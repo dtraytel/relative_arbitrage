@@ -429,26 +429,8 @@ text \<open>\<open>F(p, M) = Inf {- tr(M a)/2 | a feasible}\<close> has no zerot
   \<open>(p, X)\<close> to \<open>(\<theta> p, \<theta> X)\<close> and \<open>F(p,X) \<le> 1\<close> to the strict
   \<open>F(\<theta> p, \<theta> X) \<le> \<theta> < 1\<close>.\<close>
 
-lemma feasible_scaleR_p:
-  fixes p :: "real^'n::finite"
-  assumes t: "\<theta> \<noteq> 0"
-  shows "feasible k L (\<theta> *\<^sub>R p) = feasible k L p"
-proof -
-  have iff: "(a *v (\<theta> *\<^sub>R p) = 0) = (a *v p = 0)" for a :: "real^'n^'n"
-  proof -
-    have "a *v (\<theta> *\<^sub>R p) = \<theta> *\<^sub>R (a *v p)"
-      by (simp add: scaleR_matrix_vector_assoc[symmetric]
-          matrix_scaleR_vector_ac)
-    thus ?thesis using t by simp
-  qed
-  show ?thesis unfolding feasible_def using iff by auto
-qed
-
-text \<open>Scaling a conditionally-complete infimum by a positive constant:
-  \<open>cInf_mult_pos\<close> lives in @{theory Relative_Arbitrage.Operator_Envelopes}.\<close>
-
 text \<open>Positive homogeneity of \<open>F\<close> in the matrix argument: with
-  \<open>feasible_scaleR_p\<close>, this is the strict-perturbation mechanism, scaling
+  @{thm [source] feasible_scale}, this is the strict-perturbation mechanism, scaling
   a subsolution's jet to \<open>(\<theta> p, \<theta> X)\<close> and its value to
   \<open>\<theta> F(p,X) \<le> \<theta> < 1\<close>.\<close>
 
@@ -471,12 +453,6 @@ proof -
     unfolding ell_op_def img
     by (rule cInf_mult_pos[OF t _ ell_op_bdd_below]) (use ne in simp)
 qed
-
-lemma ell_op_scaleR_p:
-  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes t: "\<theta> \<noteq> 0"
-  shows "ell_op k L (\<theta> *\<^sub>R p) M = ell_op k L p M"
-  unfolding ell_op_def feasible_scaleR_p[OF t] ..
 
 text \<open>Scaling a subsolution by \<open>\<theta> \<in> (0,1)\<close> makes its operator inequality
   strict, since \<open>F\<close> has no zeroth-order term. With
@@ -737,7 +713,7 @@ proof -
     using sub x tfc mc unfolding visc_subsol_def by blast
   hence step: "ell_op k L (c *\<^sub>R g x) (c *\<^sub>R H) \<le> 1" by simp
   have "ell_op k L (c *\<^sub>R g x) (c *\<^sub>R H) = ell_op k L (g x) (c *\<^sub>R H)"
-    by (rule ell_op_scaleR_p[OF cn])
+    by (rule ell_op_scale[OF cn])
   also have "\<dots> = c * ell_op k L (g x) H"
     by (rule ell_op_scaleR_matrix[OF c0 ne])
   finally have "c * ell_op k L (g x) H \<le> 1" using step by simp

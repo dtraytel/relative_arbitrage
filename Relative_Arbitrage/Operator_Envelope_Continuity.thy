@@ -594,33 +594,12 @@ proof -
     by simp
 qed
 
-text \<open>Theorem 4.3 (comparison) in the form the paper uses it: a subsolution with
-  zero boundary data is dominated by a supersolution with zero boundary data.
-  Here \<open>w\<^sub>+\<close> of the paper is \<open>max (w y) 0\<close>, which has nonnegative boundary data
-  by construction and is still a supersolution wherever \<open>w\<close> is nonnegative --
-  so the hypothesis is carried explicitly rather than silently assumed.\<close>
-
-theorem comparison_from_max_principle:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes mp: "max_principle_boundary k L K"
-    and sub: "visc_subsol_env k L K (interior K) u"
-    and sup: "visc_supersol_env k L K (interior K) w"
-    and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and ubd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> 0"
-    and wbd: "\<And>y. y \<in> K - interior K \<Longrightarrow> w y = 0"
-  shows "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
-proof -
-  have wbd': "\<And>y. y \<in> K - interior K \<Longrightarrow> 0 \<le> w y"
-    using wbd by simp
-  show "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
-    by (rule max_principle_le[OF mp sub sup cu cw ubd wbd'])
-qed
-
 text \<open>Proposition 4.1 (uniqueness): two viscosity solutions with the same
-  boundary data agree, by applying the comparison step in both directions.
-  This needs the maximum principle for \<open>K\<close> only, not the \<open>T\<^sub>\<iota>\<close> family, which
-  the paper's Theorem 4.3 uses to handle boundary data that is merely
-  semicontinuous -- unnecessary for the equal-boundary-data statement.\<close>
+  boundary data agree, since \<open>u - w\<close> and \<open>w - u\<close> both peak on the boundary,
+  where they vanish.  This needs the maximum principle for \<open>K\<close> only, not the
+  \<open>T\<^sub>\<iota>\<close> family, which the paper's Theorem 4.3 uses to handle boundary data
+  that is merely semicontinuous -- unnecessary for the equal-boundary-data
+  statement.\<close>
 
 theorem uniqueness_from_max_principle:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -630,19 +609,15 @@ theorem uniqueness_from_max_principle:
     and sw: "visc_subsol_env k L K (interior K) w"
     and pw: "visc_supersol_env k L K (interior K) w"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = 0"
-    and bd': "\<And>y. y \<in> K - interior K \<Longrightarrow> w y = 0"
+    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
   shows "\<And>y. y \<in> K \<Longrightarrow> u y = w y"
 proof -
   fix y assume y: "y \<in> K"
-  have le1: "u y \<le> w y"
-    by (rule comparison_from_max_principle[OF mp su pw cu cw _ bd' y])
-       (simp add: bd)
-  have le2: "w y \<le> u y"
-    by (rule comparison_from_max_principle[OF mp sw pu cw cu _ bd y])
-       (simp add: bd')
-  from le1 le2 show "u y = w y"
-    by simp
+  obtain a where a: "a \<in> K - interior K" and ma: "u y - w y \<le> u a - w a"
+    using mp su pw cu cw y unfolding max_principle_boundary_def by blast
+  obtain b where b: "b \<in> K - interior K" and mb: "w y - u y \<le> w b - u b"
+    using mp sw pu cw cu y unfolding max_principle_boundary_def by blast
+  show "u y = w y" using ma mb bd[OF a] bd[OF b] by linarith
 qed
 
 text \<open>Removing the interface needs a proof of \<open>max_principle_boundary k L K\<close>

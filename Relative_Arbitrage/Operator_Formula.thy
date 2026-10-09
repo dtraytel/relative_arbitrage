@@ -41,20 +41,6 @@ text \<open>On \<open>p\<^sup>\<bottom>\<close> the projection \<open>I - pp'/|p
   \<open>p\<close>-direction eigenvalue \<open>min(\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0)\<close> is the smallest of its
   spectrum, as needed for Eq. (3.5).\<close>
 
-lemma rank1proj_annihilates_perp:
-  fixes p :: "real^'n::finite"
-  assumes y: "p \<bullet> y = 0"
-  shows "rank1proj p *v y = 0"
-proof -
-  have "rank1proj p *v y = inverse (p \<bullet> p) *\<^sub>R (outer_prod p p *v y)"
-    unfolding rank1proj_def by (rule scaleR_matrix_vector_assoc[symmetric])
-  also have "\<dots> = inverse (p \<bullet> p) *\<^sub>R ((p \<bullet> y) *\<^sub>R p)"
-    by simp
-  also have "\<dots> = 0"
-    by (simp add: y)
-  finally show ?thesis .
-qed
-
 lemma perp_proj_fixes_perp:
   fixes p :: "real^'n::finite"
   assumes y: "p \<bullet> y = 0"
@@ -121,27 +107,25 @@ qed
 
 section \<open>An orthonormal eigenbasis of \<open>M\<^sub>p\<close> containing \<open>p/|p|\<close>\<close>
 
-text \<open>The hyperplane \<open>p\<^sup>\<bottom>\<close> is \<open>M\<^sub>p\<close>-invariant, so it carries an orthonormal
-  eigenbasis of \<open>M\<^sub>p\<close>; adjoining the unit eigenvector \<open>p/|p|\<close> gives an
-  eigenbasis of the whole space with \<open>p\<close> distinguished and the rest in
-  \<open>p\<^sup>\<bottom>\<close>.\<close>
+text \<open>The unit vector \<open>p/|p|\<close> is an eigenvector of \<open>M\<^sub>p\<close> with eigenvalue
+  \<open>min(\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0)\<close>, so the symmetric \<open>M\<^sub>p\<close> has an orthonormal eigenbasis
+  containing it, the rest lying in \<open>p\<^sup>\<bottom>\<close>.\<close>
 
-lemma Mp_invariant_perp:
+lemma Mp_apply_unit_p:
   fixes M :: "real^'n::finite^'n"
-  assumes p: "p \<noteq> 0" and y: "p \<bullet> y = 0"
-  shows "p \<bullet> (Mp p M *v y) = 0"
+  assumes p: "p \<noteq> 0"
+  shows "Mp p M *v (p /\<^sub>R norm p) = min (eigval CARD('n) M) 0 *\<^sub>R (p /\<^sub>R norm p)"
+  using Mp_apply_p[OF p, of M] by (simp add: matrix_vector_mult_scaleR mult.commute)
+
+lemma Mp_quadform_unit_p:
+  fixes M :: "real^'n::finite^'n"
+  assumes p: "p \<noteq> 0"
+  shows "(p /\<^sub>R norm p) \<bullet> (Mp p M *v (p /\<^sub>R norm p)) = min (eigval CARD('n) M) 0"
 proof -
-  have symQ: "transpose (mat 1 - rank1proj p :: real^'n^'n) = mat 1 - rank1proj p"
-    by (rule symmetric_perp_proj)
-  have Qp: "(mat 1 - rank1proj p) *v p = 0"
-    by (simp add: matrix_vector_mult_diff rank1proj_apply_self[OF p])
-  have "p \<bullet> (Mp p M *v y) = p \<bullet> ((mat 1 - rank1proj p) *v (M *v y))"
-    by (simp add: Mp_apply_perp[OF p y])
-  also have "\<dots> = (M *v y) \<bullet> ((mat 1 - rank1proj p) *v p)"
-    by (rule sym_inner_swap[OF symQ])
-  also have "\<dots> = 0"
-    by (simp add: Qp)
-  finally show ?thesis .
+  define q where "q = p /\<^sub>R norm p"
+  have "norm q = 1" unfolding q_def using p by simp
+  then have qq: "q \<bullet> q = 1" by (simp add: dot_square_norm)
+  show ?thesis using Mp_apply_unit_p[OF p, of M] unfolding q_def[symmetric] by (simp add: qq)
 qed
 
 theorem Mp_eigenbasis_adapted:
@@ -152,124 +136,13 @@ theorem Mp_eigenbasis_adapted:
       \<and> p /\<^sub>R norm p \<in> B
       \<and> (\<forall>u \<in> B - {p /\<^sub>R norm p}. p \<bullet> u = 0)"
 proof -
-  define q where "q = p /\<^sub>R norm p"
-  define H where "H = {y :: real^'n. p \<bullet> y = 0}"
-  have np: "norm p \<noteq> 0"
+  have nq: "norm (p /\<^sub>R norm p) = 1"
     using p by simp
-  have nq: "norm q = 1"
-    unfolding q_def using np by simp
-  have symMp: "transpose (Mp p M) = Mp p M"
-    by (rule transpose_Mp[OF sym])
-  have subH: "subspace H"
-    unfolding H_def by (simp add: subspace_hyperplane)
-  have invH: "\<forall>y\<in>H. Mp p M *v y \<in> H"
-    unfolding H_def using Mp_invariant_perp[OF p] by simp
-  obtain B0 where B0: "onormal B0" "B0 \<subseteq> H" "span B0 = H"
-    and eig0: "\<forall>u\<in>B0. Mp p M *v u = (u \<bullet> (Mp p M *v u)) *\<^sub>R u"
-    using invariant_subspace_eigenbasis_ex[OF symMp subH invH] by blast
-  have finB0: "finite B0"
-    by (rule onormal_finite[OF B0(1)])
-  have qperp: "q \<bullet> u = 0" if u: "u \<in> B0" for u
-  proof -
-    have "p \<bullet> u = 0"
-      using u B0(2) by (auto simp: H_def)
-    then show ?thesis
-      unfolding q_def by simp
-  qed
-  text \<open>\<open>q\<close> is not already in \<open>B\<^sub>0\<close>, since \<open>B\<^sub>0 \<subseteq> p\<^sup>\<bottom>\<close> while \<open>p \<bullet> q = |p| \<noteq> 0\<close>.\<close>
-  have pq: "p \<bullet> q = norm p"
-    unfolding q_def using np
-    by (simp add: dot_square_norm power2_eq_square)
-  have qnotin: "q \<notin> B0"
-    using pq np B0(2) by (auto simp: H_def)
-  define B where "B = insert q B0"
-  have onB: "onormal B"
-    unfolding B_def onormal_def
-  proof (intro conjI)
-    show "finite (insert q B0)"
-      using finB0 by simp
-    show "pairwise orthogonal (insert q B0)"
-      using B0(1) qperp
-      by (auto simp: onormal_def pairwise_insert orthogonal_def inner_commute)
-    show "\<forall>u\<in>insert q B0. norm u = 1"
-      using nq B0(1) by (auto simp: onormal_def)
-  qed
-  text \<open>Completeness: split \<open>x\<close> into its \<open>q\<close>-component and a remainder that is
-    orthogonal to \<open>p\<close>, hence lies in \<open>span B\<^sub>0\<close>.\<close>
-  have spanB: "span B = UNIV"
-  proof -
-    have "x \<in> span B" for x :: "real^'n"
-    proof -
-      define z where "z = x - (q \<bullet> x) *\<^sub>R q"
-      have pz: "p \<bullet> z = 0"
-      proof -
-        have qx: "q \<bullet> x = inverse (norm p) * (p \<bullet> x)"
-          unfolding q_def by simp
-        have "p \<bullet> z = p \<bullet> x - (q \<bullet> x) * (p \<bullet> q)"
-          unfolding z_def by (simp add: inner_diff_right)
-        also have "\<dots> = p \<bullet> x - (inverse (norm p) * (p \<bullet> x)) * norm p"
-          unfolding qx pq by (rule refl)
-        also have "\<dots> = 0"
-          using np by simp
-        finally show ?thesis .
-      qed
-      have zB0: "z \<in> span B0"
-        using pz B0(3) unfolding H_def by simp
-      have sub: "B0 \<subseteq> insert q B0"
-        by blast
-      have zB: "z \<in> span B"
-        unfolding B_def using zB0 span_mono[OF sub] by blast
-      have qB: "q \<in> span B"
-        unfolding B_def by (simp add: span_base)
-      have "x = (q \<bullet> x) *\<^sub>R q + z"
-        unfolding z_def by simp
-      also have "\<dots> \<in> span B"
-        using qB zB by (intro span_add span_scale)
-      finally show ?thesis .
-    qed
-    then show ?thesis by auto
-  qed
-  have eigB: "\<forall>u\<in>B. Mp p M *v u = (u \<bullet> (Mp p M *v u)) *\<^sub>R u"
-    unfolding B_def
-  proof (intro ballI)
-    fix u assume "u \<in> insert q B0"
-    then show "Mp p M *v u = (u \<bullet> (Mp p M *v u)) *\<^sub>R u"
-    proof (cases "u = q")
-      case True
-      have Mpp: "Mp p M *v p = min (eigval CARD('n) M) 0 *\<^sub>R p"
-        by (rule Mp_apply_p[OF p])
-      have pull: "Mp p M *v (inverse (norm p) *\<^sub>R p)
-          = inverse (norm p) *\<^sub>R (Mp p M *v p)"
-        by (simp add: matrix_scaleR_vector_ac scaleR_matrix_vector_assoc)
-      have Mpq: "Mp p M *v q = min (eigval CARD('n) M) 0 *\<^sub>R q"
-      proof -
-        have "Mp p M *v q = inverse (norm p) *\<^sub>R (min (eigval CARD('n) M) 0 *\<^sub>R p)"
-          unfolding q_def pull Mpp by (rule refl)
-        also have "\<dots> = min (eigval CARD('n) M) 0 *\<^sub>R q"
-          unfolding q_def by (simp add: mult.commute)
-        finally show ?thesis .
-      qed
-      have qq: "q \<bullet> q = 1"
-        using nq by (simp add: dot_square_norm)
-      have "q \<bullet> (Mp p M *v q) = min (eigval CARD('n) M) 0"
-        unfolding Mpq by (simp add: qq)
-      then show ?thesis
-        using True Mpq by simp
-    next
-      case False
-      then have "u \<in> B0"
-        using \<open>u \<in> insert q B0\<close> by simp
-      then show ?thesis
-        using eig0 by blast
-    qed
-  qed
-  have qB: "q \<in> B"
-    unfolding B_def by simp
-  have restperp: "\<forall>u \<in> B - {q}. p \<bullet> u = 0"
-    unfolding B_def using B0(2) by (auto simp: H_def)
+  have eigq: "Mp p M *v (p /\<^sub>R norm p)
+      = ((p /\<^sub>R norm p) \<bullet> (Mp p M *v (p /\<^sub>R norm p))) *\<^sub>R (p /\<^sub>R norm p)"
+    unfolding Mp_quadform_unit_p[OF p] by (rule Mp_apply_unit_p[OF p])
   show ?thesis
-    unfolding q_def[symmetric]
-    by (rule exI[of _ B]) (intro conjI onB spanB eigB qB restperp)
+    using eigenbasis_containing_eigenvector[OF transpose_Mp[OF sym] nq eigq] p by auto
 qed
 
 section \<open>Traces of weighted outer-product sums\<close>
@@ -788,36 +661,6 @@ proof (intro exI[of _ "span S"] conjI)
       by (rule quadform_weighted_outer_sum_eq[OF finB, symmetric])
     finally show "x \<bullet> x \<le> x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x)" .
   qed
-qed
-
-lemma Mp_quadform_unit_p:
-  fixes M :: "real^'n::finite^'n"
-  assumes p: "p \<noteq> 0"
-  shows "(p /\<^sub>R norm p) \<bullet> (Mp p M *v (p /\<^sub>R norm p)) = min (eigval CARD('n) M) 0"
-proof -
-  define q where "q = p /\<^sub>R norm p"
-  have np: "norm p \<noteq> 0"
-    using p by simp
-  have nq: "norm q = 1"
-    unfolding q_def using np by simp
-  have qq: "q \<bullet> q = 1"
-    using nq by (simp add: dot_square_norm)
-  have Mpp: "Mp p M *v p = min (eigval CARD('n) M) 0 *\<^sub>R p"
-    by (rule Mp_apply_p[OF p])
-  have pull: "Mp p M *v (inverse (norm p) *\<^sub>R p)
-      = inverse (norm p) *\<^sub>R (Mp p M *v p)"
-    by (simp add: matrix_scaleR_vector_ac scaleR_matrix_vector_assoc)
-  have "Mp p M *v q = min (eigval CARD('n) M) 0 *\<^sub>R q"
-  proof -
-    have "Mp p M *v q
-        = inverse (norm p) *\<^sub>R (min (eigval CARD('n) M) 0 *\<^sub>R p)"
-      unfolding q_def pull Mpp by (rule refl)
-    also have "\<dots> = min (eigval CARD('n) M) 0 *\<^sub>R q"
-      unfolding q_def by (simp add: mult.commute)
-    finally show ?thesis .
-  qed
-  then show ?thesis
-    unfolding q_def[symmetric] by (simp add: qq)
 qed
 
 section \<open>The reverse inequality of Eq. (3.5): the attaining witness\<close>

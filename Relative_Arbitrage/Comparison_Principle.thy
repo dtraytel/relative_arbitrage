@@ -546,9 +546,9 @@ text \<open>The refutation: given any sub/supersolution pair and nonempty interi
 
 text \<open>The repair lives in @{theory Relative_Arbitrage.Operator_Envelope_Continuity}: the corrected
   \<open>max_principle_boundary\<close> carries \<open>continuous_on K u\<close> and
-  \<open>continuous_on K w\<close>, and \<open>max_principle_le\<close>,
-  \<open>comparison_from_max_principle\<close>, \<open>uniqueness_from_max_principle\<close>
-  thread the two continuity hypotheses through.  Everything downstream -
+  \<open>continuous_on K w\<close>, and \<open>max_principle_le\<close> and
+  \<open>uniqueness_from_max_principle\<close> thread the two continuity hypotheses
+  through.  Everything downstream -
   4.2(b), Theorem 4.3, Proposition 4.1 - is unchanged except for carrying
   this continuity.\<close>
 
@@ -1604,7 +1604,7 @@ proof (rule ccontr)
 
   \<comment> \<open>8.  the viscosity properties of the extensions, in jet form\<close>
   have subenv: "visc_subsol_env2 k L K (interior K) ut"
-    by (rule visc_subsol_env_agrees[OF subu interior_subset]) (simp add: ut_def)
+    by (rule visc_subsol_env2_cong[OF interior_subset _ subu]) (simp add: ut_def)
   have sub: "visc_subsol k L (interior K) ut"
     by (rule visc_subsol_env_imp_visc_subsol
         [OF subenv Kb _ kk(1) kk(2) LL, where Bu = B]) (use utup in simp)
@@ -1722,12 +1722,8 @@ section \<open>Uniqueness on a general compact set\<close>
 
 text \<open>The first consequence of Theorem 4.2(a): two continuous viscosity
   solutions on compact \<open>K\<close> agreeing on \<open>K - interior K\<close> agree everywhere
-  on \<open>K\<close>.  Both directions swap the roles of sub- and supersolution,
-  putting the maximum of \<open>u - w\<close> on the boundary where it vanishes.\<close>
-
-text \<open>The comparison principle proper, with ordered boundary data: a
-  subsolution below a supersolution on the boundary stays below it
-  throughout \<open>K\<close>.\<close>
+  on \<open>K\<close>: @{thm [source] uniqueness_from_max_principle}, its interface
+  discharged by @{thm [source] max_principle_boundary_holds}.\<close>
 
 theorem viscosity_uniqueness_compact:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
@@ -1741,31 +1737,8 @@ theorem viscosity_uniqueness_compact:
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
     and x: "x \<in> K"
   shows "u x = w x"
-proof -
-  have mpb: "max_principle_boundary k L K"
-    by (rule max_principle_boundary_holds[OF cK neK kk(1) kk(2) LL])
-  \<comment> \<open>\<open>u - w\<close> peaks on the boundary, where it vanishes\<close>
-  have le: "u x \<le> w x"
-  proof -
-    obtain b where bB: "b \<in> K - interior K"
-      and bmax: "\<And>y. y \<in> K \<Longrightarrow> u y - w y \<le> u b - w b"
-      using mpb subu supw cu cw unfolding max_principle_boundary_def by blast
-    have "u b - w b = 0" using bd[OF bB] by simp
-    then have "u x - w x \<le> 0" using bmax[OF x] by linarith
-    then show ?thesis by linarith
-  qed
-  \<comment> \<open>and the same with the roles swapped\<close>
-  have ge: "w x \<le> u x"
-  proof -
-    obtain b where bB: "b \<in> K - interior K"
-      and bmax: "\<And>y. y \<in> K \<Longrightarrow> w y - u y \<le> w b - u b"
-      using mpb subw supu cw cu unfolding max_principle_boundary_def by blast
-    have "w b - u b = 0" using bd[OF bB] by simp
-    then have "w x - u x \<le> 0" using bmax[OF x] by linarith
-    then show ?thesis by linarith
-  qed
-  from le ge show ?thesis by simp
-qed
+  by (rule uniqueness_from_max_principle[OF max_principle_boundary_holds[OF cK neK kk LL]
+        subu supu subw supw cu cw bd x])
 
 section \<open>Map of the Theorem 4.2(a) chain\<close>
 

@@ -268,7 +268,7 @@ proof -
   have "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
     by (rule supersol_shifted_bound_supconv[OF sup ysO Ys Bw e opt jet d])
   then show ?thesis
-    unfolding ell_op_usc_eq_at_nonzero[OF kk(1) kk(2) LL p0] by simp
+    using ell_op_usc_off_zero[OF transpose_shift_diff[OF Ys] p0 LL kk(1) kk(2)] by simp
 qed
 
 subsection \<open>Absorbing Jensen's tilt: the general nearby-point form\<close>
@@ -678,34 +678,6 @@ lemma visc_subsol_mono_dom:
   assumes s: "visc_subsol k L \<Omega> u" and sub: "\<Omega>' \<subseteq> \<Omega>"
   shows "visc_subsol k L \<Omega>' u"
   using s sub unfolding visc_subsol_def by blast
-
-text \<open>\<open>visc_subsol_env k L K \<Omega> u\<close> reads \<open>u\<close> only on \<open>K\<close>, insensitive to its
-  values off \<open>K\<close>, which is what makes the extension below legitimate:
-  Definition 3.1(a) transfers to the extended function for free.\<close>
-
-lemma visc_subsol_env_agrees:
-  fixes K :: "(real^'n::finite) set"
-  assumes sub: "visc_subsol_env2 k L K \<Omega> u" and OK: "\<Omega> \<subseteq> K"
-    and eq: "\<And>y. y \<in> K \<Longrightarrow> u' y = u y"
-  shows "visc_subsol_env2 k L K \<Omega> u'"
-  unfolding visc_subsol_env2_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_C2 \<phi> g H x"
-    and gl: "\<forall>y\<in>K. u' y - \<phi> y \<le> u' x - \<phi> x"
-  have xK: "x \<in> K" using x OK by blast
-  have gl': "\<forall>y\<in>K. u y - \<phi> y \<le> u x - \<phi> x"
-  proof
-    fix y assume y: "y \<in> K"
-    have "u y - \<phi> y = u' y - \<phi> y" using eq[OF y] by simp
-    also have "\<dots> \<le> u' x - \<phi> x" using gl y by blast
-    also have "\<dots> = u x - \<phi> x" using eq[OF xK] by simp
-    finally show "u y - \<phi> y \<le> u x - \<phi> x" .
-  qed
-  show "ell_op_lsc k L (g x) H \<le> 1"
-    using sub x tf gl' unfolding visc_subsol_env2_def by blast
-qed
 
 text \<open>\<open>usc_extend_const_below\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 

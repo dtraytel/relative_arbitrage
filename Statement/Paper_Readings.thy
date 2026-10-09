@@ -421,11 +421,59 @@ theorem lemma_2_1:
 
 section \<open>The uniqueness hypothesis is not vacuous\<close>
 
+text \<open>Section 4 of the paper notes that convex sets with nonempty interior are
+  expandable.  In the paper's own form: with \<open>x\<^sub>0\<close> an interior point, the
+  dilations \<open>T\<^sub>\<iota> x = x\<^sub>0 + \<iota>(x - x\<^sub>0)\<close> (no rotation, translation
+  \<open>(1 - \<iota>)x\<^sub>0 \<rightarrow> 0\<close>) carry \<open>K\<close> into the interior of \<open>T\<^sub>\<iota>(K)\<close>, since
+  \<open>T\<^sub>\<iota>\<^sup>-\<^sup>1\<close> shrinks \<open>K\<close> towards \<open>x\<^sub>0\<close> into its interior.  Compactness is
+  not needed for this; it is needed for the formal hypothesis, which follows by
+  @{thm [source] paper_expandable_imp_expandable}.\<close>
+
+theorem convex_sets_are_paper_expandable:
+  fixes K :: "(real^'n::finite) set"
+  assumes cvx: "convex K" and int: "interior K \<noteq> {}"
+  shows "paper_expandable K"
+proof -
+  obtain x0 where x0: "x0 \<in> interior K" using int by blast
+  have sub: "K \<subseteq> interior ((\<lambda>x. (1 - i) *\<^sub>R x0 + i *\<^sub>R x) ` K)" if i: "1 < i" for i
+  proof
+    fix y assume y: "y \<in> K"
+    define z where "z = y - (1 - 1/i) *\<^sub>R (y - x0)"
+    have "z \<in> interior K"
+      unfolding z_def using i
+      by (intro mem_interior_convex_shrink[OF cvx x0 y]) auto
+    moreover have "y = (1 - i) *\<^sub>R x0 + i *\<^sub>R z"
+      unfolding z_def using i by (simp add: vec_eq_iff field_simps)
+    ultimately have "y \<in> (\<lambda>x. (1 - i) *\<^sub>R x0 + i *\<^sub>R x) ` interior K" by blast
+    moreover have "open ((\<lambda>x. (1 - i) *\<^sub>R x0 + i *\<^sub>R x) ` interior K)"
+      by (rule open_affinity) (use i in auto)
+    ultimately show "y \<in> interior ((\<lambda>x. (1 - i) *\<^sub>R x0 + i *\<^sub>R x) ` K)"
+      using interior_maximal[OF image_mono[OF interior_subset]] by blast
+  qed
+  have n1: "0 < norm x0 + 1" by (simp add: add_nonneg_pos)
+  have bnd: "norm ((1 - i) *\<^sub>R x0) \<le> e" if e: "0 < e" and i: "1 < i" "i < 1 + e / (norm x0 + 1)" for e i
+  proof -
+    have "norm ((1 - i) *\<^sub>R x0) = (i - 1) * norm x0" using i by simp
+    also have "\<dots> \<le> e / (norm x0 + 1) * norm x0" using i by (intro mult_right_mono) auto
+    also have "\<dots> \<le> e" using e n1 by (simp add: field_simps)
+    finally show ?thesis .
+  qed
+  show ?thesis
+    unfolding paper_expandable_def
+  proof (intro exI[of _ "\<lambda>i. mat 1"] exI[of _ "\<lambda>i. (1 - i) *\<^sub>R x0"] conjI allI impI)
+    fix e :: real assume e: "0 < e"
+    show "\<exists>d>1. \<forall>i. 1 < i \<longrightarrow> i < d \<longrightarrow> (\<forall>x. norm (mat 1 *v x - x) \<le> e * norm x)
+        \<and> norm ((1 - i) *\<^sub>R x0) \<le> e"
+      using e n1 bnd[OF e] by (intro exI[of _ "1 + e / (norm x0 + 1)"]) auto
+  qed (use sub in \<open>auto simp: orthogonal_matrix_id add.commute\<close>)
+qed
+
 theorem convex_sets_are_expandable:
   fixes K :: "(real^'n::finite) set"
   assumes "compact K" and "convex K" and "interior K \<noteq> {}"
   shows "expandable K"
-  by (rule convex_expandable[OF assms])
+  by (rule paper_expandable_imp_expandable[OF assms(1)
+        convex_sets_are_paper_expandable[OF assms(2,3)]])
 
 
 section \<open>The literal reading of Eq. (1.5)\<close>
