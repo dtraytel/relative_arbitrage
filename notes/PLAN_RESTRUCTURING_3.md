@@ -812,7 +812,53 @@ PLAN_RESTRUCTURING_2 §8 applies, with these amendments:
 
 | 2026-10-09 | `bd84eff` + fix | Phase 4, first round: chunk 0 of groups G2 (SOVA), G3 (CTM/CPS: the direct `ess_inf_pexit_usc` proof, −940 lines with the Laplace route) and G5 (path toolkit). 38 twins or special cases gone, all users re-pointed; 46 fingerprints changed, all checked: equivalent (the new `pshift_law`/`aglue_law` abbreviations, an associativity merge) or stronger (`martingale_expectation_eq`, `norm_sq_*_expand`, `superjet_supconv_form_lower`). 102 140 lines. The rest of phase 4 (20 chunks over 8 groups; work list in `data/phase4/G*-items.json`; phases 5–6 move list in `data/phase56_scope.json`) was stopped by a usage limit; G1 and G4 left unverified work on branches `p4-G1`, `p4-G4` | all sessions build; dead code 196 lines |
 
+| 2026-10-09 | (saved, not merged) | Phase 4, round 2 (paused by the owner): 11 more chunks finished and built in their worktrees, about −8 800 lines by the agents' estimates; not yet reviewed, merged or built together | see "Resuming phase 4" |
+
 **State after phase 2:** 104 811 lines (baseline 120 586 at `41fca32`), of which RA 53 206
 (was 64 995), SOVA 16 687 (18 461), CPS 11 352 (13 503). Dead code: 196 lines, all kept on
 purpose. Oracles on the roots: none.
+
+### Resuming phase 4 (state of 2026-10-09)
+
+Round 2 ran each group in its own git worktree, branched from `bc034d3`, with its own
+Isabelle home, so that groups never shared heaps. The run was paused before the reviews.
+Everything it produced is in `notes/review_3/data/phase4/phase4-round2.bundle` (restore
+with `git fetch notes/review_3/data/phase4/phase4-round2.bundle 'refs/heads/*:refs/heads/*'`):
+
+- branches `p4-G1` … `p4-G8`: committed chunks, each of which built (full build) in its
+  worktree, but **none reviewed and none merged or built together**;
+- `p4-G1-wip2`, `p4-G4-wip2`: chunks interrupted mid-way, **unverified**.
+
+Chunks finished in round 2:
+
+| chunk | commit | build | items done | lines saved (agent estimate) |
+|---|---|---|---:|---:|
+| impl:G1:0 | `4ffff4f` | OK | 11/11 | 467 |
+| impl:G2:1 | `06cbcd5` | OK | 11/12 | 632 |
+| impl:G2:2 | `12165b6` | OK | 11/12 | 710 |
+| impl:G3:1 | `7be3647` | OK | 11/11 | 463 |
+| impl:G3:2 | `b089223` | OK | 11/11 | 749 |
+| impl:G4:0 | `d7e434f` | OK | 12/12 | 527 |
+| impl:G5:1 | `25984aa` | OK | 8/10 | 894 |
+| impl:G5:2 | `4ae5959` | OK | 8/10 | 1558 |
+| impl:G6:0 | `935499a` | OK | 10/10 | 325 |
+| impl:G7:0 | `5d8a82d` | OK | 10/12 | 1266 |
+| impl:G8:0 | `babcbce` | OK | 9/9 | 1219 |
+
+Not yet done:
+- G1 chunks 1–3, G2 chunk 3, G3 chunk 3, G4 chunks 1–2 (the WIP branches hold partial
+  work), G6 chunks 1–2;
+- the eight group reviews;
+- the merge.
+
+Merge order: G1, G2, G3, G4, G5, G6, G7, G8. Expect conflicts:
+- G7 and G8 both did the max-principle corollaries;
+- several groups re-point the same uses in shared files.
+
+Resolve them, then run the full build, the analysis with `fp_compare.py` against the
+fingerprints of `bc034d3`, and a dead-code pass. The work list is in `data/phase4/G*-items.json`. The tools
+(build wrapper, statement check, batch check, build-slot lock, the workflow script) are in
+`notes/review_3/phase4_tools/`; their paths point to the session scratch directory and must
+be adjusted. Memory: two concurrent builds on this 15 GB machine were OOM-killed several
+times; with `--maxheap 4G` and `-Xmx1500m` per build they fit.
 
