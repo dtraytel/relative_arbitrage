@@ -581,98 +581,12 @@ subsection \<open>The sup-convolution is attained\<close>
 
 text \<open>\<open>comparison_supconv_sequence_complete\<close> takes attainment of each
   sup-convolution as a hypothesis - the points \<open>y\<^sub>s\<close> where
-  \<open>supconv u \<epsilon> x = u y\<^sub>s - dist(x,y\<^sub>s)\<^sup>2/(2\<epsilon>)\<close>.  For continuous \<open>u\<close>
-  bounded above they exist by coercivity: beyond an explicit radius
+  \<open>supconv u \<epsilon> x = u y\<^sub>s - dist(x,y\<^sub>s)\<^sup>2/(2\<epsilon>)\<close>.  For upper semicontinuous
+  \<open>u\<close> bounded above they exist by coercivity: beyond an explicit radius
   \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))+1\<close> the penalty already beats the value at \<open>x\<close>,
   so the supremum over the whole space equals the supremum over one
-  compact ball, attained by continuity.\<close>
-
-subsection \<open>The attainment radius as a parameter\<close>
-
-text \<open>The \<open>+1\<close> margin is not needed: any radius \<open>R\<close> exceeding
-  \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))\<close> serves. With the margin,
-  \<open>cball x R \<subseteq> \<Omega>\<close> would ask \<open>\<Omega>\<close> for a ball of radius one, which no
-  bounded \<open>\<Omega>\<close> of small diameter has; with \<open>R\<close> free, the hypothesis
-  separates into a geometric condition on \<open>R\<close> and a smallness condition
-  on \<open>\<epsilon>\<close>, discharged separately at the top level.\<close>
-
-theorem supconv_attained_ball_rad:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
-    and cu: "continuous_on UNIV u"
-    and R: "sqrt (max 0 (2*\<epsilon>*(Bu - u x))) < R"
-  shows "\<exists>ys. dist x ys \<le> R
-      \<and> supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-proof -
-  define M where "M = max 0 (2*\<epsilon>*(Bu - u x))"
-  have M0: "0 \<le> M" unfolding M_def by simp
-  have s0: "0 \<le> sqrt M" using M0 by simp
-  have sR: "sqrt M < R" using R unfolding M_def .
-  have R0: "0 < R" using s0 sR by linarith
-  have Rsq: "2*\<epsilon>*(Bu - u x) < R\<^sup>2"
-  proof -
-    have sq: "(sqrt M)\<^sup>2 = M" using M0 by simp
-    have "(sqrt M)\<^sup>2 < R\<^sup>2"
-      by (rule power_strict_mono[OF sR s0]) simp
-    then have "M < R\<^sup>2" unfolding sq .
-    moreover have "2*\<epsilon>*(Bu - u x) \<le> M" unfolding M_def by simp
-    ultimately show ?thesis by linarith
-  qed
-  have cpt: "compact (cball x R)" by (rule compact_cball)
-  have ne: "cball x R \<noteq> {}" using R0 by auto
-  have cont: "continuous_on (cball x R) (\<lambda>y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
-    by (intro continuous_intros continuous_on_subset[OF cu subset_UNIV])
-       (use e in auto)
-  obtain ys where ysin: "ys \<in> cball x R"
-    and ysmax: "\<forall>y \<in> cball x R.
-        u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-    using continuous_attains_sup[OF cpt ne cont] by blast
-  have xin: "x \<in> cball x R" using R0 by simp
-  have key: "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)" for y
-  proof (cases "dist x y \<le> R")
-    case True
-    then have "y \<in> cball x R" by (simp add: dist_commute)
-    with ysmax show ?thesis by blast
-  next
-    case False
-    then have gt: "R < dist x y" by simp
-    have lt: "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) < u x"
-    proof -
-      have "R\<^sup>2 < (dist x y)\<^sup>2"
-        by (rule power_strict_mono[OF gt less_imp_le[OF R0]]) simp
-      then have big: "2*\<epsilon>*(Bu - u x) < (dist x y)\<^sup>2"
-        using Rsq by linarith
-      have c0: "0 < 2*\<epsilon>" using e by simp
-      have "(Bu - u x) * (2*\<epsilon>) < (dist x y)\<^sup>2"
-        using big by (simp add: algebra_simps)
-      then have "Bu - u x < (dist x y)\<^sup>2 / (2*\<epsilon>)"
-        using c0 by (simp add: pos_less_divide_eq)
-      then show ?thesis using B[of y] by linarith
-    qed
-    have xval: "u x = u x - (dist x x)\<^sup>2 / (2*\<epsilon>)" by simp
-    have "u x - (dist x x)\<^sup>2 / (2*\<epsilon>) \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-      using ysmax xin by blast
-    with lt xval show ?thesis by linarith
-  qed
-  have "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-  proof (rule antisym)
-    show "supconv u \<epsilon> x \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-      unfolding supconv_def by (rule cSUP_least) (auto simp: key)
-    show "u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>) \<le> supconv u \<epsilon> x"
-      unfolding supconv_def
-      by (intro cSUP_upper supconv_bdd_above[OF B e]) simp
-  qed
-  moreover have "dist x ys \<le> R"
-    using ysin by (simp add: dist_commute)
-  ultimately show ?thesis by blast
-qed
-
-text \<open>Every attainment point, not just the one \<open>supconv_attained_ball_rad\<close>
-  produces, lies inside that radius: if \<open>z\<close> attains then
-  \<open>u z - dist\<^sup>2/(2\<epsilon>) \<ge> u x\<close> gives \<open>dist\<^sup>2 \<le> 2\<epsilon>(B\<^sub>u-u x)\<close>.  The universal
-  form is needed where membership of the attainment point in \<open>\<Omega>\<close> comes
-  from a gate on \<open>u\<close> rather than from a ball.\<close>
-
+  compact ball, attained by upper semicontinuity
+  (\<open>supconv_attained_usc_ball\<close> below).\<close>
 
 lemma visc_subsol_mono_dom:
   assumes s: "visc_subsol k L \<Omega> u" and sub: "\<Omega>' \<subseteq> \<Omega>"
@@ -815,41 +729,6 @@ qed
 text \<open>\<open>doubled_maximiser_over_UNIV_snd\<close>, \<open>mxK_of_UNIV_snd\<close>, \<open>cont_pos_near\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 
-lemma supconv_le_of_local_bound:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
-    and cu: "continuous_on UNIV u"
-    and R: "sqrt (max 0 (2*\<epsilon>*(Bu - u x))) < R"
-    and loc: "\<And>y. dist x y \<le> R \<Longrightarrow> u y \<le> M"
-  shows "supconv u \<epsilon> x \<le> M"
-proof -
-  obtain ys where d: "dist x ys \<le> R"
-    and v: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_ball_rad[OF B e cu R] by blast
-  have nn: "0 \<le> (dist x ys)\<^sup>2 / (2*\<epsilon>)" using e by simp
-  have "supconv u \<epsilon> x \<le> u ys" unfolding v using nn by linarith
-  also have "u ys \<le> M" by (rule loc[OF d])
-  finally show ?thesis .
-qed
-
-text \<open>\<open>supconv_radius_uniform\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-theorem supconv_sandwich:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> Bu" and lo: "\<And>y. Bl \<le> u y"
-    and e: "0 < \<epsilon>" and cu: "continuous_on UNIV u"
-    and h: "0 < \<eta>" and small: "2*\<epsilon>*(Bu - Bl) < \<eta>\<^sup>2"
-    and loc: "\<And>y. dist x y \<le> \<eta> \<Longrightarrow> u y \<le> u x + \<sigma>"
-  shows "u x \<le> supconv u \<epsilon> x"
-    and "supconv u \<epsilon> x \<le> u x + \<sigma>"
-proof -
-  show "u x \<le> supconv u \<epsilon> x" by (rule supconv_ge[OF B e])
-  show "supconv u \<epsilon> x \<le> u x + \<sigma>"
-    by (rule supconv_le_of_local_bound
-        [where Bu = Bu and R = \<eta> and M = "u x + \<sigma>",
-         OF B e cu supconv_radius_uniform[OF lo e h small] loc])
-qed
-
 subsection \<open>Locating the doubling maximiser away from the boundary\<close>
 
 text \<open>\<open>uniform_modulus_on_compact\<close>, \<open>doubling_maximiser_far_from_boundary\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
@@ -866,266 +745,55 @@ text \<open>Both facts reduce to the radial profile
   \<open>soft_R_lipschitz\<close>.\<close>
 
 
+subsection \<open>The sup-convolution converges to its function uniformly on compacts\<close>
+
+text \<open>For bounded continuous \<open>u\<close>: above \<open>u\<close> always (@{thm [source] supconv_ge}),
+  and within \<open>\<sigma>\<close> of it once the penalty beats the range of \<open>u\<close> outside a
+  ball on which a modulus of continuity of \<open>u\<close> on a neighbourhood of \<open>K\<close>
+  keeps \<open>u\<close> below \<open>u x + \<sigma>\<close> (@{thm [source] supconv_le_of_local_bound_usc}).\<close>
+
 lemma supconv_uniform_upper:
   fixes u :: "real^'n::finite \<Rightarrow> real"
   assumes cK: "compact K"
     and B: "\<And>y. u y \<le> Bu" and lo: "\<And>y. Bl \<le> u y"
     and cu: "continuous_on UNIV u"
-    and s: "0 < \<sigma>"
-  shows "\<exists>\<epsilon>\<^sub>0. 0 < \<epsilon>\<^sub>0 \<and> (\<forall>\<epsilon>. 0 < \<epsilon> \<longrightarrow> \<epsilon> \<le> \<epsilon>\<^sub>0
-      \<longrightarrow> (\<forall>x\<in>K. supconv u \<epsilon> x \<le> u x + \<sigma>))"
-proof -
-  have bK: "bounded K" by (rule compact_imp_bounded[OF cK])
-  then obtain R\<^sub>0 where R0: "\<And>x. x \<in> K \<Longrightarrow> norm x \<le> R\<^sub>0"
-    using bounded_iff by blast
-  define R where "R = max 0 R\<^sub>0 + 1"
-  have R1: "1 \<le> R" unfolding R_def by simp
-  have KR: "norm x \<le> R - 1" if "x \<in> K" for x
-    using R0[OF that] unfolding R_def by simp
-  have cb: "compact (cball (0::real^'n) R)" by (rule compact_cball)
-  have cuR: "continuous_on (cball (0::real^'n) R) u"
-    by (rule continuous_on_subset[OF cu subset_UNIV])
-  obtain \<eta> where hpos: "0 < \<eta>"
-    and modu: "\<And>p q. p \<in> cball (0::real^'n) R \<Longrightarrow> q \<in> cball (0::real^'n) R
-        \<Longrightarrow> dist p q \<le> \<eta> \<Longrightarrow> u q \<le> u p + \<sigma>"
-    using uniform_modulus_on_compact[OF cb cuR s] by blast
-  define h where "h = min \<eta> 1"
-  have hp: "0 < h" unfolding h_def using hpos by simp
-  have hle1: "h \<le> 1" unfolding h_def by simp
-  have hlem: "h \<le> \<eta>" unfolding h_def by simp
-  have Dnn: "0 \<le> max 0 (Bu - Bl)" by simp
-  have hsq: "0 < h\<^sup>2" using hp by simp
-  obtain \<epsilon>\<^sub>0 where e0pos: "0 < \<epsilon>\<^sub>0"
-    and esm: "2*\<epsilon>\<^sub>0*(max 0 (Bu - Bl)) < h\<^sup>2"
-    using exists_eps_aux[OF hsq Dnn] by blast
-  \<comment> \<open>the bound survives shrinking \<open>\<epsilon>\<close>, which is what lets the assembly pick ONE
-      \<open>\<epsilon>\<close> serving both sup-convolutions\<close>
-  have esm2: "2*\<epsilon>*(Bu - Bl) < h\<^sup>2" if ep: "0 < \<epsilon>" and ele: "\<epsilon> \<le> \<epsilon>\<^sub>0" for \<epsilon>
-  proof -
-    have le: "Bu - Bl \<le> max 0 (Bu - Bl)" by simp
-    have e2: "0 \<le> 2*\<epsilon>" using ep by linarith
-    have step1: "2*\<epsilon>*(Bu - Bl) \<le> 2*\<epsilon>*(max 0 (Bu - Bl))"
-      by (rule mult_left_mono[OF le e2])
-    have le2: "2*\<epsilon> \<le> 2*\<epsilon>\<^sub>0" using ele by linarith
-    have step2: "2*\<epsilon>*(max 0 (Bu - Bl)) \<le> 2*\<epsilon>\<^sub>0*(max 0 (Bu - Bl))"
-      by (rule mult_right_mono[OF le2 Dnn])
-    from step1 step2 esm show ?thesis by linarith
-  qed
-  have main: "supconv u \<epsilon> x \<le> u x + \<sigma>"
-    if ep: "0 < \<epsilon>" and ele: "\<epsilon> \<le> \<epsilon>\<^sub>0" and x: "x \<in> K" for \<epsilon> x
-  proof -
-    have nx: "norm x \<le> R - 1" by (rule KR[OF x])
-    have xR: "x \<in> cball (0::real^'n) R"
-      using nx R1 by (simp add: dist_norm)
-    have loc: "u y \<le> u x + \<sigma>" if d: "dist x y \<le> h" for y
+  shows "uniform_limit K (\<lambda>\<epsilon>. supconv u \<epsilon>) u (at_right 0)"
+  unfolding uniform_limit_iff
+proof (intro allI impI)
+  fix \<sigma> :: real assume s: "0 < \<sigma>"
+  obtain R where R: "\<And>x. x \<in> K \<Longrightarrow> norm x \<le> R"
+    using compact_imp_bounded[OF cK] bounded_iff by blast
+  have "uniformly_continuous_on (cball 0 (R + 1)) u"
+    by (rule compact_uniformly_continuous[OF continuous_on_subset[OF cu subset_UNIV] compact_cball])
+  then obtain d where d: "0 < d" and ucu: "\<And>x y. x \<in> cball 0 (R + 1) \<Longrightarrow> y \<in> cball 0 (R + 1)
+      \<Longrightarrow> dist y x < d \<Longrightarrow> dist (u y) (u x) < \<sigma>/2"
+    unfolding uniformly_continuous_on_def using half_gt_zero[OF s] by metis
+  define h where "h = min (d/2) 1"
+  have h: "0 < h" "h < d" "h \<le> 1" unfolding h_def using d by auto
+  have "((\<lambda>\<epsilon>::real. 2*\<epsilon>*(Bu - Bl)) \<longlongrightarrow> 2*0*(Bu - Bl)) (at_right 0)"
+    by (intro tendsto_intros)
+  then have small: "\<forall>\<^sub>F \<epsilon> in at_right 0. 2*\<epsilon>*(Bu - Bl) < h\<^sup>2"
+    by (rule order_tendstoD(2)) (use h(1) in simp)
+  show "\<forall>\<^sub>F \<epsilon> in at_right 0. \<forall>x\<in>K. dist (supconv u \<epsilon> x) (u x) < \<sigma>"
+  proof (rule eventually_mono[OF eventually_conj[OF small eventually_at_right_less]], intro ballI)
+    fix \<epsilon> x assume e: "2*\<epsilon>*(Bu - Bl) < h\<^sup>2 \<and> 0 < \<epsilon>" and x: "x \<in> K"
+    have xC: "x \<in> cball 0 (R + 1)" using R[OF x] by simp
+    have loc: "u y \<le> u x + \<sigma>/2" if y: "dist x y \<le> h" for y
     proof -
-      have tri: "dist 0 y \<le> dist 0 x + dist x y" by (rule dist_triangle)
-      have d0y: "dist (0::real^'n) y = norm y" by simp
-      have d0x: "dist (0::real^'n) x = norm x" by simp
-      have "norm y \<le> norm x + h" using tri d hle1 unfolding d0y d0x by linarith
-      then have "norm y \<le> R" using nx hle1 by linarith
-      then have yR: "y \<in> cball (0::real^'n) R" by (simp add: dist_norm)
-      have dh: "dist x y \<le> \<eta>" using d hlem by linarith
-      show ?thesis by (rule modu[OF xR yR dh])
+      have "norm y \<le> norm x + dist x y" using dist_triangle[of 0 y x] by simp
+      then have yC: "y \<in> cball 0 (R + 1)" unfolding mem_cball_0 using R[OF x] y h(3) by linarith
+      have "dist y x < d" using y h(2) dist_commute[of x y] by linarith
+      then show ?thesis using ucu[OF xC yC] unfolding dist_real_def abs_less_iff by linarith
     qed
-    show ?thesis
-      by (rule supconv_sandwich(2)[OF B lo ep cu hp esm2[OF ep ele] loc])
+    have "2*\<epsilon>*(Bu - (u x + \<sigma>/2)) \<le> 2*\<epsilon>*(Bu - Bl)"
+      using lo[of x] s e by (intro mult_left_mono) auto
+    then have gap: "2*\<epsilon>*(Bu - (u x + \<sigma>/2)) < h\<^sup>2" using e by linarith
+    have up: "supconv u \<epsilon> x \<le> u x + \<sigma>/2"
+      by (rule supconv_le_of_local_bound_usc[OF B _ _ gap loc]) (use e h in auto)
+    have "u x \<le> supconv u \<epsilon> x" by (rule supconv_ge[OF B conjunct2[OF e]])
+    then show "dist (supconv u \<epsilon> x) (u x) < \<sigma>"
+      unfolding dist_real_def abs_less_iff using up s by (intro conjI) linarith+
   qed
-  show ?thesis using e0pos main by blast
-qed
-
-subsection \<open>Threading the parameters: the localised maximiser for \<open>soft_pen\<close>\<close>
-
-text \<open>Threading the five smallness steps, in order (the maximiser depends on
-  \<open>\<kappa>\<^sub>P\<close>, which must be fixed before it, and \<open>\<beta>\<close> before \<open>\<kappa>\<^sub>P\<close>):
-
-    \<open>G = M - m > 0\<close>, split as \<open>\<sigma> = \<tau> = \<tau>' = G/8\<close>
-    \<open>\<tau>\<close>  fixes \<open>\<beta>\<^sub>0\<close>   (modulus of \<open>g\<close> on \<open>K\<close>)
-    \<open>\<tau>'\<close> fixes \<open>\<kappa>\<^sub>0\<close>   (modulus of \<open>f + g\<close> on \<open>K\<close>)
-    \<open>\<kappa>\<^sub>g = \<kappa>\<^sub>0/2\<close>, \<open>\<beta> = min \<beta>\<^sub>0 (\<kappa>\<^sub>0/2)\<close>
-    \<open>\<sigma>\<close>  fixes \<open>\<epsilon>\<close>, and \<open>\<beta>\<close> fixes \<open>\<kappa>\<^sub>P\<close> and the maximiser
-
-  The bound for \<open>ŷ\<close> comes free from the one for \<open>x̂\<close> via the triangle
-  inequality, avoiding a second modulus for \<open>f\<close>.\<close>
-
-theorem doubling_localised_maximiser_soft:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes cK: "compact K" and neK: "K \<noteq> {}"
-    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
-    and lou: "\<And>y. Blu \<le> \<theta> * u y" and low: "\<And>y. Blw \<le> (- w) y"
-    and cu: "continuous_on UNIV (\<lambda>y. \<theta> * u y)"
-    and cw: "continuous_on UNIV (- w)"
-    and zK: "z \<in> K"
-    and Mval: "M \<le> \<theta> * u z - w z"
-    and bdry: "\<And>c. c \<in> K - interior K \<Longrightarrow> \<theta> * u c - w c \<le> m"
-    and gapMm: "m < M"
-  shows "\<exists>\<epsilon>>0. \<exists>\<kappa>\<^sub>g>0. \<exists>\<kappa>\<^sub>P>0. \<exists>xh\<in>K. \<exists>yh\<in>K.
-      (\<forall>x\<in>K. \<forall>y\<in>K.
-         supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
-         \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
-           - soft_pen \<kappa>\<^sub>P (xh - yh))
-    \<and> (\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist xh b)
-    \<and> (\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist yh b)
-    \<and> 2*\<epsilon>*(Bu - Blu) < (\<kappa>\<^sub>g/4)\<^sup>2
-    \<and> 2*\<epsilon>*(Bw - Blw) < (\<kappa>\<^sub>g/4)\<^sup>2"
-proof -
-  \<comment> \<open>1. split the gap\<close>
-  have Gpos: "0 < M - m" using gapMm by linarith
-  obtain \<sigma> \<tau> \<tau>' where spos: "0 < \<sigma>" and tpos: "0 < \<tau>" and t'pos: "0 < \<tau>'"
-    and gsum: "2*\<sigma> + \<tau> + \<tau>' < M - m"
-    using gap_split_aux[OF Gpos] by blast
-  \<comment> \<open>2. the modulus of \<open>g = -w\<close>, at scale \<open>\<tau>\<close>\<close>
-  have cwK: "continuous_on K (- w)"
-    by (rule continuous_on_subset[OF cw subset_UNIV])
-  obtain \<beta>\<^sub>0 where b0pos: "0 < \<beta>\<^sub>0"
-    and modg0: "\<And>p q. p \<in> K \<Longrightarrow> q \<in> K \<Longrightarrow> dist p q \<le> \<beta>\<^sub>0 \<Longrightarrow> (- w) q \<le> (- w) p + \<tau>"
-    using uniform_modulus_on_compact[OF cK cwK tpos] by blast
-  \<comment> \<open>3. the modulus of \<open>f + g\<close>, at scale \<open>\<tau>'\<close>\<close>
-  have cFK: "continuous_on K (\<lambda>y. \<theta> * u y + (- w) y)"
-    by (intro continuous_intros
-        continuous_on_subset[OF cu subset_UNIV]
-        continuous_on_subset[OF cw subset_UNIV])
-  obtain \<kappa>\<^sub>0 where k0pos: "0 < \<kappa>\<^sub>0"
-    and modF0: "\<And>p q. p \<in> K \<Longrightarrow> q \<in> K \<Longrightarrow> dist p q \<le> \<kappa>\<^sub>0
-        \<Longrightarrow> (\<lambda>y. \<theta> * u y + (- w) y) q \<le> (\<lambda>y. \<theta> * u y + (- w) y) p + \<tau>'"
-    using uniform_modulus_on_compact[OF cK cFK t'pos] by blast
-  \<comment> \<open>4. the two radii\<close>
-  define \<kappa>\<^sub>g where "\<kappa>\<^sub>g = \<kappa>\<^sub>0/2"
-  define \<beta> where "\<beta> = min \<beta>\<^sub>0 (\<kappa>\<^sub>0/2)"
-  have kgpos: "0 < \<kappa>\<^sub>g" unfolding \<kappa>\<^sub>g_def using k0pos by simp
-  have bpos: "0 < \<beta>" unfolding \<beta>_def using b0pos k0pos by simp
-  have bleb0: "\<beta> \<le> \<beta>\<^sub>0" unfolding \<beta>_def by simp
-  have fit: "\<kappa>\<^sub>g + \<beta> \<le> \<kappa>\<^sub>0"
-    unfolding \<kappa>\<^sub>g_def \<beta>_def using k0pos by simp
-  \<comment> \<open>5. one \<open>\<epsilon>\<close> for BOTH sup-convolutions\<close>
-  obtain \<epsilon>u where eupos: "0 < \<epsilon>u"
-    and upu: "\<And>e x. 0 < e \<Longrightarrow> e \<le> \<epsilon>u \<Longrightarrow> x \<in> K
-        \<Longrightarrow> supconv (\<lambda>y. \<theta> * u y) e x \<le> \<theta> * u x + \<sigma>"
-    using supconv_uniform_upper[OF cK Bu lou cu spos] by blast
-  obtain \<epsilon>w where ewpos: "0 < \<epsilon>w"
-    and upw: "\<And>e x. 0 < e \<Longrightarrow> e \<le> \<epsilon>w \<Longrightarrow> x \<in> K
-        \<Longrightarrow> supconv (- w) e x \<le> (- w) x + \<sigma>"
-    using supconv_uniform_upper[OF cK Bw low cw spos] by blast
-  \<comment> \<open>\<open>\<epsilon>\<close> must ALSO be small enough that the sup-convolution attainment radii
-      \<open>R\<^sub>u\<close>, \<open>R\<^sub>w\<close> fit inside \<open>\<kappa>\<^sub>g\<close> --- a constraint that comes from downstream,
-      from \<open>smallu\<close>/\<open>fitu\<close> in \<open>comparison_from_localised_maximiser_soft\<close>, and is
-      invisible from the boundary argument alone.  It is consistent because
-      \<open>\<kappa>\<^sub>g\<close> is fixed at step 4, BEFORE \<open>\<epsilon>\<close> is chosen at step 5.\<close>
-  have hq: "0 < (\<kappa>\<^sub>g/4)\<^sup>2" using kgpos by simp
-  have DunN: "0 \<le> max 0 (Bu - Blu)" by simp
-  have DwnN: "0 \<le> max 0 (Bw - Blw)" by simp
-  obtain \<epsilon>A where eApos: "0 < \<epsilon>A"
-    and eAlt: "2*\<epsilon>A*(max 0 (Bu - Blu)) < (\<kappa>\<^sub>g/4)\<^sup>2"
-    using exists_eps_aux[OF hq DunN] by blast
-  obtain \<epsilon>B where eBpos: "0 < \<epsilon>B"
-    and eBlt: "2*\<epsilon>B*(max 0 (Bw - Blw)) < (\<kappa>\<^sub>g/4)\<^sup>2"
-    using exists_eps_aux[OF hq DwnN] by blast
-  define \<epsilon> where "\<epsilon> = min (min \<epsilon>u \<epsilon>w) (min \<epsilon>A \<epsilon>B)"
-  have epos: "0 < \<epsilon>" unfolding \<epsilon>_def using eupos ewpos eApos eBpos by simp
-  have eleu: "\<epsilon> \<le> \<epsilon>u" unfolding \<epsilon>_def by simp
-  have elew: "\<epsilon> \<le> \<epsilon>w" unfolding \<epsilon>_def by simp
-  have eleA: "\<epsilon> \<le> \<epsilon>A" unfolding \<epsilon>_def by simp
-  have eleB: "\<epsilon> \<le> \<epsilon>B" unfolding \<epsilon>_def by simp
-  have smallu: "2*\<epsilon>*(Bu - Blu) < (\<kappa>\<^sub>g/4)\<^sup>2"
-    by (rule eps_mono_aux[OF epos eleA eAlt])
-  have smallw: "2*\<epsilon>*(Bw - Blw) < (\<kappa>\<^sub>g/4)\<^sup>2"
-    by (rule eps_mono_aux[OF epos eleB eBlt])
-  \<comment> \<open>6. an upper bound for the doubled functional on \<open>K \<times> K\<close>\<close>
-  have cA: "continuous_on K (supconv (\<lambda>y. \<theta> * u y) \<epsilon>)"
-    by (rule continuous_on_subset[OF supconv_continuous[OF Bu epos] subset_UNIV])
-  have cB0: "continuous_on K (supconv (- w) \<epsilon>)"
-    by (rule continuous_on_subset[OF supconv_continuous[OF Bw epos] subset_UNIV])
-  have cB: "continuous_on K (\<lambda>y. - supconv (- w) \<epsilon> y)"
-    by (intro continuous_intros cB0)
-  obtain C where Cbnd: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
-      supconv (\<lambda>y. \<theta> * u y) \<epsilon> x - (\<lambda>y. - supconv (- w) \<epsilon> y) y \<le> C"
-    using doubling_upper_bound_exists[OF cK neK cA cB] by blast
-  have Cbnd': "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y \<le> C"
-    if "x \<in> K" "y \<in> K" for x y
-    using Cbnd[OF that] by simp
-  \<comment> \<open>7. \<open>\<beta>\<close> fixes \<open>\<kappa>\<^sub>P\<close> and with it the maximiser\<close>
-  obtain \<kappa>\<^sub>P xh yh where kPpos: "0 < \<kappa>\<^sub>P" and xhK: "xh \<in> K" and yhK: "yh \<in> K"
-    and mxb: "\<forall>x\<in>K. \<forall>y\<in>K.
-        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
-        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
-          - soft_pen \<kappa>\<^sub>P (xh - yh)"
-    and near: "dist xh yh < \<beta>"
-    using doubling_close_maximiser_supconv_soft
-      [OF cK neK Bu Bw epos zK Cbnd' bpos] by blast
-  have mx: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
-      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
-        - soft_pen \<kappa>\<^sub>P (xh - yh)" if "x \<in> K" "y \<in> K" for x y
-    using mxb that by blast
-  \<comment> \<open>8. transfer the value to the ORIGINAL functions\<close>
-  have kPnn: "0 \<le> \<kappa>\<^sub>P" using kPpos by linarith
-  have vt: "\<theta> * u z + (- w) z + soft_pen \<kappa>\<^sub>P (xh - yh)
-      \<le> \<theta> * u xh + (- w) yh + 2*\<sigma>"
-    by (rule doubling_maximiser_value_transfer_gen
-        [where A = "supconv (\<lambda>y. \<theta> * u y) \<epsilon>" and Bf = "supconv (- w) \<epsilon>"
-           and f = "\<lambda>y. \<theta> * u y" and g = "- w" and Pn = "soft_pen \<kappa>\<^sub>P"
-           and K = K and xh = xh and yh = yh and z = z and \<sigma> = \<sigma>,
-         OF mx zK soft_pen_zero
-            supconv_ge[OF Bu epos] supconv_ge[OF Bw epos]
-            upu[OF epos eleu xhK] upw[OF epos elew yhK]])
-  have pnn: "0 \<le> soft_pen \<kappa>\<^sub>P (xh - yh)" by (rule soft_pen_nonneg[OF kPnn])
-  have tr: "\<theta> * u z + (- w) z \<le> \<theta> * u xh + (- w) yh + 2*\<sigma>"
-    using vt pnn by linarith
-  \<comment> \<open>9. the boundary theorem, at radius \<open>\<kappa>\<^sub>g + \<beta>\<close>\<close>
-  have valM: "M \<le> \<theta> * u z + (- w) z" using Mval by simp
-  have nearle: "dist xh yh \<le> \<beta>" using near by linarith
-  have modg: "(- w) q \<le> (- w) p + \<tau>" if "p \<in> K" "q \<in> K" "dist p q \<le> \<beta>" for p q
-    using modg0[OF that(1) that(2)] that(3) bleb0 by linarith
-  have bdry': "\<theta> * u c + (- w) c \<le> m" if "c \<in> K - interior K" for c
-    using bdry[OF that] by simp
-  have modF: "\<theta> * u p + (- w) p \<le> \<theta> * u q + (- w) q + \<tau>'"
-    if "p \<in> K" "q \<in> K" "dist p q \<le> \<kappa>\<^sub>g + \<beta>" for p q
-  proof -
-    have "dist q p \<le> \<kappa>\<^sub>0" using that(3) fit by (simp add: dist_commute)
-    from modF0[OF that(2) that(1) this] show ?thesis by simp
-  qed
-  have gap: "m + 2*\<sigma> + \<tau> + \<tau>' < M" using gsum by linarith
-  have farx: "\<kappa>\<^sub>g + \<beta> < dist xh b" if b: "b \<in> K - interior K" for b
-    by (rule doubling_maximiser_far_from_boundary
-        [where f = "\<lambda>y. \<theta> * u y" and g = "- w" and K = K and xh = xh
-           and yh = yh and M = M and z = z and \<sigma> = \<sigma> and \<beta> = \<beta>
-           and \<tau> = \<tau> and m = m and \<kappa> = "\<kappa>\<^sub>g + \<beta>" and \<tau>' = \<tau>',
-         OF xhK yhK valM tr nearle modg bdry' modF gap b])
-  \<comment> \<open>10. and the mirror bound for \<open>ŷ\<close>, for free\<close>
-  have fary: "\<kappa>\<^sub>g < dist yh b" if b: "b \<in> K - interior K" for b
-  proof -
-    have tri: "dist xh b \<le> dist xh yh + dist yh b" by (rule dist_triangle)
-    have "\<kappa>\<^sub>g + \<beta> < dist xh b" by (rule farx[OF b])
-    then show ?thesis using tri near by linarith
-  qed
-  \<comment> \<open>explicit introductions: a single \<open>blast\<close> over this nested existential
-      searches instead of just building the witness, and PIDE flags it as
-      possibly nonterminating\<close>
-  have f1: "\<kappa>\<^sub>g < dist xh b" if b: "b \<in> K - interior K" for b
-    using farx[OF b] bpos by linarith
-  have F1: "\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist xh b"
-  proof
-    fix b assume "b \<in> K - interior K"
-    then show "\<kappa>\<^sub>g < dist xh b" by (rule f1)
-  qed
-  have F2: "\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist yh b"
-  proof
-    fix b assume "b \<in> K - interior K"
-    then show "\<kappa>\<^sub>g < dist yh b" by (rule fary)
-  qed
-  have inner: "(\<forall>x\<in>K. \<forall>y\<in>K.
-        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa>\<^sub>P (x - y)
-        \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
-          - soft_pen \<kappa>\<^sub>P (xh - yh))
-      \<and> (\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist xh b)
-      \<and> (\<forall>b \<in> K - interior K. \<kappa>\<^sub>g < dist yh b)
-      \<and> 2*\<epsilon>*(Bu - Blu) < (\<kappa>\<^sub>g/4)\<^sup>2
-      \<and> 2*\<epsilon>*(Bw - Blw) < (\<kappa>\<^sub>g/4)\<^sup>2"
-    by (intro conjI mxb F1 F2 smallu smallw)
-  show ?thesis
-    by (rule exI[of _ \<epsilon>], rule conjI[OF epos],
-        rule exI[of _ \<kappa>\<^sub>g], rule conjI[OF kgpos],
-        rule exI[of _ \<kappa>\<^sub>P], rule conjI[OF kPpos],
-        rule bexI[OF _ xhK], rule bexI[OF _ yhK], rule inner)
 qed
 
 subsection \<open>Skolemising a four-component existential over an index\<close>
