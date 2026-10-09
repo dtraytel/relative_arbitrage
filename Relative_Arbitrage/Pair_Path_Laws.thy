@@ -3830,7 +3830,7 @@ proof -
     by (rule covariation_class_compensated_integrable[OF Q z])
   have const: "(\<integral>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0) \<partial>Q)
       = (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q)"
-    using martingale_expectation_eq[OF covariation_class_compensated_martingale[OF Q]
+    using martingale_expectation_eq[OF covariation_class_martingale_compensated[OF Q]
         order.refl t0] t0 tT by simp
   have start: "(\<integral>\<omega>. outerp (fst (\<omega> 0)) - snd (\<omega> 0) \<partial>Q) = outerp x"
   proof -
