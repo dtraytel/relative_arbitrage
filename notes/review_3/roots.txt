@@ -538,7 +538,7 @@ Path_Law_Pasting.path_rcd_ksemi    # KEEP_API
 Value_Function_Subsolution.stopped_X_int    # KEEP_API
 Value_Function_Subsolution.stopped_X_mean    # KEEP_API
 Value_Function_Euler_Construction.bm_coordinate_pow4    # FIX_THEN_KEEP
-Value_Function_Euler_Construction.bm_R2_moment    # FIX_THEN_KEEP
+Value_Function_Euler_Construction.bm_norm_pow4_le    # FIX_THEN_KEEP
 Value_Function_Euler_Construction.sbm_xi_mean0    # KEEP_API
 Value_Function_Supersolution_Case_2.visc_supersol_lsc_iff_env    # FIX_THEN_KEEP
 # wm_cps_small
@@ -596,8 +596,8 @@ Stopped_Localization.fourth_moment_L2_integrable    # COROLLARY
 Stopped_Localization.fourth_moment_L2_bochner    # COROLLARY
 Optional_Sampling.nat_stopped_martingale.stopped_expectation    # COROLLARY
 Sampled_Quadratic_Variation.expectation_sq_sampled    # COROLLARY
-Operator_Envelope_Continuity.max_principle_le    # COROLLARY
-Operator_Envelope_Continuity.uniqueness_from_max_principle    # COROLLARY
+Comparison_Principle.max_principle_le    # COROLLARY
+Comparison_Principle.uniqueness_from_max_principle    # COROLLARY
 Poincare_Separation.is_proj_rank1    # COROLLARY
 Doubling_Of_Variables.doubling_dist_bound    # COROLLARY
 Doubling_Of_Variables.penalty_difference_identity    # COROLLARY
