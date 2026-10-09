@@ -34,75 +34,9 @@ text \<open>The resolvent is a globally defined, surjective, 1-Lipschitz map
 subsection \<open>Firm nonexpansiveness and the derivative of the resolvent\<close>
 
 text \<open>The resolvent is firmly nonexpansive (\<open>prox_firm_nonexpansive\<close>);
-  differentiating along a line makes its derivative positive semidefinite
-  with norm at most one.\<close>
-
-lemma has_derivative_dir_limit:
-  fixes F :: "'a::euclidean_space \<Rightarrow> 'b::real_normed_vector"
-  assumes D: "(F has_derivative D) (at x)"
-  shows "((\<lambda>t. (F (x + t *\<^sub>R h) - F x) /\<^sub>R t) \<longlongrightarrow> D h) (at (0::real))"
-proof (cases "h = 0")
-  case True
-  have lin: "bounded_linear D" by (rule has_derivative_bounded_linear[OF D])
-  have "D 0 = 0" using lin by (simp add: linear_simps(3))
-  thus ?thesis unfolding True by simp
-next
-  case False
-  have lin: "bounded_linear D" by (rule has_derivative_bounded_linear[OF D])
-  have Dlin: "linear D" using lin unfolding bounded_linear_def by simp
-  have Dsc: "D (t *\<^sub>R h) = t *\<^sub>R D h" for t
-    using Dlin unfolding linear_iff by simp
-  have lim0: "((\<lambda>u. norm (F (x + u) - F x - D u) / norm u) \<longlongrightarrow> 0) (at 0)"
-    using D unfolding has_derivative_at by blast
-  have flim: "filterlim (\<lambda>t::real. t *\<^sub>R h) (at 0) (at 0)"
-    unfolding filterlim_at
-  proof (intro conjI)
-    have "((\<lambda>t::real. t *\<^sub>R h) \<longlongrightarrow> 0 *\<^sub>R h) (at 0)" by (intro tendsto_intros)
-    thus "((\<lambda>t::real. t *\<^sub>R h) \<longlongrightarrow> 0) (at 0)" by simp
-    have "eventually (\<lambda>t::real. t \<noteq> 0) (at 0)"
-      unfolding eventually_at by (intro exI[of _ 1]) auto
-    thus "eventually (\<lambda>t::real. t *\<^sub>R h \<in> UNIV \<and> t *\<^sub>R h \<noteq> 0) (at 0)"
-      by (rule eventually_mono) (use False in simp)
-  qed
-  have comp: "((\<lambda>t. norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h))
-      / norm (t *\<^sub>R h)) \<longlongrightarrow> 0) (at (0::real))"
-    by (rule filterlim_compose[OF lim0 flim])
-  have scaled: "((\<lambda>t. (norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h))
-      / norm (t *\<^sub>R h)) * norm h) \<longlongrightarrow> 0 * norm h) (at (0::real))"
-    by (intro tendsto_mult comp tendsto_const)
-  have ev: "eventually (\<lambda>t. norm ((F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h)
-      = (norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h)) / norm (t *\<^sub>R h)) * norm h)
-      (at (0::real))"
-  proof -
-    have "eventually (\<lambda>t::real. t \<noteq> 0) (at 0)"
-      unfolding eventually_at by (intro exI[of _ 1]) auto
-    thus ?thesis
-    proof (eventually_elim)
-      case (elim t)
-      hence t: "t \<noteq> 0" .
-      have "(F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h
-          = (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h)) /\<^sub>R t"
-        using t by (simp add: Dsc scaleR_diff_right)
-      hence "norm ((F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h)
-          = norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h)) / \<bar>t\<bar>"
-        by (simp add: divide_inverse mult.commute)
-      also have "\<dots> = (norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h))
-          / norm (t *\<^sub>R h)) * norm h"
-        using t False by (simp add: field_simps)
-      finally show ?case .
-    qed
-  qed
-  have ev': "eventually (\<lambda>t. (norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h))
-      / norm (t *\<^sub>R h)) * norm h
-      = norm ((F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h)) (at (0::real))"
-    using ev by (rule eventually_mono) simp
-  have "((\<lambda>t. norm ((F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h))
-      \<longlongrightarrow> 0) (at (0::real))"
-    using scaled ev' by (simp add: Lim_transform_eventually)
-  hence "((\<lambda>t. (F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h) \<longlongrightarrow> 0) (at 0)"
-    by (simp add: tendsto_norm_zero_iff)
-  thus ?thesis by (simp add: Lim_null[symmetric])
-qed
+  differentiating along a line (\<open>has_derivative_dir_limit\<close>, in
+  @{theory Second_Order_Viscosity_Analysis.Rademacher}) makes its derivative
+  positive semidefinite with norm at most one.\<close>
 
 text \<open>Wherever the resolvent is differentiable, its derivative \<open>DR\<close>
   satisfies \<open>|DR h|\<^sup>2 \<le> h \<cdot> DR h\<close>, so \<open>DR\<close> is positive semidefinite with

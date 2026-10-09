@@ -625,6 +625,48 @@ next
       has_derivative (\<lambda>h. H *v h)) (at x)" by simp
 qed
 
+text \<open>A local touching becomes a global one over \<open>K\<close> by a quartic: if
+  \<open>u - \<phi>\<close> has a maximum at \<open>x\<close> on \<open>ball x r\<close>, \<open>u\<close> is bounded above and
+  \<open>\<phi>\<close> below on \<open>K\<close>, then \<open>u - (\<phi> + C\<bar>\<cdot> - x\<bar>\<^sup>4)\<close> has a maximum at \<open>x\<close> on
+  \<open>K\<close> for some \<open>C \<ge> 0\<close>.  The quartic does not change the two-jet at \<open>x\<close>
+  (\<open>test_fun_at_quartic_shift\<close>, \<open>test_fun_C2_quartic_shift\<close>).\<close>
+
+lemma local_max_quartic_deepen:
+  fixes u \<phi> :: "real^'n::finite \<Rightarrow> real"
+  assumes uhi: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
+    and phi: "\<And>y. y \<in> K \<Longrightarrow> B\<phi> \<le> \<phi> y"
+    and r0: "0 < r"
+    and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
+  shows "\<exists>C. \<forall>y\<in>K. u y - (\<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> u x - \<phi> x"
+proof -
+  have r40: "0 < r ^ 4" using r0 by simp
+  define C where "C = max 0 ((Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4)"
+  have C0: "0 \<le> C" unfolding C_def by simp
+  have "(Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4 \<le> C" unfolding C_def by simp
+  then have Cbig: "Bu - B\<phi> - (u x - \<phi> x) \<le> C * r ^ 4"
+    using r40 by (simp add: pos_divide_le_eq)
+  have "u y - (\<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> u x - \<phi> x"
+    if yK: "y \<in> K" for y
+  proof (cases "y \<in> ball x r")
+    case True
+    have "0 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_nonneg_nonneg[OF C0]) simp
+    then show ?thesis using lm[OF True] by linarith
+  next
+    case False
+    then have "r \<le> norm (y - x)"
+      by (simp add: dist_norm norm_minus_commute)
+    then have "(r\<^sup>2)\<^sup>2 \<le> ((norm (y - x))\<^sup>2)\<^sup>2"
+      using r0 by (intro power_mono) auto
+    then have "r ^ 4 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (simp add: dot_square_norm flip: power_mult)
+    then have "C * r ^ 4 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_left_mono[OF _ C0])
+    then show ?thesis using Cbig uhi[OF yK] phi[OF yK] by linarith
+  qed
+  then show ?thesis by blast
+qed
+
 lemma test_fun_at_quadratic:
   fixes M :: "real^'n::finite^'n" and p x :: "real^'n" and c :: real
   assumes sym: "transpose M = M"

@@ -346,38 +346,27 @@ lemma dquot_tendsto_vector_derivative:
   assumes d: "phi differentiable (at t)"
   shows "((\<lambda>h. (phi (t + h) - phi t) /\<^sub>R h)
       \<longlongrightarrow> vector_derivative phi (at t)) (at 0)"
+  using LIM_offset_zero[OF vector_derivative_works[THEN iffD1, OF d,
+        unfolded has_vector_derivative_within_1D]]
+  by simp
+
+text \<open>Along a line, the difference quotient of a differentiable map tends
+  to its derivative in that direction: the chain rule makes
+  \<open>t \<mapsto> F (x + t h)\<close> a curve with derivative \<open>D h\<close>.\<close>
+
+lemma has_derivative_dir_limit:
+  fixes F :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector"
+  assumes D: "(F has_derivative D) (at x)"
+  shows "((\<lambda>t. (F (x + t *\<^sub>R h) - F x) /\<^sub>R t) \<longlongrightarrow> D h) (at (0::real))"
 proof -
-  define L where "L = vector_derivative phi (at t)"
-  have D: "(phi has_derivative (\<lambda>h. h *\<^sub>R L)) (at t)"
-    using d unfolding L_def
-    by (metis has_vector_derivative_def vector_derivative_works)
-  have Dh: "(\<lambda>h. h *\<^sub>R L) h = h *\<^sub>R L" for h by simp
-  have lim0: "((\<lambda>h. norm (phi (t + h) - phi t - h *\<^sub>R L) / norm h)
-      \<longlongrightarrow> 0) (at 0)"
-    using D unfolding has_derivative_at by blast
-  have ne: "eventually (\<lambda>h::real. h \<noteq> 0) (at 0)"
-    unfolding eventually_at by (intro exI[of _ 1]) auto
-  have eq: "eventually (\<lambda>h. norm (phi (t + h) - phi t - h *\<^sub>R L) / norm h
-      = norm ((phi (t + h) - phi t) /\<^sub>R h - L)) (at 0)"
-    using ne
-  proof (eventually_elim)
-    case (elim h)
-    hence h: "h \<noteq> 0" .
-    have "(phi (t + h) - phi t) /\<^sub>R h - L
-        = (phi (t + h) - phi t - h *\<^sub>R L) /\<^sub>R h"
-      using h by (simp add: scaleR_diff_right)
-    hence "norm ((phi (t + h) - phi t) /\<^sub>R h - L)
-        = norm (phi (t + h) - phi t - h *\<^sub>R L) / \<bar>h\<bar>"
-      by (simp add: divide_inverse mult.commute)
-    thus ?case by simp
-  qed
-  have "((\<lambda>h. norm ((phi (t + h) - phi t) /\<^sub>R h - L)) \<longlongrightarrow> 0) (at 0)"
-    by (rule Lim_transform_eventually[OF lim0 eq])
-  hence "((\<lambda>h. (phi (t + h) - phi t) /\<^sub>R h - L) \<longlongrightarrow> 0) (at 0)"
-    by (simp add: tendsto_norm_zero_iff)
-  hence "((\<lambda>h. (phi (t + h) - phi t) /\<^sub>R h) \<longlongrightarrow> L) (at 0)"
-    by (simp add: Lim_null[symmetric])
-  thus ?thesis unfolding L_def .
+  have d1: "((\<lambda>t::real. x + t *\<^sub>R h) has_derivative (\<lambda>s. s *\<^sub>R h)) (at 0)"
+    by (auto intro!: derivative_eq_intros)
+  have "((\<lambda>t::real. F (x + t *\<^sub>R h)) has_derivative (\<lambda>s. D (s *\<^sub>R h))) (at 0)"
+    using has_derivative_compose[OF d1, of F D] D by simp
+  then have "((\<lambda>t::real. F (x + t *\<^sub>R h)) has_vector_derivative D h) (at 0)"
+    unfolding has_vector_derivative_def
+    by (simp add: linear_cmul[OF has_derivative_linear[OF D]])
+  then show ?thesis unfolding has_vector_derivative_within_1D by simp
 qed
 
 lemma dquot_of_differentiable:
@@ -397,7 +386,7 @@ proof (rule lipschitz_on_continuous_on[of "max B 0"], rule lipschitz_onI)
 qed simp
 
 theorem negligible_no_dderiv_basis:
-  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::{euclidean_space,banach}"
+  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::euclidean_space"
   assumes lip: "\<And>x y. norm (f x - f y) \<le> B * norm (x - y)" and b: "b \<in> Basis"
   shows "negligible (- dlim_set f b)"
 proof (rule negligible_of_basis_sections[OF _ b])
@@ -463,7 +452,7 @@ proof (rule set_eqI)
 qed
 
 theorem negligible_no_dderiv:
-  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::{euclidean_space,banach}"
+  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::euclidean_space"
   assumes lip: "\<And>x y. norm (f x - f y) \<le> B * norm (x - y)" and v: "v \<noteq> 0"
   shows "negligible (- dlim_set f v)"
 proof -
@@ -644,16 +633,7 @@ lemma ddir_scale:
     and "ddir f (c *\<^sub>R v) x = c *\<^sub>R ddir f v x"
 proof -
   have flim: "filterlim (\<lambda>t. c * t) (at 0) (at (0::real))"
-    unfolding filterlim_at
-  proof (intro conjI)
-    have "((\<lambda>t. c * t) \<longlongrightarrow> c * 0) (at (0::real))"
-      by (intro tendsto_intros)
-    thus "((\<lambda>t. c * t) \<longlongrightarrow> 0) (at (0::real))" by simp
-    have "eventually (\<lambda>t::real. t \<noteq> 0) (at 0)"
-      unfolding eventually_at by (intro exI[of _ 1]) auto
-    thus "eventually (\<lambda>t::real. c * t \<in> UNIV \<and> c * t \<noteq> 0) (at 0)"
-      by (rule eventually_mono) (use c in simp)
-  qed
+    by (rule filterlim_atI) (auto intro!: tendsto_eq_intros simp: c eventually_at_filter)
   have "((\<lambda>t. dquot f v x (c * t)) \<longlongrightarrow> ddir f v x) (at 0)"
     by (rule filterlim_compose[OF ddir_tendsto[OF x] flim])
   hence sc: "((\<lambda>t. c *\<^sub>R dquot f v x (c * t)) \<longlongrightarrow> c *\<^sub>R ddir f v x) (at 0)"
@@ -992,36 +972,29 @@ proof -
         using Pem[of "box l u"] Nem[of "box l u"] box0[of l u] by simp
     qed
   qed
-  have pos: "AE x in lborel. \<not> (0 < g x)"
+  have half: "AE x in lborel. \<not> (0 < f x)"
+    if fm: "f \<in> borel_measurable borel"
+      and E: "\<And>S. S \<in> sets borel \<Longrightarrow> (\<integral>\<^sup>+x. ennreal (f x) * indicator S x \<partial>lborel)
+        = (\<integral>\<^sup>+x. ennreal (- f x) * indicator S x \<partial>lborel)" for f :: "'a \<Rightarrow> real"
   proof -
-    define S where "S = {x. 0 < g x}"
-    have Ssets: "S \<in> sets borel" unfolding S_def using gm by measurable
-    have zeroN: "(\<lambda>x. ennreal (- g x) * indicator S x) = (\<lambda>x. 0)"
+    define S where "S = {x. 0 < f x}"
+    have Ssets: "S \<in> sets borel" unfolding S_def using fm by measurable
+    have zeroN: "(\<lambda>x. ennreal (- f x) * indicator S x) = (\<lambda>x. 0)"
       by (rule ext) (auto simp: S_def indicator_def ennreal_neg)
-    have "(\<integral>\<^sup>+x. ennreal (- g x) * indicator S x \<partial>lborel) = 0"
-      unfolding zeroN by simp
-    hence "emeasure P S = 0" using Nem[OF Ssets] Pem[OF Ssets] PN by simp
-    hence "(\<integral>\<^sup>+x. ennreal (g x) * indicator S x \<partial>lborel) = 0"
-      using Pem[OF Ssets] by simp
-    hence "AE x in lborel. ennreal (g x) * indicator S x = 0"
-      using Ssets gm by (subst (asm) nn_integral_0_iff_AE) auto
+    have "(\<integral>\<^sup>+x. ennreal (f x) * indicator S x \<partial>lborel) = 0"
+      unfolding E[OF Ssets] zeroN by simp
+    hence "AE x in lborel. ennreal (f x) * indicator S x = 0"
+      using Ssets fm by (subst (asm) nn_integral_0_iff_AE) auto
     thus ?thesis by (auto simp: S_def indicator_def)
   qed
-  have neg: "AE x in lborel. \<not> (g x < 0)"
-  proof -
-    define S where "S = {x. g x < 0}"
-    have Ssets: "S \<in> sets borel" unfolding S_def using gm by measurable
-    have zeroP: "(\<lambda>x. ennreal (g x) * indicator S x) = (\<lambda>x. 0)"
-      by (rule ext) (auto simp: S_def indicator_def ennreal_neg)
-    have "(\<integral>\<^sup>+x. ennreal (g x) * indicator S x \<partial>lborel) = 0"
-      unfolding zeroP by simp
-    hence "emeasure N S = 0" using Nem[OF Ssets] Pem[OF Ssets] PN by simp
-    hence "(\<integral>\<^sup>+x. ennreal (- g x) * indicator S x \<partial>lborel) = 0"
-      using Nem[OF Ssets] by simp
-    hence "AE x in lborel. ennreal (- g x) * indicator S x = 0"
-      using Ssets gm by (subst (asm) nn_integral_0_iff_AE) auto
-    thus ?thesis by (auto simp: S_def indicator_def)
-  qed
+  have E: "(\<integral>\<^sup>+x. ennreal (g x) * indicator S x \<partial>lborel)
+      = (\<integral>\<^sup>+x. ennreal (- g x) * indicator S x \<partial>lborel)" if "S \<in> sets borel" for S
+    using Pem[OF that] Nem[OF that] PN by simp
+  have pos: "AE x in lborel. \<not> (0 < g x)" by (rule half[OF gm E])
+  have neg: "AE x in lborel. \<not> (0 < - g x)"
+  proof (rule half)
+    show "(\<lambda>x. - g x) \<in> borel_measurable borel" using gm by measurable
+  qed (simp add: E)
   show ?thesis using pos neg by eventually_elim linarith
 qed
 
@@ -1371,13 +1344,10 @@ proof (rule integral_cong_AE)
     using hm by measurable
   show "(\<lambda>x. h x * indicator (cbox a b) x) \<in> borel_measurable lborel"
     using hm by measurable
-  have negl: "negligible (cbox a b - box a b :: 'a set)"
-    by (rule negligible_frontier_interval)
   have sB: "(cbox a b - box a b :: 'a set) \<in> sets borel" by simp
-  have "(cbox a b - box a b :: 'a set) \<in> null_sets lborel"
-    using negligible_iff_null_lborel[OF sB] negl by simp
-  hence "AE x in lborel. x \<notin> (cbox a b - box a b :: 'a set)"
-    by (simp add: eventually_ae_filter) blast
+  have "AE x in lborel. x \<notin> (cbox a b - box a b :: 'a set)"
+    by (rule AE_not_in)
+      (use negligible_iff_null_lborel[OF sB] negligible_frontier_interval in blast)
   thus "AE x in lborel. h x * indicator (box a b) x
       = h x * indicator (cbox a b) x"
     by (rule eventually_mono)
@@ -1388,15 +1358,10 @@ lemma filterlim_scaleR_inverse_Suc:
   fixes u :: "'a::real_normed_vector"
   assumes u: "u \<noteq> 0"
   shows "filterlim (\<lambda>n. inverse (real (Suc n)) *\<^sub>R u) (at 0) sequentially"
-  unfolding filterlim_at
-proof (intro conjI)
-  have "((\<lambda>n. inverse (real (Suc n)) *\<^sub>R u) \<longlongrightarrow> 0 *\<^sub>R u) sequentially"
-    by (intro tendsto_intros LIMSEQ_inverse_real_of_nat)
-  thus "((\<lambda>n. inverse (real (Suc n)) *\<^sub>R u) \<longlongrightarrow> 0) sequentially" by simp
-  show "eventually (\<lambda>n. inverse (real (Suc n)) *\<^sub>R u \<in> UNIV
-      \<and> inverse (real (Suc n)) *\<^sub>R u \<noteq> 0) sequentially"
-    using u by simp
-qed
+proof (rule filterlim_atI)
+  show "((\<lambda>n. inverse (real (Suc n)) *\<^sub>R u) \<longlongrightarrow> 0) sequentially"
+    using tendsto_scaleR[OF LIMSEQ_inverse_real_of_nat tendsto_const, of u] by simp
+qed (use u in simp)
 
 theorem defect_seq_tendsto:
   fixes a b u :: "'a::euclidean_space"
@@ -1416,16 +1381,7 @@ text \<open>The quotient integrated over the translated box still converges to
 lemma content_cbox_translate:
   fixes a b w :: "'a::euclidean_space"
   shows "content (cbox (a + w) (b + w)) = content (cbox a b)"
-proof -
-  have cond: "(\<forall>i\<in>Basis. (a + w) \<bullet> i \<le> (b + w) \<bullet> i)
-      \<longleftrightarrow> (\<forall>i\<in>Basis. a \<bullet> i \<le> b \<bullet> i)"
-    by (simp add: inner_add_left)
-  have fac: "(\<Prod>i\<in>Basis. (b + w) \<bullet> i - (a + w) \<bullet> i)
-      = (\<Prod>i\<in>Basis. b \<bullet> i - a \<bullet> i)"
-    by (rule prod.cong[OF refl]) (simp add: inner_add_left)
-  show ?thesis
-    unfolding content_cbox_cases using cond fac by simp
-qed
+  by (simp add: content_cbox_cases inner_add_left)
 
 theorem shifted_box_integral_tendsto:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -1725,32 +1681,7 @@ text \<open>The candidate derivative at a good point is the linear map from the
 lemma bounded_linear_coord_combination:
   fixes c :: "'a::euclidean_space \<Rightarrow> real"
   shows "bounded_linear (\<lambda>v. \<Sum>b\<in>Basis. (v \<bullet> b) * c b)"
-proof
-  fix v w :: 'a
-  show "(\<Sum>b\<in>Basis. ((v + w) \<bullet> b) * c b)
-      = (\<Sum>b\<in>Basis. (v \<bullet> b) * c b) + (\<Sum>b\<in>Basis. (w \<bullet> b) * c b)"
-    by (simp add: algebra_simps sum.distrib)
-next
-  fix r :: real and v :: 'a
-  show "(\<Sum>b\<in>Basis. ((r *\<^sub>R v) \<bullet> b) * c b)
-      = r *\<^sub>R (\<Sum>b\<in>Basis. (v \<bullet> b) * c b)"
-    by (simp add: sum_distrib_left algebra_simps)
-next
-  define K where "K = (\<Sum>b\<in>Basis. \<bar>c b\<bar>)"
-  have "\<bar>\<Sum>b\<in>Basis. (v \<bullet> b) * c b\<bar> \<le> norm v * K" for v :: 'a
-  proof -
-    have "\<bar>\<Sum>b\<in>Basis. (v \<bullet> b) * c b\<bar> \<le> (\<Sum>b\<in>Basis. \<bar>(v \<bullet> b) * c b\<bar>)"
-      by (rule sum_abs)
-    also have "\<dots> = (\<Sum>b\<in>Basis. \<bar>v \<bullet> b\<bar> * \<bar>c b\<bar>)"
-      by (simp add: abs_mult)
-    also have "\<dots> \<le> (\<Sum>b\<in>Basis. norm v * \<bar>c b\<bar>)"
-      by (intro sum_mono mult_right_mono) (auto simp: Basis_le_norm)
-    also have "\<dots> = norm v * K" unfolding K_def by (simp add: sum_distrib_left)
-    finally show ?thesis .
-  qed
-  thus "\<exists>K. \<forall>v :: 'a. norm (\<Sum>b\<in>Basis. (v \<bullet> b) * c b) \<le> norm v * K"
-    by (intro exI[of _ K]) simp
-qed
+  by (intro bounded_linear_sum bounded_linear_mult_const bounded_linear_inner_left)
 
 subsection \<open>A countable dense set of directions\<close>
 
@@ -2146,14 +2077,8 @@ lemma lipschitz_component:
   fixes F :: "'a::euclidean_space \<Rightarrow> 'b::euclidean_space"
   assumes lip: "\<And>y z. norm (F y - F z) \<le> B * norm (y - z)" and b: "b \<in> Basis"
   shows "norm ((F y \<bullet> b) - (F z \<bullet> b)) \<le> B * norm (y - z)"
-proof -
-  have "\<bar>(F y \<bullet> b) - (F z \<bullet> b)\<bar> = \<bar>(F y - F z) \<bullet> b\<bar>"
-    by (simp add: inner_diff_left)
-  also have "\<dots> \<le> norm (F y - F z) * norm b"
-    by (rule Cauchy_Schwarz_ineq2)
-  also have "\<dots> = norm (F y - F z)" using norm_Basis[OF b] by simp
-  finally show ?thesis using lip[of y z] by simp
-qed
+  using order_trans[OF Basis_le_norm[OF b, of "F y - F z"] lip[of y z]]
+  by (simp add: inner_diff_left)
 
 theorem rademacher_vec_AE:
   fixes F :: "'a::euclidean_space \<Rightarrow> 'b::euclidean_space"

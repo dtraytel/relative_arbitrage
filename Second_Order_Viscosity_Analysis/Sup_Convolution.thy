@@ -242,33 +242,22 @@ proof -
   show thesis by (rule that[OF h1 h2])
 qed
 
-text \<open>At a point of continuity, the sup-convolution converges to \<open>u\<close> as
-  \<open>\<epsilon> \<rightarrow> 0\<^sup>+\<close>, the near-optimizer localizing in a ball of radius
-  \<open>O(\<surd>\<epsilon>)\<close>.\<close>
+text \<open>At a point of upper semicontinuity, the sup-convolution converges to
+  \<open>u\<close> as \<open>\<epsilon> \<rightarrow> 0\<^sup>+\<close>, the near-optimizer localizing in a ball of radius
+  \<open>O(\<surd>\<epsilon>)\<close>; the lower bound is \<open>supconv_ge\<close>.\<close>
 
 lemma supconv_tendsto:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> B" and cont: "continuous (at x) u"
+  assumes B: "\<And>y. u y \<le> B"
+    and usc: "\<And>c. u x < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist x y < e \<longrightarrow> u y < c"
   shows "((\<lambda>\<epsilon>. supconv u \<epsilon> x) \<longlongrightarrow> u x) (at_right 0)"
 proof (rule tendstoI)
   fix \<eta> :: real assume \<eta>: "0 < \<eta>"
   define \<delta> where "\<delta> = min (\<eta>/2) 1"
   have \<delta>pos: "0 < \<delta>" and \<delta>le: "\<delta> \<le> \<eta>/2" and \<delta>1: "\<delta> \<le> 1"
     using \<eta> by (auto simp: \<delta>_def)
-  have "eventually (\<lambda>y. dist (u y) (u x) < \<eta>/2) (at x)"
-    by (rule tendstoD[OF cont[unfolded continuous_at]]) (use \<eta> in simp)
-  then obtain r where r: "0 < r"
-    and rb: "\<And>y. y \<noteq> x \<Longrightarrow> dist y x < r \<Longrightarrow> dist (u y) (u x) < \<eta>/2"
-    unfolding eventually_at by blast
-  have rb': "u y < u x + \<eta>/2" if "dist x y < r" for y
-  proof (cases "y = x")
-    case True thus ?thesis using \<eta> by simp
-  next
-    case False
-    hence "dist (u y) (u x) < \<eta>/2"
-      using rb[OF False] that by (metis dist_commute)
-    thus ?thesis unfolding dist_real_def abs_diff_less_iff by linarith
-  qed
+  obtain r where r: "0 < r" and rb': "\<And>y. dist x y < r \<Longrightarrow> u y < u x + \<eta>/2"
+    using usc[of "u x + \<eta>/2"] \<eta> by auto
   define C where "C = B - u x + 1"
   have C: "0 < C" using B[of x] by (simp add: C_def)
   define \<epsilon>\<^sub>0 where "\<epsilon>\<^sub>0 = r\<^sup>2 / (2*C)"

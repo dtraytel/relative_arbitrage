@@ -558,6 +558,25 @@ lemma sym_add_scaleR:
   shows "a \<bullet> (F b + c *\<^sub>R b) = b \<bullet> (F a + c *\<^sub>R a)"
   using sF[of a b] by (simp add: inner_add_right inner_commute)
 
+text \<open>The quadratic penalty's second-order expansion is exact, with
+  gradient \<open>\<alpha> d\<close> and Hessian \<open>\<alpha> I\<close>: the penalty jet the \<open>_gen\<close> lemmas of
+  @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables} take.\<close>
+
+lemma quad_pen_jet:
+  fixes d :: "real^'n::finite" and \<alpha> :: real
+  shows "((\<lambda>h. ((\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) (d + h) - (\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) d
+      - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> ((\<alpha> *\<^sub>R mat 1) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+proof -
+  have "(\<alpha>/2) * (norm (d + h))\<^sup>2 - (\<alpha>/2) * (norm d)\<^sup>2
+      - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> ((\<alpha> *\<^sub>R mat 1) *v h))/2 = 0" for h
+    using penalty_difference_identity[of \<alpha> d h 0]
+    by (simp add: scaleR_matrix_vector_assoc[symmetric] power2_norm_eq_inner)
+  then have "(\<lambda>h. ((\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) (d + h) - (\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) d
+      - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> ((\<alpha> *\<^sub>R mat 1) *v h))/2) / (norm h)\<^sup>2) = (\<lambda>h. 0)"
+    by (intro ext) simp
+  then show ?thesis by simp
+qed
+
 lemma add_sq_le_double:
   fixes x y :: real
   shows "(x + y)\<^sup>2 \<le> 2 * (x\<^sup>2 + y\<^sup>2)"
@@ -647,7 +666,7 @@ proof -
     have pen1: "\<delta> * (norm (fst y - fst ((xh, yh) :: (real^'n) \<times> (real^'n))))\<^sup>2
         + \<delta> * (norm (snd y - snd ((xh, yh))))\<^sup>2
         = \<delta> * (norm (y - ((xh, yh) :: (real^'n) \<times> (real^'n))))\<^sup>2"
-      unfolding norm_sq_prod_split[of y "(xh, yh)"]
+      unfolding norm_prod_sq[of "y - (xh, yh)"]
       by (simp add: algebra_simps)
     have pen2: "\<rho>\<^sup>2 \<le> (norm (y - ((xh, yh) :: (real^'n) \<times> (real^'n))))\<^sup>2"
     proof -
@@ -727,9 +746,16 @@ proof -
     using expraw unfolding af_def bf_def by simp
   have dz1: "dist zh ((xh, yh) :: (real^'n) \<times> (real^'n)) < 1"
     using dzr rho1 by linarith
-  note slices = tilted_doubled_jet_slices[where a = af and b = bf
-      and \<alpha> = \<alpha> and W = WW and zh = zh and \<xi> = "(xh, yh)" and r = 1
-      and pt = pt and q = qq, OF blW dz1 mxA expA]
+  define Z where "Z = (\<alpha> *\<^sub>R mat 1 :: real^'n^'n)"
+  have symZ: "transpose Z = Z" unfolding Z_def by (simp add: transpose_scalar)
+  have pj: "((\<lambda>h. ((\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) ((fst zh - snd zh) + h)
+      - (\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) (fst zh - snd zh)
+      - (\<alpha> *\<^sub>R (fst zh - snd zh)) \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2)
+      \<longlongrightarrow> 0) (at 0)"
+    unfolding Z_def by (rule quad_pen_jet)
+  note slices = tilted_doubled_jet_slices_gen[where P = "\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2"
+      and a = af and b = bf and W = WW and zh = zh and \<xi> = "(xh, yh)" and r = 1
+      and pt = pt and q = qq, OF blW dz1 mxA expA pj]
   have hiW: "\<And>v. v \<bullet> WW v \<le> 0"
     by (rule tilted_doubled_hessian_nonpositive[where a = af and b = bf
         and \<alpha> = \<alpha> and W = WW and zh = zh and \<xi> = "(xh, yh)" and r = 1
@@ -737,9 +763,9 @@ proof -
   have scW: "\<And>s uu. WW (s *\<^sub>R uu) = s *\<^sub>R WW uu"
     using blW by (simp add: linear_simps)
   have symW': "\<And>v z. v \<bullet> WW z = z \<bullet> WW v" using symW by blast
-  have ord: "\<And>v. v \<bullet> (fst (WW (v, 0)) + \<alpha> *\<^sub>R v)
-      \<le> v \<bullet> (- (snd (WW (0, v)) + \<alpha> *\<^sub>R v))"
-    by (rule sums_gives_ordering[OF expA scW hiW])
+  have ord: "\<And>v. v \<bullet> (fst (WW (v, 0)) + Z *v v)
+      \<le> v \<bullet> (- (snd (WW (0, v)) + Z *v v))"
+    by (rule sums_gives_ordering_gen[OF expA pj scW hiW])
   obtain ysu where optu: "supconv u \<epsilon> (fst zh)
       = u ysu - (dist (fst zh) ysu)\<^sup>2 / (2*\<epsilon>)"
     using supconv_attained_usc[OF Bu e0 uscu] by blast
@@ -748,11 +774,11 @@ proof -
     using supconv_attained_usc[OF Bb e0 uscb] by blast
   define pu where "pu = (- fst pt + \<alpha> *\<^sub>R (fst zh - snd zh))
       + (2 * \<delta>) *\<^sub>R (fst zh - xh)"
-  define XU where "XU = (\<lambda>k :: real^'n. (fst (WW (k, 0)) + \<alpha> *\<^sub>R k)
+  define XU where "XU = (\<lambda>k :: real^'n. (fst (WW (k, 0)) + Z *v k)
       + (2 * \<delta>) *\<^sub>R k)"
   define pw where "pw = (- (snd pt + \<alpha> *\<^sub>R (fst zh - snd zh)))
       + (2 * \<delta>) *\<^sub>R (snd zh - yh)"
-  define YU where "YU = (\<lambda>k :: real^'n. (snd (WW (0, k)) + \<alpha> *\<^sub>R k)
+  define YU where "YU = (\<lambda>k :: real^'n. (snd (WW (0, k)) + Z *v k)
       + (2 * \<delta>) *\<^sub>R k)"
   have collu: "\<And>x. af x + \<delta> * (norm (x - xh))\<^sup>2 = supconv u \<epsilon> x"
     unfolding af_def by simp
@@ -768,37 +794,19 @@ proof -
     unfolding collb pw_def YU_def .
   have linXU: "linear XU"
     unfolding XU_def
-    by (rule linear_add_scaleR[OF linear_block_fst[OF blW]])
+    by (rule linear_add_scaleR[OF linear_block_fst_gen[OF blW]])
   have symXU: "\<And>a b. a \<bullet> XU b = b \<bullet> XU a"
     unfolding XU_def
-    by (rule sym_add_scaleR[OF sym_block_fst[OF symW']])
+    by (rule sym_add_scaleR[OF sym_block_fst_gen[OF symW' symZ]])
   have linYU: "linear YU"
-  proof -
-    have "linear (\<lambda>v. - (snd (WW (0, v)) + \<alpha> *\<^sub>R v))"
-      by (rule linear_block_snd[OF blW])
-    then have "linear (\<lambda>v. snd (WW (0, v)) + \<alpha> *\<^sub>R v)"
-      using linear_neg_iff by fastforce
-    then show ?thesis unfolding YU_def by (rule linear_add_scaleR)
-  qed
+    unfolding YU_def using linear_block_snd_gen[OF blW, of Z]
+      linear_neg_iff[of "\<lambda>v. snd (WW (0, v)) + Z *v v"]
+    by (intro linear_add_scaleR) simp
   have symYU: "\<And>a b. a \<bullet> YU b = b \<bullet> YU a"
   proof -
-    have s: "\<And>a b. a \<bullet> (snd (WW (0, b)) + \<alpha> *\<^sub>R b)
-        = b \<bullet> (snd (WW (0, a)) + \<alpha> *\<^sub>R a)"
-    proof -
-      fix a b :: "real^'n"
-      have n1: "a \<bullet> (- (snd (WW (0, b)) + \<alpha> *\<^sub>R b))
-          = b \<bullet> (- (snd (WW (0, a)) + \<alpha> *\<^sub>R a))"
-        by (rule sym_block_snd[OF symW'])
-      have l: "a \<bullet> (- (snd (WW (0, b)) + \<alpha> *\<^sub>R b))
-          = - (a \<bullet> (snd (WW (0, b)) + \<alpha> *\<^sub>R b))"
-        by (rule inner_minus_right)
-      have r: "b \<bullet> (- (snd (WW (0, a)) + \<alpha> *\<^sub>R a))
-          = - (b \<bullet> (snd (WW (0, a)) + \<alpha> *\<^sub>R a))"
-        by (rule inner_minus_right)
-      show "a \<bullet> (snd (WW (0, b)) + \<alpha> *\<^sub>R b)
-          = b \<bullet> (snd (WW (0, a)) + \<alpha> *\<^sub>R a)"
-        using n1 unfolding l r by linarith
-    qed
+    have s: "\<And>a b. a \<bullet> (snd (WW (0, b)) + Z *v b) = b \<bullet> (snd (WW (0, a)) + Z *v a)"
+      using sym_block_snd_gen[OF symW' symZ, unfolded inner_minus_right]
+      by (metis neg_equal_iff_equal)
     show "\<And>a b. a \<bullet> YU b = b \<bullet> YU a"
       unfolding YU_def by (rule sym_add_scaleR[OF s])
   qed
@@ -808,17 +816,17 @@ proof -
     by (rule supconv_superjet_at_optimizer[OF Bb e0 optb expb linYU symYU])
   have o3: "v \<bullet> XU v + v \<bullet> YU v \<le> 4 * \<delta> * (norm v)\<^sup>2" for v
   proof -
-    have neg: "v \<bullet> (- (snd (WW (0, v)) + \<alpha> *\<^sub>R v))
-        = - (v \<bullet> (snd (WW (0, v)) + \<alpha> *\<^sub>R v))"
+    have neg: "v \<bullet> (- (snd (WW (0, v)) + Z *v v))
+        = - (v \<bullet> (snd (WW (0, v)) + Z *v v))"
       by (rule inner_minus_right)
-    have base: "v \<bullet> (fst (WW (v, 0)) + \<alpha> *\<^sub>R v)
-        + v \<bullet> (snd (WW (0, v)) + \<alpha> *\<^sub>R v) \<le> 0"
+    have base: "v \<bullet> (fst (WW (v, 0)) + Z *v v)
+        + v \<bullet> (snd (WW (0, v)) + Z *v v) \<le> 0"
       using ord[of v] unfolding neg by linarith
-    have x1: "v \<bullet> XU v = v \<bullet> (fst (WW (v, 0)) + \<alpha> *\<^sub>R v)
+    have x1: "v \<bullet> XU v = v \<bullet> (fst (WW (v, 0)) + Z *v v)
         + 2 * \<delta> * (norm v)\<^sup>2"
       unfolding XU_def
       by (simp add: inner_add_right power2_norm_eq_inner)
-    have y1: "v \<bullet> YU v = v \<bullet> (snd (WW (0, v)) + \<alpha> *\<^sub>R v)
+    have y1: "v \<bullet> YU v = v \<bullet> (snd (WW (0, v)) + Z *v v)
         + 2 * \<delta> * (norm v)\<^sup>2"
       unfolding YU_def
       by (simp add: inner_add_right power2_norm_eq_inner)
