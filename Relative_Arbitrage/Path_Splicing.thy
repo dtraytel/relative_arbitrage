@@ -234,27 +234,15 @@ proof -
   have into: "padd T p' w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     if "w \<in> space ?B" for w
     using that p by (auto simp: space_borel_of intro: padd_mspace)
-  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). padd T p' w t) \<in> borel_measurable ?B" for t
-  proof (cases "t \<in> {0..T}")
-    case True
+  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). padd T p' w t) \<in> borel_measurable ?B"
+    if True: "t \<in> {0..T}" for t
+  proof -
     have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). p' t + w t) \<in> borel_measurable ?B"
       by (intro borel_measurable_add borel_measurable_const
           pair_law_eval_measurable[OF refl])
     then show ?thesis by (simp add: padd_apply[OF True])
-  next
-    case False
-    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). padd T p' w t) = (\<lambda>w. undefined)"
-      by (rule ext) (rule padd_outside[OF False])
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (padd T p' w) a) \<in> borel_measurable ?B"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
 lemma pshift_pshift:
@@ -340,9 +328,8 @@ proof -
     then show ?thesis using spB by (auto intro: padd_mspace)
   qed
   have ev: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). ?f p t) \<in> borel_measurable ?M"
-    for t
-  proof (cases "t \<in> {0..T}")
-    case True
+    if True: "t \<in> {0..T}" for t
+  proof -
     have e1: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). fst p t) \<in> borel_measurable ?M"
       by (rule measurable_compose[OF measurable_fst
             pair_law_eval_measurable[OF refl]])
@@ -353,21 +340,8 @@ proof -
         \<in> borel_measurable ?M"
       using e1 e2 by simp
     then show ?thesis by (simp add: padd_apply[OF True])
-  next
-    case False
-    have "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). ?f p t)
-        = (\<lambda>p. undefined)"
-      by (rule ext) (rule padd_outside[OF False])
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>p. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (?f p) a)
-        \<in> borel_measurable ?M"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
 text \<open>The split inverts the glue, provided the continuation stands still up
@@ -1512,26 +1486,14 @@ proof -
   have into: "pembed s T w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     if "w \<in> space ?Bs" for w
     using that by (auto simp: space_borel_of intro: pembed_mspace[OF s0 sT])
-  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). pembed s T w t) \<in> borel_measurable ?Bs" for t
-  proof (cases "t \<in> {0..T}")
-    case True
+  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). pembed s T w t) \<in> borel_measurable ?Bs"
+    if True: "t \<in> {0..T}" for t
+  proof -
     have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w (max (t - s) 0)) \<in> borel_measurable ?Bs"
       by (rule pair_law_eval_measurable[OF refl])
     then show ?thesis by (simp add: pembed_apply[OF True])
-  next
-    case False
-    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). pembed s T w t) = (\<lambda>w. undefined)"
-      by (rule ext) (rule pembed_outside[OF False])
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (pembed s T w) a) \<in> borel_measurable ?Bs"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
 text \<open>\<^const>\<open>prebase\<close> inverts \<^const>\<open>pembed\<close>: the delayed law carries exactly
@@ -1608,9 +1570,9 @@ proof -
   qed
   have sndm: "(\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). snd p) \<in> ?M \<rightarrow>\<^sub>M ?B"
     by (rule measurable_snd)
-  have ev: "(\<lambda>p. pdel (fst p) T (snd p) t) \<in> borel_measurable ?M" for t
-  proof (cases "t \<in> {0..T}")
-    case True
+  have ev: "(\<lambda>p. pdel (fst p) T (snd p) t) \<in> borel_measurable ?M"
+    if True: "t \<in> {0..T}" for t
+  proof -
     have gm: "(\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). max (t - max 0 (min (fst p) T)) 0)
         \<in> borel_measurable ?M" by measurable
     have g0: "0 \<le> max (t - max 0 (min (fst p) T)) 0"
@@ -1624,21 +1586,8 @@ proof -
             and g = "\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). max (t - max 0 (min (fst p) T)) 0",
             OF T0 sndm gm g0 gT])
     then show ?thesis using True by (simp add: pdel_eval)
-  next
-    case False
-    then have "(\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). pdel (fst p) T (snd p) t)
-        = (\<lambda>p. undefined)"
-      unfolding pdel_def by (simp add: pembed_outside)
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>p. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (pdel (fst p) T (snd p)) a) \<in> borel_measurable ?M"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
 subsection \<open>Cutting a law commutes with shifting, and caps its value\<close>
@@ -1768,26 +1717,14 @@ proof -
       using that sp by simp
     show ?thesis by (rule prebase_mspace[OF s0 sT m])
   qed
-  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). prebase s T w u) \<in> borel_measurable ?B" for u
-  proof (cases "u \<in> {0..T - s}")
-    case True
+  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). prebase s T w u) \<in> borel_measurable ?B"
+    if True: "u \<in> {0..T - s}" for u
+  proof -
     have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w (s + u)) \<in> borel_measurable ?B"
       by (rule pair_law_eval_measurable[OF refl])
     then show ?thesis by (simp add: prebase_apply[OF True])
-  next
-    case False
-    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). prebase s T w u) = (\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). undefined)"
-      by (rule ext) (rule prebase_outside[OF False])
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>w. mdist (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (prebase s T w) a) \<in> borel_measurable ?B"
-      by (rule mdist_measurable_of_eval[OF Ts into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF Ts into ev])
 qed
 text \<open>Hence clause (i) for the kernel: re-based, the conditional law is a
   probability measure on the \<open>(T - \<theta>)\<close>-path space.\<close>

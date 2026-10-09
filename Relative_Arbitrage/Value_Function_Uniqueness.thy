@@ -496,7 +496,8 @@ section \<open>The clauses for the value function of Eq. (1.6)\<close>
 text \<open>Everything above is stated at a finite horizon.  Since
   @{thm [source] iexit_val_eq_exit_val_ball} identifies the two value
   functions uniformly in the point once the horizon exceeds \<open>r\<^sup>2/(n-k)\<close>, the
-  horizon can be chosen inside each proof and disappears from the statements:
+  horizon can be chosen inside each proof
+  (@{thm [source] iexit_val_eq_exit_val_horizon}) and disappears from the statements:
   what follows is Theorem 1.1 for the value function of Eq. (1.6) as the paper
   writes it, on \<open>C([0,\<infinity>))\<close>.\<close>
 
@@ -516,11 +517,9 @@ theorem iexit_val_le_ball_bound:
   shows "iexit_val k L K x
       \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
 proof -
-  obtain T :: real where T0: "0 < T"
-    and T1: "rK * rK / real (CARD('n) - k) < T"
-    using nonbinding_horizon_ex[OF kn] by blast
-  have eq: "iexit_val k L K x = exit_val k L T K x"
-    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  obtain T :: real where T0: "0 < T" and "rK * rK / real (CARD('n) - k) < T"
+    and "2 * (rK * rK) / real (CARD('n) - k) < T" and eq: "iexit_val k L K = exit_val k L T K"
+    by (rule iexit_val_eq_exit_val_horizon[OF kn L Kc KB])
   show ?thesis unfolding eq
     using L by (intro exit_val_le_ball_bound[OF kn less_imp_le[OF T0] _ KB]) simp
 qed
@@ -536,11 +535,9 @@ proof -
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
   obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
     using compact_cball_bound[OF cK] by blast
-  obtain T :: real where T0: "0 < T"
-    and T1: "rK * rK / real (CARD('n) - k) < T"
-    using nonbinding_horizon_ex[OF kn] by blast
-  have eq: "iexit_val k L K y = exit_val k L T K y" for y
-    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  obtain T :: real where T0: "0 < T" and "rK * rK / real (CARD('n) - k) < T"
+    and "2 * (rK * rK) / real (CARD('n) - k) < T" and eq: "iexit_val k L K = exit_val k L T K"
+    by (rule iexit_val_eq_exit_val_horizon[OF kn L Kc KB])
   show ?thesis unfolding eq
     by (rule exit_val_real_usc[OF T0 L Kc kn KB lt[unfolded eq]])
 qed
@@ -565,11 +562,9 @@ proof -
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
   obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
     using compact_cball_bound[OF cK] by blast
-  obtain T :: real where T0: "0 < T"
-    and T1: "rK * rK / real (CARD('n) - k) < T"
-    using nonbinding_horizon_ex[OF kn] by blast
-  have eq: "iexit_val k L K y = exit_val k L T K y" for y
-    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+  obtain T :: real where T0: "0 < T" and "rK * rK / real (CARD('n) - k) < T"
+    and "2 * (rK * rK) / real (CARD('n) - k) < T" and eq: "iexit_val k L K = exit_val k L T K"
+    by (rule iexit_val_eq_exit_val_horizon[OF kn L Kc KB])
   show ?thesis unfolding eq by (rule exit_val_subsol_bc[OF T0 L Kc kn])
 qed
 
@@ -592,12 +587,10 @@ proof -
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
   obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
     using compact_cball_bound[OF cK] by blast
-  obtain T :: real where T0: "0 < T"
-    and T1: "rK * rK / real (CARD('n) - k) < T"
+  obtain T :: real where T0: "0 < T" and "rK * rK / real (CARD('n) - k) < T"
     and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
-    using nonbinding_horizon_ex[OF kn] by blast
-  have eq: "iexit_val k L K y = exit_val k L T K y" for y
-    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+    and eq: "iexit_val k L K = exit_val k L T K"
+    by (rule iexit_val_eq_exit_val_horizon[OF kn L Kc KB])
   show ?thesis unfolding eq
     by (rule theorem_1_1_uniqueness_faithful[OF T0 L1 k1 kn cK neK expK KB r0
           T2 usc bnd sub sups xK])
@@ -662,12 +655,10 @@ proof -
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
   obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
     using compact_cball_bound[OF cK] by blast
-  obtain T :: real where T0: "0 < T"
-    and T1: "rK * rK / real (CARD('n) - k) < T"
+  obtain T :: real where T0: "0 < T" and "rK * rK / real (CARD('n) - k) < T"
     and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
-    using nonbinding_horizon_ex[OF kn] by blast
-  have eq: "iexit_val k L K y = exit_val k L T K y" for y
-    by (rule iexit_val_eq_exit_val_ball[OF kn L Kc KB T1])
+    and eq: "iexit_val k L K = exit_val k L T K"
+    by (rule iexit_val_eq_exit_val_horizon[OF kn L Kc KB])
   show ?thesis unfolding eq
     by (rule exit_val_supersol_bc_K[OF T0 L1 k1 kn Kc KB T2])
 qed
@@ -735,10 +726,9 @@ theorem example_3_1_uncapped:
       = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
 proof -
   obtain T :: real where T0: "0 < T"
-    and T1: "r * r / real (CARD('n) - k) < T"
-    using nonbinding_horizon_ex[OF kn] by blast
-  have eq: "iexit_val k L (cball 0 r) y = exit_val k L T (cball 0 r) y" for y :: "real^'n"
-    by (rule iexit_val_eq_exit_val_ball[OF kn L closed_cball subset_refl T1])
+    and T1: "r * r / real (CARD('n) - k) < T" and "2 * (r * r) / real (CARD('n) - k) < T"
+    and eq: "iexit_val k L (cball (0 :: real^'n) r) = exit_val k L T (cball 0 r)"
+    by (rule iexit_val_eq_exit_val_horizon[where rK = r, OF kn L closed_cball subset_refl])
   show ?thesis unfolding eq
     by (rule example_3_1[OF k1 kn L T0 r0 less_imp_le[OF T1]])
 qed

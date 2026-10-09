@@ -155,26 +155,6 @@ text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the c
   makes \<open>Y\<close> a.s. \<open>n\<sqdot>L\<close>-Lipschitz, leaving only the
   \<open>X\<close>-side Hoelder estimate.\<close>
 
-lemma nonbinding_horizon_ex:
-  fixes rK :: real
-  assumes k: "k < CARD('n::finite)"
-  shows "\<exists>T :: real. 0 < T \<and> rK * rK / real (CARD('n) - k) < T
-       \<and> 2 * (rK * rK) / real (CARD('n) - k) < T"
-proof -
-  have nk: "0 < real (CARD('n) - k)" using k by simp
-  define B :: real where "B = 2 * (rK * rK) / real (CARD('n) - k)"
-  have B0: "0 \<le> B" unfolding B_def using nk by simp
-  have le: "rK * rK / real (CARD('n) - k) \<le> B"
-    unfolding B_def using nk by (intro divide_right_mono) auto
-  show ?thesis
-  proof (intro exI[of _ "B + 1"] conjI)
-    show "0 < B + 1" using B0 by simp
-    show "rK * rK / real (CARD('n) - k) < B + 1" using le by simp
-    show "2 * (rK * rK) / real (CARD('n) - k) < B + 1"
-      unfolding B_def[symmetric] by simp
-  qed
-qed
-
 lemma standard_borel_path_metric:
   "standard_borel (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
   unfolding standard_borel_def
@@ -1107,68 +1087,28 @@ proof -
   finally show ?thesis .
 qed
 
-lemma measurable_into_path_metric:
-  fixes f :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,banach} \<times> 'x::{polish_space,banach})"
-  assumes into: "\<And>w. w \<in> space M
-      \<Longrightarrow> f w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
-    and dm: "\<And>a. a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)
-      \<Longrightarrow> (\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a)
-          \<in> borel_measurable M"
-  shows "f \<in> M \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'b \<times> 'x)) measure)"
-proof -
-  let ?m = "path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric"
-  let ?B = "borel_of (mtopology_of ?m)"
-  interpret MS: Metric_space "mspace ?m" "mdist ?m"
-    by (rule Metric_space_mspace_mdist)
-  let ?balls = "{MS.mball a \<epsilon> | a \<epsilon>. a \<in> mspace ?m \<and> \<epsilon> > 0}"
-  have sub: "?balls \<subseteq> Pow (mspace ?m)" using MS.mball_subset_mspace by auto
-  have base: "base_in (mtopology_of ?m) ?balls"
-    using MS.mtopology_base_in_balls by (simp add: mtopology_of_def)
-  have "?B = sigma (topspace (mtopology_of ?m)) ?balls"
-    by (rule borel_of_second_countable'
-        [OF second_countable_path_metric base_is_subbase[OF base]])
-  then have setsB: "sets ?B = sigma_sets (mspace ?m) ?balls"
-    using sets_measure_of[OF sub] by simp
-  show ?thesis
-  proof (rule measurable_sigma_sets[OF setsB sub])
-    show "f \<in> space M \<rightarrow> mspace ?m" using into by blast
-  next
-    fix A assume "A \<in> ?balls"
-    then obtain a e where A: "A = MS.mball a e" and am: "a \<in> mspace ?m"
-      and epos: "e > 0" by blast
-    have ball: "(\<omega> \<in> MS.mball a e) = (\<omega> \<in> mspace ?m \<and> mdist ?m \<omega> a < e)"
-      for \<omega> :: "(real \<Rightarrow> 'b \<times> 'x)"
-      using am by (simp only: MS.in_mball MS.commute conj_commute simp_thms)
-    have "f -` A \<inter> space M = {w \<in> space M. mdist ?m (f w) a < e}"
-      unfolding A using into by (auto simp only: ball vimage_eq Int_iff)    then show "f -` A \<inter> space M \<in> sets M" using dm[OF am] by simp
-  qed
-qed
+text \<open>Landing in the path space: a map into the capped paths is measurable
+  as soon as its evaluations are (@{thm [source] pathify_measurable}, since
+  each value is its own restriction).\<close>
 
-text \<open>Hypothesis (ii) of the criterion: the distance to a fixed path is a
-  sup of evaluations over the rationals (@{thm [source] path_mdist_le_iff}),
-  hence a countable intersection.\<close>
-
-lemma mdist_measurable_of_eval:
-  fixes f :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,banach} \<times> 'x::{polish_space,banach})"
+lemma path_measurable_of_eval:
+  fixes f :: "'a \<Rightarrow> real \<Rightarrow> 'b::polish_space"
   assumes T0: "0 \<le> T"
-    and into: "\<And>w. w \<in> space M
-      \<Longrightarrow> f w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
-    and am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
-    and ev: "\<And>t. (\<lambda>w. f w t) \<in> borel_measurable M"
-  shows "(\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a)
-      \<in> borel_measurable M"
-proof (rule borel_measurable_iff_le[THEN iffD2], intro allI)
-  fix q :: real
-  have cnt: "countable ({0..T} \<inter> \<rat>)" by (simp add: countable_rat)
-  have ne: "{0..T} \<inter> \<rat> \<noteq> {}" using T0 by auto
-  have eq: "{w \<in> space M. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a \<le> q}
-      = (\<Inter>t \<in> {0..T} \<inter> \<rat>. {w \<in> space M. dist (f w t) (a t) \<le> q})"
-    using ne by (auto simp: path_mdist_le_iff[OF T0 into am])
-  have inner: "{w \<in> space M. dist (f w t) (a t) \<le> q} \<in> sets M" for t
-    using ev[of t] by measurable
-  show "{w \<in> space M. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a \<le> q}
-      \<in> sets M"
-    unfolding eq by (intro sets.countable_INT'[OF cnt ne]) (auto simp: inner)qed
+    and into: "\<And>w. w \<in> space M \<Longrightarrow> f w \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    and ev: "\<And>t. t \<in> {0..T} \<Longrightarrow> (\<lambda>w. f w t) \<in> borel_measurable M"
+  shows "f \<in> M \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)"
+proof -
+  have "f \<in> M \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)
+      \<longleftrightarrow> (\<lambda>w. restrict (\<lambda>t. f w t) {0..T}) \<in> M \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)"
+    by (rule measurable_cong) (simp add: mspace_path_restrict_self[OF into])
+  also have "\<dots>"
+  proof (rule pathify_measurable[OF T0])
+    show "(\<lambda>w. f w t) \<in> borel_measurable M" if "t \<in> {0..T}" for t by (rule ev[OF that])
+    show "continuous_on {0..T} (\<lambda>t. f w t)" if "w \<in> space M" for w
+      using mspace_path_metric_continuous[OF into[OF that]] by simp
+  qed
+  finally show ?thesis .
+qed
 
 text \<open>Hence both halves of the split are measurable maps of the path.  Only
   Borel measurability of \<open>\<theta>\<close> is used here; the stopping-time property is
@@ -1441,109 +1381,10 @@ lemma sets_natural_filtration_path_subset:
       \<subseteq> sets (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   using subalgebra_natural_filtration_path[OF refl] unfolding subalgebra_def by blast
 
-text \<open>The metric half.  @{thm [source] path_mdist_le_iff} turns the sup
-  distance into a condition at the rational times only, countably many, so
-  \<open>sets.countable_INT'\<close> applies.  The intersection must be over
-  a nonempty index set to keep \<open>\<omega> \<in> space \<FF>\<close> on the \<open>\<supseteq>\<close> side; over an empty
-  one it would be the universe.\<close>
-
-lemma mdist_measurable_natural_filtration:
-  fixes U :: real and f :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
-  assumes U: "0 \<le> U" and f: "f \<in> mspace (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-  shows "(\<lambda>\<omega>. mdist (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric) f \<omega>)
-      \<in> borel_measurable (natural_filtration
-          (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-          0 (\<lambda>v \<omega>. \<omega> v) U)"
-proof -
-  let ?m = "path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric"
-  let ?B = "borel_of (mtopology_of ?m)"
-  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) U"
-  have spF: "space ?F = mspace ?m" by (simp add: space_borel_of)
-  have Q0: "(0::real) \<in> {0..U} \<inter> \<rat>" using U by simp
-  have neQ: "{0..U} \<inter> (\<rat> :: real set) \<noteq> {}" using Q0 by blast
-  have cQ: "countable ({0..U} \<inter> (\<rat> :: real set))"
-    by (rule countable_subset[OF _ countable_rat]) simp
-  show ?thesis
-  proof (subst borel_measurable_iff_le, intro allI)
-    fix q :: real
-    have iff: "mdist ?m f \<omega> \<le> q \<longleftrightarrow> (\<forall>t\<in>{0..U} \<inter> \<rat>. dist (f t) (\<omega> t) \<le> q)"
-      if w: "\<omega> \<in> mspace ?m" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-      by (rule path_mdist_le_iff[OF U f w])
-    have mem: "{\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q} \<in> sets ?F"
-      if t: "t \<in> {0..U} \<inter> \<rat>" for t
-    proof -
-      have m: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). dist (f t) (\<omega> t)) \<in> borel_measurable ?F"
-        using natural_filtration_eval[where Y = "\<lambda>v \<omega>. \<omega> v" and N = ?B, of t U] t
-        by (intro borel_measurable_dist) auto
-      show ?thesis using iffD1[OF borel_measurable_iff_le m] by blast
-    qed
-    have seteq: "{\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}
-        = (\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})"
-    proof
-      show "{\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}
-          \<subseteq> (\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})"
-        using iff spF by auto
-    next
-      show "(\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})
-          \<subseteq> {\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}"
-      proof
-        fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-        assume w: "\<omega> \<in> (\<Inter>t \<in> {0..U} \<inter> \<rat>.
-            {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})"
-        have sp: "\<omega> \<in> space ?F" using w Q0 by blast
-        then have mw: "\<omega> \<in> mspace ?m" using spF by simp
-        have "\<forall>t\<in>{0..U} \<inter> \<rat>. dist (f t) (\<omega> t) \<le> q" using w by blast
-        then have "mdist ?m f \<omega> \<le> q" using iff[OF mw] by blast
-        then show "\<omega> \<in> {\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}" using sp by simp
-      qed
-    qed
-    have "(\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})
-        \<in> sets ?F"
-      by (rule sets.countable_INT'[OF cQ neQ]) (use mem in auto)
-    then show "{\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q} \<in> sets ?F"
-      unfolding seteq .
-  qed
-qed
-
-text \<open>Hence every metric ball is a filtration event.\<close>
-
-lemma mball_in_natural_filtration:
-  fixes U :: real and f :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
-  assumes U: "0 \<le> U" and f: "f \<in> mspace (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-  shows "Metric_space.mball (mspace (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
-        (mdist (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) f e
-      \<in> sets (natural_filtration
-          (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-          0 (\<lambda>v \<omega>. \<omega> v) U)"
-proof -
-  let ?m = "path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric"
-  let ?B = "borel_of (mtopology_of ?m)"
-  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) U"
-  interpret MS: Metric_space "mspace ?m" "mdist ?m"
-    by (rule Metric_space_mspace_mdist)
-  have spF: "space ?F = mspace ?m" by (simp add: space_borel_of)
-  have mb: "MS.mball f e = {\<omega> \<in> space ?F. mdist ?m f \<omega> < e}"
-  proof (rule set_eqI)
-    fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-    have "(\<omega> \<in> MS.mball f e)
-        = (f \<in> mspace ?m \<and> \<omega> \<in> mspace ?m \<and> mdist ?m f \<omega> < e)"
-      by (rule MS.in_mball)
-    also have "\<dots> = (\<omega> \<in> mspace ?m \<and> mdist ?m f \<omega> < e)"
-      by (simp only: eqTrueI[OF f] simp_thms)
-    also have "\<dots> = (\<omega> \<in> {\<omega> \<in> space ?F. mdist ?m f \<omega> < e})"
-      by (simp only: spF mem_Collect_eq)
-    finally show "(\<omega> \<in> MS.mball f e)
-        = (\<omega> \<in> {\<omega> \<in> space ?F. mdist ?m f \<omega> < e})" .
-  qed
-  have "{\<omega> \<in> space ?F. mdist ?m f \<omega> < e} \<in> sets ?F"
-    by (rule borel_measurable_less[OF mdist_measurable_natural_filtration[OF U f]
-        borel_measurable_const])
-  then show ?thesis unfolding mb[symmetric] .
-qed
-
-text \<open>And the balls generate: the path space is second countable, so its
-  Borel \<open>\<sigma>\<close>-algebra is generated by any base
-  (\<open>borel_of_second_countable'\<close>), and the balls are one.\<close>
+text \<open>The natural filtration of the path space at the horizon is all of its
+  Borel sets: the identity is measurable into the path space
+  (@{thm [source] path_measurable_of_eval}), the evaluations being measurable
+  for the natural filtration.\<close>
 
 theorem sets_natural_filtration_path:
   fixes U :: real
@@ -1553,29 +1394,16 @@ theorem sets_natural_filtration_path:
         0 (\<lambda>v \<omega>. \<omega> v) U)
       = sets (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?m = "path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric"
-  let ?B = "borel_of (mtopology_of ?m)"
+  let ?B = "path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure"
   let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) U"
-  interpret MS: Metric_space "mspace ?m" "mdist ?m"
-    by (rule Metric_space_mspace_mdist)
-  let ?balls = "{MS.mball a \<epsilon> | a \<epsilon>. a \<in> mspace ?m \<and> \<epsilon> > 0}"
-  have spF: "space ?F = mspace ?m" by (simp add: space_borel_of)
-  have sub: "?balls \<subseteq> Pow (mspace ?m)" using MS.mball_subset_mspace by auto
-  have base: "base_in (mtopology_of ?m) ?balls"
-    using MS.mtopology_base_in_balls by (simp add: mtopology_of_def)
-  have "?B = sigma (topspace (mtopology_of ?m)) ?balls"
-    by (rule borel_of_second_countable'
-        [OF second_countable_path_metric base_is_subbase[OF base]])
-  then have "sets ?B = sigma_sets (mspace ?m) ?balls"
-    using sets_measure_of[OF sub] by simp
-  also have "\<dots> \<subseteq> sets ?F"
-  proof -
-    have "?balls \<subseteq> sets ?F" using mball_in_natural_filtration[OF U] by blast
-    then have "sigma_sets (space ?F) ?balls \<subseteq> sets ?F"
-      by (rule sets.sigma_sets_subset)
-    then show ?thesis using spF by simp
-  qed
-  finally show ?thesis
+  have spF: "space ?F = space ?B" by simp
+  have idm: "(\<lambda>\<omega>. \<omega>) \<in> ?F \<rightarrow>\<^sub>M ?B"
+    by (rule path_measurable_of_eval[OF U]) (auto simp: space_borel_of
+        intro: natural_filtration_eval[where Y = "\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v"])
+  have "A \<in> sets ?F" if A: "A \<in> sets ?B" for A
+    using measurable_sets[OF idm A] sets.sets_into_space[OF A] spF
+    by (simp add: Int_absorb2)
+  then show ?thesis
     using sets_natural_filtration_path_subset[of U U] by blast
 qed
 

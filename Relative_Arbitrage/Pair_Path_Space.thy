@@ -794,8 +794,9 @@ subsection \<open>The constant-volatility Gaussian member\<close>
 
 text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
   so the building block is Brownian motion pushed through a constant
-  matrix \<open>S\<close>: the pair \<open>(S \<cdot> W\<^sub>t, t \<cdot> S S\<^sup>T)\<close>, started at \<open>0\<close>.  Class
-  membership mirrors \<open>bmpair_law_in_paper_pair_class\<close>: the
+  matrix \<open>S\<close>: the pair \<open>(S \<cdot> W\<^sub>t, t \<cdot> S S\<^sup>T)\<close>, started at \<open>0\<close>
+  (\<open>sbmpair\<close>, whose case \<open>S = I\<close> is the witness \<open>bmpair\<close>).  In its class
+  membership (\<open>sbmpair_law_in_paper_pair_class\<close>) the
   martingale clauses are bounded-linear images of the Brownian ones
   (@{thm [source] martingale_bounded_linear_image}), the covariation
   clause is deterministic, and an arbitrary start comes free from
