@@ -90,7 +90,7 @@ text \<open>The Dynkin identity along the grid: for a continuous-time
   In particular it does not depend on the grid in between.\<close>
 
 text \<open>The compensated square along the grid is a martingale, and the
-  optional-sampling results of @{theory Continuous_Time_Martingales.Quadratic_Variation} apply verbatim to the
+  discrete optional-sampling results of \<open>Optional_Sampling\<close> apply verbatim to the
   sampled process.\<close>
 
 end

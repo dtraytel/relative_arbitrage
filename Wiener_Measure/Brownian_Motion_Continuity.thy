@@ -124,6 +124,33 @@ theorem bm_coord_modification:
     (use \<gamma> bm_coord_moment_bound bm_coord_moment_bound' in
       \<open>simp_all add: ennreal_mult''\<close>)
 
+text \<open>Any modification of the coordinate process lives on the Wiener measure,
+  is measurable, and agrees almost surely with each coordinate.\<close>
+
+lemma modification_bm_coord:
+  assumes mod: "modification bm_coord B"
+  shows "proc_source B = wiener_pre"
+    and "process B u \<in> wiener_pre \<rightarrow>\<^sub>M (borel :: real measure)"
+    and "u \<in> {0..} \<Longrightarrow> AE \<omega> in wiener_pre. process B u \<omega> = \<omega> u"
+proof -
+  show src: "proc_source B = wiener_pre"
+    using modificationD(1)[OF mod] by (auto simp: compatible_source)
+  have tgt: "sets (proc_target B) = sets (borel :: real measure)"
+    using modificationD(1)[OF mod] compatible_target by fastforce
+  show "process B u \<in> wiener_pre \<rightarrow>\<^sub>M (borel :: real measure)"
+    using stochastic_process_measurable[of B u] src
+    by (simp add: measurable_cong_sets[OF refl tgt])
+  show "AE \<omega> in wiener_pre. process B u \<omega> = \<omega> u" if u: "u \<in> {0..}"
+  proof -
+    have "AE \<omega> in proc_source bm_coord. process bm_coord u \<omega> = process B u \<omega>"
+      using u by (intro modificationD(2)[OF mod]) simp
+    then have "AE \<omega> in wiener_pre. process bm_coord u \<omega> = process B u \<omega>"
+      unfolding source_bm_coord .
+    then show ?thesis
+      by (simp add: process_bm_coord[OF u] eq_commute)
+  qed
+qed
+
 text \<open>The main existence theorem: a continuous process starting at 0
   whose increments are centered Gaussians with variance the time gap.\<close>
 
@@ -145,31 +172,9 @@ proof -
     by blast
   have cont: "\<And>\<omega>. continuous_on {0..} (\<lambda>t. B t \<omega>)"
     using holder local_holder_imp_continuous by blast
-  have source_B: "proc_source B = wiener_pre"
-    using modificationD(1)[OF mod] by (auto simp: compatible_source)
-  have target_B: "sets (proc_target B) = sets (borel :: real measure)"
-    using modificationD(1)[OF mod] compatible_target by fastforce
-  have B_meas: "\<And>u. process B u \<in> wiener_pre \<rightarrow>\<^sub>M (borel :: real measure)"
-  proof -
-    fix u
-    have "process B u \<in> proc_source B \<rightarrow>\<^sub>M proc_target B"
-      by (rule stochastic_process_measurable)
-    then show "process B u \<in> wiener_pre \<rightarrow>\<^sub>M (borel :: real measure)"
-      using source_B target_B
-      by (simp add: measurable_cong_sets[OF refl target_B])
-  qed
-  have ae_eq: "AE \<omega> in wiener_pre. process bm_coord u \<omega> = process B u \<omega>"
-    if u: "u \<in> {0..}" for u
-  proof -
-    have "AE \<omega> in proc_source bm_coord.
-        process bm_coord u \<omega> = process B u \<omega>"
-      using u by (intro modificationD(2)[OF mod]) simp
-    then show ?thesis
-      unfolding source_bm_coord .
-  qed
-  have ae_coord: "AE \<omega> in wiener_pre. process B u \<omega> = \<omega> u"
-    if u: "u \<in> {0..}" for u
-    using ae_eq[OF u] by (simp add: process_bm_coord[OF u] eq_commute)
+  note source_B = modification_bm_coord(1)[OF mod]
+    and B_meas = modification_bm_coord(2)[OF mod]
+    and ae_coord = modification_bm_coord(3)[OF mod]
   have start: "AE \<omega> in wiener_pre. B 0 \<omega> = 0"
     using ae_coord[of 0] wiener_pre_start by fastforce
   have incr: "distr wiener_pre borel (\<lambda>\<omega>. B t \<omega> - B s \<omega>)

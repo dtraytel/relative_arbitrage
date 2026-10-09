@@ -54,6 +54,14 @@ proof -
     using fD gD fT gT j m1 m2 by auto
 qed
 
+text \<open>Independence of two families of sets passes to subfamilies.\<close>
+
+lemma (in prob_space) indep_set_mono:
+  assumes "indep_set A B" "A' \<subseteq> A" "B' \<subseteq> B"
+  shows "indep_set A' B'"
+  using assms(1) unfolding indep_set_def
+  by (rule indep_sets_mono_sets) (use assms(2,3) in \<open>auto split: bool.split\<close>)
+
 text \<open>Componentwise independent pairs over a finite product measure give an
   independent pair of product-valued vectors.\<close>
 
@@ -191,19 +199,10 @@ proof -
     then show "a \<inter> b \<in> E2"
       using A unfolding E2_def by (intro CollectI exI[of _ "\<lambda>i. A i \<inter> B i"]) auto
   qed
-  have "P.indep_set E1 E2"
-    by (rule P.indep_setI[OF E1_events E2_events fact_ab])
-  then have "P.indep_sets (case_bool E1 E2) UNIV"
-    unfolding P.indep_set_def .
-  then have "P.indep_sets (\<lambda>b. sigma_sets (space (Pi\<^sub>M I N))
-      (case_bool E1 E2 b)) UNIV"
-    by (rule P.indep_sets_sigma) (auto split: bool.split
-        simp: E1_Int E2_Int)
-  then have sig: "P.indep_set (sigma_sets (space (Pi\<^sub>M I N)) E1)
+  have sig: "P.indep_set (sigma_sets (space (Pi\<^sub>M I N)) E1)
       (sigma_sets (space (Pi\<^sub>M I N)) E2)"
-    unfolding P.indep_set_def
-    by (rule P.indep_sets_cong[THEN iffD1, OF refl, rotated])
-      (auto split: bool.split)
+    by (rule P.indep_set_sigma_sets[OF P.indep_setI[OF E1_events E2_events fact_ab]
+          E1_Int E2_Int])
   \<comment> \<open>the rectangle preimages generate the full vimage @{text \<sigma>}-algebras\<close>
   have gen: "sigma_sets (space (Pi\<^sub>M I N))
       {F -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I T)}
@@ -249,21 +248,7 @@ proof -
         {?G -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I S)})
       (sigma_sets (space (Pi\<^sub>M I N))
         {?H -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I S')})"
-  proof -
-    have "P.indep_sets (case_bool
-        (sigma_sets (space (Pi\<^sub>M I N)) E1)
-        (sigma_sets (space (Pi\<^sub>M I N)) E2)) UNIV"
-      using sig unfolding P.indep_set_def .
-    then have "P.indep_sets (case_bool
-        (sigma_sets (space (Pi\<^sub>M I N))
-          {?G -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I S)})
-        (sigma_sets (space (Pi\<^sub>M I N))
-          {?H -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I S')})) UNIV"
-      by (rule P.indep_sets_mono_sets)
-        (auto split: bool.split simp: genG genH)
-    then show ?thesis
-      unfolding P.indep_set_def .
-  qed
+    by (rule P.indep_set_mono[OF sig genG genH])
   show ?thesis
     unfolding P.indep_var_eq
     using Gm Hm main by blast

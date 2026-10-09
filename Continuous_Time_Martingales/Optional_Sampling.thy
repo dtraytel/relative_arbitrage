@@ -24,8 +24,9 @@ text \<open>
 
       1. discrete time, arbitrary stopping time: the stopped process is the
          martingale transform of Z by the indicators of \<open>{T\<close> > \<open>k},\<close> so its
-         expectation is constant (no square integrability needed, unlike the
-         optional-sampling section of \<open>Quadratic_Variation\<close>);
+         expectation is constant (no square integrability needed); for a
+         square-integrable martingale the stopped process is again one, and
+         the Dynkin identity holds at the stopping time;
 
       2. a continuous-time martingale sampled on a grid is a discrete-time
          martingale, so (star) holds for stopping times taking finitely many
@@ -280,6 +281,113 @@ proof -
     using sets.top[of "F 0"] subalgebras[of 0] by (simp add: subalgebra_def)
   from set_stopped_expectation[OF this, of n] show ?thesis
     by (simp cong: Bochner_Integration.integral_cong)
+qed
+
+
+text \<open>The stopped process in the form @{const stopped} of
+  \<open>Quadratic_Variation\<close>: it is adapted, and a martingale (optional stopping).\<close>
+
+lemma stopped_measurable_F: "stopped T Y n \<in> borel_measurable (F n)"
+proof -
+  have inc_meas: "inc k \<in> borel_measurable (F n)" if k: "k < n" for k
+  proof -
+    have T: "Tgt k \<in> sets (F n)"
+      using Tgt_sets_F[of k] sets_F_mono[of k n] k by auto
+    show ?thesis
+      unfolding inc_def[abs_def]
+      by (intro borel_measurable_times borel_measurable_indicator T
+          borel_measurable_diff adaptedD) (use k in auto)
+  qed
+  have "(\<lambda>\<omega>. Y 0 \<omega> + (\<Sum>k<n. inc k \<omega>)) \<in> borel_measurable (F n)"
+    by (intro borel_measurable_add adaptedD borel_measurable_sum inc_meas) auto
+  then show ?thesis
+    by (rule measurable_cong[THEN iffD1, rotated]) (simp add: stopped_def stopped_eq_sum)
+qed
+
+lemma stopped_measurable [measurable]: "stopped T Y n \<in> borel_measurable M"
+proof -
+  have "subalgebra M (F n)"
+    by (intro subalgebras) simp
+  from measurable_from_subalg[OF this stopped_measurable_F] show ?thesis .
+qed
+
+theorem martingale_stopped: "martingale M F 0 (stopped T Y)"
+proof (rule martingale_of_set_integral_eq)
+  show "adapted_process M F 0 (stopped T Y)"
+  proof (unfold_locales)
+    fix i :: nat assume "0 \<le> i"
+    show "stopped T Y i \<in> borel_measurable (F i)"
+      by (rule stopped_measurable_F)
+  qed
+  show "\<And>i. 0 \<le> i \<Longrightarrow> integrable M (stopped T Y i)"
+    unfolding stopped_def[abs_def] by (rule stopped_integrable)
+  fix A and i j :: nat
+  assume "0 \<le> i" "i \<le> j" "A \<in> sets (F i)"
+  then show "set_lebesgue_integral M A (stopped T Y i)
+      = set_lebesgue_integral M A (stopped T Y j)"
+    using set_stopped_expectation'[of A i j] unfolding stopped_def[abs_def] by simp
+qed
+
+end
+
+subsection \<open>Square-integrable martingales\<close>
+
+text \<open>For a square-integrable martingale the stopped process is again one,
+  and the Dynkin identity holds at the stopping time.\<close>
+
+locale stopped_sq_int_martingale = sq_int_martingale M F X + nat_stopped_martingale M F X T
+  for M :: "'a measure" and F and X :: "nat \<Rightarrow> 'a \<Rightarrow> real" and T :: "'a \<Rightarrow> nat"
+begin
+
+lemma stopped_sq_integrable: "integrable M (\<lambda>\<omega>. (stopped T X n \<omega>)\<^sup>2)"
+proof -
+  have dom: "integrable M (\<lambda>\<omega>. \<Sum>j\<le>n. (X j \<omega>)\<^sup>2)"
+    by (intro Bochner_Integration.integrable_sum sq_integrable)
+  show ?thesis
+  proof (rule Bochner_Integration.integrable_bound[OF dom])
+    show "(\<lambda>\<omega>. (stopped T X n \<omega>)\<^sup>2) \<in> borel_measurable M"
+      by measurable
+    show "AE \<omega> in M. norm ((stopped T X n \<omega>)\<^sup>2)
+        \<le> norm (\<Sum>j\<le>n. (X j \<omega>)\<^sup>2)"
+    proof (intro AE_I2)
+      fix \<omega>
+      have le: "(X (min n (T \<omega>)) \<omega>)\<^sup>2 \<le> (\<Sum>j\<le>n. (X j \<omega>)\<^sup>2)"
+        by (intro member_le_sum) auto
+      have nn: "0 \<le> (\<Sum>j\<le>n. (X j \<omega>)\<^sup>2)"
+        by (intro sum_nonneg) auto
+      show "norm ((stopped T X n \<omega>)\<^sup>2) \<le> norm (\<Sum>j\<le>n. (X j \<omega>)\<^sup>2)"
+        using le nn by (simp add: stopped_def)
+    qed
+  qed
+qed
+
+lemma sq_int_martingale_stopped: "sq_int_martingale M F (stopped T X)"
+proof -
+  have parent: "nat_sigma_finite_filtered_measure M F"
+    by unfold_locales
+  show ?thesis
+    by (intro sq_int_martingale.intro[OF parent]
+        sq_int_martingale_axioms.intro martingale_stopped stopped_sq_integrable)
+qed
+
+text \<open>The stopped Dynkin identity.\<close>
+
+theorem stopped_expectation_sq_qvar:
+  "(\<integral>\<omega>. (X (min n (T \<omega>)) \<omega>)\<^sup>2 \<partial>M)
+     = (\<integral>\<omega>. (X 0 \<omega>)\<^sup>2 \<partial>M)
+       + (\<integral>\<omega>. qvar X (min n (T \<omega>)) \<omega> \<partial>M)"
+proof -
+  have eq1: "(\<lambda>\<omega>. (stopped T X n \<omega>)\<^sup>2)
+      = (\<lambda>\<omega>. (X (min n (T \<omega>)) \<omega>)\<^sup>2)"
+    by (simp add: stopped_def)
+  have eq2: "qvar (stopped T X) n = (\<lambda>\<omega>. qvar X (min n (T \<omega>)) \<omega>)"
+    by (simp add: fun_eq_iff qvar_stopped)
+  have "(\<integral>\<omega>. (stopped T X n \<omega>)\<^sup>2 \<partial>M)
+      = (\<integral>\<omega>. (stopped T X 0 \<omega>)\<^sup>2 \<partial>M)
+        + (\<integral>\<omega>. qvar (stopped T X) n \<omega> \<partial>M)"
+    by (rule sq_int_martingale.expectation_sq_qvar[OF sq_int_martingale_stopped])
+  then show ?thesis
+    unfolding eq1 eq2 by simp
 qed
 
 end

@@ -41,34 +41,13 @@ lemma Bcont_mod: "modification bm_coord Bcont"
 lemma Bcont_cont: "continuous_on {0..} (\<lambda>t. Bcont t \<omega>)"
   using Bcont_ex by simp
 
-lemma Bcont_source: "proc_source Bcont = wiener_pre"
-  using modificationD(1)[OF Bcont_mod]
-  by (auto simp: compatible_source)
-
-lemma Bcont_target: "sets (proc_target Bcont) = sets (borel :: real measure)"
-  using modificationD(1)[OF Bcont_mod] compatible_target by fastforce
-
 lemma Bcont_meas: "process Bcont u \<in> wiener_pre \<rightarrow>\<^sub>M (borel :: real measure)"
-proof -
-  have "process Bcont u \<in> proc_source Bcont \<rightarrow>\<^sub>M proc_target Bcont"
-    by (rule stochastic_process_measurable)
-  then show ?thesis
-    using Bcont_source
-    by (simp add: measurable_cong_sets[OF refl Bcont_target])
-qed
+  by (rule modification_bm_coord(2)[OF Bcont_mod])
 
 lemma Bcont_coord:
   assumes u: "u \<in> {0..}"
   shows "AE \<omega> in wiener_pre. Bcont u \<omega> = \<omega> u"
-proof -
-  have "AE \<omega> in proc_source bm_coord.
-      process bm_coord u \<omega> = process Bcont u \<omega>"
-    using u by (intro modificationD(2)[OF Bcont_mod]) simp
-  then have "AE \<omega> in wiener_pre. process bm_coord u \<omega> = process Bcont u \<omega>"
-    unfolding source_bm_coord .
-  then show ?thesis
-    by (simp add: process_bm_coord[OF u] eq_commute)
-qed
+  by (rule modification_bm_coord(3)[OF Bcont_mod u])
 
 section \<open>The continuous state process\<close>
 
@@ -136,68 +115,6 @@ proof (rule martingale_of_modification_vec[where X = "bmX x0"])
       AE \<omega> in (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
         cbmX x0 u \<omega> = bmX x0 u \<omega>"
     by (intro cbmX_ae_eq) simp
-qed
-
-section \<open>The compensated square is a martingale for the same filtration\<close>
-
-text \<open>The market locales need both the state process and its compensated
-  square to be martingales for one filtration, namely the natural filtration
-  of the continuous process.  This is what the general transfer theorem
-  provides; adaptedness of the compensated square to that filtration holds
-  because it is a continuous function of the state.\<close>
-
-theorem martingale_cbmX_square:
-  fixes x0 :: "real^'n::finite"
-  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-    (natural_filtration bm_paths 0 (cbmX x0)) 0
-    (\<lambda>t \<omega>. cbmX x0 t \<omega> \<bullet> cbmX x0 t \<omega>
-      - set_lebesgue_integral lborel {0..t}
-          (\<lambda>s. trace (mat 1 :: real^'n^'n)))"
-proof -
-  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?F = "natural_filtration ?M 0 (cbmX x0)"
-  let ?c = "\<lambda>t. set_lebesgue_integral lborel {0..t}
-    (\<lambda>s. trace (mat 1 :: real^'n^'n))"
-  let ?Z = "\<lambda>t \<omega>. bmX x0 t \<omega> \<bullet> bmX x0 t \<omega> - ?c t"
-  let ?Z' = "\<lambda>t \<omega>. cbmX x0 t \<omega> \<bullet> cbmX x0 t \<omega> - ?c t"
-  have measZ': "?Z' u \<in> borel_measurable ?M" for u
-    by (intro borel_measurable_diff borel_measurable_const
-        borel_measurable_inner measurable_cbmX)
-  have aeZ: "AE \<omega> in ?M. ?Z' u \<omega> = ?Z u \<omega>" if u: "0 \<le> u" for u
-  proof -
-    have "AE \<omega> in ?M. cbmX x0 u \<omega> = bmX x0 u \<omega>"
-      using u by (intro cbmX_ae_eq) simp
-    then show ?thesis by eventually_elim simp
-  qed
-  have adaptZ': "adapted_process ?M ?F 0 ?Z'"
-  proof (rule adapted_of_natural_filtration
-      [where f = "\<lambda>u y. y \<bullet> y - ?c u"])
-    show "\<And>u. 0 \<le> u \<Longrightarrow> cbmX x0 u \<in> borel_measurable ?M"
-      by (rule measurable_cbmX)
-    show "\<And>u. (\<lambda>y :: real^'n. y \<bullet> y - ?c u)
-        \<in> borel_measurable borel"
-      by (intro borel_measurable_diff borel_measurable_const
-          borel_measurable_inner) auto
-  qed
-  show ?thesis
-  proof (rule martingale_of_modification_gen[where X = "bmX x0" and Y = ?Z])
-    show "prob_space ?M"
-      by simp
-    show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0 ?Z"
-      by (rule martingale_bm_square)
-    show "\<And>u. 0 \<le> u \<Longrightarrow> bmX x0 u \<in> borel_measurable ?M"
-      by (intro measurable_bmX) simp
-    show "\<And>u. 0 \<le> u \<Longrightarrow> cbmX x0 u \<in> borel_measurable ?M"
-      by (rule measurable_cbmX)
-    show "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in ?M. cbmX x0 u \<omega> = bmX x0 u \<omega>"
-      by (intro cbmX_ae_eq) simp
-    show "\<And>u. 0 \<le> u \<Longrightarrow> ?Z' u \<in> borel_measurable ?M"
-      by (rule measZ')
-    show "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in ?M. ?Z' u \<omega> = ?Z u \<omega>"
-      by (rule aeZ)
-    show "adapted_process ?M ?F 0 ?Z'"
-      by (rule adaptZ')
-  qed
 qed
 
 section \<open>Path continuity\<close>
@@ -275,6 +192,40 @@ proof -
   qed
 qed
 
+
+section \<open>The compensated square is a martingale for the same filtration\<close>
+
+text \<open>The market locales need both the state process and its compensated
+  square to be martingales for one filtration, namely the natural filtration
+  of the continuous process.  The compensated square of the norm is the sum
+  of the compensated coordinate squares above, a bounded linear image of the
+  vector of them.\<close>
+
+theorem martingale_cbmX_square:
+  fixes x0 :: "real^'n::finite"
+  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+    (natural_filtration bm_paths 0 (cbmX x0)) 0
+    (\<lambda>t \<omega>. cbmX x0 t \<omega> \<bullet> cbmX x0 t \<omega>
+      - set_lebesgue_integral lborel {0..t}
+          (\<lambda>s. trace (mat 1 :: real^'n^'n)))"
+proof -
+  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
+  let ?F = "natural_filtration ?M 0 (cbmX x0)"
+  let ?V = "\<lambda>t \<omega>. \<chi> i. (cbmX x0 t \<omega> $ i)\<^sup>2
+    - set_lebesgue_integral lborel {0..t} (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i)"
+  have c: "set_lebesgue_integral lborel {0..u} (\<lambda>s. c) = u * c"
+    if "0 \<le> u" for u c :: real
+    using that by (simp add: set_integral_const)
+  have "martingale ?M ?F 0 ?V"
+    by (rule martingale_vecI) (unfold vec_lambda_beta, rule martingale_cbm_coord_square)
+  then have "martingale ?M ?F 0 (\<lambda>t \<omega>. \<Sum>i\<in>UNIV. ?V t \<omega> $ i)"
+    by (rule martingale_bounded_linear_image[where T = "\<lambda>v :: real^'n. \<Sum>i\<in>UNIV. v $ i",
+          rotated]) (intro bounded_linear_sum bounded_linear_vec_nth)
+  then show ?thesis
+    by (rule martingale_cong_ge)
+      (simp add: fun_eq_iff c inner_vec_def power2_eq_square sum_subtractf
+        sum_distrib_left trace_def)
+qed
 
 (*<*)
 end

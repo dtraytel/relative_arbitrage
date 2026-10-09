@@ -161,23 +161,13 @@ proof -
         \<in> borel_measurable ?M"
       using s st
       by (intro borel_measurable_diff measurable_bm_coordinate) auto
-    have "BMP.indep_sets (case_bool (sets ?F) (sets ?V)) UNIV"
-      using base unfolding BMP.indep_set_def .
-    then have "BMP.indep_sets (case_bool
-        (sigma_sets (space ?M)
-          {(indicator A :: _ \<Rightarrow> real) -` B \<inter> space ?M |B. B \<in> sets borel})
-        (sigma_sets (space ?M)
-          {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B \<inter> space ?M
-            |B. B \<in> sets borel})) UNIV"
-      by (rule BMP.indep_sets_mono_sets)
-        (auto split: bool.split simp: L R)
-    then show "BMP.indep_set
+    show "BMP.indep_set
         (sigma_sets (space ?M)
           {(indicator A :: _ \<Rightarrow> real) -` B \<inter> space ?M |B. B \<in> sets borel})
         (sigma_sets (space ?M)
           {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B \<inter> space ?M
             |B. B \<in> sets borel})"
-      unfolding BMP.indep_set_def .
+      by (rule BMP.indep_set_mono[OF base L R])
   qed
 qed
 
@@ -300,24 +290,19 @@ proof -
     by unfold_locales (intro measurable_bmX, simp)
   have fm: "finite_measure ?M"
     by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
-  have sfs: "sigma_finite_subalgebra ?M (?F i)" for i
-    by (intro finite_measure_subalgebra_is_sigma_finite
-        finite_measure_subalgebra.intro
-        finite_measure_subalgebra_axioms.intro
-        fm SP.subalgebra_natural_filtration)
+  interpret FF: finite_filtered_measure ?M ?F 0
+    by (rule SP.finite_filtered_measure_natural_filtration[OF fm])
   show ?thesis
   proof (intro martingale.intro martingale_axioms.intro)
     show "sigma_finite_filtered_measure ?M ?F 0"
-      by (intro sigma_finite_filtered_measure.intro
-          sigma_finite_filtered_measure_axioms.intro
-          SP.filtered_measure_natural_filtration sfs)
+      by (rule FF.sigma_finite_filtered_measure_axioms)
     show "adapted_process ?M ?F 0 (bmX x0)"
       by (rule SP.adapted_process_natural_filtration)
     show "\<And>i. 0 \<le> i \<Longrightarrow> integrable ?M (bmX x0 i)"
       by (rule bmX_integrable)
     fix i j :: real assume ij: "0 \<le> i" "i \<le> j"
     interpret S: sigma_finite_subalgebra ?M "?F i"
-      by (rule sfs)
+      using ij by (intro FF.sigma_finite_subalgebra_F) simp
     show "AE \<xi> in ?M. bmX x0 i \<xi> = cond_exp ?M (?F i) (bmX x0 j) \<xi>"
       by (rule S.has_cond_exp_charact(2)
           [OF bmX_has_cond_exp[OF ij], THEN AE_symmetric])
@@ -415,21 +400,12 @@ proof -
         \<in> borel_measurable ?M"
       using s st
       by (intro borel_measurable_diff measurable_bm_coordinate) auto
-    have "BMP.indep_sets (case_bool (sets ?F) (sets ?V)) UNIV"
-      using base unfolding BMP.indep_set_def .
-    then have "BMP.indep_sets (case_bool
-        (sigma_sets (space ?M) {g -` B \<inter> space ?M |B. B \<in> sets borel})
-        (sigma_sets (space ?M)
-          {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B \<inter> space ?M
-            |B. B \<in> sets borel})) UNIV"
-      by (rule BMP.indep_sets_mono_sets)
-        (auto split: bool.split simp: L R)
-    then show "BMP.indep_set
+    show "BMP.indep_set
         (sigma_sets (space ?M) {g -` B \<inter> space ?M |B. B \<in> sets borel})
         (sigma_sets (space ?M)
           {(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<omega> i t - \<omega> i s) -` B \<inter> space ?M
             |B. B \<in> sets borel})"
-      unfolding BMP.indep_set_def .
+      by (rule BMP.indep_set_mono[OF base L R])
   qed
 qed
 
@@ -810,17 +786,8 @@ proof -
     by (rule SP.adapted_process_natural_filtration)
   have fm: "finite_measure ?M"
     by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
-  have sfs: "sigma_finite_subalgebra ?M (?F i)" for i
-    by (intro finite_measure_subalgebra_is_sigma_finite
-        finite_measure_subalgebra.intro
-        finite_measure_subalgebra_axioms.intro
-        fm SP.subalgebra_natural_filtration)
-  have sff: "sigma_finite_filtered_measure ?M ?F 0"
-    by (intro sigma_finite_filtered_measure.intro
-        sigma_finite_filtered_measure_axioms.intro
-        SP.filtered_measure_natural_filtration sfs)
-  interpret SFF: sigma_finite_filtered_measure ?M ?F 0
-    by (rule sff)
+  interpret SFF: finite_filtered_measure ?M ?F 0
+    by (rule SP.finite_filtered_measure_natural_filtration[OF fm])
   have Zmeas: "?Z u \<in> borel_measurable (?F u)" if u: "0 \<le> u" for u
   proof -
     have X_F: "bmX x0 u \<in> borel_measurable (?F u)"
@@ -934,17 +901,8 @@ proof -
     by (rule SP.adapted_process_natural_filtration)
   have fm: "finite_measure ?M"
     by (rule finite_measureI) (simp add: BMP.emeasure_space_1)
-  have sfs: "sigma_finite_subalgebra ?M (?F j)" for j
-    by (intro finite_measure_subalgebra_is_sigma_finite
-        finite_measure_subalgebra.intro
-        finite_measure_subalgebra_axioms.intro
-        fm SP.subalgebra_natural_filtration)
-  have sff: "sigma_finite_filtered_measure ?M ?F 0"
-    by (intro sigma_finite_filtered_measure.intro
-        sigma_finite_filtered_measure_axioms.intro
-        SP.filtered_measure_natural_filtration sfs)
-  interpret SFF: sigma_finite_filtered_measure ?M ?F 0
-    by (rule sff)
+  interpret SFF: finite_filtered_measure ?M ?F 0
+    by (rule SP.finite_filtered_measure_natural_filtration[OF fm])
   have coord: "bmX x0 w \<omega> $ i = x0 $ i + \<omega> i w" for w \<omega>
     by (simp add: bmX_def)
   have Zmeas: "?Z u \<in> borel_measurable (?F u)" if u: "0 \<le> u" for u

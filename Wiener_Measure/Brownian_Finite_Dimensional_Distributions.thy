@@ -487,46 +487,15 @@ proof -
     define A' where "A' s = (if s \<in> J then A s else (UNIV :: real set))" for s
     have A'H: "\<And>s. s \<in> H \<Longrightarrow> A' s \<in> sets borel"
       using A by (auto simp: A'_def)
-    have space_H: "space (bm_fdd H) = space (Pi\<^sub>M H (\<lambda>_. (borel :: real measure)))"
-      by (rule space_bm_fdd)
     have restr_pre: "(\<lambda>f. restrict f J) -` Pi\<^sub>E J A \<inter> space (bm_fdd H)
         = Pi\<^sub>E H A'"
-    proof (intro equalityI subsetI)
-      fix f assume "f \<in> (\<lambda>f. restrict f J) -` Pi\<^sub>E J A \<inter> space (bm_fdd H)"
-      then have f: "restrict f J \<in> Pi\<^sub>E J A"
-        and fsp: "f \<in> Pi\<^sub>E H (\<lambda>_. UNIV :: real set)"
-        by (auto simp: space_H space_PiM)
-      have "f s \<in> A' s" if sH: "s \<in> H" for s
-      proof (cases "s \<in> J")
-        case True
-        then have "restrict f J s \<in> A s"
-          using f by (auto simp: PiE_iff)
-        then show ?thesis using True by (simp add: A'_def)
-      next
-        case False
-        then show ?thesis by (simp add: A'_def)
-      qed
-      with fsp show "f \<in> Pi\<^sub>E H A'"
-        by (auto simp: PiE_iff)
-    next
-      fix f assume fH: "f \<in> Pi\<^sub>E H A'"
-      then have vals: "\<And>s. s \<in> H \<Longrightarrow> f s \<in> A' s"
-        by (auto simp: PiE_iff)
-      have "restrict f J \<in> Pi\<^sub>E J A"
-      proof (rule PiE_I)
-        fix s assume sJ: "s \<in> J"
-        have "f s \<in> A' s" using vals JH sJ by blast
-        then show "restrict f J s \<in> A s"
-          using sJ by (simp add: A'_def)
-      next
-        fix s assume "s \<notin> J"
-        then show "restrict f J s = undefined" by simp
-      qed
-      moreover have "f \<in> space (bm_fdd H)"
-        using fH by (auto simp: space_H space_PiM PiE_iff)
-      ultimately show "f \<in> (\<lambda>f. restrict f J) -` Pi\<^sub>E J A
-          \<inter> space (bm_fdd H)"
-        by auto
+    proof -
+      have "(\<lambda>f. restrict f J) -` Pi\<^sub>E J A \<inter> space (bm_fdd H)
+          = prod_emb H (\<lambda>_. borel :: real measure) J (Pi\<^sub>E J A)"
+        by (simp add: prod_emb_def space_bm_fdd space_PiM)
+      also have "\<dots> = Pi\<^sub>E H A'"
+        by (subst prod_emb_PiE[OF JH]) (auto intro!: PiE_cong simp: A'_def)
+      finally show ?thesis .
     qed
     have "emeasure (distr (bm_fdd H) (Pi\<^sub>M J (\<lambda>_. borel))
         (\<lambda>f. restrict f J)) (Pi\<^sub>E J A)

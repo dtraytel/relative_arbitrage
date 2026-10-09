@@ -262,51 +262,27 @@ next
   qed
 qed
 
-text \<open>The pushforward form of the convolution law.\<close>
+text \<open>The convolution law for HOL-Probability's convolution of measures
+  \<open>\<star>\<close>, the law of the sum of independent variables.\<close>
 
 lemma gauss_measure_conv:
   assumes a: "0 \<le> a" and b: "0 \<le> b"
-  shows "distr (gauss_measure a \<Otimes>\<^sub>M gauss_measure b) borel (\<lambda>(x, y). x + y)
-       = gauss_measure (a + b)"
+  shows "gauss_measure a \<star> gauss_measure b = gauss_measure (a + b)"
 proof (rule measure_eqI)
-  show "sets (distr (gauss_measure a \<Otimes>\<^sub>M gauss_measure b) borel
-      (\<lambda>(x, y). x + y)) = sets (gauss_measure (a + b))"
-    by simp
-next
-  interpret Gb: sigma_finite_measure "gauss_measure b"
-    by simp
   fix X :: "real set"
-  assume "X \<in> sets (distr (gauss_measure a \<Otimes>\<^sub>M gauss_measure b) borel
-      (\<lambda>(x, y). x + y))"
+  assume "X \<in> sets (gauss_measure a \<star> gauss_measure b)"
   then have X [measurable]: "X \<in> sets borel"
     by simp
-  have meas_add: "(\<lambda>(x, y). x + y)
-      \<in> (gauss_measure a \<Otimes>\<^sub>M gauss_measure b) \<rightarrow>\<^sub>M (borel :: real measure)"
-    by measurable
-  have pre: "(\<lambda>(x, y). x + y) -` X \<inter>
-        space (gauss_measure a \<Otimes>\<^sub>M gauss_measure b)
-      \<in> sets (gauss_measure a \<Otimes>\<^sub>M gauss_measure b)"
-    by (rule measurable_sets[OF meas_add X])
-  have "emeasure (distr (gauss_measure a \<Otimes>\<^sub>M gauss_measure b) borel
-        (\<lambda>(x, y). x + y)) X
-      = emeasure (gauss_measure a \<Otimes>\<^sub>M gauss_measure b)
-        ((\<lambda>(x, y). x + y) -` X \<inter> space (gauss_measure a \<Otimes>\<^sub>M gauss_measure b))"
-    by (rule emeasure_distr[OF meas_add X])
-  also have "\<dots> = (\<integral>\<^sup>+x. (\<integral>\<^sup>+y. indicator ((\<lambda>(x, y). x + y) -` X \<inter>
-        space (gauss_measure a \<Otimes>\<^sub>M gauss_measure b)) (x, y)
-        \<partial>gauss_measure b) \<partial>gauss_measure a)"
-    by (rule Gb.emeasure_pair_measure[OF pre])
-  also have "\<dots> = (\<integral>\<^sup>+x. (\<integral>\<^sup>+y. indicator X (x + y) \<partial>gauss_measure b)
-      \<partial>gauss_measure a)"
-    by (intro nn_integral_cong)
-      (auto simp: space_pair_measure split: split_indicator)
-  also have "\<dots> = (\<integral>\<^sup>+z. indicator X z \<partial>gauss_measure (a + b))"
-    by (rule gauss_measure_conv_nn[OF a b]) measurable
+  have "emeasure (gauss_measure a \<star> gauss_measure b) X
+      = (\<integral>\<^sup>+x. (\<integral>\<^sup>+y. indicator X (x + y) \<partial>gauss_measure b) \<partial>gauss_measure a)"
+    by (subst nn_integral_indicator[symmetric], simp,
+        intro nn_integral_convolution prob_space.finite_measure prob_space_gauss_measure)
+      simp_all
   also have "\<dots> = emeasure (gauss_measure (a + b)) X"
-    by simp
-  finally show "emeasure (distr (gauss_measure a \<Otimes>\<^sub>M gauss_measure b) borel
-      (\<lambda>(x, y). x + y)) X = emeasure (gauss_measure (a + b)) X" .
-qed
+    by (subst gauss_measure_conv_nn[OF a b]) simp_all
+  finally show "emeasure (gauss_measure a \<star> gauss_measure b) X
+      = emeasure (gauss_measure (a + b)) X" .
+qed simp
 
 
 (*<*)

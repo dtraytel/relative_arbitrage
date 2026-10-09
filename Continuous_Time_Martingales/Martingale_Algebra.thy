@@ -665,11 +665,29 @@ proof -
   qed
 qed
 
-section \<open>Mean, from a zero start\<close>
+section \<open>The mean of a martingale is constant\<close>
 
-text \<open>A martingale that starts at \<open>0\<close> has mean \<open>0\<close> at every later time; the
-  set-integral identity over the whole space is the case \<open>i = 0\<close> of the
-  martingale property.\<close>
+text \<open>The set-integral identity over the whole space is the case \<open>i = 0\<close> of
+  the martingale property.  In particular a martingale that starts at \<open>0\<close>
+  has mean \<open>0\<close> at every later time.\<close>
+
+lemma martingale_mean_const:
+  fixes M :: "'a measure"
+    and Z :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes mg: "martingale M F (0::real) Z" and u: "0 \<le> u"
+  shows "(\<integral>\<omega>. Z u \<omega> \<partial>M) = (\<integral>\<omega>. Z 0 \<omega> \<partial>M)"
+proof -
+  interpret MG: martingale M F "0::real" Z by (rule mg)
+  have top: "space M \<in> sets (F 0)"
+    using sets.top[of "F 0"] MG.subalgebras[OF order.refl] by (simp add: subalgebra_def)
+  have "(\<integral>\<omega>. Z u \<omega> \<partial>M) = set_lebesgue_integral M (space M) (Z u)"
+    by (rule set_integral_space[OF MG.integrable[OF u], symmetric])
+  also have "\<dots> = set_lebesgue_integral M (space M) (Z 0)"
+    by (rule MG.set_integral_eq[OF top order.refl u, symmetric])
+  also have "\<dots> = (\<integral>\<omega>. Z 0 \<omega> \<partial>M)"
+    by (rule set_integral_space[OF MG.integrable[OF order.refl]])
+  finally show ?thesis .
+qed
 
 lemma martingale_mean_zero_of_start:
   fixes M :: "'a measure"
@@ -679,21 +697,10 @@ lemma martingale_mean_zero_of_start:
   shows "(\<integral>\<omega>. Z u \<omega> \<partial>M) = 0"
 proof -
   interpret MG: martingale M F "0::real" Z by (rule mg)
-  have sub: "subalgebra M (F 0)" by (rule MG.subalgebras[OF order.refl])
-  have spF: "space (F 0) = space M" using sub by (simp add: subalgebra_def)
-  have top: "space M \<in> sets (F 0)" using sets.top[of "F 0"] spF by simp
-  have i0: "integrable M (Z 0)" by (rule MG.integrable[OF order.refl])
-  have iu: "integrable M (Z u)" by (rule MG.integrable[OF u])
-  have m0: "Z 0 \<in> borel_measurable M"
-    using i0 by (simp add: borel_measurable_integrable)
-  have "(\<integral>\<omega>. Z u \<omega> \<partial>M) = set_lebesgue_integral M (space M) (Z u)"
-    by (rule set_integral_space[OF iu, symmetric])
-  also have "\<dots> = set_lebesgue_integral M (space M) (Z 0)"
-    by (rule MG.set_integral_eq[OF top order.refl u, symmetric])
-  also have "\<dots> = (\<integral>\<omega>. Z 0 \<omega> \<partial>M)" by (rule set_integral_space[OF i0])
-  also have "\<dots> = (\<integral>\<omega>. 0 \<partial>M)"
-    by (rule integral_cong_AE[OF m0 borel_measurable_const z0])
-  finally show ?thesis by simp
+  have "(\<integral>\<omega>. Z 0 \<omega> \<partial>M) = (\<integral>\<omega>. 0 \<partial>M)"
+    by (rule integral_cong_AE[OF MG.random_variable[OF order.refl] borel_measurable_const z0])
+  then show ?thesis
+    using martingale_mean_const[OF mg u] by simp
 qed
 
 section \<open>A boundedness test for a martingale contracted against a factor\<close>

@@ -25,8 +25,8 @@ text \<open>
 
       E[\<open>X_n\<close>\<open>^2]\<close> = E[\<open>X_0\<close>\<open>^2]\<close> + \<open>E[[X]_n].\<close>
 
-    This is the discrete-time shape of the martingale-problem assumption
-    the quadratic Dynkin identity of \<open>Volatile_Market\<close>.\<close>
+    The stopped process and its quadratic variation are defined here; the
+    stopped Dynkin identity is in \<open>Optional_Sampling\<close>.\<close>
 section \<open>Elementary square bounds\<close>
 
 
@@ -326,12 +326,10 @@ qed
 
 end
 
-section \<open>Optional sampling\<close>
+section \<open>The stopped process\<close>
 
-text \<open>The stopped process.  A stopping time is described directly by the
-  requirement that the event of having stopped by time n lies in F n;
-  this avoids interpreting HOL-Probability's locale filtration, whose
-  constant-time lemmas would otherwise be needed.\<close>
+text \<open>The process stopped at a random time \<open>T\<close>.  Optional sampling for it,
+  with \<open>T\<close> a stopping time, is in \<open>Optional_Sampling\<close>.\<close>
 
 definition stopped ::
   "('a \<Rightarrow> nat) \<Rightarrow> (nat \<Rightarrow> 'a \<Rightarrow> real) \<Rightarrow> nat \<Rightarrow> 'a \<Rightarrow> real" where
@@ -381,240 +379,6 @@ proof -
   finally show ?thesis
     by (simp add: qvar_def)
 qed
-
-locale stopped_sq_int_martingale = sq_int_martingale M F X
-  for M :: "'a measure" and F and X :: "nat \<Rightarrow> 'a \<Rightarrow> real" +
-  fixes T :: "'a \<Rightarrow> nat"
-  assumes stopping_time_T: "\<And>n. {\<omega> \<in> space M. T \<omega> \<le> n} \<in> sets (F n)"
-begin
-
-definition Tgt :: "nat \<Rightarrow> 'a set" where
-  "Tgt n = {\<omega> \<in> space M. n < T \<omega>}"
-
-lemma Tgt_sets_F: "Tgt n \<in> sets (F n)"
-proof -
-  have eq: "Tgt n = space (F n) - {\<omega> \<in> space M. T \<omega> \<le> n}"
-    by (auto simp: Tgt_def)
-  show ?thesis
-    unfolding eq by (intro sets.compl_sets stopping_time_T)
-qed
-
-lemma Tgt_sets_M: "Tgt n \<in> sets M"
-proof -
-  have sub: "sets (F n) \<subseteq> sets M"
-    by (intro sets_F_subset) simp
-  from subsetD[OF sub Tgt_sets_F] show ?thesis .
-qed
-
-lemma ind_Tgt_measurable_F:
-  "(indicator (Tgt n) :: 'a \<Rightarrow> real) \<in> borel_measurable (F n)"
-proof -
-  have "Tgt n \<inter> space (F n) = Tgt n"
-    by (auto simp: Tgt_def)
-  then show ?thesis
-    using Tgt_sets_F[of n] by (simp add: borel_measurable_indicator_iff)
-qed
-
-lemma stopped_incr_ind:
-  assumes w: "\<omega> \<in> space M"
-  shows "stopped T X (Suc n) \<omega>
-      = stopped T X n \<omega> + indicator (Tgt n) \<omega> * (X (Suc n) \<omega> - X n \<omega>)"
-proof -
-  have "indicator (Tgt n) \<omega> * (X (Suc n) \<omega> - X n \<omega>)
-      = (if n < T \<omega> then X (Suc n) \<omega> - X n \<omega> else 0)"
-  proof (cases "n < T \<omega>")
-    case True
-    then have "\<omega> \<in> Tgt n"
-      using w by (simp add: Tgt_def)
-    with True show ?thesis by simp
-  next
-    case False
-    then have "\<omega> \<notin> Tgt n"
-      by (simp add: Tgt_def)
-    with False show ?thesis by simp
-  qed
-  also have "\<dots> = stopped T X (Suc n) \<omega> - stopped T X n \<omega>"
-    by (simp add: stopped_incr)
-  finally show ?thesis by simp
-qed
-
-subsection \<open>The stopped process is again a square-integrable martingale\<close>
-
-lemma stopped_measurable_F: "stopped T X n \<in> borel_measurable (F n)"
-proof (induction n)
-  case 0
-  show ?case
-    using X_measurable_F[of 0 0] by simp
-next
-  case (Suc n)
-  have 1: "stopped T X n \<in> borel_measurable (F (Suc n))"
-    using Suc borel_measurable_mono[of n "Suc n"] by auto
-  have 2: "(indicator (Tgt n) :: 'a \<Rightarrow> real) \<in> borel_measurable (F (Suc n))"
-    using ind_Tgt_measurable_F[of n] borel_measurable_mono[of n "Suc n"]
-    by auto
-  have 3: "X (Suc n) \<in> borel_measurable (F (Suc n))"
-    by (intro X_measurable_F) auto
-  have 4: "X n \<in> borel_measurable (F (Suc n))"
-    by (intro X_measurable_F) auto
-  have g: "(\<lambda>\<omega>. stopped T X n \<omega>
-      + indicator (Tgt n) \<omega> * (X (Suc n) \<omega> - X n \<omega>))
-      \<in> borel_measurable (F (Suc n))"
-    using 1 2 3 4 by measurable
-  show ?case
-  proof (rule iffD2[OF measurable_cong])
-    fix \<omega> assume "\<omega> \<in> space (F (Suc n))"
-    then have "\<omega> \<in> space M" by simp
-    then show "stopped T X (Suc n) \<omega>
-        = stopped T X n \<omega> + indicator (Tgt n) \<omega> * (X (Suc n) \<omega> - X n \<omega>)"
-      by (rule stopped_incr_ind)
-  next
-    show "(\<lambda>\<omega>. stopped T X n \<omega>
-        + indicator (Tgt n) \<omega> * (X (Suc n) \<omega> - X n \<omega>))
-        \<in> borel_measurable (F (Suc n))"
-      by (rule g)
-  qed
-qed
-
-lemma stopped_measurable [measurable]: "stopped T X n \<in> borel_measurable M"
-proof -
-  have "subalgebra M (F n)"
-    by (intro subalgebras) simp
-  from measurable_from_subalg[OF this stopped_measurable_F] show ?thesis .
-qed
-
-lemma stopped_integrable: "integrable M (stopped T X n)"
-proof -
-  have dom: "integrable M (\<lambda>\<omega>. \<Sum>j\<le>n. \<bar>X j \<omega>\<bar>)"
-    by (intro Bochner_Integration.integrable_sum integrable_abs X_integrable)
-  show ?thesis
-  proof (rule Bochner_Integration.integrable_bound[OF dom])
-    show "stopped T X n \<in> borel_measurable M"
-      by measurable
-    show "AE \<omega> in M. norm (stopped T X n \<omega>) \<le> norm (\<Sum>j\<le>n. \<bar>X j \<omega>\<bar>)"
-    proof (intro AE_I2)
-      fix \<omega>
-      have le: "\<bar>X (min n (T \<omega>)) \<omega>\<bar> \<le> (\<Sum>j\<le>n. \<bar>X j \<omega>\<bar>)"
-        by (intro member_le_sum) auto
-      have nn: "0 \<le> (\<Sum>j\<le>n. \<bar>X j \<omega>\<bar>)"
-        by (intro sum_nonneg) auto
-      show "norm (stopped T X n \<omega>) \<le> norm (\<Sum>j\<le>n. \<bar>X j \<omega>\<bar>)"
-        using le nn by (simp add: stopped_def)
-    qed
-  qed
-qed
-
-lemma stopped_sq_integrable: "integrable M (\<lambda>\<omega>. (stopped T X n \<omega>)\<^sup>2)"
-proof -
-  have dom: "integrable M (\<lambda>\<omega>. \<Sum>j\<le>n. (X j \<omega>)\<^sup>2)"
-    by (intro Bochner_Integration.integrable_sum sq_integrable)
-  show ?thesis
-  proof (rule Bochner_Integration.integrable_bound[OF dom])
-    show "(\<lambda>\<omega>. (stopped T X n \<omega>)\<^sup>2) \<in> borel_measurable M"
-      by measurable
-    show "AE \<omega> in M. norm ((stopped T X n \<omega>)\<^sup>2)
-        \<le> norm (\<Sum>j\<le>n. (X j \<omega>)\<^sup>2)"
-    proof (intro AE_I2)
-      fix \<omega>
-      have le: "(X (min n (T \<omega>)) \<omega>)\<^sup>2 \<le> (\<Sum>j\<le>n. (X j \<omega>)\<^sup>2)"
-        by (intro member_le_sum) auto
-      have nn: "0 \<le> (\<Sum>j\<le>n. (X j \<omega>)\<^sup>2)"
-        by (intro sum_nonneg) auto
-      show "norm ((stopped T X n \<omega>)\<^sup>2) \<le> norm (\<Sum>j\<le>n. (X j \<omega>)\<^sup>2)"
-        using le nn by (simp add: stopped_def)
-    qed
-  qed
-qed
-
-lemma stopped_incr_integrable:
-  "integrable M (\<lambda>\<omega>. indicator (Tgt n) \<omega> * (X (Suc n) \<omega> - X n \<omega>))"
-proof -
-  have "integrable M
-      (\<lambda>\<omega>. indicator (Tgt n) \<omega> *\<^sub>R (X (Suc n) \<omega> - X n \<omega>))"
-    by (intro integrable_mult_indicator Tgt_sets_M incr_integrable)
-  then show ?thesis by simp
-qed
-
-text \<open>Optional sampling for square-integrable martingales: the increment
-  of the stopped process is the increment cut off by an event of the
-  current sigma-algebra, so its conditional expectation still vanishes.\<close>
-
-theorem martingale_stopped: "martingale M F 0 (stopped T X)"
-proof (rule martingale_of_cond_exp_diff_Suc_eq_zero)
-  show "adapted_process M F 0 (stopped T X)"
-  proof (unfold_locales)
-    fix i :: nat assume "0 \<le> i"
-    show "stopped T X i \<in> borel_measurable (F i)"
-      by (rule stopped_measurable_F)
-  qed
-  show "\<And>i. integrable M (stopped T X i)"
-    by (rule stopped_integrable)
-next
-  fix i :: nat
-  have ae_eq: "AE \<omega> in M. stopped T X (Suc i) \<omega> - stopped T X i \<omega>
-      = indicator (Tgt i) \<omega> * (X (Suc i) \<omega> - X i \<omega>)"
-  proof (intro AE_I2)
-    fix \<omega> assume "\<omega> \<in> space M"
-    then show "stopped T X (Suc i) \<omega> - stopped T X i \<omega>
-        = indicator (Tgt i) \<omega> * (X (Suc i) \<omega> - X i \<omega>)"
-      using stopped_incr_ind[of \<omega> i] by simp
-  qed
-  have int1: "integrable M (\<lambda>\<omega>. stopped T X (Suc i) \<omega> - stopped T X i \<omega>)"
-    by (intro Bochner_Integration.integrable_diff stopped_integrable)
-  have cong: "AE \<omega> in M.
-      cond_exp M (F i) (\<lambda>\<omega>. stopped T X (Suc i) \<omega> - stopped T X i \<omega>) \<omega>
-      = cond_exp M (F i)
-          (\<lambda>\<omega>. indicator (Tgt i) \<omega> * (X (Suc i) \<omega> - X i \<omega>)) \<omega>"
-    by (intro cond_exp_cong_AE int1 stopped_incr_integrable ae_eq)
-  have pull: "AE \<omega> in M.
-      cond_exp M (F i) (\<lambda>\<omega>. indicator (Tgt i) \<omega>
-          * (X (Suc i) \<omega> - X i \<omega>)) \<omega>
-      = indicator (Tgt i) \<omega>
-          * cond_exp M (F i) (\<lambda>\<omega>. X (Suc i) \<omega> - X i \<omega>) \<omega>"
-    by (intro cond_exp_measurable_mult(2) stopped_incr_integrable
-        incr_integrable ind_Tgt_measurable_F)
-  have zero: "AE \<omega> in M.
-      cond_exp M (F i) (\<lambda>\<omega>. X (Suc i) \<omega> - X i \<omega>) \<omega> = 0"
-    by (rule Mg.cond_exp_diff_eq_zero) auto
-  from cong pull zero
-  show "AE \<omega> in M. cond_exp M (F i)
-      (\<lambda>\<omega>. stopped T X (Suc i) \<omega> - stopped T X i \<omega>) \<omega> = 0"
-    by eventually_elim simp
-qed
-
-lemma sq_int_martingale_stopped: "sq_int_martingale M F (stopped T X)"
-proof -
-  have parent: "nat_sigma_finite_filtered_measure M F"
-    by unfold_locales
-  show ?thesis
-    by (intro sq_int_martingale.intro[OF parent]
-        sq_int_martingale_axioms.intro martingale_stopped stopped_sq_integrable)
-qed
-
-subsection \<open>The stopped Dynkin identity\<close>
-
-text \<open>The exact discrete-time shape of the martingale-problem assumption
-  the quadratic Dynkin identity of \<open>Volatile\_Market,\<close> now a theorem.\<close>
-
-theorem stopped_expectation_sq_qvar:
-  "(\<integral>\<omega>. (X (min n (T \<omega>)) \<omega>)\<^sup>2 \<partial>M)
-     = (\<integral>\<omega>. (X 0 \<omega>)\<^sup>2 \<partial>M)
-       + (\<integral>\<omega>. qvar X (min n (T \<omega>)) \<omega> \<partial>M)"
-proof -
-  have eq1: "(\<lambda>\<omega>. (stopped T X n \<omega>)\<^sup>2)
-      = (\<lambda>\<omega>. (X (min n (T \<omega>)) \<omega>)\<^sup>2)"
-    by (simp add: stopped_def)
-  have eq2: "qvar (stopped T X) n = (\<lambda>\<omega>. qvar X (min n (T \<omega>)) \<omega>)"
-    by (simp add: fun_eq_iff qvar_stopped)
-  have "(\<integral>\<omega>. (stopped T X n \<omega>)\<^sup>2 \<partial>M)
-      = (\<integral>\<omega>. (stopped T X 0 \<omega>)\<^sup>2 \<partial>M)
-        + (\<integral>\<omega>. qvar (stopped T X) n \<omega> \<partial>M)"
-    by (rule sq_int_martingale.expectation_sq_qvar[OF sq_int_martingale_stopped])
-  then show ?thesis
-    unfolding eq1 eq2 by simp
-qed
-
-end
-
 
 (*<*)
 end

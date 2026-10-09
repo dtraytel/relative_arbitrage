@@ -1,7 +1,7 @@
 
 (*<*)
 theory Modification_Transfer
-  imports "Martingales.Martingale"
+  imports Natural_Filtration
 begin
 
 (*>*)
@@ -26,6 +26,21 @@ text \<open>A modification agrees with the process almost surely at each fixed
   identity to the whole filtration.\<close>
 
 section \<open>Cylinder events of a process\<close>
+
+text \<open>The natural filtration of a measurable process consists of events.  This
+  needs the locale \<open>stochastic\_process,\<close> so it has to live in a theory that
+  does not import Kolmogorov-Chentsov.\<close>
+
+lemma sets_natural_filtration_subset:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b :: {second_countable_topology, banach}"
+  assumes measX: "\<And>u. 0 \<le> u \<Longrightarrow> X u \<in> borel_measurable M"
+  shows "sets (natural_filtration M 0 X i) \<subseteq> sets M"
+proof -
+  interpret SP: stochastic_process M 0 X
+    by unfold_locales (auto intro: measX)
+  show ?thesis
+    using SP.subalgebra_natural_filtration by (simp add: subalgebra_def)
+qed
 
 definition cylset ::
   "'a measure \<Rightarrow> (real \<Rightarrow> 'a \<Rightarrow> 'b :: topological_space) \<Rightarrow> real
@@ -169,45 +184,19 @@ theorem set_integral_zero_transfer:
     and A: "A \<in> sets (natural_filtration M 0 X' t)"
   shows "(\<integral>\<omega>. indicat_real A \<omega> * D' \<omega> \<partial>M) = 0"
 proof -
-  have subalg: "sets (natural_filtration M 0 Y t) \<subseteq> sets M"
-    if Y: "\<And>u. 0 \<le> u \<Longrightarrow> Y u \<in> borel_measurable M"
-    for Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b"
-  proof -
-    interpret SP: stochastic_process M 0 Y
-      by unfold_locales (auto intro: Y)
-    show ?thesis
-      using SP.subalgebra_natural_filtration by (simp add: subalgebra_def)
-  qed
-  have A_cyl: "A \<in> sigma_sets (space M) (cylset M X' t)"
-    using A X' by (simp add: sigma_sets_cylset)
-  have sets_M: "B \<in> sets M"
-    if "B \<in> sigma_sets (space M) (cylset M X' t)" for B
-  proof -
-    have "B \<in> sets (natural_filtration M 0 X' t)"
-      using that X' by (simp add: sigma_sets_cylset)
-    then show ?thesis
-      using subalg[OF X'] by (rule rev_subsetD)
-  qed
-  have int_ind: "integrable M (\<lambda>\<omega>. indicat_real C \<omega> * D' \<omega>)"
-    if C: "C \<in> sets M" for C
-  proof -
-    have "integrable M (\<lambda>\<omega>. indicat_real C \<omega> *\<^sub>R D' \<omega>)"
-      by (intro integrable_mult_indicator C D'_int)
-    then show ?thesis by simp
-  qed
-  have int_ind0: "integrable M (\<lambda>\<omega>. indicat_real C \<omega> * D \<omega>)"
-    if C: "C \<in> sets M" for C
-  proof -
-    have "integrable M (\<lambda>\<omega>. indicat_real C \<omega> *\<^sub>R D \<omega>)"
-      by (intro integrable_mult_indicator C D_int)
-    then show ?thesis by simp
-  qed
-  have space_nf: "space M \<in> sets (natural_filtration M 0 X t)"
-    using sets.top[of "natural_filtration M 0 X t"] by simp
-  show ?thesis
-    using Int_stable_cylset cylset_subset_Pow A_cyl
-  proof (induct rule: sigma_sets_induct_disjoint)
-    case (basic B)
+  interpret SP': stochastic_process M 0 X'
+    by unfold_locales (auto intro: X')
+  have [measurable]: "D \<in> borel_measurable M" "D' \<in> borel_measurable M"
+    using D_int D'_int by (simp_all add: borel_measurable_integrable)
+  have conv: "set_lebesgue_integral M C D' = (\<integral>\<omega>. indicat_real C \<omega> * D' \<omega> \<partial>M)"
+    for C
+    unfolding set_lebesgue_integral_def by simp
+  have "set_lebesgue_integral M A D' = 0"
+  proof (rule set_integral_zero_of_generator[OF SP'.subalgebra_natural_filtration D'_int
+        Int_stable_cylset cylset_subset_Pow sigma_sets_cylset[OF X', symmetric] _ _ A])
+    show "space M \<in> cylset M X' t"
+      unfolding cylset_def by (intro CollectI exI[of _ "{}"]) auto
+    fix B assume B: "B \<in> cylset M X' t"
     then obtain P where
       P: "B = space M \<inter> (\<Inter>p\<in>P. X' (fst p) -` snd p)" "finite P"
         "\<forall>p\<in>P. fst p \<in> {0..t} \<and> snd p \<in> sets borel"
@@ -217,165 +206,133 @@ proof -
       unfolding B0_def cylset_def using P(2,3) by blast
     have B0_sets: "B0 \<in> sets (natural_filtration M 0 X t)"
       using X B0_cyl by (rule cylset_in_natural_filtration)
-    have B0_M: "B0 \<in> sets M"
-      by (rule subsetD[OF subalg[OF X] B0_sets])
-    have B_M: "B \<in> sets M"
-    proof (rule sets_M)
-      show "B \<in> sigma_sets (space M) (cylset M X' t)"
-        using basic by (rule sigma_sets.Basic)
-    qed
-    have ae_ind: "AE \<omega> in M. indicat_real B \<omega> * D' \<omega>
-        = indicat_real B0 \<omega> * D \<omega>"
-    proof -
-      have "AE \<omega> in M. indicat_real B \<omega> = indicat_real B0 \<omega>"
-        unfolding P(1) B0_def
-        by (rule cylset_indicator_AE_eq[where t = t, OF ae P(2) P(3)])
-      with ae_D show ?thesis
-        by eventually_elim simp
-    qed
-    have m1: "(\<lambda>\<omega>. indicat_real B \<omega> * D' \<omega>) \<in> borel_measurable M"
-      using int_ind[OF B_M] by (rule borel_measurable_integrable)
-    have m2: "(\<lambda>\<omega>. indicat_real B0 \<omega> * D \<omega>) \<in> borel_measurable M"
-      using int_ind0[OF B0_M] by (rule borel_measurable_integrable)
-    have "(\<integral>\<omega>. indicat_real B \<omega> * D' \<omega> \<partial>M)
+    have B_sets: "B \<in> sets (natural_filtration M 0 X' t)"
+      by (rule cylset_in_natural_filtration[OF X' B])
+    have [measurable]: "B \<in> sets M"
+      by (rule subsetD[OF sets_natural_filtration_subset[OF X'] B_sets])
+    have [measurable]: "B0 \<in> sets M"
+      by (rule subsetD[OF sets_natural_filtration_subset[OF X] B0_sets])
+    have "AE \<omega> in M. indicat_real B \<omega> = indicat_real B0 \<omega>"
+      unfolding P(1) B0_def
+      by (rule cylset_indicator_AE_eq[where t = t, OF ae P(2) P(3)])
+    with ae_D have "AE \<omega> in M. indicat_real B \<omega> * D' \<omega> = indicat_real B0 \<omega> * D \<omega>"
+      by eventually_elim simp
+    then have "(\<integral>\<omega>. indicat_real B \<omega> * D' \<omega> \<partial>M)
         = (\<integral>\<omega>. indicat_real B0 \<omega> * D \<omega> \<partial>M)"
-      by (rule integral_cong_AE[OF m1 m2 ae_ind])
-    also have "\<dots> = 0"
-      by (rule zero[OF B0_sets])
-    finally show ?case .
-  next
-    case empty
-    show ?case by simp
-  next
-    case (compl B)
-    have B_M: "B \<in> sets M"
-      using compl(1) by (rule sets_M)
-    have space_M: "space M \<in> sets M"
-      by (rule sets.top)
-    have space_zero: "(\<integral>\<omega>. indicat_real (space M) \<omega> * D' \<omega> \<partial>M) = 0"
-    proof -
-      have ae_sp: "AE \<omega> in M. indicat_real (space M) \<omega> * D' \<omega>
-          = indicat_real (space M) \<omega> * D \<omega>"
-        using ae_D by eventually_elim simp
-      have s1: "(\<lambda>\<omega>. indicat_real (space M) \<omega> * D' \<omega>)
-          \<in> borel_measurable M"
-        using int_ind[OF space_M] by (rule borel_measurable_integrable)
-      have s2: "(\<lambda>\<omega>. indicat_real (space M) \<omega> * D \<omega>)
-          \<in> borel_measurable M"
-        using int_ind0[OF space_M] by (rule borel_measurable_integrable)
-      have "(\<integral>\<omega>. indicat_real (space M) \<omega> * D' \<omega> \<partial>M)
-          = (\<integral>\<omega>. indicat_real (space M) \<omega> * D \<omega> \<partial>M)"
-        by (rule integral_cong_AE[OF s1 s2 ae_sp])
-      also have "\<dots> = 0"
-        by (rule zero[OF space_nf])
-      finally show ?thesis .
-    qed
-    have "(\<integral>\<omega>. indicat_real (space M - B) \<omega> * D' \<omega> \<partial>M)
-        = (\<integral>\<omega>. indicat_real (space M) \<omega> * D' \<omega>
-            - indicat_real B \<omega> * D' \<omega> \<partial>M)"
-      by (intro Bochner_Integration.integral_cong refl)
-        (simp add: indicator_def)
-    also have "\<dots> = (\<integral>\<omega>. indicat_real (space M) \<omega> * D' \<omega> \<partial>M)
-        - (\<integral>\<omega>. indicat_real B \<omega> * D' \<omega> \<partial>M)"
-      by (intro Bochner_Integration.integral_diff int_ind space_M B_M)
-    also have "\<dots> = 0"
-      using space_zero compl(2) by simp
-    finally show ?case .
-  next
-    case (union Bs)
-    have Bs_M: "Bs i \<in> sets M" for i
-      by (rule sets_M[OF subsetD[OF union(2) rangeI]])
-    have partial: "(\<integral>\<omega>. indicat_real (\<Union>i<n. Bs i) \<omega> * D' \<omega> \<partial>M) = 0"
-      for n
-    proof -
-      have dfn: "disjoint_family_on Bs {..<n}"
-        using union(1) unfolding disjoint_family_on_def by auto
-      have ind_sum: "indicat_real (\<Union>i<n. Bs i) \<omega>
-          = (\<Sum>i<n. indicat_real (Bs i) \<omega>)" for \<omega>
-        by (intro indicator_UN_disjoint finite_lessThan dfn)
-      have "(\<integral>\<omega>. indicat_real (\<Union>i<n. Bs i) \<omega> * D' \<omega> \<partial>M)
-          = (\<integral>\<omega>. (\<Sum>i<n. indicat_real (Bs i) \<omega> * D' \<omega>) \<partial>M)"
-        by (intro Bochner_Integration.integral_cong refl)
-          (simp add: ind_sum sum_distrib_right)
-      also have "\<dots> = (\<Sum>i<n. (\<integral>\<omega>. indicat_real (Bs i) \<omega> * D' \<omega> \<partial>M))"
-        by (intro Bochner_Integration.integral_sum int_ind Bs_M)
-      also have "\<dots> = 0"
-        using union(3) by simp
-      finally show ?thesis .
-    qed
-    have UN_M: "(\<Union>i. Bs i) \<in> sets M"
-      by (rule sets.countable_UN) (intro image_subsetI Bs_M)
-    have finUN_M: "(\<Union>i<n. Bs i) \<in> sets M" for n
-      by (rule sets.finite_UN[OF finite_lessThan]) (rule Bs_M)
-    have "(\<lambda>n. (\<integral>\<omega>. indicat_real (\<Union>i<n. Bs i) \<omega> * D' \<omega> \<partial>M))
-        \<longlonglongrightarrow> (\<integral>\<omega>. indicat_real (\<Union>i. Bs i) \<omega> * D' \<omega> \<partial>M)"
-    proof (rule integral_dominated_convergence
-        [where w = "\<lambda>\<omega>. \<bar>D' \<omega>\<bar>"])
-      show "integrable M (\<lambda>\<omega>. \<bar>D' \<omega>\<bar>)"
-        by (intro integrable_abs D'_int)
-      show "(\<lambda>\<omega>. indicat_real (\<Union>i. Bs i) \<omega> * D' \<omega>) \<in> borel_measurable M"
-        using int_ind[OF UN_M] by (rule borel_measurable_integrable)
-      show "(\<lambda>\<omega>. indicat_real (\<Union>i<n. Bs i) \<omega> * D' \<omega>)
-          \<in> borel_measurable M" for n
-        using int_ind[OF finUN_M] by (rule borel_measurable_integrable)
-      show "AE \<omega> in M. (\<lambda>n. indicat_real (\<Union>i<n. Bs i) \<omega> * D' \<omega>)
-          \<longlonglongrightarrow> indicat_real (\<Union>i. Bs i) \<omega> * D' \<omega>"
-      proof (intro AE_I2)
-        fix \<omega>
-        show "(\<lambda>n. indicat_real (\<Union>i<n. Bs i) \<omega> * D' \<omega>)
-            \<longlonglongrightarrow> indicat_real (\<Union>i. Bs i) \<omega> * D' \<omega>"
-        proof (cases "\<omega> \<in> (\<Union>i. Bs i)")
-          case True
-          then obtain i0 where i0: "\<omega> \<in> Bs i0" by blast
-          have ev: "\<forall>\<^sub>F n in sequentially.
-              indicat_real (\<Union>i<n. Bs i) \<omega> * D' \<omega>
-                = indicat_real (\<Union>i. Bs i) \<omega> * D' \<omega>"
-          proof (intro eventually_sequentiallyI[of "Suc i0"])
-            fix n assume "Suc i0 \<le> n"
-            then have "\<omega> \<in> (\<Union>i<n. Bs i)"
-              using i0 by auto
-            moreover have "\<omega> \<in> (\<Union>i. Bs i)"
-              using i0 by blast
-            ultimately show "indicat_real (\<Union>i<n. Bs i) \<omega> * D' \<omega>
-                = indicat_real (\<Union>i. Bs i) \<omega> * D' \<omega>"
-              by simp
-          qed
-          show ?thesis
-            by (rule tendsto_eventually[OF ev])
-        next
-          case False
-          have z1: "indicat_real (\<Union>i<n. Bs i) \<omega> = 0" for n
-            using False by auto
-          have z2: "indicat_real (\<Union>i. Bs i) \<omega> = 0"
-            using False by simp
-          show ?thesis
-            by (simp add: z1 z2)
-        qed
-      qed
-      show "AE \<omega> in M. norm (indicat_real (\<Union>i<n. Bs i) \<omega> * D' \<omega>)
-          \<le> \<bar>D' \<omega>\<bar>" for n
-        by (intro AE_I2) (simp add: indicator_def)
-    qed
-    then have "(\<lambda>n. 0 :: real)
-        \<longlonglongrightarrow> (\<integral>\<omega>. indicat_real (\<Union>i. Bs i) \<omega> * D' \<omega> \<partial>M)"
-      unfolding partial .
-    then show ?case
-      by (simp add: LIMSEQ_const_iff)
+      by (intro integral_cong_AE) measurable
+    then show "set_lebesgue_integral M B D' = 0"
+      unfolding conv using zero[OF B0_sets] by simp
   qed
+  then show ?thesis
+    unfolding conv .
 qed
 
 section \<open>The martingale property transfers to the modification\<close>
 
-text \<open>Real-valued case, which is what the process form of the martingale
-  problem needs.  For a vector-valued process the set-integral identity is
-  obtained componentwise from this one.\<close>
+text \<open>The market locales require a single filtration for both the state
+  process and its compensated square, so here the process generating the
+  filtration (\<open>X\<close> to \<open>X'\<close>) and the martingale (\<open>Y\<close> to \<open>Y'\<close>) are transferred
+  separately.  Adaptedness of the new martingale to the new filtration is
+  assumed, since it does not transfer for free; in the applications \<open>Y'\<close> is a
+  continuous function of \<open>X'\<close>.  The martingale takes values in any Euclidean
+  space: the increments in \<open>set_integral_zero_transfer\<close> are real-valued, so
+  the transfer is done for the inner product of the increment with each vector.\<close>
 
-section \<open>The vector-valued case, componentwise\<close>
+theorem martingale_of_modification_gen:
+  fixes X X' :: "real \<Rightarrow> 'a \<Rightarrow> 'b :: {second_countable_topology, banach}"
+    and Y Y' :: "real \<Rightarrow> 'a \<Rightarrow> 'c :: euclidean_space"
+  assumes PS: "prob_space M"
+    and mg: "martingale M (natural_filtration M 0 X) 0 Y"
+    and measX: "\<And>u. 0 \<le> u \<Longrightarrow> X u \<in> borel_measurable M"
+    and meas': "\<And>u. 0 \<le> u \<Longrightarrow> X' u \<in> borel_measurable M"
+    and aeX: "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in M. X' u \<omega> = X u \<omega>"
+    and measY': "\<And>u. 0 \<le> u \<Longrightarrow> Y' u \<in> borel_measurable M"
+    and aeY: "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in M. Y' u \<omega> = Y u \<omega>"
+    and adaptedY': "adapted_process M (natural_filtration M 0 X') 0 Y'"
+  shows "martingale M (natural_filtration M 0 X') 0 Y'"
+proof -
+  interpret Mg: martingale M "natural_filtration M 0 X" 0 Y
+    by (rule mg)
+  interpret SP': stochastic_process M 0 X'
+    by unfold_locales (auto intro: meas')
+  have fm: "finite_measure M"
+    by (rule finite_measureI) (simp add: prob_space.emeasure_space_1[OF PS])
+  interpret SFF: finite_filtered_measure M "natural_filtration M 0 X'" 0
+    by (rule SP'.finite_filtered_measure_natural_filtration[OF fm])
+  have int': "integrable M (Y' i)" if i: "0 \<le> i" for i
+  proof -
+    have "integrable M (Y' i) \<longleftrightarrow> integrable M (Y i)"
+      by (intro integrable_cong_AE measY'[OF i] Mg.random_variable[OF i] aeY[OF i])
+    then show ?thesis
+      using Mg.integrable[OF i] by simp
+  qed
+  show ?thesis
+  proof (rule SFF.martingale_of_set_integral_eq)
+    show "adapted_process M (natural_filtration M 0 X') 0 Y'"
+      by (rule adaptedY')
+    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable M (Y' i)"
+      by (rule int')
+    fix A and i j :: real
+    assume i: "0 \<le> i" and ij: "i \<le> j"
+      and A: "A \<in> sets (natural_filtration M 0 X' i)"
+    have j: "0 \<le> j" using i ij by simp
+    have sdiff: "(\<integral>\<omega>. indicat_real C \<omega> * ((V j \<omega> - V i \<omega>) \<bullet> b) \<partial>M)
+        = (set_lebesgue_integral M C (V j) - set_lebesgue_integral M C (V i)) \<bullet> b"
+      if Vj: "set_integrable M C (V j)" and Vi: "set_integrable M C (V i)"
+      for C b and V :: "real \<Rightarrow> 'a \<Rightarrow> 'c"
+    proof -
+      have "(\<integral>\<omega>. indicat_real C \<omega> * ((V j \<omega> - V i \<omega>) \<bullet> b) \<partial>M)
+          = (\<integral>\<omega>. (indicat_real C \<omega> *\<^sub>R (V j \<omega> - V i \<omega>)) \<bullet> b \<partial>M)"
+        by (intro Bochner_Integration.integral_cong refl) simp
+      also have "\<dots> = set_lebesgue_integral M C (\<lambda>\<omega>. V j \<omega> - V i \<omega>) \<bullet> b"
+        unfolding set_lebesgue_integral_def
+        by (rule integral_inner_left)
+          (use set_integral_diff(1)[OF Vj Vi] in \<open>simp add: set_integrable_def\<close>)
+      finally show ?thesis
+        using set_integral_diff(2)[OF Vj Vi] by simp
+    qed
+    have A_M: "A \<in> sets M"
+      by (rule subsetD[OF sets_natural_filtration_subset[OF meas'] A])
+    have si: "set_integrable M A (Y' u)" if u: "0 \<le> u" for u
+      unfolding set_integrable_def by (intro integrable_mult_indicator A_M int' u)
+    have comp_zero: "(\<integral>\<omega>. indicat_real A \<omega> * ((Y' j \<omega> - Y' i \<omega>) \<bullet> b) \<partial>M) = 0"
+      for b
+    proof (rule set_integral_zero_transfer
+        [where X = X and X' = X' and t = i
+          and D = "\<lambda>\<omega>. (Y j \<omega> - Y i \<omega>) \<bullet> b"])
+      show "\<And>u. 0 \<le> u \<Longrightarrow> X u \<in> borel_measurable M"
+        by (rule measX)
+      show "\<And>u. 0 \<le> u \<Longrightarrow> X' u \<in> borel_measurable M"
+        by (rule meas')
+      show "\<And>u. u \<in> {0..i} \<Longrightarrow> AE \<omega> in M. X' u \<omega> = X u \<omega>"
+        by (intro aeX) auto
+      show "integrable M (\<lambda>\<omega>. (Y j \<omega> - Y i \<omega>) \<bullet> b)"
+        by (intro integrable_inner_left Bochner_Integration.integrable_diff
+            Mg.integrable i j)
+      show "integrable M (\<lambda>\<omega>. (Y' j \<omega> - Y' i \<omega>) \<bullet> b)"
+        by (intro integrable_inner_left Bochner_Integration.integrable_diff int' i j)
+      show "AE \<omega> in M. (Y' j \<omega> - Y' i \<omega>) \<bullet> b = (Y j \<omega> - Y i \<omega>) \<bullet> b"
+        using aeY[OF i] aeY[OF j] by eventually_elim simp
+      show "A \<in> sets (natural_filtration M 0 X' i)"
+        by (rule A)
+      fix B assume B: "B \<in> sets (natural_filtration M 0 X i)"
+      have B_M: "B \<in> sets M"
+        by (rule subsetD[OF sets_natural_filtration_subset[OF measX] B])
+      have sB: "set_integrable M B (Y u)" if u: "0 \<le> u" for u
+        unfolding set_integrable_def by (intro integrable_mult_indicator B_M Mg.integrable u)
+      show "(\<integral>\<omega>. indicat_real B \<omega> * ((Y j \<omega> - Y i \<omega>) \<bullet> b) \<partial>M) = 0"
+        using sdiff[OF sB[OF j] sB[OF i]] Mg.set_integral_eq[OF B i ij] by simp
+    qed
+    have "(set_lebesgue_integral M A (Y' j) - set_lebesgue_integral M A (Y' i))
+        \<bullet> (set_lebesgue_integral M A (Y' j) - set_lebesgue_integral M A (Y' i)) = 0"
+      using sdiff[OF si[OF j] si[OF i]] comp_zero by simp
+    then show "set_lebesgue_integral M A (Y' i) = set_lebesgue_integral M A (Y' j)"
+      by simp
+  qed
+qed
 
 text \<open>State processes commonly take values in \<open>real^'n\<close>, so the
-  transfer is needed there too.  The increments in
-  \<open>set\_integral\_zero\_transfer\<close> are real-valued and independent of the value
-  type of the process, so the vector case follows componentwise.\<close>
+  transfer is needed there too, with the process as its own martingale.\<close>
 
 theorem martingale_of_modification_vec:
   fixes X X' :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite"
@@ -389,253 +346,9 @@ proof -
     by (rule mg)
   interpret SP': stochastic_process M 0 X'
     by unfold_locales (auto intro: meas')
-  have fm: "finite_measure M"
-    by (rule finite_measureI) (simp add: prob_space.emeasure_space_1[OF PS])
-  have sfs: "sigma_finite_subalgebra M (natural_filtration M 0 X' i)" for i
-    by (intro finite_measure_subalgebra_is_sigma_finite
-        finite_measure_subalgebra.intro finite_measure_subalgebra_axioms.intro
-        fm SP'.subalgebra_natural_filtration)
-  have sff: "sigma_finite_filtered_measure M (natural_filtration M 0 X') 0"
-    by (intro sigma_finite_filtered_measure.intro
-        sigma_finite_filtered_measure_axioms.intro
-        SP'.filtered_measure_natural_filtration sfs)
-  interpret SFF: sigma_finite_filtered_measure M "natural_filtration M 0 X'" 0
-    by (rule sff)
-  have int': "integrable M (X' i)" if i: "0 \<le> i" for i
-  proof -
-    have "integrable M (X' i) \<longleftrightarrow> integrable M (X i)"
-      by (intro integrable_cong_AE meas'[OF i] Mg.random_variable[OF i] ae[OF i])
-    then show ?thesis
-      using Mg.integrable[OF i] by simp
-  qed
-  have split_diff: "(\<integral>\<omega>. indicat_real C \<omega> *\<^sub>R (Y \<omega> - Z \<omega>) \<partial>M)
-      = set_lebesgue_integral M C Y - set_lebesgue_integral M C Z"
-    if YZ: "set_integrable M C Y" "set_integrable M C Z" for C and Y :: "'a \<Rightarrow> real^'n" and Z :: "'a \<Rightarrow> real^'n"
-  proof -
-    have "(\<integral>\<omega>. indicat_real C \<omega> *\<^sub>R (Y \<omega> - Z \<omega>) \<partial>M)
-        = (\<integral>\<omega>. indicat_real C \<omega> *\<^sub>R Y \<omega>
-              - indicat_real C \<omega> *\<^sub>R Z \<omega> \<partial>M)"
-      by (intro Bochner_Integration.integral_cong refl)
-        (simp add: scaleR_right_diff_distrib)
-    also have "\<dots> = set_lebesgue_integral M C Y - set_lebesgue_integral M C Z"
-      unfolding set_lebesgue_integral_def
-      using YZ by (intro Bochner_Integration.integral_diff)
-        (simp_all add: set_integrable_def)
-    finally show ?thesis .
-  qed
   show ?thesis
-  proof (rule SFF.martingale_of_set_integral_eq)
-    show "adapted_process M (natural_filtration M 0 X') 0 X'"
-      by (rule SP'.adapted_process_natural_filtration)
-    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable M (X' i)"
-      by (rule int')
-    fix A and i j :: real
-    assume i: "0 \<le> i" and ij: "i \<le> j"
-      and A: "A \<in> sets (natural_filtration M 0 X' i)"
-    have j: "0 \<le> j" using i ij by simp
-    have A_M: "A \<in> sets M"
-    proof -
-      have "sets (natural_filtration M 0 X' i) \<subseteq> sets M"
-        using SP'.subalgebra_natural_filtration by (simp add: subalgebra_def)
-      then show ?thesis using A by blast
-    qed
-    have si: "set_integrable M A (X' u)" if u: "0 \<le> u" for u
-      unfolding set_integrable_def
-      by (intro integrable_mult_indicator A_M int' u)
-    have dA: "integrable M (\<lambda>\<omega>. indicat_real A \<omega> *\<^sub>R (X' j \<omega> - X' i \<omega>))"
-      using si[OF j] si[OF i] unfolding set_integrable_def
-      by (subst scaleR_right_diff_distrib) (rule Bochner_Integration.integrable_diff)
-    have comp_zero: "(\<integral>\<omega>. indicat_real A \<omega>
-        * ((X' j \<omega> - X' i \<omega>) $ k) \<partial>M) = 0" for k
-    proof (rule set_integral_zero_transfer
-        [where X = X and X' = X' and t = i
-          and D = "\<lambda>\<omega>. (X j \<omega> - X i \<omega>) $ k"])
-      show "\<And>u. 0 \<le> u \<Longrightarrow> X u \<in> borel_measurable M"
-        by (rule Mg.random_variable)
-      show "\<And>u. 0 \<le> u \<Longrightarrow> X' u \<in> borel_measurable M"
-        by (rule meas')
-      show "\<And>u. u \<in> {0..i} \<Longrightarrow> AE \<omega> in M. X' u \<omega> = X u \<omega>"
-        by (intro ae) auto
-      show "integrable M (\<lambda>\<omega>. (X j \<omega> - X i \<omega>) $ k)"
-        by (intro integrable_bounded_linear[OF bounded_linear_vec_nth]
-            Bochner_Integration.integrable_diff Mg.integrable i j)
-      show "integrable M (\<lambda>\<omega>. (X' j \<omega> - X' i \<omega>) $ k)"
-        by (intro integrable_bounded_linear[OF bounded_linear_vec_nth]
-            Bochner_Integration.integrable_diff int' i j)
-      show "AE \<omega> in M. (X' j \<omega> - X' i \<omega>) $ k = (X j \<omega> - X i \<omega>) $ k"
-        using ae[OF i] ae[OF j] by eventually_elim simp
-      show "A \<in> sets (natural_filtration M 0 X' i)"
-        by (rule A)
-      fix B assume B: "B \<in> sets (natural_filtration M 0 X i)"
-      have B_M: "B \<in> sets M"
-      proof -
-        have "sets (natural_filtration M 0 X i) \<subseteq> sets M"
-          using Mg.subalgebra_natural_filtration by (simp add: subalgebra_def)
-        then show ?thesis using B by blast
-      qed
-      have sB: "set_integrable M B (X u)" if u: "0 \<le> u" for u
-        unfolding set_integrable_def
-        by (intro integrable_mult_indicator B_M Mg.integrable u)
-      have dB: "integrable M (\<lambda>\<omega>. indicat_real B \<omega> *\<^sub>R (X j \<omega> - X i \<omega>))"
-        using sB[OF j] sB[OF i] unfolding set_integrable_def
-        by (subst scaleR_right_diff_distrib) (rule Bochner_Integration.integrable_diff)
-      have "(\<integral>\<omega>. indicat_real B \<omega> * ((X j \<omega> - X i \<omega>) $ k) \<partial>M)
-          = (\<integral>\<omega>. (indicat_real B \<omega> *\<^sub>R (X j \<omega> - X i \<omega>)) $ k \<partial>M)"
-        by (intro Bochner_Integration.integral_cong refl) simp
-      also have "\<dots> = (\<integral>\<omega>. indicat_real B \<omega>
-            *\<^sub>R (X j \<omega> - X i \<omega>) \<partial>M) $ k"
-        by (rule integral_bounded_linear[OF bounded_linear_vec_nth dB])
-      also have "\<dots> = 0"
-        using split_diff[OF sB[OF j] sB[OF i]] Mg.set_integral_eq[OF B i ij]
-        by simp
-      finally show "(\<integral>\<omega>. indicat_real B \<omega>
-          * ((X j \<omega> - X i \<omega>) $ k) \<partial>M) = 0" .
-    qed
-    have key: "(\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R (X' j \<omega> - X' i \<omega>) \<partial>M) = 0"
-    proof -
-      have "(\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R (X' j \<omega> - X' i \<omega>) \<partial>M) $ k = 0"
-        for k
-      proof -
-        have "(\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R (X' j \<omega> - X' i \<omega>) \<partial>M) $ k
-            = (\<integral>\<omega>. (indicat_real A \<omega> *\<^sub>R (X' j \<omega> - X' i \<omega>)) $ k \<partial>M)"
-          by (rule integral_bounded_linear
-              [OF bounded_linear_vec_nth dA, symmetric])
-        also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega>
-              * ((X' j \<omega> - X' i \<omega>) $ k) \<partial>M)"
-          by (intro Bochner_Integration.integral_cong refl) simp
-        also have "\<dots> = 0"
-          by (rule comp_zero)
-        finally show ?thesis .
-      qed
-      then show ?thesis
-        by (simp add: vec_eq_iff)
-    qed
-    show "set_lebesgue_integral M A (X' i) = set_lebesgue_integral M A (X' j)"
-      using split_diff[OF si[OF j] si[OF i]] key by simp
-  qed
-qed
-
-section \<open>Separating the filtration from the martingale\<close>
-
-text \<open>The market locales require a single filtration for both the state
-  process and its compensated square, so here the process generating the
-  filtration (\<open>X\<close> to \<open>X'\<close>) and the martingale (\<open>Y\<close> to \<open>Y'\<close>) are transferred
-  separately.  Adaptedness of the new martingale to the new filtration is
-  assumed, since it does not transfer for free; in the applications \<open>Y'\<close> is a
-  continuous function of \<open>X'\<close>.\<close>
-
-theorem martingale_of_modification_gen:
-  fixes X X' :: "real \<Rightarrow> 'a \<Rightarrow> 'b :: {second_countable_topology, banach}"
-    and Y Y' :: "real \<Rightarrow> 'a \<Rightarrow> real"
-  assumes PS: "prob_space M"
-    and mg: "martingale M (natural_filtration M 0 X) 0 Y"
-    and measX: "\<And>u. 0 \<le> u \<Longrightarrow> X u \<in> borel_measurable M"
-    and meas': "\<And>u. 0 \<le> u \<Longrightarrow> X' u \<in> borel_measurable M"
-    and aeX: "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in M. X' u \<omega> = X u \<omega>"
-    and measY': "\<And>u. 0 \<le> u \<Longrightarrow> Y' u \<in> borel_measurable M"
-    and aeY: "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in M. Y' u \<omega> = Y u \<omega>"
-    and adaptedY': "adapted_process M (natural_filtration M 0 X') 0 Y'"
-  shows "martingale M (natural_filtration M 0 X') 0 Y'"
-proof -
-  interpret Mg: martingale M "natural_filtration M 0 X" 0 Y
-    by (rule mg)
-  interpret SP: stochastic_process M 0 X
-    by unfold_locales (auto intro: measX)
-  interpret SP': stochastic_process M 0 X'
-    by unfold_locales (auto intro: meas')
-  have fm: "finite_measure M"
-    by (rule finite_measureI) (simp add: prob_space.emeasure_space_1[OF PS])
-  have sfs: "sigma_finite_subalgebra M (natural_filtration M 0 X' i)" for i
-    by (intro finite_measure_subalgebra_is_sigma_finite
-        finite_measure_subalgebra.intro finite_measure_subalgebra_axioms.intro
-        fm SP'.subalgebra_natural_filtration)
-  have sff: "sigma_finite_filtered_measure M (natural_filtration M 0 X') 0"
-    by (intro sigma_finite_filtered_measure.intro
-        sigma_finite_filtered_measure_axioms.intro
-        SP'.filtered_measure_natural_filtration sfs)
-  interpret SFF: sigma_finite_filtered_measure M "natural_filtration M 0 X'" 0
-    by (rule sff)
-  have int': "integrable M (Y' i)" if i: "0 \<le> i" for i
-  proof -
-    have "integrable M (Y' i) \<longleftrightarrow> integrable M (Y i)"
-      by (intro integrable_cong_AE measY'[OF i] Mg.random_variable[OF i] aeY[OF i])
-    then show ?thesis
-      using Mg.integrable[OF i] by simp
-  qed
-  have gconv: "set_lebesgue_integral M C V = (\<integral>\<omega>. indicat_real C \<omega> * V \<omega> \<partial>M)"
-    for C and V :: "'a \<Rightarrow> real"
-    unfolding set_lebesgue_integral_def by simp
-  have iV: "integrable M (\<lambda>\<omega>. indicat_real C \<omega> * V \<omega>)"
-    if "set_integrable M C V" for C and V :: "'a \<Rightarrow> real"
-    using that[unfolded set_integrable_def] by simp
-  have split_diff: "(\<integral>\<omega>. indicat_real C \<omega> * (V \<omega> - W \<omega>) \<partial>M)
-      = set_lebesgue_integral M C V - set_lebesgue_integral M C W"
-    if V: "set_integrable M C V" and W: "set_integrable M C W"
-    for C and V W :: "'a \<Rightarrow> real"
-  proof -
-    have "(\<integral>\<omega>. indicat_real C \<omega> * (V \<omega> - W \<omega>) \<partial>M)
-        = (\<integral>\<omega>. indicat_real C \<omega> * V \<omega>
-              - indicat_real C \<omega> * W \<omega> \<partial>M)"
-      by (intro Bochner_Integration.integral_cong refl) (simp add: algebra_simps)
-    also have "\<dots> = (\<integral>\<omega>. indicat_real C \<omega> * V \<omega> \<partial>M)
-        - (\<integral>\<omega>. indicat_real C \<omega> * W \<omega> \<partial>M)"
-      by (intro Bochner_Integration.integral_diff iV V W)
-    finally show ?thesis unfolding gconv .
-  qed
-  show ?thesis
-  proof (rule SFF.martingale_of_set_integral_eq)
-    show "adapted_process M (natural_filtration M 0 X') 0 Y'"
-      by (rule adaptedY')
-    show "\<And>i. 0 \<le> i \<Longrightarrow> integrable M (Y' i)"
-      by (rule int')
-    fix A and i j :: real
-    assume i: "0 \<le> i" and ij: "i \<le> j"
-      and A: "A \<in> sets (natural_filtration M 0 X' i)"
-    have j: "0 \<le> j" using i ij by simp
-    have A_M: "A \<in> sets M"
-    proof -
-      have "sets (natural_filtration M 0 X' i) \<subseteq> sets M"
-        using SP'.subalgebra_natural_filtration by (simp add: subalgebra_def)
-      then show ?thesis using A by blast
-    qed
-    have si: "set_integrable M A (Y' u)" if u: "0 \<le> u" for u
-      unfolding set_integrable_def
-      by (intro integrable_mult_indicator A_M int' u)
-    have key: "(\<integral>\<omega>. indicat_real A \<omega> * (Y' j \<omega> - Y' i \<omega>) \<partial>M) = 0"
-    proof (rule set_integral_zero_transfer
-        [where X = X and X' = X' and t = i
-          and D = "\<lambda>\<omega>. Y j \<omega> - Y i \<omega>"])
-      show "\<And>u. 0 \<le> u \<Longrightarrow> X u \<in> borel_measurable M"
-        by (rule measX)
-      show "\<And>u. 0 \<le> u \<Longrightarrow> X' u \<in> borel_measurable M"
-        by (rule meas')
-      show "\<And>u. u \<in> {0..i} \<Longrightarrow> AE \<omega> in M. X' u \<omega> = X u \<omega>"
-        by (intro aeX) auto
-      show "integrable M (\<lambda>\<omega>. Y j \<omega> - Y i \<omega>)"
-        by (intro Bochner_Integration.integrable_diff Mg.integrable i j)
-      show "integrable M (\<lambda>\<omega>. Y' j \<omega> - Y' i \<omega>)"
-        by (intro Bochner_Integration.integrable_diff int' i j)
-      show "AE \<omega> in M. Y' j \<omega> - Y' i \<omega> = Y j \<omega> - Y i \<omega>"
-        using aeY[OF i] aeY[OF j] by eventually_elim simp
-      show "A \<in> sets (natural_filtration M 0 X' i)"
-        by (rule A)
-      fix B assume B: "B \<in> sets (natural_filtration M 0 X i)"
-      have B_M: "B \<in> sets M"
-      proof -
-        have "sets (natural_filtration M 0 X i) \<subseteq> sets M"
-          using SP.subalgebra_natural_filtration by (simp add: subalgebra_def)
-        then show ?thesis using B by blast
-      qed
-      have sB: "set_integrable M B (Y u)" if u: "0 \<le> u" for u
-        unfolding set_integrable_def
-        by (intro integrable_mult_indicator B_M Mg.integrable u)
-      show "(\<integral>\<omega>. indicat_real B \<omega> * (Y j \<omega> - Y i \<omega>) \<partial>M) = 0"
-        using split_diff[OF sB[OF j] sB[OF i]] Mg.set_integral_eq[OF B i ij]
-        by simp
-    qed
-    show "set_lebesgue_integral M A (Y' i) = set_lebesgue_integral M A (Y' j)"
-      using split_diff[OF si[OF j] si[OF i]] key by simp
-  qed
+    by (rule martingale_of_modification_gen[OF PS mg Mg.random_variable meas' ae
+          meas' ae SP'.adapted_process_natural_filtration])
 qed
 
 text \<open>Adaptedness of a measurable function of the state to the state's own
@@ -663,20 +376,6 @@ proof -
         \<in> borel_measurable (natural_filtration M 0 X i)"
       by (rule measurable_compose[OF AP.adapted[OF i] measf])
   qed
-qed
-
-text \<open>Two more facts that need the locale \<open>stochastic\_process\<close> and therefore
-  have to live in a theory that does not import Kolmogorov-Chentsov.\<close>
-
-lemma sets_natural_filtration_subset:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b :: {second_countable_topology, banach}"
-  assumes measX: "\<And>u. 0 \<le> u \<Longrightarrow> X u \<in> borel_measurable M"
-  shows "sets (natural_filtration M 0 X i) \<subseteq> sets M"
-proof -
-  interpret SP: stochastic_process M 0 X
-    by unfold_locales (auto intro: measX)
-  show ?thesis
-    using SP.subalgebra_natural_filtration by (simp add: subalgebra_def)
 qed
 
 (*<*)
