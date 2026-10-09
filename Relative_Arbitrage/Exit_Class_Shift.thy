@@ -269,14 +269,13 @@ proof -
   also have "\<dots> = Sup (ennreal ` (vshift T ?A (x, 0) ` ?C))"
     by (simp add: image_image)
   also have "\<dots> = ennreal (Sup (vshift T ?A (x, 0) ` ?C))"
-  proof (rule ennreal_Sup_image[where B = T])
+  proof (rule ennreal_Sup[symmetric])
     show "vshift T ?A (x, 0) ` ?C \<noteq> {}"
       unfolding image_is_empty by (rule ne)
-    fix s :: real assume "s \<in> vshift T ?A (x, 0) ` ?C"
-    then obtain Q where Q: "Q \<in> ?C" and s: "s = vshift T ?A (x, 0) Q" by blast
-    have "0 \<le> s" unfolding s vshift_def by simp
-    moreover have "s \<le> T" unfolding s by (rule vshift_le[OF T probQ[OF Q]])
-    ultimately show "0 \<le> s \<and> s \<le> T" by blast
+    have "(SUP s\<in>vshift T ?A (x, 0) ` ?C. ennreal s) \<le> ennreal T"
+      by (rule SUP_least) (auto intro!: ennreal_leI vshift_le[OF T probQ])
+    then show "(SUP s\<in>vshift T ?A (x, 0) ` ?C. ennreal s) \<noteq> \<top>"
+      by (rule neq_top_trans[OF ennreal_neq_top])
   qed
   finally show ?thesis .
 qed

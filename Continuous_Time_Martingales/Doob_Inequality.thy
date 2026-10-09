@@ -67,14 +67,6 @@ begin
 sublocale P: prob_space M
   by (rule prob_space_M)
 
-lemma sets_F_M: "A \<in> sets (F n) \<Longrightarrow> A \<in> sets M"
-proof -
-  assume "A \<in> sets (F n)"
-  moreover have "sets (F n) \<subseteq> sets M"
-    by (intro sets_F_subset) simp
-  ultimately show ?thesis by blast
-qed
-
 lemma set_integrable_abs_X:
   assumes "A \<in> sets M"
   shows "set_integrable M A (\<lambda>x. \<bar>X k x\<bar>)"
@@ -88,7 +80,7 @@ lemma abs_set_integral_mono:
   shows "(LINT x:A|M. \<bar>X k x\<bar>) \<le> (LINT x:A|M. \<bar>X n x\<bar>)"
 proof -
   have AM: "A \<in> sets M"
-    using A by (rule sets_F_M)
+    using A sets_F_subset[OF le0] by blast
   have int_k: "set_integrable M A (\<lambda>x. \<bar>X k x\<bar>)"
     using AM by (rule set_integrable_abs_X)
   have int_n: "set_integrable M A (\<lambda>x. \<bar>X n x\<bar>)"
@@ -159,7 +151,7 @@ proof -
 qed
 
 lemma hits_sets_M: "hits l k \<in> sets M"
-  using hits_sets_F by (rule sets_F_M)
+  using hits_sets_F sets_F_subset[OF le0] by blast
 
 lemma hits_disjoint: "disjoint_family_on (hits l) A"
   unfolding disjoint_family_on_def
@@ -310,32 +302,10 @@ qed
 
 lemma maxabs_prod_integrable:
   "integrable M (\<lambda>\<omega>. \<bar>X n \<omega>\<bar> * maxabs X n \<omega>)"
-proof (rule Bochner_Integration.integrable_bound
-    [of _ "\<lambda>\<omega>. (X n \<omega>)\<^sup>2 + (maxabs X n \<omega>)\<^sup>2"])
-  show "integrable M (\<lambda>\<omega>. (X n \<omega>)\<^sup>2 + (maxabs X n \<omega>)\<^sup>2)"
-    by (intro Bochner_Integration.integrable_add sq_integrable
-        maxabs_sq_integrable)
-  show "(\<lambda>\<omega>. \<bar>X n \<omega>\<bar> * maxabs X n \<omega>) \<in> borel_measurable M"
-    by measurable
-  show "AE \<omega> in M. norm (\<bar>X n \<omega>\<bar> * maxabs X n \<omega>)
-      \<le> norm ((X n \<omega>)\<^sup>2 + (maxabs X n \<omega>)\<^sup>2)"
-  proof (intro AE_I2)
-    fix \<omega>
-    have nn: "0 \<le> \<bar>X n \<omega>\<bar> * maxabs X n \<omega>"
-      by (simp add: maxabs_nonneg)
-    have "\<bar>X n \<omega>\<bar> * maxabs X n \<omega>
-        \<le> 2 * (\<bar>X n \<omega>\<bar> * maxabs X n \<omega>)"
-      using nn by linarith
-    also have "\<dots> \<le> (X n \<omega>)\<^sup>2 + (maxabs X n \<omega>)\<^sup>2"
-      using sum_squares_bound[of "\<bar>X n \<omega>\<bar>" "maxabs X n \<omega>"]
-      by (simp add: mult_ac)
-    finally have "\<bar>X n \<omega>\<bar> * maxabs X n \<omega>
-        \<le> (X n \<omega>)\<^sup>2 + (maxabs X n \<omega>)\<^sup>2" .
-    with nn show "norm (\<bar>X n \<omega>\<bar> * maxabs X n \<omega>)
-        \<le> norm ((X n \<omega>)\<^sup>2 + (maxabs X n \<omega>)\<^sup>2)"
-      by simp
-  qed
-qed
+proof (rule integrable_prod_of_squares)
+  show "integrable M (\<lambda>\<omega>. \<bar>X n \<omega>\<bar>\<^sup>2)" using sq_integrable[of n] by simp
+  show "(\<lambda>\<omega>. \<bar>X n \<omega>\<bar>) \<in> borel_measurable M" by measurable
+qed (rule maxabs_sq_integrable, measurable)
 
 lemma level_set_sets: "{\<omega> \<in> space M. l \<le> maxabs X n \<omega>} \<in> sets M"
   by measurable
@@ -638,16 +608,8 @@ proof -
 qed
 
 lemma gsup_integrable: "integrable M (gsup n)"
-proof (rule Bochner_Integration.integrable_bound
-    [of _ "\<lambda>\<omega>. 1 + (gsup n \<omega>)\<^sup>2"])
-  show "integrable M (\<lambda>\<omega>. 1 + (gsup n \<omega>)\<^sup>2)"
-    by (intro Bochner_Integration.integrable_add P.integrable_const
-        gsup_sq_integrable)
-  show "gsup n \<in> borel_measurable M"
-    by measurable
-  show "AE \<omega> in M. norm (gsup n \<omega>) \<le> norm (1 + (gsup n \<omega>)\<^sup>2)"
-    using gsup_le_one_plus_sq gsup_nonneg by (intro AE_I2) simp
-qed
+  by (rule integrable_of_sq_integrable[OF P.finite_measure_axioms gsup_measurable
+        gsup_sq_integrable])
 
 lemma gsup_L2: "(\<integral>\<omega>. (gsup n \<omega>)\<^sup>2 \<partial>M) \<le> 4 * (\<integral>\<omega>. (Y u \<omega>)\<^sup>2 \<partial>M)"
 proof -

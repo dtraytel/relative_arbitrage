@@ -1007,7 +1007,7 @@ qed
 
 subsection \<open>Integrability from the \<open>L\<^sup>2\<close> bound, for members and for limits\<close>
 
-text \<open>\<open>integrable_of_sq_integrable\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+text \<open>\<open>integrable_of_sq_integrable\<close> lives in @{theory Continuous_Time_Martingales.Quadratic_Variation}.\<close>
 
 theorem qvmat_eq_A_localised:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite" and A :: "real \<Rightarrow> 'a \<Rightarrow> real^'n^'n"
@@ -1426,7 +1426,9 @@ proof (rule order.antisym)
       fix \<omega> assume "e \<le> ennreal (g \<omega>)"
       with be have "b \<le> ennreal (g \<omega>)" by simp
       with bc have "b \<le> min (ennreal (g \<omega>)) (ennreal c)" by simp
-      then show "b \<le> ennreal (min (g \<omega>) c)" by (simp add: ennreal_min_eq)
+      also have "\<dots> = ennreal (min (g \<omega>) c)"
+        by (rule min_of_mono) (rule monoI, erule ennreal_leI)
+      finally show "b \<le> ennreal (min (g \<omega>) c)" .
     qed
     then have "b \<le> ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c)"
       unfolding ess_inf_time_def by (intro Sup_upper) simp
@@ -1479,7 +1481,7 @@ qed
 
 subsection \<open>Generic integrability side conditions of the transfer theorem\<close>
 
-text \<open>\<open>bounded_measurable_integrable\<close>, \<open>clamp_integrable\<close>, \<open>tail_indicator_measurable\<close>, \<open>tail_integrable\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+text \<open>\<open>clamp_integrable\<close>, \<open>tail_indicator_measurable\<close>, \<open>tail_integrable\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 
 subsection \<open>The test functional under a pair law with an \<open>L\<^sup>2\<close> bound\<close>
@@ -1575,7 +1577,7 @@ text \<open>The martingale-level form of "pulling out what is known": the AFP's
   along it, or it is not adapted.  \<open>martingale_mult_measurable\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
-text \<open>\<open>integrable_mult_of_sq\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+text \<open>\<open>integrable_prod_of_squares\<close> lives in @{theory Continuous_Time_Martingales.Quadratic_Variation}.\<close>
 
 
 text \<open>\<open>martingale_cross_measurable\<close> lives in

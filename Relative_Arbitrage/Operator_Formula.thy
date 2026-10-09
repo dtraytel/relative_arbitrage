@@ -1065,19 +1065,8 @@ proof -
     unfolding rank1proj_def .
 qed
 
-lemma Mp_scaleR:
-  fixes M :: "real^'n::finite^'n"
-  assumes c: "c \<noteq> 0" and p: "p \<noteq> 0"
-  shows "Mp (c *\<^sub>R p) M = Mp p M"
-proof -
-  have cp: "c *\<^sub>R p \<noteq> 0"
-    using c p by simp
-  show ?thesis
-    unfolding Mp_def
-    using cp p by (simp add: rank1proj_scaleR[OF c p])
-qed
-
-text \<open>Consequently \<open>F\<close> itself is constant along the paper's sequence.\<close>
+text \<open>\<open>F\<close> is constant along the paper's sequence: the feasible set sees only
+  the direction of \<open>p\<close>.\<close>
 
 corollary ell_op_scaleR_dir:
   fixes M :: "real^'n::finite^'n"
@@ -1085,16 +1074,9 @@ corollary ell_op_scaleR_dir:
     and k: "1 \<le> k" "k < CARD('n)"
   shows "ell_op k L (c *\<^sub>R p) M = ell_op k L p M"
 proof -
-  have cp: "c *\<^sub>R p \<noteq> 0"
-    using c p by simp
-  have "ell_op k L (c *\<^sub>R p) M
-      = - (1/2) * bracket (CARD('n) - k) L (Mp (c *\<^sub>R p) M)"
-    by (rule ell_op_eq_half_bracket[OF sym cp L k(1) k(2)])
-  also have "\<dots> = - (1/2) * bracket (CARD('n) - k) L (Mp p M)"
-    using c by (simp add: Mp_scaleR[OF _ p])
-  also have "\<dots> = ell_op k L p M"
-    by (rule ell_op_eq_half_bracket[OF sym p L k(1) k(2), symmetric])
-  finally show ?thesis .
+  have "feasible k L (c *\<^sub>R p) = feasible k L p"
+    using c by (auto simp: feasible_def matrix_vector_mult_scaleR)
+  then show ?thesis unfolding ell_op_def by simp
 qed
 
 section \<open>The spectrum of \<open>M\<^sub>q\<close> when \<open>q\<close> is an eigenvector of \<open>M\<close>\<close>

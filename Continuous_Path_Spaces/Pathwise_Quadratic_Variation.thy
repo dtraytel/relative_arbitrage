@@ -450,7 +450,7 @@ proof (rule integrable_bounded[where B = "(2 * R)^4"])
   show "(\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4) \<in> borel_measurable M"
     using Xmeas[OF u] Xmeas[OF v] by simp
   show "AE \<omega> in M. \<bar>(X v \<omega> - X u \<omega>)^4\<bar> \<le> (2 * R)^4"
-    using Xinc[OF u v] by eventually_elim (rule fourth_abs_mono)
+    using Xinc[OF u v] by eventually_elim (unfold power_abs, erule power_mono[OF _ abs_ge_zero])
 qed
 
 lemma dAsq_int:
@@ -559,7 +559,7 @@ proof -
       case (elim \<omega>)
       have "\<bar>qvar (\<lambda>k. X (t k)) m \<omega> - A (t m) \<omega>\<bar> \<le> real m * (2 * R)\<^sup>2 + C * t m"
         using elim by simp
-      then show ?case by (rule sq_abs_mono)
+      then show ?case by (simp add: sq_mono_abs)
     qed
   qed
 qed

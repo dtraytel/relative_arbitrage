@@ -2,7 +2,7 @@
 (*<*)
 theory Operator_Envelopes
   imports
-    "Continuous_Time_Martingales.Integrability_Criteria" Viscosity_Definitions
+    Viscosity_Definitions
     "Semicontinuous_Analysis.Semicontinuity"
     "Symmetric_Matrix_Spectra.Householder_Rotation"
 begin
@@ -1184,8 +1184,6 @@ proof -
 qed
 
 subsection \<open>The invariances of \<open>F\<close> --- the paper's display (4.4)\<close>
-
-text \<open>\<open>cInf_mult_pos\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 
 lemma ell_op_scale:

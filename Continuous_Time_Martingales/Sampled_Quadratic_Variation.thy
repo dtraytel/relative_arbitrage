@@ -19,8 +19,7 @@ text \<open>
   square function (\<open>qvar_compensates\<close>) and the energy identity
   (\<open>expectation_sq_qvar\<close>). Transferred, they say: along any partition of a
   continuous-time martingale, the compensated square is a martingale, and the
-  second moment grows exactly by the expected sum of squared increments. The
-  latter is the second-moment input that Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> needs.\<close>
+  second moment grows exactly by the expected sum of squared increments.\<close>
 subsection \<open>The sampled process is a square-integrable discrete martingale\<close>
 
 theorem sq_int_martingale_sampled:
@@ -75,7 +74,8 @@ qed
 text \<open>
   The energy identity: along any partition, the second moment of a
   continuous-time martingale grows exactly by the expected sum of squared
-  increments. This is the second-moment input of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.
+  increments: @{thm [source] sq_int_martingale.expectation_sq_qvar} for the
+  sampled process.
 \<close>
 
 theorem expectation_sq_sampled:
@@ -86,15 +86,8 @@ theorem expectation_sq_sampled:
   shows "(\<integral>\<omega>. (X (t n) \<omega>)\<^sup>2 \<partial>M)
            = (\<integral>\<omega>. (X (t 0) \<omega>)\<^sup>2 \<partial>M)
              + (\<integral>\<omega>. (\<Sum>k<n. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2) \<partial>M)"
-proof -
-  interpret S: sq_int_martingale M "\<lambda>k. F (t k)" "\<lambda>k. X (t k)"
-    by (rule sq_int_martingale_sampled[OF X t0 tmono sq])
-  have "(\<integral>\<omega>. (X (t n) \<omega>)\<^sup>2 \<partial>M)
-          = (\<integral>\<omega>. (X (t 0) \<omega>)\<^sup>2 \<partial>M)
-            + (\<integral>\<omega>. qvar (\<lambda>k. X (t k)) n \<omega> \<partial>M)"
-    by (rule S.expectation_sq_qvar)
-  thus ?thesis by (simp add: qvar_sampled_eq)
-qed
+  using sq_int_martingale.expectation_sq_qvar[OF sq_int_martingale_sampled[OF X t0 tmono sq], of n]
+  unfolding qvar_sampled_eq .
 
 subsection \<open>The conditional increment identity\<close>
 

@@ -468,7 +468,7 @@ proof -
   interpret PR: prob_space "ibm_law :: ('n pairpath) measure"
     by (rule prob_space_ibm_law)
   interpret PP: prob_space "Q \<Otimes>\<^sub>M (ibm_law :: ('n pairpath) measure)"
-    by (rule prob_space_pair_measure[OF PQ.prob_space_axioms
+    by (rule prob_space_pair[OF PQ.prob_space_axioms
           PR.prob_space_axioms])
   show ?thesis
     unfolding iextend_def

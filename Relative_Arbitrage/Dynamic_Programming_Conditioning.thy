@@ -156,7 +156,7 @@ proof -
   have intB: "integrable P
       (\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r) $ j * fst (\<omega> (r + min u ?S)) $ i)"
     if u: "0 \<le> u" for u i j
-  proof (rule integrable_mult_of_sq)
+  proof (rule integrable_prod_of_squares)
     show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r) $ j) \<in> borel_measurable P"
       by (rule Pstart)
     show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (r + min u ?S)) $ i) \<in> borel_measurable P"
@@ -264,7 +264,7 @@ text \<open>Every condition defining the class is linear in the measure ---
   almost every \<open>\<omega>\<close>" needs only that a \<open>\<G>\<close>-measurable function all of whose
   \<open>\<G>\<close>-set integrals vanish is almost everywhere zero.\<close>
 
-text \<open>\<open>AE_nonpos_of_set_integral_zero\<close> and \<open>AE_zero_of_set_integral_zero\<close> live
+text \<open>\<open>AE_zero_of_set_integral_zero\<close> lives
   in @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
 
 subsection \<open>The conditional law of the future given the past\<close>
@@ -441,7 +441,7 @@ proof -
       fix p q :: real
       assume pq: "p \<in> \<rat>" "q \<in> \<rat>" "p \<in> {0..?S}" "q \<in> {0..?S}" "p < q"
       have "AE w in \<kappa> p'. w \<in> C p q"
-        by (rule AE_mem_of_emeasure_1[OF PK R[OF pq]])
+        by (rule prob_space.AE_prob_1[OF PK]) (simp add: measure_def R[OF pq])
       then show "AE w in \<kappa> p'.
           (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
         unfolding C_def by (auto elim: eventually_mono)
@@ -523,8 +523,10 @@ proof -
       by blast+
     have PK: "prob_space (\<kappa> p')" by (rule ksemi_sets_kernel(2)[OF KQ W])
     have sK: "sets (\<kappa> p') = sets ?Y" by (rule ksemi_sets_kernel(1)[OF KQ W])
-    have C1': "AE w in \<kappa> p'. fst (w 0) = (0 :: real^'n) \<and> snd (w 0) = 0"
-      using AE_mem_of_emeasure_1[OF PK C1] by (rule eventually_mono) simp
+    have "AE w in \<kappa> p'. w \<in> {w \<in> space ?Y. fst (w 0) = 0 \<and> snd (w 0) = 0}"
+      by (rule prob_space.AE_prob_1[OF PK]) (simp add: measure_def C1)
+    then have C1': "AE w in \<kappa> p'. fst (w 0) = (0 :: real^'n) \<and> snd (w 0) = 0"
+      by (rule eventually_mono) simp
     show ?case
       unfolding exit_class_def
       by (intro CollectI conjI PK sK C1' C2 C3 C4)

@@ -173,22 +173,6 @@ proof -
         Bochner_Integration.integrable_sum inc_integrable)
 qed
 
-theorem stopped_expectation:
-  "(\<integral>\<omega>. Y (min n (T \<omega>)) \<omega> \<partial>M) = (\<integral>\<omega>. Y 0 \<omega> \<partial>M)"
-proof -
-  have "(\<integral>\<omega>. Y (min n (T \<omega>)) \<omega> \<partial>M)
-      = (\<integral>\<omega>. Y 0 \<omega> + (\<Sum>k<n. inc k \<omega>) \<partial>M)"
-    by (intro Bochner_Integration.integral_cong refl stopped_eq_sum)
-  also have "\<dots> = (\<integral>\<omega>. Y 0 \<omega> \<partial>M) + (\<integral>\<omega>. (\<Sum>k<n. inc k \<omega>) \<partial>M)"
-    by (intro Bochner_Integration.integral_add Y_integrable
-        Bochner_Integration.integrable_sum inc_integrable)
-  also have "(\<integral>\<omega>. (\<Sum>k<n. inc k \<omega>) \<partial>M) = (\<Sum>k<n. (\<integral>\<omega>. inc k \<omega> \<partial>M))"
-    by (intro Bochner_Integration.integral_sum inc_integrable)
-  also have "\<dots> = 0"
-    by (simp add: inc_zero)
-  finally show ?thesis by simp
-qed
-
 subsection \<open>The stopped process is itself a martingale\<close>
 
 text \<open>Localising the argument above to an event of the past turns the
@@ -289,6 +273,15 @@ corollary set_stopped_expectation':
   using set_stopped_expectation[OF A mn]
   unfolding set_lebesgue_integral_def by simp
 
+theorem stopped_expectation:
+  "(\<integral>\<omega>. Y (min n (T \<omega>)) \<omega> \<partial>M) = (\<integral>\<omega>. Y 0 \<omega> \<partial>M)"
+proof -
+  have "space M \<in> sets (F 0)"
+    using sets.top[of "F 0"] subalgebras[of 0] by (simp add: subalgebra_def)
+  from set_stopped_expectation[OF this, of n] show ?thesis
+    by (simp cong: Bochner_Integration.integral_cong)
+qed
+
 end
 
 section \<open>Sampling a continuous-time martingale on a grid\<close>
@@ -305,7 +298,7 @@ proof -
     show "\<And>i :: nat. 0 \<le> i \<Longrightarrow> subalgebra M (F (t i))"
       by (intro subalgebras t_ge_0)
     show "\<And>i j :: nat. 0 \<le> i \<Longrightarrow> i \<le> j \<Longrightarrow> sets (F (t i)) \<le> sets (F (t j))"
-      by (intro sets_F_mono t_ge_0 t_mono_le)
+      by (intro sets_F_mono t_ge_0 lift_Suc_mono_le[of t, OF t_step])
   qed
   have sff: "sigma_finite_filtered_measure M (\<lambda>n. F (t n)) (0 :: nat)"
     by (intro sigma_finite_filtered_measure.intro[OF fm]
@@ -320,7 +313,7 @@ proof -
       by (intro integrable t_ge_0)
     show "\<And>i j :: nat. 0 \<le> i \<Longrightarrow> i \<le> j \<Longrightarrow>
         AE \<xi> in M. Z (t i) \<xi> = cond_exp M (F (t i)) (Z (t j)) \<xi>"
-      by (intro martingale_property t_ge_0 t_mono_le)
+      by (intro martingale_property t_ge_0 lift_Suc_mono_le[of t, OF t_step])
   qed
 qed
 
@@ -352,7 +345,7 @@ lemma Tidx_le_iff:
 proof
   assume "Tidx \<omega> \<le> n"
   then have "t (Tidx \<omega>) \<le> t n"
-    by (rule t_mono_le)
+    by (rule lift_Suc_mono_le[of t, OF t_step])
   with Tidx_ge[OF w] show "tau \<omega> \<le> t n" by simp
 next
   assume "tau \<omega> \<le> t n"
@@ -368,7 +361,7 @@ proof -
   then have "Tidx \<omega> \<le> m"
     unfolding Tidx_def by (intro Least_le) simp
   then have "t (Tidx \<omega>) \<le> t m"
-    by (rule t_mono_le)
+    by (rule lift_Suc_mono_le[of t, OF t_step])
   with m Tidx_ge[OF w] show ?thesis by simp
 qed
 
@@ -400,18 +393,6 @@ next
   moreover have "\<not> tau \<omega> \<le> t n"
     using False Tidx_le_iff[OF w] by simp
   ultimately show ?thesis by simp
-qed
-
-theorem simple_optional_sampling:
-  "(\<integral>\<omega>. Z (min (t n) (tau \<omega>)) \<omega> \<partial>M) = (\<integral>\<omega>. Z (t 0) \<omega> \<partial>M)"
-proof -
-  have "(\<integral>\<omega>. Z (min (t n) (tau \<omega>)) \<omega> \<partial>M)
-      = (\<integral>\<omega>. Z (t (min n (Tidx \<omega>))) \<omega> \<partial>M)"
-    by (intro Bochner_Integration.integral_cong refl)
-      (simp add: t_min_Tidx)
-  also have "\<dots> = (\<integral>\<omega>. Z (t 0) \<omega> \<partial>M)"
-    by (rule S.stopped_expectation)
-  finally show ?thesis .
 qed
 
 theorem simple_stopped_integrable:
@@ -446,6 +427,17 @@ proof -
     unfolding set_lebesgue_integral_def
     by (intro Bochner_Integration.integral_cong refl) (simp add: e)
   finally show ?thesis .
+qed
+
+theorem simple_optional_sampling:
+  "(\<integral>\<omega>. Z (min (t n) (tau \<omega>)) \<omega> \<partial>M) = (\<integral>\<omega>. Z (t 0) \<omega> \<partial>M)"
+proof -
+  have "space M \<in> sets (F (t 0))"
+    using sets.top[of "F (t 0)"] subalgebras[OF t_ge_0] by (simp add: subalgebra_def)
+  moreover have "min (t 0) (tau \<omega>) = t 0" if "\<omega> \<in> space M" for \<omega>
+    using t_Tidx[OF that] lift_Suc_mono_le[of t, OF t_step, of 0 "Tidx \<omega>"] by simp
+  ultimately show ?thesis using set_simple_optional_sampling[of "space M" 0 n]
+    unfolding set_lebesgue_integral_def by (simp cong: Bochner_Integration.integral_cong)
 qed
 
 end
@@ -777,62 +769,12 @@ proof -
   qed
 qed
 
-lemma dyadic_expectation: "(\<integral>\<omega>. Z (dtime n \<omega>) \<omega> \<partial>M) = (\<integral>\<omega>. Z 0 \<omega> \<partial>M)"
-proof -
-  have "(\<integral>\<omega>. Z (min (dgrid n (2 ^ n)) (dtime n \<omega>)) \<omega> \<partial>M)
-      = (\<integral>\<omega>. Z (dgrid n 0) \<omega> \<partial>M)"
-    by (rule simple_stopped_martingale.simple_optional_sampling[OF simple_dyadic])
-  then show ?thesis
-    by (simp add: min_absorb2 dtime_le_u)
-qed
-
 lemma dyadic_integrable: "integrable M (\<lambda>\<omega>. Z (dtime n \<omega>) \<omega>)"
 proof -
   have "integrable M (\<lambda>\<omega>. Z (min (dgrid n (2 ^ n)) (dtime n \<omega>)) \<omega>)"
     by (rule simple_stopped_martingale.simple_stopped_integrable[OF simple_dyadic])
   then show ?thesis
     by (simp add: min_absorb2 dtime_le_u)
-qed
-
-subsection \<open>The limit\<close>
-
-theorem optional_sampling:
-  "(\<integral>\<omega>. Z (min u (tau \<omega>)) \<omega> \<partial>M) = (\<integral>\<omega>. Z 0 \<omega> \<partial>M)"
-proof -
-  have meas: "(\<lambda>\<omega>. Z (dtime n \<omega>) \<omega>) \<in> borel_measurable M" for n
-    using dyadic_integrable[of n] by (rule borel_measurable_integrable)
-  have bound: "AE \<omega> in M. norm (Z (dtime n \<omega>) \<omega>) \<le> D \<omega>" for n
-    using Z_dom by eventually_elim (use dtime_nonneg dtime_le_u in auto)
-  have lim: "AE \<omega> in M. (\<lambda>n. Z (dtime n \<omega>) \<omega>) \<longlonglongrightarrow> Z (min u (tau \<omega>)) \<omega>"
-    using paths_cont AE_space
-  proof eventually_elim
-    case (elim \<omega>)
-    then have cont: "continuous_on {0..u} (\<lambda>s. Z s \<omega>)" and w: "\<omega> \<in> space M"
-      by auto
-    have inS: "dtime n \<omega> \<in> {0..u}" for n
-      using dtime_nonneg dtime_le_u by auto
-    have limS: "min u (tau \<omega>) \<in> {0..u}"
-      using tau_nonneg[OF w] u_pos by auto
-    have seq: "\<And>x a. a \<in> {0..u} \<Longrightarrow> (\<forall>n. x n \<in> {0..u}) \<Longrightarrow> x \<longlonglongrightarrow> a
-        \<Longrightarrow> ((\<lambda>s. Z s \<omega>) \<circ> x) \<longlonglongrightarrow> Z a \<omega>"
-      using cont unfolding continuous_on_sequentially by blast
-    have "((\<lambda>s. Z s \<omega>) \<circ> (\<lambda>n. dtime n \<omega>)) \<longlonglongrightarrow> Z (min u (tau \<omega>)) \<omega>"
-    proof (rule seq)
-      show "min u (tau \<omega>) \<in> {0..u}" by (rule limS)
-      show "\<forall>n. dtime n \<omega> \<in> {0..u}" using inS by blast
-      show "(\<lambda>n. dtime n \<omega>) \<longlonglongrightarrow> min u (tau \<omega>)"
-        by (rule dtime_tendsto[OF w])
-    qed
-    then show ?case
-      by (simp add: comp_def)
-  qed
-  have "(\<lambda>n. (\<integral>\<omega>. Z (dtime n \<omega>) \<omega> \<partial>M)) \<longlonglongrightarrow> (\<integral>\<omega>. Z (min u (tau \<omega>)) \<omega> \<partial>M)"
-    by (intro integral_dominated_convergence[where w = D]
-        stopped_measurable meas D_integrable lim bound)
-  moreover have "(\<lambda>n. (\<integral>\<omega>. Z (dtime n \<omega>) \<omega> \<partial>M)) \<longlonglongrightarrow> (\<integral>\<omega>. Z 0 \<omega> \<partial>M)"
-    by (simp add: dyadic_expectation)
-  ultimately show ?thesis
-    by (rule LIMSEQ_unique)
 qed
 
 subsection \<open>The localised limit: optional sampling over an event of the past\<close>
@@ -1034,6 +976,21 @@ proof -
     unfolding level .
   with cv show ?thesis
     by (rule LIMSEQ_unique[symmetric])
+qed
+
+text \<open>The unlocalised identity is the case \<open>v = 0\<close>, \<open>A = space M\<close>.\<close>
+
+theorem optional_sampling:
+  "(\<integral>\<omega>. Z (min u (tau \<omega>)) \<omega> \<partial>M) = (\<integral>\<omega>. Z 0 \<omega> \<partial>M)"
+proof -
+  have sp: "space M \<in> sets (F 0)"
+    using sets.top[of "F 0"] subalgebras[of 0] by (simp add: subalgebra_def)
+  have e: "Z (min 0 (tau \<omega>)) \<omega> = Z 0 \<omega>" if "\<omega> \<in> space M" for \<omega>
+    using tau_nonneg[OF that] by simp
+  have "(\<lambda>\<omega>. Z (min 0 (tau \<omega>)) \<omega>) \<in> borel_measurable M"
+    using measurable_from_subalg[OF subalgebras adapted, of 0] by (simp cong: measurable_cong add: e)
+  from set_optional_sampling[OF order_refl less_imp_le[OF u_pos] sp this] show ?thesis
+    by (simp add: e cong: Bochner_Integration.integral_cong)
 qed
 
 theorem stopped_integrable: "integrable M (\<lambda>\<omega>. Z (min u (tau \<omega>)) \<omega>)"

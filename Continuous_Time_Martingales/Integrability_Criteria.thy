@@ -1,59 +1,23 @@
-section \<open>Criteria for integrability, and two lattice helpers\<close>
+section \<open>Criteria for integrability, and a lattice helper\<close>
 
 (*<*)
 theory Integrability_Criteria
-  imports Martingale_Algebra "HOL-Probability.Probability"
+  imports Martingale_Algebra Quadratic_Variation "HOL-Probability.Probability"
 begin
 
 (*>*)
 
 text \<open>
   Small, frequently needed criteria that neither HOL-Probability nor the
-  AFP's \<open>Martingales\<close> states: when a square-integrable or boundedly
-  measurable function is integrable, when a clamped or tail-truncated one
-  is, integrability and integrals under a scalar multiple, positivity of an
+  AFP's \<open>Martingales\<close> states: when a clamped or tail-truncated function
+  is integrable, positivity of an
   integral from almost-everywhere positivity, two set integrals over
   degenerate sets, and independence read through a distribution or
   through the components of a product measure.
 
-  Two facts about \<open>ennreal\<close> suprema and about shifting and scaling an
-  infimum of reals come along, because the same arguments need them and
-  they have nowhere better to live.
+  A fact about shifting an infimum of reals comes along, because the same
+  arguments need it and it has nowhere better to live.
 \<close>
-
-lemma cInf_mult_pos:
-  fixes A :: "real set"
-  assumes c0: "0 < c" and ne: "A \<noteq> {}" and bdd: "bdd_below A"
-  shows "Inf ((\<lambda>t. c * t) ` A) = c * Inf A"
-proof -
-  obtain m where m: "\<And>a. a \<in> A \<Longrightarrow> m \<le> a"
-    using bdd unfolding bdd_below_def by blast
-  have bddI: "bdd_below ((\<lambda>t. c * t) ` A)"
-  proof (rule bdd_belowI[of _ "c * m"])
-    fix t assume "t \<in> (\<lambda>t. c * t) ` A"
-    then obtain a where aA: "a \<in> A" and ta: "t = c * a" by auto
-    show "c * m \<le> t" unfolding ta using m[OF aA] c0 by (simp add: mult_left_mono)
-  qed
-  have neI: "(\<lambda>t. c * t) ` A \<noteq> {}" using ne by auto
-  have ge: "c * Inf A \<le> Inf ((\<lambda>t. c * t) ` A)"
-  proof (rule cInf_greatest[OF neI])
-    fix t assume "t \<in> (\<lambda>t. c * t) ` A"
-    then obtain a where aA: "a \<in> A" and ta: "t = c * a" by auto
-    have "Inf A \<le> a" by (rule cInf_lower[OF aA bdd])
-    then show "c * Inf A \<le> t" unfolding ta using c0 by (simp add: mult_left_mono)
-  qed
-  have "Inf ((\<lambda>t. c * t) ` A) / c \<le> Inf A"
-  proof (rule cInf_greatest[OF ne])
-    fix a assume aA: "a \<in> A"
-    have "Inf ((\<lambda>t. c * t) ` A) \<le> c * a"
-      by (rule cInf_lower[OF _ bddI]) (use aA in auto)
-    then show "Inf ((\<lambda>t. c * t) ` A) / c \<le> a"
-      using c0 by (simp add: divide_le_eq mult.commute)
-  qed
-  then have le: "Inf ((\<lambda>t. c * t) ` A) \<le> c * Inf A"
-    using c0 by (simp add: divide_le_eq mult.commute)
-  show ?thesis using ge le by linarith
-qed
 
 text \<open>Independence of a pair of random variables transports along a
   pushforward in both directions.\<close>
@@ -315,49 +279,19 @@ text \<open>The transfer theorem \<open>weak_conv_integral_of_L2_bound\<close> a
   works with a bare pair law with an \<open>L\<^sup>2\<close> bound and never mentions the
   class.\<close>
 
-lemma integrable_of_sq_integrable:
-  fixes f :: "'a \<Rightarrow> real"
-  assumes fm: "finite_measure N" and m: "f \<in> borel_measurable N"
-    and sq: "integrable N (\<lambda>\<omega>. (f \<omega>)\<^sup>2)"
-  shows "integrable N f"
-proof (rule Bochner_Integration.integrable_bound)
-  show "integrable N (\<lambda>\<omega>. 1 + (f \<omega>)\<^sup>2)"
-    by (intro Bochner_Integration.integrable_add
-        finite_measure.integrable_const[OF fm] sq)
-  show "f \<in> borel_measurable N" by (rule m)
-  show "AE \<omega> in N. norm (f \<omega>) \<le> norm (1 + (f \<omega>)\<^sup>2)"
-  proof (intro AE_I2)
-    fix \<omega>
-    have nn: "(0::real) \<le> (1 - \<bar>f \<omega>\<bar>)\<^sup>2" by simp
-    have exp: "(1 - \<bar>f \<omega>\<bar>)\<^sup>2 = 1 - 2 * \<bar>f \<omega>\<bar> + (f \<omega>)\<^sup>2"
-      by (simp add: power2_diff)
-    have "\<bar>f \<omega>\<bar> \<le> 1 + (f \<omega>)\<^sup>2"
-      using nn abs_ge_zero[of "f \<omega>"] unfolding exp by linarith
-    then show "norm (f \<omega>) \<le> norm (1 + (f \<omega>)\<^sup>2)" by simp
-  qed
-qed
-
 text \<open>\<open>weak_conv_integral_of_L2_bound\<close> asks, besides the \<open>L\<^sup>2\<close> bound
   itself, for integrability of the clamped and of the tail-truncated
   integrand under every law involved.  Neither depends on the path space:
   a clamp is bounded, and a tail truncation is dominated by \<open>\<bar>f\<bar>\<close>.\<close>
 
-lemma bounded_measurable_integrable:
-  fixes g :: "'a \<Rightarrow> real"
-  assumes P: "finite_measure N" and m: "g \<in> borel_measurable N"
-    and b: "\<And>w. \<bar>g w\<bar> \<le> D"
-  shows "integrable N g"
-  by (rule finite_measure.integrable_const_bound[OF P _ m]) (use b in auto)
-
 lemma clamp_integrable:
   fixes f :: "'a \<Rightarrow> real"
   assumes P: "finite_measure N" and m: "f \<in> borel_measurable N"
   shows "integrable N (\<lambda>w. max (- R) (min R (f w)))"
-proof (rule bounded_measurable_integrable[OF P])
+proof (rule finite_measure.integrable_const_bound[OF P, where B = "\<bar>R\<bar>"])
   show "(\<lambda>w. max (- R) (min R (f w))) \<in> borel_measurable N"
     using m by measurable
-  show "\<And>w. \<bar>max (- R) (min R (f w))\<bar> \<le> \<bar>R\<bar>" by auto
-qed
+qed (auto intro: AE_I2)
 
 lemma tail_indicator_measurable:
   fixes f :: "'a \<Rightarrow> real"
@@ -381,49 +315,6 @@ proof (rule Bochner_Integration.integrable_bound
     by (rule tail_indicator_measurable[OF borel_measurable_integrable[OF int]])
   show "AE w in N. norm (\<bar>f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (f w)) \<le> norm \<bar>f w\<bar>"
     by (intro AE_I2) (auto simp: indicator_def)
-qed
-
-lemma ennreal_Sup_image:
-  fixes S :: "real set" and B :: real
-  assumes ne: "S \<noteq> {}" and bnd: "\<And>s. s \<in> S \<Longrightarrow> 0 \<le> s \<and> s \<le> B"
-  shows "Sup (ennreal ` S) = ennreal (Sup S)"
-proof -
-  have bdd: "bdd_above S" using bnd by (intro bdd_aboveI[of _ B]) auto
-  have le1: "Sup (ennreal ` S) \<le> ennreal (Sup S)"
-  proof (rule Sup_least)
-    fix e assume "e \<in> ennreal ` S"
-    then obtain s where s: "s \<in> S" and e: "e = ennreal s" by blast
-    have "s \<le> Sup S" using s bdd by (rule cSup_upper)
-    then show "e \<le> ennreal (Sup S)" unfolding e by (rule ennreal_leI)
-  qed
-  have leB: "Sup (ennreal ` S) \<le> ennreal B"
-    by (rule Sup_least) (use bnd in \<open>auto intro: ennreal_leI\<close>)
-  have fin: "Sup (ennreal ` S) < \<top>"
-    using leB ennreal_less_top by (rule order_le_less_trans)
-  have "Sup S \<le> enn2real (Sup (ennreal ` S))"
-  proof (rule cSup_least[OF ne])
-    fix s assume s: "s \<in> S"
-    have "ennreal s \<le> Sup (ennreal ` S)" using s by (intro Sup_upper) auto
-    also have "\<dots> = ennreal (enn2real (Sup (ennreal ` S)))"
-      using fin by simp
-    finally show "s \<le> enn2real (Sup (ennreal ` S))" by simp
-  qed
-  then have "ennreal (Sup S) \<le> ennreal (enn2real (Sup (ennreal ` S)))"
-    by (rule ennreal_leI)
-  then have le2: "ennreal (Sup S) \<le> Sup (ennreal ` S)"
-    using fin by simp
-  from le1 le2 show ?thesis by simp
-qed
-
-lemma ennreal_min_eq: "ennreal (min a b) = min (ennreal a) (ennreal b)"
-proof (cases "a \<le> b")
-  case True
-  then have "ennreal a \<le> ennreal b" by (rule ennreal_leI)
-  with True show ?thesis by (simp add: min_def)
-next
-  case False
-  then have "ennreal b \<le> ennreal a" by (simp add: ennreal_leI)
-  with False show ?thesis by (simp add: min_def)
 qed
 
 text \<open>This section builds the ingredients for the conditioning statement
@@ -457,58 +348,6 @@ proof -
       then show "r + Inf S \<le> z" using cInf_lower[OF s(1) bdd] by simp
     qed
   qed
-qed
-
-text \<open>The two ingredients \<open>e\<close> needs on
-  the way to clause (iv): a product is integrable as soon as both squares
-  are, and the cross term of \<open>d\<close> is a
-  matrix martingale, entry by entry.\<close>
-
-lemma integrable_mult_of_sq:
-  fixes f g :: "'a \<Rightarrow> real"
-  assumes fm: "f \<in> borel_measurable M" and gm: "g \<in> borel_measurable M"
-    and f2: "integrable M (\<lambda>\<omega>. (f \<omega>)\<^sup>2)" and g2: "integrable M (\<lambda>\<omega>. (g \<omega>)\<^sup>2)"
-  shows "integrable M (\<lambda>\<omega>. f \<omega> * g \<omega>)"
-proof -
-  have b: "integrable M (\<lambda>\<omega>. ((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2)" using f2 g2 by simp
-  have pm: "(\<lambda>\<omega>. f \<omega> * g \<omega>) \<in> borel_measurable M" using fm gm by simp
-  have ae: "AE \<omega> in M. norm (f \<omega> * g \<omega>) \<le> norm (((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2)"
-  proof (rule AE_I2)
-    fix \<omega>
-    have "(0::real) \<le> (\<bar>f \<omega>\<bar> - \<bar>g \<omega>\<bar>)\<^sup>2" by simp
-    also have "(\<bar>f \<omega>\<bar> - \<bar>g \<omega>\<bar>)\<^sup>2 = (f \<omega>)\<^sup>2 - 2 * (\<bar>f \<omega>\<bar> * \<bar>g \<omega>\<bar>) + (g \<omega>)\<^sup>2"
-      by (simp add: power2_diff)
-    finally have le: "2 * (\<bar>f \<omega>\<bar> * \<bar>g \<omega>\<bar>) \<le> (f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2" by simp
-    have nn: "(0::real) \<le> ((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2" by simp
-    show "norm (f \<omega> * g \<omega>) \<le> norm (((f \<omega>)\<^sup>2 + (g \<omega>)\<^sup>2) / 2)"
-      using le nn by (simp add: abs_mult)
-  qed
-  show ?thesis by (rule Bochner_Integration.integrable_bound[OF b pm ae])
-qed
-
-text \<open>Two tiny facts used throughout the localisation: multiplying by a real
-  constant passes through integrability and the integral.\<close>
-
-lemma integrable_cmult:
-  fixes g :: "'a \<Rightarrow> real"
-  assumes g: "integrable N g"
-  shows "integrable N (\<lambda>\<omega>. c * g \<omega>)"
-proof -
-  have bl: "bounded_linear (\<lambda>r :: real. c * r)"
-    unfolding linear_conv_bounded_linear[symmetric]
-    by (intro linearI) (auto simp: algebra_simps)
-  show ?thesis by (rule integrable_bounded_linear[OF bl g])
-qed
-
-lemma integral_cmult:
-  fixes g :: "'a \<Rightarrow> real"
-  assumes g: "integrable N g"
-  shows "(\<integral>\<omega>. c * g \<omega> \<partial>N) = c * (\<integral>\<omega>. g \<omega> \<partial>N)"
-proof -
-  have bl: "bounded_linear (\<lambda>r :: real. c * r)"
-    unfolding linear_conv_bounded_linear[symmetric]
-    by (intro linearI) (auto simp: algebra_simps)
-  show ?thesis by (rule integral_bounded_linear[OF bl g])
 qed
 
 lemma integral_pos_of_AE_pos:
@@ -574,10 +413,6 @@ qed
 text \<open>Transfer to the continuous modification via
   \<open>Modification_Transfer.martingale_of_modification_gen\<close>, as
   \<open>Continuous_Brownian_Motion.martingale_cbm_coord_square\<close> does for the diagonal.\<close>
-
-lemma bm_prj_measurable: "(\<lambda>x :: real^'n::finite. x $ i) \<in> borel_measurable borel"
-  by (intro borel_measurable_continuous_onI linear_continuous_on
-      bounded_linear_vec_nth)
 
 text \<open>\<open>bounded_linear_cross_pair\<close> lives in \<open>Matrix_Algebra\<close>.\<close>
 

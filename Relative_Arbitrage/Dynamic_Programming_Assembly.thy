@@ -640,7 +640,7 @@ proof -
   proof -
     have "ennreal (min (enn2real (exit_val k L T K y)) S)
         = min (ennreal (enn2real (exit_val k L T K y))) (ennreal S)"
-      by (rule ennreal_min_eq)
+      using S0 by (simp add: min_ennreal)
     also have "\<dots> = min (exit_val k L T K y) (ennreal S)"
       using exit_val_neq_top[OF T0, of k L K y]
       by (simp add: less_top)

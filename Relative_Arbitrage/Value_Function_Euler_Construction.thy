@@ -1362,7 +1362,7 @@ proof -
   have Rint: "integrable ?M (\<lambda>\<omega>. (?R \<omega>)\<^sup>2)"
     by (rule bm_R2_integrable[OF h0])
   have domint: "integrable ?M (\<lambda>\<omega>. CA * (?R \<omega>)\<^sup>2 + CB * h\<^sup>2)"
-    by (intro Bochner_Integration.integrable_add integrable_cmult Rint
+    by (intro Bochner_Integration.integrable_add integrable_mult_right Rint
         BMP.integrable_const)
   have int2M: "integrable ?M (\<lambda>\<omega>. (?\<xi> (sbmpair S h \<omega>))\<^sup>2)"
   proof (rule Bochner_Integration.integrable_bound[OF domint xi2measM])
@@ -1388,14 +1388,14 @@ proof -
   also have "\<dots> = CA * (\<integral>\<omega>. (?R \<omega>)\<^sup>2 \<partial>?M) + CB * h\<^sup>2"
   proof -
     have ic: "integrable ?M (\<lambda>\<omega>. CA * (?R \<omega>)\<^sup>2)"
-      by (rule integrable_cmult[OF Rint])
+      by (rule integrable_mult_right[OF Rint])
     have icc: "integrable ?M (\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. CB * h\<^sup>2)"
       by simp
     have "(\<integral>\<omega>. CA * (?R \<omega>)\<^sup>2 + CB * h\<^sup>2 \<partial>?M)
         = (\<integral>\<omega>. CA * (?R \<omega>)\<^sup>2 \<partial>?M) + (\<integral>\<omega>. CB * h\<^sup>2 \<partial>?M)"
       by (rule Bochner_Integration.integral_add[OF ic icc])
     also have "(\<integral>\<omega>. CA * (?R \<omega>)\<^sup>2 \<partial>?M) = CA * (\<integral>\<omega>. (?R \<omega>)\<^sup>2 \<partial>?M)"
-      by (rule integral_cmult[OF Rint])
+      by (rule integral_mult_right_zero)
     also have "(\<integral>\<omega>. CB * h\<^sup>2 \<partial>?M) = measure ?M (space ?M) *\<^sub>R (CB * h\<^sup>2)"
       by (rule lebesgue_integral_const)
     finally show ?thesis
@@ -1762,7 +1762,7 @@ next
     have iconst: "integrable (?K \<omega>) (\<lambda>\<omega>'. (?A \<omega>)\<^sup>2)"
       by (rule KP.integrable_const)
     have ia: "integrable (?K \<omega>) (\<lambda>\<omega>'. (2 * ?A \<omega>) * ?xi \<omega> \<omega>')"
-      by (rule integrable_cmult[OF i1])
+      by (rule integrable_mult_right[OF i1])
     have ib: "integrable (?K \<omega>)
         (\<lambda>\<omega>'. (2 * ?A \<omega>) * ?xi \<omega> \<omega>' + (?xi \<omega> \<omega>')\<^sup>2)"
       by (rule Bochner_Integration.integrable_add[OF ia i2])
@@ -1775,7 +1775,7 @@ next
         = (2 * ?A \<omega>) * (\<integral>\<omega>'. ?xi \<omega> \<omega>' \<partial>(?K \<omega>))
           + (\<integral>\<omega>'. (?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))"
       by (simp add: Bochner_Integration.integral_add[OF ia i2]
-          integral_cmult[OF i1])
+          integral_mult_right_zero)
     have split: "(\<integral>\<omega>'. (?A \<omega> + ?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))
         = (\<integral>\<omega>'. (?A \<omega>)\<^sup>2 \<partial>(?K \<omega>))
           + (\<integral>\<omega>'. (2 * ?A \<omega>) * ?xi \<omega> \<omega>' + (?xi \<omega> \<omega>')\<^sup>2 \<partial>(?K \<omega>))"

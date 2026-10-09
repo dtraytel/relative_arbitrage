@@ -49,59 +49,29 @@ qed
 
 section \<open>Congruence\<close>
 
-text \<open>The processes below differ at negative times --- the shifted
-  evaluation is \<open>undefined\<close> there, the shifted value is not --- and the
-  martingale locale never looks at those, so a congruence above \<open>t\<^sub>0\<close> is
-  what is needed.\<close>
-
-lemma martingale_cong_ge:
-  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{second_countable_topology,banach}"
-  assumes mg: "martingale M F t0 X"
-    and eq: "\<And>u. t0 \<le> u \<Longrightarrow> X u = Y u"
-  shows "martingale M F t0 Y"
-proof -
-  interpret MX: martingale M F t0 X by (rule mg)
-  show ?thesis
-  proof (rule MX.martingale_of_set_integral_eq)
-    show "adapted_process M F t0 Y"
-    proof (unfold_locales)
-      fix i :: real assume i: "t0 \<le> i"
-      show "Y i \<in> borel_measurable (F i)"
-        using MX.adapted[OF i] eq[OF i] by simp
-    qed
-    show "\<And>i. t0 \<le> i \<Longrightarrow> integrable M (Y i)"
-      using MX.integrable eq by simp
-    fix A and i j :: real
-    assume A: "A \<in> F i" and ij: "t0 \<le> i" "i \<le> j"
-    have j: "t0 \<le> j" using ij by simp
-    show "set_lebesgue_integral M A (Y i) = set_lebesgue_integral M A (Y j)"
-      using MX.set_integral_eq[OF A ij] eq[OF ij(1)] eq[OF j] by simp
-  qed
-qed
-
 text \<open>Passing to an a.e. equal, still adapted, process.\<close>
 
 lemma martingale_cong_AE:
-  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
-  assumes mg: "martingale M F (0::real) X"
-    and adap: "adapted_process M F (0::real) Y"
-    and eq: "\<And>i. 0 \<le> i \<Longrightarrow> AE \<omega> in M. X i \<omega> = Y i \<omega>"
-  shows "martingale M F 0 Y"
+  fixes X Y :: "'t::{second_countable_topology,order_topology,t2_space} \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes mg: "martingale M F t0 X"
+    and adap: "adapted_process M F t0 Y"
+    and eq: "\<And>i. t0 \<le> i \<Longrightarrow> AE \<omega> in M. X i \<omega> = Y i \<omega>"
+  shows "martingale M F t0 Y"
 proof -
-  interpret MG: martingale M F "0::real" X by (rule mg)
-  interpret AY: adapted_process M F "0::real" Y by (rule adap)
-  have Xm: "X i \<in> borel_measurable M" if i: "0 \<le> i" for i
+  interpret MG: martingale M F t0 X by (rule mg)
+  interpret AY: adapted_process M F t0 Y by (rule adap)
+  have Xm: "X i \<in> borel_measurable M" if i: "t0 \<le> i" for i
     by (rule measurable_from_subalg[OF MG.subalgebras[OF i] MG.adapted[OF i]])
-  have Ym: "Y i \<in> borel_measurable M" if i: "0 \<le> i" for i
+  have Ym: "Y i \<in> borel_measurable M" if i: "t0 \<le> i" for i
     by (rule measurable_from_subalg[OF MG.subalgebras[OF i] AY.adapted[OF i]])
-  have iY: "integrable M (Y i)" if i: "0 \<le> i" for i
+  have iY: "integrable M (Y i)" if i: "t0 \<le> i" for i
     using MG.integrable[OF i] integrable_cong_AE[OF Xm[OF i] Ym[OF i] eq[OF i]]
     by simp
   show ?thesis
   proof (rule MG.martingale_of_set_integral_eq[OF adap iY])
-    fix A and i j :: real
-    assume ij: "0 \<le> i" "i \<le> j" and A: "A \<in> sets (F i)"
-    then have j: "0 \<le> j" by simp
+    fix A and i j :: 't
+    assume ij: "t0 \<le> i" "i \<le> j" and A: "A \<in> sets (F i)"
+    have j: "t0 \<le> j" using ij by (rule order_trans)
     have AM: "A \<in> sets M" using A MG.sets_F_subset[OF ij(1)] by auto
     have "set_lebesgue_integral M A (Y i) = set_lebesgue_integral M A (X i)"
       using eq[OF ij(1)]
@@ -116,42 +86,28 @@ proof -
   qed
 qed
 
+text \<open>The processes below differ at negative times --- the shifted
+  evaluation is \<open>undefined\<close> there, the shifted value is not --- and the
+  martingale locale never looks at those, so a congruence above \<open>t\<^sub>0\<close> is
+  what is needed.\<close>
+
+lemma martingale_cong_ge:
+  fixes X Y :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{second_countable_topology,banach}"
+  assumes mg: "martingale M F t0 X"
+    and eq: "\<And>u. t0 \<le> u \<Longrightarrow> X u = Y u"
+  shows "martingale M F t0 Y"
+proof (rule martingale_cong_AE[OF mg])
+  interpret MX: martingale M F t0 X by (rule mg)
+  show "adapted_process M F t0 Y"
+  proof unfold_locales
+    fix i assume i: "t0 \<le> i"
+    show "Y i \<in> borel_measurable (F i)" using MX.adapted[OF i] eq[OF i] by simp
+  qed
+qed (use eq in simp)
+
 section \<open>Time changes and coarser filtrations\<close>
 
-lemma martingale_time_change:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
-  assumes mg: "martingale M F (0::real) X"
-    and s0: "\<And>u :: real. 0 \<le> u \<Longrightarrow> 0 \<le> s u"
-    and smono: "\<And>u v :: real. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> s u \<le> s v"
-  shows "martingale M (\<lambda>u. F (s u)) 0 (\<lambda>u. X (s u))"
-proof -
-  interpret MG: martingale M F "0::real" X by (rule mg)
-  have FMs: "filtered_measure M (\<lambda>u. F (s u)) (0::real)"
-  proof (unfold_locales)
-    show "subalgebra M (F (s i))" if "0 \<le> i" for i :: real
-      by (rule MG.subalgebras[OF s0[OF that]])
-    show "sets (F (s i)) \<le> sets (F (s j))" if "0 \<le> i" "i \<le> j" for i j :: real
-      by (rule MG.sets_F_mono[OF s0[OF that(1)] smono[OF that]])
-  qed
-  interpret SF: sigma_finite_filtered_measure M "\<lambda>u. F (s u)" "0::real"
-    unfolding sigma_finite_filtered_measure_def
-      sigma_finite_filtered_measure_axioms_def
-    using FMs MG.sigma_finite_subalgebra_F[OF s0[OF order_refl]] by blast
-  show ?thesis
-  proof (rule SF.martingale_of_set_integral_eq)
-    show "adapted_process M (\<lambda>u. F (s u)) 0 (\<lambda>u. X (s u))"
-      unfolding adapted_process_def adapted_process_axioms_def
-      using FMs MG.adapted[OF s0] by blast
-    show "integrable M (X (s i))" if "0 \<le> i" for i :: real
-      by (rule MG.integrable[OF s0[OF that]])
-    show "set_lebesgue_integral M A (X (s i))
-        = set_lebesgue_integral M A (X (s j))"
-      if "0 \<le> i" "i \<le> j" "A \<in> sets (F (s i))" for A and i j :: real
-      by (rule MG.set_integral_eq[OF that(3) s0[OF that(1)] smono[OF that(1,2)]])
-  qed
-qed
-
-text \<open>The congruence and the time change fused, for a process only defined
+text \<open>A time change, fused with a congruence for a process only defined
   through its relation to the base.\<close>
 
 lemma martingale_time_change_cong:
@@ -194,6 +150,16 @@ proof -
   qed
 qed
 
+text \<open>The plain time change is the case \<open>Y = X \<circ> s\<close>.\<close>
+
+lemma martingale_time_change:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'c::{banach,second_countable_topology}"
+  assumes mg: "martingale M F (0::real) X"
+    and s0: "\<And>u :: real. 0 \<le> u \<Longrightarrow> 0 \<le> s u"
+    and smono: "\<And>u v :: real. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> s u \<le> s v"
+  shows "martingale M (\<lambda>u. F (s u)) 0 (\<lambda>u. X (s u))"
+  by (rule martingale_time_change_cong[OF mg]) (simp_all add: s0 smono)
+
 text \<open>A martingale stays one along any coarser filtration it is still
   adapted to.\<close>
 
@@ -201,13 +167,13 @@ lemma martingale_coarser_filtration:
   fixes X :: "'b :: {second_countable_topology, order_topology, t2_space} \<Rightarrow> 'a \<Rightarrow>
     'c :: {second_countable_topology, banach}"
   assumes M: "martingale M F t0 X"
-    and ffm: "finite_filtered_measure M G t0"
+    and ffm: "sigma_finite_filtered_measure M G t0"
     and GF: "\<And>i. t0 \<le> i \<Longrightarrow> subalgebra (F i) (G i)"
     and adapt: "\<And>i. t0 \<le> i \<Longrightarrow> X i \<in> borel_measurable (G i)"
   shows "martingale M G t0 X"
 proof -
   interpret MF: martingale M F t0 X by (rule M)
-  interpret GG: finite_filtered_measure M G t0 by (rule ffm)
+  interpret GG: sigma_finite_filtered_measure M G t0 by (rule ffm)
   show ?thesis
   proof (unfold_locales)
     show "\<And>i. t0 \<le> i \<Longrightarrow> X i \<in> borel_measurable (G i)" by (rule adapt)

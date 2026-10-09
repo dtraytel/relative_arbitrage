@@ -342,7 +342,7 @@ text \<open>So @{thm [source] exit_val_dpp_sup_ge_time} applies at the exit time
 
 section \<open>Scalar multiples through the Bochner integral\<close>
 
-text \<open>\<open>integrable_cmult\<close>, \<open>integral_cmult\<close>, \<open>integral_pos_of_AE_pos\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+text \<open>\<open>integral_pos_of_AE_pos\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 
 section \<open>Measurability of the ball exit time\<close>
@@ -1237,18 +1237,18 @@ proof -
   \<comment> \<open>the quadratic term, through the compensated entries\<close>
   have icomp: "integrable P (\<lambda>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)))"
     unfolding trace_mult_sum
-    by (intro Bochner_Integration.integrable_sum integrable_cmult iCc)
+    by (intro Bochner_Integration.integrable_sum integrable_mult_right iCc)
   have Ecomp: "(\<integral>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)) \<partial>P)
       = trace (M ** outerp x)"
   proof -
     have "(\<integral>\<omega>. (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i) \<partial>P)
         = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (\<Sum>j\<in>UNIV. M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i) \<partial>P))"
       by (rule Bochner_Integration.integral_sum)
-        (intro Bochner_Integration.integrable_sum integrable_cmult iCc)
+        (intro Bochner_Integration.integrable_sum integrable_mult_right iCc)
     also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV.
         (\<integral>\<omega>. M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i \<partial>P))"
       by (intro sum.cong refl Bochner_Integration.integral_sum
-          integrable_cmult iCc)
+          integrable_mult_right iCc)
     also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j * outerp x $ j $ i)"
     proof -
       have iCc': "integrable P (\<lambda>\<omega>. outerp (?Xf \<omega>) $ cc $ dd - ?Yf \<omega> $ cc $ dd)"
@@ -1267,7 +1267,7 @@ proof -
       qed
       show ?thesis
         by (intro sum.cong refl)
-          (simp add: integral_cmult[OF iCc'] ECc')
+          (simp add: integral_mult_right_zero ECc')
     qed    finally show ?thesis unfolding trace_mult_sum .
   qed
   have itrY: "integrable P (\<lambda>\<omega>. trace (M ** ?Yf \<omega>))"
@@ -1777,7 +1777,7 @@ proof -
     by simp
   have icomp: "integrable P (\<lambda>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)))"
     unfolding trace_mult_sum
-    by (intro Bochner_Integration.integrable_sum integrable_cmult iCc)
+    by (intro Bochner_Integration.integrable_sum integrable_mult_right iCc)
   have Ecomp: "(\<integral>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)) \<partial>P)
       = trace (M ** outerp x)"
   proof -
@@ -1786,11 +1786,11 @@ proof -
         = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (\<Sum>j\<in>UNIV.
             M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i) \<partial>P))"
       by (rule Bochner_Integration.integral_sum)
-        (intro Bochner_Integration.integrable_sum integrable_cmult iCc)
+        (intro Bochner_Integration.integrable_sum integrable_mult_right iCc)
     also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV.
         (\<integral>\<omega>. M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i \<partial>P))"
       by (intro sum.cong refl Bochner_Integration.integral_sum
-          integrable_cmult iCc)
+          integrable_mult_right iCc)
     also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j * outerp x $ j $ i)"
     proof -
       have iCc': "integrable P
@@ -1809,7 +1809,7 @@ proof -
       qed
       show ?thesis
         by (intro sum.cong refl)
-          (simp add: integral_cmult[OF iCc'] ECc')
+          (simp add: integral_mult_right_zero ECc')
     qed
     finally show ?thesis unfolding trace_mult_sum .
   qed
@@ -2294,9 +2294,9 @@ next
       by (rule eventually_mono) (auto intro: mult_right_mono simp: indicator_def)
     have "(\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real A \<omega> \<partial>P)
         \<le> (\<integral>\<omega>. (nq * \<epsilon>)\<^sup>2 * indicat_real A \<omega> \<partial>P)"
-      by (rule integral_mono_AE[OF W2A_int integrable_cmult[OF indA_int] ptw])
+      by (rule integral_mono_AE[OF W2A_int integrable_mult_right[OF indA_int] ptw])
     also have "\<dots> = (nq * \<epsilon>)\<^sup>2 * PP.prob A"
-      using integral_cmult[OF indA_int] indA_E by simp
+      using integral_mult_right_zero indA_E by simp
     finally show ?thesis .
   qed
   have probA: "s / 2 \<le> (nq * \<epsilon>)\<^sup>2 * PP.prob A"
@@ -2311,9 +2311,9 @@ next
     qed
     have "sqrt (s / 2) * PP.prob A
         = (\<integral>\<omega>. sqrt (s / 2) * indicat_real A \<omega> \<partial>P)"
-      using integral_cmult[OF indA_int] indA_E by simp
+      using integral_mult_right_zero indA_E by simp
     also have "\<dots> \<le> (\<integral>\<omega>. \<bar>W \<omega>\<bar> \<partial>P)"
-      by (rule integral_mono_AE[OF integrable_cmult[OF indA_int] iabs ptw])
+      by (rule integral_mono_AE[OF integrable_mult_right[OF indA_int] iabs ptw])
     finally show ?thesis .
   qed
   \<comment> \<open>the contradiction\<close>
@@ -2367,9 +2367,9 @@ next
         by (rule integral_bounded_linear[OF bounded_linear_trace iY,
               symmetric])
       also have "\<dots> \<le> (\<integral>\<omega>. n' * n' * L * \<theta>' \<omega> \<partial>P)"
-        by (rule integral_mono_AE[OF itrY integrable_cmult[OF ith] trYbnd])
+        by (rule integral_mono_AE[OF itrY integrable_mult_right[OF ith] trYbnd])
       also have "\<dots> = n' * n' * L * et"
-        using integral_cmult[OF ith] by (simp add: et_def)
+        using integral_mult_right_zero by (simp add: et_def)
       finally show ?thesis .
     qed
     have normsqE: "(\<integral>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>) \<partial>P) = trace EY"
@@ -2424,9 +2424,9 @@ next
         by (rule integrable_real_indicator[OF Evm])
           (simp add: PP.emeasure_eq_measure)
       have "\<epsilon>\<^sup>2 * PP.prob Ev = (\<integral>\<omega>. \<epsilon>\<^sup>2 * indicat_real Ev \<omega> \<partial>P)"
-        using integral_cmult[OF indEv_int] Evm by simp
+        using integral_mult_right_zero Evm by simp
       also have "\<dots> \<le> (\<integral>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>) \<partial>P)"
-        by (rule integral_mono_AE[OF integrable_cmult[OF indEv_int]
+        by (rule integral_mono_AE[OF integrable_mult_right[OF indEv_int]
               inormsq ptw])
       finally show ?thesis using normsqE by simp
     qed
@@ -2466,10 +2466,10 @@ next
           (auto simp: PP.emeasure_eq_measure sets.compl_sets Evm)
       have "t * PP.prob (space P - Ev)
           = (\<integral>\<omega>. t * indicat_real (space P - Ev) \<omega> \<partial>P)"
-        using integral_cmult[OF indC_int] sets.compl_sets[OF Evm] by simp
+        using integral_mult_right_zero sets.compl_sets[OF Evm] by simp
       also have "\<dots> \<le> et"
         unfolding et_def
-        by (rule integral_mono_AE[OF integrable_cmult[OF indC_int] ith ptw])
+        by (rule integral_mono_AE[OF integrable_mult_right[OF indC_int] ith ptw])
       finally have h: "t * PP.prob (space P - Ev) \<le> et" .
       have "PP.prob (space P - Ev) = 1 - PP.prob Ev"
         by (rule PP.prob_compl[OF Evm])

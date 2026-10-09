@@ -57,6 +57,30 @@ proof -
   qed
 qed
 
+text \<open>A square-integrable function is integrable on a finite measure.\<close>
+
+lemma integrable_of_sq_integrable:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes fm: "finite_measure N" and m: "f \<in> borel_measurable N"
+    and sq: "integrable N (\<lambda>\<omega>. (f \<omega>)\<^sup>2)"
+  shows "integrable N f"
+proof (rule Bochner_Integration.integrable_bound)
+  show "integrable N (\<lambda>\<omega>. 1 + (f \<omega>)\<^sup>2)"
+    by (intro Bochner_Integration.integrable_add
+        finite_measure.integrable_const[OF fm] sq)
+  show "f \<in> borel_measurable N" by (rule m)
+  show "AE \<omega> in N. norm (f \<omega>) \<le> norm (1 + (f \<omega>)\<^sup>2)"
+  proof (intro AE_I2)
+    fix \<omega>
+    have nn: "(0::real) \<le> (1 - \<bar>f \<omega>\<bar>)\<^sup>2" by simp
+    have exp: "(1 - \<bar>f \<omega>\<bar>)\<^sup>2 = 1 - 2 * \<bar>f \<omega>\<bar> + (f \<omega>)\<^sup>2"
+      by (simp add: power2_diff)
+    have "\<bar>f \<omega>\<bar> \<le> 1 + (f \<omega>)\<^sup>2"
+      using nn abs_ge_zero[of "f \<omega>"] unfolding exp by linarith
+    then show "norm (f \<omega>) \<le> norm (1 + (f \<omega>)\<^sup>2)" by simp
+  qed
+qed
+
 section \<open>Quadratic variation\<close>
 
 definition qvar :: "(nat \<Rightarrow> 'a \<Rightarrow> real) \<Rightarrow> nat \<Rightarrow> 'a \<Rightarrow> real" where

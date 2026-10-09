@@ -676,9 +676,6 @@ lemma sets_pglue_law[simp]:
      = sets (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
   unfolding pglue_law_def by (rule sets_pair_law_of)
 
-text \<open>\<open>prob_space_pair_measure\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
-
 lemma prob_space_pglue_law:
   fixes Q R :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
@@ -688,7 +685,7 @@ lemma prob_space_pglue_law:
   shows "prob_space (pglue_law r T Q R)"
 proof -
   interpret PP: prob_space "Q \<Otimes>\<^sub>M R"
-    by (rule prob_space_pair_measure[OF PQ PR])
+    by (rule prob_space_pair[OF PQ PR])
   show ?thesis
     unfolding pglue_law_def pair_law_of_def
     by (rule PP.prob_space_distr[OF pglue_measurable[OF r rT setsQ setsR]])
@@ -1898,14 +1895,6 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>@{thm [source] AE_kernel_full} delivers \<open>emeasure (\<kappa> p) C = 1\<close>, while
-  the class's clauses are stated as \<open>AE\<close> properties; the bridge from the
-  library's real-valued \<open>prob_space.AE_prob_1\<close> goes through
-  \<open>finite_measure.emeasure_eq_measure\<close>.\<close>
-
-text \<open>\<open>AE_mem_of_emeasure_1\<close> lives in
-  @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
-
 text \<open>Clause (ii) for the conditional law, at rational pairs only, since an
   almost-sure statement survives only countably many conditions, which is
   what \<open>exit_class_diffquot_of_rational_pairs\<close> supplies.\<close>
@@ -2583,7 +2572,7 @@ lemma prob_space_kglue_law:
   shows "prob_space (kglue_law r T N Q RR)"
 proof -
   interpret PP: prob_space "Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR"
-    by (rule prob_space_pair_measure[OF PQ prob_space_PiM]) (rule PR)
+    by (rule prob_space_pair[OF PQ prob_space_PiM]) (rule PR)
   show ?thesis
     unfolding kglue_law_def pair_law_of_def
     by (rule PP.prob_space_distr

@@ -35,27 +35,8 @@ locale time_grid =
     and t_step: "\<And>n. t n \<le> t (Suc n)"
 begin
 
-lemma t_mono_le: "m \<le> n \<Longrightarrow> t m \<le> t n"
-proof (induction n)
-  case 0
-  then show ?case by simp
-next
-  case (Suc n)
-  show ?case
-  proof (cases "m \<le> n")
-    case True
-    then have "t m \<le> t n" by (rule Suc)
-    also have "\<dots> \<le> t (Suc n)" by (rule t_step)
-    finally show ?thesis .
-  next
-    case False
-    with Suc have "m = Suc n" by simp
-    then show ?thesis by simp
-  qed
-qed
-
 lemma t_ge_0: "0 \<le> t n"
-  using t_nonneg t_mono_le[of 0 n] by simp
+  using t_nonneg lift_Suc_mono_le[of t, OF t_step, of 0 n] by simp
 
 end
 
@@ -74,7 +55,7 @@ proof -
     show "\<And>i :: nat. 0 \<le> i \<Longrightarrow> subalgebra M (F (t i))"
       by (intro subalgebras t_ge_0)
     show "\<And>i j :: nat. 0 \<le> i \<Longrightarrow> i \<le> j \<Longrightarrow> sets (F (t i)) \<le> sets (F (t j))"
-      by (intro sets_F_mono t_ge_0 t_mono_le)
+      by (intro sets_F_mono t_ge_0 lift_Suc_mono_le[of t, OF t_step])
   qed
   have sff: "sigma_finite_filtered_measure M (\<lambda>n. F (t n)) (0 :: nat)"
     by (intro sigma_finite_filtered_measure.intro[OF fm]
@@ -91,7 +72,7 @@ proof -
       by (intro integrable t_ge_0)
     show "\<And>i j :: nat. 0 \<le> i \<Longrightarrow> i \<le> j \<Longrightarrow>
         AE \<xi> in M. Y (t i) \<xi> = cond_exp M (F (t i)) (Y (t j)) \<xi>"
-      by (intro martingale_property t_ge_0 t_mono_le)
+      by (intro martingale_property t_ge_0 lift_Suc_mono_le[of t, OF t_step])
   qed
   show "sq_int_martingale M (\<lambda>n. F (t n)) (\<lambda>n. Y (t n))"
     by (intro sq_int_martingale.intro[OF nsff] sq_int_martingale_axioms.intro

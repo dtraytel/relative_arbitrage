@@ -74,54 +74,21 @@ lemma subalgebra_self: "subalgebra M M"
 text \<open>A \<open>\<G>\<close>-measurable function all of whose \<open>\<G>\<close>-set integrals vanish is
   almost everywhere zero, for \<open>\<G>\<close> a sub-\<open>\<sigma>\<close>-algebra of \<open>M\<close>.\<close>
 
-lemma AE_nonpos_of_set_integral_zero:
-  fixes f :: "'a \<Rightarrow> real"
-  assumes G: "subalgebra M G" and int: "integrable M f"
-    and fm: "f \<in> borel_measurable G"
-    and z: "\<And>A. A \<in> sets G \<Longrightarrow> set_lebesgue_integral M A f = 0"
-  shows "AE \<omega> in M. f \<omega> \<le> 0"
-proof -
-  have spG: "space G = space M" using G by (simp add: subalgebra_def)
-  let ?A = "{\<omega> \<in> space G. 0 < f \<omega>}"
-  have A: "?A \<in> sets G" using fm by measurable
-  have AM: "?A \<in> sets M" using A G by (auto simp: subalgebra_def)
-  have ii: "integrable M (\<lambda>\<omega>. indicator ?A \<omega> *\<^sub>R f \<omega>)"
-    by (rule integrable_mult_indicator[OF AM int])
-  have inn: "AE \<omega> in M. 0 \<le> indicator ?A \<omega> *\<^sub>R f \<omega>"
-    by (rule AE_I2) (auto simp: indicator_def)
-  have zi: "(\<integral>\<omega>. indicator ?A \<omega> *\<^sub>R f \<omega> \<partial>M) = 0"
-    using z[OF A] unfolding set_lebesgue_integral_def .
-  have "AE \<omega> in M. indicator ?A \<omega> *\<^sub>R f \<omega> = 0"
-    using ii inn zi by (simp add: integral_nonneg_eq_0_iff_AE)
-  moreover have "AE \<omega> in M. \<omega> \<in> space M" by (rule AE_I2) simp
-  ultimately show ?thesis
-    by eventually_elim (auto simp: indicator_def spG split: if_split_asm)
-qed
-
 lemma AE_zero_of_set_integral_zero:
   fixes f :: "'a \<Rightarrow> real"
   assumes G: "subalgebra M G" and int: "integrable M f"
     and fm: "f \<in> borel_measurable G"
     and z: "\<And>A. A \<in> sets G \<Longrightarrow> set_lebesgue_integral M A f = 0"
   shows "AE \<omega> in M. f \<omega> = 0"
-proof -
-  have up: "AE \<omega> in M. f \<omega> \<le> 0"
-    by (rule AE_nonpos_of_set_integral_zero[OF G int fm z])
-  have zn: "set_lebesgue_integral M A (\<lambda>\<omega>. - f \<omega>) = 0" if A: "A \<in> sets G" for A
-  proof -
-    have AM: "A \<in> sets M" using A G by (auto simp: subalgebra_def)
-    have "(\<integral>\<omega>. indicator A \<omega> *\<^sub>R (- f \<omega>) \<partial>M)
-        = (\<integral>\<omega>. - (indicator A \<omega> *\<^sub>R f \<omega>) \<partial>M)" by simp
-    also have "\<dots> = - (\<integral>\<omega>. indicator A \<omega> *\<^sub>R f \<omega> \<partial>M)"
-      by (rule Bochner_Integration.integral_minus)
-    also have "\<dots> = 0" using z[OF A] unfolding set_lebesgue_integral_def by simp
-    finally show ?thesis unfolding set_lebesgue_integral_def .
-  qed
-  have dn: "AE \<omega> in M. - f \<omega> \<le> 0"
-    by (rule AE_nonpos_of_set_integral_zero[OF G integrable_minus[OF int] _ zn])
-       (use fm in simp)
-  show ?thesis using up dn by eventually_elim simp
-qed
+proof (rule AE_restr_to_subalg[OF G], rule density_unique_real)
+  show "integrable (restr_to_subalg M G) f" by (rule integrable_in_subalg[OF G fm int])
+  fix A assume "A \<in> sets (restr_to_subalg M G)"
+  then have A: "A \<in> sets G" by (simp add: sets_restr_to_subalg[OF G])
+  have "(\<lambda>\<omega>. indicat_real A \<omega> *\<^sub>R f \<omega>) \<in> borel_measurable G" using A fm by measurable
+  then show "set_lebesgue_integral (restr_to_subalg M G) A f
+      = set_lebesgue_integral (restr_to_subalg M G) A (\<lambda>_. 0)"
+    using z[OF A] unfolding set_lebesgue_integral_def by (simp add: integral_subalgebra2[OF G])
+qed simp
 
 text \<open>Passing the vanishing of set integrals from a generating \<open>\<pi>\<close>-system to
   the whole generated \<open>\<sigma>\<close>-algebra is a Dynkin argument:
@@ -181,21 +148,6 @@ proof -
     also have "\<dots> = 0" using union.IH by simp
     finally show ?case .
   qed
-qed
-
-section \<open>A probability-one event contains almost every point\<close>
-
-text \<open>The bridge from the library's real-valued
-  @{thm [source] prob_space.AE_prob_1} through
-  @{thm [source] finite_measure.emeasure_eq_measure}.\<close>
-
-lemma AE_mem_of_emeasure_1:
-  assumes PS: "prob_space M" and one: "emeasure M C = 1"
-  shows "AE w in M. w \<in> C"
-proof -
-  interpret PM: prob_space M by (rule PS)
-  have "measure M C = 1" using one by (simp add: PM.emeasure_eq_measure)
-  then show ?thesis by (rule PM.AE_prob_1)
 qed
 
 (*<*)

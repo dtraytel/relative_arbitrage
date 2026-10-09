@@ -1409,8 +1409,6 @@ lemma integrable_at_bounded_stopping_time:
   fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
     and Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<sigma> :: "'a \<Rightarrow> real"
   assumes mg: "martingale M F 0 Y"
-    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and sub: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
     and stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
     and sig0: "\<And>\<omega>. 0 \<le> \<sigma> \<omega>" and sigU: "\<And>\<omega>. \<sigma> \<omega> \<le> U" and U0: "0 \<le> U"
     and cont: "\<And>\<omega>. \<omega> \<in> space M
@@ -1420,6 +1418,9 @@ lemma integrable_at_bounded_stopping_time:
   shows "integrable M (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)"
 proof -
   interpret Mg: martingale M F 0 Y by (rule mg)
+  have mono: "sets (F s) \<subseteq> sets (F t)" if "0 \<le> s" "s \<le> t" for s t
+    using Mg.sets_F_mono[OF that] by simp
+  note sub = Mg.subalgebras
   define \<sigma>n where "\<sigma>n n \<omega> = dyceil n U (\<sigma> \<omega>)" for n :: nat and \<omega> :: 'a
   define Vn where "Vn n = (\<lambda>j. min U (real_of_int j / 2^n)) ` {0..\<lceil>2^n * U\<rceil>}"
     for n :: nat
@@ -1579,7 +1580,7 @@ proof -
 
   show ?thesis
     by (rule integrable_at_bounded_stopping_time
-        [OF mg mono sub stops sig0 sigU T0' conts Dbd Dint])
+        [OF mg stops sig0 sigU T0' conts Dbd Dint])
 qed
 
 section \<open>The increment identity moves to the kernel\<close>
@@ -1722,7 +1723,7 @@ proof -
     using ZG measurable_from_subalg[OF subG] by blast
   have Dm: "?D \<in> borel_measurable P" using intD by simp
   have intZD: "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). Z \<omega> * ?D \<omega>)"
-    by (rule integrable_mult_of_sq[OF ZP Dm Zsq Dsq])
+    by (rule integrable_prod_of_squares[OF Zsq Dsq ZP Dm])
   show int1: "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). ?D \<omega> * Z \<omega>)"
     using intZD by (simp add: mult.commute)
 

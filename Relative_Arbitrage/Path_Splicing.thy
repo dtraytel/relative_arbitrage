@@ -968,8 +968,6 @@ next
     by (intro continuous_intros)
 qed
 
-text \<open>\<open>ennreal_min_eq\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
-
 lemma ess_inf_time_pfst:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and K :: "('a) set"
   assumes T: "0 \<le> T" and K: "closed K"
@@ -996,11 +994,6 @@ proof -
     by (auto simp: pshift_fst)
   then show ?thesis unfolding pexit_def etime_def by simp
 qed
-
-subsection \<open>Turning a supremum of \<open>ennreal\<close>s into a supremum of reals\<close>
-
-text \<open>\<open>ennreal_Sup_image\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
-
 
 subsection \<open>A value functional as a shifted supremum at \<open>0\<close>\<close>
 
