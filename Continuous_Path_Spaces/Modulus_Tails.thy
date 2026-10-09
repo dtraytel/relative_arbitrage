@@ -144,17 +144,6 @@ proof -
   finally show ?thesis unfolding pq by simp
 qed
 
-lemma powr_ratio_lt_1:
-  fixes \<gamma> :: real
-  assumes "\<gamma> < 1/4"
-  shows "2 powr (-(1-4*\<gamma>)) < 1"
-proof -
-  have "(-(1-4*\<gamma>)) < 0" using assms by simp
-  hence "2 powr (-(1-4*\<gamma>)) < 2 powr 0"
-    by (intro powr_less_mono) simp_all
-  thus ?thesis by simp
-qed
-
 subsection \<open>The bad event over all levels at once\<close>
 
 text \<open>
@@ -185,7 +174,7 @@ proof -
       2 powr (-\<gamma>*real j)
         \<le> \<bar>X (real_of_int k / 2^j) \<omega> - X (real_of_int (k - 1) / 2^j) \<omega>\<bar>}" for j
   have q0: "0 < ?q" by simp
-  have q1: "?q < 1" by (rule powr_ratio_lt_1[OF g2])
+  have q1: "?q < 1" by (rule powr_less_one) (use g2 in simp_all)
   have Xmeas: "X u \<in> borel_measurable M" if "0 \<le> u" for u
     by (rule Xm[OF that])
   have Esets: "E j \<in> sets M" for j
@@ -229,22 +218,7 @@ proof -
       = (\<Union>j\<in>{n..}. E j)"
     unfolding E_def by auto
   have s2: "(\<Union>j\<in>{n..}. E j) = (\<Union>m. E (n + m))"
-  proof -
-    have "(\<Union>j\<in>{n..}. E j) \<subseteq> (\<Union>m. E (n + m))"
-    proof
-      fix x assume "x \<in> (\<Union>j\<in>{n..}. E j)"
-      then obtain j where j: "n \<le> j" "x \<in> E j" by auto
-      from j(1) obtain m where "j = n + m" using le_Suc_ex by blast
-      with j(2) show "x \<in> (\<Union>m. E (n + m))" by auto
-    qed
-    moreover have "(\<Union>m. E (n + m)) \<subseteq> (\<Union>j\<in>{n..}. E j)"
-    proof
-      fix x assume "x \<in> (\<Union>m. E (n + m))"
-      then obtain m where "x \<in> E (n + m)" by auto
-      thus "x \<in> (\<Union>j\<in>{n..}. E j)" by (intro UN_I[of "n + m"]) simp_all
-    qed
-    ultimately show ?thesis by blast
-  qed
+    by (auto dest: le_Suc_ex intro!: bexI[of _ "n + _"])
   have "measure M (\<Union>m. E (n + m)) \<le> (\<Sum>m. measure M (E (n + m)))"
     by (rule P.finite_measure_subadditive_countably) (use Esets msum in auto)
   also have "\<dots> \<le> (\<Sum>m. 8*C\<^sup>2*T * ?q^n * ?q^m)"
@@ -267,31 +241,14 @@ lemma geometric_tail_sum_le:
   fixes r :: real
   assumes r0: "0 \<le> r" and r1: "r < 1"
   shows "(\<Sum>j\<in>{n<..m}. r^j) \<le> r^Suc n / (1 - r)"
-proof (cases "n \<le> m")
+proof (cases "n < m")
   case True
-  have iv: "{n<..m} = {Suc n..<Suc m}" by auto
-  have "(\<Sum>j\<in>{Suc n..<Suc m}. r^j) = (\<Sum>i\<in>{0..<Suc m - Suc n}. r^(i + Suc n))"
-    using sum.shift_bounds_nat_ivl[of "\<lambda>j. r^j" 0 "Suc n" "Suc m - Suc n"] True
-    by simp
-  also have "\<dots> = r^Suc n * (\<Sum>i\<in>{0..<Suc m - Suc n}. r^i)"
-    by (simp add: power_add sum_distrib_left mult_ac)
-  also have "\<dots> \<le> r^Suc n * (1 / (1 - r))"
-  proof (rule mult_left_mono)
-    have "(\<Sum>i\<in>{0..<Suc m - Suc n}. r^i) \<le> (\<Sum>i. r^i)"
-      by (rule sum_le_suminf)
-         (use r0 r1 summable_geometric[of r] in auto)
-    also have "\<dots> = 1 / (1 - r)"
-      using r0 r1 by (simp add: suminf_geometric)
-    finally show "(\<Sum>i\<in>{0..<Suc m - Suc n}. r^i) \<le> 1 / (1 - r)" .
-    show "0 \<le> r^Suc n" using r0 by simp
-  qed
-  finally show ?thesis unfolding iv by simp
+  have "{n<..m} = {Suc n..m}" by auto
+  then show ?thesis
+    using True r0 r1 by (simp add: sum_gp divide_right_mono)
 next
   case False
-  hence "{n<..m} = {}" by auto
-  moreover have "0 \<le> r^Suc n / (1 - r)"
-    using r0 r1 by (intro divide_nonneg_pos) simp_all
-  ultimately show ?thesis by simp
+  then show ?thesis using r0 r1 by simp
 qed
 
 text \<open>
@@ -316,12 +273,7 @@ theorem modulus_of_good_path:
 proof -
   let ?r = "2 powr (-\<gamma>)"
   have r0: "0 < ?r" by simp
-  have r1: "?r < 1"
-  proof -
-    have "(-\<gamma>) < 0" using g0 by simp
-    hence "2 powr (-\<gamma>) < 2 powr 0" by (intro powr_less_mono) simp_all
-    thus ?thesis by simp
-  qed
+  have r1: "?r < 1" by (rule powr_less_one) (use g0 in simp_all)
   have pos: "0 < 1 - ?r" using r1 by simp
   have cj: "2 powr (-\<gamma>*real j) = ?r^j" for j
     by (subst powr_realpow[symmetric]) (simp_all add: powr_powr)

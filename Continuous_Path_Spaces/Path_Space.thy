@@ -114,13 +114,7 @@ lemma mspace_path_metricD:
   fixes f :: "real \<Rightarrow> 'b::polish_space"
   assumes f: "f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
   shows "continuous_on {0..T} f"
-proof -
-  have "continuous_map (top_of_set {0..T})
-      (mtopology_of (euclidean_metric :: 'b metric)) f"
-    using f unfolding path_metric_def mspace_cfunspace by simp
-  hence "continuous_map (top_of_set {0..T}) euclidean f" by simp
-  thus ?thesis by simp
-qed
+  using f unfolding path_metric_def mspace_cfunspace by auto
 
 theorem compactin_path_holder_ball:
   fixes x :: "'b::{polish_space, real_normed_vector, heine_borel}"
@@ -286,12 +280,6 @@ proof -
     by (rule continuous_le_on_closure[OF contc Icc_rats_dense[OF T t] le])
 qed
 
-lemma mspace_path_metric_continuous:
-  fixes g :: "real \<Rightarrow> 'b::polish_space"
-  assumes "g \<in> mspace (path_metric T)"
-  shows "continuous_on {0..T} g"
-  using assms unfolding path_metric_def mspace_cfunspace by auto
-
 lemma path_mdist_le_iff:
   fixes g h :: "real \<Rightarrow> 'b::polish_space"
   assumes T: "0 \<le> T"
@@ -317,8 +305,8 @@ proof -
   next
     assume r: "\<forall>t\<in>{0..T} \<inter> \<rat>. dist (g t) (h t) \<le> q"
     have cd: "continuous_on {0..T} (\<lambda>t. dist (g t) (h t))"
-      by (intro continuous_on_dist mspace_path_metric_continuous[OF g]
-          mspace_path_metric_continuous[OF h])
+      by (intro continuous_on_dist mspace_path_metricD[OF g]
+          mspace_path_metricD[OF h])
     have "dist (g t) (h t) \<le> q" if "t \<in> {0..T}" for t
       by (rule le_on_Icc_of_rats[OF T cd _ that]) (use r in blast)
     thus "mdist (path_metric T) g h \<le> q" unfolding iff1 by blast
@@ -516,7 +504,7 @@ lemma restrict_mspace_path_metric:
     and f: "f \<in> mspace (path_metric m')"
   shows "restrict f {0..m} \<in> mspace (path_metric m)"
 proof -
-  have "continuous_on {0..m'} f" by (rule mspace_path_metric_continuous[OF f])
+  have "continuous_on {0..m'} f" by (rule mspace_path_metricD[OF f])
   hence "continuous_on {0..m} f"
     by (rule continuous_on_subset) (use mm in auto)
   thus ?thesis by (rule mspace_path_metricI)

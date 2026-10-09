@@ -89,63 +89,63 @@ proof -
     by (meson linorder_neqE order.irrefl)
 qed
 
+lemma pexit_cap_eq:
+  fixes K :: "'a::polish_space set" and f :: "real \<Rightarrow> 'a"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and ex: "\<not> (pexit r K f = r \<and> f r \<in> K)"
+  shows "pexit T K f = pexit r K f"
+proof (cases "pexit T K f \<le> r")
+  case True
+  then show ?thesis using pexit_min_horizon[OF r rT, of K f] by (simp add: min_absorb1)
+next
+  case False
+  then have "f r \<in> K" using pexit_le_of_mem[OF order.trans[OF r rT] r rT] by blast
+  moreover have "pexit r K f = r" using False pexit_min_horizon[OF r rT, of K f] by simp
+  ultimately show ?thesis using ex by simp
+qed
+
 lemma pexit_mono_T:
   assumes T: "0 \<le> T" and TT: "T \<le> T'"
   shows "pexit T K f \<le> pexit T' K f"
   by (simp add: pexit_min_horizon[OF T TT])
 
-lemma pexit_stable_above_T:
-  assumes T: "0 \<le> T" and TT: "T \<le> T'" and ex: "pexit T K f < T"
-  shows "pexit T' K f = pexit T K f"
-  using pexit_min_horizon[OF T TT, of K f] ex by (simp add: min_def split: if_splits)
-
-text \<open>The law-level form: the essential infimum only sees the almost-sure
-  class of the exit time, so once the exit happens before \<open>T\<close> almost surely,
-  every larger horizon gives the SAME value.  This is what licenses working
-  at a fixed finite \<open>T\<close> in place of the paper's \<open>C([0,\<infinity>), \<real>ⁿ)\<close>.\<close>
-
-text \<open>Upper semicontinuity, in sublevel-set form: strict sublevels of the
-  exit time are open in the path topology. A path that exits before \<open>c\<close>
-  does so at a time where it sits in the open complement of \<open>K\<close>, and
+text \<open>Upper semicontinuity, in sublevel-set form: strict sublevels of an exit
+  time are open in the path topology. A path that is in the open set \<open>A\<close>
+  (after a continuous map \<open>\<phi>\<close>) before \<open>c\<close> is so at some single time, and
   evaluation at that time is continuous.\<close>
+
+lemma etime_comp_sublevel_open:
+  fixes T c :: real and A :: "'c::topological_space set"
+    and \<phi> :: "'b::polish_space \<Rightarrow> 'c"
+  assumes T: "0 \<le> T" and A: "open A" and \<phi>: "continuous_on UNIV \<phi>"
+  shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). etime T A (\<lambda>s w. \<phi> (w s)) f < c}"
+proof (cases "T < c")
+  case True
+  then have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). etime T A (\<lambda>s w. \<phi> (w s)) f < c}
+      = topspace (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    using le_less_trans[OF etime_le_T[OF T, of A "\<lambda>s w. \<phi> (w s)"] True] by simp
+  then show ?thesis by (simp only: openin_topspace)
+next
+  case False
+  have eq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). etime T A (\<lambda>s w. \<phi> (w s)) f < c}
+      = (\<Union>r \<in> {r. 0 \<le> r \<and> r \<le> T \<and> r < c}.
+          {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). \<phi> (f r) \<in> A})"
+    using False etime_less_iff[OF T, of A "\<lambda>s w. \<phi> (w s)" _ c] by blast
+  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). \<phi> (f r) \<in> A}"
+    if r: "r \<in> {0..T}" for r
+    using open_eval_preimage[OF r open_vimage[OF A \<phi>]] by simp
+  show ?thesis unfolding eq by (intro openin_Union) (auto intro: op)
+qed
 
 lemma pexit_sublevel_open:
   fixes K :: "('b :: polish_space) set"
   assumes T: "0 \<le> T" and K: "closed K"
   shows "openin (mtopology_of (path_metric T))
       {f \<in> mspace (path_metric T). pexit T K f < c}"
-proof (cases "T < c")
-  case True
-  then have "{f \<in> mspace (path_metric T). pexit T K f < c}
-      = mspace (path_metric T)"
-    using pexit_le_T[OF T] by (auto intro: le_less_trans)
-  then show ?thesis
-    by (metis openin_topspace topspace_mtopology_of)
-next
-  case False
-  have ev: "openin (mtopology_of (path_metric T))
-      {f \<in> mspace (path_metric T). f r \<notin> K}" if r: "r \<in> {0..T}" for r
-  proof -
-    have cm: "continuous_map (mtopology_of (path_metric T)) euclidean
-        (\<lambda>f :: real \<Rightarrow> 'b. f r)"
-      by (rule continuous_map_path_eval[OF r])
-    have op: "openin euclidean (- K)"
-      using K by (metis open_Compl open_openin)
-    have "openin (mtopology_of (path_metric T))
-        {f \<in> topspace (mtopology_of (path_metric T)). f r \<in> - K}"
-      by (rule openin_continuous_map_preimage[OF cm op])
-    then show ?thesis
-      by simp
-  qed
-  have "{f \<in> mspace (path_metric T). pexit T K f < c}
-      = (\<Union>r \<in> {0..T} \<inter> {..<c}.
-          {f \<in> mspace (path_metric T). f r \<notin> K})"
-    using False by (fastforce simp: pexit_less_iff[OF T])
-  moreover have "openin (mtopology_of (path_metric T))
-      (\<Union>r \<in> {0..T} \<inter> {..<c}. {f \<in> mspace (path_metric T). f r \<notin> K})"
-    by (intro openin_Union) (auto intro: ev)
-  ultimately show ?thesis by simp
-qed
+  using etime_comp_sublevel_open[OF T, where A = "- K" and \<phi> = "\<lambda>x. x"] K
+  by (simp add: pexit_def open_Compl)
 
 lemma pexit_measurable:
   fixes K :: "('b :: polish_space) set"
@@ -420,35 +420,8 @@ lemma open_etime_shift_less:
   shows "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
       {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
          etime T A (\<lambda>s w. y + w s) f < d}"
-proof -
-  have eq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-        etime T A (\<lambda>s w. y + w s) f < d}
-      = (\<Union>r \<in> {r \<in> qtimes T. r < d}.
-           {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). y + f r \<in> A})"
-  proof -
-    have "etime T A (\<lambda>s w. y + w s) f < d
-        \<longleftrightarrow> (\<exists>r \<in> {r \<in> qtimes T. r < d}. y + f r \<in> A)"
-      if w: "f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)" for f
-    proof -
-      have cont: "continuous_on {0..T} (\<lambda>s. y + f s)"
-        by (intro continuous_intros mspace_path_metricD[OF w])
-      have e: "etime T A (\<lambda>s w. y + w s) f = etime T A (\<lambda>s w'. y + f s) f"
-        unfolding etime_def by simp
-      show ?thesis unfolding e
-        using etime_less_iff_qtimes_open[OF T A dT cont, of f] by auto
-    qed
-    thus ?thesis by blast
-  qed
-  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). y + f r \<in> A}"
-    if r: "r \<in> {r \<in> qtimes T. r < d}" for r
-  proof -
-    have "r \<in> qtimes T" using r by simp
-    hence rT: "r \<in> {0..T}" using qtimes_subset[OF T] by blast
-    show ?thesis by (rule open_shifted_eval_preimage[OF rT A])
-  qed
-  show ?thesis unfolding eq by (rule openin_Union) (use op in blast)
-qed
+  using etime_comp_sublevel_open[OF T A, where \<phi> = "\<lambda>z. y + z"]
+  by (simp add: continuous_intros)
 
 subsection \<open>Berge's box hypothesis for the shifted exit time\<close>
 
@@ -662,27 +635,6 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-lemma pexit_cap_eq:
-  fixes K :: "'a::polish_space set" and f :: "real \<Rightarrow> 'a"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and ex: "\<not> (pexit r K f = r \<and> f r \<in> K)"
-  shows "pexit T K f = pexit r K f"
-proof (cases "pexit r K f < r")
-  case True
-  then show ?thesis by (rule pexit_stable_above_T[OF r rT])
-next
-  case False
-  then have eqr: "pexit r K f = r" using pexit_le_T[OF r, of K f] by simp
-  with ex have nk: "f r \<in> - K" by simp
-  show ?thesis
-  proof (rule antisym)
-    have "pexit T K f \<le> r"
-      using r rT nk by (intro pexit_le_of_mem) auto
-    then show "pexit T K f \<le> pexit r K f" using eqr by simp
-    show "pexit r K f \<le> pexit T K f" by (rule pexit_mono_T[OF r rT])
-  qed
-qed
-
 text \<open>Hence the \<open>\<le>\<close> half of (2.9) reduces to a single statement about
   conditioning, and no other property of the class is needed:
 
@@ -835,62 +787,20 @@ lemma etime_shift_superlevel_closed:
   shows "closedin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
       {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
          c \<le> ennreal (etime T A (\<lambda>s w. y + w s) f)}"
-proof -
-  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
-      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-         ennreal (etime T A (\<lambda>s w. y + w s) f) < c}"
-  proof (cases "ennreal T < c")
-    text \<open>One split, on whether the threshold is beyond the cap, rather than the
-      two that \<open>ennreal_cases\<close> would give: above the cap every path qualifies,
-      and below it the threshold is automatically a real \<open>r\<close> with \<open>\<not> T < r\<close>,
-      which is exactly the hypothesis \<open>open_etime_shift_less\<close> wants.\<close>
-    case True
-    have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-          ennreal (etime T A (\<lambda>s w. y + w s) f) < c}
-        = mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
-    proof -
-      have "ennreal (etime T A (\<lambda>s w. y + w s) f) < c" for f
-      proof -
-        have "etime T A (\<lambda>s w. y + w s) f \<le> T" by (rule etime_le_T[OF T])
-        hence "ennreal (etime T A (\<lambda>s w. y + w s) f) \<le> ennreal T"
-          by (rule ennreal_leI)
-        thus ?thesis using True by (rule order_le_less_trans)
-      qed
-      thus ?thesis by blast
-    qed
-    then show ?thesis
-      using openin_topspace[of
-          "mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)"]
-      by simp
-  next
-    case False
-    hence cT: "c \<le> ennreal T" by simp
-    then obtain r where r: "0 \<le> r" "c = ennreal r"
-      by (cases c rule: ennreal_cases) (auto simp: top_unique)
-    have rT: "\<not> T < r"
-    proof
-      assume "T < r"
-      hence "ennreal T < ennreal r" using T by (simp add: ennreal_less_iff)
-      thus False using False r(2) by simp
-    qed
-    have "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-          ennreal (etime T A (\<lambda>s w. y + w s) f) < c}
-        = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-          etime T A (\<lambda>s w. y + w s) f < r}"
-      unfolding r(2)
-      using etime_nonneg[OF T, of A "\<lambda>s w. y + w s"]
-      by (auto simp: ennreal_less_iff)
-    then show ?thesis by (simp add: open_etime_shift_less[OF T A rT])
-  qed
-  have compl: "topspace (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+proof (cases c rule: ennreal_cases)
+  case (real r)
+  text \<open>The complement of a strict sublevel set, which is open.\<close>
+  have eq: "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         c \<le> ennreal (etime T A (\<lambda>s w. y + w s) f)}
+      = topspace (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
         - {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-             c \<le> ennreal (etime T A (\<lambda>s w. y + w s) f)}
-      = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
-           ennreal (etime T A (\<lambda>s w. y + w s) f) < c}"
-    by (auto simp: not_le)
-  show ?thesis
-    unfolding closedin_def using op unfolding compl by auto
-qed
+             etime T A (\<lambda>s w. y + w s) f < r}"
+    using real etime_nonneg[OF T, of A "\<lambda>s w. y + w s"] by (auto simp: ennreal_le_iff)
+  have op: "openin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric). etime T A (\<lambda>s w. y + w s) f < r}"
+    using etime_comp_sublevel_open[OF T A, where \<phi> = "\<lambda>z. y + z"] by (simp add: continuous_intros)
+  show ?thesis unfolding eq by (rule closedin_diff[OF closedin_topspace op])
+qed (simp add: top_unique)
 
 definition rclamp :: "real \<Rightarrow> real \<Rightarrow> real"
   where "rclamp c y = max (- c) (min c y)"

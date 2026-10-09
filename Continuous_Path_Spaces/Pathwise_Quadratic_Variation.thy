@@ -624,10 +624,6 @@ subsection \<open>At a fixed time: the path functional computes the compensator\
 text \<open>The rate \<open>18 C\<^sup>2 T\<^sup>2 / 2\<^sup>n\<close> is summable, so the dyadic sums converge to
   \<open>A T\<close> almost surely, and \<open>qvp\<close> --- their \<open>limsup\<close> --- agrees with \<open>A T\<close>.\<close>
 
-lemma dyadic_qsum_eq_grid:
-  "dyadic_qsum (\<lambda>s. X s \<omega>) T n = qvar (\<lambda>k. X (T * real k / 2 ^ n)) (2 ^ n) \<omega>"
-  by (simp add: dyadic_qsum_def qvar_def)
-
 lemma qvp_tendsto:
   fixes T :: real
   assumes T: "0 \<le> T"
@@ -639,7 +635,7 @@ proof (rule AE_tendsto_zero_of_summable_sq[where c = "\<lambda>n. 18 * C\<^sup>2
   have tmono: "mono t"
     using T by (simp add: t_def mono_def divide_right_mono mult_left_mono)
   have eq: "dyadic_qsum (\<lambda>s. X s \<omega>) T n = qvar (\<lambda>k. X (t k)) (2 ^ n) \<omega>" for \<omega>
-    by (simp add: dyadic_qsum_eq_grid t_def)
+    by (simp add: dyadic_qsum_eq_qvar t_def)
   show "(\<lambda>\<omega>. dyadic_qsum (\<lambda>s. X s \<omega>) T n - A T \<omega>) \<in> borel_measurable M"
     unfolding eq qvar_def using Xmeas[OF t0] Ameas[OF T] by simp
   have int: "integrable M (\<lambda>\<omega>. (qvar (\<lambda>k. X (t k)) (2 ^ n) \<omega> - A T \<omega>)\<^sup>2)"
@@ -682,10 +678,24 @@ proof eventually_elim
   then show ?case by (rule qvp_eq_limI)
 qed
 
+text \<open>The rational times are countably many, so \<open>qvp\<close> identifies \<open>A\<close> at all of
+  them on one event.\<close>
+
+lemma qvp_eq_A_rat:
+  "AE \<omega> in M. \<forall>q :: rat. 0 \<le> q \<longrightarrow> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"
+proof (subst AE_all_countable, intro allI)
+  fix q :: rat
+  show "AE \<omega> in M. 0 \<le> q \<longrightarrow> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"
+  proof (cases "0 \<le> q")
+    case True
+    then have "(0::real) \<le> real_of_rat q" by simp
+    from qvp_eq_A[OF this] show ?thesis by eventually_elim simp
+  qed simp
+qed
+
 subsection \<open>The identification at every time at once\<close>
 
-text \<open>The rational times are countably many, so \<open>qvp\<close> identifies \<open>A\<close> at all of
-  them on one event.  From there the Lipschitz rate does the rest: for \<open>q < t\<close>
+text \<open>From the rational times (\<open>qvp_eq_A_rat\<close>) the Lipschitz rate does the rest: for \<open>q < t\<close>
   we have \<open>A q \<omega> \<le> A t \<omega> \<le> A q \<omega> + C (t - q)\<close>, so the supremum over rationals
   \<open>q < t\<close> is exactly \<open>A t \<omega>\<close> --- no continuity argument, and no separate
   treatment of \<open>t = 0\<close>, where the index set is empty and both sides vanish.\<close>
@@ -693,17 +703,7 @@ text \<open>The rational times are countably many, so \<open>qvp\<close> identif
 theorem qvps_eq_A:
   shows "AE \<omega> in M. \<forall>t. 0 \<le> t \<longrightarrow> qvps (\<lambda>s. X s \<omega>) t = A t \<omega>"
 proof -
-  have rat: "AE \<omega> in M. \<forall>q :: rat. 0 \<le> q \<longrightarrow> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"
-  proof (subst AE_all_countable, intro allI)
-    fix q :: rat
-    show "AE \<omega> in M. 0 \<le> q \<longrightarrow> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"
-    proof (cases "0 \<le> q")
-      case True
-      then have "(0::real) \<le> real_of_rat q" by simp
-      from qvp_eq_A[OF this] show ?thesis by eventually_elim simp
-    qed simp
-  qed
-  from rat A0 Arate show ?thesis
+  from qvp_eq_A_rat A0 Arate show ?thesis
   proof eventually_elim
     case (elim \<omega>)
     then have qeq: "\<And>q :: rat. 0 \<le> q \<Longrightarrow> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) = A (real_of_rat q) \<omega>"

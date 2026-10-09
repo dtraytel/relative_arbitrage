@@ -59,15 +59,6 @@ qed
 
 subsection \<open>Good dyadics put the path in an explicit H\"older ball\<close>
 
-lemma powr_neg_lt_1:
-  assumes g0: "0 < \<gamma>"
-  shows "2 powr (-\<gamma>) < (1::real)"
-proof -
-  have "(-\<gamma>) < 0" using g0 by simp
-  hence "2 powr (-\<gamma>) < 2 powr 0" by (intro powr_less_mono) simp_all
-  thus ?thesis by simp
-qed
-
 text \<open>
   The H\"older constant produced by the level-\<open>n\<close> modulus: explicit in
   \<open>(\<gamma>, T, n)\<close> only, so the resulting compact ball is common to every law
@@ -84,7 +75,7 @@ lemma holder_const_nonneg:
   assumes g0: "0 < \<gamma>"
   shows "0 \<le> holder_const \<gamma> T n"
 proof -
-  have pos: "0 < 1 - 2 powr (-\<gamma>)" using powr_neg_lt_1[OF g0] by simp
+  have pos: "0 < 1 - 2 powr (-\<gamma>)" using g0 by (simp add: powr_less_one)
   have E0: "0 \<le> 3 / (1 - 2 powr (-\<gamma>))" using pos by simp
   show ?thesis unfolding holder_const_def
     by (intro add_nonneg_nonneg mult_nonneg_nonneg E0) simp_all
@@ -100,7 +91,7 @@ lemma holder_of_good_dyadics:
   shows "\<bar>f u - f v\<bar> \<le> holder_const \<gamma> T n * \<bar>u - v\<bar> powr \<gamma>"
 proof -
   define E where "E = 3 / (1 - 2 powr (-\<gamma>))"
-  have pos: "0 < 1 - 2 powr (-\<gamma>)" using powr_neg_lt_1[OF g0] by simp
+  have pos: "0 < 1 - 2 powr (-\<gamma>)" using g0 by (simp add: powr_less_one)
   have E0: "0 \<le> E" unfolding E_def using pos by simp
   have H: "\<bar>f u' - f v'\<bar> \<le> E * 2 powr (- \<gamma> * real m)"
     if m: "n \<le> m" and u': "u' \<in> {0..T}" and v': "v' \<in> {0..T}"
@@ -288,7 +279,7 @@ proof -
   proof -
     define q where "q = 2 powr (-(1-4*\<gamma>))"
     have q0: "0 \<le> q" unfolding q_def by simp
-    have q1: "q < 1" unfolding q_def by (rule powr_ratio_lt_1[OF g2])
+    have q1: "q < 1" unfolding q_def by (rule powr_less_one) (use g2 in simp_all)
     have lim: "(\<lambda>n. 8*C\<^sup>2*T * q^n / (1 - q)) \<longlonglongrightarrow> 0"
     proof -
       have e1: "(\<lambda>n. q^n) \<longlonglongrightarrow> 0" by (rule LIMSEQ_realpow_zero[OF q0 q1])
@@ -570,7 +561,7 @@ proof -
   proof -
     define q where "q = 2 powr (-(1-4*\<gamma>))"
     have q0: "0 \<le> q" unfolding q_def by simp
-    have q1: "q < 1" unfolding q_def by (rule powr_ratio_lt_1[OF g2])
+    have q1: "q < 1" unfolding q_def by (rule powr_less_one) (use g2 in simp_all)
     have lim: "(\<lambda>n. real CARD('m) * (8*C\<^sup>2*T * q^n / (1 - q))) \<longlonglongrightarrow> 0"
     proof -
       have e1: "(\<lambda>n. q^n) \<longlonglongrightarrow> 0" by (rule LIMSEQ_realpow_zero[OF q0 q1])
@@ -623,26 +614,36 @@ corollary path_laws_convergent_subsequence_vec:
         (\<integral>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
   shows "\<exists>a N. strict_mono a \<and> finite_measure N
       \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
+      \<and> prob_space N
+      \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+proof -
+  have Pl: "prob_space (path_law (MM i) (XX i) T)" for i
+    by (rule prob_space_path_law[OF P T0]) (use Xm cont in auto)
+  have "\<exists>a N. strict_mono a \<and> finite_measure N
+      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
       \<and> N (space N) \<le> ennreal 1
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
           (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
-proof (rule tight_on_set_imp_convergent_subsequence)
-  show "metrizable_space (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
-    unfolding mtopology_of_def
-    by (rule Metric_space.metrizable_space_mtopology[OF Metric_space_mspace_mdist])
-  show "separable_space (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
-    by (rule separable_path_metric)
-  show "tight_on_set (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-      (range (\<lambda>i. path_law (MM i) (XX i) T))"
-    by (intro tight_on_set_path_laws_vec[OF T0 g0 g2, where x = x and C = C]
-          P Xm cont start int4 mom)
-  fix i :: nat
-  have Xm': "XX i t \<in> borel_measurable (MM i)" if "t \<in> {0..T}" for t
-    using that by (intro Xm) simp
-  have "prob_space (path_law (MM i) (XX i) T)"
-    by (rule prob_space_path_law[OF P T0 Xm' cont])
-  thus "path_law (MM i) (XX i) T (space (path_law (MM i) (XX i) T)) \<le> ennreal 1"
-    by (simp add: prob_space.emeasure_space_1)
+  proof (rule tight_on_set_imp_convergent_subsequence)
+    show "metrizable_space (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+      unfolding mtopology_of_def
+      by (rule Metric_space.metrizable_space_mtopology[OF Metric_space_mspace_mdist])
+    show "separable_space (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+      by (rule separable_path_metric)
+    show "tight_on_set (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
+        (range (\<lambda>i. path_law (MM i) (XX i) T))"
+      by (intro tight_on_set_path_laws_vec[OF T0 g0 g2, where x = x and C = C]
+            P Xm cont start int4 mom)
+    show "path_law (MM i) (XX i) T (space (path_law (MM i) (XX i) T)) \<le> ennreal 1" for i
+      using Pl[of i] by (simp add: prob_space.emeasure_space_1)
+  qed
+  then obtain a N where "strict_mono a" "finite_measure N"
+      "sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)"
+      and wc: "weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))" by blast
+  moreover have "prob_space N" by (rule weak_conv_on_prob_space[OF wc]) (simp add: Pl)
+  ultimately show ?thesis by blast
 qed
 
 subsection \<open>The finite-dimensional marginal maps\<close>
@@ -690,7 +691,7 @@ lemma dyadic_pair_modulus:
 proof -
   let ?r = "2 powr (-\<gamma>)"
   have r0: "0 < ?r" by simp
-  have r1: "?r < 1" using powr_neg_lt_1[OF g0] by simp
+  have r1: "?r < 1" by (rule powr_less_one) (use g0 in simp_all)
   have pos: "0 < 1 - ?r" using r1 by simp
   have cj: "2 powr (-\<gamma>*real j) = ?r^j" for j
     by (subst powr_realpow[symmetric]) (simp_all add: powr_powr)

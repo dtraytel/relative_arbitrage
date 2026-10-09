@@ -57,20 +57,32 @@ lemma expectation_increment_sq:
   shows "(\<integral>\<omega>. (X u \<omega> - X s \<omega>)\<^sup>2 \<partial>M)
            = (\<integral>\<omega>. (X u \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. (X s \<omega>)\<^sup>2 \<partial>M)"
 proof -
-  define t where "t = (\<lambda>k::nat. if k = 0 then s else u)"
-  have t0: "0 \<le> t k" for k unfolding t_def using s su by simp
-  have tmono: "mono t"
-  proof (rule monoI)
-    fix k l :: nat assume "k \<le> l"
-    thus "t k \<le> t l" unfolding t_def using su
-      by (cases "k = 0"; cases "l = 0") auto
-  qed
-  have t_0: "t 0 = s" and t_1: "t (Suc 0) = u" unfolding t_def by simp_all
-  have "(\<integral>\<omega>. (X (t (Suc 0)) \<omega>)\<^sup>2 \<partial>M)
-          = (\<integral>\<omega>. (X (t 0) \<omega>)\<^sup>2 \<partial>M)
-            + (\<integral>\<omega>. (\<Sum>k<Suc 0. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2) \<partial>M)"
-    by (rule expectation_sq_sampled[OF X t0 tmono sq])
-  thus ?thesis by (simp add: t_0 t_1)
+  define t :: "nat \<Rightarrow> real" where "t k = (if k = 0 then s else u)" for k
+  have t0: "0 \<le> t k" for k using s su by (simp add: t_def)
+  have tmono: "mono t" using su by (auto simp: mono_def t_def)
+  show ?thesis
+    using expectation_sq_sampled[OF X t0 tmono sq, of "Suc 0"] by (simp add: t_def)
+qed
+
+text \<open>Applied to the compensated square, whose expectation is constant: the
+  second moment of an increment is the expected increment of the compensator.\<close>
+
+lemma increment_sq_compensator:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes X: "martingale M F (0::real) X"
+    and sq: "\<And>v. 0 \<le> v \<Longrightarrow> integrable M (\<lambda>\<omega>. (X v \<omega>)\<^sup>2)"
+    and Zmart: "martingale M F (0::real) (\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>)"
+    and Aint: "\<And>v. 0 \<le> v \<Longrightarrow> integrable M (A v)"
+    and s: "0 \<le> s" and su: "s \<le> u"
+  shows "(\<integral>\<omega>. (X u \<omega> - X s \<omega>)\<^sup>2 \<partial>M) = (\<integral>\<omega>. A u \<omega> \<partial>M) - (\<integral>\<omega>. A s \<omega> \<partial>M)"
+proof -
+  have u: "0 \<le> u" using s su by simp
+  have "(\<integral>\<omega>. (X s \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. A s \<omega> \<partial>M)
+      = (\<integral>\<omega>. (X u \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. A u \<omega> \<partial>M)"
+    using martingale_expectation_eq[OF Zmart s su]
+    by (simp add: Bochner_Integration.integral_diff[OF sq[OF s] Aint[OF s]]
+        Bochner_Integration.integral_diff[OF sq[OF u] Aint[OF u]])
+  with expectation_increment_sq[OF X sq s su] show ?thesis by linarith
 qed
 
 subsection \<open>The bound\<close>
@@ -88,36 +100,12 @@ theorem increment_second_moment_bound:
 proof -
   interpret P: prob_space M by (rule P)
   have u: "0 \<le> u" using s su by simp
-
-  text \<open>The compensated square has equal expectations at @{term s} and @{term u}.\<close>
-  have "(\<integral>\<omega>. (X s \<omega>)\<^sup>2 - A s \<omega> \<partial>M) = (\<integral>\<omega>. (X u \<omega>)\<^sup>2 - A u \<omega> \<partial>M)"
-    by (rule martingale_expectation_eq[OF Zmart s su])
-  moreover have "(\<integral>\<omega>. (X v \<omega>)\<^sup>2 - A v \<omega> \<partial>M)
-      = (\<integral>\<omega>. (X v \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. A v \<omega> \<partial>M)" if "0 \<le> v" for v
-    by (rule Bochner_Integration.integral_diff[OF sq[OF that] Aint[OF that]])
-  ultimately have split:
-      "(\<integral>\<omega>. (X u \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. (X s \<omega>)\<^sup>2 \<partial>M)
-         = (\<integral>\<omega>. A u \<omega> \<partial>M) - (\<integral>\<omega>. A s \<omega> \<partial>M)"
-    using s u by simp
-
-  text \<open>And the compensator increment is bounded by hypothesis.\<close>
-  have "(\<integral>\<omega>. A u \<omega> \<partial>M) - (\<integral>\<omega>. A s \<omega> \<partial>M) = (\<integral>\<omega>. A u \<omega> - A s \<omega> \<partial>M)"
-    by (rule Bochner_Integration.integral_diff[OF Aint[OF u] Aint[OF s], symmetric])
+  have "(\<integral>\<omega>. (X u \<omega> - X s \<omega>)\<^sup>2 \<partial>M) = (\<integral>\<omega>. A u \<omega> - A s \<omega> \<partial>M)"
+    using increment_sq_compensator[OF X sq Zmart Aint s su]
+    by (simp add: Bochner_Integration.integral_diff[OF Aint[OF u] Aint[OF s]])
   also have "\<dots> \<le> (\<integral>\<omega>. C * (u - s) \<partial>M)"
-  proof (rule integral_mono_AE)
-    show "integrable M (\<lambda>\<omega>. A u \<omega> - A s \<omega>)" using Aint[OF u] Aint[OF s] by simp
-    show "integrable M (\<lambda>\<omega>. C * (u - s))" by simp
-    show "AE \<omega> in M. A u \<omega> - A s \<omega> \<le> C * (u - s)" by (rule Arate)
-  qed
-  also have "(\<integral>\<omega>. C * (u - s) \<partial>M) = C * (u - s)" by (simp add: P.prob_space)
-  finally have Abound: "(\<integral>\<omega>. A u \<omega> \<partial>M) - (\<integral>\<omega>. A s \<omega> \<partial>M) \<le> C * (u - s)" .
-
-  have "(\<integral>\<omega>. (X u \<omega> - X s \<omega>)\<^sup>2 \<partial>M)
-          = (\<integral>\<omega>. (X u \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. (X s \<omega>)\<^sup>2 \<partial>M)"
-    by (rule expectation_increment_sq[OF X sq s su])
-  also have "\<dots> = (\<integral>\<omega>. A u \<omega> \<partial>M) - (\<integral>\<omega>. A s \<omega> \<partial>M)" by (rule split)
-  also note Abound
-  finally show ?thesis .
+    using Aint[OF u] Aint[OF s] Arate by (intro integral_mono_AE) auto
+  finally show ?thesis by (simp add: P.prob_space)
 qed
 
 subsection \<open>Integrability from fourth moments\<close>
@@ -1297,22 +1285,10 @@ lemma upart_diff_le:
   assumes sT: "s \<le> T"
   shows "upart s T m (Suc k) - upart s T m k \<le> (T - s) / real (Suc m)"
 proof -
-  have h: "min (Suc k) (Suc m) \<le> Suc (min k (Suc m))"
-    by (simp add: min_def)
-  have hr: "real (min (Suc k) (Suc m)) - real (min k (Suc m)) \<le> 1"
-    using h by simp
-  have "upart s T m (Suc k) - upart s T m k
-          = (T - s) * real (min (Suc k) (Suc m)) / real (Suc m)
-            - (T - s) * real (min k (Suc m)) / real (Suc m)"
-    by (simp add: upart_def)
-  also have "\<dots> = ((T - s) * real (min (Suc k) (Suc m))
-                   - (T - s) * real (min k (Suc m))) / real (Suc m)"
-    by (simp add: diff_divide_distrib)
-  also have "\<dots> = (T - s) * (real (min (Suc k) (Suc m))
-                             - real (min k (Suc m))) / real (Suc m)"
-    by (simp add: right_diff_distrib)  also have "\<dots> \<le> (T - s) * 1 / real (Suc m)"
-    using sT hr by (intro divide_right_mono mult_left_mono) simp_all
-  finally show ?thesis by simp
+  have "(T - s) * real (min (Suc k) (Suc m)) \<le> (T - s) * (real (min k (Suc m)) + 1)"
+    using sT by (intro mult_left_mono) (simp_all add: min_def)
+  then show ?thesis
+    by (simp add: upart_def diff_divide_distrib[symmetric] divide_right_mono algebra_simps)
 qed
 
 subsection \<open>The two pointwise steps of the mesh limit\<close>
@@ -1526,23 +1502,11 @@ lemma integrable_pow4_of_bounded:
     and R: "0 \<le> R"
     and b: "AE \<omega> in M. \<bar>f \<omega>\<bar> \<le> R"
   shows "integrable M (\<lambda>\<omega>. (f \<omega>)^4)"
-proof (rule Bochner_Integration.integrable_bound[of _ "\<lambda>_. R^4"])
+proof -
   interpret P: prob_space M by (rule P)
-  show "integrable M (\<lambda>_. R^4)" by (rule P.integrable_const)
-  show "(\<lambda>\<omega>. (f \<omega>)^4) \<in> borel_measurable M" by measurable
-  show "AE \<omega> in M. norm ((f \<omega>)^4) \<le> norm (R^4)"
-    using b
-  proof eventually_elim
-    case (elim \<omega>)
-    have le4: "\<bar>f \<omega>\<bar>^4 \<le> R^4" by (rule power_mono[OF elim abs_ge_zero])
-    have e1: "\<bar>f \<omega>\<bar>^4 = (\<bar>f \<omega>\<bar>\<^sup>2)\<^sup>2" by algebra
-    have e2: "(\<bar>f \<omega>\<bar>\<^sup>2)\<^sup>2 = ((f \<omega>)\<^sup>2)\<^sup>2" by simp
-    have e3: "((f \<omega>)\<^sup>2)\<^sup>2 = (f \<omega>)^4" by algebra
-    have le: "(f \<omega>)^4 \<le> R^4" using le4 e1 e2 e3 by linarith
-    have nn: "0 \<le> (f \<omega>)^4" by (rule pow4_nonneg)
-    have nn2: "0 \<le> R^4" using R by simp
-    show ?case using le nn nn2 by simp
-  qed
+  have "AE \<omega> in M. norm ((f \<omega>)^4) \<le> R^4"
+    using b by eventually_elim (use fourth_abs_mono in auto)
+  then show ?thesis by (rule P.integrable_const_bound) measurable
 qed
 
 
@@ -2048,33 +2012,7 @@ lemma clamp_diff_le_tail_pointwise:
   fixes z R :: real
   assumes Rnn: "0 \<le> R"
   shows "\<bar>z - max (- R) (min R z)\<bar> \<le> \<bar>z\<bar> * indicat_real {w. R < \<bar>w\<bar>} z"
-proof (cases "R < \<bar>z\<bar>")
-  case False
-  then have zR: "\<bar>z\<bar> \<le> R" by linarith
-  then have "min R z = z" by (simp add: abs_le_iff)
-  moreover have "max (- R) z = z" using zR by (simp add: abs_le_iff)
-  ultimately show ?thesis by simp
-next
-  case True
-  have ind: "indicat_real {w. R < \<bar>w\<bar>} z = 1" using True by simp
-  show ?thesis
-  proof (cases "0 \<le> z")
-    case True
-    then have zgt: "R < z" using \<open>R < \<bar>z\<bar>\<close> by simp
-    have "min R z = R" using zgt by simp
-    moreover have "max (- R) R = R" using Rnn by simp
-    ultimately have "max (- R) (min R z) = R" by simp
-    then show ?thesis unfolding ind using zgt True Rnn by simp
-  next
-    case False
-    then have zlt: "z < - R" using \<open>R < \<bar>z\<bar>\<close> by simp
-    have zleR: "z \<le> R" using zlt Rnn by linarith
-    have "min R z = z" by (rule min_absorb2[OF zleR])
-    moreover have "max (- R) z = - R" using zlt by simp
-    ultimately have "max (- R) (min R z) = - R" by simp
-    then show ?thesis unfolding ind using zlt False Rnn by simp
-  qed
-qed
+  using Rnn by (auto simp: indicator_def abs_if max_def min_def)
 
 lemma clamp_integral_error:
   fixes f :: "'a \<Rightarrow> real"
@@ -2115,169 +2053,16 @@ lemma abs_diff_le_two:
   shows "\<bar>a - b\<bar> \<le> 2 * C"
   using assms by (simp add: abs_le_iff)
 
-text \<open>This section instantiates the generic chain at
-  \<open>F\<^sub>2 p = (outerp (fst p) - snd p) $ i $ j\<close>.  The only new input is its
-  \<open>L\<^sup>2\<close> bound, which is where the fourth moment is spent:
-  \<open>(ab - c)\<^sup>2 \<le> a\<^sup>4 + b\<^sup>4 + 2c\<^sup>2\<close> pointwise, so a second moment of the
-  compensated functional costs a fourth moment of the coordinates.\<close>
-
-
-lemma zero_le_fourth:
-  fixes a :: real
-  shows "0 \<le> a^4"
-proof -
-  have "a^4 = (a\<^sup>2)\<^sup>2"
-    by (simp add: power2_eq_square power4_eq_xxxx algebra_simps)
-  then show ?thesis by simp
-qed
-
 subsection \<open>Difference quotients of a continuous path, tested at rationals\<close>
 
 text \<open>The weak limit gives the constraint only for the countably many
   rational pairs \<open>s < t\<close> (one closed set each, all of full mass,
   intersected). Path continuity and closedness upgrade this to all real
   \<open>s < t\<close>: squeeze rationals \<open>p\<^sub>n \<down> s\<close>, \<open>q\<^sub>n \<up> t\<close> strictly inside
-  \<open>(s,t)\<close> and pass to the limit.\<close>
-
-lemma diffquot_all_of_rational:
-  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
-  assumes S: "closed S"
-    and cont: "continuous_on {0..T} Y"
-    and rat: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
-        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (Y q - Y p) \<in> S"
-    and st: "0 \<le> s" "s < t" "t \<le> T"
-  shows "(1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
-proof -
-  define d where "d = (t - s) / 3"
-  have d0: "0 < d" using st unfolding d_def by simp
-  define e where "e = (\<lambda>n :: nat. min d (1 / real (Suc n)))"
-  have e0: "0 < e n" for n using d0 unfolding e_def by simp
-  have ed: "e n \<le> d" for n unfolding e_def by simp
-  have elim: "e \<longlonglongrightarrow> 0"
-  proof (rule tendsto_sandwich[of "\<lambda>n. 0" e sequentially
-      "\<lambda>n. 1 / real (Suc n)"])
-    show "\<forall>\<^sub>F n in sequentially. 0 \<le> e n"
-      using e0 by (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. e n \<le> 1 / real (Suc n)"
-      by (simp add: e_def)
-    show "(\<lambda>n :: nat. 0 :: real) \<longlonglongrightarrow> 0" by simp
-    show "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
-      using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
-  qed
-  have exp: "\<exists>r. r \<in> \<rat> \<and> s < r \<and> r < s + e n" for n
-  proof -
-    have "s < s + e n" using e0 by simp
-    from Rats_dense_in_real[OF this] show ?thesis by blast
-  qed
-  have exq: "\<exists>r. r \<in> \<rat> \<and> t - e n < r \<and> r < t" for n
-  proof -
-    have "t - e n < t" using e0 by simp
-    from Rats_dense_in_real[OF this] show ?thesis by blast
-  qed
-  obtain p where p: "\<And>n. p n \<in> \<rat>" "\<And>n. s < p n" "\<And>n. p n < s + e n"
-    using exp by metis
-  obtain q where q: "\<And>n. q n \<in> \<rat>" "\<And>n. t - e n < q n" "\<And>n. q n < t"
-    using exq by metis
-  have mid: "s + d < t - d"
-    unfolding d_def using st by argo
-  have pq: "p n < q n" for n
-  proof -
-    have "p n < s + d" using p(3)[of n] ed[of n] by simp
-    also have "\<dots> < t - d" by (rule mid)
-    also have "\<dots> \<le> t - e n" using ed[of n] by simp
-    also have "\<dots> < q n" by (rule q(2))
-    finally show ?thesis .
-  qed
-  have pmem: "p n \<in> {0..T}" for n
-    using p(2)[of n] pq[of n] q(3)[of n] st by auto
-  have qmem: "q n \<in> {0..T}" for n
-    using q(3)[of n] p(2)[of n] pq[of n] st by auto
-  have inS: "(1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)) \<in> S" for n
-    using p q pq pmem qmem st by (intro rat) auto
-  have pl: "p \<longlonglongrightarrow> s"
-  proof (rule tendsto_sandwich[of "\<lambda>n. s" p sequentially "\<lambda>n. s + e n"])
-    show "\<forall>\<^sub>F n in sequentially. s \<le> p n"
-      using p(2) by (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. p n \<le> s + e n"
-      using p(3) by (simp add: less_imp_le)
-    show "(\<lambda>n. s) \<longlonglongrightarrow> s" by simp
-    show "(\<lambda>n. s + e n) \<longlonglongrightarrow> s"
-      using tendsto_add[OF tendsto_const elim] by simp
-  qed
-  have ql: "q \<longlonglongrightarrow> t"
-  proof (rule tendsto_sandwich[of "\<lambda>n. t - e n" q sequentially "\<lambda>n. t"])
-    show "\<forall>\<^sub>F n in sequentially. t - e n \<le> q n"
-      using q(2) by (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. q n \<le> t"
-      using q(3) by (simp add: less_imp_le)
-    show "(\<lambda>n. t - e n) \<longlonglongrightarrow> t"
-      using tendsto_diff[OF tendsto_const elim] by simp
-    show "(\<lambda>n. t) \<longlonglongrightarrow> t" by simp
-  qed
-  have Yp: "(\<lambda>n. Y (p n)) \<longlonglongrightarrow> Y s"
-    using st pmem by (intro continuous_on_tendsto_compose[OF cont pl]) auto
-  have Yq: "(\<lambda>n. Y (q n)) \<longlonglongrightarrow> Y t"
-    using st qmem by (intro continuous_on_tendsto_compose[OF cont ql]) auto
-  have "(\<lambda>n. (1 / (q n - p n)) *\<^sub>R (Y (q n) - Y (p n)))
-      \<longlonglongrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s)"
-    using st by (intro tendsto_intros Yp Yq ql pl) auto
-  then show ?thesis
-    by (rule closed_sequentially[OF S inS])
-qed
-
-text \<open>Once the constraint holds for all \<open>s < t\<close>, boundedness of the
-  constraint set makes \<open>Y\<close> Lipschitz, and closedness carries through to
-  the derivative wherever it exists: \<open>dY/dt \<in> S\<close> a.e., the density
-  statement of Eq. (1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.\<close>
-
-lemma diffquot_lipschitz:
-  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
-  assumes B0: "0 \<le> B" and B: "\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B"
-    and dq: "\<And>s t. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> t \<le> T
-        \<Longrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
-  shows "B-lipschitz_on {0..T} Y"
-proof (rule lipschitz_onI[OF _ B0])
-  fix u v :: real
-  assume uv: "u \<in> {0..T}" "v \<in> {0..T}"
-  have key: "dist (Y a) (Y b) \<le> B * dist a b"
-    if ab: "a \<in> {0..T}" "b \<in> {0..T}" "a < b" for a b
-  proof -
-    have ba: "0 < b - a" using ab by simp
-    have "(1 / (b - a)) *\<^sub>R (Y b - Y a) \<in> S"
-      using ab by (intro dq) auto
-    then have "norm ((1 / (b - a)) *\<^sub>R (Y b - Y a)) \<le> B" by (rule B)
-    then have "(1 / (b - a)) * norm (Y b - Y a) \<le> B"
-      using ba by simp
-    then have "norm (Y b - Y a) \<le> B * (b - a)"
-      using ba by (simp add: field_simps)
-    then show ?thesis
-      using ba by (simp add: dist_norm norm_minus_commute)
-  qed
-  show "dist (Y u) (Y v) \<le> B * dist u v"
-  proof (cases "u = v")
-    case True
-    then show ?thesis using B0 by simp
-  next
-    case ne: False
-    show ?thesis
-    proof (cases "u < v")
-      case True
-      show ?thesis by (rule key[OF uv True])
-    next
-      case False
-      with ne have vu: "v < u" by simp
-      have "dist (Y v) (Y u) \<le> B * dist v u"
-        by (rule key[OF uv(2) uv(1) vu])
-      then show ?thesis by (simp add: dist_commute)
-    qed
-  qed
-qed
-
-text \<open>The rational-to-real step with a lower guard.  \<open>l\<close> is the same argument at \<open>r = 0\<close>, and the guard
-  costs nothing: the rationals it picks satisfy \<open>p\<^sub>n > s\<close>, and \<open>s \<ge> r\<close>, so
-  \<open>r \<le> p\<^sub>n\<close> holds automatically, which is why the grid can stay in the
-  original time scale even though the interval starts at the random
-  \<open>\<theta> p'\<close>.\<close>
+  \<open>(s,t)\<close> and pass to the limit.  A lower guard \<open>r \<le> p\<close> on the rational
+  pairs costs nothing: the rationals picked satisfy \<open>p\<^sub>n > s \<ge> r\<close>, which
+  is why the grid can stay in the original time scale even though the
+  interval starts at the random \<open>\<theta> p'\<close>.\<close>
 
 lemma diffquot_all_of_rational_ge:
   fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
@@ -2368,6 +2153,66 @@ proof -
   then show ?thesis by (rule closed_sequentially[OF S inS])
 qed
 
+text \<open>The unguarded form is the case \<open>r = 0\<close>.\<close>
+
+lemma diffquot_all_of_rational:
+  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
+  assumes S: "closed S"
+    and cont: "continuous_on {0..T} Y"
+    and rat: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
+        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (Y q - Y p) \<in> S"
+    and st: "0 \<le> s" "s < t" "t \<le> T"
+  shows "(1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
+  by (rule diffquot_all_of_rational_ge[where r = 0, OF S cont rat st(1) st]) auto
+
+text \<open>Once the constraint holds for all \<open>s < t\<close>, boundedness of the
+  constraint set makes \<open>Y\<close> Lipschitz, and closedness carries through to
+  the derivative wherever it exists: \<open>dY/dt \<in> S\<close> a.e., the density
+  statement of Eq. (1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.\<close>
+
+lemma diffquot_lipschitz:
+  fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"
+  assumes B0: "0 \<le> B" and B: "\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and dq: "\<And>s t. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> t \<le> T
+        \<Longrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
+  shows "B-lipschitz_on {0..T} Y"
+proof (rule lipschitz_onI[OF _ B0])
+  fix u v :: real
+  assume uv: "u \<in> {0..T}" "v \<in> {0..T}"
+  have key: "dist (Y a) (Y b) \<le> B * dist a b"
+    if ab: "a \<in> {0..T}" "b \<in> {0..T}" "a < b" for a b
+  proof -
+    have ba: "0 < b - a" using ab by simp
+    have "(1 / (b - a)) *\<^sub>R (Y b - Y a) \<in> S"
+      using ab by (intro dq) auto
+    then have "norm ((1 / (b - a)) *\<^sub>R (Y b - Y a)) \<le> B" by (rule B)
+    then have "(1 / (b - a)) * norm (Y b - Y a) \<le> B"
+      using ba by simp
+    then have "norm (Y b - Y a) \<le> B * (b - a)"
+      using ba by (simp add: field_simps)
+    then show ?thesis
+      using ba by (simp add: dist_norm norm_minus_commute)
+  qed
+  show "dist (Y u) (Y v) \<le> B * dist u v"
+  proof (cases "u = v")
+    case True
+    then show ?thesis using B0 by simp
+  next
+    case ne: False
+    show ?thesis
+    proof (cases "u < v")
+      case True
+      show ?thesis by (rule key[OF uv True])
+    next
+      case False
+      with ne have vu: "v < u" by simp
+      have "dist (Y v) (Y u) \<le> B * dist v u"
+        by (rule key[OF uv(2) uv(1) vu])
+      then show ?thesis by (simp add: dist_commute)
+    qed
+  qed
+qed
+
 text \<open>The \<open>\<forall>\<close>-form of the freezing, which the additive glue's \<open>Kfr\<close> hypothesis
   consumes.  The measurability of the frozen set is the only real content:
   a continuous path vanishing at every rational point of \<open>[0,d]\<close> vanishes
@@ -2379,50 +2224,15 @@ lemma vanishes_of_rational:
     and rat: "\<And>q. q \<in> (\<rat> :: real set) \<Longrightarrow> q \<in> {0..d} \<Longrightarrow> w q = 0"
     and u: "u \<in> {0..d}"
   shows "w u = 0"
-proof (cases "u = 0")
+proof (cases "d = 0")
   case True
-  show ?thesis unfolding True by (rule rat) (use d0 in auto)
+  then show ?thesis using u rat[of 0] by simp
 next
   case False
-  then have u0: "0 < u" and ud: "u \<le> d" using u by auto
-  have "\<exists>q. q \<in> (\<rat> :: real set) \<and> max 0 (u - 1 / real (Suc n)) < q \<and> q < u"
-    for n
-  proof -
-    have "max 0 (u - 1 / real (Suc n)) < u" using u0 by simp
-    then show ?thesis using Rats_dense_in_real by blast
-  qed
-  then obtain q where q: "\<And>n. q n \<in> (\<rat> :: real set)"
-    and ql: "\<And>n. max 0 (u - 1 / real (Suc n)) < q n"
-    and qu: "\<And>n. q n < u" by metis
-  have qin: "q n \<in> {0..d}" for n using ql[of n] qu[of n] ud by auto
-  have qlim: "q \<longlonglongrightarrow> u"
-  proof (rule tendsto_sandwich[of "\<lambda>n. max 0 (u - 1 / real (Suc n))" q
-      sequentially "\<lambda>_. u"])
-    show "\<forall>\<^sub>F n in sequentially. max 0 (u - 1 / real (Suc n)) \<le> q n"
-    proof (intro always_eventually allI)
-      fix n show "max 0 (u - 1 / real (Suc n)) \<le> q n" using ql[of n] by simp
-    qed
-    show "\<forall>\<^sub>F n in sequentially. q n \<le> u"
-    proof (intro always_eventually allI)
-      fix n show "q n \<le> u" using qu[of n] by simp
-    qed
-    show "(\<lambda>n. max 0 (u - 1 / real (Suc n))) \<longlonglongrightarrow> u"
-    proof -
-      have "(\<lambda>n. u - 1 / real (Suc n)) \<longlonglongrightarrow> u - 0"
-        by (intro tendsto_intros LIMSEQ_Suc[OF lim_1_over_n])
-      then have "(\<lambda>n. u - 1 / real (Suc n)) \<longlonglongrightarrow> u" by simp
-      then have "(\<lambda>n. max 0 (u - 1 / real (Suc n))) \<longlonglongrightarrow> max 0 u"
-        by (intro tendsto_intros)
-      then show ?thesis using u0 by simp
-    qed
-    show "(\<lambda>_. u) \<longlonglongrightarrow> u" by simp
-  qed
-  have "(\<lambda>n. w (q n)) \<longlonglongrightarrow> w u"
-    using cont qin qlim u unfolding continuous_on_sequentially
-    by (simp add: o_def)
-  moreover have "(\<lambda>n. w (q n)) \<longlonglongrightarrow> 0"
-    using rat[OF q qin] by simp
-  ultimately show ?thesis by (rule LIMSEQ_unique)
+  then have cl: "closure ({0..d} \<inter> \<rat>) = {0..d}"
+    using d0 by (subst closure_convex_Int_superset) (auto simp: Rats_closure_real)
+  show ?thesis
+    by (rule continuous_constant_on_closure[of "{0..d} \<inter> \<rat>" w]) (use cont rat u cl in auto)
 qed
 
 (*<*)

@@ -1482,8 +1482,8 @@ proof -
   define d :: "'n pairpath \<Rightarrow> real"
     where "d = (\<lambda>\<omega>. (fst (\<omega> u) $ i - fst (\<omega> 0) $ i)^4)"
   define c :: real where "c = 8 * (x $ i)^4"
-  have c0: "0 \<le> c" unfolding c_def using zero_le_fourth by simp
-  have d0: "0 \<le> d \<omega>" for \<omega> unfolding d_def by (rule zero_le_fourth)
+  have c0: "0 \<le> c" unfolding c_def using pow4_nonneg by simp
+  have d0: "0 \<le> d \<omega>" for \<omega> unfolding d_def by (rule pow4_nonneg)
   have dm: "d \<in> borel_measurable Q"
     unfolding d_def
     by (intro borel_measurable_power borel_measurable_diff
@@ -1583,9 +1583,9 @@ proof -
     by simp
   have LT0: "0 \<le> 8 * L\<^sup>2 * T\<^sup>2" by (intro mult_nonneg_nonneg) auto
   have p0: "0 \<le> 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)"
-    using LT0 zero_le_fourth[of "x $ i"] by simp
+    using LT0 pow4_nonneg[of "x $ i"] by simp
   have pj0: "0 \<le> 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)"
-    using LT0 zero_le_fourth[of "x $ j"] by simp
+    using LT0 pow4_nonneg[of "x $ j"] by simp
   have Yb: "AE \<omega> in Q. norm (snd (\<omega> u) $ i $ j) \<le> real CARD('n) * L * T"
     by (rule exit_class_Y_entry_bound_ae[OF T0 L Q u])
   have ae: "AE \<omega> in Q. ennreal (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)
@@ -1619,7 +1619,7 @@ proof -
       using le by (rule ennreal_leI)
     also have "\<dots> = ennreal ((fst (\<omega> u) $ i)^4) + ennreal ((fst (\<omega> u) $ j)^4)
         + ennreal (2 * (real CARD('n) * L * T)\<^sup>2)"
-      by (simp add: zero_le_fourth)
+      by (simp add: pow4_nonneg)
     finally show "ennreal (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)
         \<le> ennreal ((fst (\<omega> u) $ i)^4) + ennreal ((fst (\<omega> u) $ j)^4)
           + ennreal (2 * (real CARD('n) * L * T)\<^sup>2)" .
@@ -1695,7 +1695,7 @@ proof -
           + 2 * (real CARD('n) * L * T)\<^sup>2"
   have T0: "0 \<le> T" using T by simp
   have C0: "0 \<le> ?C"
-    by (intro add_nonneg_nonneg mult_nonneg_nonneg zero_le_fourth) auto
+    by (intro add_nonneg_nonneg mult_nonneg_nonneg pow4_nonneg) auto
   show ?thesis
   proof (rule martingale_F_limit
       [where F = "\<lambda>p :: (real^'n) \<times> (real^'n^'n).

@@ -19,14 +19,6 @@ text \<open>
 \<close>
 subsection \<open>Markov's inequality at the fourth power\<close>
 
-lemma abs_pow4: "\<bar>x::real\<bar>^4 = x^4"
-proof -
-  have "\<bar>x\<bar>^4 = (\<bar>x\<bar>\<^sup>2)\<^sup>2" by algebra
-  also have "\<dots> = (x\<^sup>2)\<^sup>2" by simp
-  also have "\<dots> = x^4" by algebra
-  finally show ?thesis .
-qed
-
 lemma fourth_moment_tail:
   fixes f :: "'a \<Rightarrow> real"
   assumes P: "prob_space M"
@@ -40,12 +32,12 @@ proof -
     fix \<omega>
     assume "l \<le> \<bar>f \<omega>\<bar>"
     hence "l^4 \<le> \<bar>f \<omega>\<bar>^4" using l by (intro power_mono) simp_all
-    thus "l^4 \<le> (f \<omega>)^4" by (simp add: abs_pow4)
+    thus "l^4 \<le> (f \<omega>)^4" by simp
   next
     fix \<omega>
     assume "l^4 \<le> (f \<omega>)^4"
     hence h4: "l ^ Suc 3 \<le> \<bar>f \<omega>\<bar> ^ Suc 3"
-      by (simp add: abs_pow4 eval_nat_numeral)
+      by (simp add: eval_nat_numeral)
     show "l \<le> \<bar>f \<omega>\<bar>" by (rule power_le_imp_le_base[OF h4 abs_ge_zero])
   qed
   have l4: "0 < l^4" using l by simp

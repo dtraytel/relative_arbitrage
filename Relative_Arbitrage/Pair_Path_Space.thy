@@ -43,7 +43,7 @@ corollary path_laws_convergent_subsequence_market:
         0 \<le> AA i l v \<omega> - AA i l u \<omega> \<and> AA i l v \<omega> - AA i l u \<omega> \<le> C * (v - u)"
   shows "\<exists>a N. strict_mono a \<and> finite_measure N
       \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
-      \<and> N (space N) \<le> ennreal 1
+      \<and> prob_space N
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
           (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
 proof (rule path_laws_convergent_subsequence_vec[where C = C and x = x, OF T0 g0 g2])

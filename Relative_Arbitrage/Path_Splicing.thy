@@ -118,7 +118,7 @@ lemma pfut_in_mspace:
     and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "pfut r T \<omega> \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
 proof -
-  have cw: "continuous_on {0..T} \<omega>" by (rule mspace_path_metric_continuous[OF w])
+  have cw: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
   have sub: "(\<lambda>s. r + s) ` {0..T - r} \<subseteq> {0..T}" using r rT by auto
   have c1: "continuous_on {0..T - r} (\<lambda>s. \<omega> (r + s))"
     by (rule continuous_on_compose2[OF cw _ sub]) (intro continuous_intros)

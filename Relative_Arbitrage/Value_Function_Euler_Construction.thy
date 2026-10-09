@@ -2383,7 +2383,7 @@ proof -
   have int4: "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
     by (rule exit_class_fourth_moment_integrable[OF T L Q st stt ttT])
   have nn: "AE \<omega> in Q. 0 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4"
-    by (simp add: zero_le_fourth)
+    by (simp add: pow4_nonneg)
   have intgl: "(\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q)
       \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
   proof -

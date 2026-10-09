@@ -34,7 +34,7 @@ proof -
   show ?thesis
   proof (rule integrableI_nonneg[OF m])
     show "AE \<omega> in Q. 0 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4"
-      by (simp add: zero_le_fourth)
+      by (simp add: pow4_nonneg)
     have "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
         \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
       by (rule exit_class_fourth_moment[OF T L setsQ Q st stt ttT])
@@ -61,7 +61,7 @@ proof -
   have "ennreal (\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q)
       = (\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)"
     by (rule nn_integral_eq_integral[symmetric, OF int])
-      (simp add: zero_le_fourth)
+      (simp add: pow4_nonneg)
   also have "\<dots> \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
     by (rule exit_class_fourth_moment[OF T L setsQ Q st stt ttT])
   finally show ?thesis using B0 by simp
@@ -240,7 +240,7 @@ proof -
   have ga0: "0 < ?ga" by simp
   have ga4: "?ga < 1/4" by simp
   have q0: "0 < ?q" by simp
-  have q1: "?q < 1" by (rule powr_ratio_lt_1[OF ga4])
+  have q1: "?q < 1" by (rule powr_less_one) (use ga4 in simp_all)
   show ?thesis
   proof (rule tight_on_set_pair_holder_charge[OF T0 ga0])
     show "finite_measure N" if "N \<in> \<Gamma>" for N

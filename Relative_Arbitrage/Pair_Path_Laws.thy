@@ -1323,7 +1323,7 @@ lemma path_sets_fst_continuous:
 proof -
   have "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     using w space_of_path_sets[OF setsN] by simp
-  then have "continuous_on {0..T} \<omega>" by (rule mspace_path_metric_continuous)
+  then have "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD)
   then show ?thesis by (rule continuous_on_fst)
 qed
 
@@ -2965,7 +2965,7 @@ qed
 
 section \<open>The compensated clause of Lemma 2.3\<close>
 
-text \<open>\<open>prod_minus_sq_bound\<close>, \<open>fourth_power_sum_bound\<close>, \<open>zero_le_fourth\<close> live in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
+text \<open>\<open>prod_minus_sq_bound\<close>, \<open>fourth_power_sum_bound\<close> and \<open>pow4_nonneg\<close> live in @{theory Continuous_Time_Martingales.Power_Inequalities}.\<close>
 
 
 subsection \<open>The compensated functional\<close>
