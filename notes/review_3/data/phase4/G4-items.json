@@ -1,0 +1,935 @@
+{
+ "group": "G4-cps",
+ "chunks": [
+  [
+   "qvps-mono-lip-from-qvsa",
+   "cps-holder-dbound",
+   "diffquot-all-of-rational-corollary",
+   "increment-moment-identities",
+   "cps-small-library",
+   "cps-geometric-tail",
+   "cps-exit-time-open",
+   "pexit-cap-eq-from-min-horizon",
+   "etime-shift-superlevel-short",
+   "cps-mspace-path-metric",
+   "path-laws-subsequence-prob-space",
+   "cps-dyadic-qsum"
+  ],
+  [
+   "ctm-stopped-L2",
+   "cps-rate-continuous",
+   "rate-continuous-on-reuse",
+   "plan-corollaries-updated",
+   "ra-chebyshev-tails",
+   "second-moment-partition-bound",
+   "cps-increment-moments-inline",
+   "cps-portmanteau-wrappers",
+   "ra-lipschitz-path-ops",
+   "ra-weak-conv-bridges",
+   "portmanteau-closed-from-afp",
+   "cps-tightness-scalar-vec"
+  ],
+  [
+   "dyadic-pair-modulus-into-modulus-tails",
+   "cps-compensator-identity",
+   "polarisation-locale-free",
+   "stopped-covariation-via-compensator",
+   "fourth-moment-L2-fix",
+   "ra-marginals-measurability",
+   "ra-diffquot-rational-pairs",
+   "ra-pexit-splicing-rederivations",
+   "ra-qvmat-polarisation",
+   "twin-approach-from-below"
+  ]
+ ],
+ "items": {
+  "qvps-mono-lip-from-qvsa": {
+   "id": "qvps-mono-lip-from-qvsa",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: Adapted_Quadratic_Variation, after qvsa_eq_qvps). Replace the long proofs of qvps_mono_lip and qvps_continuous with about 3+2-line corollaries of qvsa_eq_qvps together with qvsa_mono, qvsa_lip and qvsa_continuous. Move both after qvsa_eq_qvps.",
+   "files": [
+    "Continuous_Path_Spaces/Adapted_Quadratic_Variation.thy"
+   ],
+   "facts": [
+    "qvps_mono_lip",
+    "qvps_continuous",
+    "qvsa_eq_qvps",
+    "qvsa_mono",
+    "qvsa_lip",
+    "qvsa_continuous"
+   ],
+   "est_lines_saved": 155,
+   "status_now": "applies",
+   "evidence": "AQV:155-297 qvps_mono_lip (143) and AQV:299-319 qvps_continuous (21) both assume qvp_good C w. qvsa_eq_qvps (AQV:648-700) has the same assumption and does not use them (grep: 0 hits in 648-700). qvsa_mono is at 506, qvsa_lip at 531, qvsa_continuous at 624. Roots: 592-593.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Adapted_Quadratic_Variation.qvsa_eq_qvps",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "cps-holder-dbound": {
+   "id": "cps-holder-dbound",
+   "kind": "derive-corollary",
+   "summary": "In holder_of_dyadic_moduli, the dbound block clones lipschitz_imp_holder_bound. Move that lemma before it and use it there. Optionally drop the unnecessary max 1 factor (holder_const inherits it).",
+   "files": [
+    "Continuous_Path_Spaces/Holder_Interpolation.thy",
+    "Continuous_Path_Spaces/Path_Tightness.thy"
+   ],
+   "facts": [
+    "holder_of_dyadic_moduli",
+    "lipschitz_imp_holder_bound",
+    "holder_const"
+   ],
+   "est_lines_saved": 20,
+   "status_now": "applies",
+   "evidence": "Holder_Interpolation.thy:100 (210), :324 (20); Path_Tightness.thy:77 holder_const.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "diffquot-all-of-rational-corollary": {
+   "id": "diffquot-all-of-rational-corollary",
+   "kind": "derive-corollary",
+   "summary": "Put Increment_Moments.diffquot_all_of_rational after diffquot_all_of_rational_ge and prove it in one line: by (rule diffquot_all_of_rational_ge[where r = 0, OF S cont rat st(1) st]) auto. Keep the name, which has 13 call sites.",
+   "files": [
+    "Continuous_Path_Spaces/Increment_Moments.thy"
+   ],
+   "facts": [
+    "diffquot_all_of_rational",
+    "diffquot_all_of_rational_ge"
+   ],
+   "est_lines_saved": 75,
+   "status_now": "applies",
+   "evidence": "Increment_Moments.thy: diffquot_all_of_rational 2142-2226 (85 lines); diffquot_lipschitz 2233-2274 does not use it; diffquot_all_of_rational_ge 2282-2369 does not use the plain lemma (grep: the only hit in Increment_Moments is 2142). Users are in Exit_Class, VFEC, Pair_Path_Laws, Exit_Class_Marginals, Path_Law_Pasting, DP_Conditioning, Path_Splicing, Exit_Class_Pasting, Exit_Class_Witness:713 and DP_Delayed_Class:925; none needs a change. The text at 2276 needs adjusting.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "verification_results.md, clone-derivations, claim 2. Scratch file: verify/clone-derivations/Clone_SOVA.thy, 'Claim 2' (diffquot_all_of_rational').",
+   "general_lemma": "diffquot_all_of_rational_ge",
+   "source": "verified",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "increment-moment-identities": {
+   "id": "increment-moment-identities",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: CTM.Sampled_Quadratic_Variation) and its FIX_THEN_KEEP sibling. (1) Restate Increment_Moments.expectation_increment_sq (E[(X_u - X_s)^2] = E X_u^2 - E X_s^2) as a short corollary of cond_exp_increment_sq via expectation_cond_exp, dropping the duplicated two-point-partition set-up. (2) Restate increment_second_moment_bound as the compensator identity E[(X_u - X_s)^2] = E A_u - E A_s, about 10 lines from expectation_increment_sq and martingale_expectation_eq. The rate bound becomes a 3-line corollary or stays at the use site. The move to CTM is phase 5. The plan's verified item (second_moment_partition_bound, 134 -> about 20 lines) builds on (1).",
+   "files": [
+    "Continuous_Path_Spaces/Increment_Moments.thy"
+   ],
+   "facts": [
+    "expectation_increment_sq",
+    "increment_second_moment_bound",
+    "cond_exp_increment_sq",
+    "martingale_expectation_eq",
+    "second_moment_partition_bound",
+    "expectation_sq_sampled"
+   ],
+   "est_lines_saved": 15,
+   "status_now": "applies",
+   "evidence": "IM:52-74 expectation_increment_sq (23; used at IM:117). IM:78-90 increment_second_moment_bound (used at IM:269). cond_exp_increment_sq is at SQV:109-160. second_moment_partition_bound is at IM:276. Roots: 582, 613.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Sampled_Quadratic_Variation.cond_exp_increment_sq",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "cps-small-library": {
+   "id": "cps-small-library",
+   "kind": "library-reproof",
+   "summary": "Delete abs_pow4, zero_le_fourth (10 uses in RA; the Section 3.2 matcher pair with pow4_nonneg), powr_ratio_lt_1 and powr_neg_lt_1. Redirect them to simp, pow4_nonneg and powr_less_one. Shorten integrable_pow4_of_bounded, clamp_diff_le_tail_pointwise and vanishes_of_rational by citing library lemmas.",
+   "files": [
+    "Continuous_Path_Spaces/Increment_Tails.thy",
+    "Continuous_Path_Spaces/Increment_Moments.thy",
+    "Continuous_Path_Spaces/Modulus_Tails.thy",
+    "Continuous_Path_Spaces/Path_Tightness.thy"
+   ],
+   "facts": [
+    "abs_pow4",
+    "zero_le_fourth",
+    "pow4_nonneg",
+    "powr_ratio_lt_1",
+    "powr_neg_lt_1",
+    "integrable_pow4_of_bounded",
+    "clamp_diff_le_tail_pointwise",
+    "vanishes_of_rational"
+   ],
+   "est_lines_saved": 80,
+   "status_now": "applies",
+   "evidence": "Increment_Tails.thy:22 (7); Increment_Moments.thy:2125 (8), :1522 (25), :2047 (31), :2376 (51); Modulus_Tails.thy:147 (10); Path_Tightness.thy:62 (8); Power_Inequalities.thy:123 pow4_nonneg. Reader CPS1-15 says the library derivations were checked in PIDE.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "cps-geometric-tail": {
+   "id": "cps-geometric-tail",
+   "kind": "library-reproof",
+   "summary": "Shorten geometric_tail_sum_le, the s2 block in dyadic_bad_event_tail_mom, and upart_diff_le with Set_Interval/Series lemmas.",
+   "files": [
+    "Continuous_Path_Spaces/Modulus_Tails.thy",
+    "Continuous_Path_Spaces/Increment_Moments.thy"
+   ],
+   "facts": [
+    "geometric_tail_sum_le",
+    "dyadic_bad_event_tail_mom",
+    "upart_diff_le"
+   ],
+   "est_lines_saved": 30,
+   "status_now": "applies",
+   "evidence": "Modulus_Tails.thy:266 (30), :167 (96); Increment_Moments.thy:1296 (21).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "cps-exit-time-open": {
+   "id": "cps-exit-time-open",
+   "kind": "merge-twins",
+   "summary": "Prove one openness lemma for strict sublevel sets of exit times under continuous path maps, and derive pexit_sublevel_open (a root, whose inner 'ev' step repeats open_eval_preimage) and open_etime_shift_less from it. open_hit_strictly_before was already deleted.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Exit_Times.thy",
+    "Continuous_Path_Spaces/Path_Space.thy"
+   ],
+   "facts": [
+    "pexit_sublevel_open",
+    "open_etime_shift_less",
+    "open_eval_preimage"
+   ],
+   "est_lines_saved": 40,
+   "status_now": "partly-applies",
+   "evidence": "Path_Exit_Times.thy:141 (37), :1322 (35); Path_Space.thy:754 (15). grep finds no open_hit_strictly_before.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "pexit-cap-eq-from-min-horizon": {
+   "id": "pexit-cap-eq-from-min-horizon",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY pair, re-deriving a live caller. Re-prove Path_Exit_Times.pexit_cap_eq, which is live through Proposition_2_4:89, in about 5 lines from pexit_min_horizon and pexit_le_of_mem, moved after pexit_min_horizon. Then delete pexit_stable_above_T, whose only proof user is pexit_cap_eq, and drop its prose mention at DPP:557, which goes anyway with dpp-le-of-cond-retire.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Exit_Times.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy"
+   ],
+   "facts": [
+    "pexit_cap_eq",
+    "pexit_stable_above_T",
+    "pexit_min_horizon",
+    "pexit_le_of_mem"
+   ],
+   "est_lines_saved": 55,
+   "status_now": "applies",
+   "evidence": "PEX:89-129 pexit_stable_above_T (41; used at PEX:1599). PEX:1592-1611 pexit_cap_eq (20; used at DPP:628 and Prop_2_4:89). PEX:1628-1659 pexit_min_horizon does not use either.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Path_Exit_Times.pexit_min_horizon",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "etime-shift-superlevel-short": {
+   "id": "etime-shift-superlevel-short",
+   "kind": "derive-corollary",
+   "summary": "Shorten Path_Exit_Times.etime_shift_superlevel_closed (COROLLARY, delete unless vshift_path_law is kept). vshift_path_law is kept and uses it at PPS:1681, so restate it as the complement of the live open_etime_shift_less with an ennreal threshold, in about 10 lines.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Exit_Times.thy"
+   ],
+   "facts": [
+    "etime_shift_superlevel_closed",
+    "open_etime_shift_less",
+    "vshift_path_law"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "applies",
+   "evidence": "PEX:1790-1852 (63 lines). Its only user is PPS:1681 in vshift_path_law (PPS:1666). open_etime_shift_less is at PEX:1322-1356.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Path_Exit_Times.open_etime_shift_less",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "cps-mspace-path-metric": {
+   "id": "cps-mspace-path-metric",
+   "kind": "merge-twins",
+   "summary": "mspace_path_metricD and mspace_path_metric_continuous are the same lemma. Keep one and rename the 8 uses, or make the other a 'lemmas' alias.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Space.thy"
+   ],
+   "facts": [
+    "mspace_path_metricD",
+    "mspace_path_metric_continuous"
+   ],
+   "est_lines_saved": 8,
+   "status_now": "applies",
+   "evidence": "Path_Space.thy:113 (11), :289 (5).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "path-laws-subsequence-prob-space": {
+   "id": "path-laws-subsequence-prob-space",
+   "kind": "fix-then-keep",
+   "summary": "Keep the COROLLARY Path_Tightness.path_laws_convergent_subsequence_vec (home: Path_Tightness) as the 'Lemma 2.2 at a fixed horizon' entry point. Strengthen its conclusion N (space N) <= 1 to prob_space N using Path_Space.weak_conv_on_prob_space, and make the same change in Pair_Path_Space.path_laws_convergent_subsequence_market.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Tightness.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy"
+   ],
+   "facts": [
+    "path_laws_convergent_subsequence_vec",
+    "path_laws_convergent_subsequence_market",
+    "weak_conv_on_prob_space"
+   ],
+   "est_lines_saved": 0,
+   "status_now": "applies",
+   "evidence": "PT:612-646 (35 lines; used at PPS:49 and in text at PT:1245). PPS:26-80 (55).",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "weak_conv_on_prob_space",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  },
+  "cps-dyadic-qsum": {
+   "id": "cps-dyadic-qsum",
+   "kind": "merge-twins",
+   "summary": "Delete dyadic_qsum_eq_qvar, which is dyadic_qsum_eq_grid. State the rational identification as one locale lemma of bounded_martingale_compensator, and use it in qvps_eq_A and qvp_good_ae. Share the grid set-up.",
+   "files": [
+    "Continuous_Path_Spaces/Pathwise_Quadratic_Variation.thy",
+    "Continuous_Path_Spaces/Adapted_Quadratic_Variation.thy"
+   ],
+   "facts": [
+    "dyadic_qsum_eq_qvar",
+    "dyadic_qsum_eq_grid",
+    "qvps_eq_A",
+    "qvp_good_ae"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "Pathwise_Quadratic_Variation.thy:276 (3), :630 (3), :696 qvps_eq_A (84); Adapted_Quadratic_Variation.thy:329 qvp_good_ae (43).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "ctm-stopped-L2": {
+   "id": "ctm-stopped-L2",
+   "kind": "derive-corollary",
+   "summary": "'Stop an L2 martingale with continuous paths' is proved three times. Derive clause (1) of Pair_Path_Laws.horizon_sq_int_martingale_stopped, and Exit_Class_Limits.exit_class_stopped_coord_martingale, from Stopped_Localization.stopped_martingale_L2 (both RA theories have it as an ancestor). Inside Stopped_Localization, add stopped_compensator_integrable and stopped_L2_sq_integrable lemmas for the iAS/A_intS and sqXS blocks and the 3 contXu copies. This merges CTM-15, CPS2-12 and RA-path1-14.",
+   "files": [
+    "Continuous_Path_Spaces/Stopped_Localization.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy",
+    "Relative_Arbitrage/Exit_Class_Limits.thy"
+   ],
+   "facts": [
+    "stopped_martingale_L2",
+    "horizon_sq_int_martingale_stopped",
+    "exit_class_stopped_coord_martingale",
+    "stopped_compensated_square",
+    "optional_stopping",
+    "Dsup_dominates"
+   ],
+   "est_lines_saved": 120,
+   "status_now": "applies",
+   "evidence": "Stopped_Localization.thy:26 (46), :87 (107); Pair_Path_Laws.thy:1398 (81); Exit_Class_Limits.thy:792 (67); Optional_Sampling.thy:1070; Doob_Inequality.thy:873. Ancestry: Pair_Path_Laws and Exit_Class_Limits both have Stopped_Localization as an ancestor.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G5-toolkit",
+    "G6-class-dpp"
+   ]
+  },
+  "cps-rate-continuous": {
+   "id": "cps-rate-continuous",
+   "kind": "derive-corollary",
+   "summary": "'A monotone C-rate on {0..} implies continuous' is proved four times. Move rate_continuous_on (FIX_THEN_KEEP) to the top of Stopped_Localization or lower, and use it for contA in stopped_compensated_square, for qvps_continuous (a COROLLARY root) and for qvsa_continuous.",
+   "files": [
+    "Continuous_Path_Spaces/Stopped_Localization.thy",
+    "Continuous_Path_Spaces/Adapted_Quadratic_Variation.thy"
+   ],
+   "facts": [
+    "rate_continuous_on",
+    "stopped_compensated_square",
+    "qvps_continuous",
+    "qvsa_continuous"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "applies",
+   "evidence": "Stopped_Localization.thy:197 (23), :87 (107); Adapted_Quadratic_Variation.thy:299 (21), :624 (20). Adapted_Quadratic_Variation has Stopped_Localization as an ancestor.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "rate-continuous-on-reuse": {
+   "id": "rate-continuous-on-reuse",
+   "kind": "swap-proof",
+   "summary": "Move Stopped_Localization.rate_continuous_on above stopped_compensated_square. Replace its inline copy contA (the Lipschitz argument) with one call. Optionally do the same for Adapted_Quadratic_Variation.qvsa_continuous.",
+   "files": [
+    "Continuous_Path_Spaces/Stopped_Localization.thy",
+    "Continuous_Path_Spaces/Adapted_Quadratic_Variation.thy"
+   ],
+   "facts": [
+    "rate_continuous_on",
+    "stopped_compensated_square",
+    "qvsa_continuous"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "rate_continuous_on is at SL:197-219. contA at SL:108-125 is a 17-line verbatim copy inside stopped_compensated_square (SL:87-193). qvsa_continuous is at AQV:624-643, and AQV imports SL.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "rate_continuous_on",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "plan-corollaries-updated": {
+   "id": "plan-corollaries-updated",
+   "kind": "derive-corollary",
+   "summary": "Three of the four Section 3.2 special cases remain. (1) Restate exit_val_boundary_zero as a 5-line corollary of exit_val_le_ball_bound, moved after it. (2) Restate diffquot_all_of_rational as the r := 0 instance of diffquot_all_of_rational_ge, after _ge. (3) Restate exit_val_attained as a 5-line corollary of exit_val_measurable_selector, after the selector. The fourth, exit_val_visc_subsol, was deleted in phase 2, so this plan row has changed; its stale mention at Value_Function_Uniqueness.thy:26 is a phase-8 prose fix.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Witness.thy",
+    "Continuous_Path_Spaces/Increment_Moments.thy",
+    "Relative_Arbitrage/Exit_Class_Optimizer.thy"
+   ],
+   "facts": [
+    "exit_val_boundary_zero",
+    "exit_val_le_ball_bound",
+    "diffquot_all_of_rational",
+    "diffquot_all_of_rational_ge",
+    "exit_val_attained",
+    "exit_val_measurable_selector",
+    "exit_val_visc_subsol",
+    "exit_val_visc_subsol_any"
+   ],
+   "est_lines_saved": 215,
+   "status_now": "partly-applies",
+   "evidence": "Exit_Class_Witness.thy:1060 exit_val_boundary_zero (~100 lines), :1169 exit_val_le_ball_bound. Increment_Moments.thy:2142 diffquot_all_of_rational (85), :2282 _ge (88). Exit_Class_Optimizer.thy:28 exit_val_attained (66), :266 selector (181). grep: no 'exit_val_visc_subsol' lemma any more; only exit_val_visc_subsol_any at Value_Function_Subsolution.thy:2708.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, clone-derivations claims 1, 2, 6 (claim 3 is moot)",
+   "general_lemma": "exit_val_le_ball_bound; diffquot_all_of_rational_ge; exit_val_measurable_selector",
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-chebyshev-tails": {
+   "id": "ra-chebyshev-tails",
+   "kind": "library-reproof",
+   "summary": "Chebyshev/Markov tail bounds are re-proved. Prove eulerp_Xi_chebyshev from HOL's finite_measure.second_moment_method (about 8 lines) and exit_class_increment_tail from Increment_Tails.fourth_moment_tail (about 15 lines). Extract a generic coordinate-to-norm tail lemma for exit_class_increment_tail_norm and for the union bound in Path_Tightness.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy",
+    "Continuous_Path_Spaces/Increment_Tails.thy",
+    "Continuous_Path_Spaces/Path_Tightness.thy"
+   ],
+   "facts": [
+    "eulerp_Xi_chebyshev",
+    "exit_class_increment_tail",
+    "exit_class_increment_tail_norm",
+    "fourth_moment_tail"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "applies",
+   "evidence": "Value_Function_Euler_Construction.thy:2181 (45), :2408 (66), :2475 (92); Increment_Tails.thy:30 (31). Increment_Tails is an ancestor of Value_Function_Euler_Construction.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "second-moment-partition-bound": {
+   "id": "second-moment-partition-bound",
+   "kind": "swap-proof",
+   "summary": "Re-prove Increment_Moments.second_moment_partition_bound (134 lines) in about 20 lines. Compose expectation_increment_sq (a COROLLARY root, which this keeps alive), CTM Sampled_Quadratic_Variation.expectation_sq_sampled, integral_sum, sum_mono with interval_sq_le, and sum_lessThan_telescope. interval_sq_le (IM:833) and interval_sq_eq_dA (IM:800) come after the theorem (276) and its user (IM:600), so move them above 276 first.",
+   "files": [
+    "Continuous_Path_Spaces/Increment_Moments.thy"
+   ],
+   "facts": [
+    "second_moment_partition_bound",
+    "expectation_increment_sq",
+    "expectation_sq_sampled",
+    "interval_sq_le",
+    "interval_sq_eq_dA"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "applies",
+   "evidence": "Increment_Moments.thy: expectation_increment_sq 52-74; second_moment_partition_bound 276-409 (hypotheses P, X, t0, tmono, sq, dA_int, dA_bounds, cov); use :600; interval_sq_eq_dA 800; interval_sq_le 833. expectation_sq_sampled is at Sampled_Quadratic_Variation.thy:81 (already used by IM:21, 72).",
+   "risk": "medium",
+   "gated": false,
+   "checked_derivation": "None in PIDE. The derivation recipe is reader finding CPS1-11 (reader_findings_by_cluster.md:2285-2294) and REVIEW_3.md section 4.",
+   "general_lemma": "expectation_sq_sampled",
+   "source": "verified",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "cps-increment-moments-inline": {
+   "id": "cps-increment-moments-inline",
+   "kind": "merge-twins",
+   "summary": "Within Increment_Moments, proofs inline lemmas that are proved later in the same file. Reorder interval_sq_eq_dA, interval_sq_le and weighted_interval_bound to come first, and use them for EY2d2 in fourth_moment_partition_bound (and Ed2, unless second_moment_partition_bound is re-proved anyway). Introduce max_sq_incr with its measurability, nonnegativity and 4R^2 bound for the W blocks shared by expectation_max_sq_tendsto_zero and remainder_tendsto_zero. Share the bounded-package preamble of remainder_tendsto_zero and fourth_moment_bound_bounded. Use abs_diff_le_two. Derive EYd and EY3d from one 'E[Z (X v - X u)] = 0' lemma.",
+   "files": [
+    "Continuous_Path_Spaces/Increment_Moments.thy"
+   ],
+   "facts": [
+    "fourth_moment_partition_bound",
+    "weighted_interval_bound",
+    "interval_sq_le",
+    "interval_sq_eq_dA",
+    "expectation_max_sq_tendsto_zero",
+    "remainder_tendsto_zero",
+    "fourth_moment_bound_bounded",
+    "abs_diff_le_two"
+   ],
+   "est_lines_saved": 250,
+   "status_now": "applies",
+   "evidence": "Increment_Moments.thy:428 fourth_moment_partition_bound (361), :866 (108), :833 (26), :800 (32), :1359 (160), :1559 (331), :1901 (74), :2112 (5). Inner-block ranges in CPS1-5 refer to 3bc3803.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "cps-portmanteau-wrappers": {
+   "id": "cps-portmanteau-wrappers",
+   "kind": "library-reproof",
+   "summary": "There are seven portmanteau wrappers and 5 separate mweak_conv_fin interpretations. Gather the wrappers in one weak-convergence theory for an arbitrary metric, and prove each in 2-5 lines from AFP General_Weak_Convergence weak_conv_on_eq1/eq2. Delete weak_conv_closed_full_mass (rewrite Exit_Class.thy:307, 626 to weak_conv_closed_full_measure) and inline weak_conv_total_mass (one use). Coordinate with the plan's ess_inf_pexit_usc swap, which removes some users.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Space.thy",
+    "Continuous_Path_Spaces/Path_Exit_Times.thy",
+    "Continuous_Path_Spaces/Path_Tightness.thy",
+    "Relative_Arbitrage/Exit_Class.thy"
+   ],
+   "facts": [
+    "weak_conv_closed_full_measure",
+    "weak_conv_open_positive_eventually",
+    "weak_conv_open_liminf",
+    "weak_conv_closed_limsup",
+    "weak_conv_closed_full_mass",
+    "weak_conv_total_mass",
+    "metric_measure_eqI_bounded_cts"
+   ],
+   "est_lines_saved": 180,
+   "status_now": "applies",
+   "evidence": "Path_Space.thy:928 (52; root), :996 (63); Path_Exit_Times.thy:663 (72; root), :740 (52; root), :796 (23; used Exit_Class.thy:307,626), :820 (24; used PET:892); Path_Tightness.thy:852 (103).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-lipschitz-path-ops": {
+   "id": "ra-lipschitz-path-ops",
+   "kind": "merge-twins",
+   "summary": "The Lipschitz-on-path-space proof is repeated for every operation. Add Lipschitz_path_mapI to Path_Space (pointwise distance bound implies Lipschitz_continuous_map of the path metric), and use it for Lipschitz_pfut, Lipschitz_pshift, Lipschitz_pfst, Lipschitz_pglue (with mdist_pglue_le) and Lipschitz_restrict_path_metric.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Space.thy",
+    "Relative_Arbitrage/Path_Splicing.thy"
+   ],
+   "facts": [
+    "Lipschitz_pfut",
+    "Lipschitz_pshift",
+    "Lipschitz_pfst",
+    "mdist_pglue_le",
+    "Lipschitz_pglue",
+    "Lipschitz_restrict_path_metric"
+   ],
+   "est_lines_saved": 120,
+   "status_now": "applies",
+   "evidence": "Path_Splicing.thy:168 (46), :280 (42), :910 (44), :1030 (57), :1088 (62); Path_Space.thy:525 (42). Reader RA-path1-23 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  },
+  "ra-weak-conv-bridges": {
+   "id": "ra-weak-conv-bridges",
+   "kind": "other",
+   "summary": "Add two generic lemmas to Path_Space: an extended continuous-mapping lemma (phi continuous, R_m converges weakly to R, sup over w of d(phi_m w, phi w) -> 0, imply distr R_m phi_m converges weakly to distr R phi, via mweak_conv_eq1), and a prob_algebra / weak-topology measurability bridge. Derive pshift_law_weak_conv_joint in about 10 lines, and use the bridge in sbm_law_weak_conv, sbm_kernel_package and exit_val_measurable_selector_kernel'. This merges RA-path2-25, RA-value1-26 and RA-dpp-9; the Dynamic_Programming_Kernels copies are gone.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Space.thy",
+    "Relative_Arbitrage/Path_Law_Pasting.thy",
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy"
+   ],
+   "facts": [
+    "pshift_law_weak_conv_joint",
+    "weak_conv_on_pushforward",
+    "sbm_law_weak_conv",
+    "sbm_kernel_package",
+    "exit_val_measurable_selector_kernel'"
+   ],
+   "est_lines_saved": 200,
+   "status_now": "partly-applies",
+   "evidence": "Path_Law_Pasting.thy:326 (174); Path_Space.thy:624 (68); Value_Function_Euler_Construction.thy:585 (75), :672 (103); Dynamic_Programming_Pasting.thy:87 (61).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G5-toolkit",
+    "G6-class-dpp",
+    "G7-value-function"
+   ]
+  },
+  "portmanteau-closed-from-afp": {
+   "id": "portmanteau-closed-from-afp",
+   "kind": "library-reproof",
+   "summary": "COROLLARY that keeps its name (home: Path_Space). Re-prove Path_Space.weak_conv_closed_full_measure in at most 8 lines from AFP General_Weak_Convergence.weak_conv_on_eq1: side conditions from weak_conv_on_def, metrizability from metrizable_space_mtopology, then Limsup_const and prob_le_1. Make Path_Exit_Times.weak_conv_closed_full_mass a 1-line instance (its probs hypothesis is unused). Re-prove weak_conv_closed_limsup, the same hand-interpreted mweak_conv block, from weak_conv_on_eq1 as well. Delete the stale prose citing Value_Function_Market.ess_inf_time_ge_iff_measure.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Space.thy",
+    "Continuous_Path_Spaces/Path_Exit_Times.thy"
+   ],
+   "facts": [
+    "weak_conv_closed_full_measure",
+    "weak_conv_closed_full_mass",
+    "weak_conv_closed_limsup",
+    "weak_conv_on_eq1"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "applies",
+   "evidence": "PS:928-979 (52). PEX:796-818 weak_conv_closed_full_mass (23; used at EC:307/626, PPL:684 and PPS:1240). PEX:740-791 weak_conv_closed_limsup (52; used at PEX:810 and ECT:360). weak_conv_on_eq1 is at /opt/afp/thys/Levy_Prokhorov_Metric/General_Weak_Convergence.thy:887.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "AFP General_Weak_Convergence.weak_conv_on_eq1",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "cps-tightness-scalar-vec": {
+   "id": "cps-tightness-scalar-vec",
+   "kind": "merge-twins",
+   "summary": "The scalar and vector tightness theorems are near-verbatim copies, all now roots. Derive the scalar ones (path_law_holder_ball_bound, tight_on_set_path_laws, path_laws_convergent_subsequence) as instances of the _vec ones (FIX_THEN_KEEP), or restate once at 'b::euclidean_space over Basis; D6 says the scalar twin goes. Also state tight_on_set_of_holder_charge generically in Path_Tightness and derive Pair_Path_Laws.tight_on_set_pair_holder_charge, deleting compactin_pair_holder_ball (RA-path1-24).",
+   "files": [
+    "Continuous_Path_Spaces/Path_Tightness.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy",
+    "Relative_Arbitrage/Exit_Class_Tightness.thy"
+   ],
+   "facts": [
+    "path_law_holder_ball_bound",
+    "path_law_holder_ball_bound_vec",
+    "tight_on_set_path_laws",
+    "tight_on_set_path_laws_vec",
+    "path_laws_convergent_subsequence",
+    "path_laws_convergent_subsequence_vec",
+    "tight_on_set_pair_holder_charge",
+    "compactin_pair_holder_ball",
+    "compactin_path_holder_ball"
+   ],
+   "est_lines_saved": 220,
+   "status_now": "applies",
+   "evidence": "Path_Tightness.thy:128 (118), :385 (145), :249 (76), :531 (80), :337 (35), :612 (35); Pair_Path_Laws.thy:629 (38), :480 (8); Path_Space.thy:125. roots.txt keeps both the scalar and the _vec forms.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G5-toolkit",
+    "G6-class-dpp"
+   ]
+  },
+  "dyadic-pair-modulus-into-modulus-tails": {
+   "id": "dyadic-pair-modulus-into-modulus-tails",
+   "kind": "merge-twins",
+   "summary": "Move Path_Tightness.dyadic_pair_modulus, the general metric-space geometric chaining bound, down to Modulus_Tails or Dyadic_Chaining. Move powr_neg_lt_1 with it, or use Modulus_Tails.powr_ratio_lt_1 instead. Then derive block K of the live Modulus_Tails.modulus_of_good_path from it.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Tightness.thy",
+    "Continuous_Path_Spaces/Modulus_Tails.thy"
+   ],
+   "facts": [
+    "dyadic_pair_modulus",
+    "modulus_of_good_path",
+    "powr_neg_lt_1",
+    "powr_ratio_lt_1"
+   ],
+   "est_lines_saved": 45,
+   "status_now": "applies",
+   "evidence": "PT:680-753 (74 lines; root at roots.txt:285; its only other mention is the text at PT:675). modulus_of_good_path is at MT:307. Modulus_Tails reaches Path_Tightness through Holder_Interpolation, so the move goes downward.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "dyadic_pair_modulus",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "cps-compensator-identity": {
+   "id": "cps-compensator-identity",
+   "kind": "derive-corollary",
+   "summary": "The compensator identity cond_exp(dX^2) = cond_exp(dA) is proved twice. Re-derive the tail of stopped_covariation (FIX_THEN_KEEP) as compensator_cond_increment applied to the stopped pair, and drop the derivable Aad hypothesis from the four Stopped_Localization statements. Pathwise_Quadratic_Variation is not an ancestor of Stopped_Localization, so compensator_cond_increment (pure martingale theory) must move below it first.",
+   "files": [
+    "Continuous_Path_Spaces/Pathwise_Quadratic_Variation.thy",
+    "Continuous_Path_Spaces/Stopped_Localization.thy"
+   ],
+   "facts": [
+    "compensator_cond_increment",
+    "stopped_covariation",
+    "fourth_moment_L2"
+   ],
+   "est_lines_saved": 40,
+   "status_now": "applies",
+   "evidence": "Pathwise_Quadratic_Variation.thy:33 (42); Stopped_Localization.thy:230 stopped_covariation (105). Ancestry check: Stopped_Localization does not have Pathwise_Quadratic_Variation as an ancestor. independent_interest.md:282.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "polarisation-locale-free": {
+   "id": "polarisation-locale-free",
+   "kind": "merge-twins",
+   "summary": "Take the polarisation lemmas Xpol, Apol, Apol_eq_form, Apol_diff and polarised out of the locale bounded_matrix_martingale_compensator, as locale-free lemmas without bnd/R that conclude the hypotheses of qvps_eq_A_localised (start bound 2B). Then replace the inline 'pol' block of Pair_Path_Space.qvmat_eq_A_localised (mgY, the m1-m4 decomposition, Grate) with one call.",
+   "files": [
+    "Continuous_Path_Spaces/Pathwise_Quadratic_Variation.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy"
+   ],
+   "facts": [
+    "Xpol_def",
+    "Apol_def",
+    "Apol_eq_form",
+    "Apol_diff",
+    "polarised",
+    "qvmat_eq_A_localised",
+    "qvps_eq_A_localised"
+   ],
+   "est_lines_saved": 70,
+   "status_now": "applies",
+   "evidence": "PQV:866-996: the definitions and polarised (105 lines), inside the locale (PQV:845). PPS:1012-1218 qvmat_eq_A_localised: its pol block starts at PPS:1033 (Y and G defined at 1040-1041, mgY at 1045, m1-m4 at 1060-1066, Grate at 1074) and runs to about 1130, before qvps_eq_A_localised is applied at PPS:1176.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "bounded_matrix_martingale_compensator.polarised (made locale-free)",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  },
+  "stopped-covariation-via-compensator": {
+   "id": "stopped-covariation-via-compensator",
+   "kind": "swap-proof",
+   "summary": "Re-derive the last ~25 lines of Stopped_Localization.stopped_covariation as Pathwise_Quadratic_Variation.compensator_cond_increment applied to the stopped pair (X^tau, A^tau), using stopped_martingale_L2 and stopped_compensated_square. Drop the redundant Aad hypothesis. This needs compensator_cond_increment, which uses only martingale facts, to move below SL: into Increment_Moments now, or into CTM in phase 5.",
+   "files": [
+    "Continuous_Path_Spaces/Stopped_Localization.thy",
+    "Continuous_Path_Spaces/Pathwise_Quadratic_Variation.thy",
+    "Continuous_Path_Spaces/Increment_Moments.thy"
+   ],
+   "facts": [
+    "stopped_covariation",
+    "compensator_cond_increment",
+    "stopped_martingale_L2",
+    "stopped_compensated_square"
+   ],
+   "est_lines_saved": 20,
+   "status_now": "applies",
+   "evidence": "SL:230-334 (105 lines). Its tail (SL:310-334: inc, zmp, d1, d2, fm) is compensator_cond_increment's argument. compensator_cond_increment is at PQV:33-74. SL does not import PQV; both import Increment_Moments.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "compensator_cond_increment",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": []
+  },
+  "fourth-moment-L2-fix": {
+   "id": "fourth-moment-L2-fix",
+   "kind": "fix-then-keep",
+   "summary": "Fix Stopped_Localization.fourth_moment_L2. (a) Drop the hypothesis Aad, which follows from mgX and mgZ as in compensator_cond_increment. (b) Weaken the pointwise start X 0 = x0 to an almost-sure (bounded) start. Merge the COROLLARY pair fourth_moment_L2_integrable / fourth_moment_L2_bochner (home: Stopped_Localization) into one corollary with two conclusions. The move to CTM is phase 5.",
+   "files": [
+    "Continuous_Path_Spaces/Stopped_Localization.thy",
+    "Continuous_Path_Spaces/Path_Tightness.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy"
+   ],
+   "facts": [
+    "fourth_moment_L2",
+    "fourth_moment_L2_integrable",
+    "fourth_moment_L2_bochner"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "fourth_moment_L2 at SL:361-568 (208 lines) still has Aad and `start` (SL:366-368). _integrable is at SL:573-600 (28) and _bochner at SL:602-630 (29); both are used at PPS:65/77, and they share their set-up. Roots: 290, 595-596.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "fourth_moment_L2",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G4-cps",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  },
+  "ra-marginals-measurability": {
+   "id": "ra-marginals-measurability",
+   "kind": "merge-twins",
+   "summary": "Add one generic lemma next to diffquot_all_of_rational: closed S, continuous paths and measurable evaluations make the all-pairs difference-quotient event measurable, quantifying over the rationals. Use it in place of the rational-pair blocks (equiv/predD) inside iexit_class_marginal_in_xclass and in pairpath_diffquot_sets. Move iexit_class_fstify_measurable and xclass_liftify_measurable before the inclusions and use them instead of the inline pushforward-measurability proofs.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Marginals.thy",
+    "Continuous_Path_Spaces/Increment_Moments.thy"
+   ],
+   "facts": [
+    "pairpath_diffquot_sets",
+    "iexit_class_marginal_in_xclass",
+    "xclass_lift_in_iexit_class",
+    "iexit_class_fstify_measurable",
+    "xclass_liftify_measurable"
+   ],
+   "est_lines_saved": 120,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Marginals.thy:860 (109), :354 (337; KEEP_EVIDENCE root), :970 (214; root), :1203 (25), :1229 (24).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-diffquot-rational-pairs": {
+   "id": "ra-diffquot-rational-pairs",
+   "kind": "merge-twins",
+   "summary": "The rational-pair to real-time difference-quotient argument is copied many times. Keep one rational-pair lemma, stated for covariation_class or a closed S in Exit_Class_Pasting or lower, and derive the other. exit_class_diffquot_of_rational_pairs duplicates exit_class_diffquot_of_pairs. Add an AE_rat_pairs lemma (AE over Q x Q from per-pair AE) and replace the inline copies in Dynamic_Programming_Conditioning and Dynamic_Programming_Delayed_Class; the Dynamic_Programming_Kernels copies are gone.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Pasting.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Conditioning.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Delayed_Class.thy",
+    "Continuous_Path_Spaces/Increment_Moments.thy"
+   ],
+   "facts": [
+    "exit_class_diffquot_of_pairs",
+    "exit_class_diffquot_of_rational_pairs"
+   ],
+   "est_lines_saved": 150,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Pasting.thy:14 (51); Dynamic_Programming_Conditioning.thy:287 (51). Inline ranges in RA-dpp-10 refer to 3bc3803.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-pexit-splicing-rederivations": {
+   "id": "ra-pexit-splicing-rederivations",
+   "kind": "derive-corollary",
+   "summary": "Path_Splicing re-derives Path_Exit_Times lemmas. Reduce pexit_pglue_ge to a 2-5 line corollary, and rewrite pexit_pglue_split, pexit_pglue_dpp, pexit_delayed_rebase and pexit_padd_dpp through pexit_split_at_r, pexit_surv_of_less, pexit_cong_on and pexit_eq_of_stays. If the deterministic DPP half (ra-dpp-deterministic-half) becomes a corollary, pexit_pglue_dpp may lose its users. pexit_pcut_ge was deleted in phase 2.",
+   "files": [
+    "Relative_Arbitrage/Path_Splicing.thy",
+    "Continuous_Path_Spaces/Path_Exit_Times.thy"
+   ],
+   "facts": [
+    "pexit_pglue_ge",
+    "pexit_pglue_split",
+    "pexit_pglue_dpp",
+    "pexit_delayed_rebase",
+    "pexit_padd_dpp",
+    "pexit_split_at_r",
+    "pexit_surv_of_less",
+    "pexit_cong_on",
+    "pexit_eq_of_stays",
+    "pexit_min_horizon"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "partly-applies",
+   "evidence": "Path_Splicing.thy:1173 (44), :606 (48), :1218 (48; used DPP:249,407, PS:1850), :1460 (52), :1857 (86); Path_Exit_Times.thy:1484 (66), :1559 (19). grep finds no pexit_pcut_ge. Reader RA-path1-18 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  },
+  "ra-qvmat-polarisation": {
+   "id": "ra-qvmat-polarisation",
+   "kind": "merge-twins",
+   "summary": "qvmat_eq_A_localised re-proves the polarisation inside Pathwise_Quadratic_Variation's locale bounded_matrix_martingale_compensator (Xpol, Apol, polarised: FIX_THEN_KEEP roots; qvmat_eq_A_sym: a COROLLARY root). Factor the boundedness-free part of 'polarised' (martingale of Xpol, compensated martingale, Apol rate) into locale-free lemmas and use them in both proofs.",
+   "files": [
+    "Relative_Arbitrage/Pair_Path_Space.thy",
+    "Continuous_Path_Spaces/Pathwise_Quadratic_Variation.thy"
+   ],
+   "facts": [
+    "qvmat_eq_A_localised",
+    "polarised",
+    "Apol_diff",
+    "qvmat_eq_A",
+    "qvmat_eq_A_sym",
+    "bounded_matrix_martingale_compensator"
+   ],
+   "est_lines_saved": 150,
+   "status_now": "applies",
+   "evidence": "Pair_Path_Space.thy:1012 qvmat_eq_A_localised (207); Pathwise_Quadratic_Variation.thy:846 locale, :877 Apol_diff, :892 polarised (105), :1016 qvmat_eq_A (37). roots.txt:294-300.",
+   "risk": "high",
+   "gated": false,
+   "source": "review",
+   "group": "G4-cps",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  },
+  "twin-approach-from-below": {
+   "id": "twin-approach-from-below",
+   "kind": "merge-twins",
+   "summary": "Pilot. Add one real-analysis helper to Continuous_Path_Spaces.Path_Space next to le_on_Icc_of_rats. It says: continuous_on {0..c} g, a closed condition on S, t in closure S gives the condition at t; prove it via continuous_ge_on_closure/continuous_le_on_closure. Derive radial_sq_upto_gen, quad_good_upto_region and quad_good_rat_to_real_region from it in about 10 lines each. Make radial_sq_upto the instance F = \u03bbw. (norm (w - y0))^2 of radial_sq_upto_gen, and fold quad_eval_cont into open_quad_bad_event_region. Three of the six original copies (quad_good_upto, quad_good_rat_to_real, open_quad_bad_event) were deleted in phase 2.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Space.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy"
+   ],
+   "facts": [
+    "radial_sq_upto_gen",
+    "radial_sq_upto",
+    "quad_good_upto_region",
+    "quad_good_rat_to_real_region",
+    "open_quad_bad_event_region",
+    "quad_eval_cont",
+    "le_on_Icc_of_rats",
+    "continuous_ge_on_closure"
+   ],
+   "est_lines_saved": 250,
+   "status_now": "partly-applies",
+   "evidence": "Pair_Path_Space.thy:117-197 radial_sq_upto_gen. Pair_Path_Laws.thy: open_quad_bad_event_region 1325-1376, radial_sq_upto 3079-3160 (uses VFSC1:1876/1920 only, inside exit_val_ball_lower_plus), quad_eval_cont 3386-3416, quad_good_upto_region 3424-3499, quad_good_rat_to_real_region 3515-3605. Together about 413 lines. grep: quad_good_upto, quad_good_rat_to_real and open_quad_bad_event have no hits. le_on_Icc_of_rats is at Path_Space.thy:274. Interacts with twin-tanp and twin-ball-lower: radial_sq_upto dies if exit_val_ball_lower_plus is derived.",
+   "risk": "medium",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "new closure-transfer helper in Path_Space",
+   "source": "verified",
+   "group": "G4-cps",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  }
+ }
+}

@@ -1,0 +1,923 @@
+{
+ "group": "G5-toolkit",
+ "chunks": [
+  [
+   "ra-selector-value-ae",
+   "ra-exit-val-horizon-cap",
+   "dpp-le-of-cond-retire",
+   "ra-inline-borel-facts-class",
+   "ra-natural-filtration-eval",
+   "ra-law-constructors",
+   "ra-path2-small-repeats",
+   "ra-inline-entry-measurability-pls",
+   "ra-small-duplicates",
+   "ra-stopping-time-max-shift"
+  ],
+  [
+   "ra-nonbinding-preamble",
+   "bmpair-as-sbmpair",
+   "ra-rcd-instances",
+   "ra-martingale-distr-instances",
+   "ra-ksemi-disintegration",
+   "ra-ae-transfer-glues",
+   "ra-path-op-measurability",
+   "ra-pre-sigma-library",
+   "ra-euler-boilerplate",
+   "ra-pglue-kglue"
+  ],
+  [
+   "ra-approach-from-below-radial",
+   "twin-deterministic-dpp-ge",
+   "ra-dpp-deterministic-half",
+   "twin-coordinate-weak-limit-chain",
+   "twin-qvmat-ae",
+   "ra-qvmata",
+   "ra-approach-from-below-helper",
+   "ra-coord-vs-F-chain",
+   "twin-pls-x-vs-compensated",
+   "ra-X-comp-path-law-sampling"
+  ]
+ ],
+ "items": {
+  "ra-selector-value-ae": {
+   "id": "ra-selector-value-ae",
+   "kind": "derive-corollary",
+   "summary": "State one lemma: from ess_inf_time (pshift_law S y \u03bc) \u03c4_K = exit_val k L S K y, conclude that AE \u03c9 in \u03bc, enn2real (exit_val k L S K y) <= pexit S K (\u03bbt. y + fst (\u03c9 t)), via AE_pshift_law_iff, pexit_pshift and enn2real_leI. Derive selector_value_AE from it with one AE_distr_iff through prebase. The Kernels copy (pexit_pglue_selector_ge) is gone, and the Pasting copy goes with ra-dpp-deterministic-half.",
+   "files": [
+    "Relative_Arbitrage/Dynamic_Programming_Assembly.thy",
+    "Relative_Arbitrage/Path_Law_Pasting.thy"
+   ],
+   "facts": [
+    "selector_value_AE",
+    "AE_pshift_law_iff",
+    "pexit_pshift"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "partly-applies",
+   "evidence": "Dynamic_Programming_Assembly.thy:122 (87); Path_Law_Pasting.thy:902 (35); Path_Splicing.thy:542. grep finds no pexit_pglue_selector_ge.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-exit-val-horizon-cap": {
+   "id": "ra-exit-val-horizon-cap",
+   "kind": "derive-corollary",
+   "summary": "exit_val_horizon_cap re-does the core computation of ess_inf_pexit_pcut_law. Split ess_inf_pexit_pcut_law into an unshifted core lemma plus the pshift step, and use the core in exit_val_horizon_cap.",
+   "files": [
+    "Relative_Arbitrage/Dynamic_Programming_Delayed_Class.thy",
+    "Relative_Arbitrage/Path_Law_Pasting.thy"
+   ],
+   "facts": [
+    "exit_val_horizon_cap",
+    "ess_inf_pexit_pcut_law"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "Dynamic_Programming_Delayed_Class.thy:136 (71); Path_Law_Pasting.thy:938 (46).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "dpp-le-of-cond-retire": {
+   "id": "dpp-le-of-cond-retire",
+   "kind": "merge-twins",
+   "summary": "Retire Dynamic_Programming_Pasting.exit_val_dpp_le_of_cond. Its FIX is already done: Proposition_2_4 (040c0c5) proves the unconditional <= half (exit_val_dpp_le_time, exit_val_dpp, exit_val_dpp_time), and its `key` block is now exported as exit_val_dpp_ess_inf_mono_time. The old lemma is a weaker conditional twin with no proof users. First drop it from roots.txt:272 in its own commit, then delete the subsection DPP:550-681 (text, lemma and closing text) and rewrite the two prose mentions. pexit_cap_eq stays live because Proposition_2_4:89 uses it.",
+   "files": [
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy",
+    "Relative_Arbitrage/Proposition_2_4.thy",
+    "Relative_Arbitrage/Path_Splicing.thy"
+   ],
+   "facts": [
+    "exit_val_dpp_le_of_cond",
+    "exit_val_dpp_ess_inf_mono_time",
+    "exit_val_dpp_le_time",
+    "exit_val_dpp",
+    "pexit_cap_eq",
+    "pexit_stable_above_T"
+   ],
+   "est_lines_saved": 130,
+   "status_now": "partly-applies",
+   "evidence": "exit_val_dpp_le_of_cond is at DPP:560-678 (119 lines). Grep finds its name only at DPP:560, Proposition_2_4:31 (an @{thm [source]} in text) and Path_Splicing:1343 (text). Its `key` block (DPP:578-650) is repeated as Proposition_2_4.exit_val_dpp_ess_inf_mono_time (Prop_2_4:34-104), and Prop_2_4:106-125 derives exit_val_dpp_le_time from it. It is a root at roots.txt:272.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Proposition_2_4.exit_val_dpp_le_time / exit_val_dpp_ess_inf_mono_time",
+   "checked_derivation": "Proposition_2_4.thy (built, commit 040c0c5)",
+   "source": "verdicts",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-inline-borel-facts-class": {
+   "id": "ra-inline-borel-facts-class",
+   "kind": "derive-corollary",
+   "summary": "Add outerp_fst_minus_snd_borel (compensated_map_borel) next to outerp_borel, and a start_set_sets lemma. Replace the inline re-derivations with pair_fst_borel, pair_snd_borel, pexit_path_measurable, enn2real_leI and the new lemmas, in Exit_Class_Pasting, Exit_Class_Witness, Exit_Class_Infinite, Exit_Class_Marginals, Value_Function_Euler_Construction and the Dynamic_Programming_* theories. Factor exit_class_stopped_A_integrable and exit_class_doob_envelope in Exit_Class_Limits. This merges RA-class-14, RA-dpp-18, RA-infinite+Statement-18 and the fst-measurability part of RA-value1-15.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Pasting.thy",
+    "Relative_Arbitrage/Exit_Class_Witness.thy",
+    "Relative_Arbitrage/Exit_Class_Infinite.thy",
+    "Relative_Arbitrage/Exit_Class_Marginals.thy",
+    "Relative_Arbitrage/Exit_Class_Limits.thy",
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Delayed_Class.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Assembly.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy"
+   ],
+   "facts": [
+    "outerp_borel",
+    "pair_fst_borel",
+    "pair_snd_borel",
+    "pexit_path_measurable",
+    "exit_val_le_T"
+   ],
+   "est_lines_saved": 200,
+   "status_now": "applies",
+   "evidence": "Pair_Path_Laws.thy:2218 outerp_borel (9); Integrability_Criteria.thy:717, :722; Path_Splicing.thy:1307 (11); Exit_Class_Witness.thy:900 exit_val_le_T. The inline block ranges in the four findings refer to 3bc3803 and must be re-located.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp",
+    "G7-value-function"
+   ]
+  },
+  "ra-natural-filtration-eval": {
+   "id": "ra-natural-filtration-eval",
+   "kind": "library-reproof",
+   "summary": "Delete the four copies of Natural_Filtration.natural_filtration_eval (path_eval_measurable_natural_filtration', nat_filt_eval, path_eval_natural_filtration, path_eval_measurable_natural_filtration) and point their uses and the inline copies at it. Make sets_natural_filtration_path_subset, subalgebra_natural_filtration_path and sigma_finite_subalgebra_natural_filtration_path one-liners.",
+   "files": [
+    "Relative_Arbitrage/Pair_Path_Laws.thy",
+    "Relative_Arbitrage/Path_Splicing.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy"
+   ],
+   "facts": [
+    "natural_filtration_eval",
+    "nat_filt_eval",
+    "path_eval_natural_filtration",
+    "path_eval_measurable_natural_filtration",
+    "sets_natural_filtration_path_subset",
+    "subalgebra_natural_filtration_path",
+    "sigma_finite_subalgebra_natural_filtration_path"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "Pair_Path_Laws.thy:116 (primed copy, 8), :229 (7), :282 (7), :1497 (8), :1506 (21), :2414 (15), :2430 (12); Natural_Filtration.thy:49.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-law-constructors": {
+   "id": "ra-law-constructors",
+   "kind": "merge-twins",
+   "summary": "Define pshift_law and aglue_law via pair_law_of, or as abbreviations, and delete the sets_/space_/prob_space_ duplicates. pair_law_of itself duplicates Path_Space.path_law.",
+   "files": [
+    "Relative_Arbitrage/Path_Law_Pasting.thy"
+   ],
+   "facts": [
+    "pair_law_of",
+    "pshift_law",
+    "sets_pshift_law",
+    "space_pshift_law",
+    "prob_space_pshift_law",
+    "aglue_law",
+    "sets_aglue_law",
+    "prob_space_aglue_law",
+    "path_law"
+   ],
+   "est_lines_saved": 30,
+   "status_now": "applies",
+   "evidence": "Path_Law_Pasting.thy:24, :179, :185, :190, :195 (11), :314, :321, :508 (19); Path_Space.thy:464. Reader RA-path2-23 has medium confidence.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-path2-small-repeats": {
+   "id": "ra-path2-small-repeats",
+   "kind": "merge-twins",
+   "summary": "Smaller repeats in the pasting layer: reuse pfut_filtration_measurable in martingale_future_of_past; reuse path_stopping_time_cut_eq (a root) in path_stopping_time_cut; reuse aglue_section_int_at for the inline gi in aglue_section_measurable and the 3 |cc*h| <= |h| steps; state the start clause as w 0 = (x, 0) for the 4 start-set measurability copies; add countable_pi_systems_natural_filtration_path for the two bchoice blocks.",
+   "files": [
+    "Relative_Arbitrage/Path_Law_Pasting.thy",
+    "Relative_Arbitrage/Path_Stopping_Times.thy",
+    "Relative_Arbitrage/Path_Law_Sampling.thy"
+   ],
+   "facts": [
+    "pfut_filtration_measurable",
+    "path_stopping_time_cut",
+    "path_stopping_time_cut_eq",
+    "aglue_section_measurable",
+    "aglue_section_int_at",
+    "pair_law_eval_measurable"
+   ],
+   "est_lines_saved": 80,
+   "status_now": "applies",
+   "evidence": "Path_Law_Pasting.thy:2631 (43); Path_Stopping_Times.thy:682 (32), :633 (15); Path_Law_Sampling.thy:2256 (51), :2346 (37). Block ranges in RA-path2-18 refer to 3bc3803.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-inline-entry-measurability-pls": {
+   "id": "ra-inline-entry-measurability-pls",
+   "kind": "derive-corollary",
+   "summary": "Replace the about 13 inline proofs of coordinate and compensated-entry measurability in Path_Law_Sampling by X_eval_entry_measurable and comp_eval_entry_measurable, with measurable_cong_sets where needed. If ra-X-comp-path-law-sampling lands first, about half of these blocks disappear with it.",
+   "files": [
+    "Relative_Arbitrage/Path_Law_Sampling.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy"
+   ],
+   "facts": [
+    "X_eval_entry_measurable",
+    "comp_eval_entry_measurable"
+   ],
+   "est_lines_saved": 100,
+   "status_now": "applies",
+   "evidence": "Pair_Path_Laws.thy:718 (9), :2228 (24). The inline ranges listed in RA-path2-17 (Path_Law_Sampling.thy:275-3057) refer to 3bc3803.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-small-duplicates": {
+   "id": "ra-small-duplicates",
+   "kind": "merge-twins",
+   "summary": "Small duplicates across the path and class layers. Delete pcut_id_on_mspace (= mspace_path_restrict_self). Merge continuous_on_pglue and continuous_on_iglue. Keep one of covariation_class_compensated_martingale / covariation_class_martingale_compensated. Keep one of X_eval_entry_measurable / pair_law_coord_measurable, and one of path_coord_cont_on / eval_component_continuous. Delete covariation_class_eval_measurable (= pair_law_eval_measurable). Derive pembed_mspace_full and pembed_mspace from one continuity lemma. Delete exit_class_comp_martingale (= exit_class_compensated_martingale). Move exit_class_start to Exit_Class and replace the ad-hoc exit_class_def unfoldings via exit_class_eq_covariation. Delete the duplicated paragraphs in Pair_Path_Laws. The second copy of outerp_eq_outer_prod is a plan row and is not repeated here.",
+   "files": [
+    "Relative_Arbitrage/Path_Splicing.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Conditioning.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy",
+    "Relative_Arbitrage/Exit_Class.thy",
+    "Relative_Arbitrage/Value_Function_Subsolution.thy"
+   ],
+   "facts": [
+    "pcut_id_on_mspace",
+    "mspace_path_restrict_self",
+    "continuous_on_pglue",
+    "continuous_on_iglue",
+    "covariation_class_compensated_martingale",
+    "covariation_class_martingale_compensated",
+    "X_eval_entry_measurable",
+    "pair_law_coord_measurable",
+    "path_coord_cont_on",
+    "eval_component_continuous",
+    "covariation_class_eval_measurable",
+    "pair_law_eval_measurable",
+    "pembed_mspace",
+    "pembed_mspace_full",
+    "exit_class_comp_martingale",
+    "exit_class_compensated_martingale",
+    "exit_class_start",
+    "exit_class_eq_covariation"
+   ],
+   "est_lines_saved": 100,
+   "status_now": "applies",
+   "evidence": "Path_Splicing.thy:715 (9), :1392 (14), :1407 (14); Path_Space.thy:1082; Pair_Path_Space.thy:1299 (25), :1284 (14), :404 (11); Pair_Path_Laws.thy:37 (25), :3893 (6), :3673 (6), :718 (9), :3292 (14), :3825 (11), :293; Dynamic_Programming_Conditioning.thy:30 (6); Exit_Class.thy:480, :241; Dynamic_Programming_Pasting.thy:157 (5).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp",
+    "G7-value-function"
+   ]
+  },
+  "ra-stopping-time-max-shift": {
+   "id": "ra-stopping-time-max-shift",
+   "kind": "merge-twins",
+   "summary": "path_stopping_time_max and path_stopping_time_shift (both KEEP_API roots) repeat one argument. Prove one path_stopping_time_comp_ge lemma (x <= f x) and derive both.",
+   "files": [
+    "Relative_Arbitrage/Path_Stopping_Times.thy"
+   ],
+   "facts": [
+    "path_stopping_time_max",
+    "path_stopping_time_shift",
+    "path_stopping_time_min"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "Path_Stopping_Times.thy:507 (23), :534 (30), :576 (37).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-nonbinding-preamble": {
+   "id": "ra-nonbinding-preamble",
+   "kind": "derive-corollary",
+   "summary": "Add corollary iexit_val_eq_exit_val_compact (k < CARD('n), 1 <= L, compact K give some T > 0 with iexit_val k L K = exit_val k L T K) to Exit_Class_Infinite. Use it for the six repeated nonbinding_horizon_ex + iexit_val_eq_exit_val_ball preambles in Value_Function_Uniqueness, and inline or delete nonbinding_horizon_ex.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Uniqueness.thy",
+    "Relative_Arbitrage/Exit_Class_Infinite.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy"
+   ],
+   "facts": [
+    "nonbinding_horizon_ex",
+    "iexit_val_eq_exit_val_ball",
+    "iexit_val_eq_exit_val"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "Value_Function_Uniqueness.thy:521/523, :541/543, :570/572, :598/600, :668/670, :739/741; Exit_Class_Infinite.thy:785, :816; Pair_Path_Laws.thy:193 (19).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp",
+    "G7-value-function"
+   ]
+  },
+  "bmpair-as-sbmpair": {
+   "id": "bmpair-as-sbmpair",
+   "kind": "merge-twins",
+   "summary": "Move the sbmpair package (definition sbmpair through sbmpair_law_in_paper_pair_class, and sbmpair_pshift_law_in_paper_pair_class) from Value_Function_Euler_Construction into Exit_Class_Witness, in place of the bmpair block. Keep bmpair as a definition with lemma bmpair_eq_sbmpair: 'bmpair T = sbmpair (mat 1) T' by (rule ext) (simp add: bmpair_def sbmpair_def). Re-prove bmpair_law_in_paper_pair_class in 2 lines: unfolding bmpair_eq_sbmpair by (rule sbmpair_law_in_paper_pair_class[OF T L]) (use mat_1_in_sconstraint[OF L] in simp). Delete bmpair_apply, continuous_on_bmpair_path, bmpair_measurable, prob_space_bmpair_law, bmpair_law_start, bmpair_law_diffquot, bmpair_adapted, bmpair_law_X_martingale and bmpair_law_comp_martingale. Fix the prose that names bmpair lemmas (Pair_Path_Laws.thy:65-67, Pair_Path_Space.thy:798) and the SOVA text that names sbmpair (Doubling_Of_Variables.thy:3086-3087).",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Witness.thy",
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy",
+    "Relative_Arbitrage/Exit_Class_Infinite.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy"
+   ],
+   "facts": [
+    "bmpair",
+    "bmpair_def",
+    "bmpair_eq_sbmpair",
+    "bmpair_law_in_paper_pair_class",
+    "sbmpair",
+    "sbmpair_law_in_paper_pair_class",
+    "sbmpair_pshift_law_in_paper_pair_class",
+    "mat_1_in_sconstraint"
+   ],
+   "est_lines_saved": 320,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Witness.thy: bmpair block 533-871 (definition 538, bmpair_law_in_paper_pair_class 838-871), then exit_class_nonempty at 873. Value_Function_Euler_Construction.thy 42-427 holds the sbmpair package; a diff against the verified Sbm_Move.thy shows lines 42-412 identical. Outside users of bmpair: Exit_Class_Infinite.thy:397-398 (pcut_ibmpair uses bmpair_def), :440-456; Exit_Class_Pasting.thy:890/893. Caveat: phase 3 cut ECW's imports to Exit_Class_Shift + Continuous_Brownian_Motion, and ECW lost Path_Law_Sampling as an ancestor. The move was checked against the pre-phase-3 import set, so re-check it in PIDE. Plan inconsistency: the phase-4 row says phase 5 moves sbmpair on to Wiener_Measure, but section 1.1 says it is typed at pairpath and stays in the paper session or goes to Path_Space_Operations.",
+   "risk": "medium",
+   "gated": false,
+   "checked_derivation": "verification_results.md, clone-derivations, claim 8 (bmpair_eq_sbmpair and the corollary quoted). Scratch files: verify/clone-derivations/Sbm_Move.thy (the whole package over an import of Exit_Class_Witness only) and Clone_RA.thy, 'Claim 8'.",
+   "general_lemma": "sbmpair_law_in_paper_pair_class",
+   "source": "verified",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp",
+    "G7-value-function"
+   ]
+  },
+  "ra-rcd-instances": {
+   "id": "ra-rcd-instances",
+   "kind": "derive-corollary",
+   "summary": "exit_class_rcd and exit_class_rcd_ksemi re-prove path_rcd and path_rcd_ksemi (KEEP_API roots) in the same file. path_rcd depends on facts at PLP:1259-2295 (kglue_law, ksemi_weak_conv, emeasure_ksemi_rect), so move exit_class_rcd (only use PLP:1540) and exit_class_rcd_ksemi (only use DPC:624) after path_rcd_ksemi and make them one-line instances, e.g. path_rcd[OF Tr PS pcut_measurable pfut_measurable_law]. Optionally rename them pfut_rcd / pfut_rcd_ksemi.",
+   "files": [
+    "Relative_Arbitrage/Path_Law_Pasting.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Conditioning.thy"
+   ],
+   "facts": [
+    "exit_class_rcd",
+    "exit_class_rcd_ksemi",
+    "path_rcd",
+    "path_rcd_ksemi",
+    "pcut_measurable",
+    "pfut_measurable_law"
+   ],
+   "est_lines_saved": 150,
+   "status_now": "applies",
+   "evidence": "Path_Law_Pasting.thy:1259 exit_class_rcd (86), :1507 _ksemi (72), :2295 path_rcd (81), :2740 path_rcd_ksemi (70). grep of :2295-2810 against the facts at :1259-2295 finds kglue_law, AE_kglue_law, emeasure_ksemi_rect, integral_ksemi_rect_real, ksemi_weak_conv and prob_space_kglue_law.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "path_rcd, path_rcd_ksemi",
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-martingale-distr-instances": {
+   "id": "ra-martingale-distr-instances",
+   "kind": "library-reproof",
+   "summary": "martingale_pair_law (17 uses) and martingale_pshift_law re-prove CTM's martingale_distr (a root). Re-prove them as instances, with filtered_measure from AFP finite_filtered_measure_natural_filtration. Replace phi_filtration_measurable by Natural_Filtration.natural_filtration_pull.",
+   "files": [
+    "Relative_Arbitrage/Path_Law_Pasting.thy"
+   ],
+   "facts": [
+    "martingale_pair_law",
+    "martingale_pshift_law",
+    "phi_filtration_measurable",
+    "martingale_distr",
+    "natural_filtration_pull"
+   ],
+   "est_lines_saved": 170,
+   "status_now": "applies",
+   "evidence": "Path_Law_Pasting.thy:68 (86), :221 (82), :39 (28); Martingale_Transfer.thy:494 (61); Natural_Filtration.thy:25 (20). Path_Law_Pasting has both theories as ancestors.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-ksemi-disintegration": {
+   "id": "ra-ksemi-disintegration",
+   "kind": "library-reproof",
+   "summary": "Section 3.1, partial. Add the 20-line bridge ksemi_disintegration and derive AE_integrable_ksemi_section and integral_ksemi_real (3 lines each) from AFP prob_kernel.integrable_kernel_integrable and prob_kernel.integral_fst. Call sites must supply sigma_finite_measure M (true at those inspected: M is a prob_space). The library form is Banach-valued and drops the gm/msec hypotheses, so integral_aglue_law and aglue_msec_X/C may shrink too.",
+   "files": [
+    "Relative_Arbitrage/Path_Law_Pasting.thy",
+    "Relative_Arbitrage/Path_Law_Sampling.thy"
+   ],
+   "facts": [
+    "AE_integrable_ksemi_section",
+    "integral_ksemi_real",
+    "integral_aglue_law",
+    "aglue_msec_X",
+    "aglue_msec_C",
+    "aglue_section_measurable"
+   ],
+   "est_lines_saved": 95,
+   "status_now": "applies",
+   "evidence": "Path_Law_Pasting.thy:1944 (37; 7 occurrences in 2 files), :2041 (88; 5 in 2), :2137 (34); Path_Law_Sampling.thy:2308, :2439, :2256. Path_Law_Pasting's imports chain reaches Disintegration.",
+   "risk": "medium",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, libdup-check claim 4 (partial; bridge proved)",
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-ae-transfer-glues": {
+   "id": "ra-ae-transfer-glues",
+   "kind": "merge-twins",
+   "summary": "The same AE-transfer skeleton is written four times for different glues. Prove one generic lemma (AE over distr (ksemi Q N K) g iff AE p in Q. AE w in K p. Phi (g (p,w))) plus ksemi_const_kernel. Derive AE_aglue_law, AE_pglue_law and AE_kglue_law', and keep AE_kglue_law (Pi-measure index) or derive it through kglue_law_eq_kglue_law'.",
+   "files": [
+    "Relative_Arbitrage/Path_Law_Pasting.thy"
+   ],
+   "facts": [
+    "AE_aglue_law",
+    "AE_pglue_law",
+    "AE_kglue_law",
+    "prob_space_pglue_law",
+    "prob_space_kglue_law",
+    "kglue_law_eq_kglue_law"
+   ],
+   "est_lines_saved": 120,
+   "status_now": "applies",
+   "evidence": "Path_Law_Pasting.thy:533 (31), :723 (59), :1372 (67, the primed law), :2680 (59), :703, :1349, :2613, :2435.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-path-op-measurability": {
+   "id": "ra-path-op-measurability",
+   "kind": "library-reproof",
+   "summary": "Measurability into the path space is re-derived instead of using Path_Space.pathify_measurable. Rewrite padd_measurable_left, padd_measurable, pembed_measurable, pdel_measurable_pair and prebase_measurable with it. Prove sets_natural_filtration_path from pathify_measurable plus sets_natural_filtration_subset. Delete measurable_into_path_metric, mdist_measurable_of_eval, mdist_measurable_natural_filtration and mball_in_natural_filtration.",
+   "files": [
+    "Relative_Arbitrage/Path_Splicing.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy",
+    "Relative_Arbitrage/Path_Stopping_Times.thy",
+    "Relative_Arbitrage/Path_Law_Pasting.thy"
+   ],
+   "facts": [
+    "pathify_measurable",
+    "padd_measurable_left",
+    "padd_measurable",
+    "pembed_measurable",
+    "pdel_measurable_pair",
+    "prebase_measurable",
+    "sets_natural_filtration_path",
+    "measurable_into_path_metric",
+    "mdist_measurable_of_eval",
+    "mdist_measurable_natural_filtration",
+    "mball_in_natural_filtration"
+   ],
+   "est_lines_saved": 250,
+   "status_now": "applies",
+   "evidence": "Path_Splicing.thy:226 (34), :323 (50), :1523 (32), :1609 (53), :1774 (37); Pair_Path_Laws.thy:1632 (33), :1176 (36), :1217 (21), :1534 (57), :1594 (33); Path_Space.thy:328 pathify_measurable (128).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-pre-sigma-library": {
+   "id": "ra-pre-sigma-library",
+   "kind": "library-reproof",
+   "summary": "Section 3.1, partial. pre_sigma_of equals sets (filtration.pre_sigma) for nonnegative stopping times of a sub-filtration (about 40-line bridge plus a 6-line natural-filtration corollary, both checked). It has 38 occurrences, so switching saves about nothing by itself. Do it only together with the CTM move of the block (phase 5), to reuse sigma_algebra_pre_sigma and mono_pre_sigma. At minimum, cite the HOL lemmas in the text.",
+   "files": [
+    "Relative_Arbitrage/Path_Stopping_Times.thy"
+   ],
+   "facts": [
+    "pre_sigma_of",
+    "pre_sigma_ofI",
+    "sigma_algebra_pre_sigma_of",
+    "pre_sigma_of_mono",
+    "pre_sigma_of_cut"
+   ],
+   "est_lines_saved": 0,
+   "status_now": "partly-applies",
+   "evidence": "Path_Stopping_Times.thy:868 pre_sigma_of (5; 38 occurrences in 2 files), :874, :995 (40; root), :1040 (18), :982.",
+   "risk": "medium",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, libdup-check claim 5",
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-euler-boilerplate": {
+   "id": "ra-euler-boilerplate",
+   "kind": "merge-twins",
+   "summary": "The Euler induction step and grid-prefix facts are repeated. Add eulerp_Suc (packaging Ee, Kp, Kb, Kc, phim, sets) and pglue_grid_prefix, and nn_integral_kglue_law'_prefix in Path_Law_Pasting. Use them in eulerp_in_class, eulerp_Xi_sq_bound, eulerp_Xi_sq_bound_le and Case_1's eulerp_orth_increments_cond. The ball-version eulerp_orth_increments was deleted.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy",
+    "Relative_Arbitrage/Path_Law_Pasting.thy"
+   ],
+   "facts": [
+    "eulerp_in_class",
+    "eulerp_Xi_sq_bound",
+    "eulerp_Xi_sq_bound_le",
+    "eulerp_orth_increments_cond"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "partly-applies",
+   "evidence": "Value_Function_Euler_Construction.thy:796 (88), :1629 (291), :2025 (155); Value_Function_Supersolution_Case_1.thy:509 (175).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "ra-pglue-kglue": {
+   "id": "ra-pglue-kglue",
+   "kind": "merge-twins",
+   "summary": "The pglue and kglue martingale proofs repeat each other's set-up. Prove the measure identity pglue_law = kglue_law at a constant index, and factor pglue_product_filtration / kglue_product_filtration set-up lemmas. Then drop pglue_law_start, pglue_law_diffquot, pglue_law_X_martingale and pglue_law_comp_martingale in favour of the kglue versions. The X/comp twin inside each pair is the same pattern as ra-X-comp-dynamic-programming. Not in the plan's pilot table, but large enough to warrant a gate.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Pasting.thy",
+    "Relative_Arbitrage/Path_Law_Pasting.thy"
+   ],
+   "facts": [
+    "pglue_law_X_martingale",
+    "pglue_law_comp_martingale",
+    "kglue_law_X_martingale",
+    "kglue_law_comp_martingale",
+    "pglue_law_start",
+    "kglue_law_start",
+    "pglue_law_diffquot",
+    "kglue_law_diffquot",
+    "pglue_law",
+    "kglue_law"
+   ],
+   "est_lines_saved": 450,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Pasting.thy:387 (200), :589 (257), :1157 (335), :1685 (584), :280 (34), :982 (37), :315 (37), :1020 (59); Path_Law_Pasting.thy:690 pglue_law, :1069/:2289 kglue_law. Reader RA-class-5 has medium confidence.",
+   "risk": "high",
+   "gated": false,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-approach-from-below-radial": {
+   "id": "ra-approach-from-below-radial",
+   "kind": "derive-corollary",
+   "summary": "Part of the plan pilot 'approach t from below, six copies'. radial_sq_upto is the F = |. - y0|^2 instance of radial_sq_upto_gen. Delete its proof, make it a one-line instance, or use _gen at its two uses in Case_1. Of the three exact-instance copies the reader found, this is the only one left, and it passes the pilot gate trivially.",
+   "files": [
+    "Relative_Arbitrage/Pair_Path_Laws.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy"
+   ],
+   "facts": [
+    "radial_sq_upto",
+    "radial_sq_upto_gen"
+   ],
+   "est_lines_saved": 78,
+   "status_now": "applies",
+   "evidence": "Pair_Path_Laws.thy:3079 radial_sq_upto (82); Pair_Path_Space.thy:117 radial_sq_upto_gen (81); uses Value_Function_Supersolution_Case_1.thy:1876, :1920. grep finds no quad_good_upto, quad_good_rat_to_real or open_quad_bad_event (the ball versions).",
+   "risk": "low",
+   "gated": true,
+   "general_lemma": "radial_sq_upto_gen",
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "twin-deterministic-dpp-ge": {
+   "id": "twin-deterministic-dpp-ge",
+   "kind": "merge-twins",
+   "summary": "Pilot. The kglue route is not dead after phase 2. Derive Dynamic_Programming_Pasting.exit_val_dpp_sup_ge as exit_val_dpp_sup_ge_time at \u03b8 = \u03bb_. r: path_stopping_time of a constant holds by unfolding, and measurability is trivial. Derive exit_val_dpp_ge from that via SUP_upper. Put both in Dynamic_Programming_Assembly after exit_val_dpp_sup_ge_time; all their users (Proposition_2_4, VFSC1, VFA) are downstream of DPA. Then delete exit_val_kpaste_ge and exit_val_dpp_ge_const (the independent kglue proof) and Path_Splicing.pexit_pglue_dpp. Fix the texts at DPA:940-948 and Path_Splicing.thy:1850.",
+   "files": [
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Assembly.thy",
+    "Relative_Arbitrage/Path_Splicing.thy"
+   ],
+   "facts": [
+    "exit_val_dpp_sup_ge",
+    "exit_val_dpp_ge",
+    "exit_val_dpp_ge_const",
+    "exit_val_kpaste_ge",
+    "exit_val_dpp_sup_ge_time",
+    "exit_val_dpp_ge_const_time",
+    "pexit_pglue_dpp",
+    "exit_val_measurable_selector_kernel'"
+   ],
+   "est_lines_saved": 390,
+   "status_now": "applies",
+   "evidence": "Dynamic_Programming_Pasting.thy: exit_val_kpaste_ge 22-76 (used only at :250 text and :443); section and text from 236; exit_val_dpp_ge_const 253-444 (used :522 and DPA:948 text); exit_val_dpp_ge 450-528 (used :547, Proposition_2_4.thy:193); exit_val_dpp_sup_ge 532-548 (used Prop_2_4:171, VFSC1:1754/2001, VFA:249). Dynamic_Programming_Assembly.thy: exit_val_dpp_ge_const_time 856, exit_val_dpp_sup_ge_time_of_const 950-1043, exit_val_dpp_sup_ge_time 1045-1067, all independent of the kglue route. Path_Splicing.thy:1218-1265 pexit_pglue_dpp, used only at DPP:407. exit_val_measurable_selector_kernel' (DPP 87-147) stays (VFEC:670, DPDC:266).",
+   "risk": "medium",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "exit_val_dpp_sup_ge_time",
+   "source": "verified",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-dpp-deterministic-half": {
+   "id": "ra-dpp-deterministic-half",
+   "kind": "derive-corollary",
+   "summary": "Pilot (plan table 'deterministic-time DPP >= vs the stopping-time half at constant theta'). It is still live: Proposition_2_4.thy:171/193, Case_1:2001 and Value_Function_Assembly:249 use it. Add path_stopping_time_const and derive exit_val_dpp_sup_ge, and exit_val_dpp_ge for a single P, from exit_val_dpp_sup_ge_time / exit_val_dpp_ge_const_time at theta = \u03bb_. r. That deletes exit_val_kpaste_ge, exit_val_dpp_ge_const (including its inner selector block and DPP-integrand measurability) and the old proofs. No circularity: exit_val_dpp_ge_const_time is built on exit_val_ge_of_stopped_bound, not on the kglue half. Dynamic_Programming_Pasting is upstream of Assembly, so the corollaries move to Assembly or later.",
+   "files": [
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Assembly.thy",
+    "Relative_Arbitrage/Proposition_2_4.thy",
+    "Relative_Arbitrage/Path_Splicing.thy"
+   ],
+   "facts": [
+    "exit_val_kpaste_ge",
+    "exit_val_dpp_ge_const",
+    "exit_val_dpp_ge",
+    "exit_val_dpp_sup_ge",
+    "exit_val_dpp_sup_ge_time",
+    "exit_val_dpp_ge_const_time",
+    "exit_val_ge_of_stopped_bound",
+    "pexit_pglue_dpp"
+   ],
+   "est_lines_saved": 330,
+   "status_now": "applies",
+   "evidence": "Dynamic_Programming_Pasting.thy:22 (55), :253 (192), :450 (79), :532 (17); Dynamic_Programming_Assembly.thy:856 (83; uses exit_val_ge_of_stopped_bound only), :1045 (23); Path_Splicing.thy:1218 (48).",
+   "risk": "medium",
+   "gated": true,
+   "general_lemma": "exit_val_dpp_sup_ge_time",
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "twin-coordinate-weak-limit-chain": {
+   "id": "twin-coordinate-weak-limit-chain",
+   "kind": "merge-twins",
+   "summary": "Pilot. Prove Exit_Class_Limits.exit_class_coord_martingale_limit as martingale_F_limit[where F = \"\u03bbp. fst p $ i\", ...] with exit_class_sq_nn_bound, as Limits:1701 already does for the compensated entry. Delete the hand-specialised chain exit_class_martingale_test, exit_class_martingale_test_limit, exit_class_limit_sq_nn, exit_class_limit_increment_integrable and exit_class_martingale_event_limit. Then re-run dead.py on the coordinate-only helpers pair_test_sq_bound, pair_test_integrable, pair_law_limit_sq_nn_bound and pair_test_functional_cont.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Limits.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy"
+   ],
+   "facts": [
+    "exit_class_coord_martingale_limit",
+    "exit_class_martingale_test",
+    "exit_class_martingale_test_limit",
+    "exit_class_limit_sq_nn",
+    "exit_class_limit_increment_integrable",
+    "exit_class_martingale_event_limit",
+    "martingale_F_limit",
+    "martingale_test_F",
+    "martingale_test_F_limit",
+    "martingale_event_F_limit",
+    "exit_class_sq_nn_bound",
+    "pair_test_sq_bound",
+    "pair_test_integrable",
+    "pair_law_limit_sq_nn_bound"
+   ],
+   "est_lines_saved": 500,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Limits.thy: exit_class_martingale_test 53-105, exit_class_martingale_test_limit 138-219, exit_class_limit_sq_nn 236-251, exit_class_limit_increment_integrable 253-279, exit_class_martingale_event_limit 281-494, exit_class_coord_martingale_limit 508-628 (uses :642); martingale_F_limit is used at :1701. The generic chain is in Pair_Path_Laws: martingale_test_F 2276, martingale_test_F_limit 2329, martingale_event_F_limit 2591, martingale_F_limit 2940. Possibly dead afterwards: pair_test_sq_bound (Pair_Path_Space 1581-1664), pair_test_integrable (PPL:81), pair_law_limit_sq_nn_bound (PPL:125), together up to about 150 more lines. The plan's 1260 also counted a Pair_Path_Space copy that no longer exists, so the gate (630 or more) is marginal.",
+   "risk": "medium",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "martingale_F_limit",
+   "source": "verified",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "twin-qvmat-ae": {
+   "id": "twin-qvmat-ae",
+   "kind": "merge-twins",
+   "summary": "Pilot. State one AE lemma, qvmata_eq_compensator_AE, next to qvmat_eq_A_localised. Hypotheses: prob_space, a filtration, X with continuous paths and martingale components, outerp X - A a martingale, AE A 0 = 0, AE difference quotients of A in S \u2286 psd with entry bound C, AE |X 0 $ i| <= B. Conclusion: AE \u2200t\u22650. qvmata (4C) X t = A t. Make Exit_Class_Marginals.iexit_class_qvmat and xclass_qvmata about 10-line instances; they share the same 150-line argument.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Marginals.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy"
+   ],
+   "facts": [
+    "iexit_class_qvmat",
+    "xclass_qvmata",
+    "qvmat_eq_A_localised",
+    "diffquot_psd",
+    "diffquot_entry",
+    "diffquot_sym"
+   ],
+   "est_lines_saved": 130,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Marginals.thy: diffquot_psd/entry/sym 108-171; iexit_class_qvmat 183-333 (use :390); xclass_qvmata 702-851 (use :989); both call qvmat_eq_A_localised (:281, :805), which is at Pair_Path_Space.thy:1012-1218 (phase 5 moves it to CPS Adapted_Quadratic_Variation). Reader RA-infinite+Statement-4 lists side-by-side blocks.",
+   "risk": "medium",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "qvmata_eq_compensator_AE (new)",
+   "source": "verified",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-qvmata": {
+   "id": "ra-qvmata",
+   "kind": "merge-twins",
+   "summary": "Pilot (plan table 'iexit_class_qvmat vs xclass_qvmata'). The two are the same 150-line argument. State qvmata_eq_compensator_AE once, next to qvmat_eq_A_localised: prob_space, filtration, continuous paths, martingale components, outerp X - A a martingale, A 0 = 0 a.e., difference quotients of A in a psd set S with a uniform entry bound, and a bounded start. Make the two lemmas about 10-line instances, together with diffquot_psd/entry/sym.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Marginals.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy"
+   ],
+   "facts": [
+    "iexit_class_qvmat",
+    "xclass_qvmata",
+    "qvmat_eq_A_localised",
+    "diffquot_psd",
+    "diffquot_entry",
+    "diffquot_sym"
+   ],
+   "est_lines_saved": 140,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Marginals.thy:183 (151), :702 (150), :108 (21), :130 (21), :152 (20); Pair_Path_Space.thy:1012.",
+   "risk": "medium",
+   "gated": true,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-approach-from-below-helper": {
+   "id": "ra-approach-from-below-helper",
+   "kind": "merge-twins",
+   "summary": "Pilot (plan table 'approach t from below'). Four copies of the continuity argument remain. Prove one real-analysis helper: continuous_on {0..c} g, a s <= g s on S, and t in the closure of S imply a t <= g t (via continuous_ge_on_closure with S = {0<..<t} or its rational points). Derive radial_sq_upto_gen, quad_good_upto_region, quad_good_rat_to_real_region and open_quad_bad_event_region from it in about 10 lines each, and fold quad_eval_cont into open_quad_bad_event_region. The ball copies were deleted in phase 2.",
+   "files": [
+    "Relative_Arbitrage/Pair_Path_Space.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy"
+   ],
+   "facts": [
+    "radial_sq_upto_gen",
+    "quad_good_upto_region",
+    "quad_good_rat_to_real_region",
+    "open_quad_bad_event_region",
+    "quad_eval_cont"
+   ],
+   "est_lines_saved": 150,
+   "status_now": "partly-applies",
+   "evidence": "Pair_Path_Space.thy:117 (81); Pair_Path_Laws.thy:3424 (76), :3515 (91), :1325 (52), :3386 (31).",
+   "risk": "medium",
+   "gated": true,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-coord-vs-F-chain": {
+   "id": "ra-coord-vs-F-chain",
+   "kind": "merge-twins",
+   "summary": "Pilot (plan table 'coordinate weak-limit chain vs the generic F-chain'). Prove exit_class_coord_martingale_limit as martingale_F_limit[where F = \u03bbp. fst p $ i] plus exit_class_sq_nn_bound, in about 15 lines. Then delete exit_class_martingale_test, _test_limit, exit_class_limit_sq_nn, exit_class_limit_increment_integrable and exit_class_martingale_event_limit (the last subsumes the RA-market-3 event-upgrade copy, whose market twin is already gone). Delete the coordinate-only helpers pair_eval_coord_sq_cont, pair_test_functional_cont, pair_law_coord_sq_measurable, pair_law_sq_integrable_of_nn_bound, pair_law_sq_mean_of_nn_bound, pair_test_measurable, pair_test_sq_bound, pair_test_integrable and pair_law_limit_sq_nn_bound. Keep pair_eval_coord_cont and pair_law_coord_measurable as one-line corollaries of the _F_ versions.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Limits.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy"
+   ],
+   "facts": [
+    "exit_class_coord_martingale_limit",
+    "exit_class_martingale_test",
+    "exit_class_martingale_test_limit",
+    "exit_class_limit_sq_nn",
+    "exit_class_limit_increment_integrable",
+    "exit_class_martingale_event_limit",
+    "exit_class_sq_nn_bound",
+    "martingale_F_limit",
+    "martingale_test_F",
+    "martingale_test_F_limit",
+    "martingale_event_F_limit",
+    "pair_eval_coord_cont",
+    "pair_eval_coord_sq_cont",
+    "pair_test_functional_cont",
+    "pair_law_coord_measurable",
+    "pair_law_coord_sq_measurable",
+    "pair_law_sq_integrable_of_nn_bound",
+    "pair_law_sq_mean_of_nn_bound",
+    "pair_test_measurable",
+    "pair_test_sq_bound",
+    "pair_test_integrable",
+    "pair_law_limit_sq_nn_bound"
+   ],
+   "est_lines_saved": 730,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Limits.thy:508 (121), :53 (53), :138 (82), :236 (16), :253 (27), :281 (214), :127 (9); Pair_Path_Laws.thy:2940 martingale_F_limit (131), :2276, :2329, :2591, :81 (20), :125 (10); Pair_Path_Space.thy:805 (22), :969 (14), :984 (23), :1284 (14), :1358 (14), :1425 (18), :1503 (12), :1522 (20), :1581 (84). Sum of the deletable code is about 760 lines.",
+   "risk": "high",
+   "gated": true,
+   "general_lemma": "martingale_F_limit",
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "twin-pls-x-vs-compensated": {
+   "id": "twin-pls-x-vs-compensated",
+   "kind": "merge-twins",
+   "summary": "Pilot. In Path_Law_Sampling, prove each clause once, for a path functional h u w = F (w (min u T)) with F continuous, or for a family read out by a bounded linear map. Then derive the X and compensated (outerp X - Y) versions as instances; martingale_vecI vs martingale_matI should be the only difference. The pairs: aglue_inner_increment/_comp, aglue_law_X_increment/aglue_law_comp_increment, aglue_law_X_martingale/aglue_law_comp_martingale, aglue_law_X_integrable/aglue_law_comp_integrable, pfut_rcd_X_increment_zero/pfut_rcd_comp_increment_zero, pfut_rcd_X_integrable/pfut_rcd_comp_integrable, pfut_rcd_X_martingale/pfut_rcd_comp_martingale; also aglue_msec_X/_C and aglue_gint_X/_C.",
+   "files": [
+    "Relative_Arbitrage/Path_Law_Sampling.thy"
+   ],
+   "facts": [
+    "aglue_inner_increment",
+    "aglue_inner_increment_comp",
+    "aglue_law_X_increment",
+    "aglue_law_comp_increment",
+    "aglue_law_X_martingale",
+    "aglue_law_comp_martingale",
+    "aglue_law_X_integrable",
+    "aglue_law_comp_integrable",
+    "pfut_rcd_X_increment_zero",
+    "pfut_rcd_comp_increment_zero",
+    "pfut_rcd_X_integrable",
+    "pfut_rcd_comp_integrable",
+    "pfut_rcd_X_martingale",
+    "pfut_rcd_comp_martingale",
+    "aglue_msec_X",
+    "aglue_msec_C",
+    "aglue_gint_X",
+    "aglue_gint_C"
+   ],
+   "est_lines_saved": 1000,
+   "status_now": "applies",
+   "evidence": "All pairs are still present. X side: 210-566, 576-698, 709-815, 1600-1772, 1930-2025, 2033-2109, 2308-2339, 2484-2525, 2583-2810 (about 1235 lines). Compensated side: 833-1370, 1444-1598, 1782-1919, 2130-2247, 2439-2480, 2527-2579, 2823-2991, 2993-3074, 3081-3335 (about 1550 lines). Reader RA-path2-1 expects about 900 lines saved. Gate risk: the plan's estimate of about 2000 means the pilot must save 1000 or more to pass.",
+   "risk": "high",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "one lemma per clause over a continuous functional F of the stopped pair path (new)",
+   "source": "verified",
+   "group": "G5-toolkit",
+   "other_areas": []
+  },
+  "ra-X-comp-path-law-sampling": {
+   "id": "ra-X-comp-path-law-sampling",
+   "kind": "merge-twins",
+   "summary": "Pilot (plan table 'X vs compensated process in Path_Law_Sampling (7 pairs)'). State each argument once for a real-valued path functional F(w(min u T)) with F continuous, or for a family read out by a bounded linear map, and instantiate it for X and for outerp X - Y. Pairs: aglue_inner_increment(_comp), aglue_law_X/comp_increment, aglue_law_X/comp_martingale, aglue_law_X/comp_integrable, pfut_rcd_X/comp_increment_zero, pfut_rcd_X/comp_integrable, pfut_rcd_X/comp_martingale, plus aglue_msec_X/C and aglue_gint_X/C. RA-path2-7 proposes pfut_rcd/aglue locales to carry the shared hypotheses.",
+   "files": [
+    "Relative_Arbitrage/Path_Law_Sampling.thy"
+   ],
+   "facts": [
+    "aglue_inner_increment",
+    "aglue_inner_increment_comp",
+    "aglue_law_X_increment",
+    "aglue_law_comp_increment",
+    "aglue_law_X_martingale",
+    "aglue_law_comp_martingale",
+    "aglue_law_X_integrable",
+    "aglue_law_comp_integrable",
+    "pfut_rcd_X_increment_zero",
+    "pfut_rcd_comp_increment_zero",
+    "pfut_rcd_X_integrable",
+    "pfut_rcd_comp_integrable",
+    "pfut_rcd_X_martingale",
+    "pfut_rcd_comp_martingale",
+    "aglue_msec_X",
+    "aglue_msec_C",
+    "aglue_gint_X",
+    "aglue_gint_C"
+   ],
+   "est_lines_saved": 1100,
+   "status_now": "applies",
+   "evidence": "Path_Law_Sampling.thy X side :210 (357), :576 (123), :709 (107), :1930 (96), :1600 (173), :2033 (77), :2583 (228) = 1161 lines; comp side :833 (538), :1444 (155), :1782 (138), :2130 (118), :2823 (169), :2993 (82), :3081 (255) = 1455; :2308/:2439, :2484/:2527.",
+   "risk": "high",
+   "gated": true,
+   "source": "review",
+   "group": "G5-toolkit",
+   "other_areas": []
+  }
+ }
+}

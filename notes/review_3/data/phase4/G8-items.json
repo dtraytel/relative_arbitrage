@@ -1,0 +1,257 @@
+{
+ "group": "G8-operator-comparison",
+ "chunks": [
+  [
+   "scale-lemmas-merge",
+   "ra-visc-env2-cong",
+   "ra-rank1proj-annihilates",
+   "ra-max-principle-corollaries",
+   "supconv-uniform-upper-reprove",
+   "ra-continuous-comparison-chain",
+   "ra-ell-op-usc-off-zero",
+   "ra-Mp-eigenbasis",
+   "convex-sets-paper-expandable"
+  ]
+ ],
+ "items": {
+  "scale-lemmas-merge": {
+   "id": "scale-lemmas-merge",
+   "kind": "merge-twins",
+   "summary": "The three-copy families are down to two copies, because the Viscosity_Comparison_Interface copies were deleted in phase 2. (1) Delete Comparison_Strictness.feasible_scaleR_p and use Operator_Envelopes.feasible_scale at its users (CS:479 and the text at :451). (2) Keep one of Operator_Envelopes.ell_op_scale (0 < c) and Comparison_Strictness.ell_op_scaleR_p (theta ~= 0, more general): state the theta ~= 0 version once in Operator_Envelopes, proved by unfolding ell_op_def feasible_scale, and update Operator_Envelopes.thy:1373 and Comparison_Strictness.thy:740. (3) The plan's ell_op_dilation sub-item is obsolete. ell_op_dilation is gone, and the surviving ell_op_scaleR_matrix (CS 455-473) already uses cInf_mult_pos and has no twin. (4) Fix the false text at Comparison_Strictness.thy:447-448: cInf_mult_pos lives in Continuous_Time_Martingales.Integrability_Criteria:24, not in Operator_Envelopes.",
+   "files": [
+    "Relative_Arbitrage/Comparison_Strictness.thy",
+    "Relative_Arbitrage/Operator_Envelopes.thy"
+   ],
+   "facts": [
+    "feasible_scale",
+    "feasible_scaleR_p",
+    "feasible_scale_p",
+    "ell_op_scale",
+    "ell_op_scaleR_p",
+    "ell_op_scale_p",
+    "ell_op_scaleR_matrix",
+    "ell_op_dilation",
+    "cInf_mult_pos"
+   ],
+   "est_lines_saved": 22,
+   "status_now": "partly-applies",
+   "evidence": "grep: feasible_scale_p, ell_op_scale_p and ell_op_dilation have no hits (VCI deleted in phase 2). feasible_scale is at Operator_Envelopes.thy:801-813 (uses VFSC1:289, OE:1021, OE:1197). feasible_scaleR_p is at Comparison_Strictness.thy:432-445 (uses :479 and text :451). ell_op_scale is at OE:1191-1199 (use :1373). ell_op_scaleR_p is at CS:475-479 (use :740). ell_op_scaleR_matrix is at CS:455-473 (use :742). Comparison_Strictness imports Operator_Envelope_Continuity, which imports Operator_Envelopes. The plan's -80 assumed three copies plus the 51-line ell_op_dilation.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "verification_results.md, clone-derivations, claim 4 (seven one-line cross-derivations). Scratch file: verify/clone-derivations/Clone_RA.thy, 'Claim 4' (feasible_A/B/C, ell_op_A..D).",
+   "general_lemma": "feasible_scale",
+   "source": "verified",
+   "group": "G8-operator-comparison",
+   "other_areas": []
+  },
+  "ra-visc-env2-cong": {
+   "id": "ra-visc-env2-cong",
+   "kind": "merge-twins",
+   "summary": "visc_subsol_env2_cong and visc_subsol_env_agrees are an exact duplicate; delete one. The other cong_on/extend variants of RA-comparison-6 were deleted. The generic cong/mono layer over visc_*_gen is phase 7 (G-G).",
+   "files": [
+    "Relative_Arbitrage/Comparison_Strictness.thy",
+    "Relative_Arbitrage/Comparison_Localisation.thy"
+   ],
+   "facts": [
+    "visc_subsol_env2_cong",
+    "visc_subsol_env_agrees",
+    "visc_supersol_env2_cong",
+    "visc_subsol_mono_dom",
+    "visc_supersol_env2_mono",
+    "supersol_jet_cong_on"
+   ],
+   "est_lines_saved": 20,
+   "status_now": "partly-applies",
+   "evidence": "Comparison_Strictness.thy:31 (16), :48 (16), :65 (5); Comparison_Localisation.thy:686 (23), :677 (4); Comparison_Principle.thy:514 (27). grep finds no visc_subsol_cong_on, visc_supersol_cong_on, visc_subsol_extend or supersol_jet_extend.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G8-operator-comparison",
+   "other_areas": []
+  },
+  "ra-rank1proj-annihilates": {
+   "id": "ra-rank1proj-annihilates",
+   "kind": "derive-corollary",
+   "summary": "Derive rank1proj_annihilates from rank1proj_annihilates_perp once both live in one theory. Operator_Formula imports Operator_Continuity, so move the _perp lemma down, or do this together with sms-rotation-householder-twins' move of rank1proj. The ball_v parts of RA-operator-28 are gone.",
+   "files": [
+    "Relative_Arbitrage/Operator_Continuity.thy",
+    "Relative_Arbitrage/Operator_Formula.thy"
+   ],
+   "facts": [
+    "rank1proj_annihilates",
+    "rank1proj_annihilates_perp"
+   ],
+   "est_lines_saved": 10,
+   "status_now": "partly-applies",
+   "evidence": "Operator_Continuity.thy:49 (13); Operator_Formula.thy:44 (13). grep finds no ball_v_pos.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G8-operator-comparison",
+   "other_areas": []
+  },
+  "ra-max-principle-corollaries": {
+   "id": "ra-max-principle-corollaries",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY roots: replace max_principle_le, comparison_from_max_principle and uniqueness_from_max_principle by one uniqueness_from_max_principle (with bd: u y = w y) next to max_principle_boundary. Make viscosity_uniqueness_compact (37 lines; used Value_Function_Uniqueness.thy:45) a short corollary of max_principle_boundary_holds / max_principle_usc_lsc. The ball-uniqueness theorems of RA-operator-24 are gone.",
+   "files": [
+    "Relative_Arbitrage/Operator_Envelope_Continuity.thy",
+    "Relative_Arbitrage/Comparison_Principle.thy",
+    "Relative_Arbitrage/Viscosity_Definitions.thy"
+   ],
+   "facts": [
+    "max_principle_le",
+    "comparison_from_max_principle",
+    "uniqueness_from_max_principle",
+    "viscosity_uniqueness_compact",
+    "max_principle_boundary",
+    "max_principle_boundary_holds",
+    "max_principle_usc_lsc"
+   ],
+   "est_lines_saved": 45,
+   "status_now": "applies",
+   "evidence": "Operator_Envelope_Continuity.thy:575 (21), :603 (15), :625 (22); Comparison_Principle.thy:1732 (37), :1662, :1291; Viscosity_Definitions.thy:149. roots.txt COROLLARY: viscosity_uniqueness_compact, max_principle_le, uniqueness_from_max_principle.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G8-operator-comparison",
+   "other_areas": []
+  },
+  "supconv-uniform-upper-reprove": {
+   "id": "supconv-uniform-upper-reprove",
+   "kind": "fix-then-keep",
+   "summary": "Reprove supconv_uniform_upper with supconv_sandwich folded in. State it as uniform_limit K (lambda eps. supconv u eps) u (at_right 0), for compact K and u continuous and bounded. Use DoV.supconv_le_of_local_bound_usc, DoV.supconv_radius_uniform and HOL compact_uniformly_continuous, with supconv_ge for the lower side (about 30 lines). The continuous copies supconv_le_of_local_bound and supconv_attained_ball_rad then lose their last users and go. Dropping supconv_sandwich needs an edit of roots.txt:279. The move to SOVA and the generalisation to euclidean_space are phase 5 (see move-to-sova).",
+   "files": [
+    "Relative_Arbitrage/Comparison_Localisation.thy"
+   ],
+   "facts": [
+    "supconv_uniform_upper",
+    "supconv_sandwich",
+    "supconv_le_of_local_bound",
+    "supconv_attained_ball_rad",
+    "supconv_le_of_local_bound_usc",
+    "supconv_radius_uniform",
+    "compact_uniformly_continuous"
+   ],
+   "est_lines_saved": 135,
+   "status_now": "applies",
+   "evidence": "CL:897-963 supconv_uniform_upper (67, real^'n; used only at CL:1032/1036 in doubling_localised_maximiser_soft). CL:865-879 supconv_sandwich (15). CL:846-861 supconv_le_of_local_bound (16; used at CL:876). CL:599-668 supconv_attained_ball_rad (70; used at CL:856). The usc tools exist: DoV:3743 and DoV:2205.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "Doubling_Of_Variables.supconv_le_of_local_bound_usc",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G8-operator-comparison",
+   "other_areas": []
+  },
+  "ra-continuous-comparison-chain": {
+   "id": "ra-continuous-comparison-chain",
+   "kind": "merge-twins",
+   "summary": "RA-comparison-11, updated by D3. Theorem 4.2(a) now runs through the usc chain (comparison_soft_off_diagonal_usc, comparison_soft_diagonal, max_principle_usc_lsc), and max_principle_boundary_holds is its corollary. The continuous-data chain is now a superseded twin, kept only as FIX_THEN_KEEP roots: comparison_soft_complete (no uses), comparison_soft_off_diagonal, comparison_from_localised_maximiser_soft, comparison_from_localised_maximiser_gen and doubling_localised_maximiser_soft. Remove these roots in a commit of their own (the roots.txt rule) and delete the chain; independent_interest.md says 'if D3 ... unifies, those helpers become DELETE'. Restate comparison_soft_complete as a corollary of max_principle_usc_lsc only if the name is wanted. Keep theta_gap_preserved (used by the usc chain) and supconv_uniform_upper/supconv_sandwich (KEEP_API, to move to SOVA). Optionally merge comparison_2dom_off_diagonal with comparison_soft_off_diagonal_usc, which is the reader's 'one off-diagonal closing lemma'.",
+   "files": [
+    "Relative_Arbitrage/Comparison_Principle.thy",
+    "Relative_Arbitrage/Comparison_Localisation.thy",
+    "Relative_Arbitrage/Comparison_Two_Domain.thy"
+   ],
+   "facts": [
+    "comparison_soft_complete",
+    "comparison_soft_off_diagonal",
+    "comparison_from_localised_maximiser_soft",
+    "comparison_from_localised_maximiser_gen",
+    "doubling_localised_maximiser_soft",
+    "comparison_soft_off_diagonal_usc",
+    "comparison_soft_diagonal",
+    "max_principle_usc_lsc",
+    "max_principle_boundary_holds",
+    "theta_gap_preserved",
+    "comparison_2dom_off_diagonal",
+    "supconv_uniform_upper",
+    "supconv_sandwich"
+   ],
+   "est_lines_saved": 580,
+   "status_now": "partly-applies",
+   "evidence": "Comparison_Principle.thy:579 _gen (only use :764), :730 _soft (only use :853), :793 soft_off_diagonal (only use :1106), :872 2dom (used Comparison_Two_Domain.thy:505), :989 soft_diagonal (used :1651, Comparison_Two_Domain.thy:532), :1063 comparison_soft_complete (no uses), :1178 _usc, :1291 max_principle_usc_lsc. Comparison_Localisation.thy:979 doubling_localised_maximiser_soft (179; only use CP:1091). The roots.txt:276-280 entries are FIX_THEN_KEEP. CP:579-871 plus 1063-1177 plus CL:979-1157 is about 585 lines.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G8-operator-comparison",
+   "other_areas": []
+  },
+  "ra-ell-op-usc-off-zero": {
+   "id": "ra-ell-op-usc-off-zero",
+   "kind": "merge-twins",
+   "summary": "F^* = F off the origin is proved twice: the rotation route (ell_op_usc_le_at_nonzero, 163 lines, plus ell_op_usc_eq_at_nonzero) and the Lipschitz route (ell_op_ball_bound plus ell_op_usc_off_zero). Keep the Lipschitz route, which also gives the lsc half, and rewrite the one external use (Comparison_Localisation.thy:271) with ell_op_usc_off_zero. ell_op_sym_part (added in phase 1) removes the need for a symmetry hypothesis. feasible_conj stays.",
+   "files": [
+    "Relative_Arbitrage/Operator_Envelopes.thy",
+    "Relative_Arbitrage/Operator_Envelope_Continuity.thy",
+    "Relative_Arbitrage/Comparison_Localisation.thy"
+   ],
+   "facts": [
+    "ell_op_usc_le_at_nonzero",
+    "ell_op_usc_eq_at_nonzero",
+    "ell_op_ball_bound",
+    "ell_op_usc_off_zero",
+    "feasible_conj",
+    "ell_op_sym_part"
+   ],
+   "est_lines_saved": 170,
+   "status_now": "applies",
+   "evidence": "Operator_Envelopes.thy:888 (163; only use :1140), :1133 (11; only use Comparison_Localisation.thy:271); Operator_Envelope_Continuity.thy:241 (92), :403 (61). Comparison_Localisation has Operator_Envelope_Continuity as an ancestor.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "ell_op_usc_off_zero",
+   "source": "review",
+   "group": "G8-operator-comparison",
+   "other_areas": []
+  },
+  "ra-Mp-eigenbasis": {
+   "id": "ra-Mp-eigenbasis",
+   "kind": "library-reproof",
+   "summary": "Prove Mp_eigenbasis_adapted (127 lines) in about 10 lines from Symmetric_Matrix_Spectra's eigenbasis_containing_eigenvector, using Mp_apply_p for the eigenvector condition. Delete Mp_invariant_perp, whose only use is inside it. Derive Mp_quadform_unit_p from Mp_apply_p in 3 lines.",
+   "files": [
+    "Relative_Arbitrage/Operator_Formula.thy"
+   ],
+   "facts": [
+    "Mp_eigenbasis_adapted",
+    "eigenbasis_containing_eigenvector",
+    "Mp_invariant_perp",
+    "Mp_quadform_unit_p",
+    "Mp_apply_p"
+   ],
+   "est_lines_saved": 140,
+   "status_now": "applies",
+   "evidence": "Operator_Formula.thy:147 (127; used :632, :845), :129 (17; only use :166), :793 (29); Operator_Continuity.thy:156 Mp_apply_p; Poincare_Separation.thy:463 (an ancestor of Operator_Formula).",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "eigenbasis_containing_eigenvector",
+   "source": "review",
+   "group": "G8-operator-comparison",
+   "other_areas": []
+  },
+  "convex-sets-paper-expandable": {
+   "id": "convex-sets-paper-expandable",
+   "kind": "fix-then-keep",
+   "summary": "Paper_Readings.convex_sets_are_expandable still concludes only the formal `expandable K`. Prove the paper's Section 4 claim directly: compact K, convex K and interior K nonempty imply paper_expandable K. Take R_i = mat 1 and b_i = (1-i) x0 with x0 in interior K, via HOL mem_interior_convex_shrink (about 30 lines). `expandable K` then follows from paper_expandable_imp_expandable. convex_expandable stays as a KEEP_EVIDENCE root.",
+   "files": [
+    "Statement/Paper_Readings.thy"
+   ],
+   "facts": [
+    "convex_sets_are_expandable",
+    "paper_expandable",
+    "paper_expandable_imp_expandable",
+    "convex_expandable",
+    "mem_interior_convex_shrink"
+   ],
+   "est_lines_saved": -30,
+   "status_now": "applies",
+   "evidence": "PR:424-428 has `shows expandable K` by (rule convex_expandable). paper_expandable is defined at PR:107 and paper_expandable_imp_expandable is at PR:122. convex_expandable is at Test_Functions:1146-1268 (123 lines; root, KEEP_EVIDENCE).",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "paper_expandable_imp_expandable",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G8-operator-comparison",
+   "other_areas": []
+  }
+ }
+}

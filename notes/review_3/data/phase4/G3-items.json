@@ -1,0 +1,1209 @@
+{
+ "group": "G3-ctm-wm",
+ "chunks": [
+  [
+   "cps-tail-functionals",
+   "martingale-expectation-eq-generalise",
+   "essinf-direct-proof",
+   "cps-pexit-family",
+   "doob-weak-inequality-short",
+   "ctm-ess-inf-time",
+   "ra-dpp-essinf-reduction",
+   "ctm-integral-pos",
+   "lib-martingale-add-diff",
+   "ctm-martingale-algebra-library",
+   "ctm-vec-mat-components"
+  ],
+  [
+   "martingale-coarser-filtration-weaken",
+   "ctm-small-library",
+   "martingale-uniform-measure-generalise",
+   "ctm-special-cases",
+   "stopped-expectation-corollary",
+   "optional-sampling-corollary",
+   "ctm-power-inequalities",
+   "ctm-integrability-helpers",
+   "expectation-sq-sampled-short",
+   "ra-scale-lemmas-updated",
+   "bounded-stopping-time-integrable"
+  ],
+  [
+   "wm-fdd-prod-emb",
+   "gauss-measure-convolution",
+   "wm-filtration-boilerplate",
+   "ctm-dynkin-modification",
+   "ctm-stopped-locale-merge",
+   "stopped-sq-int-locale-into-optional-sampling",
+   "ra-X-comp-entry-stopped",
+   "wm-increments-indep-transport",
+   "wm-coord-zero-skeleton",
+   "wm-bcont-modification",
+   "cbmX-square-from-coordinates"
+  ],
+  [
+   "wm-gaussian-moment-lifting",
+   "twin-ctm-grid-sampling-dyadic",
+   "ctm-dyadic-grids-sampling",
+   "twin-wm-martingale-square",
+   "twin-increment-independence",
+   "wm-increment-independence-three",
+   "wm-martingale-square-norm-coord",
+   "twin-optional-sampling-dyadic",
+   "ctm-optional-sampling-twice"
+  ]
+ ],
+ "items": {
+  "cps-tail-functionals": {
+   "id": "cps-tail-functionals",
+   "kind": "merge-twins",
+   "summary": "Two tail functionals for uniform integrability remain: the indicator tail (clamp_integral_error in Increment_Moments) and the excess tail (Vitali_Convergence). Keep one and derive the other in one line (|y| 1{|y|>R} <= 2 max 0 (|y| - R/2)). sq_tail_le_fourth_moment_pointwise and sq_tail_bound_of_fourth_moment were deleted in phase 2.",
+   "files": [
+    "Continuous_Path_Spaces/Increment_Moments.thy",
+    "Continuous_Time_Martingales/Vitali_Convergence.thy"
+   ],
+   "facts": [
+    "clamp_integral_error",
+    "clamp_diff_abs",
+    "tail_le_moment",
+    "unif_integrable_of_moment_bound"
+   ],
+   "est_lines_saved": 20,
+   "status_now": "partly-applies",
+   "evidence": "Increment_Moments.thy:2079 (23); Vitali_Convergence.thy:41, :303 (24), :328 (53; root).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G4-cps"
+   ]
+  },
+  "martingale-expectation-eq-generalise": {
+   "id": "martingale-expectation-eq-generalise",
+   "kind": "fix-then-keep",
+   "summary": "Generalise Increment_Moments.martingale_expectation_eq to banach, second_countable_topology values and an arbitrary t0; the proof is unchanged. Derive Martingale_Algebra.martingale_mean_zero_of_start from it, and replace the inline re-derivations (at least six by the reader's count) with citations. The move to CTM.Martingale_Algebra is phase 5.",
+   "files": [
+    "Continuous_Path_Spaces/Increment_Moments.thy",
+    "Continuous_Time_Martingales/Martingale_Algebra.thy"
+   ],
+   "facts": [
+    "martingale_expectation_eq",
+    "martingale_mean_zero_of_start"
+   ],
+   "est_lines_saved": 15,
+   "status_now": "applies",
+   "evidence": "IM:26-43 (18 lines; used at IM:94). martingale_mean_zero_of_start is at MA:903 (used at Dynamic_Programming_Delayed_Class:702, 763 and 775). Root at roots.txt:581.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G4-cps"
+   ]
+  },
+  "essinf-direct-proof": {
+   "id": "essinf-direct-proof",
+   "kind": "swap-proof",
+   "summary": "Replace the 171-line proof of Path_Exit_Times.ess_inf_pexit_usc (lines 1147-1317) by the PIDE-checked 69-line direct proof with the identical statement. Then delete the Laplace and step-minorant blocks that only it uses: ess_inf_time_le_laplace, ess_inf_time_eq_laplace_inf, definition pstep, pstep_sandwich, pstep_integral, weak_conv_total_mass, pstep_integral_liminf, pstep_integrable and exp_pexit_integral_liminf, with section headers 194 and 457. Also delete their CTM helpers Integrability_Criteria.exp_neg_time_integrable and exp_neg_time_integral_lower with the text before them. Keep weak_conv_open_liminf (663-734, a root), which the new proof uses, and keep weak_conv_closed_limsup and weak_conv_closed_full_mass. Optionally prove ess_inf_pexit_usc_min (0 <= T, closed K, wc only; 65 lines) and keep ess_inf_pexit_usc as its one-line corollary 'using T K wc by (intro ess_inf_pexit_usc_min) auto', so the callers stay unchanged. Rewrite the header text (Path_Exit_Times.thy 12-20), which describes the Laplace route.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Exit_Times.thy",
+    "Continuous_Time_Martingales/Integrability_Criteria.thy"
+   ],
+   "facts": [
+    "ess_inf_pexit_usc",
+    "ess_inf_time_le_laplace",
+    "ess_inf_time_eq_laplace_inf",
+    "pstep",
+    "pstep_sandwich",
+    "pstep_integral",
+    "weak_conv_total_mass",
+    "pstep_integral_liminf",
+    "pstep_integrable",
+    "exp_pexit_integral_liminf",
+    "exp_neg_time_integrable",
+    "exp_neg_time_integral_lower",
+    "weak_conv_open_liminf",
+    "ess_inf_time_less_iff",
+    "pexit_sublevel_open"
+   ],
+   "est_lines_saved": 940,
+   "status_now": "applies",
+   "evidence": "Path_Exit_Times.thy: section 194; ess_inf_time_le_laplace 199-270; ess_inf_time_eq_laplace_inf 276-455; pstep 465 to pstep_integral 591-656; weak_conv_open_liminf 663-734 (its only use now is :901, inside pstep_integral_liminf); weak_conv_total_mass 820-843; pstep_integral_liminf 850-977; pstep_integrable 979-1014; exp_pexit_integral_liminf 1016-1143; ess_inf_pexit_usc 1147-1317. The dead lines are 194-656, 820-844 and 845-1144, about 788 in all. grep -rnw finds every Laplace/pstep name only inside Path_Exit_Times.thy. Integrability_Criteria.thy: exp_neg_time_integrable 320-336 and exp_neg_time_integral_lower 338-364, used only by Path_Exit_Times; text 314-319, plus the orphan market text at 308-312. Callers of ess_inf_pexit_usc: Exit_Class_Optimizer.thy:72, Path_Law_Pasting.thy:504 and :815, Path_Splicing.thy:895. Every lemma the new proof uses still exists (ess_inf_time_less_iff at Essential_Infimum.thy:216, pexit_sublevel_open at :141, pexit_le_T at :35, pexit_nonneg at :38). Estimate: 788 + (171-69) + 52.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, section simplify-essinf. The full text of the minimal-hypothesis proof is quoted under '[confirmed] ess_inf_pexit_usc has a direct proof'. Scratch files: <scratch>/verify/simplify-essinf/Essinf_Direct.thy (ess_inf_pexit_usc_direct, identical statement, ML aconv assert) and Essinf_Direct_Min.thy (ess_inf_pexit_usc_min).",
+   "general_lemma": "ess_inf_pexit_usc_min (optional)",
+   "source": "verified",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G4-cps"
+   ]
+  },
+  "cps-pexit-family": {
+   "id": "cps-pexit-family",
+   "kind": "derive-corollary",
+   "summary": "Reorder Path_Exit_Times so that pexit_le_of_mem and pexit_cong_on come first. Then derive pexit_cong_nonneg and pexit_restrict from pexit_cong_on, derive pexit_mono_T and pexit_stable_above_T from pexit_min_horizon, and use pexit_le_of_mem at its 4 inline re-derivations. Relate pexit_eq_of_stays to Stopped_Localization.etime_eq_T_of_no_hit (FIX_THEN_KEEP). Weaken ess_inf_time_le_const and use it for the two 'ess_inf_time <= T' re-derivations.",
+   "files": [
+    "Continuous_Path_Spaces/Path_Exit_Times.thy",
+    "Continuous_Path_Spaces/Stopped_Localization.thy",
+    "Continuous_Time_Martingales/Essential_Infimum.thy"
+   ],
+   "facts": [
+    "pexit_cong_nonneg",
+    "pexit_restrict",
+    "pexit_cong_on",
+    "pexit_mono_T",
+    "pexit_stable_above_T",
+    "pexit_min_horizon",
+    "pexit_le_of_mem",
+    "pexit_eq_of_stays",
+    "etime_eq_T_of_no_hit",
+    "ess_inf_time_le_const"
+   ],
+   "est_lines_saved": 70,
+   "status_now": "applies",
+   "evidence": "Path_Exit_Times.thy:1389 (8), :1403 (6), :1583 (8), :55 (33), :89 (41), :1628 (32), :1875 (5), :1966 (15); Stopped_Localization.thy:338 (11); Essential_Infimum.thy:144 (12). Reader CPS2-24 has medium confidence.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G4-cps"
+   ]
+  },
+  "doob-weak-inequality-short": {
+   "id": "doob-weak-inequality-short",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: Doob_Inequality). Shorten prob_sq_int_martingale.doob_maximal_inequality' to at most 8 lines: order_trans with doob_maximal_inequality, integral_mono on indicator times |X_n| <= |X_n|, and the level set by measurability. Note for phase 7: the weak inequality needs only an integrable martingale.",
+   "files": [
+    "Continuous_Time_Martingales/Doob_Inequality.thy"
+   ],
+   "facts": [
+    "doob_maximal_inequality'",
+    "doob_maximal_inequality"
+   ],
+   "est_lines_saved": 22,
+   "status_now": "applies",
+   "evidence": "Doob_Inequality:262-292 (30 lines): the setM block plus an integral_mono block with three subgoals.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "prob_sq_int_martingale.doob_maximal_inequality",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ctm-ess-inf-time": {
+   "id": "ctm-ess-inf-time",
+   "kind": "derive-corollary",
+   "summary": "The G4 leftovers: ess_inf_timeI, ess_inf_time_AE (a verbatim copy of ess_inf_AE), ess_inf_time_mono and ess_inf_time_distr become one-liners from the ess_inf versions via ess_inf_ennreal. Derive ess_inf_time_distr_measurable from ess_inf_time_distr. Optionally define ess_inf_time as ess_inf of ennreal \u2218 tau, which also removes the conversion steps in Exit_Class_Infinite. This merges CTM-6, RA-dpp-26 and RA-infinite+Statement-15.",
+   "files": [
+    "Continuous_Time_Martingales/Essential_Infimum.thy",
+    "Relative_Arbitrage/Exit_Class_Infinite.thy"
+   ],
+   "facts": [
+    "ess_inf_timeI",
+    "ess_inf_time_AE",
+    "ess_inf_AE",
+    "ess_inf_time_mono",
+    "ess_inf_time_distr",
+    "ess_inf_time_distr_measurable",
+    "ess_inf_ennreal",
+    "ess_inf_distr"
+   ],
+   "est_lines_saved": 40,
+   "status_now": "applies",
+   "evidence": "Essential_Infimum.thy:87 (4), :92 (15) vs :44 (16), :234 (9), :268 (10), :255 (12), :83, :282.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ra-dpp-essinf-reduction": {
+   "id": "ra-dpp-essinf-reduction",
+   "kind": "derive-corollary",
+   "summary": "The ess-inf to real-constant reduction is proved three times. Add the paper-free lemma ess_inf_time_le_of_real_bounds to Essential_Infimum (prob_space M, 0 <= g <= T, and all c with AE c <= g giving ennreal c <= v, imply ess_inf_time M g <= v). Then exit_val_dpp_sup_ge_time_of_const shrinks to about 10 lines, and so does the key step of exit_val_dpp_le_of_cond (FIX_THEN_KEEP). The third copy, exit_val_dpp_ge, goes with ra-dpp-deterministic-half.",
+   "files": [
+    "Continuous_Time_Martingales/Essential_Infimum.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Assembly.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy"
+   ],
+   "facts": [
+    "exit_val_dpp_sup_ge_time_of_const",
+    "exit_val_dpp_le_of_cond",
+    "exit_val_dpp_ge"
+   ],
+   "est_lines_saved": 90,
+   "status_now": "applies",
+   "evidence": "Dynamic_Programming_Assembly.thy:950 (94); Dynamic_Programming_Pasting.thy:560 (119), :450 (79).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "ctm-integral-pos": {
+   "id": "ctm-integral-pos",
+   "kind": "library-reproof",
+   "summary": "integral_pos_of_AE_pos takes 91 lines. Re-prove it in about 8 lines via integral_nonneg_eq_0_iff_AE and prob_space.AE_False.",
+   "files": [
+    "Continuous_Time_Martingales/Integrability_Criteria.thy"
+   ],
+   "facts": [
+    "integral_pos_of_AE_pos",
+    "integral_nonneg_eq_0_iff_AE"
+   ],
+   "est_lines_saved": 80,
+   "status_now": "applies",
+   "evidence": "Integrability_Criteria.thy:572 (91 lines). integral_nonneg_eq_0_iff_AE is at Bochner_Integration.thy:1875.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "lib-martingale-add-diff": {
+   "id": "lib-martingale-add-diff",
+   "kind": "library-reproof",
+   "summary": "Replace Martingale_Algebra.martingale_add and martingale_diff by the AFP's martingale.add and martingale.diff. Either keep one-line aliases (lemma martingale_add ... by (rule martingale.add[OF mX mY]), same for diff), because there are about 15 call sites, or rewrite the call sites. Correct the header text (Martingale_Algebra.thy:9-16, 'the AFP's Martingales entry does not record: sums, differences') and the remark at :69.",
+   "files": [
+    "Continuous_Time_Martingales/Martingale_Algebra.thy"
+   ],
+   "facts": [
+    "martingale_add",
+    "martingale_diff",
+    "martingale.add",
+    "martingale.diff"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "Martingale_Algebra.thy: martingale_add 20-57; martingale_diff 72-97 (text at 69). Users of martingale_add: MA:66, 99, 114, 833; Path_Law_Pasting:304, DP_Conditioning:230, Pair_Path_Space:1563, Exit_Class_Shift:123, Exit_Class_Pasting:451, 696, 699, 1404, 1808, 2164. Users of martingale_diff: Pathwise_Quadratic_Variation:23 and :99, DP_Conditioning:230, Pair_Path_Space:1563.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "verification_results.md, libdup-check, claim 3 (C3_add, C3_diff). Scratch file: verify/libdup-check/LibDup_B.thy.",
+   "general_lemma": "martingale.add / martingale.diff (AFP Martingales)",
+   "source": "verified",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ctm-martingale-algebra-library": {
+   "id": "ctm-martingale-algebra-library",
+   "kind": "library-reproof",
+   "summary": "Section 3.1 and CTM-7. Replace martingale_add and martingale_diff by AFP martingale.add and martingale.diff, or by one-line wrappers (checked). Replace integral_of_bounded_linear (26 occurrences in 6 files) by HOL's integral_bounded_linear, and the inline copy in set_integral_mat_component likewise. Correct the false texts at Martingale_Algebra.thy:8-15 and :69-70, which say the AFP lacks these.",
+   "files": [
+    "Continuous_Time_Martingales/Martingale_Algebra.thy",
+    "Continuous_Time_Martingales/Integrability_Criteria.thy"
+   ],
+   "facts": [
+    "martingale_add",
+    "martingale_diff",
+    "integral_of_bounded_linear",
+    "integral_bounded_linear",
+    "set_integral_mat_component"
+   ],
+   "est_lines_saved": 65,
+   "status_now": "applies",
+   "evidence": "Martingale_Algebra.thy:20 martingale_add (38; 15 occurrences in 6 files), :72 martingale_diff (26), :305 integral_of_bounded_linear (8), :619. The false header text is at :8-15. integral_bounded_linear is at Bochner_Integration.thy:1052.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, libdup-check claim 3",
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ctm-vec-mat-components": {
+   "id": "ctm-vec-mat-components",
+   "kind": "derive-corollary",
+   "summary": "martingale_vec_component and martingale_mat_component (47 and 44 lines) are martingale_vec_nth and martingale_mat_nth at t0 = 0. set_integral_vec_component and set_integral_mat_component are instances of set_integral_of_bounded_linear. Make them one-line lemmas, or rename the 14 + 6 uses. The euclidean_space merge of the vec/mat pairs is generalisation work (phase 7).",
+   "files": [
+    "Continuous_Time_Martingales/Martingale_Algebra.thy"
+   ],
+   "facts": [
+    "martingale_vec_component",
+    "martingale_vec_nth",
+    "martingale_mat_component",
+    "martingale_mat_nth",
+    "set_integral_vec_component",
+    "set_integral_mat_component",
+    "set_integral_of_bounded_linear"
+   ],
+   "est_lines_saved": 100,
+   "status_now": "applies",
+   "evidence": "Martingale_Algebra.thy:417 (47), :379 (5), :702 (44), :385 (6), :400 (16), :619 (20), :319 (18).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "martingale-coarser-filtration-weaken": {
+   "id": "martingale-coarser-filtration-weaken",
+   "kind": "fix-then-keep",
+   "summary": "Weaken the assumption finite_filtered_measure M G t0 of Martingale_Algebra.martingale_coarser_filtration to sigma_finite_filtered_measure; the proof uses only sigma_finite_subalgebra_F. Declare it a CTM root.",
+   "files": [
+    "Continuous_Time_Martingales/Martingale_Algebra.thy"
+   ],
+   "facts": [
+    "martingale_coarser_filtration"
+   ],
+   "est_lines_saved": 0,
+   "status_now": "applies",
+   "evidence": "MA:268-301; assumption ffm at MA:272. Cited in text at Exit_Class_Infinite:89.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ctm-small-library": {
+   "id": "ctm-small-library",
+   "kind": "library-reproof",
+   "summary": "Redirect the uses of small HOL/HOL-Probability re-proofs and delete them. prob_space_pair_measure becomes prob_space_pair (13 occurrences). bm_prj_measurable becomes borel_measurable_nth. t_mono_le becomes lift_Suc_mono_le[OF t_step]. ennreal_Sup_image is SPMF's ennreal_Sup and ennreal_min_eq is min_ennreal. AE_nonpos_of_set_integral_zero and AE_zero_of_set_integral_zero follow from density_unique_real on restr_to_subalg. AE_mem_of_emeasure_1 is prob_space.AE_prob_1, and sets_F_M is sets_F_subset. This covers the Section 3.1 matcher rows prob_space_pair_measure and bm_prj_measurable.",
+   "files": [
+    "Continuous_Time_Martingales/Martingale_Transfer.thy",
+    "Continuous_Time_Martingales/Integrability_Criteria.thy",
+    "Continuous_Time_Martingales/Time_Discretisation.thy",
+    "Continuous_Time_Martingales/Natural_Filtration.thy",
+    "Continuous_Time_Martingales/Doob_Inequality.thy"
+   ],
+   "facts": [
+    "prob_space_pair_measure",
+    "bm_prj_measurable",
+    "t_mono_le",
+    "ennreal_Sup_image",
+    "ennreal_min_eq",
+    "AE_nonpos_of_set_integral_zero",
+    "AE_zero_of_set_integral_zero",
+    "AE_mem_of_emeasure_1",
+    "sets_F_M"
+   ],
+   "est_lines_saved": 95,
+   "status_now": "applies",
+   "evidence": "Martingale_Transfer.thy:29 (9); Integrability_Criteria.thy:711 (3), :444 (31), :476 (10); Time_Discretisation.thy:38 (18); Natural_Filtration.thy:77 (23), :101 (24), :192 (8); Doob_Inequality.thy:70 (7). borel_measurable_nth is at Borel_Space.thy:1301 and prob_space_pair at Giry_Monad.thy:1677.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "martingale-uniform-measure-generalise": {
+   "id": "martingale-uniform-measure-generalise",
+   "kind": "fix-then-keep",
+   "summary": "Generalise Martingale_Transfer.martingale_uniform_measure, and its uniform-measure Bochner helpers if needed, from real time with t0 = 0 to an arbitrary index type and t0, with A in sets (F t0). The proof already goes through the index-generic martingale_of_set_integral_eq.",
+   "files": [
+    "Continuous_Time_Martingales/Martingale_Transfer.thy"
+   ],
+   "facts": [
+    "martingale_uniform_measure",
+    "uniform_measure_density_real",
+    "integral_uniform_measure_eq",
+    "integrable_uniform_measureI",
+    "set_integral_uniform_measure_eq"
+   ],
+   "est_lines_saved": 0,
+   "status_now": "applies",
+   "evidence": "MT:752-803 is stated for X :: real => ... with mg: martingale M F (0::real) X and A in sets (F 0). The helpers are at MT:671-751. Only text mentions outside the theory (Path_Splicing:396-400).",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "martingale_of_set_integral_eq",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ctm-special-cases": {
+   "id": "ctm-special-cases",
+   "kind": "derive-corollary",
+   "summary": "Derive the special cases from their general forms in 3-6 lines each (reordering where needed). optional_sampling from set_optional_sampling; stopped_expectation (a COROLLARY root) from set_stopped_expectation; simple_optional_sampling from set_simple_optional_sampling; martingale_time_change from martingale_time_change_cong; integral_kernel_measurable from integral_ksemi_measurable. Generalise martingale_cong_AE to arbitrary t0 so martingale_cong_ge follows. Merge the two stopped_integrable domination arguments in Optional_Sampling.",
+   "files": [
+    "Continuous_Time_Martingales/Optional_Sampling.thy",
+    "Continuous_Time_Martingales/Martingale_Algebra.thy",
+    "Continuous_Time_Martingales/Semidirect_Kernels.thy"
+   ],
+   "facts": [
+    "optional_sampling",
+    "set_optional_sampling",
+    "stopped_expectation",
+    "set_stopped_expectation",
+    "simple_optional_sampling",
+    "set_simple_optional_sampling",
+    "martingale_time_change",
+    "martingale_time_change_cong",
+    "martingale_cong_ge",
+    "martingale_cong_AE",
+    "integral_kernel_measurable",
+    "integral_ksemi_measurable",
+    "stopped_integrable"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "applies",
+   "evidence": "Optional_Sampling.thy:799 (38) / :847 (191), :176 (15) / :228 (56), :405 (11) / :431 (19), :165 (10) and :1039 (17); Martingale_Algebra.thy:189 (32) / :225 (39), :125 (24) / :152 (34); Semidirect_Kernels.thy:179 (31) / :147 (16).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "stopped-expectation-corollary": {
+   "id": "stopped-expectation-corollary",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: Optional_Sampling). Restate nat_stopped_martingale.stopped_expectation as a corollary of at most 5 lines of set_stopped_expectation at A = space M, m = 0. Move it after that lemma.",
+   "files": [
+    "Continuous_Time_Martingales/Optional_Sampling.thy"
+   ],
+   "facts": [
+    "stopped_expectation",
+    "set_stopped_expectation"
+   ],
+   "est_lines_saved": 8,
+   "status_now": "applies",
+   "evidence": "OS:176-190 (15 lines). set_stopped_expectation (OS:228-283) does not use it. Root at roots.txt:597.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "nat_stopped_martingale.set_stopped_expectation",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "optional-sampling-corollary": {
+   "id": "optional-sampling-corollary",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: Optional_Sampling). Replace the dominated-convergence proof of stopped_cont_martingale.optional_sampling with about 6 lines: set_optional_sampling at v = 0 and A = space M; meas_v holds since Z (min 0 (tau w)) w = Z 0 w. Move it after set_optional_sampling. If phase 5 lifts set_martingale_sampling_two into CTM as the single general theorem, derive it from that instead.",
+   "files": [
+    "Continuous_Time_Martingales/Optional_Sampling.thy"
+   ],
+   "facts": [
+    "optional_sampling",
+    "set_optional_sampling"
+   ],
+   "est_lines_saved": 32,
+   "status_now": "applies",
+   "evidence": "OS:799-836 (38 lines). set_optional_sampling (OS:847-1037) mentions optional_sampling only through simple_stopped_martingale.set_simple_optional_sampling (OS:892), not this lemma.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "stopped_cont_martingale.set_optional_sampling",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ctm-power-inequalities": {
+   "id": "ctm-power-inequalities",
+   "kind": "derive-corollary",
+   "summary": "Make pow4_diff_le an instance of fourth_power_sum_bound (a root). Drop the _abs_mono variants (sq_abs_mono, fourth_abs_mono) via power_abs/abs_power2. Derive abs_prod_le_sq from abs_prod_le_half_squares, and cite prod_sq_le_half_pow4 at its two inline re-derivations.",
+   "files": [
+    "Continuous_Time_Martingales/Power_Inequalities.thy"
+   ],
+   "facts": [
+    "pow4_diff_le",
+    "fourth_power_sum_bound",
+    "sq_mono_abs",
+    "sq_abs_mono",
+    "fourth_mono_abs",
+    "fourth_abs_mono",
+    "abs_prod_le_sq",
+    "abs_prod_le_half_squares",
+    "prod_sq_le_half_pow4"
+   ],
+   "est_lines_saved": 35,
+   "status_now": "applies",
+   "evidence": "Power_Inequalities.thy:129 (11), :212 (29), :66, :72, :181, :191, :48 (17), :102 (6), :116 (6).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ctm-integrability-helpers": {
+   "id": "ctm-integrability-helpers",
+   "kind": "merge-twins",
+   "summary": "Keep one product-integrability lemma (integrable_prod_of_squares or integrable_mult_of_sq) low in CTM and derive maxabs_prod_integrable from it. Keep one 'square-integrable implies integrable' lemma (integrable_of_sq_integrable) and use it for gsup_le_one_plus_sq/gsup_integrable in Doob. Pick one tail truncation (integrable_tail or tail_integrable). Redirect three library duplicates: bounded_measurable_integrable to finite_measure.integrable_const_bound, integrable_cmult to integrable_mult_right, integral_cmult to integral_mult_right(_zero).",
+   "files": [
+    "Continuous_Time_Martingales/Quadratic_Variation.thy",
+    "Continuous_Time_Martingales/Integrability_Criteria.thy",
+    "Continuous_Time_Martingales/Doob_Inequality.thy",
+    "Continuous_Time_Martingales/Vitali_Convergence.thy"
+   ],
+   "facts": [
+    "integrable_prod_of_squares",
+    "integrable_mult_of_sq",
+    "maxabs_prod_integrable",
+    "integrable_of_sq_integrable",
+    "gsup_le_one_plus_sq",
+    "gsup_integrable",
+    "integrable_tail",
+    "tail_integrable",
+    "bounded_measurable_integrable",
+    "integrable_cmult",
+    "integral_cmult"
+   ],
+   "est_lines_saved": 90,
+   "status_now": "applies",
+   "evidence": "Quadratic_Variation.thy:33 (26); Integrability_Criteria.thy:525 (21), :376 (21), :432 (11), :403 (6), :550 (10), :561 (10); Doob_Inequality.thy:329 (28), :649 (8), :658 (11); Vitali_Convergence.thy:90 (10). grep finds no integrable_clamp.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "expectation-sq-sampled-short": {
+   "id": "expectation-sq-sampled-short",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: Sampled_Quadratic_Variation). Shorten expectation_sq_sampled to at most 8 lines from sq_int_martingale_sampled and sq_int_martingale.expectation_sq_qvar. Rewrite the 'Eq. (2.7)' prose in library terms. Its locale twin Time_Discretisation.grid_expected_qvar is already gone.",
+   "files": [
+    "Continuous_Time_Martingales/Sampled_Quadratic_Variation.thy"
+   ],
+   "facts": [
+    "expectation_sq_sampled",
+    "sq_int_martingale_sampled",
+    "expectation_sq_qvar"
+   ],
+   "est_lines_saved": 9,
+   "status_now": "partly-applies",
+   "evidence": "SQV:81-97 (17 lines). grid_expected_qvar: grep finds 0 hits. Root at roots.txt:598.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "sq_int_martingale.expectation_sq_qvar",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ra-scale-lemmas-updated": {
+   "id": "ra-scale-lemmas-updated",
+   "kind": "merge-twins",
+   "summary": "Section 3.2 scale row, now changed: the Viscosity_Comparison_Interface copies (feasible_scale_p, ell_op_scale_p, ell_op_dilation) were deleted with that theory in phase 2. Two copies of each remain. Keep feasible_scale (generalised to c != 0) and delete feasible_scaleR_p. Keep one of ell_op_scale / ell_op_scaleR_p, and fold in ell_op_scaleR_dir. ell_op_scaleR_matrix is now the only dilation lemma and stays in the operator layer. Prove cInf_mult_pos in 2 lines from continuous_at_Inf_mono and move it out of CTM.Integrability_Criteria, so Operator_Envelopes can drop that import.",
+   "files": [
+    "Relative_Arbitrage/Operator_Envelopes.thy",
+    "Relative_Arbitrage/Comparison_Strictness.thy",
+    "Relative_Arbitrage/Operator_Formula.thy",
+    "Continuous_Time_Martingales/Integrability_Criteria.thy"
+   ],
+   "facts": [
+    "feasible_scale",
+    "feasible_scaleR_p",
+    "ell_op_scale",
+    "ell_op_scaleR_p",
+    "ell_op_scaleR_dir",
+    "ell_op_scaleR_matrix",
+    "cInf_mult_pos",
+    "feasible_scale_p",
+    "ell_op_scale_p",
+    "ell_op_dilation"
+   ],
+   "est_lines_saved": 55,
+   "status_now": "partly-applies",
+   "evidence": "Operator_Envelopes.thy:801 feasible_scale (13; uses Case_1:289, OE:1021,1197), :1191 ell_op_scale (9); Comparison_Strictness.thy:432 (14; use :479), :475 (5; use :740), :455 (19; use :742); Operator_Formula.thy:1082 (17); Integrability_Criteria.thy:24 cInf_mult_pos (33; use CS:472). grep finds no feasible_scale_p, ell_op_scale_p or ell_op_dilation.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, clone-derivations claim 4 (cross-derivations by rule)",
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "bounded-stopping-time-integrable": {
+   "id": "bounded-stopping-time-integrable",
+   "kind": "fix-then-keep",
+   "summary": "Drop the hypotheses mono and sub from Path_Stopping_Times.integrable_at_bounded_stopping_time; both follow from the martingale through filtered_measure (sets_F_mono, subalgebras). Then use it to discharge the stopped_measurable assumption of CTM's stopped_cont_martingale. The move to CTM.Optional_Sampling is phase 5.",
+   "files": [
+    "Relative_Arbitrage/Path_Stopping_Times.thy",
+    "Continuous_Time_Martingales/Optional_Sampling.thy"
+   ],
+   "facts": [
+    "integrable_at_bounded_stopping_time",
+    "stopped_cont_martingale",
+    "set_martingale_sampling"
+   ],
+   "est_lines_saved": 5,
+   "status_now": "applies",
+   "evidence": "PST:1430-1482 (53 lines). It is used at PST:1603, inside integrable_at_path_stopping_time. The stopped_cont_martingale locale is at OS:463. Root at roots.txt:531.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  },
+  "wm-fdd-prod-emb": {
+   "id": "wm-fdd-prod-emb",
+   "kind": "library-reproof",
+   "summary": "Replace the 39-line restr_pre set computation inside bm_fdd_projective (a root) by prod_emb_def, space_bm_fdd, space_PiM and HOL's prod_emb_PiE.",
+   "files": [
+    "Wiener_Measure/Brownian_Finite_Dimensional_Distributions.thy"
+   ],
+   "facts": [
+    "bm_fdd_projective",
+    "prod_emb_PiE"
+   ],
+   "est_lines_saved": 33,
+   "status_now": "applies",
+   "evidence": "Brownian_Finite_Dimensional_Distributions.thy:457 bm_fdd_projective (100 lines). prod_emb_PiE is at Finite_Product_Measure.thy:132.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "gauss-measure-convolution": {
+   "id": "gauss-measure-convolution",
+   "kind": "swap-proof",
+   "summary": "Restate Gaussian_Increments.gauss_measure_conv as gauss_measure a * gauss_measure b = gauss_measure (a + b), with * HOL-Probability's convolution, for variances a, b >= 0. Prove it in about 10 lines by measure_eqI, convolution_emeasure / nn_integral_convolution and the live gauss_measure_conv_nn.",
+   "files": [
+    "Wiener_Measure/Gaussian_Increments.thy"
+   ],
+   "facts": [
+    "gauss_measure_conv",
+    "gauss_measure_conv_nn",
+    "convolution_def"
+   ],
+   "est_lines_saved": 33,
+   "status_now": "applies",
+   "evidence": "GI:267-309 (43 lines; no user, root at roots.txt:563). gauss_measure_conv_nn is at GI:158-263.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Gaussian_Increments.gauss_measure_conv_nn",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "wm-filtration-boilerplate": {
+   "id": "wm-filtration-boilerplate",
+   "kind": "library-reproof",
+   "summary": "Replace the three hand-built sigma_finite_filtered_measure blocks with AFP finite_filtered_measure_natural_filtration. Replace the two case_bool indep_sets_sigma blocks with indep_set_sigma_sets.",
+   "files": [
+    "Wiener_Measure/Vector_Brownian_Martingales.thy",
+    "Wiener_Measure/Product_Brownian_Motion.thy",
+    "Continuous_Time_Martingales/Integrability_Criteria.thy"
+   ],
+   "facts": [
+    "bmX_increment_set_integral_zero",
+    "bmX_has_cond_exp",
+    "martingale_bmX"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "applies",
+   "evidence": "Vector_Brownian_Martingales.thy:310-312, :818-822, :942-944 (sigma_finite_filtered_measure.intro blocks); Product_Brownian_Motion.thy:779-783; Integrability_Criteria.thy:232-236. Reader SemiC+Wiener-16 has medium confidence.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ctm-dynkin-modification": {
+   "id": "ctm-dynkin-modification",
+   "kind": "merge-twins",
+   "summary": "Import Natural_Filtration into Modification_Transfer and reduce set_integral_zero_transfer to set_integral_zero_of_generator's basic case. Replace the inline re-proofs of sets_natural_filtration_subset (5 places) and the sff blocks by AFP finite_filtered_measure_natural_filtration. Generalise martingale_of_modification_gen's codomain so that martingale_of_modification_vec (both are roots) is an instance.",
+   "files": [
+    "Continuous_Time_Martingales/Modification_Transfer.thy",
+    "Continuous_Time_Martingales/Natural_Filtration.thy"
+   ],
+   "facts": [
+    "set_integral_zero_transfer",
+    "set_integral_zero_of_generator",
+    "sets_natural_filtration_subset",
+    "martingale_of_modification_vec",
+    "martingale_of_modification_gen"
+   ],
+   "est_lines_saved": 200,
+   "status_now": "applies",
+   "evidence": "Modification_Transfer.thy:159 set_integral_zero_transfer (207), :380 _vec (137), :527 _gen (113), :671 sets_natural_filtration_subset (10); Natural_Filtration.thy:133 (52). Modification_Transfer imports only Martingales.Martingale.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ctm-stopped-locale-merge": {
+   "id": "ctm-stopped-locale-merge",
+   "kind": "fix-then-keep",
+   "summary": "Discrete optional stopping exists twice. Quadratic_Variation's locale stopped_sq_int_martingale has its own Tgt machinery, stopped_measurable_F, stopped_integrable, martingale_stopped and sq_int_martingale_stopped, and Optional_Sampling.nat_stopped_martingale has Tgt, Tgt_sets_F/M and stopped_integrable. Section 3.1 called the first copy dead; it is now kept as FIX_THEN_KEEP roots. Move martingale_stopped and the L2 results into nat_stopped_martingale and a combined L2 locale, and delete the duplicate Tgt machinery and the twin stopped_integrable. A martingale form via Fair_Games_Theorem's stopped_process_submartingale is 16 lines (checked from copied sources), but that session is not a dependency.",
+   "files": [
+    "Continuous_Time_Martingales/Quadratic_Variation.thy",
+    "Continuous_Time_Martingales/Optional_Sampling.thy"
+   ],
+   "facts": [
+    "stopped_sq_int_martingale",
+    "martingale_stopped",
+    "sq_int_martingale_stopped",
+    "stopped_expectation_sq_qvar",
+    "stopped_measurable_F",
+    "stopped_incr_ind",
+    "ind_Tgt_measurable_F",
+    "stopped_sq_integrable",
+    "stopped_integrable",
+    "nat_stopped_martingale",
+    "Tgt_sets_F",
+    "Tgt_sets_M"
+   ],
+   "est_lines_saved": 85,
+   "status_now": "applies",
+   "evidence": "Quadratic_Variation.thy:361 locale, :370-385 Tgt facts, :419 (34), :461 stopped_integrable (20), :482, :504, :517 martingale_stopped (42), :560, :574; Optional_Sampling.thy:39 nat_stopped_martingale, :51, :59, :165 stopped_integrable. roots.txt:339-349 FIX_THEN_KEEP; independent_interest.md:310,316.",
+   "risk": "medium",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, libdup-check claim 8 (Fair_Games route, from copied sources)",
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "stopped-sq-int-locale-into-optional-sampling": {
+   "id": "stopped-sq-int-locale-into-optional-sampling",
+   "kind": "merge-twins",
+   "summary": "FIX_THEN_KEEP rows for Quadratic_Variation 389-595. Restate the locale stopped_sq_int_martingale in Optional_Sampling as sq_int_martingale + nat_stopped_martingale, on top of the latter's Tgt and stopped_eq_sum. Drop the duplicated Tgt, Tgt_sets_F and Tgt_sets_M, and drop stopped_incr_ind and ind_Tgt_measurable_F. Re-prove stopped_measurable_F in about 10 lines from stopped_eq_sum. Reuse OS's stopped_integrable. Keep sq_int_martingale_stopped and make stopped_expectation_sq_qvar a root; drop the Volatile_Market prose. stopped_def, stopped_0, stopped_incr and qvar_stopped stay in Quadratic_Variation unchanged.",
+   "files": [
+    "Continuous_Time_Martingales/Quadratic_Variation.thy",
+    "Continuous_Time_Martingales/Optional_Sampling.thy"
+   ],
+   "facts": [
+    "stopped_sq_int_martingale.Tgt_def",
+    "ind_Tgt_measurable_F",
+    "stopped_incr_ind",
+    "stopped_measurable_F",
+    "stopped_measurable",
+    "stopped_integrable",
+    "stopped_sq_integrable",
+    "martingale_stopped",
+    "sq_int_martingale_stopped",
+    "stopped_expectation_sq_qvar",
+    "nat_stopped_martingale.stopped_eq_sum",
+    "stopped_def",
+    "qvar_stopped"
+   ],
+   "est_lines_saved": 80,
+   "status_now": "applies",
+   "evidence": "QV:361-590 (the locale; only its own lemmas and roots use it). Tgt is repeated at QV:367-383 and OS:48-65. ind_Tgt_measurable_F is at QV:385-392 and stopped_incr_ind at 394-415. stopped_measurable_F is at 419-452 (34). stopped_integrable at QV:461-480 vs OS:165-174. OS sees QV through Time_Discretisation. Roots: 339-349.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "nat_stopped_martingale.stopped_eq_sum",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ra-X-comp-entry-stopped": {
+   "id": "ra-X-comp-entry-stopped",
+   "kind": "merge-twins",
+   "summary": "exit_class_X_entry_stopped and exit_class_comp_entry_stopped have identical proofs. State one optional-sampling lemma for a continuous F :: pair => real with horizon_sq_int_martingale (\u03bbu p. F (p (min u T))), and add martingale_mean_const beside martingale_mean_zero_of_start.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Subsolution.thy",
+    "Continuous_Time_Martingales/Martingale_Algebra.thy"
+   ],
+   "facts": [
+    "exit_class_X_entry_stopped",
+    "exit_class_comp_entry_stopped",
+    "martingale_mean_zero_of_start",
+    "horizon_sq_int_martingale"
+   ],
+   "est_lines_saved": 90,
+   "status_now": "applies",
+   "evidence": "Value_Function_Subsolution.thy:604 (88), :693 (106); Martingale_Algebra.thy:903; Doob_Inequality.thy:574 horizon_sq_int_martingale.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "wm-increments-indep-transport": {
+   "id": "wm-increments-indep-transport",
+   "kind": "merge-twins",
+   "summary": "Increment independence of the Wiener measure is transported through csum twice: bm_increments_indep (a FIX_THEN_KEEP root, unused) and wiener_pre_past_increment_indep. Factor out the distr-equals-inc_prod lemma and derive both. The FIX_THEN_KEEP restatement as AFP indep_increments belongs to independent_interest.md.",
+   "files": [
+    "Wiener_Measure/Brownian_Motion.thy",
+    "Wiener_Measure/Product_Brownian_Motion.thy"
+   ],
+   "facts": [
+    "bm_increments_indep",
+    "wiener_pre_past_increment_indep",
+    "inc_prod"
+   ],
+   "est_lines_saved": 130,
+   "status_now": "applies",
+   "evidence": "Brownian_Motion.thy:257 bm_increments_indep (183, no uses); Product_Brownian_Motion.thy:40 wiener_pre_past_increment_indep (156; use :574).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "wm-coord-zero-skeleton": {
+   "id": "wm-coord-zero-skeleton",
+   "kind": "merge-twins",
+   "summary": "Prove one lemma, distr wiener_pre borel (\u03bb\u03c9. \u03c9 u) = gauss_measure u, by wiener_pre_increment's skeleton. Derive wiener_pre_coord_zero and wiener_pre_coord from it, and delete the vacuous step.",
+   "files": [
+    "Wiener_Measure/Brownian_Motion.thy",
+    "Wiener_Measure/Product_Brownian_Motion.thy"
+   ],
+   "facts": [
+    "wiener_pre_coord_zero",
+    "wiener_pre_increment",
+    "wiener_pre_coord"
+   ],
+   "est_lines_saved": 40,
+   "status_now": "applies",
+   "evidence": "Brownian_Motion.thy:147 wiener_pre_coord_zero (48; use :207), :75 wiener_pre_increment (71); Product_Brownian_Motion.thy:345 (17).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "wm-bcont-modification": {
+   "id": "wm-bcont-modification",
+   "kind": "derive-corollary",
+   "summary": "Let Brownian_motion_exists (or a lemma about any modification of bm_coord) export measurability and AE coordinate equality. Then Bcont_source, Bcont_target, Bcont_meas and Bcont_coord become instances, instead of re-deriving source_B, target_B, B_meas and ae_coord.",
+   "files": [
+    "Wiener_Measure/Continuous_Brownian_Motion.thy",
+    "Wiener_Measure/Brownian_Motion_Continuity.thy"
+   ],
+   "facts": [
+    "Bcont_source",
+    "Bcont_target",
+    "Bcont_meas",
+    "Bcont_coord",
+    "Brownian_motion_exists"
+   ],
+   "est_lines_saved": 30,
+   "status_now": "applies",
+   "evidence": "Continuous_Brownian_Motion.thy:44,48,51,60 (3+2+8+12 lines; used :56,57,87,110).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "cbmX-square-from-coordinates": {
+   "id": "cbmX-square-from-coordinates",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: Continuous_Brownian_Motion). Derive martingale_cbmX_square in about 8 lines from martingale_cbm_coord_square, via martingale_vecI and martingale_bounded_linear_image with the coordinate sum. State the compensator as real CARD('n) * t instead of the set integral of trace (mat 1). Move it after the coordinate lemma. The 275-line bmX norm route below it was already deleted in phase 2.",
+   "files": [
+    "Wiener_Measure/Continuous_Brownian_Motion.thy"
+   ],
+   "facts": [
+    "martingale_cbmX_square",
+    "martingale_cbm_coord_square",
+    "martingale_vecI",
+    "martingale_bounded_linear_image"
+   ],
+   "est_lines_saved": 45,
+   "status_now": "partly-applies",
+   "evidence": "CBM:149-201 (53). CBM:221-276 martingale_cbm_coord_square does not use it. martingale_vecI is at MA:500 and martingale_bounded_linear_image at MA:338. The file now ends at 276, so the norm route is gone. The filtration (natural filtration of cbmX) still has to be matched.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "Continuous_Brownian_Motion.martingale_cbm_coord_square",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "wm-gaussian-moment-lifting": {
+   "id": "wm-gaussian-moment-lifting",
+   "kind": "derive-corollary",
+   "summary": "State the Gaussian moments once in Gaussian_Increments: gauss_measure_moment_even with integrable and integral conclusions, plus the odd moments. Add one bm_coordinate_integral lemma, built on bm_coordinate_distr. Then bm_coordinate_sq, bm_coordinate_mean, bm_coordinate_pow4 and bm_R2_moment become 2-line corollaries, and the last two (FIX_THEN_KEEP roots) move from Value_Function_Euler_Construction to Product_Brownian_Motion. All of these are roots without code uses.",
+   "files": [
+    "Wiener_Measure/Gaussian_Increments.thy",
+    "Wiener_Measure/Product_Brownian_Motion.thy",
+    "Wiener_Measure/Vector_Brownian_Martingales.thy",
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy"
+   ],
+   "facts": [
+    "gauss_measure_mean",
+    "gauss_measure_snd_moment",
+    "gauss_shifted_square",
+    "bm_coordinate_sq",
+    "bm_coordinate_mean",
+    "bm_coordinate_pow4",
+    "bm_R2_moment",
+    "gauss_measure_fourth_moment",
+    "gauss_measure_moment_even",
+    "bm_coordinate_distr"
+   ],
+   "est_lines_saved": 150,
+   "status_now": "applies",
+   "evidence": "Product_Brownian_Motion.thy:234 (38), :273 (31), :305 (37), :384 (30), :363 bm_coordinate_distr; Vector_Brownian_Martingales.thy:12 (29); Value_Function_Euler_Construction.thy:926 (43), :970 (89); Gaussian_Increments.thy:74, :99. grep shows no code uses of these roots.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "twin-ctm-grid-sampling-dyadic": {
+   "id": "twin-ctm-grid-sampling-dyadic",
+   "kind": "merge-twins",
+   "summary": "Pilot. (1) Keep one 'a monotone sampling of a martingale is a discrete martingale' proof, Sampled_Martingale.martingale_sampled. Re-prove the time_grid sublocales (Time_Discretisation.sampled_martingale and Optional_Sampling.sampled_cont_martingale) and Sampled_Quadratic_Variation.sq_int_martingale_sampled from it in about 3 lines each; Time_Discretisation then imports Sampled_Martingale. (2) Inside stopped_cont_martingale, derive dtime_ge, dtime_le and dtime_tendsto from dceil_ge, dceil_le and dceil_tendsto via dtime_eq_dceil (unused today), and Least_dgrid_le_iff from Least_dgrid_le_iff2. (3) Optionally build one Dyadic_Grids theory (Doob_Inequality.dy = dgrid, the Stopped_Adaptedness inline dg/idx, dyceil from Path_Stopping_Times); this overlaps phase 5.5. grid_expected_qvar, grid_qvar_compensates and qvar_sampled_fun are already gone.",
+   "files": [
+    "Continuous_Time_Martingales/Time_Discretisation.thy",
+    "Continuous_Time_Martingales/Optional_Sampling.thy",
+    "Continuous_Time_Martingales/Sampled_Martingale.thy",
+    "Continuous_Time_Martingales/Sampled_Quadratic_Variation.thy",
+    "Continuous_Time_Martingales/Doob_Inequality.thy",
+    "Continuous_Time_Martingales/Stopped_Adaptedness.thy"
+   ],
+   "facts": [
+    "martingale_sampled",
+    "sampled_martingale",
+    "sampled_cont_martingale",
+    "sq_int_martingale_sampled",
+    "dtime_ge",
+    "dtime_le",
+    "dtime_tendsto",
+    "dceil_ge",
+    "dceil_le",
+    "dceil_tendsto",
+    "dtime_eq_dceil",
+    "Least_dgrid_le_iff",
+    "Least_dgrid_le_iff2",
+    "dy",
+    "dgrid",
+    "dyceil"
+   ],
+   "est_lines_saved": 200,
+   "status_now": "partly-applies",
+   "evidence": "Time_Discretisation.thy: sublocale proof 69-99, dyceil helpers 124-140. Optional_Sampling.thy: sampled_cont_martingale sublocale 300-325; Least_dgrid_le_iff 524-535; dtime_ge 549-564, dtime_le 566-604, dtime_tendsto 606-622; dtime_eq_dceil 639 (no use); Least_dgrid_le_iff2 642-654; dceil_ge 667-680, dceil_le 682-718, dceil_tendsto 720-736. Sampled_Martingale.thy:32-64 martingale_sampled. Sampled_Quadratic_Variation.thy:26-39. Doob_Inequality.thy:588-605 dy. Stopped_Adaptedness.thy:41-43 inline dg/idx. grep: grid_expected_qvar, grid_qvar_compensates, qvar_sampled_fun and dceil_grid have no hits. Steps (1)+(2) save about 125; the plan's 440 needs step (3), so the gate (220 or more) is marginal.",
+   "risk": "medium",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "martingale_sampled; dceil_*",
+   "source": "verified",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "ctm-dyadic-grids-sampling": {
+   "id": "ctm-dyadic-grids-sampling",
+   "kind": "merge-twins",
+   "summary": "Pilot (plan table 'CTM grid sampling (four proofs), five dyadic-grid constructions'). Prove the time_grid sublocales (Time_Discretisation.sampled_martingale, Optional_Sampling.sampled_cont_martingale, Sampled_Quadratic_Variation.sq_int_martingale_sampled) by martingale_sampled in 3 lines each. Create Dyadic_Grids with one grid and dceil/dfloor plus their ge/le/tendsto lemmas. Derive the dtime_* lemmas from dceil_*. Use dceil in Doob_Inequality (dy, dy_floor) and Stopped_Adaptedness (inline dg/idx), and make Path_Stopping_Times.dyceil and the inline gn in path_eval_at_measurable_time use it. The grid_* trio and qvar_sampled_fun were already deleted. This merges CTM-1, CTM-3 and RA-path2-12.",
+   "files": [
+    "Continuous_Time_Martingales/Time_Discretisation.thy",
+    "Continuous_Time_Martingales/Optional_Sampling.thy",
+    "Continuous_Time_Martingales/Sampled_Martingale.thy",
+    "Continuous_Time_Martingales/Sampled_Quadratic_Variation.thy",
+    "Continuous_Time_Martingales/Doob_Inequality.thy",
+    "Continuous_Time_Martingales/Stopped_Adaptedness.thy",
+    "Relative_Arbitrage/Path_Stopping_Times.thy",
+    "Relative_Arbitrage/Pair_Path_Laws.thy"
+   ],
+   "facts": [
+    "sampled_martingale",
+    "sampled_cont_martingale",
+    "martingale_sampled",
+    "sq_int_martingale_sampled",
+    "expectation_sq_sampled",
+    "dtime_le",
+    "dtime_ge",
+    "dtime_tendsto",
+    "dtime_eq_dceil",
+    "dceil_le",
+    "dceil_ge",
+    "dceil_tendsto",
+    "dy_floor",
+    "dy_floor_tendsto",
+    "stopped_adapted_of_cont",
+    "dyceil",
+    "dyceil_tendsto",
+    "path_eval_at_measurable_time"
+   ],
+   "est_lines_saved": 250,
+   "status_now": "partly-applies",
+   "evidence": "Time_Discretisation.thy:69 (31), :126, :130; Optional_Sampling.thy:300 (26), :537-622 dtime_* (about 81 lines), :639, :642-736 dceil_*; Sampled_Martingale.thy:32 (33); Sampled_Quadratic_Variation.thy:26 (14), :81 (17, COROLLARY root); Doob_Inequality.thy:591-605, :797 (56), :854 (18); Stopped_Adaptedness.thy:25 (247); Path_Stopping_Times.thy:15-145; Pair_Path_Laws.thy:1080 (75). grep finds no grid_expected_qvar, grid_qvar_compensates, qvar_sampled_fun or dceil_grid.",
+   "risk": "medium",
+   "gated": true,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  },
+  "twin-wm-martingale-square": {
+   "id": "twin-wm-martingale-square",
+   "kind": "merge-twins",
+   "summary": "Pilot. Derive the norm version of the Brownian compensated square from the coordinate version. Prove Vector_Brownian_Martingales.martingale_bm_square (a root) by summing martingale_bm_coord_square over i (martingale_vecI + martingale_bounded_linear_image with \u03bbv. \u03a3i. v$i, plus trace (mat 1) = CARD('n)), and delete its helpers bm_indicator_sq_sum, bm_indicator_sq_integrable and bm_set_integral_sq_eq. Prove Continuous_Brownian_Motion.martingale_cbmX_square (a root, COROLLARY) the same way from martingale_cbm_coord_square in about 8 lines. Optionally add one bmX-to-cbmX transfer lemma, so that the _square, _coord_square and ECW _cross transfers become one-liners.",
+   "files": [
+    "Wiener_Measure/Vector_Brownian_Martingales.thy",
+    "Wiener_Measure/Continuous_Brownian_Motion.thy"
+   ],
+   "facts": [
+    "martingale_bm_square",
+    "martingale_bm_coord_square",
+    "martingale_cbmX_square",
+    "martingale_cbm_coord_square",
+    "bm_indicator_sq_sum",
+    "bm_indicator_sq_integrable",
+    "bm_set_integral_sq_eq",
+    "martingale_vecI",
+    "martingale_bounded_linear_image"
+   ],
+   "est_lines_saved": 195,
+   "status_now": "applies",
+   "evidence": "Vector_Brownian_Martingales.thy: bm_indicator_sq_sum 734, bm_indicator_sq_integrable 742, bm_set_integral_sq_eq 752-791 (used only by martingale_bm_square at :875/:906); martingale_bm_square 795-911; martingale_bm_coord_square 918-1027. Continuous_Brownian_Motion.thy: martingale_cbmX_square 149-201 (no user; root); martingale_cbm_coord_square 221-276. Martingale_Algebra (martingale_vecI :500, martingale_bounded_linear_image :338) is an ancestor of VBM, via Product_Brownian_Motion -> Integrability_Criteria.",
+   "risk": "medium",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "martingale_bm_coord_square / martingale_cbm_coord_square",
+   "source": "verified",
+   "group": "G3-ctm-wm",
+   "other_areas": []
+  },
+  "twin-increment-independence": {
+   "id": "twin-increment-independence",
+   "kind": "merge-twins",
+   "summary": "Pilot. Keep one 'past-measurable g is independent of a Borel function of the increment' proof. In phase 4, inside Vector_Brownian_Martingales, derive bm_indicator_increment_indep_var from bm_meas_increment_indep_var[OF s st borel_measurable_indicator[OF A]] at its one use (VBM:233), placing the meas version first. Then move the general Exit_Class_Witness.bm_meas_increment_fun_indep_var (any Borel h of the vector increment) into VBM and derive bm_meas_increment_indep_var with h = \u03bbv. v$i. That move crosses a session boundary and is also listed as phase 5.3.",
+   "files": [
+    "Wiener_Measure/Vector_Brownian_Martingales.thy",
+    "Relative_Arbitrage/Exit_Class_Witness.thy"
+   ],
+   "facts": [
+    "bm_indicator_increment_indep_var",
+    "bm_meas_increment_indep_var",
+    "bm_meas_increment_fun_indep_var",
+    "bmX_increment_set_integral_zero"
+   ],
+   "est_lines_saved": 180,
+   "status_now": "applies",
+   "evidence": "Vector_Brownian_Martingales.thy: bm_indicator_increment_indep_var 80-182 (only use :233, in bmX_increment_set_integral_zero from 184); bm_meas_increment_indep_var 338-434 (uses :460, :473, :683, ECW:101 text). Exit_Class_Witness.thy:105-187 bm_meas_increment_fun_indep_var (use :222). About 95 lines are saved inside VBM without any move; the rest needs the ECW-to-WM move.",
+   "risk": "medium",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "bm_meas_increment_fun_indep_var (moved to WM)",
+   "source": "verified",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "wm-increment-independence-three": {
+   "id": "wm-increment-independence-three",
+   "kind": "merge-twins",
+   "summary": "Pilot: 'past-measurable g is independent of a function of the increment' is proved three times. Keep one lemma in Vector_Brownian_Martingales with Exit_Class_Witness's statement (h Borel on real^'n), and derive the coordinate case and the indicator case (VBM:233) from it.",
+   "files": [
+    "Wiener_Measure/Vector_Brownian_Martingales.thy",
+    "Relative_Arbitrage/Exit_Class_Witness.thy"
+   ],
+   "facts": [
+    "bm_indicator_increment_indep_var",
+    "bm_meas_increment_indep_var",
+    "bm_meas_increment_fun_indep_var"
+   ],
+   "est_lines_saved": 170,
+   "status_now": "applies",
+   "evidence": "Vector_Brownian_Martingales.thy:80 (103; one use :233), :338 (97; uses ECW:101, VBM:460,473,683); Exit_Class_Witness.thy:105 (83; use :222).",
+   "risk": "medium",
+   "gated": true,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "wm-martingale-square-norm-coord": {
+   "id": "wm-martingale-square-norm-coord",
+   "kind": "merge-twins",
+   "summary": "Pilot: the norm and coordinate martingale-square proofs are parallel 110-line proofs, and so are their continuous transfers. Prove the coordinate and cross martingales once, as a matrix martingale bmX bmX^T - tI via martingale_matI. Get the norm form through martingale_bounded_linear_image with trace. Add one transfer lemma bmX -> cbmX so that the continuous versions are one-liners.",
+   "files": [
+    "Wiener_Measure/Vector_Brownian_Martingales.thy",
+    "Wiener_Measure/Continuous_Brownian_Motion.thy",
+    "Relative_Arbitrage/Exit_Class_Witness.thy"
+   ],
+   "facts": [
+    "martingale_bm_square",
+    "martingale_bm_coord_square",
+    "bm_set_integral_sq_eq",
+    "martingale_cbmX_square",
+    "martingale_cbm_coord_square",
+    "martingale_bm_cross",
+    "martingale_cbm_cross",
+    "martingale_cbm_outerp"
+   ],
+   "est_lines_saved": 250,
+   "status_now": "applies",
+   "evidence": "Vector_Brownian_Martingales.thy:795 (117), :918 (110), :752 (40); Continuous_Brownian_Motion.thy:149 (53; root, unused), :221 (56; root); Exit_Class_Witness.thy:378 (58), :440 (43), :489 (43).",
+   "risk": "medium",
+   "gated": true,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G6-class-dpp"
+   ]
+  },
+  "twin-optional-sampling-dyadic": {
+   "id": "twin-optional-sampling-dyadic",
+   "kind": "merge-twins",
+   "summary": "Pilot, blocked on a cross-session move. One dyadic-approximation optional-sampling argument should remain. The general one is Path_Stopping_Times.set_martingale_sampling / set_martingale_sampling_two (arbitrary sigma <= rho, A in pre_sigma_of). CTM's stopped_cont_martingale.set_optional_sampling and optional_sampling (both roots) are its special case with deterministic sigma = v. Deriving the CTM theorems needs the PST block (pre_sigma_of, set_martingale_sampling_simple, borel_measurable_at_simple_time, set_martingale_sampling(_two), integrable_at_bounded_stopping_time) moved down into CTM first. That move is phase 5.5 and needs a dry run (rule 4). So either do the move inside this pilot or defer to phase 5.",
+   "files": [
+    "Continuous_Time_Martingales/Optional_Sampling.thy",
+    "Relative_Arbitrage/Path_Stopping_Times.thy"
+   ],
+   "facts": [
+    "set_optional_sampling",
+    "optional_sampling",
+    "stopped_cont_martingale",
+    "set_martingale_sampling",
+    "set_martingale_sampling_two",
+    "set_martingale_sampling_simple",
+    "pre_sigma_of",
+    "integrable_at_bounded_stopping_time",
+    "dyceil"
+   ],
+   "est_lines_saved": 480,
+   "status_now": "partly-applies",
+   "evidence": "Optional_Sampling.thy: locale stopped_cont_martingale 463-1057 (dgrid/dtime/dceil 477-736, optional_sampling 799-836, set_optional_sampling 847-1037); optional_stopping 1070-1146 uses set_optional_sampling (1136/1140); Expected_Exit_Times.thy:68-80 (D2 root) uses the locale and optional_sampling. Path_Stopping_Times.thy: set_martingale_sampling_simple 1150-1224, set_martingale_sampling 1282-1386, set_martingale_sampling_two 1396-1427, integrable_at_bounded_stopping_time 1430-1482. Direction: CTM is upstream of RA, so nothing can be saved without the move.",
+   "risk": "high",
+   "gated": true,
+   "checked_derivation": "Partial only: the pre_sigma_of = filtration.pre_sigma bridge (verification_results.md, libdup-check, claim 5; verify/libdup-check/LibDup_D.thy) is relevant to the move.",
+   "general_lemma": "set_martingale_sampling_two (after moving to CTM)",
+   "source": "verified",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  },
+  "ctm-optional-sampling-twice": {
+   "id": "ctm-optional-sampling-twice",
+   "kind": "merge-twins",
+   "summary": "Pilot (plan table 'optional sampling by dyadic approximation, twice'). Keep one dyadic-approximation argument: derive OS.set_optional_sampling and optional_sampling from Path_Stopping_Times.set_martingale_sampling_two, or the reverse, and place the path-free block in CTM. pre_sigma_of, set_martingale_sampling*, borel_measurable_at_simple_time and integrable_at_bounded_stopping_time (FIX_THEN_KEEP) are already path-free, which suits the phase-5 move.",
+   "files": [
+    "Continuous_Time_Martingales/Optional_Sampling.thy",
+    "Relative_Arbitrage/Path_Stopping_Times.thy"
+   ],
+   "facts": [
+    "set_optional_sampling",
+    "optional_sampling",
+    "simple_stopped_martingale",
+    "stopped_cont_martingale",
+    "set_martingale_sampling_simple",
+    "set_martingale_sampling",
+    "set_martingale_sampling_two",
+    "borel_measurable_at_simple_time",
+    "integrable_at_bounded_stopping_time",
+    "stopped_increment_of_horizon_gen"
+   ],
+   "est_lines_saved": 300,
+   "status_now": "applies",
+   "evidence": "Optional_Sampling.thy:847 (191), :799 (38), :332, :463; Path_Stopping_Times.thy:1150 (75), :1233 (42), :1282 (105), :1396 (32), :1430 (53), :1484 (71). Path_Stopping_Times has Optional_Sampling as an ancestor.",
+   "risk": "high",
+   "gated": true,
+   "source": "review",
+   "group": "G3-ctm-wm",
+   "other_areas": [
+    "G5-toolkit"
+   ]
+  }
+ }
+}

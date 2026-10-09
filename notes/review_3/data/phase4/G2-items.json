@@ -1,0 +1,1289 @@
+{
+ "group": "G2-sova",
+ "chunks": [
+  [
+   "sova-semiconvex-alexandrov-corollary",
+   "sova-has-derivative-at-alt",
+   "sova-small-library",
+   "sova-second-difference-bounds",
+   "semiconvex-alexandrov-corollary",
+   "sova-norm-sq-expansion",
+   "sova-prox-nonexpansive",
+   "sova-cis-hol-helpers",
+   "cis-header-prose",
+   "norm-sq-expand-generic",
+   "superjet-supconv-form-lower-general",
+   "tilted-hessian-instance"
+  ],
+  [
+   "doubling-dist-bound-gen",
+   "lib-norm-pair-le-leftover",
+   "sova-quadratic-penalty-direct-instances",
+   "sova-nearby-shifted",
+   "sova-library-hol-reproofs",
+   "sova-quad-bdd-on-bounded",
+   "doubling-dist-bound-from-gen",
+   "doubling-gen-two-domain",
+   "doubling-maximiser-exists-usc",
+   "sova-semiconvex-continuous",
+   "moreau-ae-merge",
+   "sova-rademacher-internal"
+  ],
+  [
+   "sova-rademacher-library-24",
+   "sova-small-patterns-helpers",
+   "soft-penalty-doubling-cleanup",
+   "supconv-tendsto-usc",
+   "sova-superjet-onesided",
+   "sova-semiconvex-shifted",
+   "sova-second-order-form-unique",
+   "second-order-form-unique-corollary",
+   "ra-quartic-deepening",
+   "cis-quadratic-reroute",
+   "quadratic-doubling-to-gen",
+   "sova-dquot-derivative"
+  ],
+  [
+   "sova-test-fun-mirror",
+   "test-fun-affine-general",
+   "sova-quadratic-penalty-lift",
+   "ra-supconv-attainment",
+   "twin-cis-internal-duplication",
+   "supconv-attainment-twins",
+   "cis-internal-duplication",
+   "twin-supconv-attainment",
+   "sova-cis-internal"
+  ]
+ ],
+ "items": {
+  "sova-semiconvex-alexandrov-corollary": {
+   "id": "sova-semiconvex-alexandrov-corollary",
+   "kind": "derive-corollary",
+   "summary": "semiconvex_alexandrov (a root) is a 64-line near-copy of semiconvex_alexandrov_bounded (also a root). Move it after and prove it in 3 lines via negligible_subset. The supconv_jensen chain the reader mentions is gone; supconv_alexandrov (a COROLLARY root) is already 7 lines.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Alexandrov.thy"
+   ],
+   "facts": [
+    "semiconvex_alexandrov",
+    "semiconvex_alexandrov_bounded",
+    "supconv_alexandrov"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "Alexandrov.thy:1297 semiconvex_alexandrov (64), :1368 _bounded (75); Sup_Convolution.thy:391 supconv_alexandrov (7). grep finds no supconv_jensen or supconv_jensen_alexandrov_point.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "semiconvex_alexandrov_bounded",
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-has-derivative-at-alt": {
+   "id": "sova-has-derivative-at-alt",
+   "kind": "library-reproof",
+   "summary": "The has_derivative epsilon-delta remainder bound is re-derived three times. Replace all three by HOL's has_derivative_at_alt (then substitute y = x + u): prox_remainder_small, the 'small' block in moreau_second_order_taylor, and the 'rem' block in moreau_second_difference_limit. Delete prox_remainder_small.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Alexandrov.thy",
+    "Second_Order_Viscosity_Analysis/Moreau_Envelope.thy"
+   ],
+   "facts": [
+    "prox_remainder_small",
+    "moreau_second_order_taylor",
+    "moreau_second_difference_limit",
+    "f_taylor_limit"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "applies",
+   "evidence": "Alexandrov.thy:743 prox_remainder_small (31), :187 moreau_second_difference_limit (146), :853 f_taylor_limit; Moreau_Envelope.thy:459 moreau_second_order_taylor (111). has_derivative_at_alt is at Derivative.thy:295.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-small-library": {
+   "id": "sova-small-library",
+   "kind": "library-reproof",
+   "summary": "Delete five re-proofs in favour of the library. inj_linear_bounded_below becomes linear_inj_bounded_below_pos. linear_inj_two_sided_inverse becomes linear_injective_isomorphism. cSUP_plus_const becomes Sup_add_eq. lipschitz_continuous_on_UNIV (10 uses) becomes lipschitz_on_continuous_on. inner_sum_scaleR_Basis becomes the simp lemma inner_sum_left_Basis; keep inner_sum_scaleR_subset. inner_sum_scaleR_Basis is also on the Section 3.1 matcher list.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Alexandrov.thy",
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy",
+    "Second_Order_Viscosity_Analysis/Rademacher.thy"
+   ],
+   "facts": [
+    "inj_linear_bounded_below",
+    "linear_inj_two_sided_inverse",
+    "cSUP_plus_const",
+    "lipschitz_continuous_on_UNIV",
+    "inner_sum_scaleR_Basis",
+    "inner_sum_scaleR_subset"
+   ],
+   "est_lines_saved": 95,
+   "status_now": "applies",
+   "evidence": "Alexandrov.thy:805 (19), :1044 (17); Sup_Convolution.thy:132 (25); Rademacher.thy:389 (28), :860 (12), :2020. Sup_add_eq is at Conditionally_Complete_Lattices.thy:728 and lipschitz_on_continuous_on at Lipschitz.thy:145.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-second-difference-bounds": {
+   "id": "sova-second-difference-bounds",
+   "kind": "merge-twins",
+   "summary": "Export the two second-difference norm bounds (b1/b2, repeated as nb1/nb2 in moreau_second_difference_limit) as a lemma, or as the w1/w2 hypotheses of the integrand bound. State the integrand bound left-associated directly. second_difference_symmetric was deleted in phase 2; the inline symmetry ('same' in moreau_hessian_symmetric) stays.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Alexandrov.thy"
+   ],
+   "facts": [
+    "second_difference_integrand_bound",
+    "second_difference_integrand_bound_left",
+    "moreau_second_difference_limit",
+    "moreau_hessian_symmetric"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "partly-applies",
+   "evidence": "Alexandrov.thy:52 (74), :136 (18), :187 (146), :338 (34). grep finds no second_difference_symmetric.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "semiconvex-alexandrov-corollary": {
+   "id": "semiconvex-alexandrov-corollary",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: Alexandrov, declared a root). Replace the 64-line near-verbatim copy in Alexandrov.semiconvex_alexandrov with a 3-line proof: negligible_subset of semiconvex_alexandrov_bounded, then blast. Move it after that lemma.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Alexandrov.thy"
+   ],
+   "facts": [
+    "semiconvex_alexandrov",
+    "semiconvex_alexandrov_bounded"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "Alex:1297-1360 (64). Alex:1368-1442 semiconvex_alexandrov_bounded does not use it. It is used by Sup_Convolution:397.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Alexandrov.semiconvex_alexandrov_bounded",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-norm-sq-expansion": {
+   "id": "sova-norm-sq-expansion",
+   "kind": "merge-twins",
+   "summary": "The squared-norm expansion is re-derived at least 11 times. Move norm_sq_add_expand and norm_sq_diff_expand (FIX_THEN_KEEP roots in Crandall_Ishii_Sums), generalised to real_inner, into Convex_Subgradients, and cite them at: midpoint_dist_identity, prox_step_expand, moreau_upper/lower, subdiff_prox, f_increment_exact, semiconvex_alexandrov(_bounded), interior_max_subdiff_unique, max_semiconcave_bound, supconv_square_decomp, norm_sq_diff_shift, parallelogram_norm, and penalty_difference_identity (a COROLLARY root).",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Convex_Subgradients.thy",
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Moreau_Envelope.thy",
+    "Second_Order_Viscosity_Analysis/Alexandrov.thy",
+    "Second_Order_Viscosity_Analysis/Jensen_Lemma.thy",
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy",
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy"
+   ],
+   "facts": [
+    "norm_sq_add_expand",
+    "norm_sq_diff_expand",
+    "midpoint_dist_identity",
+    "prox_step_expand",
+    "moreau_upper",
+    "moreau_lower",
+    "subdiff_prox",
+    "f_increment_exact",
+    "supconv_square_decomp",
+    "norm_sq_diff_shift",
+    "parallelogram_norm",
+    "penalty_difference_identity"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "Crandall_Ishii_Sums.thy:439, :1439; Convex_Subgradients.thy:238, :299; Moreau_Envelope.thy:191, :205; Alexandrov.thy:411, :713; Jensen_Lemma.thy:43, :127; Sup_Convolution.thy:194; Theorem_On_Sums.thy:380; Doubling_Of_Variables.thy:1711, :1274.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-prox-nonexpansive": {
+   "id": "sova-prox-nonexpansive",
+   "kind": "merge-twins",
+   "summary": "Prove prox_firm_nonexpansive in Convex_Subgradients. Derive prox_nonexpansive from it with a lemma norm_le_of_sq_le_inner, which also serves prox_deriv_norm_le and the end of subdiff_lipschitz_of_semiconcave. Keep one Lipschitz phrasing of prox: prox_lipschitz or prox_lipschitz_on.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Convex_Subgradients.thy",
+    "Second_Order_Viscosity_Analysis/Moreau_Envelope.thy",
+    "Second_Order_Viscosity_Analysis/Jensen_Lemma.thy",
+    "Second_Order_Viscosity_Analysis/Alexandrov.thy"
+   ],
+   "facts": [
+    "prox_firm_nonexpansive",
+    "prox_nonexpansive",
+    "prox_deriv_norm_le",
+    "subdiff_lipschitz_of_semiconcave",
+    "prox_lipschitz",
+    "prox_lipschitz_on"
+   ],
+   "est_lines_saved": 35,
+   "status_now": "applies",
+   "evidence": "Moreau_Envelope.thy:44 (12), :305 (13), :18 (9); Convex_Subgradients.thy:372 (27); Jensen_Lemma.thy:253 (38); Alexandrov.thy:580 (5).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-cis-hol-helpers": {
+   "id": "sova-cis-hol-helpers",
+   "kind": "library-reproof",
+   "summary": "Replace the HOL-derivable helpers in Crandall_Ishii_Sums and Doubling_Of_Variables by one-liners. tendsto_of_dist_bound becomes metric_tendsto_imp_tendsto; tendsto_of_norm_bound becomes Lim_null_comparison, and the two duplicate each other. linear_add_scaleR becomes linear_compose_add plus linear_scaleR. linear_neg_iff (a FIX_THEN_KEEP root) becomes a one-liner via linear_compose_neg. add_sq_le_double equals CTM's square_add_le_two, which SOVA cannot see; keep it until Power_Inequalities' pure-HOL lemmas move lower (phase 5).",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy"
+   ],
+   "facts": [
+    "tendsto_of_dist_bound",
+    "tendsto_of_norm_bound",
+    "linear_add_scaleR",
+    "linear_neg_iff",
+    "add_sq_le_double",
+    "square_add_le_two"
+   ],
+   "est_lines_saved": 40,
+   "status_now": "applies",
+   "evidence": "Crandall_Ishii_Sums.thy:548 (18), :569 (17), :38 (6), :593 (11); Doubling_Of_Variables.thy:1826 (8); Power_Inequalities.thy:41 (CTM).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "cis-header-prose": {
+   "id": "cis-header-prose",
+   "kind": "other",
+   "summary": "Fix (b) of the theorem_on_sums_quadratic_closed row: correct the CIS header, which claims that the quadratic coupling is what every uniqueness proof 'including the one in this development' uses. The paper uses eps^-1 |x-y|^4 and the formalisation uses soft_pen. Pure prose; may be folded into phase 8.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy"
+   ],
+   "facts": [
+    "theorem_on_sums_quadratic_closed"
+   ],
+   "est_lines_saved": 0,
+   "status_now": "applies",
+   "evidence": "CIS:11-21 still reads '... the instance every standard uniqueness proof, including the one in this development, actually uses'.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "norm-sq-expand-generic": {
+   "id": "norm-sq-expand-generic",
+   "kind": "swap-proof",
+   "summary": "Generalise Crandall_Ishii_Sums.norm_sq_add_expand and norm_sq_diff_expand to 'a::real_inner and move them to Convex_Subgradients, the bottom theory of SOVA. Cite them at the about 11 inline re-derivations (Convex_Subgradients, Moreau_Envelope, Alexandrov, Jensen_Lemma, Sup_Convolution, DoV), and in place of ToS.norm_sq_diff_shift and DoV.parallelogram_norm.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Convex_Subgradients.thy",
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy"
+   ],
+   "facts": [
+    "norm_sq_add_expand",
+    "norm_sq_diff_expand",
+    "norm_sq_diff_shift",
+    "parallelogram_norm"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "CIS:439-443 and CIS:1439-1443 (5 lines each; used at CIS:466, 1457, 1464, 1692 and 1812). ToS:380-384 norm_sq_diff_shift, used at ToS:417. DoV:1711 parallelogram_norm. The inline sites were counted by the SOVA1 reader and not re-counted here.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "norm_sq_add_expand (real_inner)",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "superjet-supconv-form-lower-general": {
+   "id": "superjet-supconv-form-lower-general",
+   "kind": "fix-then-keep",
+   "summary": "Restate Crandall_Ishii_Sums.superjet_supconv_form_lower for any v with convex_on UNIV (lambda z. v z + (c/2) |z|^2): (p, F) in superjet v x implies -c |h|^2 <= h.F h. Obtain the sup-convolution case through supconv_semiconvex with c = 1/lam.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy"
+   ],
+   "facts": [
+    "superjet_supconv_form_lower",
+    "supconv_semiconvex"
+   ],
+   "est_lines_saved": 0,
+   "status_now": "applies",
+   "evidence": "CIS:1653-1762 (110 lines; used at CIS:2295 and 2297).",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "tilted-hessian-instance": {
+   "id": "tilted-hessian-instance",
+   "kind": "derive-corollary",
+   "summary": "Replace the 35-line proof of Doubling_Of_Variables.tilted_doubled_hessian_nonpositive (a root, COROLLARY verdict) with: by (rule tilted_doubled_hessian_nonpositive_gen[where P = \"\u03bbd. (\u03b1/2) * (norm d)^2\", OF blW rz mx expPsi]). Keep the statement and name; it is used at Crandall_Ishii_Sums.thy:766.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy"
+   ],
+   "facts": [
+    "tilted_doubled_hessian_nonpositive",
+    "tilted_doubled_hessian_nonpositive_gen"
+   ],
+   "est_lines_saved": 33,
+   "status_now": "applies",
+   "evidence": "Doubling_Of_Variables.thy: tilted_doubled_hessian_nonpositive_gen 2653-2697 ('a::euclidean_space); tilted_doubled_hessian_nonpositive 2699-2749 (statement 2699-2714, proof 2715-2749). Used at CIS:766; text at DoV:4011. roots.txt lists it as a COROLLARY root, so the name must stay.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "verification_results.md, clone-derivations, claim 5(b). Scratch file: verify/clone-derivations/Clone_SOVA.thy (tilted_doubled_hessian_nonpositive').",
+   "general_lemma": "tilted_doubled_hessian_nonpositive_gen",
+   "source": "verified",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "doubling-dist-bound-gen": {
+   "id": "doubling-dist-bound-gen",
+   "kind": "derive-corollary",
+   "summary": "Part of the 'quadratic doubling lemmas' row. Prove Doubling_Of_Variables.doubling_dist_bound (a root, COROLLARY) from doubling_penalty_bound_gen with Pn := \u03bbd. (\u03b1/2)*(norm d)^2 (P0 by simp) instead of from the quadratic doubling_penalty_bound. Then delete doubling_penalty_bound, which has no other code user.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Relative_Arbitrage/Comparison_Strictness.thy"
+   ],
+   "facts": [
+    "doubling_dist_bound",
+    "doubling_penalty_bound",
+    "doubling_penalty_bound_gen"
+   ],
+   "est_lines_saved": 16,
+   "status_now": "applies",
+   "evidence": "DoV.thy: doubling_penalty_bound 175-190; doubling_dist_bound 196-211 (uses doubling_penalty_bound at :206); doubling_penalty_bound_gen 255-271 ('a, Pn 0 = 0). Other mentions of doubling_penalty_bound: Comparison_Strictness.thy:598 (text only, to fix); DoV:329 (text).",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "Not machine-checked (independent_interest.md row 847 describes it as a 3-line corollary).",
+   "general_lemma": "doubling_penalty_bound_gen",
+   "source": "verified",
+   "group": "G2-sova",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "lib-norm-pair-le-leftover": {
+   "id": "lib-norm-pair-le-leftover",
+   "kind": "library-reproof",
+   "summary": "Carry-over from phase 3 item 1, which is not yet done: delete Doubling_Of_Variables.norm_Pair_le. It shadows Product_Vector.norm_Pair_le with the same statement, and its uses resolve to the library fact unchanged. Also delete the self-referential text at DoV:4090.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy"
+   ],
+   "facts": [
+    "norm_Pair_le",
+    "Product_Vector.norm_Pair_le",
+    "bounded_seq_limit_point_triple"
+   ],
+   "est_lines_saved": 11,
+   "status_now": "applies",
+   "evidence": "DoV.thy:2751-2760 lemma norm_Pair_le (still present at 4188265). Uses: DoV:2774, 2776 (in bounded_seq_limit_point_triple), Pair_Path_Laws.thy:415; text Holder_Interpolation.thy:318, DoV:4090. Phase 3a (ad9add6) only dropped Pair_Path_Space's DoV import.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "verification_results.md, libdup-check, claim 7 (C7). Scratch file: verify/libdup-check/LibDup_F.thy.",
+   "general_lemma": "Product_Vector.norm_Pair_le",
+   "source": "verified",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-quadratic-penalty-direct-instances": {
+   "id": "sova-quadratic-penalty-direct-instances",
+   "kind": "derive-corollary",
+   "summary": "Section 3.2 and D1: the quadratic-penalty lemmas that Crandall_Ishii_Sums needs stay as roots but become instances of _gen with P = (\u03b1/2)|d|^2. tilted_doubled_hessian_nonpositive (CIS:766) is 1 line, checked. doubled_supconv_jet_exists_shifted (CIS:740) is real^'n like its _gen. doubling_penalty_bound and doubling_dist_bound are 'a like theirs. doubling_maximiser_exists was deleted in phase 2, so this plan row has changed.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy"
+   ],
+   "facts": [
+    "tilted_doubled_hessian_nonpositive",
+    "tilted_doubled_hessian_nonpositive_gen",
+    "doubled_supconv_jet_exists_shifted",
+    "doubled_supconv_jet_exists_shifted_gen",
+    "doubling_penalty_bound",
+    "doubling_penalty_bound_gen",
+    "doubling_dist_bound",
+    "doubling_maximiser_exists"
+   ],
+   "est_lines_saved": 100,
+   "status_now": "partly-applies",
+   "evidence": "Doubling_Of_Variables.thy:2699 (51) vs :2653 _gen (45), both 'a; :3430 (53) vs :3285 _gen (73), both real^'n; :175 (16) vs :255 _gen, both 'a; :196 doubling_dist_bound (COROLLARY root). grep finds no doubling_maximiser_exists (only _gen at :283).",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, clone-derivations claim 5(b) (tilted_doubled_hessian_nonpositive)",
+   "general_lemma": "the _gen lemmas of Doubling_Of_Variables",
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-nearby-shifted": {
+   "id": "sova-nearby-shifted",
+   "kind": "merge-twins",
+   "summary": "nearby_of_convergent_shifted and its _neg twin are identical up to + versus -. Merge them into one nearby_of_convergent_shift with a sign or shift parameter, and keep the two names as one-line instances for Comparison_Localisation.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Relative_Arbitrage/Comparison_Localisation.thy"
+   ],
+   "facts": [
+    "nearby_of_convergent_shifted",
+    "nearby_of_convergent_shifted_neg"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "Doubling_Of_Variables.thy:1845 (67), :1917 (67); uses Comparison_Localisation.thy:477, :486.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "sova-library-hol-reproofs": {
+   "id": "sova-library-hol-reproofs",
+   "kind": "library-reproof",
+   "summary": "Delete HOL re-proofs and cite the library. Doubling_Of_Variables.norm_Pair_le has HOL's name and statement and shadows it; phase 3.1 planned to delete it, and only its import was dropped. norm_Pair_right_zero/left_zero become norm_Pair2/norm_Pair1 [simp]. convex_on_scaleR_nonneg becomes convex_on_cmul. linear_of_bounded_linear_prod becomes bounded_linear.linear. abs_norm_diff_le becomes norm_triangle_ineq3. bounded_seq_limit_point becomes bounded_imp_convergent_subsequence. inner_sq_over_norm_sq_le becomes Cauchy_Schwarz_ineq. norm_le_soft_R becomes real_sqrt_sum_squares_ge1. The Section 3.1 rows norm_Pair_le, norm_Pair_left/right_zero and abs_norm_diff_le are included here.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Soft_Penalty.thy"
+   ],
+   "facts": [
+    "norm_Pair_le",
+    "norm_Pair_right_zero",
+    "norm_Pair_left_zero",
+    "convex_on_scaleR_nonneg",
+    "linear_of_bounded_linear_prod",
+    "abs_norm_diff_le",
+    "bounded_seq_limit_point",
+    "inner_sq_over_norm_sq_le",
+    "norm_le_soft_R"
+   ],
+   "est_lines_saved": 75,
+   "status_now": "applies",
+   "evidence": "Doubling_Of_Variables.thy:2751 norm_Pair_le (10; uses :2774, :2776 resolve to Product_Vector.norm_Pair_le, and Pair_Path_Laws.thy:415 already does), :1176 (11), :1785 (18); Theorem_On_Sums.thy:36, :41 (4 each), :207 (14); Soft_Penalty.thy:346 (9), :153 (11), :337 (8).",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, libdup-check claim 7 (norm_Pair_le)",
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-quad-bdd-on-bounded": {
+   "id": "sova-quad-bdd-on-bounded",
+   "kind": "swap-proof",
+   "summary": "quad_bdd_above_on_bounded (54 lines) and quad_bdd_below_on_bounded (34) prove 'continuous on a bounded set is bounded'. Prove one boundedness lemma for the quadratic image via continuity and closure, and derive the two 'obtains' from it.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy"
+   ],
+   "facts": [
+    "quad_bdd_above_on_bounded",
+    "quad_bdd_below_on_bounded"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "Doubling_Of_Variables.thy:44 (54), :114 (34).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "doubling-dist-bound-from-gen": {
+   "id": "doubling-dist-bound-from-gen",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: DoV, next to doubling_penalty_bound_gen). Restate doubling_dist_bound as a 3-line corollary of doubling_penalty_bound_gen with Pn = (lambda d. (alpha/2) * norm d^2) and Pn 0 = 0 by simp. Then delete its only proof user's twin doubling_penalty_bound (COROLLARY row: delete).",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy"
+   ],
+   "facts": [
+    "doubling_dist_bound",
+    "doubling_penalty_bound",
+    "doubling_penalty_bound_gen"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "DoV:175-190 doubling_penalty_bound (16; its only proof use is DoV:206). DoV:196-211 doubling_dist_bound (16). The mentions at Comparison_Strictness:598/616 and Soft_Penalty:1466 are text. doubling_penalty_bound_gen is at DoV:255. Root at roots.txt:602.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Doubling_Of_Variables.doubling_penalty_bound_gen",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "doubling-gen-two-domain": {
+   "id": "doubling-gen-two-domain",
+   "kind": "fix-then-keep",
+   "summary": "Generalise doubling_diagonal_max_gen, doubling_off_diagonal_gen and doubling_penalty_bound_gen to a maximiser over K x K' (x in K, y in K', diagonal points in the intersection); the proofs are unchanged. Then Comparison_Two_Domain.comparison_two_domain can call them instead of re-deriving 'base' and 'Mmax' inline. Re-derive doubling_dist_bound from the two-domain penalty bound.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Relative_Arbitrage/Comparison_Two_Domain.thy"
+   ],
+   "facts": [
+    "doubling_diagonal_max_gen",
+    "doubling_off_diagonal_gen",
+    "doubling_penalty_bound_gen",
+    "comparison_two_domain",
+    "doubling_dist_bound"
+   ],
+   "est_lines_saved": 15,
+   "status_now": "applies",
+   "evidence": "DoV:221-271 (18+14+17 lines). The inline re-derivation is at CTD:449 (have base) and CTD:471 (have Mmax). Roots: 443-445.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "doubling-maximiser-exists-usc": {
+   "id": "doubling-maximiser-exists-usc",
+   "kind": "fix-then-keep",
+   "summary": "Restate Doubling_Of_Variables.doubling_maximiser_exists_gen for usc u and lsc w (global epsilon-form), over K x K'. Prove it by usc attainment on the compact product, after moving usc_attains_sup_compact and usc_open_lt ahead of DoV (into Sup_Convolution, shared with supconv-attainment-twins). The continuous version then follows in 1 line; inline Soft_Penalty.doubling_maximiser_exists_soft accordingly.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Second_Order_Viscosity_Analysis/Soft_Penalty.thy",
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy"
+   ],
+   "facts": [
+    "doubling_maximiser_exists_gen",
+    "usc_attains_sup_compact",
+    "doubling_maximiser_exists_soft"
+   ],
+   "est_lines_saved": 10,
+   "status_now": "applies",
+   "evidence": "DoV:283-327 (45 lines, continuous_on K u/w, via continuous_attains_sup). Its users are Soft_Penalty:1434 and the text at CP:1778/Comparison_Strictness:639. usc_attains_sup_compact is at CIS:126-152.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Crandall_Ishii_Sums.usc_attains_sup_compact",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-semiconvex-continuous": {
+   "id": "sova-semiconvex-continuous",
+   "kind": "merge-twins",
+   "summary": "Derive supconv_continuous from semiconvex_continuous. Jensen_Lemma is not an ancestor of Sup_Convolution, so semiconvex_continuous must move down first, into Convex_Subgradients or a semiconvexity theory. Replace the mirror pair convex_bdd_above_cball / convex_bdd_below_cball, which use only continuity, by one lemma or by continuous_attains_sup/inf.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Jensen_Lemma.thy",
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy",
+    "Second_Order_Viscosity_Analysis/Alexandrov.thy"
+   ],
+   "facts": [
+    "semiconvex_continuous",
+    "supconv_continuous",
+    "convex_bdd_above_cball",
+    "convex_bdd_below_cball"
+   ],
+   "est_lines_saved": 30,
+   "status_now": "applies",
+   "evidence": "Jensen_Lemma.thy:298 (14); Sup_Convolution.thy:253 (15); Alexandrov.thy:465 (16), :482 (16). Import check: Sup_Convolution imports Alexandrov, and Jensen_Lemma imports Convex_Subgradients, so neither is above the other.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "moreau-ae-merge": {
+   "id": "moreau-ae-merge",
+   "kind": "merge-twins",
+   "summary": "Merge the three overlapping AE packagings of the Moreau envelope's second-order regularity into one root theorem in Alexandrov, right after moreau_hessian_symmetric. It states: for almost every x there is a bounded linear, symmetric, psd A with (lambda y. y - prox f y) has_derivative A at x, and the second-order Taylor expansion of moreau f at x with gradient x - prox f x and form A. moreau_hessian_psd becomes its helper; drop the x-independent conjunct, which is just moreau_has_derivative.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Moreau_Envelope.thy",
+    "Second_Order_Viscosity_Analysis/Alexandrov.thy"
+   ],
+   "facts": [
+    "moreau_twice_differentiable_AE",
+    "moreau_alexandrov_AE",
+    "moreau_alexandrov_sym_AE",
+    "moreau_hessian_psd",
+    "moreau_hessian_symmetric",
+    "moreau_second_order_taylor",
+    "prox_differentiable_AE"
+   ],
+   "est_lines_saved": 45,
+   "status_now": "applies",
+   "evidence": "ME:340-368 (29), ME:578-600 moreau_alexandrov_AE (23), Alex:377-403 moreau_alexandrov_sym_AE (27). ME:319-332 moreau_hessian_psd (used at Alex:392 and ME:361/592). Roots: 493-495.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Alexandrov.moreau_hessian_symmetric + Moreau_Envelope.moreau_second_order_taylor",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-rademacher-internal": {
+   "id": "sova-rademacher-internal",
+   "kind": "merge-twins",
+   "summary": "Rademacher repeats several facts. Move norm_dquot_le and AE_dlim_set (plus new borel_compl_dlim_set and norm_dquot_diff_le) up and cite them. State integrable_bounded_indicator with an AE bound and use it for integrable_dquot_indicator, integrable_ddir_indicator and the inline copies in box_integral_add_split and ddir_add_AE. Normalise |B| once in the public theorems.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Rademacher.thy"
+   ],
+   "facts": [
+    "AE_dlim_set",
+    "norm_dquot_le",
+    "norm_ddir_le",
+    "integrable_dquot_indicator",
+    "integrable_bounded_indicator",
+    "integrable_ddir_indicator",
+    "box_integral_add_split",
+    "ddir_add_AE",
+    "box_integral_dquot_tendsto"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "applies",
+   "evidence": "Rademacher.thy:1687 AE_dlim_set (17), :1058 norm_dquot_le (12), :599 norm_ddir_le (27), :1214 (15), :1314 (22), :1705 (29), :1230 (41), :1738 (104), :1088 (55). Inner-block line ranges in SOVA1-5/6 refer to 3bc3803.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-rademacher-library-24": {
+   "id": "sova-rademacher-library-24",
+   "kind": "library-reproof",
+   "summary": "Use library lemmas instead of hand proofs: bounded_linear_coord_combination, content_cbox_translate, integral_box_cbox_eq, lipschitz_component, and the repeated 'scaleR tends to 0' steps (one local filterlim_scaleR_at_0). In AE_zero_of_box_integrals_zero, get the negative half by applying the positive half to -g. Drop banach from the {euclidean_space,banach} sorts.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Rademacher.thy",
+    "Second_Order_Viscosity_Analysis/Moreau_Envelope.thy",
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy"
+   ],
+   "facts": [
+    "bounded_linear_coord_combination",
+    "content_cbox_translate",
+    "integral_box_cbox_eq",
+    "lipschitz_component",
+    "AE_zero_of_box_integrals_zero"
+   ],
+   "est_lines_saved": 75,
+   "status_now": "applies",
+   "evidence": "Rademacher.thy:1849 (29), :1488 (13), :1436 (22), :2269 (12), :958 (95). Inner-block ranges in SOVA1-24 refer to 3bc3803.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-small-patterns-helpers": {
+   "id": "sova-small-patterns-helpers",
+   "kind": "library-reproof",
+   "summary": "Introduce soft_R_coeff_pos for the repeated step '1 < R implies 0 < 1 - 1/R' in the soft_* lemmas. Reuse sqrt_norm_sq_add_one_ge_one inside sqrt_shift_diff_bound. Add one 'doubled sup-convolution is continuous on K x K' lemma for the 3 identical preambles, and one compact_Times preamble. Cite or inline near-library helpers: dist_pair_le (dist_Pair_Pair plus sqrt_sum_squares_le_sum), parallelogram_norm and norm_sq_diff_shift (dot_norm/dot_norm_neg), norm_prod_sq (norm_prod_def), bounded_on_compact and doubling_upper_bound_exists (compact_imp_bounded of compact_continuous_image), and choice4.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Soft_Penalty.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy"
+   ],
+   "facts": [
+    "soft_R_gt_one",
+    "soft_grad_coeff_pos",
+    "soft_gap_pos",
+    "soft_grad_norm_eq",
+    "soft_hess_quadform_bounds",
+    "sqrt_shift_diff_bound",
+    "sqrt_norm_sq_add_one_ge_one",
+    "dist_pair_le",
+    "parallelogram_norm",
+    "norm_prod_sq",
+    "bounded_on_compact",
+    "doubling_upper_bound_exists",
+    "choice4"
+   ],
+   "est_lines_saved": 90,
+   "status_now": "applies",
+   "evidence": "Soft_Penalty.thy:424, :436, :488, :1258, :1064, :508 (43), :319; Doubling_Of_Variables.thy:3091 (15), :1711, :2932 (16), :333 (30), :2377; Theorem_On_Sums.thy:241. grep finds no shifted_jensen_smallness.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "soft-penalty-doubling-cleanup": {
+   "id": "soft-penalty-doubling-cleanup",
+   "kind": "fix-then-keep",
+   "summary": "Soft_Penalty helpers of Theorem 4.2(a). (1) Drop theta from doubling_close_maximiser_supconv_soft, stating it for any u bounded above and w bounded below; the caller CP:1532 instantiates u := lambda y. theta * ut y. (2) doubling_maximiser_supconv_soft has no user and the verifier kept it DELETE: drop it from roots.txt:484 and delete it. (3) Inline doubling_maximiser_exists_soft at its one call, or restate it two-domain after doubling-maximiser-exists-usc. (4) Reword the stale texts at SP:1436-1438 and 1528-1531. The planned direct proof of doubling_near_soft no longer matters, because norm_lt_of_penalty_bound_gen stays live at SP:581 and 1378.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Soft_Penalty.thy",
+    "Relative_Arbitrage/Comparison_Principle.thy"
+   ],
+   "facts": [
+    "doubling_maximiser_exists_soft",
+    "doubling_maximiser_supconv_soft",
+    "doubling_near_soft",
+    "doubling_close_maximiser_soft",
+    "doubling_close_maximiser_supconv_soft",
+    "norm_lt_of_penalty_bound_gen"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "SP:1427-1434 exists_soft (used at SP:1519). SP:1440-1462 supconv_soft (23 lines; only text mentions). SP:1472-1496 near_soft. SP:1498-1527 close_soft. SP:1533-1570 close_supconv_soft (used at CP:1532 by max_principle_usc_lsc).",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "supconv-tendsto-usc": {
+   "id": "supconv-tendsto-usc",
+   "kind": "fix-then-keep",
+   "summary": "Restate Sup_Convolution.supconv_tendsto and its helper supconv_near_optimizer for u upper semicontinuous at x (epsilon-form, as in the CIS usc lemmas) instead of continuous at x. The lower half already comes from supconv_ge.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy"
+   ],
+   "facts": [
+    "supconv_tendsto",
+    "supconv_near_optimizer",
+    "supconv_ge"
+   ],
+   "est_lines_saved": 0,
+   "status_now": "applies",
+   "evidence": "SupC:272-295 (24) and SupC:301-358 (58). Roots: 491-492.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-superjet-onesided": {
+   "id": "sova-superjet-onesided",
+   "kind": "merge-twins",
+   "summary": "Keep only the one-sided superjet-to-local-max lemma, and derive the two-sided superjet_local_max (used in Comparison_Localisation) in 2 lines. Theorem_On_Sums is upstream of Doubling_Of_Variables, so superjet_local_max_onesided must move up. The two-sided jet_imp_local_min_test is already gone.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy"
+   ],
+   "facts": [
+    "superjet_local_max",
+    "superjet_local_max_onesided",
+    "jet_imp_local_min_test_onesided",
+    "onesided_of_tendsto_gen"
+   ],
+   "est_lines_saved": 30,
+   "status_now": "partly-applies",
+   "evidence": "Theorem_On_Sums.thy:1068 superjet_local_max (35; used Comparison_Localisation.thy:146,202); Doubling_Of_Variables.thy:379 (30), :410 (47; used Comparison_Strictness.thy:777), :3121 (12).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-semiconvex-shifted": {
+   "id": "sova-semiconvex-shifted",
+   "kind": "derive-corollary",
+   "summary": "Replace doubled_functional_semiconvex_shifted by semiconvex_shift_perturb applied to doubled_functional_semiconvex. Its only use is in Doubling_Of_Variables, which is downstream of Theorem_On_Sums, so move it there. Prove the 'aff' step with convex_on_affine_inner, cite norm_sq_prod_split for the inline nsplit, and prove the repeated identities d and s once.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy"
+   ],
+   "facts": [
+    "doubled_functional_semiconvex_shifted",
+    "semiconvex_shift_perturb",
+    "doubled_functional_semiconvex",
+    "convex_on_affine_inner",
+    "norm_sq_prod_split",
+    "shifted_annulus_bound_split_gen"
+   ],
+   "est_lines_saved": 55,
+   "status_now": "partly-applies",
+   "evidence": "Theorem_On_Sums.thy:386 (48; only use Doubling_Of_Variables.thy:3476); DoV:679 (32), :1084 (5), :717 (36); Sup_Convolution.thy:183 (11). grep finds no shifted_annulus_bound (non-_gen).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-second-order-form-unique": {
+   "id": "sova-second-order-form-unique",
+   "kind": "derive-corollary",
+   "summary": "second_order_form_unique (a COROLLARY root with no code use) repeats the ray argument of expansion_ray_limit. Move it after expansion_ray_limit and prove it in about 5 lines.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy"
+   ],
+   "facts": [
+    "second_order_form_unique",
+    "expansion_ray_limit"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "Theorem_On_Sums.thy:504 second_order_form_unique (68), :578 expansion_ray_limit (53); roots.txt COROLLARY section.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "expansion_ray_limit",
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "second-order-form-unique-corollary": {
+   "id": "second-order-form-unique-corollary",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: Theorem_On_Sums, next to expansion_ray_limit). Replace the 69-line proof of second_order_form_unique with about 8 lines: expansion_ray_limit applied to Q1 and Q2 (scaling from linear_cmul), tendsto_unique with trivial_limit_at_right_real, and v = 0 by linear_simps. Move it after expansion_ray_limit.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy"
+   ],
+   "facts": [
+    "second_order_form_unique",
+    "expansion_ray_limit"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "ToS:504-571 (68 lines; no user, root at roots.txt:611). ToS:578-630 expansion_ray_limit does not use it.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Theorem_On_Sums.expansion_ray_limit",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "ra-quartic-deepening": {
+   "id": "ra-quartic-deepening",
+   "kind": "merge-twins",
+   "summary": "Quartic deepening (local touching implies global touching on K) is proved three times. Prove one operator-free lemma in SOVA Test_Functions, in both test-function classes: a local max of u - phi on ball x r, with u <= Bu and phi >= Bphi on K, gives C >= 0 with a global max on K of u - (phi + C|. - x|^4) and the same 2-jet. Instantiate it for visc_supersol_env2_local, visc_subsol_env2_local and visc_subsol_env_local (FIX_THEN_KEEP).",
+   "files": [
+    "Relative_Arbitrage/Comparison_Strictness.thy",
+    "Relative_Arbitrage/Operator_Envelopes.thy",
+    "Second_Order_Viscosity_Analysis/Test_Functions.thy"
+   ],
+   "facts": [
+    "visc_supersol_env2_local",
+    "visc_subsol_env2_local",
+    "visc_subsol_env_local",
+    "test_fun_at_quartic_shift"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "applies",
+   "evidence": "Comparison_Strictness.thy:91 (61), :153 (61); Operator_Envelopes.thy:1070 (62; root).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "cis-quadratic-reroute": {
+   "id": "cis-quadratic-reroute",
+   "kind": "derive-corollary",
+   "summary": "The rest of the plan's 'quadratic doubling lemmas' row: the quadratic copies that CIS uses only at real^'n. Decide first whether D1 ('the quadratic-penalty lemmas it needs stay as roots') keeps the non-root ones. (a) Add quad_pen_jet (about 15 lines, from penalty_difference_identity) to Crandall_Ishii_Sums. (b) Replace the CIS calls tilted_doubled_jet_slices (CIS:761-762), sums_gives_ordering (CIS:774), linear_block_fst/snd and sym_block_fst/snd (CIS:803-823) by inline instances of tilted_doubled_jet_slices_gen, sums_gives_ordering_gen, linear_block_*_gen and sym_block_*_gen with Pn = (\u03b1/2)\u2016\u00b7\u2016\u00b2, Z = \u03b1 *R mat 1, G = \u03b1 *R (fst zh - snd zh). Then delete the 'a-typed DoV copies: tilted_doubled_jet_slices, sums_gives_ordering, the four block lemmas and linear_of_bounded_linear_prod. (c) Restate doubled_supconv_jet_exists_shifted (a root) as a 1-step corollary of doubled_supconv_jet_exists_shifted_gen[where Pn = .. and \u03ba = \u03b1, ...] (simp add: convex_on_const). This frees Theorem_On_Sums.norm_sq_diff_shift, doubled_functional_semiconvex_shifted and DoV.doubled_semiconvexity_constant_pos. Not covered: the six 'a-typed slice roots (penalty_difference_identity, doubled_slice_numerator_fst/_snd, doubled_jet_slice_fst/_snd, penalty_difference_identity_snd). doubled_jet_slices_at_max, an 'a-typed root, still uses them, and the _gen versions are real^'n only.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy"
+   ],
+   "facts": [
+    "tilted_doubled_jet_slices",
+    "tilted_doubled_jet_slices_gen",
+    "sums_gives_ordering",
+    "sums_gives_ordering_gen",
+    "linear_block_fst",
+    "linear_block_snd",
+    "sym_block_fst",
+    "sym_block_snd",
+    "linear_of_bounded_linear_prod",
+    "doubled_supconv_jet_exists_shifted",
+    "doubled_supconv_jet_exists_shifted_gen",
+    "doubled_functional_semiconvex_shifted",
+    "norm_sq_diff_shift",
+    "doubled_semiconvexity_constant_pos",
+    "quad_pen_jet",
+    "penalty_difference_identity",
+    "theorem_on_sums_stage"
+   ],
+   "est_lines_saved": 230,
+   "status_now": "partly-applies",
+   "evidence": "DoV.thy: sums_gives_ordering 1019-1052 (text from 1009); linear_of_bounded_linear_prod 1176-1186; linear_block_fst/snd and sym_block_fst/snd 1188-1234; tilted_doubled_jet_slices 2509-2576; doubled_supconv_jet_exists_shifted 3430-3482 (real^'n, root). Their only code uses are in CIS theorem_on_sums_stage (CIS:740, 762, 766, 774, 803-823). doubled_functional_semiconvex_shifted is at ToS:386-433 (only use DoV:3476); norm_sq_diff_shift at ToS:380 (only use ToS:417); doubled_semiconvexity_constant_pos at DoV:1065-1075 (uses DoV:3478). norm_sq_prod_split stays (CIS:682). doubling_maximiser_exists is gone. The plan row's -95 counted only claim 5(a)+(b).",
+   "risk": "medium",
+   "gated": false,
+   "checked_derivation": "Not in verification_results.md. The independent-interest verifier checked the instances in PIDE: <scratch>/indep/work/sova_doubling_verify/QuadInst.thy (quad_pen_jet, tilted_doubled_jet_slices_inst, sums_gives_ordering_inst, linear_block_fst_inst, sym_block_snd_inst, doubled_supconv_jet_exists_shifted_inst). They are quoted in notes/review_3/data/independent_interest.md rows 850, 853, 856 and 860.",
+   "general_lemma": "tilted_doubled_jet_slices_gen, sums_gives_ordering_gen, linear_block_*_gen, sym_block_*_gen, doubled_supconv_jet_exists_shifted_gen",
+   "source": "verified",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "quadratic-doubling-to-gen": {
+   "id": "quadratic-doubling-to-gen",
+   "kind": "swap-proof",
+   "summary": "Route theorem_on_sums_stage through the live real^'n _gen chain with Pn = (alpha/2)|.|^2, Z = alpha *R mat 1 and G = alpha (x - y); this is change (i) of the stage row, covered by the plan's verified item 'quadratic doubling lemmas' and D1. Add quad_pen_jet (12 lines, from penalty_difference_identity). Rewire the CIS calls: CIS:740 doubled_supconv_jet_exists_shifted -> _shifted_gen; CIS:762 tilted_doubled_jet_slices -> _gen; CIS:766 tilted_doubled_hessian_nonpositive -> _gen; CIS:774 sums_gives_ordering -> sums_gives_ordering_gen; CIS:803-823 linear_block_fst/snd and sym_block_fst/snd -> *_gen; CIS:682 norm_sq_prod_split -> norm_prod_sq. Then delete the quadratic copies in DoV and the ToS helpers they alone use. tilted_doubled_hessian_nonpositive and doubled_supconv_jet_exists_shifted may stay as 1-5-line corollaries. Roots first: 604-608 list the slice lemmas as kept-name COROLLARY, though the verifier's final text deletes them; 110 lists doubled_jet_slices_at_max as a SOVA deliverable, although no proof uses it.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy",
+    "Relative_Arbitrage/Comparison_Localisation.thy"
+   ],
+   "facts": [
+    "sums_gives_ordering",
+    "norm_sq_prod_split",
+    "linear_block_fst",
+    "linear_block_snd",
+    "sym_block_fst",
+    "sym_block_snd",
+    "linear_of_bounded_linear_prod",
+    "doubled_slice_numerator_fst",
+    "doubled_jet_slice_fst",
+    "penalty_difference_identity_snd",
+    "doubled_slice_numerator_snd",
+    "doubled_jet_slice_snd",
+    "doubled_jet_slices_at_max",
+    "tilted_doubled_jet_slices",
+    "tilted_doubled_hessian_nonpositive",
+    "doubled_supconv_jet_exists_shifted",
+    "linear_slice_fst",
+    "linear_slice_snd",
+    "sym_slice_fst",
+    "sym_slice_snd",
+    "doubled_functional_semiconvex_shifted",
+    "doubled_semiconvexity_constant_pos",
+    "penalty_difference_identity",
+    "quad_pen_jet",
+    "sums_gives_ordering_gen",
+    "tilted_doubled_jet_slices_gen",
+    "tilted_doubled_hessian_nonpositive_gen",
+    "doubled_supconv_jet_exists_shifted_gen",
+    "linear_block_fst_gen",
+    "sym_block_snd_gen"
+   ],
+   "est_lines_saved": 450,
+   "status_now": "applies",
+   "evidence": "DoV: sums_gives_ordering 1019-1052 (34), norm_sq_prod_split 1084-1088, linear/sym_block_* 1188-1234 (44) plus linear_of_bounded_linear_prod, the slice lemmas 1319-1514 (119), doubled_jet_slices_at_max 1610-1647 (38; no proof user, text only at CL:101), tilted_doubled_jet_slices 2509-2576 (68), tilted_doubled_hessian_nonpositive 2699-2749 (51), doubled_supconv_jet_exists_shifted 3430-3482 (53). ToS: linear_slice_* and sym_slice_* 940-1055 (98; used only by the DoV blocks), doubled_functional_semiconvex_shifted 386-433 (48; used only at DoV:3476). sums_matrix_inequality (ToS:774-827) loses its last user but stays a root (roots.txt:102). The CIS call sites are at 682, 740, 762, 766, 774 and 803-823.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "the real^'n _gen chain of Doubling_Of_Variables",
+   "checked_derivation": "PIDE scratch indep/work/sova_doubling_verify/QuadInst.thy (quad_pen_jet and the instances of tilted_doubled_jet_slices_gen, sums_gives_ordering_gen, linear_block_fst_gen, sym_block_snd_gen and doubled_supconv_jet_exists_shifted_gen), cited in independent_interest.md sova_doubling. data/verification_results.md clone-derivations item 5(b) (tilted_doubled_hessian_nonpositive) and 5(c) (sums_matrix_inequality at real^'n)",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "sova-dquot-derivative": {
+   "id": "sova-dquot-derivative",
+   "kind": "library-reproof",
+   "summary": "The difference quotient along a line tends to the derivative; this is proved twice. Re-prove dquot_tendsto_vector_derivative from has_vector_derivative_within_1D, and has_derivative_dir_limit in about 5 lines by the chain rule plus that lemma, placed next to it in Rademacher.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Rademacher.thy",
+    "Second_Order_Viscosity_Analysis/Moreau_Envelope.thy"
+   ],
+   "facts": [
+    "dquot_tendsto_vector_derivative",
+    "has_derivative_dir_limit"
+   ],
+   "est_lines_saved": 85,
+   "status_now": "applies",
+   "evidence": "Rademacher.thy:344 dquot_tendsto_vector_derivative (38); Moreau_Envelope.thy:57 has_derivative_dir_limit (66; used ME:137). Reader SOVA1-26 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "sova-test-fun-mirror": {
+   "id": "sova-test-fun-mirror",
+   "kind": "derive-corollary",
+   "summary": "test_fun_quadratic_minorates and test_fun_quadratic_dominates are mirror images of about 120 lines each. Add test_fun_at_uminus and derive test_fun_quadratic_dominates from test_fun_quadratic_minorates applied to -u.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Test_Functions.thy"
+   ],
+   "facts": [
+    "test_fun_quadratic_dominates",
+    "test_fun_quadratic_minorates"
+   ],
+   "est_lines_saved": 95,
+   "status_now": "applies",
+   "evidence": "Test_Functions.thy:868 dominates (113), :742 minorates (120).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "test-fun-affine-general": {
+   "id": "test-fun-affine-general",
+   "kind": "merge-twins",
+   "summary": "State Test_Functions.test_fun_at_affine and test_fun_C2_affine for a general affine map z -> M z + b (gradient M^T g(Mz+b), Hessian M^T H M), through two shared helper identities for the chain rule and the Hessian conjugation. Recover the paper's c R form (orthogonal R, c > 0) as 1-line corollaries. Remove the paper prose (display (4.4), ell_op_usc_*) from this library theory.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Test_Functions.thy",
+    "Relative_Arbitrage/Comparison_Two_Domain.thy"
+   ],
+   "facts": [
+    "test_fun_at_affine",
+    "test_fun_C2_affine"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "TF:209-325 (117) and TF:341-436 (96) duplicate the gradient chain-rule step (about 249-275 vs 366-386) and the Hessian conjugation (about 297-317 vs 400-415). test_fun_C2_affine is used at CTD:103. Root at roots.txt:497.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "sova-quadratic-penalty-lift": {
+   "id": "sova-quadratic-penalty-lift",
+   "kind": "merge-twins",
+   "summary": "The rest of the quadratic/_gen duplication (Section 3.3, about 1,400 lines originally; most of the dead part went in phase 2). These remaining quadratic lemmas are stated at 'a::euclidean_space, while their _gen versions are at real^'n with a matrix Z, so they are not instances as stated. To merge them: lift the _gen chain to 'a with Z a symmetric linear map (it is turned into a matrix only in transpose_matrix_*_gen / norm_block_matrices_bounded_gen), then derive the quadratic ones. Alternatively, narrow the quadratic ones to real^'n, which is the only type their consumer Crandall_Ishii_Sums uses; that is a design decision (D1).",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy"
+   ],
+   "facts": [
+    "tilted_doubled_jet_slices",
+    "tilted_doubled_jet_slices_gen",
+    "doubled_jet_slice_fst",
+    "doubled_jet_slice_snd",
+    "doubled_jet_slice_fst_gen",
+    "doubled_jet_slice_snd_gen",
+    "doubled_slice_numerator_fst",
+    "doubled_slice_numerator_snd",
+    "penalty_difference_identity",
+    "penalty_difference_identity_snd",
+    "sums_gives_ordering",
+    "sums_gives_ordering_gen",
+    "linear_block_fst",
+    "linear_block_snd",
+    "sym_block_fst",
+    "sym_block_snd",
+    "linear_slice_fst",
+    "sym_slice_fst",
+    "sums_matrix_inequality",
+    "sums_matrix_inequality_gen",
+    "doubled_functional_semiconvex",
+    "doubled_functional_semiconvex_gen",
+    "semiconvex_penalty",
+    "semiconvex_penalty_gen",
+    "expansion_restrict_fst",
+    "penalty_exact"
+   ],
+   "est_lines_saved": 350,
+   "status_now": "partly-applies",
+   "evidence": "Doubling_Of_Variables.thy:2509 (68; used CIS:762) vs :2583; :1339/:1485 (30 each, COROLLARY roots) vs :1377/:1523; :1019 (34; CIS:774) vs :841; :1188-1234 (11 each; CIS:803-823) vs :904-1007; Theorem_On_Sums.thy:774 sums_matrix_inequality (54, a root; 'a) vs DoV:754 (real^'n); TOS:331 (39) vs DoV:3241; TOS:250 vs DoV:593 (both 'a); TOS:940-1055 slices. verification_results claim 5(c) confirms the type mismatch.",
+   "risk": "high",
+   "gated": false,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "ra-supconv-attainment": {
+   "id": "ra-supconv-attainment",
+   "kind": "merge-twins",
+   "summary": "Pilot (plan table 'sup-convolution attainment, four proofs and seven corollaries'). Three proofs remain: supconv_attained_ball_rad (continuous), supconv_attained_usc_ball (usc, real^'n) and CIS.supconv_attained_usc (usc, euclidean_space; FIX_THEN_KEEP). Keep supconv_attained_usc, moved into Sup_Convolution (CIS is not an ancestor of Comparison_Localisation) with the radius conclusion. Derive the corollaries supconv_attained_usc_ball_rad, _in_rad, _family and supconv_attain_radius there. Replace supconv_le_of_local_bound by DoV's supconv_le_of_local_bound_usc (SOVA2-34). supconv_attained_ball was already deleted.",
+   "files": [
+    "Relative_Arbitrage/Comparison_Localisation.thy",
+    "Relative_Arbitrage/Comparison_Principle.thy",
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy"
+   ],
+   "facts": [
+    "supconv_attained_ball_rad",
+    "supconv_attained_usc_ball",
+    "supconv_attained_usc",
+    "supconv_attained_usc_ball_rad",
+    "supconv_attained_usc_in_rad",
+    "supconv_attained_usc_family",
+    "supconv_attain_radius",
+    "supconv_le_of_local_bound",
+    "supconv_le_of_local_bound_usc"
+   ],
+   "est_lines_saved": 180,
+   "status_now": "partly-applies",
+   "evidence": "Comparison_Localisation.thy:599 (70; used only :856), :718 (80; used CP:1556,1558, CL:808,839), :799 (15), :815 (15), :831 (11), :846 (16; used :876); Crandall_Ishii_Sums.thy:154 (90); Doubling_Of_Variables.thy:3706 (19), :3743 (25).",
+   "risk": "medium",
+   "gated": true,
+   "general_lemma": "supconv_attained_usc",
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "twin-cis-internal-duplication": {
+   "id": "twin-cis-internal-duplication",
+   "kind": "merge-twins",
+   "summary": "Pilot (D1). (a) Extract the parameter set-up shared by theorem_on_sums_quadratic (staged, a root) and theorem_on_sums_quadratic_closed (a root) into one lemma parametric in the penalty constant (\u03b1 vs al): b = -w with its usc form, M/mxb, A, C, dl, q3, ee, ddn, ee0, ee4 and gapn. (b) Extract one deconv_shift lemma (pend, penn, gsq, penc: x0 - y0 = (1-2\u03bb\u03b1)(xh-yh) and the penalty correction), now proved three times: in deconv_doubled_attains and twice in the closed theorem (galx, sumL). (c) Optional, from the independent-interest sova_sums cluster rather than the plan row: derive superjet_of_transfer/supconv_superjet_at_optimizer from the shared e-delta argument of superjet_supconv_transfer; replace linear_add_scaleR (linear_compose_add + linear_scaleR), tendsto_of_dist_bound (metric_tendsto_imp_tendsto), add_sq_le_double (sum_squares_bound) and expansion_add_centered_sq (twin of DoV.jet_transfer_quadratic). Keep all root names.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy"
+   ],
+   "facts": [
+    "theorem_on_sums_quadratic",
+    "theorem_on_sums_quadratic_closed",
+    "deconv_doubled_attains",
+    "deconv_doubled_le",
+    "superjet_of_transfer",
+    "supconv_superjet_at_optimizer",
+    "superjet_supconv_transfer",
+    "linear_add_scaleR",
+    "tendsto_of_dist_bound",
+    "add_sq_le_double",
+    "expansion_add_centered_sq",
+    "jet_transfer_quadratic"
+   ],
+   "est_lines_saved": 220,
+   "status_now": "applies",
+   "evidence": "Crandall_Ishii_Sums.thy: theorem_on_sums_quadratic 1140-1435; theorem_on_sums_quadratic_closed 2040-2662. A difflib comparison (\u03b1 renamed to al) finds 135 identical lines in blocks of 4 or more, e.g. 1155/2054 (18), 1204/2134 (32), 1299/2209 (43). Shift algebra: 1602-1631 (deconv_doubled_attains 1574-1649), 2265-2281 (galx), 2473-2504 (sumL). Small helpers: expansion_add_centered_sq 449-482, tendsto_of_dist_bound 548-565, linear_add_scaleR 569-585, add_sq_le_double 593-603, superjet_of_transfer 487-528, supconv_superjet_at_optimizer 530-544, superjet_supconv_transfer 1933-1973. Both theorems are roots (roots.txt:100-101).",
+   "risk": "medium",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "new stage set-up lemma; new deconv_shift lemma",
+   "source": "verified",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "supconv-attainment-twins": {
+   "id": "supconv-attainment-twins",
+   "kind": "merge-twins",
+   "summary": "This is the plan's gated twin 'sup-convolution attainment (four proofs, seven corollaries)'. Three proofs and four corollaries are left. Move Crandall_Ishii_Sums.supconv_attained_usc, with its helpers usc_open_lt and usc_attains_sup_compact, down into Sup_Convolution. This is a move inside SOVA, because SOVA does not see Semicontinuous_Analysis yet. Optionally add the radius to its conclusion. Then Comparison_Localisation.supconv_attained_usc_ball becomes about 5 lines (supconv_attained_usc + DoV.supconv_attain_radius). supconv_attained_usc_ball_rad, _usc_in_rad and _usc_family stay as 2- to 5-line corollaries. The continuous copy supconv_attained_ball_rad goes through supconv-uniform-upper-reprove.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy",
+    "Relative_Arbitrage/Comparison_Localisation.thy"
+   ],
+   "facts": [
+    "supconv_attained_usc",
+    "usc_attains_sup_compact",
+    "usc_open_lt",
+    "supconv_attained_usc_ball",
+    "supconv_attained_usc_ball_rad",
+    "supconv_attained_usc_in_rad",
+    "supconv_attained_usc_family",
+    "supconv_attain_radius",
+    "supconv_attained_ball_rad"
+   ],
+   "est_lines_saved": 75,
+   "status_now": "partly-applies",
+   "evidence": "CIS:154-243 supconv_attained_usc (90, 'a::euclidean_space). CL:718-797 supconv_attained_usc_ball (80, real^'n, a separate proof via usc_attains_sup_gen at CL:757). CL:799-841: 3 corollaries. supconv_attained, _in, _family_in, _ball and the continuous _in_rad/_family_in_rad are already deleted (grep: 0 hits). No paper theory imports CIS, so it has to move down first.",
+   "risk": "medium",
+   "gated": true,
+   "general_lemma": "Crandall_Ishii_Sums.supconv_attained_usc",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "cis-internal-duplication": {
+   "id": "cis-internal-duplication",
+   "kind": "merge-twins",
+   "summary": "This is the plan's gated twin 'Crandall_Ishii_Sums internal duplication' (D1, about 420 lines). (a) Delete the staged sibling theorem_on_sums_quadratic, together with its only helper sum_squeeze_pair_fst; it is a SOVA deliverable at roots.txt:101, so the roots change comes first. (b) Extract one deconv_shift lemma for the shift algebra x0 - y0 = (1 - 2 lam alpha)(xh - yh) proved three times (deconv row). (c) Derive superjet_of_transfer and supconv_superjet_at_optimizer from DoV.superjet_local_max_onesided, and share the epsilon-delta step with superjet_supconv_transfer. (d) Replace the stage's inline annulus bound with DoV.shifted_annulus_bound_split_gen. (e) Factor the parameter set-up the stage shares with the closed theorem. (f) Replace expansion_add_centered_sq by DoV.jet_transfer_quadratic, and tendsto_of_dist_bound by metric_tendsto_imp_tendsto (DELETE rows named by the stage row).",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy"
+   ],
+   "facts": [
+    "theorem_on_sums_quadratic",
+    "sum_squeeze_pair_fst",
+    "theorem_on_sums_stage",
+    "deconv_sos_identity",
+    "deconv_moreau_bound",
+    "deconv_doubled_le",
+    "deconv_doubled_attains",
+    "superjet_of_transfer",
+    "supconv_superjet_at_optimizer",
+    "superjet_supconv_transfer",
+    "supconv_optimizer_location",
+    "superjet_local_max_onesided",
+    "shifted_annulus_bound_split_gen",
+    "expansion_add_centered_sq",
+    "jet_transfer_quadratic",
+    "tendsto_of_dist_bound"
+   ],
+   "est_lines_saved": 420,
+   "status_now": "applies",
+   "evidence": "CIS:1140-1435 theorem_on_sums_quadratic (296; no user). CIS:404-435 sum_squeeze_pair_fst. The deconv shift algebra appears at CIS:1601-1606, 2262-2266 and 2472-2476. superjet_of_transfer is at 487-528 (42), supconv_superjet_at_optimizer at 530-544, superjet_supconv_transfer at 1933-1973, supconv_optimizer_location at 1796-1928 (133). The annulus block is at about 680-705. expansion_add_centered_sq is at 449-482 and tendsto_of_dist_bound at 548-565. superjet_local_max_onesided is at DoV:379, shifted_annulus_bound_split_gen at DoV:717, jet_transfer_quadratic at DoV:1111.",
+   "risk": "medium",
+   "gated": true,
+   "general_lemma": "Doubling_Of_Variables.superjet_local_max_onesided / shifted_annulus_bound_split_gen",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G2-sova",
+   "other_areas": []
+  },
+  "twin-supconv-attainment": {
+   "id": "twin-supconv-attainment",
+   "kind": "merge-twins",
+   "summary": "Pilot. Move Crandall_Ishii_Sums.supconv_attained_usc (a FIX_THEN_KEEP root) and DoV.supconv_attain_radius into Sup_Convolution. supconv_attained_usc needs usc_attains_sup_compact and usc_open_lt, so move those too: SOVA has no Semicontinuous_Analysis dependency before phase 5.2. Then derive the paper-session copies Comparison_Localisation.supconv_attained_ball_rad (continuous data) and supconv_attained_usc_ball as 3-5-line corollaries (attainment, plus the radius bound from supconv_attain_radius, with sqrt(...) <= R). The corollaries supconv_attained_usc_ball_rad, _usc_in_rad and _usc_family stay as they are. Four of the seven variants were deleted in phase 2.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy",
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Relative_Arbitrage/Comparison_Localisation.thy"
+   ],
+   "facts": [
+    "supconv_attained_usc",
+    "supconv_attain_radius",
+    "usc_attains_sup_compact",
+    "usc_open_lt",
+    "supconv_attained_ball_rad",
+    "supconv_attained_usc_ball",
+    "supconv_attained_usc_ball_rad",
+    "supconv_attained_usc_in_rad",
+    "supconv_attained_usc_family"
+   ],
+   "est_lines_saved": 130,
+   "status_now": "partly-applies",
+   "evidence": "CIS.thy:154-243 supconv_attained_usc (uses usc_attains_sup_compact at :223; uses CIS:777/780/2363/2372). DoV.thy:3706-3724 supconv_attain_radius. Comparison_Localisation.thy: supconv_attained_ball_rad 599-668 (70 lines; uses :670 text, :856, DoV:3730 text); supconv_attained_usc_ball 718-797 (80 lines; uses CP:1556/1558, CL:808/839); corollaries 799-841. grep: supconv_attained_ball, supconv_attained, _in, _family_in, _in_rad and _family_in_rad have no hits. Gate: the plan says about 470, but about 130 remain, so the pilot fails a gate of 235 as written.",
+   "risk": "medium",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "supconv_attained_usc (moved to Sup_Convolution) + supconv_attain_radius",
+   "source": "verified",
+   "group": "G2-sova",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "sova-cis-internal": {
+   "id": "sova-cis-internal",
+   "kind": "merge-twins",
+   "summary": "Pilot (plan table row 'Crandall_Ishii_Sums internal duplication', D1). The staged theorem_on_sums_quadratic and the closed theorem_on_sums_quadratic_closed repeat the whole parameter set-up. Extract a 'theorem_on_sums_family' lemma (a sequence of stages with the quantitative conjuncts and the limits dl, ee, ddn -> 0) and derive both theorems from it. Extract a deconvolution-shift algebra lemma for the three copies (deconv_doubled_attains, galx, sumL). Make superjet_of_transfer a corollary of superjet_supconv_transfer. theorem_on_sums_stage also re-proves the annulus bound inline.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy"
+   ],
+   "facts": [
+    "theorem_on_sums_quadratic",
+    "theorem_on_sums_quadratic_closed",
+    "theorem_on_sums_stage",
+    "deconv_doubled_attains",
+    "superjet_of_transfer",
+    "supconv_superjet_at_optimizer",
+    "superjet_supconv_transfer"
+   ],
+   "est_lines_saved": 300,
+   "status_now": "applies",
+   "evidence": "Crandall_Ishii_Sums.thy:1140 theorem_on_sums_quadratic (296), :2040 _closed (623), :614 _stage (503), :1574 (76), :487 (42), :530 (15), :1933 (41). The theorems are roots; most helpers are FIX_THEN_KEEP roots.",
+   "risk": "high",
+   "gated": true,
+   "source": "review",
+   "group": "G2-sova",
+   "other_areas": []
+  }
+ }
+}

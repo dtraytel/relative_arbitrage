@@ -810,6 +810,8 @@ PLAN_RESTRUCTURING_2 §8 applies, with these amendments:
 
 | 2026-10-08 | `34e6d91` | D8: `Paper_Map` (one theorem per numbered paper item, deviations stated; written by one agent, reviewed adversarially by another against the LaTeX source); its theorems are roots | Statement builds |
 
+| 2026-10-09 | `bd84eff` + fix | Phase 4, first round: chunk 0 of groups G2 (SOVA), G3 (CTM/CPS: the direct `ess_inf_pexit_usc` proof, −940 lines with the Laplace route) and G5 (path toolkit). 38 twins or special cases gone, all users re-pointed; 46 fingerprints changed, all checked: equivalent (the new `pshift_law`/`aglue_law` abbreviations, an associativity merge) or stronger (`martingale_expectation_eq`, `norm_sq_*_expand`, `superjet_supconv_form_lower`). 102 140 lines. The rest of phase 4 (20 chunks over 8 groups; work list in `data/phase4/G*-items.json`; phases 5–6 move list in `data/phase56_scope.json`) was stopped by a usage limit; G1 and G4 left unverified work on branches `p4-G1`, `p4-G4` | all sessions build; dead code 196 lines |
+
 **State after phase 2:** 104 811 lines (baseline 120 586 at `41fca32`), of which RA 53 206
 (was 64 995), SOVA 16 687 (18 461), CPS 11 352 (13 503). Dead code: 196 lines, all kept on
 purpose. Oracles on the roots: none.

@@ -1,0 +1,348 @@
+{
+ "group": "G7-value-function",
+ "chunks": [
+  [
+   "ra-ell-op-bdd-witness",
+   "bm-fourth-moment-short",
+   "ra-dpp-lower-boilerplate",
+   "ra-supersol-lsc",
+   "max-principle-corollaries",
+   "ra-exit-class-weak-limit",
+   "visc-imp-env-reuse",
+   "ra-two-quadratic-limit",
+   "twin-tanp-vs-tanpU",
+   "twin-ball-lower-plus-vs-subspace",
+   "ra-tanp-tanpU",
+   "ra-ball-lower"
+  ]
+ ],
+ "items": {
+  "ra-ell-op-bdd-witness": {
+   "id": "ra-ell-op-bdd-witness",
+   "kind": "merge-twins",
+   "summary": "Put one trace-pairing bound (trace_mult_feasible_bound via entrysum) and the witness lemmas ell_op_le_witness (without the L hypothesis) and ell_op_approx in Curvature_Operator. Derive ell_op_bdd_below from it. Delete ell_op_bdd, ell_op_le_of_witness, ell_op_s_bdd_below and ell_op_lt_witness (a 3-line corollary of ell_op_approx). Replace the 4 inline 'one feasible witness bounds F' copies. Make mgap an abbreviation over entrysum and derive mgap_le_norm from entrysum_le_norm. This merges RA-operator-5, RA-operator-22, RA-value1-8 and RA-value2-15.",
+   "files": [
+    "Relative_Arbitrage/Curvature_Operator.thy",
+    "Relative_Arbitrage/Operator_Envelopes.thy",
+    "Relative_Arbitrage/Value_Function_Subsolution.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_2.thy",
+    "Relative_Arbitrage/Operator_Formula.thy",
+    "Relative_Arbitrage/Operator_Envelope_Continuity.thy"
+   ],
+   "facts": [
+    "ell_op_bdd_below",
+    "trace_mult_feasible_bound",
+    "ell_op_bdd",
+    "ell_op_s_bdd_below",
+    "mgap",
+    "mgap_le_norm",
+    "entrysum_le_norm",
+    "ell_op_le_witness",
+    "ell_op_le_of_witness",
+    "ell_op_approx",
+    "ell_op_lt_witness"
+   ],
+   "est_lines_saved": 120,
+   "status_now": "applies",
+   "evidence": "Curvature_Operator.thy:289 (19); Operator_Envelopes.thy:152 (36), :815 (44; used :865,:878), :150, :235 (26), :860 (6), :867 (20); Value_Function_Subsolution.thy:174 (27; used Case_1:26), :44 (12; used VFS:2790); Value_Function_Supersolution_Case_1.thy:16 (18; used Case_2:90).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G7-value-function",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "bm-fourth-moment-short": {
+   "id": "bm-fourth-moment-short",
+   "kind": "swap-proof",
+   "summary": "Re-prove Value_Function_Euler_Construction.bm_coordinate_pow4 in about 6 lines from gauss_measure_fourth_moment, the coordinate distribution and integral_distr / integrable_distr_eq. Weaken 0 < h to 0 <= h. Rename bm_R2_moment for what it states (e.g. bm_norm_pow4_le) and keep its conjunct names. The move of both to WM.Product_Brownian_Motion is phase 5.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy"
+   ],
+   "facts": [
+    "bm_coordinate_pow4",
+    "bm_coordinate_pow4_integrable",
+    "bm_coordinate_pow4_integral",
+    "bm_R2_moment",
+    "bm_R2_integrable",
+    "bm_R2_integral",
+    "gauss_measure_fourth_moment"
+   ],
+   "est_lines_saved": 37,
+   "status_now": "applies",
+   "evidence": "Euler:926-968 bm_coordinate_pow4 (43; conjuncts used at Euler:987 and 1038). Euler:970-1058 bm_R2_moment (89; used at 1392). gauss_measure_fourth_moment is at WM Gaussian_Increments:99. Roots: 540-541.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Gaussian_Increments.gauss_measure_fourth_moment",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G7-value-function",
+   "other_areas": []
+  },
+  "ra-dpp-lower-boilerplate": {
+   "id": "ra-dpp-lower-boilerplate",
+   "kind": "derive-corollary",
+   "summary": "The DPP lower-bound sites in Case_2, Case_1 and Value_Function_Assembly re-derive exit_val_dpp_ge_const_time and ess_inf_timeI. Use exit_val_dpp_ge_const_time with a real-valued AE bound at the stopping-time sites, and the corollaries from ra-dpp-deterministic-half at the constant-time sites. The plain Case 1 site is gone.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_2.thy",
+    "Relative_Arbitrage/Value_Function_Assembly.thy"
+   ],
+   "facts": [
+    "exit_val_dpp_ge_const_time",
+    "ess_inf_timeI",
+    "exit_val_dpp_sup_ge"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "partly-applies",
+   "evidence": "Dynamic_Programming_Assembly.thy:856 (83); uses of exit_val_dpp_sup_ge at Case_1:2001 and Value_Function_Assembly:249. Site ranges in RA-value2-10 refer to 3bc3803.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G7-value-function",
+   "other_areas": []
+  },
+  "ra-supersol-lsc": {
+   "id": "ra-supersol-lsc",
+   "kind": "derive-corollary",
+   "summary": "exit_val_supersol_lsc repeats the case split of exit_val_supersol_lsc_local. Move the local lemma first and prove exit_val_supersol_lsc from it with rho = 1 inside the ballI/allI/impI skeleton.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_2.thy"
+   ],
+   "facts": [
+    "exit_val_supersol_lsc",
+    "exit_val_supersol_lsc_local"
+   ],
+   "est_lines_saved": 30,
+   "status_now": "applies",
+   "evidence": "Value_Function_Supersolution_Case_2.thy:1217 (42; uses :1262,:1338,:1399), :1269 (31).",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "exit_val_supersol_lsc_local",
+   "source": "review",
+   "group": "G7-value-function",
+   "other_areas": []
+  },
+  "max-principle-corollaries": {
+   "id": "max-principle-corollaries",
+   "kind": "derive-corollary",
+   "summary": "Theorem 4.2(a) is now proved for usc/lsc data (D3: Comparison_Principle.max_principle_usc_lsc). Restate its consumers as corollaries of at most 10 lines placed next to it, using usc/lsc data and the Def. 3.1 (env2) predicates. max_principle_le becomes: u <= w on K - interior K implies u <= w on K, a generalisation of the u <= 0 <= w boundary data. uniqueness_from_max_principle becomes: equal boundary data, about 5 lines. viscosity_uniqueness_compact becomes that uniqueness corollary, merging the twins. Delete comparison_from_max_principle (a special case of max_principle_le) and the predicates max_principle_boundary and max_principle_boundary_raw. Delete max_principle_boundary_holds, or keep it as a short continuous-data form; its 38-line continuity-to-epsilon-usc conversion would then want a SemiC lemma 'continuous_on K f gives relative epsilon-usc'. Rewrite the prose at OEC:565 and 648-651, CP:512-553, VD:125-139 and VFU:45. Roots keep their names: 275, 591, 599, 600.",
+   "files": [
+    "Relative_Arbitrage/Comparison_Principle.thy",
+    "Relative_Arbitrage/Operator_Envelope_Continuity.thy",
+    "Relative_Arbitrage/Viscosity_Definitions.thy",
+    "Relative_Arbitrage/Value_Function_Uniqueness.thy"
+   ],
+   "facts": [
+    "max_principle_usc_lsc",
+    "max_principle_boundary_holds",
+    "viscosity_uniqueness_compact",
+    "max_principle_le",
+    "comparison_from_max_principle",
+    "uniqueness_from_max_principle",
+    "max_principle_boundary_def",
+    "max_principle_boundary_raw_def"
+   ],
+   "est_lines_saved": 140,
+   "status_now": "partly-applies",
+   "evidence": "max_principle_usc_lsc is at CP:1291-1656. max_principle_boundary_holds (CP:1662-1719, 58 lines) is already a corollary of it, but 38 of its lines convert continuity to epsilon-usc. viscosity_uniqueness_compact is at CP:1732-1768 (37 lines; it unfolds the predicate twice). In OEC: max_principle_le at 575-595 (21), comparison_from_max_principle at 603-617 (15), uniqueness_from_max_principle at 625-646 (22). The predicates are at Viscosity_Definitions:141-157. max_principle_boundary_gen has already been deleted.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "Comparison_Principle.max_principle_usc_lsc",
+   "checked_derivation": "max_principle_boundary_holds already derives from max_principle_usc_lsc in the built tree (518daa6)",
+   "source": "verdicts",
+   "group": "G7-value-function",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "ra-exit-class-weak-limit": {
+   "id": "ra-exit-class-weak-limit",
+   "kind": "derive-corollary",
+   "summary": "exit_class_weak_limit re-derives portmanteau. Re-prove it from exit_class_convergent_subsequence plus Path_Exit_Times' weak_conv_open_liminf and weak_conv_closed_limsup, in about 30 lines.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy"
+   ],
+   "facts": [
+    "exit_class_weak_limit",
+    "exit_class_convergent_subsequence",
+    "weak_conv_open_liminf",
+    "weak_conv_closed_limsup"
+   ],
+   "est_lines_saved": 65,
+   "status_now": "applies",
+   "evidence": "Value_Function_Euler_Construction.thy:2252 (99; use :2391); Exit_Class_Tightness.thy:381; Path_Exit_Times.thy:663, :740. Reader RA-value1-16 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G7-value-function",
+   "other_areas": []
+  },
+  "visc-imp-env-reuse": {
+   "id": "visc-imp-env-reuse",
+   "kind": "swap-proof",
+   "summary": "The phase-4 part of the visc_subsol_imp_env row: use Operator_Envelopes.visc_subsol_imp_env at the live site that re-proves its interior half inline, the local-to-K touching block of Value_Function_Subsolution.exit_val_subsol_bc. The generic restatement over SOVA predicates is G-G (see viscosity-solutions-gg).",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Subsolution.thy"
+   ],
+   "facts": [
+    "visc_subsol_imp_env",
+    "exit_val_subsol_bc",
+    "exit_val_visc_subsol_any",
+    "ell_op_lsc_le_ell_op"
+   ],
+   "est_lines_saved": 15,
+   "status_now": "partly-applies",
+   "evidence": "exit_val_subsol_bc is at VFS:2850-2932. The loc/ball block (2879-2915) and the closing ell_op_lsc_le_ell_op step (2927-2931) repeat visc_subsol_imp_env (OE:547-570). The review cited lines 3420-3475; the file has since shrunk.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "Operator_Envelopes.visc_subsol_imp_env",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G7-value-function",
+   "other_areas": []
+  },
+  "ra-two-quadratic-limit": {
+   "id": "ra-two-quadratic-limit",
+   "kind": "merge-twins",
+   "summary": "eulerp_limit_good2_region proves the same per-quadratic step twice (AErn1/2, AEall1/2, rat1/2), and Case_2 calls it with the same quadratic twice. Factor the per-quadratic lemma, parameterised by P and Praw, and provide one- and two-quadratic corollaries; use the one-quadratic form in Case_2.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_2.thy"
+   ],
+   "facts": [
+    "eulerp_limit_good2_region"
+   ],
+   "est_lines_saved": 80,
+   "status_now": "applies",
+   "evidence": "Value_Function_Supersolution_Case_1.thy:1234 (206). Inner ranges in RA-value2-9 refer to 3bc3803.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G7-value-function",
+   "other_areas": []
+  },
+  "twin-tanp-vs-tanpU": {
+   "id": "twin-tanp-vs-tanpU",
+   "kind": "merge-twins",
+   "summary": "Pilot. Generalise Value_Function_Tangential_Field.subspace_tangential_exact_growth to an arbitrary centre y0 (field \u03bbz. tanpU P (uvecV P \u03c1 (z - y0))). Obtain VFSC1.tangential_exact_growth as the instance with an orthonormal basis of all of real^'n (orthonormal_family_containing with m = CARD('n)). Then delete the tanp/uvec block (tanp, tanp_mv, tanp_sym, tanp_sq, tanp_trace, tanp_kill, uvec, uvec_unit, uvec_norm_le, uvec_par, uvec_cont, tanp_sq_sconstraint, tanRF_cont). This needs an import change: VFTF imports VFSC1, so tangential_exact_growth and its user exit_val_ball_lower_plus must move into VFTF, and Value_Function_Supersolution_Case_2 (user at :834) must import VFTF instead of VFSC1. Best done together with twin-ball-lower-plus-vs-subspace.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy",
+    "Relative_Arbitrage/Value_Function_Tangential_Field.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_2.thy"
+   ],
+   "facts": [
+    "tanp",
+    "uvec",
+    "tanp_sq_sconstraint",
+    "tanRF_cont",
+    "tangential_exact_growth",
+    "tanpU",
+    "uvecV",
+    "subspace_tangential_exact_growth",
+    "tanpU_sq_sconstraint",
+    "orthonormal_family_containing"
+   ],
+   "est_lines_saved": 370,
+   "status_now": "applies",
+   "evidence": "VFSC1.thy: tanp block 374-496 (tanp 381, uvec 450); tanp_sq_sconstraint 1452-1534; tanRF_cont 1536-1552; tangential_exact_growth 1554-1746 (used only at :1805 in exit_val_ball_lower_plus 1759-2016). All tanp/uvec uses lie in these blocks (grep line list). VFTF.thy: tanpU 129, uvecV 132, subspace_tangential_exact_growth 551-847 (used Value_Function_Assembly:77). Imports: VFTF imports VFSC1; VFSC2 imports VFSC1; VFA imports VFSC2 and VFTF.",
+   "risk": "high",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "subspace_tangential_exact_growth (with centre y0)",
+   "source": "verified",
+   "group": "G7-value-function",
+   "other_areas": []
+  },
+  "twin-ball-lower-plus-vs-subspace": {
+   "id": "twin-ball-lower-plus-vs-subspace",
+   "kind": "merge-twins",
+   "summary": "Pilot. Prove one exit_val_ball_lower_gen in Value_Function_Tangential_Field: centre y0, projector P, \u03b2 at most the value on the ball, any cc < min T \u03b4. Derive VFSC1.exit_val_ball_lower_plus (P = 1, cc = min(T/2, \u03b4/2)) and Value_Function_Assembly.exit_val_ball_lower_subspace (\u03b2 = 0) from it; the confinement and DPP steps (IN, inB, essge/esle) are textually identical. This needs the same import change as twin-tanp-vs-tanpU (VFSC2 imports VFTF), so do the two together.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy",
+    "Relative_Arbitrage/Value_Function_Assembly.thy",
+    "Relative_Arbitrage/Value_Function_Tangential_Field.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_2.thy"
+   ],
+   "facts": [
+    "exit_val_ball_lower_plus",
+    "exit_val_ball_lower_subspace",
+    "exit_val_ball_lower_sharp",
+    "radial_sq_upto",
+    "radial_sq_upto_gen",
+    "exit_val_dpp_sup_ge"
+   ],
+   "est_lines_saved": 200,
+   "status_now": "applies",
+   "evidence": "VFSC1.thy:1759-2016 exit_val_ball_lower_plus (used VFSC2:834); Value_Function_Assembly.thy:27-253 exit_val_ball_lower_subspace (used :259 by exit_val_ball_lower_sharp, which is used by Value_Function_Uniqueness:406/460). Reader RA-value2-5 gives matching blocks (old line numbers).",
+   "risk": "high",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "exit_val_ball_lower_gen (new)",
+   "source": "verified",
+   "group": "G7-value-function",
+   "other_areas": []
+  },
+  "ra-tanp-tanpU": {
+   "id": "ra-tanp-tanpU",
+   "kind": "merge-twins",
+   "summary": "Pilot (plan table 'tanp/uvec vs tanpU/uvecV'). The tanp/uvec block and tangential_exact_growth in Case_1 are the P = mat 1 instance of Value_Function_Tangential_Field's tanpU/uvecV and subspace_tangential_exact_growth. Generalise the subspace family to a centre y0 and obtain the Case_1 versions as instances (orthonormal basis via orthonormal_family_containing). Value_Function_Tangential_Field imports Case_1, so the generalised family must move before Case_1. This also resolves the small tangential copies of RA-value2-19.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy",
+    "Relative_Arbitrage/Value_Function_Tangential_Field.thy"
+   ],
+   "facts": [
+    "tanp_mv",
+    "tanp_sym",
+    "tanp_sq",
+    "tanp_trace",
+    "tanp_kill",
+    "uvec_unit",
+    "uvec_norm_le",
+    "uvec_par",
+    "uvec_cont",
+    "tanp_sq_sconstraint",
+    "tanRF_cont",
+    "tangential_exact_growth",
+    "tanpU",
+    "uvecV",
+    "tanpUV_cont",
+    "subspace_tangential_exact_growth",
+    "orthonormal_family_containing"
+   ],
+   "est_lines_saved": 350,
+   "status_now": "partly-applies",
+   "evidence": "Value_Function_Supersolution_Case_1.thy:384-497 (tanp/uvec block), :1452 (83), :1536 (17), :1554 (193); Value_Function_Tangential_Field.thy:129, :132, :378, :551 (297). grep finds no tanp_psd, tanp_eigen_ub, tanp_eigen_lb, tanp_feasible or tanp_sconstraint (deleted in phase 2).",
+   "risk": "high",
+   "gated": true,
+   "source": "review",
+   "group": "G7-value-function",
+   "other_areas": []
+  },
+  "ra-ball-lower": {
+   "id": "ra-ball-lower",
+   "kind": "merge-twins",
+   "summary": "Pilot (plan table 'exit_val_ball_lower_plus vs _subspace'). The two lemmas share a 200-line confinement plus DPP argument. Prove one exit_val_ball_lower_gen (centre y0, projector P, beta >= value on the ball, any cc < min T delta) and derive exit_val_ball_lower_plus (used by Case_2.exit_val_not_locally_constant), exit_val_ball_lower_subspace and exit_val_ball_lower_sharp. Case_2 does not see Value_Function_Assembly or Tangential_Field, so the gen lemma must sit in Case_1 or earlier.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy",
+    "Relative_Arbitrage/Value_Function_Assembly.thy"
+   ],
+   "facts": [
+    "exit_val_ball_lower_plus",
+    "exit_val_ball_lower_subspace",
+    "exit_val_ball_lower_sharp",
+    "exit_val_not_locally_constant"
+   ],
+   "est_lines_saved": 200,
+   "status_now": "applies",
+   "evidence": "Value_Function_Supersolution_Case_1.thy:1759 (258); Value_Function_Assembly.thy:27 (227), :259 (69); Value_Function_Supersolution_Case_2.thy:751. Ancestry: Case_2 imports only Case_1.",
+   "risk": "high",
+   "gated": true,
+   "source": "review",
+   "group": "G7-value-function",
+   "other_areas": []
+  }
+ }
+}

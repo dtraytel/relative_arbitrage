@@ -1,0 +1,1178 @@
+{
+ "group": "G1-matrix-semic",
+ "chunks": [
+  [
+   "ra-onormal-outer-sum",
+   "sms-parseval-outer-reproofs",
+   "semic-berge-twins",
+   "semic-sequential-glue",
+   "berge-type-class-corollary",
+   "usc-extension-generic",
+   "semic-usc-env-eq",
+   "lsc-env-eq-at",
+   "semic-compact-dense-seq",
+   "semic-ennreal-dense",
+   "dense-seq-from-afp"
+  ],
+  [
+   "sms-possum-full-corollary",
+   "sms-exists-min-subset",
+   "sms-trace-spectral-proj",
+   "sms-matvec-library-names",
+   "sms-same-statement-pairs",
+   "sms-symmetric-swap-triple",
+   "sms-orthogonal-affine-library",
+   "sms-matvec-norm-onorm",
+   "sms-small-library-wrappers",
+   "sms-projection-twins",
+   "sms-one-liner-proofs"
+  ],
+  [
+   "sms-onormal-extension-corollary",
+   "sms-dim-inter",
+   "is-proj-rank1-corollary",
+   "lib-matcher-equiv-list",
+   "ra-operator-formula-near-dups",
+   "envelope-evidence-def-3-1",
+   "countably-valued-approx-separable",
+   "sms-rotation-householder-twins",
+   "sms-spectral-psd-argument-clones",
+   "sms-local-min-hessian",
+   "sms-orthonormal-representations"
+  ],
+  [
+   "sova-quadratic-test-derivatives",
+   "local-min-second-order",
+   "eigenbasis-containing-family",
+   "eigenvalue-at-every-index",
+   "sms-eigenbasis-extension",
+   "ra-psd-eigendecomposition",
+   "ra-envelope-skeleton",
+   "cis-semicontinuity-reproofs"
+  ]
+ ],
+ "items": {
+  "ra-onormal-outer-sum": {
+   "id": "ra-onormal-outer-sum",
+   "kind": "merge-twins",
+   "summary": "'The orthonormal outer-product sum is psd with eigen_lb >= |T|' is shown three times. State one onormal_outer_sum_props lemma (psd, eigen_lb (card T), eigen_ub 1, trace = card T) in Curvature_Operator, and use it in feasible_witness, onormal_sum_suff_volatile and the weighted outer-sum lemmas.",
+   "files": [
+    "Relative_Arbitrage/Curvature_Operator.thy",
+    "Relative_Arbitrage/Constraint_Set_Convexity.thy",
+    "Relative_Arbitrage/Operator_Formula.thy",
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy"
+   ],
+   "facts": [
+    "feasible_witness",
+    "onormal_sum_suff_volatile",
+    "eigen_ub_weighted_outer_sum",
+    "eigen_lb_weighted_outer_sum",
+    "psd_weighted_outer_sum"
+   ],
+   "est_lines_saved": 70,
+   "status_now": "applies",
+   "evidence": "Curvature_Operator.thy:94 feasible_witness (95); Constraint_Set_Convexity.thy:206 (41); Operator_Formula.thy:721 (20), :746 (46); Poincare_Separation.thy:427 (17).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "sms-parseval-outer-reproofs": {
+   "id": "sms-parseval-outer-reproofs",
+   "kind": "library-reproof",
+   "summary": "Delete the Pair_Path_Laws re-proofs of Symmetric_Matrix_Spectra facts. onormal_parseval becomes parseval_onormal, and quadform_sum_outer becomes quadform_weighted_outer_sum_eq. Move onormal_span_parseval to Orthonormal_Families and matvec_sum_outer to Outer_Products. Restate the outerp lemmas as one-liners through outerp_eq_outer_prod: trace_mult_outerp_sum, trace_outerp, norm_outerp, outerp_sq, quadform_outerp, traceM_sum_outer. Prove psd_mat_1 by simp with psd_def. This merges SMS-9 and RA-path1-12 with the Section 3.2 matcher rows. The hessian_abs_bound_of_two_sided pair of SMS-9 is obsolete, because the SMS twin was deleted in phase 2.",
+   "files": [
+    "Relative_Arbitrage/Pair_Path_Laws.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy",
+    "Relative_Arbitrage/Value_Function_Subsolution.thy",
+    "Symmetric_Matrix_Spectra/Orthonormal_Families.thy",
+    "Symmetric_Matrix_Spectra/Outer_Products.thy"
+   ],
+   "facts": [
+    "onormal_parseval",
+    "parseval_onormal",
+    "quadform_sum_outer",
+    "quadform_weighted_outer_sum_eq",
+    "matvec_sum_outer",
+    "onormal_span_parseval",
+    "trace_mult_outerp_sum",
+    "trace_outerp",
+    "norm_outerp",
+    "outerp_sq",
+    "quadform_outerp",
+    "traceM_sum_outer",
+    "psd_mat_1"
+   ],
+   "est_lines_saved": 70,
+   "status_now": "applies",
+   "evidence": "Pair_Path_Laws.thy:1896 onormal_parseval (15; one use Value_Function_Subsolution.thy:1622), :1819 quadform_sum_outer (16; uses PPL:1904, VFS:1547,1549), :1780 matvec_sum_outer (13), :1933 onormal_span_parseval (15), :697,:2210,:489(16),:163,:1852(25),:19(9); Pair_Path_Space.thy:773 (19). Poincare_Separation.thy:325 parseval_onormal, :229 quadform_weighted_outer_sum_eq. Pair_Path_Laws imports Poincare_Separation. semiconvex_hessian_abs_bound no longer exists.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G5-toolkit",
+    "G7-value-function"
+   ]
+  },
+  "semic-berge-twins": {
+   "id": "semic-berge-twins",
+   "kind": "derive-corollary",
+   "summary": "Both Berge theorems are roots, with line-parallel proofs of about 90 lines each. Derive usc_sup_over_compact in about 5 lines as the Y = euclidean instance of usc_sup_over_compactin, moving it after. Optionally re-prove the compactin version via tube_lemma_right.",
+   "files": [
+    "Semicontinuous_Analysis/Berge.thy"
+   ],
+   "facts": [
+    "usc_sup_over_compact",
+    "usc_sup_over_compactin"
+   ],
+   "est_lines_saved": 85,
+   "status_now": "applies",
+   "evidence": "Berge.thy:34 usc_sup_over_compact (90), :327 usc_sup_over_compactin (91); both are roots (roots.txt, Berge section). Their uses at Berge.thy:128 and :315 are prose only.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "usc_sup_over_compactin",
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "semic-sequential-glue": {
+   "id": "semic-sequential-glue",
+   "kind": "library-reproof",
+   "summary": "Add Metric_space.limitin_of_dist_bound (via limitin_metric_dist_null and tendsto_sandwich) and a 'metrizable_space obtains a metric' lemma. Use them for limitin_of_dist_half (a FIX_THEN_KEEP root), for the limy/limQ blocks of box_of_sequential, and for the 4 metrizable_space_def unpackings. closure_of_sequential_limit and seq_compact_closure_of were deleted in phase 2, so only this part remains.",
+   "files": [
+    "Semicontinuous_Analysis/Berge.thy",
+    "Semicontinuous_Analysis/Semicontinuous_Selection.thy"
+   ],
+   "facts": [
+    "limitin_of_dist_half",
+    "box_of_sequential",
+    "closure_of_sequential_limit",
+    "seq_compact_closure_of"
+   ],
+   "est_lines_saved": 40,
+   "status_now": "partly-applies",
+   "evidence": "Semicontinuous_Selection.thy:729 limitin_of_dist_half (16; used Exit_Class_Optimizer.thy:549, Path_Law_Pasting.thy:1869); Berge.thy:143 box_of_sequential (90). grep finds no closure_of_sequential_limit or seq_compact_closure_of.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "berge-type-class-corollary": {
+   "id": "berge-type-class-corollary",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: Berge). Replace the copied 90-line proof of Berge.usc_sup_over_compact with a 3-5-line corollary of usc_sup_over_compactin (via compactin_euclidean_iff and open = openin euclidean). Move it after that lemma.",
+   "files": [
+    "Semicontinuous_Analysis/Berge.thy"
+   ],
+   "facts": [
+    "usc_sup_over_compact",
+    "usc_sup_over_compactin"
+   ],
+   "est_lines_saved": 85,
+   "status_now": "applies",
+   "evidence": "Berge:34-123 usc_sup_over_compact (90). Berge:327-417 usc_sup_over_compactin (91) does not use it (grep: 0 hits in 327-417; mentions at 128 and 315 are text).",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Berge.usc_sup_over_compactin",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "usc-extension-generic": {
+   "id": "usc-extension-generic",
+   "kind": "merge-twins",
+   "summary": "The general form asked for by the usc_extension_bounded row already exists as Semicontinuity.usc_extend_rel (usc relative to closed K and C <= f on K make the C-extension usc). Restate usc_extension_bounded as a corollary of about 10 lines (C = -B, plus the bound). Rewire Comparison_Two_Domain:320 from DoV.usc_extend_const_below to usc_extend_rel; global usc implies relative usc, and lo plus CB give C <= u on K. Then delete the SOVA copy now: it has no SOVA user, and Relative_Arbitrage already sees Semicontinuous_Analysis. Fix the prose at DoV:2057-2061, CTD:762 and CL:710.",
+   "files": [
+    "Semicontinuous_Analysis/Semicontinuity.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Relative_Arbitrage/Comparison_Two_Domain.thy"
+   ],
+   "facts": [
+    "usc_extension_bounded",
+    "usc_extend_rel",
+    "usc_extend_const_below"
+   ],
+   "est_lines_saved": 65,
+   "status_now": "applies",
+   "evidence": "Semicontinuity:196-244 usc_extension_bounded (49) and Semicontinuity:313-338 usc_extend_rel (already used at CP:1352/1373). DoV:2063-2094 usc_extend_const_below (32); its only proof user is CTD:320. Root at roots.txt:422.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Semicontinuity.usc_extend_rel",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G2-sova",
+    "G8-operator-comparison"
+   ]
+  },
+  "semic-usc-env-eq": {
+   "id": "semic-usc-env-eq",
+   "kind": "derive-corollary",
+   "summary": "usc_env_eq_self is a verbatim copy of usc_env_eq_at with a stronger usc hypothesis. Move usc_env_eq_at first and prove usc_env_eq_self by rule. Also (FIX_THEN_KEEP) restate lsc_env_eq_self through a pointwise lsc_env_eq_at, derived in about 3 lines from usc_env_eq_at applied to -u, with the continuity form kept as a corollary.",
+   "files": [
+    "Semicontinuous_Analysis/Semicontinuous_Envelopes.thy"
+   ],
+   "facts": [
+    "usc_env_eq_self",
+    "usc_env_eq_at",
+    "lsc_env_eq_self"
+   ],
+   "est_lines_saved": 45,
+   "status_now": "applies",
+   "evidence": "Semicontinuous_Envelopes.thy:235-261 and :459-485 are the same proof text. lsc_env_eq_self :294 (31; FIX_THEN_KEEP root). usc_env_eq_self is used once, at Comparison_Two_Domain.thy:811.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "usc_env_eq_at",
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "lsc-env-eq-at": {
+   "id": "lsc-env-eq-at",
+   "kind": "fix-then-keep",
+   "summary": "Restate Semicontinuous_Envelopes.lsc_env_eq_self as lsc_env_eq_at, assuming epsilon-form lsc at x instead of isCont. It follows in about 3 lines from usc_env_eq_at applied to -u, since usc_env u = - lsc_env (-u) by definition. Keep the continuity version as a 1-line corollary for its consumer in Value_Function_Supersolution_Case_2.",
+   "files": [
+    "Semicontinuous_Analysis/Semicontinuous_Envelopes.thy"
+   ],
+   "facts": [
+    "lsc_env_eq_self",
+    "usc_env_eq_at",
+    "usc_env_def",
+    "lsc_env_eq_at"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "SE:294-324 lsc_env_eq_self (31). SE:459-485 usc_env_eq_at. SE:29-30: usc_env u x = - lsc_env (lambda y. - u y) x. Users of lsc_env_eq_self: VFSC2:587 and 598. Root at roots.txt:423.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Semicontinuous_Envelopes.usc_env_eq_at",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "semic-compact-dense-seq": {
+   "id": "semic-compact-dense-seq",
+   "kind": "library-reproof",
+   "summary": "compact_space_dense_seq is a FIX_THEN_KEEP root. Re-prove it in about 6 lines from Standard_Borel_Spaces' compact_space_imp_separable, separable_space_def2, mdense_def2 and from_nat_into, importing Set_Based_Metric_Space if needed.",
+   "files": [
+    "Semicontinuous_Analysis/Semicontinuous_Selection.thy"
+   ],
+   "facts": [
+    "compact_space_dense_seq"
+   ],
+   "est_lines_saved": 42,
+   "status_now": "applies",
+   "evidence": "Semicontinuous_Selection.thy:40 Metric_space.compact_space_dense_seq (49), used at :507 and :691. The theory imports Standard_Borel_Spaces.Lemmas_StandardBorel. independent_interest.md:735.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "semic-ennreal-dense": {
+   "id": "semic-ennreal-dense",
+   "kind": "library-reproof",
+   "summary": "ennreal_strict_between is the class axiom 'dense'. Delete it, write 'using dense by blast' at its uses, and fix its false comment.",
+   "files": [
+    "Semicontinuous_Analysis/Semicontinuous_Selection.thy",
+    "Continuous_Path_Spaces/Path_Exit_Times.thy",
+    "Relative_Arbitrage/Exit_Class_Optimizer.thy",
+    "Relative_Arbitrage/Pair_Path_Space.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Delayed_Class.thy"
+   ],
+   "facts": [
+    "ennreal_strict_between"
+   ],
+   "est_lines_saved": 15,
+   "status_now": "applies",
+   "evidence": "Semicontinuous_Selection.thy:19 (17 lines); uses Path_Exit_Times.thy:1667, Exit_Class_Optimizer.thy:264,387, Pair_Path_Space.thy:1393, Dynamic_Programming_Delayed_Class.thy:151, Semicontinuous_Selection.thy:436.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G4-cps",
+    "G5-toolkit",
+    "G6-class-dpp"
+   ]
+  },
+  "dense-seq-from-afp": {
+   "id": "dense-seq-from-afp",
+   "kind": "library-reproof",
+   "summary": "Replace the nets re-proof of Semicontinuous_Selection.compact_space_dense_seq with about 6 lines from AFP Set_Based_Metric_Space.compact_space_imp_separable, separable_space_def2, mdense_def2 and from_nat_into. Preferably state it for separable_space mtopology with M nonempty, which is what the generalised countably_valued_approx needs.",
+   "files": [
+    "Semicontinuous_Analysis/Semicontinuous_Selection.thy"
+   ],
+   "facts": [
+    "Metric_space.compact_space_dense_seq",
+    "compact_space_imp_separable",
+    "separable_space_def2"
+   ],
+   "est_lines_saved": 43,
+   "status_now": "applies",
+   "evidence": "SSel:40-88 (49 lines). It is used at SSel:507 and 691. compact_space_imp_separable is at /opt/afp/thys/Standard_Borel_Spaces/Set_Based_Metric_Space.thy:1201. Root at roots.txt:424.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Set_Based_Metric_Space.compact_space_imp_separable",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-possum-full-corollary": {
+   "id": "sms-possum-full-corollary",
+   "kind": "derive-corollary",
+   "summary": "Prove possum_full_eq_sum_basis as possum_within_threshold[OF B sym eig subset_refl onormal_span_card[OF B]], with the vacuous threshold, after moving it below possum_within_threshold. The users are downstream in Operator_Formula.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Ky_Fan.thy"
+   ],
+   "facts": [
+    "possum_full_eq_sum_basis",
+    "possum_within_threshold",
+    "onormal_span_card"
+   ],
+   "est_lines_saved": 64,
+   "status_now": "applies",
+   "evidence": "Ky_Fan.thy:1274 possum_full_eq_sum_basis (69 lines), :1515 possum_within_threshold (92). Uses at Operator_Formula.thy:590 and :961.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "possum_within_threshold",
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-exists-min-subset": {
+   "id": "sms-exists-min-subset",
+   "kind": "derive-corollary",
+   "summary": "Make exists_min_subset a 3-line corollary of exists_top_subset[where f = \u03bbu. - w u], and fix its prose.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Ky_Fan.thy"
+   ],
+   "facts": [
+    "exists_min_subset",
+    "exists_top_subset"
+   ],
+   "est_lines_saved": 42,
+   "status_now": "applies",
+   "evidence": "Ky_Fan.thy:1824 exists_min_subset (46 lines), :289 exists_top_subset (64).",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "exists_top_subset",
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-trace-spectral-proj": {
+   "id": "sms-trace-spectral-proj",
+   "kind": "derive-corollary",
+   "summary": "Delete trace_mult_spectral_proj, which is trace_mult_outer_sum with three unused hypotheses, and use trace_mult_outer_sum. Drop the eig hypothesis from spectral_proj_trace.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Ky_Fan.thy",
+    "Symmetric_Matrix_Spectra/Outer_Products.thy"
+   ],
+   "facts": [
+    "trace_mult_spectral_proj",
+    "trace_mult_outer_sum",
+    "spectral_proj_trace"
+   ],
+   "est_lines_saved": 20,
+   "status_now": "applies",
+   "evidence": "Ky_Fan.thy:218 trace_mult_spectral_proj (23), :549 spectral_proj_trace (17); Outer_Products.thy:42 trace_mult_outer_sum (a root).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-matvec-library-names": {
+   "id": "sms-matvec-library-names",
+   "kind": "library-reproof",
+   "summary": "Replace the Matrix_Algebra re-proofs of Finite_Cartesian_Product, Cartesian_Space, Cartesian_Euclidean_Space and Determinants lemmas by the library names. matvec_add_right becomes matrix_vector_right_distrib. matvec_diff_right and matrix_vector_mult_diff_gen become matrix_vector_mult_diff_distrib. matvec_scaleR_right becomes matrix_vector_mult_scaleR. matrix_vector_mult_diff and matrix_vector_mult_add (19 lines each) become the _rdistrib lemmas. scaleR_matrix_vector becomes scaleR_matrix_vector_assoc[symmetric], and scaleR_matrix_mult becomes scalar_matrix_assoc[symmetric]. matmul_scaleR_right becomes matrix_scalar_ac. inner_transpose_matrix becomes transpose_mv_inner. matvec_blin becomes matrix_vector_mul_bounded_linear. matrix_vec_apply becomes matrix_vector_mul. inner_axis_one and axis1_inner become inner_axis'. matrix_vector_axis_one and matvec_axis1 become matrix_vector_mult_basis. trace_diff_matrix becomes trace_sub. Keep a one-line 'lemmas' alias only where simp orientation matters. This covers the Section 3.1 matcher's '8 Matrix_Algebra distributivity lemmas' and RA-value2-21.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy",
+    "Relative_Arbitrage/Value_Function_Tangential_Field.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy"
+   ],
+   "facts": [
+    "scaleR_matrix_vector",
+    "matvec_add_right",
+    "matrix_vector_mult_diff",
+    "matrix_vector_mult_diff_gen",
+    "matvec_diff_right",
+    "matvec_scaleR_right",
+    "matrix_vector_mult_add",
+    "scaleR_matrix_mult",
+    "matmul_scaleR_right",
+    "inner_transpose_matrix",
+    "matvec_blin",
+    "matrix_vec_apply",
+    "inner_axis_one",
+    "axis1_inner",
+    "matrix_vector_axis_one",
+    "matvec_axis1",
+    "trace_diff_matrix"
+   ],
+   "est_lines_saved": 105,
+   "status_now": "applies",
+   "evidence": "All exist: Matrix_Algebra.thy:68,88,93(19),244,619,624,657(19),60,1331,192(13),1311,2442,573,1225(11),578(13),1247(11); Poincare_Separation.thy:23. Use counts: scaleR_matrix_vector 26 in 11 files, inner_transpose_matrix 26 in 11, matvec_scaleR_right 23 in 7, scaleR_matrix_mult 16 in 8, matvec_blin 13 in 5. Library names grep-verified in src/HOL/Analysis.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "sms-same-statement-pairs": {
+   "id": "sms-same-statement-pairs",
+   "kind": "merge-twins",
+   "summary": "Keep one lemma of each same-statement pair in Matrix_Algebra and redirect the uses: neg_matrix_vector / matrix_vector_neg_left; transpose_diff_matrix / transpose_matrix_diff; matrix_vector_mult_vsum / matvec_sum_right; transpose_matrix_sum / transpose_sum_matrix (Poincare_Separation, has a needless 'finite S'); diag_eq_inner_axis / diag_entry_quadform; transpose_shift_add / transpose_shifted_block; transpose_shift_diff / transpose_sub_smat; bounded_linear_cross / bounded_linear_cross_pair; matmul_sandwich_blin / conj_mat_continuous. The two axis pairs are handled by sms-matvec-library-names.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy"
+   ],
+   "facts": [
+    "neg_matrix_vector",
+    "matrix_vector_neg_left",
+    "transpose_diff_matrix",
+    "transpose_matrix_diff",
+    "matrix_vector_mult_vsum",
+    "matvec_sum_right",
+    "transpose_matrix_sum",
+    "transpose_sum_matrix",
+    "diag_eq_inner_axis",
+    "diag_entry_quadform",
+    "transpose_shift_add",
+    "transpose_shifted_block",
+    "transpose_shift_diff",
+    "transpose_sub_smat",
+    "bounded_linear_cross",
+    "bounded_linear_cross_pair",
+    "matmul_sandwich_blin",
+    "conj_mat_continuous"
+   ],
+   "est_lines_saved": 75,
+   "status_now": "applies",
+   "evidence": "All pairs exist: Matrix_Algebra.thy:73/226, 113/1974, 120(14)/1958(12), 27/Poincare_Separation.thy:411(5), 1040(10)/1062(11), 710(21)/2270(15), 732(10)/1420(10), 1104(6)/1120(9), 1314(16)/2363(13). transpose_matrix_sum is a library root (roots.txt), so keep that one.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-symmetric-swap-triple": {
+   "id": "sms-symmetric-swap-triple",
+   "kind": "merge-twins",
+   "summary": "Keep one 'symmetric Z swaps the arguments of its bilinear form' lemma (in Matrix_Algebra, next to inner_transpose_matrix) and rename the uses of the other two. The three are inner_matrix_sym (20-line entrywise proof, used in Doubling_Of_Variables), matrix_symmetric_swap (used in Theorem_On_Sums) and sym_inner_swap (11 occurrences in 6 files). This is the Section 3.2 matcher row.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Symmetric_Matrix_Spectra/Symmetric_Spectral.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy"
+   ],
+   "facts": [
+    "inner_matrix_sym",
+    "matrix_symmetric_swap",
+    "sym_inner_swap"
+   ],
+   "est_lines_saved": 28,
+   "status_now": "applies",
+   "evidence": "Matrix_Algebra.thy:249 inner_matrix_sym (21), :2477 matrix_symmetric_swap (11); Symmetric_Spectral.thy:24 sym_inner_swap (13). Users of sym_inner_swap: Operator_Formula, Operator_Continuity, Curvature_Operator, Poincare_Separation, Ky_Fan.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G2-sova"
+   ]
+  },
+  "sms-orthogonal-affine-library": {
+   "id": "sms-orthogonal-affine-library",
+   "kind": "library-reproof",
+   "summary": "Replace the orthogonal-matrix and affine-image block by HOL-Analysis lemmas. orthogonal_matrixI becomes orthogonal_transformation_matrix. orth_preserves_inner and norm_orthogonal_matrix_vector follow from orthogonal_transformation_def/_norm. affine_interior_image becomes interior_translation plus interior_injective_linear_image. open_orth_image and open_affine_image become open_affinity. Delete the helpers affine_interior_sub, affine_inv_shape, affine_inv_left and affine_inv_right, but keep affine_inv_dist (used by Comparison_Two_Domain).",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Symmetric_Matrix_Spectra/Householder_Rotation.thy"
+   ],
+   "facts": [
+    "orthogonal_matrixI",
+    "orth_preserves_inner",
+    "norm_orthogonal_matrix_vector",
+    "open_orth_image",
+    "open_affine_image",
+    "affine_interior_sub",
+    "affine_inv_shape",
+    "affine_inv_left",
+    "affine_inv_right",
+    "affine_interior_image",
+    "affine_inv_dist"
+   ],
+   "est_lines_saved": 140,
+   "status_now": "applies",
+   "evidence": "Matrix_Algebra.thy:684(17), :772(14), :914(29), :944(12), :957(7), :968(6), :975(13), :989(14), :1004(34), :2380 affine_inv_dist; Householder_Rotation.thy:97 orthogonal_matrixI (27). Library names grep-verified: Cartesian_Space.thy:866/873, Topology_Euclidean_Space.thy:2147, Elementary_Normed_Spaces.thy:1223/1238.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-matvec-norm-onorm": {
+   "id": "sms-matvec-norm-onorm",
+   "kind": "library-reproof",
+   "summary": "Prove matvec_norm_le via onorm and matrix_vector_mul_bounded_linear plus onorm_le_matrix_component_sum, and drop sum_sq_le_sq_sum. Move entrysum (with entrysum_nonneg/_sym, and entrysum_le_norm/entry_abs_le_norm from Poincare_Separation) into Matrix_Algebra. Derive inner_quadform_bound in one line from quadform_abs_le.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Symmetric_Matrix_Spectra/Eigenvalue_Continuity.thy",
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy"
+   ],
+   "facts": [
+    "matvec_norm_le",
+    "sum_sq_le_sq_sum",
+    "inner_quadform_bound",
+    "quadform_abs_le",
+    "entrysum",
+    "entrysum_le_norm",
+    "entry_abs_le_norm"
+   ],
+   "est_lines_saved": 85,
+   "status_now": "applies",
+   "evidence": "Matrix_Algebra.thy:1259 matvec_norm_le (43), :314 sum_sq_le_sq_sum (29), :1199 quadform_abs_le (25); Eigenvalue_Continuity.thy:21 entrysum, :32 inner_quadform_bound (35); Poincare_Separation.thy:1068,1080. onorm_le_matrix_component_sum is at Cartesian_Euclidean_Space.thy:132.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-small-library-wrappers": {
+   "id": "sms-small-library-wrappers",
+   "kind": "library-reproof",
+   "summary": "Delete three wrappers in favour of the library: invertible_matrix_vector_inj (inj_matrix_vector_mult plus injD), finite_arg_min_on (arg_min_if_finite plus arg_min_least, 9 uses) and exists_enum_of_card (finite_same_card_bij). Shorten compact_cball_bound, unit_normalize, norm_le_card_Basis_bound and tendsto_entry to one-liners. compact_cball_bound is used by Statement.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Symmetric_Matrix_Spectra/Ky_Fan.thy"
+   ],
+   "facts": [
+    "invertible_matrix_vector_inj",
+    "finite_arg_min_on",
+    "exists_enum_of_card",
+    "compact_cball_bound",
+    "unit_normalize",
+    "norm_le_card_Basis_bound",
+    "tendsto_entry"
+   ],
+   "est_lines_saved": 45,
+   "status_now": "applies",
+   "evidence": "Matrix_Algebra.thy:1941(14), :1342(9), :2421(11), :1982(12), :271(13), :2223(5); Ky_Fan.thy:811 finite_arg_min_on (14).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-projection-twins": {
+   "id": "sms-projection-twins",
+   "kind": "merge-twins",
+   "summary": "Keep the is_proj versions in Ky_Fan. Replace the raw-projection lemmas proj_inner_self, proj_inner_self' and proj_norm_le in Matrix_Algebra by 'is_proj P ==> psd P' and 'norm (P *v w) <= norm w' next to them, and redirect the one Value_Function_Tangential_Field use. Make trace_proj_psd_nonneg a one-liner from trace_mult_psd_nonneg.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Symmetric_Matrix_Spectra/Ky_Fan.thy",
+    "Relative_Arbitrage/Value_Function_Tangential_Field.thy"
+   ],
+   "facts": [
+    "proj_inner_self",
+    "proj_norm_le",
+    "proj_quadform_self",
+    "proj_quadform_le_self",
+    "trace_proj_psd_nonneg",
+    "trace_mult_psd_nonneg"
+   ],
+   "est_lines_saved": 40,
+   "status_now": "applies",
+   "evidence": "Matrix_Algebra.thy:2048 proj_inner_self (12), :2061 the primed twin (9), :2102 proj_norm_le (22); Ky_Fan.thy:431 (14), :451 (29), :201 trace_proj_psd_nonneg (13); Symmetric_Spectral.thy:352.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "sms-one-liner-proofs": {
+   "id": "sms-one-liner-proofs",
+   "kind": "swap-proof",
+   "summary": "Shorten long proofs of facts that are one-liners from neighbouring lemmas. matrix_shift_apply: one simp. onormal_span_card: onormal_independent plus onormal_card_dim_span. continuous_on_trace_mult_right and continuous_on_quadform: from bounded_linear_trace_mult_right and bounded_linear_quadform. trace_mult_diff/_scaleR/_add/_zero_right: linear_* of bounded_linear_trace_mult_left. kyfan_0: reuse trace_mult_zero_right. psd_convex_comb: quadform_convex_comb. trace_nonneg_psd (unused) versus psd_diag_nonneg. possum_lipschitz: two symmetric halves.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Symmetric_Matrix_Spectra/Orthonormal_Families.thy",
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy",
+    "Symmetric_Matrix_Spectra/Ky_Fan.thy",
+    "Symmetric_Matrix_Spectra/Symmetric_Spectral.thy"
+   ],
+   "facts": [
+    "matrix_shift_apply",
+    "onormal_span_card",
+    "continuous_on_trace_mult_right",
+    "continuous_on_quadform",
+    "trace_mult_diff",
+    "kyfan_0",
+    "psd_convex_comb",
+    "trace_nonneg_psd",
+    "possum_lipschitz"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "applies",
+   "evidence": "Matrix_Algebra.thy:2292 matrix_shift_apply (21), :1086 (12), :1179, :1051 trace_nonneg_psd (10; only its definition matches by grep); Orthonormal_Families.thy:255 (17); Poincare_Separation.thy:1121 (11), :687 possum_lipschitz (58); Ky_Fan.thy:742 kyfan_0 (27); Symmetric_Spectral.thy:385 (20).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-onormal-extension-corollary": {
+   "id": "sms-onormal-extension-corollary",
+   "kind": "derive-corollary",
+   "summary": "Move onormal_extension_within before onormal_extension and prove onormal_extension (a library root) as onormal_extension_within[OF B subspace_UNIV subset_UNIV]. Its proof uses only onormal_def and onormal_basis_subspace, not onormal_extension, so the move is safe.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Orthonormal_Families.thy"
+   ],
+   "facts": [
+    "onormal_extension",
+    "onormal_extension_within"
+   ],
+   "est_lines_saved": 75,
+   "status_now": "applies",
+   "evidence": "Orthonormal_Families.thy:118 onormal_extension (79 lines), :273 onormal_extension_within (93). grep of 273-366 shows no use of onormal_extension. onormal_extension is used at :213 and Ky_Fan.thy:189.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "onormal_extension_within",
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-dim-inter": {
+   "id": "sms-dim-inter",
+   "kind": "derive-corollary",
+   "summary": "Derive subspace_inter_nonzero from dim_inter_ge after reordering. Both make the same dim_sums_Int argument.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy"
+   ],
+   "facts": [
+    "subspace_inter_nonzero",
+    "dim_inter_ge"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "Poincare_Separation.thy:288 subspace_inter_nonzero (31), :613 dim_inter_ge (12).",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "dim_inter_ge",
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "is-proj-rank1-corollary": {
+   "id": "is-proj-rank1-corollary",
+   "kind": "derive-corollary",
+   "summary": "COROLLARY that keeps its name (home: Ky_Fan, next to onormal_proj). Restate Poincare_Separation.is_proj_rank1 in 2-3 lines as onormal_proj[of {x}] plus simp on onormal_def. Moving it into Ky_Fan is optional, because PS already sees Ky_Fan.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy"
+   ],
+   "facts": [
+    "is_proj_rank1",
+    "onormal_proj",
+    "is_proj_compl_rank1"
+   ],
+   "est_lines_saved": 9,
+   "status_now": "applies",
+   "evidence": "PS:53-64 (12 lines; used at PS:136/140). onormal_proj is at Ky_Fan:152. PS imports Eigenvalue_Continuity, which imports Ky_Fan. Root at roots.txt:601.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Ky_Fan.onormal_proj",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "lib-matcher-equiv-list": {
+   "id": "lib-matcher-equiv-list",
+   "kind": "library-reproof",
+   "summary": "Redirect the matcher's EQUIV/INSTANCE clones (REVIEW_3 section 3.1) to the library names, keeping one-line 'lemmas' aliases where a name has many uses or simp orientation matters. The mapping: CTM bm_prj_measurable -> borel_measurable_nth; CTM prob_space_pair_measure -> prob_space_pair; CTM integral_of_bounded_linear -> integral_bounded_linear; SMS trace_diff_matrix -> trace_sub; SOVA inner_sum_scaleR_Basis -> inner_sum_left_Basis; SOVA abs_norm_diff_le -> norm_triangle_ineq3; ToS norm_Pair_right_zero/norm_Pair_left_zero -> norm_Pair1/norm_Pair2. For the '8 Matrix_Algebra distributivity lemmas', my reading of the SMS-2 mapping is: scaleR_matrix_mult -> scalar_matrix_assoc[symmetric]; scaleR_matrix_vector -> scaleR_matrix_vector_assoc[symmetric]; matvec_add_right -> matrix_vector_right_distrib; matrix_vector_mult_diff -> matrix_vector_mult_diff_rdistrib; matrix_vector_mult_diff_gen and matvec_diff_right -> matrix_vector_mult_diff_distrib; matvec_scaleR_right -> matrix_vector_mult_scaleR; matrix_vector_mult_add -> matrix_vector_mult_add_rdistrib. This overlaps phase 5.4 (SMS loses the 8 distributivity lemmas and trace_diff_matrix) and phase 5.5 (CTM loses bm_prj_measurable); do it once.",
+   "files": [
+    "Continuous_Time_Martingales/Integrability_Criteria.thy",
+    "Continuous_Time_Martingales/Martingale_Transfer.thy",
+    "Continuous_Time_Martingales/Martingale_Algebra.thy",
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy",
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Second_Order_Viscosity_Analysis/Rademacher.thy",
+    "Second_Order_Viscosity_Analysis/Soft_Penalty.thy",
+    "Second_Order_Viscosity_Analysis/Theorem_On_Sums.thy"
+   ],
+   "facts": [
+    "bm_prj_measurable",
+    "prob_space_pair_measure",
+    "integral_of_bounded_linear",
+    "trace_diff_matrix",
+    "inner_sum_scaleR_Basis",
+    "abs_norm_diff_le",
+    "norm_Pair_left_zero",
+    "norm_Pair_right_zero",
+    "scaleR_matrix_mult",
+    "scaleR_matrix_vector",
+    "matvec_add_right",
+    "matrix_vector_mult_diff",
+    "matrix_vector_mult_diff_gen",
+    "matvec_diff_right",
+    "matvec_scaleR_right",
+    "matrix_vector_mult_add"
+   ],
+   "est_lines_saved": 120,
+   "status_now": "applies",
+   "evidence": "All still defined: Integrability_Criteria.thy:711 bm_prj_measurable (uses ECW:437/453/479); Martingale_Transfer.thy:29-38 prob_space_pair_measure (13 uses); Martingale_Algebra.thy:305-313 integral_of_bounded_linear (about 25 uses, so keep an alias); Poincare_Separation.thy:23-26 trace_diff_matrix (8 uses); Rademacher.thy:860-872; Soft_Penalty.thy:346-355; Theorem_On_Sums.thy:36-45. Matrix_Algebra.thy: 60, 68 (26 uses), 88, 93-112, 244, 619, 624 (23 uses), 657-676. Not PIDE-checked one by one; the matcher found them.",
+   "risk": "medium",
+   "gated": false,
+   "checked_derivation": "Matcher only (Review_Analysis A2 EQUIV/INSTANCE; REVIEW_3.md section 3.1 table row; reader_findings_by_cluster.md SMS-2 for the Matrix_Algebra mapping). No PIDE derivation in verification_results.md.",
+   "general_lemma": "",
+   "source": "verified",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G2-sova",
+    "G3-ctm-wm"
+   ]
+  },
+  "ra-operator-formula-near-dups": {
+   "id": "ra-operator-formula-near-dups",
+   "kind": "merge-twins",
+   "summary": "Factor bracket_shift_le out of bracket_Mp_top_eigenvector and bracket_ge_shifted. Factor an eigval_threshold_witness lemma in Ky_Fan for the two threshold-set blocks. Derive sum_min_eigval_ge from Pi_constraint_capped_trace, or keep one capped-trace argument. Merge ell_op_usc_zero_zero_lt_one into ell_op_usc_small_shift_lt_one with a 'norm M < 1/(2B)' hypothesis. Shorten Eigenvalue_Bound_Exact's arithmetic (shift_convex_combination is a FIX_THEN_KEEP root; needs a PIDE check).",
+   "files": [
+    "Relative_Arbitrage/Operator_Formula.thy",
+    "Relative_Arbitrage/Eigenvalue_Bound_Exact.thy",
+    "Relative_Arbitrage/Operator_Envelopes.thy",
+    "Symmetric_Matrix_Spectra/Ky_Fan.thy"
+   ],
+   "facts": [
+    "bracket_Mp_top_eigenvector",
+    "bracket_ge_shifted",
+    "sum_min_eigval_ge",
+    "Pi_constraint_capped_trace",
+    "ell_op_usc_zero_zero_lt_one",
+    "ell_op_usc_small_shift_lt_one",
+    "shift_convex_combination",
+    "eigval_eq_min_of_threshold"
+   ],
+   "est_lines_saved": 120,
+   "status_now": "applies",
+   "evidence": "Operator_Formula.thy:1380 (88), :1595 (81), :423 (50); Eigenvalue_Bound_Exact.thy:413 (74), :97 (61); Operator_Envelopes.thy:1157 (28), :400 (50); Ky_Fan.thy:967. Reader RA-operator-30 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "envelope-evidence-def-3-1": {
+   "id": "envelope-evidence-def-3-1",
+   "kind": "fix-then-keep",
+   "summary": "Replace Value_Function_Supersolution_Case_2.visc_supersol_lsc_iff_env, which is about predicates the statement does not use, with Paper_Readings evidence that the envelopes of Definition 3.1 are invisible on semicontinuous functions. (1) New lsc_envK_eq_self in Semicontinuous_Envelopes, about 30 lines, modelled on lsc_env_eq_self. (2) Supersolution side: for u continuous on K, visc_supersol_env2 k L K Omega (lsc_envK K u) iff visc_supersol_env2 k L K Omega u. (3) Subsolution side: for u usc relative to K, Def. 3.1(a) with the K-relative upper envelope (-lsc_envK K (-u)) iff visc_subsol_env2. Fix the comment at Theorem_1_1_Statement:165-167 and delete the stale prose at VFSC2:583-590 and VFU:48.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_2.thy",
+    "Semicontinuous_Analysis/Semicontinuous_Envelopes.thy",
+    "Statement/Paper_Readings.thy",
+    "Statement/Theorem_1_1_Statement.thy",
+    "Relative_Arbitrage/Value_Function_Uniqueness.thy"
+   ],
+   "facts": [
+    "visc_supersol_lsc_iff_env",
+    "lsc_env_eq_self",
+    "lsc_envK_def",
+    "lsc_envK_eq_self",
+    "visc_supersol_env2",
+    "visc_subsol_env2"
+   ],
+   "est_lines_saved": -40,
+   "status_now": "applies",
+   "evidence": "VFSC2:591-634 (44 lines; only a text mention at VFU:48). lsc_envK is defined at SE:343; lsc_envK_eq_self and usc_envK do not exist (grep: 0 hits). Theorem_1_1_Statement:165-167 still attributes the asymmetry to 'Definition 3.1's own asymmetry'. Root at roots.txt:543.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "Semicontinuous_Envelopes.lsc_env_eq_self (pattern)",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G7-value-function",
+    "G8-operator-comparison"
+   ]
+  },
+  "countably-valued-approx-separable": {
+   "id": "countably-valued-approx-separable",
+   "kind": "fix-then-keep",
+   "summary": "Generalise Semicontinuous_Selection.countably_valued_approx from a compact to a separable mtopology with M nonempty. Fold limitin_of_dist_half into it as an extra limitin conclusion, or generalise it to Metric_space.limitin_of_dist_bound via limitin_metric_dist_null. That general lemma also replaces the two inline repeats in Berge.box_of_sequential. The move to CPS is phase 5.",
+   "files": [
+    "Semicontinuous_Analysis/Semicontinuous_Selection.thy",
+    "Semicontinuous_Analysis/Berge.thy"
+   ],
+   "facts": [
+    "Metric_space.countably_valued_approx",
+    "Metric_space.limitin_of_dist_half",
+    "box_of_sequential",
+    "limitin_metric_dist_null"
+   ],
+   "est_lines_saved": 20,
+   "status_now": "applies",
+   "evidence": "SSel:680-727 (48) and SSel:729-744 (16). It is live: it is used at Exit_Class_Optimizer:511 inside exit_class_kglue_law'. Berge:143-232 is box_of_sequential (90).",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "Metric_space.limitin_of_dist_bound (new)",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-rotation-householder-twins": {
+   "id": "sms-rotation-householder-twins",
+   "kind": "merge-twins",
+   "summary": "Derive rotv_orthogonal and rotm_orthogonal (a root) from orthogonal_matrix_mul plus hrefl_orthogonal (a root, currently unused). Define rotm through rotv, or the reverse, and derive one lemma family from the other. Move rank1proj and its generic lemmas from Operator_Continuity/Operator_Formula into Outer_Products or Ky_Fan. Define hrefl through rank1proj, and phrase is_proj_rank1 (a COROLLARY root) and is_proj_compl_rank1 with rank1proj.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Householder_Rotation.thy",
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy",
+    "Relative_Arbitrage/Operator_Continuity.thy",
+    "Relative_Arbitrage/Operator_Formula.thy"
+   ],
+   "facts": [
+    "rotv",
+    "rotm",
+    "rotv_orthogonal",
+    "rotm_orthogonal",
+    "hrefl_orthogonal",
+    "hrefl",
+    "rank1proj",
+    "is_proj_rank1",
+    "is_proj_compl_rank1"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "Householder_Rotation.thy:248 rotv, :251 rotv_orthogonal (20), :302 rotm, :309 rotm_orthogonal (8), :125 hrefl_orthogonal (2); Poincare_Separation.thy:53 is_proj_rank1 (12), :67 is_proj_compl_rank1 (39). roots.txt lists hrefl_orthogonal, rotm_orthogonal and is_proj_rank1 (COROLLARY). Reader SMS-16 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "sms-spectral-psd-argument-clones": {
+   "id": "sms-spectral-psd-argument-clones",
+   "kind": "derive-corollary",
+   "summary": "Derive is_proj_decomp's spectral-expansion step (Peq) from spectral_decomposition. Reuse exists_top_subset for kyfan_attained's Subs/Max step. Make psd_limit a corollary of closed_psd plus closed_sequential_limits, moving closed_psd and closed_symmetric_matrices into Symmetric_Spectral. Derive trace_mult_psd_nonneg from trace_mult_eigen_weights, which needs a reorder.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Ky_Fan.thy",
+    "Symmetric_Matrix_Spectra/Symmetric_Spectral.thy",
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy",
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy"
+   ],
+   "facts": [
+    "is_proj_decomp",
+    "spectral_decomposition",
+    "kyfan_attained",
+    "exists_top_subset",
+    "psd_limit",
+    "closed_psd",
+    "closed_symmetric_matrices",
+    "transpose_limit",
+    "trace_mult_psd_nonneg",
+    "trace_mult_eigen_weights"
+   ],
+   "est_lines_saved": 80,
+   "status_now": "applies",
+   "evidence": "Ky_Fan.thy:40 is_proj_decomp (109), :573 kyfan_attained (100), :289 exists_top_subset (64), :496 trace_mult_eigen_weights (31); Symmetric_Spectral.thy:415 spectral_decomposition (43), :520 psd_limit (21), :352 trace_mult_psd_nonneg (32); Poincare_Separation.thy:1134,1146; Matrix_Algebra.thy:2229 transpose_limit (24).",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-local-min-hessian": {
+   "id": "sms-local-min-hessian",
+   "kind": "fix-then-keep",
+   "summary": "local_min_gradient_zero and local_min_hessian_psd (about 175 lines, real^'n, in Matrix_Algebra) are FIX_THEN_KEEP roots. They are the second-order necessary condition, and the live SOVA twin second_order_interior_max proves the same at euclidean_space. Move them to SOVA and derive them from second_order_interior_max through a 'test_fun_at gives a Peano expansion' bridge, or relate the two in one direction.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy",
+    "Second_Order_Viscosity_Analysis/Test_Functions.thy"
+   ],
+   "facts": [
+    "local_min_hessian_psd",
+    "local_min_gradient_zero",
+    "second_order_interior_max"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "applies",
+   "evidence": "Matrix_Algebra.thy:359 local_min_gradient_zero (13), :373 local_min_hessian_psd (the block runs to the text at :550). Sup_Convolution.thy:418 second_order_interior_max (124). roots.txt:412-413 FIX_THEN_KEEP. independent_interest.md:732.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "second_order_interior_max",
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G2-sova"
+   ]
+  },
+  "sms-orthonormal-representations": {
+   "id": "sms-orthonormal-representations",
+   "kind": "derive-corollary",
+   "summary": "Derive orthonormal_family_containing (nat-indexed) from HOL's vector_in_orthonormal_basis, or from onormal_extension of {x0} plus an enumeration. State orthonormal_inj and orthonormal_dim_span as corollaries of onormal_independent and onormal_card_dim_span, or move the consumer to onormal.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Symmetric_Matrix_Spectra/Orthonormal_Families.thy"
+   ],
+   "facts": [
+    "orthonormal_family_containing",
+    "orthonormal_inj",
+    "orthonormal_dim_span",
+    "onormal_independent",
+    "onormal_card_dim_span"
+   ],
+   "est_lines_saved": 80,
+   "status_now": "applies",
+   "evidence": "Matrix_Algebra.thy:2125 orthonormal_family_containing (71), :1995 orthonormal_inj (16), :2012 orthonormal_dim_span (31); Orthonormal_Families.thy:241,247. Reader SMS-31 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sova-quadratic-test-derivatives": {
+   "id": "sova-quadratic-test-derivatives",
+   "kind": "merge-twins",
+   "summary": "Generalise Matrix_Algebra.quadratic_test_grad_derivative to an arbitrary point and delete Doubling_Of_Variables.quadratic_grad_derivative_at; this is the Section 3.2 matcher pair. Derive test_fun_at_quadratic and test_fun_at_shifted_quadratic from has_derivative_quadratic_form and quadratic_test_derivative. Factor the d2/d3/d4 computations shared by test_fun_C2_quartic_shift and test_fun_at_quartic_shift. Factor the gradient chain rule and Hessian conjugation shared by test_fun_at_affine (a FIX_THEN_KEEP root) and test_fun_C2_affine. Factor test_fun_at_scaleR and test_fun_C2_scaleR the same way.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Second_Order_Viscosity_Analysis/Doubling_Of_Variables.thy",
+    "Second_Order_Viscosity_Analysis/Test_Functions.thy"
+   ],
+   "facts": [
+    "quadratic_grad_derivative_at",
+    "quadratic_test_grad_derivative",
+    "has_derivative_quadratic_form",
+    "quadratic_test_derivative",
+    "test_fun_at_quadratic",
+    "test_fun_at_shifted_quadratic",
+    "test_fun_C2_quartic_shift",
+    "test_fun_at_quartic_shift",
+    "test_fun_at_affine",
+    "test_fun_C2_affine",
+    "test_fun_at_scaleR",
+    "test_fun_C2_scaleR"
+   ],
+   "est_lines_saved": 140,
+   "status_now": "applies",
+   "evidence": "Doubling_Of_Variables.thy:102 (11); Matrix_Algebra.thy:2543 (14), :2489 (22), :2518 (24); Test_Functions.thy:628 (47), :689 (39), :507 (61), :575 (52), :209 (117), :341 (96), :136 (35), :172 (34). Reader SOVA2-32 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G2-sova"
+   ]
+  },
+  "local-min-second-order": {
+   "id": "local-min-second-order",
+   "kind": "fix-then-keep",
+   "summary": "Restate the classical second-order necessary condition, Matrix_Algebra.local_min_hessian_psd with its helper local_min_gradient_zero. State it at 'a::euclidean_space with a bounded linear Hessian, as the min-dual of Sup_Convolution.second_order_interior_max. Prove the bridge 'g differentiable at x gives a second-order Peano expansion of psi at x', and derive the condition from second_order_interior_max applied to -psi instead of the MVT proof. The home is SOVA (Sup_Convolution or a small Second_Order_Conditions theory); the move out of SMS is phase 5.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Matrix_Algebra.thy",
+    "Second_Order_Viscosity_Analysis/Sup_Convolution.thy"
+   ],
+   "facts": [
+    "local_min_gradient_zero",
+    "local_min_hessian_psd",
+    "second_order_interior_max",
+    "has_derivative_local_min"
+   ],
+   "est_lines_saved": 100,
+   "status_now": "applies",
+   "evidence": "MA:359-371 local_min_gradient_zero (13) and MA:373-548 local_min_hessian_psd (176; real^'n, matrix Hessian). Their only other mention is the text at Curvature_Operator:322. second_order_interior_max is at SupC:418-541. Roots: 412-413.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "Sup_Convolution.second_order_interior_max",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G2-sova"
+   ]
+  },
+  "eigenbasis-containing-family": {
+   "id": "eigenbasis-containing-family",
+   "kind": "fix-then-keep",
+   "summary": "Generalise Poincare_Separation.eigenbasis_containing_eigenvector: every orthonormal family C of eigenvectors of a symmetric matrix extends to an orthonormal eigenbasis. Prove it by invariant_subspace_eigenbasis_ex on the orthogonal complement of span C, plus union; this replaces the repeated induction step. Keep the singleton form as a short corollary for Operator_Formula:1145, and move both to Symmetric_Spectral.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy",
+    "Symmetric_Matrix_Spectra/Symmetric_Spectral.thy",
+    "Relative_Arbitrage/Operator_Formula.thy"
+   ],
+   "facts": [
+    "eigenbasis_containing_eigenvector",
+    "invariant_subspace_eigenbasis_ex",
+    "Mp_eigenbasis_of_M_eigenvector"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "applies",
+   "evidence": "PS:463-562 (100 lines). Its single consumer is at OF:1145. invariant_subspace_eigenbasis_ex is at Symmetric_Spectral:232.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "Symmetric_Spectral.invariant_subspace_eigenbasis_ex",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "eigenvalue-at-every-index": {
+   "id": "eigenvalue-at-every-index",
+   "kind": "fix-then-keep",
+   "summary": "Generalise Poincare_Separation.exists_top_eigenvector from eigval 1 to every 1 <= i <= CARD('n): there is a unit q with a *v q = eigval i a *R q. Use the argument of eigval_antimono (exists_top_subset with card i, finite_arg_min_on, eigval_eq_min_of_threshold). Keep the i = 1 form as a corollary for OEC:42 and 102.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy",
+    "Symmetric_Matrix_Spectra/Ky_Fan.thy"
+   ],
+   "facts": [
+    "exists_top_eigenvector",
+    "eigval_antimono",
+    "exists_top_subset",
+    "finite_arg_min_on",
+    "eigval_eq_min_of_threshold"
+   ],
+   "est_lines_saved": -15,
+   "status_now": "applies",
+   "evidence": "PS:565-605 (41 lines). It is used at OEC:42 and 102. The tools are at Ky_Fan:289, 811, 967 and 1004.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "Ky_Fan.eigval_eq_min_of_threshold",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "sms-eigenbasis-extension": {
+   "id": "sms-eigenbasis-extension",
+   "kind": "merge-twins",
+   "summary": "Factor out one 'eigenbasis_extend' lemma: a symmetric a, an invariant subspace S and a unit eigenvector u in S give an eigenbasis of S containing u. Use it in the induction step of invariant_subspace_eigenbasis_ex and in eigenbasis_containing_eigenvector (a FIX_THEN_KEEP root). ra-Mp-eigenbasis then uses it too.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Symmetric_Spectral.thy",
+    "Symmetric_Matrix_Spectra/Poincare_Separation.thy"
+   ],
+   "facts": [
+    "invariant_subspace_eigenbasis_ex",
+    "eigenbasis_containing_eigenvector"
+   ],
+   "est_lines_saved": 70,
+   "status_now": "applies",
+   "evidence": "Symmetric_Spectral.thy:232 invariant_subspace_eigenbasis_ex (107 lines); Poincare_Separation.thy:463 eigenbasis_containing_eigenvector (100). Reader SMS-14 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": []
+  },
+  "ra-psd-eigendecomposition": {
+   "id": "ra-psd-eigendecomposition",
+   "kind": "merge-twins",
+   "summary": "The psd eigendecomposition boilerplate is repeated. Add psd_eigendecomposition (with an optional bij_betw enumeration) to Symmetric_Spectral, and use it in rotSF_exists, Value_Function_Subsolution, Eigenvalue_Bound_Exact and the 4 Operator_Formula sites.",
+   "files": [
+    "Symmetric_Matrix_Spectra/Symmetric_Spectral.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy",
+    "Relative_Arbitrage/Value_Function_Subsolution.thy",
+    "Relative_Arbitrage/Eigenvalue_Bound_Exact.thy",
+    "Relative_Arbitrage/Operator_Formula.thy"
+   ],
+   "facts": [
+    "rotSF_exists",
+    "symmetric_eigenbasis",
+    "exists_enum_of_card"
+   ],
+   "est_lines_saved": 60,
+   "status_now": "applies",
+   "evidence": "Value_Function_Supersolution_Case_1.thy:165 rotSF_exists (172). Other site ranges in RA-value2-23 refer to 3bc3803. Reader confidence is medium.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G7-value-function",
+    "G8-operator-comparison"
+   ]
+  },
+  "ra-envelope-skeleton": {
+   "id": "ra-envelope-skeleton",
+   "kind": "merge-twins",
+   "summary": "Four epsilon-delta envelope arguments share one skeleton (ell_op_lsc_at_zero, ell_op_usc_at_zero_le, ell_op_lsc_off_zero, ell_op_usc_off_zero), and the envelope-limit facts (ell_op_lsc_le_of_nearby, ell_op_usc_ge_of_nearby, ell_op_usc_ge_one_limit, the inline sequence argument in visc_supersol_env_imp_jet) repeat each other. Prove generic 'envelope from a ball bound' and envelope-limit lemmas once, for an ereal-valued ball envelope (Semicontinuous_Envelopes is real-valued with global bounds), and reduce each to about 10 lines. The _of_shifts and _elliptic_le variants were deleted in phase 2. This merges RA-operator-21 and RA-comparison-12; the ereal envelope overlaps phase 7 (G-G).",
+   "files": [
+    "Relative_Arbitrage/Operator_Envelopes.thy",
+    "Relative_Arbitrage/Operator_Envelope_Continuity.thy",
+    "Relative_Arbitrage/Comparison_Localisation.thy",
+    "Relative_Arbitrage/Comparison_Strictness.thy",
+    "Semicontinuous_Analysis/Semicontinuous_Envelopes.thy"
+   ],
+   "facts": [
+    "ell_op_lsc_at_zero",
+    "ell_op_usc_at_zero_le",
+    "ell_op_lsc_off_zero",
+    "ell_op_usc_off_zero",
+    "ell_op_lsc_le_of_nearby",
+    "ell_op_usc_ge_of_nearby",
+    "ell_op_usc_ge_one_limit",
+    "visc_supersol_env_imp_jet"
+   ],
+   "est_lines_saved": 180,
+   "status_now": "partly-applies",
+   "evidence": "Operator_Envelopes.thy:451 (80), :88 (30); Operator_Envelope_Continuity.thy:127 (68), :338 (64), :403 (61); Comparison_Localisation.thy:285 (24), :310 (23); Comparison_Strictness.thy:217 (84). grep finds no ell_op_lsc_le_of_shifts or ell_op_lsc_elliptic_le. Both findings have medium confidence.",
+   "risk": "high",
+   "gated": false,
+   "source": "review",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G8-operator-comparison"
+   ]
+  },
+  "cis-semicontinuity-reproofs": {
+   "id": "cis-semicontinuity-reproofs",
+   "kind": "library-reproof",
+   "summary": "The plan row's 'CIS re-proofs of Semicontinuity lemmas'. Current state: CIS.usc_open_lt has exactly the statement of Semicontinuity.open_usc_sublevel, and CIS.usc_form_of_continuous is Semicontinuity.usc_eps_of_continuous at continuous_on UNIV. But CIS.usc_attains_sup_compact (a FIX_THEN_KEEP root) is STRONGER than Semicontinuity.usc_attains_sup_gen (a root): it needs no bound B. So the replacement runs the other way: move usc_attains_sup_compact into Semicontinuity and re-derive usc_attains_sup_gen from it. All of this needs SOVA to depend on Semicontinuous_Analysis (ROOT 'sessions'), which is phase 5.2. Until then only the Semicontinuity-side derivation of usc_attains_sup_gen is possible, and it requires copying the 28-line proof there. Coordinate with twin-supconv-attainment, which moves usc_attains_sup_compact and usc_open_lt into Sup_Convolution.",
+   "files": [
+    "Second_Order_Viscosity_Analysis/Crandall_Ishii_Sums.thy",
+    "Semicontinuous_Analysis/Semicontinuity.thy"
+   ],
+   "facts": [
+    "usc_open_lt",
+    "open_usc_sublevel",
+    "usc_attains_sup_compact",
+    "usc_attains_sup_gen",
+    "usc_form_of_continuous",
+    "usc_eps_of_continuous"
+   ],
+   "est_lines_saved": 40,
+   "status_now": "partly-applies",
+   "evidence": "CIS.thy: usc_open_lt 111-124, usc_attains_sup_compact 126-152 (text 107-109 says SOVA sits on plain HOL-Analysis), usc_form_of_continuous 1764-1785 (uses 2091/2093). Semicontinuity.thy: usc_attains_sup_gen 78-103 (assumes B), usc_eps_of_continuous 168-189 (isCont f z), open_usc_sublevel 340-352. Second_Order_Viscosity_Analysis/ROOT 'sessions' lists only Symmetric_Matrix_Spectra. independent_interest.md row 960 (verifier: 'not twins ... strictly stronger'). The plan's 120 is too high: about 40 lines.",
+   "risk": "medium",
+   "gated": true,
+   "checked_derivation": "",
+   "general_lemma": "usc_attains_sup_compact (moved into Semicontinuity in phase 5.2)",
+   "source": "verified",
+   "group": "G1-matrix-semic",
+   "other_areas": [
+    "G2-sova"
+   ]
+  }
+ }
+}

@@ -1,0 +1,730 @@
+{
+ "group": "G6-class-dpp",
+ "chunks": [
+  [
+   "lib-lipschitz-absolutely-continuous",
+   "ra-covariation-density-lipschitz",
+   "ra-covariation-density-rademacher",
+   "ra-eigen-ub-bounds",
+   "ra-padd-pglue-diffquot",
+   "ra-pdelclass-frozen",
+   "ra-exit-val-borel-measurable",
+   "weak-borel-to-prob-algebra-bridge",
+   "outerp-duplicate",
+   "eigen-ub-diag-rederive"
+  ],
+  [
+   "ra-exit-class-infinite-repeats",
+   "ra-modification-detour",
+   "exit-val-attained-corollary",
+   "ra-exit-class-compactin",
+   "ra-moment-bounds-class",
+   "cps-weak-limit-prob-space",
+   "exit-val-boundary-zero-corollary",
+   "lib-bm-coordinates-indep",
+   "wm-bm-coordinates-indep-afp",
+   "ra-exit-val-ge-of-ae"
+  ],
+  [
+   "ra-exit-val-cond-ball",
+   "ra-diffquot-closed-limit",
+   "ra-selector-berge",
+   "kglue-law-drop-Kb",
+   "ra-mean-in-convex",
+   "exit-class-fourth-moment-instance",
+   "ra-subsol-stopped-moments",
+   "ra-X-comp-dynamic-programming"
+  ]
+ ],
+ "items": {
+  "lib-lipschitz-absolutely-continuous": {
+   "id": "lib-lipschitz-absolutely-continuous",
+   "kind": "library-reproof",
+   "summary": "Delete Covariation_Density.lipschitz_imp_absolutely_continuous_on and its section header. At its one use (Covariation_Density.thy:226), use HOL-Analysis Absolute_Continuity.Lipschitz_imp_absolutely_continuous. Correct the intro text (Covariation_Density.thy:21-26), which says neither analytic step is in the Isabelle distribution.",
+   "files": [
+    "Relative_Arbitrage/Covariation_Density.thy"
+   ],
+   "facts": [
+    "lipschitz_imp_absolutely_continuous_on",
+    "Lipschitz_imp_absolutely_continuous"
+   ],
+   "est_lines_saved": 44,
+   "status_now": "applies",
+   "evidence": "Covariation_Density.thy: section 28, lemma 30-72; only use :226 (rule ... [where M = M]). The text at 21-26 claims the step is not in the distribution or the AFP.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "verification_results.md, libdup-check, claim 1 (lemma C1 quoted). Scratch file: verify/libdup-check/LibDup_A.thy (C1).",
+   "general_lemma": "Absolute_Continuity.Lipschitz_imp_absolutely_continuous",
+   "source": "verified",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-covariation-density-lipschitz": {
+   "id": "ra-covariation-density-lipschitz",
+   "kind": "library-reproof",
+   "summary": "Section 3.1. Replace lipschitz_imp_absolutely_continuous_on (42 lines, one use at :226) by HOL's Lipschitz_imp_absolutely_continuous (1 line, checked), and correct the false claim at Covariation_Density.thy:22-25 that the step is not in the distribution.",
+   "files": [
+    "Relative_Arbitrage/Covariation_Density.thy"
+   ],
+   "facts": [
+    "lipschitz_imp_absolutely_continuous_on",
+    "Lipschitz_imp_absolutely_continuous"
+   ],
+   "est_lines_saved": 41,
+   "status_now": "applies",
+   "evidence": "Covariation_Density.thy:30-71; use :226; text :22-25 'Neither of the two analytic steps ... is available in the Isabelle distribution'. Absolute_Continuity.thy:859.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, libdup-check claim 1",
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-covariation-density-rademacher": {
+   "id": "ra-covariation-density-rademacher",
+   "kind": "derive-corollary",
+   "summary": "Shorten vector_derivative_in_closed_set via SOVA's dquot_tendsto_vector_derivative, and the Lipschitz step of dq_imp_density via CPS's diffquot_lipschitz. Covariation_Density currently imports only library theories (it checks early), so this adds imports of Rademacher and Increment_Moments; weigh this against the planned phase-5 move of the theory to Continuous_Path_Spaces.",
+   "files": [
+    "Relative_Arbitrage/Covariation_Density.thy"
+   ],
+   "facts": [
+    "vector_derivative_in_closed_set",
+    "dq_imp_density",
+    "dquot_tendsto_vector_derivative",
+    "diffquot_lipschitz"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "partly-applies",
+   "evidence": "Covariation_Density.thy:127 (52), :191 (59); Rademacher.thy:344; Increment_Moments.thy:2233 (42). Covariation_Density imports Disintegration, Great_Picard, Dyadic_Interval, Holder_Continuous, Prokhorov_Theorem and Martingale only.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-eigen-ub-bounds": {
+   "id": "ra-eigen-ub-bounds",
+   "kind": "fix-then-keep",
+   "summary": "Diagonal, entry, norm and trace bounds for psd/eigen_ub matrices are proved four or more times. eigen_ub_diag (FIX_THEN_KEEP, 'general form of three live lemmas', currently unused) and psd_eigen_ub_diag, psd_eigen_ub_entry_abs_le and a psd_eigen_ub_norm_le go next to eigen_ub in Curvature_Operator. Derive from them in 1-2 lines: sconstraint_diag, sconstraint_diag_le, feasible_entry_bound, sconstraint_norm_le, sconstraint_trace_ge, sconstraint_trace_le (restated as n*L) and feasible_trace_le. The Ball_Solution and market copies are already gone. This merges RA-operator-4, RA-class-13, RA-market-10 and RA-value1-9.",
+   "files": [
+    "Relative_Arbitrage/Curvature_Operator.thy",
+    "Relative_Arbitrage/Exit_Class.thy",
+    "Relative_Arbitrage/Exit_Class_Witness.thy",
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy",
+    "Relative_Arbitrage/Value_Function_Subsolution.thy"
+   ],
+   "facts": [
+    "eigen_ub_diag",
+    "psd_eigen_ub_diag",
+    "psd_eigen_ub_entry_abs_le",
+    "sconstraint_diag",
+    "sconstraint_diag_le",
+    "feasible_entry_bound",
+    "sconstraint_norm_le",
+    "sconstraint_trace_ge",
+    "sconstraint_trace_le",
+    "feasible_trace_le",
+    "psd_diag_nonneg"
+   ],
+   "est_lines_saved": 110,
+   "status_now": "partly-applies",
+   "evidence": "Curvature_Operator.thy:80 (11), :235 (53); Exit_Class.thy:128 (16), :145 (20), :166 (33), :420 (10); Exit_Class_Witness.thy:924 (14); Value_Function_Euler_Construction.thy:890 (18); Value_Function_Subsolution.thy:1380 (24), :2682 (11); Pair_Path_Space.thy:425. grep finds no feasible_diag_bound, feasible_offdiag_abs_le, feasible_bounded or trace_le_eigen_ub.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": [
+    "G7-value-function",
+    "G8-operator-comparison"
+   ]
+  },
+  "ra-padd-pglue-diffquot": {
+   "id": "ra-padd-pglue-diffquot",
+   "kind": "merge-twins",
+   "summary": "padd_diffquot repeats the convex-combination split of pglue_diffquot. Add a diffquot_convex_split lemma and restate both for 'real => 'a x 'b' and a convex S.",
+   "files": [
+    "Relative_Arbitrage/Dynamic_Programming_Additive_Glue.thy",
+    "Relative_Arbitrage/Exit_Class_Pasting.thy"
+   ],
+   "facts": [
+    "padd_diffquot",
+    "pglue_diffquot"
+   ],
+   "est_lines_saved": 25,
+   "status_now": "applies",
+   "evidence": "Dynamic_Programming_Additive_Glue.thy:29 (64); Exit_Class_Pasting.thy:222 (54).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-pdelclass-frozen": {
+   "id": "ra-pdelclass-frozen",
+   "kind": "derive-corollary",
+   "summary": "pdelclass_frozen_at is an instance of pdelclass_frozen. Add a pdelclassE elimination lemma for the pdelclass unpacking repeated seven times, derive pdelclass_frozen_at (after reordering) or use pdelclass_frozen directly in pdelclass_start_zero.",
+   "files": [
+    "Relative_Arbitrage/Dynamic_Programming_Delayed_Class.thy"
+   ],
+   "facts": [
+    "pdelclass_frozen_at",
+    "pdelclass_frozen",
+    "pdelclass_start_zero"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "applies",
+   "evidence": "Dynamic_Programming_Delayed_Class.thy:47 (36), :88 (33), :705 (11).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-exit-val-borel-measurable": {
+   "id": "ra-exit-val-borel-measurable",
+   "kind": "library-reproof",
+   "summary": "exit_val_borel_measurable takes 42 lines where HOL-Analysis gives about 4; re-prove it. Optionally add 'usc implies borel_measurable' to Semicontinuous_Analysis, and drop kn and KB from exit_val_real_usc's finiteness step.",
+   "files": [
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy",
+    "Relative_Arbitrage/Value_Function_Uniqueness.thy"
+   ],
+   "facts": [
+    "exit_val_borel_measurable",
+    "exit_val_neq_top",
+    "exit_val_real_usc"
+   ],
+   "est_lines_saved": 40,
+   "status_now": "applies",
+   "evidence": "Dynamic_Programming_Pasting.thy:193 (42), :183 (9); Value_Function_Uniqueness.thy:96 (35).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "weak-borel-to-prob-algebra-bridge": {
+   "id": "weak-borel-to-prob-algebra-bridge",
+   "kind": "merge-twins",
+   "summary": "RA-dpp#7, named as optional in the kernel_class_LP_measurable row. The step 'measurable into the weak Borel space and landing in probability measures, hence measurable into prob_algebra' is built by hand twice: the setsPA/r1/r2 block in exit_val_measurable_selector_kernel' and in sbm_kernel_package. Factor it into one generic iff lemma next to its first user.",
+   "files": [
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy",
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy"
+   ],
+   "facts": [
+    "exit_val_measurable_selector_kernel'",
+    "sbm_kernel_package",
+    "weak_conv_topology_eq_prob_algebra",
+    "borel_of_subtopology",
+    "measurable_restrict_space2"
+   ],
+   "est_lines_saved": 10,
+   "status_now": "applies",
+   "evidence": "DPP:118-131 (polish, setsPA, Sk with r1/r2) and Euler:742-753 (polish, setsPA, r1, r2) are the same 10-line block. The third copy (Dynamic_Programming_Kernels) was deleted in phase 2.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G6-class-dpp",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "outerp-duplicate": {
+   "id": "outerp-duplicate",
+   "kind": "merge-twins",
+   "summary": "Delete the second copy Exit_Class.outerp_eq_outer_prod. Pair_Path_Space.outerp_eq_outer_prod is an ancestor fact with the same statement, and the short name resolves to it.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class.thy"
+   ],
+   "facts": [
+    "outerp_eq_outer_prod"
+   ],
+   "est_lines_saved": 3,
+   "status_now": "applies",
+   "evidence": "Exit_Class.thy:213-214 lemma outerp_eq_outer_prod (by simp add: outerp_def outer_prod_def); Pair_Path_Space.thy:748-751 has the same statement. Pair_Path_Space is still an ancestor of Exit_Class after phase 3 (computed from the imports). Uses that resolve unchanged: VFSC1:385, Pair_Path_Laws:166, :1871, Pair_Path_Space:756.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "verification_results.md, clone-derivations, claim 7. Scratch file: Clone_RA.thy, 'Claim 7'.",
+   "general_lemma": "Pair_Path_Space.outerp_eq_outer_prod",
+   "source": "verified",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "eigen-ub-diag-rederive": {
+   "id": "eigen-ub-diag-rederive",
+   "kind": "derive-corollary",
+   "summary": "eigen_ub_diag has already been moved to Curvature_Operator; the rest of its FIX is open. Re-derive Exit_Class.psd_eigen_ub_diag in 2 lines: part (1) from Pair_Path_Space.psd_diag_nonneg, part (2) from eigen_ub_diag. Replace Value_Function_Euler_Construction.sconstraint_diag_le, a twin of Exit_Class.sconstraint_diag(2), at its single use and delete it. feasible_diag_bound no longer exists.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class.thy",
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy"
+   ],
+   "facts": [
+    "eigen_ub_diag",
+    "psd_eigen_ub_diag",
+    "sconstraint_diag_le",
+    "sconstraint_diag",
+    "psd_diag_nonneg"
+   ],
+   "est_lines_saved": 28,
+   "status_now": "partly-applies",
+   "evidence": "eigen_ub_diag is at Curvature_Operator:80-90. psd_eigen_ub_diag at EC:128-143 (16) re-proves both halves; it is used at EC:153 and 427-428. sconstraint_diag_le at Euler:890-907 (18) is used once, at Euler:919. sconstraint_diag (EC:420-429) gives the same bound. psd_diag_nonneg is at PPS:425. EC imports Pair_Path_Laws and Operator_Formula.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "Curvature_Operator.eigen_ub_diag",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G6-class-dpp",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "ra-exit-class-infinite-repeats": {
+   "id": "ra-exit-class-infinite-repeats",
+   "kind": "merge-twins",
+   "summary": "Exit_Class_Infinite proves two martingale clauses twice each (iexit_class_pcut and iextend_in_iexit_class) and transfers ess_inf along pcut twice (iexit_val_cap_le and iexit_val_ge_of_extension). Extract ess_inf_pexit_cut, and prove the martingale clauses once for a continuous f.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Infinite.thy"
+   ],
+   "facts": [
+    "iexit_class_pcut",
+    "iextend_in_iexit_class",
+    "iexit_val_cap_le",
+    "iexit_val_ge_of_extension"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Infinite.thy:97 (133), :652 (117), :238 (65), :313 (39).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-modification-detour": {
+   "id": "ra-modification-detour",
+   "kind": "library-reproof",
+   "summary": "The entrywise detour (martingale_of_modification_gen plus martingale_matI) in iexit_class_marginal_in_xclass and xclass_lift_in_iexit_class (KEEP_EVIDENCE roots) re-derives martingale_cong_AE. Replace each mgcomp block by martingale_cong_AE[OF mgXA] plus adaptedness and the AE equality, about 15 lines each, and correct OPEN_ITEMS.md:111-115.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Marginals.thy"
+   ],
+   "facts": [
+    "iexit_class_marginal_in_xclass",
+    "xclass_lift_in_iexit_class",
+    "martingale_cong_AE",
+    "martingale_of_modification_gen",
+    "martingale_matI"
+   ],
+   "est_lines_saved": 80,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Marginals.thy:354 (337), :970 (214); Martingale_Algebra.thy:152 (34).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "exit-val-attained-corollary": {
+   "id": "exit-val-attained-corollary",
+   "kind": "derive-corollary",
+   "summary": "Move Exit_Class_Optimizer.exit_val_attained after exit_val_measurable_selector. Replace its 66-line proof with the checked 5-line body: obtain S from exit_val_measurable_selector[OF T L K, of k] by metis, then blast. Adjust the text at 248, which cites exit_val_attained before the selector.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Optimizer.thy"
+   ],
+   "facts": [
+    "exit_val_attained",
+    "exit_val_measurable_selector"
+   ],
+   "est_lines_saved": 53,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Optimizer.thy: exit_val_attained 28-93; exit_val_measurable_selector 266-446 does not use it (only the text mention at 248). Users are unaffected: Proposition_2_4.thy:201/216/303, Path_Law_Pasting.thy:506, Value_Function_Subsolution.thy:215/1107/1989. The statement matches the scratch copy.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "verification_results.md, clone-derivations, claim 6 (proof quoted). Scratch file: verify/clone-derivations/Clone_RA.thy, 'Claim 6' (exit_val_attained').",
+   "general_lemma": "exit_val_measurable_selector",
+   "source": "verified",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-exit-class-compactin": {
+   "id": "ra-exit-class-compactin",
+   "kind": "derive-corollary",
+   "summary": "Prove exit_class_compactin_weak as compactin_of_seq_compact[OF metrizable_weak_conv_path_topology topC] plus exit_class_convergent_subsequence (Exit_Class_Tightness is an ancestor of Exit_Class_Optimizer), and add an exit_class_subset_weak_topspace lemma. This is the half of RA-class-9 that is not on the plan's corollary row.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Optimizer.thy",
+    "Relative_Arbitrage/Exit_Class_Tightness.thy"
+   ],
+   "facts": [
+    "exit_class_compactin_weak",
+    "compactin_of_seq_compact",
+    "metrizable_weak_conv_path_topology",
+    "exit_class_convergent_subsequence"
+   ],
+   "est_lines_saved": 55,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Optimizer.thy:110 (66; use :243); Berge.thy:281; Path_Space.thy:1066; Exit_Class_Tightness.thy:381 (38).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-moment-bounds-class": {
+   "id": "ra-moment-bounds-class",
+   "kind": "derive-corollary",
+   "summary": "Add exit_class_sq_norm_mean_eq and derive from it exit_class_norm_mean_le, exit_class_comp_norm_mean_le, exit_class_sq_norm_mean_ge and exit_class_norm_sq_integrable. At minimum, make exit_class_norm_mean_le call exit_class_inner_mean_le.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Pasting.thy",
+    "Relative_Arbitrage/Exit_Class_Witness.thy"
+   ],
+   "facts": [
+    "exit_class_norm_mean_le",
+    "exit_class_inner_mean_le",
+    "exit_class_comp_norm_mean_le",
+    "exit_class_sq_norm_mean_ge",
+    "exit_class_norm_sq_integrable"
+   ],
+   "est_lines_saved": 50,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Pasting.thy:1092 (64), :1593 (29), :1623 (61); Exit_Class_Witness.thy:994 (59), :978 (11).",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "cps-weak-limit-prob-space": {
+   "id": "cps-weak-limit-prob-space",
+   "kind": "derive-corollary",
+   "summary": "Delete exit_class_weak_limit_prob_space (69 lines, one use) and use weak_conv_on_prob_space[OF wcN exit_class_prob[OF memA]]. Path_Tightness.weak_conv_on_prob_limit (CPS2-15) was already deleted.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Tightness.thy"
+   ],
+   "facts": [
+    "exit_class_weak_limit_prob_space",
+    "weak_conv_on_prob_space",
+    "weak_conv_on_prob_limit"
+   ],
+   "est_lines_saved": 65,
+   "status_now": "partly-applies",
+   "evidence": "Exit_Class_Tightness.thy:306 (69; only use :413); Path_Space.thy:888 (27). grep finds no weak_conv_on_prob_limit.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "exit-val-boundary-zero-corollary": {
+   "id": "exit-val-boundary-zero-corollary",
+   "kind": "derive-corollary",
+   "summary": "Move Exit_Class_Witness.exit_val_boundary_zero below exit_val_le_ball_bound. Replace its 100-line proof with the checked 5-line body: x.x = r*r from norm x = r, then exit_val_le_ball_bound[OF k _ L order_refl, of T r x] T by simp. Keep the statement and name; its user is Value_Function_Uniqueness.thy:303.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Witness.thy"
+   ],
+   "facts": [
+    "exit_val_boundary_zero",
+    "exit_val_le_ball_bound"
+   ],
+   "est_lines_saved": 88,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Witness.thy: text 1054-1059; theorem exit_val_boundary_zero 1060-1159; exit_val_le_ball_bound 1169-1271, which does not use it (grep: only 1060 and the text mention at 1164). Uses: Value_Function_Uniqueness.thy:303 and text :234. The statement matches the scratch copy word for word.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "verification_results.md, section clone-derivations, claim 1 (proof quoted). Scratch file: verify/clone-derivations/Clone_RA.thy, section 'Claim 1' (exit_val_boundary_zero').",
+   "general_lemma": "exit_val_le_ball_bound",
+   "source": "verified",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "lib-bm-coordinates-indep": {
+   "id": "lib-bm-coordinates-indep",
+   "kind": "library-reproof",
+   "summary": "Replace the 26-line proof of Exit_Class_Witness.bm_coordinates_indep with: unfolding bm_paths_def by (rule BMC.indep_vars_PiM_coordinate) simp. Delete the false comment (lines 22-26) saying indep_vars_PiM_coordinate is not in scope. Keep the name, which is used at :53. (Phase 5.3 later moves this block to Wiener_Measure.)",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Witness.thy"
+   ],
+   "facts": [
+    "bm_coordinates_indep",
+    "product_prob_space.indep_vars_PiM_coordinate",
+    "bm_paths_def"
+   ],
+   "est_lines_saved": 22,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Witness.thy:18-42 (comment 22-26); use :53. After phase 3, ECW imports Exit_Class_Shift and Wiener_Measure.Continuous_Brownian_Motion. Product_Brownian_Motion (BMC interpretation, imports Kolmogorov_Chentsov_Extras) is still an ancestor, but re-check that the qualified name BMC.indep_vars_PiM_coordinate still resolves.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "verification_results.md, libdup-check, claim 2 (C2 quoted). Scratch file: verify/libdup-check/LibDup_A.thy (C2).",
+   "general_lemma": "BMC.indep_vars_PiM_coordinate",
+   "source": "verified",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "wm-bm-coordinates-indep-afp": {
+   "id": "wm-bm-coordinates-indep-afp",
+   "kind": "library-reproof",
+   "summary": "Replace bm_coordinates_indep's 25-line proof by 'unfolding bm_paths_def by (rule BMC.indep_vars_PiM_coordinate) simp', and delete the false comment saying the lemma is not in scope.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Witness.thy"
+   ],
+   "facts": [
+    "bm_coordinates_indep",
+    "indep_vars_PiM_coordinate"
+   ],
+   "est_lines_saved": 22,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Witness.thy:18-42 (comment at :22-26 'not in scope'); one use at :53. The theory imports Wiener_Measure.Continuous_Brownian_Motion, which provides BMC.",
+   "risk": "low",
+   "gated": false,
+   "checked_derivation": "notes/review_3/data/verification_results.md, libdup-check claim 2",
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-exit-val-ge-of-ae": {
+   "id": "ra-exit-val-ge-of-ae",
+   "kind": "merge-twins",
+   "summary": "The glue families repeat one three-step pattern: class membership, pathwise DPP bound, AE bound to value bound. Add exit_val_ge_of_AE (two lines) to Exit_Class_Witness and use it in exit_val_kpaste_ge (unless deleted by the pilot), exit_val_ge_of_stopped_bound and exit_val_ge_of_AE_pshift. exit_val_paste_ge is already gone.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Witness.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Assembly.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Conditioning.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy"
+   ],
+   "facts": [
+    "exit_val_ge_of_stopped_bound",
+    "exit_val_ge_of_AE_pshift",
+    "exit_val_kpaste_ge"
+   ],
+   "est_lines_saved": 30,
+   "status_now": "partly-applies",
+   "evidence": "Dynamic_Programming_Assembly.thy:577 (114); Dynamic_Programming_Conditioning.thy:556 (23); Dynamic_Programming_Pasting.thy:22 (55). grep finds no exit_val_paste_ge.",
+   "risk": "low",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-exit-val-cond-ball": {
+   "id": "ra-exit-val-cond-ball",
+   "kind": "derive-corollary",
+   "summary": "exit_val_cond_ball is exit_val_cond_at_time at theta = pball_exit. Move exit_val_cond_at_time up (or to Dynamic_Programming_Assembly next to enn2real_paper_v_horizon_cap), delete exit_val_cond_ball, and use it at constant h as well.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Subsolution.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Assembly.thy"
+   ],
+   "facts": [
+    "exit_val_cond_ball",
+    "exit_val_cond_at_time",
+    "enn2real_paper_v_horizon_cap"
+   ],
+   "est_lines_saved": 35,
+   "status_now": "applies",
+   "evidence": "Value_Function_Subsolution.thy:83 (36; uses :264, :1140), :1669 (28); Dynamic_Programming_Assembly.thy:703.",
+   "risk": "low",
+   "gated": false,
+   "general_lemma": "exit_val_cond_at_time",
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "ra-diffquot-closed-limit": {
+   "id": "ra-diffquot-closed-limit",
+   "kind": "other",
+   "summary": "With a closed full set, the rational reduction for the difference-quotient clause is not needed. Add closedin_diffquot_constraint_all (closed S implies the all-pairs set is closedin) next to closedin_diffquot_constraint. Rewrite exit_class_diffquot_limit and bmpair_law_diffquot, and the diffquot clauses of exit_class_pcut, pglue_law_diffquot and kglue_law_diffquot, as one-step pushforward / portmanteau arguments.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class.thy",
+    "Relative_Arbitrage/Exit_Class_Witness.thy",
+    "Relative_Arbitrage/Exit_Class_Pasting.thy"
+   ],
+   "facts": [
+    "closedin_diffquot_constraint",
+    "diffquot_constraint_weak_limit",
+    "exit_class_diffquot_limit",
+    "exit_class_diffquot_full_mass",
+    "bmpair_law_diffquot",
+    "exit_class_pcut",
+    "pglue_law_diffquot",
+    "kglue_law_diffquot"
+   ],
+   "est_lines_saved": 120,
+   "status_now": "applies",
+   "evidence": "Exit_Class.thy:260 (15), :294 (15), :638 (78), :545 (27); Exit_Class_Witness.thy:633 (85); Exit_Class_Pasting.thy:72 (139), :315 (37), :1020 (59). Reader RA-class-16 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-selector-berge": {
+   "id": "ra-selector-berge",
+   "kind": "derive-corollary",
+   "summary": "The hypB block of exit_val_measurable_selector re-proves a sequential Berge argument. Derive it from Pair_Path_Space.vshift_sup_usc / Berge.usc_sup_over_compactin via the vshift representation (exit_val_eq_vshift_sup), and keep one encoding of the exit functional.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Optimizer.thy"
+   ],
+   "facts": [
+    "exit_val_measurable_selector",
+    "vshift_sup_usc",
+    "usc_sup_over_compactin",
+    "exit_val_eq_vshift_sup",
+    "exit_val_usc"
+   ],
+   "est_lines_saved": 40,
+   "status_now": "applies",
+   "evidence": "Exit_Class_Optimizer.thy:266 (181); Pair_Path_Space.thy:831 (111); Exit_Class_Shift.thy:227 (56), :294 (90). Reader RA-class-25 has medium confidence.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "kglue-law-drop-Kb": {
+   "id": "kglue-law-drop-Kb",
+   "kind": "other",
+   "summary": "RA-dpp#8, carried over from the deleted kernel_class_LP_measurable (COROLLARY, home: inside exit_class_kglue_law'). Derive hypothesis Kb of Exit_Class_Optimizer.exit_class_kglue_law' inside its proof from Kp and Kc, in about 5 lines, using sets_natural_filtration_path / natural_filtration_cong_space, weak_conv_topology_eq_prob_algebra, borel_of_subtopology, measurable_restrict_space2_iff and exit_class_compact_metric_space(2). Then drop Kb from exit_val_kpaste_ge and from both call sites. Also drop the Levy-Prokhorov second conclusion of exit_val_measurable_selector_kernel' (its Ssub block) and of sbm_kernel_package.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Optimizer.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Pasting.thy",
+    "Relative_Arbitrage/Value_Function_Euler_Construction.thy",
+    "Relative_Arbitrage/Value_Function_Supersolution_Case_1.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Delayed_Class.thy"
+   ],
+   "facts": [
+    "exit_class_kglue_law'",
+    "exit_val_kpaste_ge",
+    "exit_val_measurable_selector_kernel'",
+    "sbm_kernel_package",
+    "kernel_class_LP_measurable",
+    "exit_class_compact_metric_space",
+    "weak_conv_topology_eq_prob_algebra",
+    "measurable_restrict_space2_iff"
+   ],
+   "est_lines_saved": 35,
+   "status_now": "applies",
+   "evidence": "kernel_class_LP_measurable no longer exists (grep: 0 hits). exit_class_kglue_law' at EO:469-572 still has Kb (EO:475) and uses it once, at EO:511 (countably_valued_approx). Kb is threaded through exit_val_kpaste_ge (DPP:22-76; call DPP:50, use DPP:443) and supplied at Euler:840-848/877-883. The Ssub block is at DPP:132-146. In sbm_kernel_package (Euler:672-756) the `cont` proof is also needed for conclusion 1, so only the statement and the final step of conclusion 2 go.",
+   "risk": "medium",
+   "gated": false,
+   "general_lemma": "weak_conv_topology_eq_prob_algebra + exit_class_compact_metric_space(2)",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G6-class-dpp",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "ra-mean-in-convex": {
+   "id": "ra-mean-in-convex",
+   "kind": "other",
+   "summary": "exit_class_Y_stopped_mean_sconstraint (246 lines) hand-unfolds the 'mean lies in a closed convex set' argument. Add a generic weighted_integral_mean_in_closed_convex, next to Covariation_Density.integral_mean_in_convex or in CTM, and reduce it to a few lines over covariation_class S. Its deterministic twin exit_class_Y_mean_sconstraint was deleted in phase 2.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Subsolution.thy",
+    "Relative_Arbitrage/Covariation_Density.thy"
+   ],
+   "facts": [
+    "exit_class_Y_stopped_mean_sconstraint",
+    "integral_mean_in_convex",
+    "exit_class_Y_mean_sconstraint"
+   ],
+   "est_lines_saved": 150,
+   "status_now": "partly-applies",
+   "evidence": "Value_Function_Subsolution.thy:836 (246); Covariation_Density.thy:76 (30). grep finds no exit_class_Y_mean_sconstraint.",
+   "risk": "medium",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "exit-class-fourth-moment-instance": {
+   "id": "exit-class-fourth-moment-instance",
+   "kind": "merge-twins",
+   "summary": "Derive the paper session's fourth-moment bound from the library one. Exit_Class_Limits.exit_class_fourth_moment would follow from fourth_moment_L2 at each coordinate of a class member; this deletes exit_class_stopped_fourth_moment and the localisation-plus-Fatou body. Exit_Class_Tightness.exit_class_fourth_moment_integrable/_bochner become instances of fourth_moment_L2_integrable/_bochner. This needs the AE-start (and possibly AE-rate) form of fourth-moment-L2-fix, because class members satisfy them only almost surely.",
+   "files": [
+    "Relative_Arbitrage/Exit_Class_Limits.thy",
+    "Relative_Arbitrage/Exit_Class_Tightness.thy"
+   ],
+   "facts": [
+    "exit_class_fourth_moment",
+    "exit_class_stopped_fourth_moment",
+    "exit_class_fourth_moment_integrable",
+    "exit_class_fourth_moment_bochner",
+    "fourth_moment_L2",
+    "fourth_moment_L2_integrable",
+    "fourth_moment_L2_bochner"
+   ],
+   "est_lines_saved": 180,
+   "status_now": "applies",
+   "evidence": "ECL:1254-1318 exit_class_stopped_fourth_moment (65), ECL:1326-1437 exit_class_fourth_moment (112), ECT:18-47 _integrable (30), ECT:49-68 _bochner (20). They repeat the localisation and Fatou argument of SL:361-630 for the class (fourth_moment_L2 row, change (d)).",
+   "risk": "high",
+   "gated": false,
+   "general_lemma": "Stopped_Localization.fourth_moment_L2",
+   "checked_derivation": "",
+   "source": "verdicts",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  },
+  "ra-subsol-stopped-moments": {
+   "id": "ra-subsol-stopped-moments",
+   "kind": "merge-twins",
+   "summary": "In the subsolution argument, the stopped-moment computation and the DPP/touching block are written out twice. Move exit_class_stopped_moments before its first use. Factor exit_val_subsol_quadratic_stopped (for theta <= pball_exit, theta > 0 a.s., return b in sconstraint with -tr(Mb)/2 <= 1 plus the moments), and derive exit_val_subsol_quadratic_ball and the first half of exit_val_touch_near_orth from it. Add exit_val_attained_AE for the three cAE blocks.",
+   "files": [
+    "Relative_Arbitrage/Value_Function_Subsolution.thy",
+    "Relative_Arbitrage/Exit_Class_Optimizer.thy"
+   ],
+   "facts": [
+    "exit_val_subsol_quadratic_ball",
+    "exit_class_stopped_moments",
+    "exit_val_touch_near_orth",
+    "exit_val_attained"
+   ],
+   "est_lines_saved": 250,
+   "status_now": "applies",
+   "evidence": "Value_Function_Subsolution.thy:1091 (280), :1705 (154), :1915 (684).",
+   "risk": "high",
+   "gated": false,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": [
+    "G7-value-function"
+   ]
+  },
+  "ra-X-comp-dynamic-programming": {
+   "id": "ra-X-comp-dynamic-programming",
+   "kind": "merge-twins",
+   "summary": "Section 3.3 counts 'plus Dynamic_Programming_*' in the X-vs-compensated twin (the plan's pilot names only Path_Law_Sampling; treat this as the same pilot). Introduce generic lemmas parameterised by a continuous f, for example martingale_time_change_capped, pdelclass_martingale_of, pstopped_law_horizon_of and pdelclass_norm_mean_le_of, and instantiate each twice. Pairs: exit_class_shifted_X/comp_martingale, exit_class_horizon_component/compensated (also used inline at Exit_Class_Limits, RA-dpp-22), pdelclass_X/comp_martingale, pstopped_law_horizon_component/compensated, pdelclass_norm_mean_le/_comp, and the KXpadd/KCpadd and msecX/C blocks in Dynamic_Programming_Assembly.",
+   "files": [
+    "Relative_Arbitrage/Dynamic_Programming_Conditioning.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Stopping_Clauses.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Delayed_Class.thy",
+    "Relative_Arbitrage/Dynamic_Programming_Assembly.thy",
+    "Relative_Arbitrage/Exit_Class_Limits.thy"
+   ],
+   "facts": [
+    "exit_class_shifted_X_martingale",
+    "exit_class_shifted_comp_martingale",
+    "exit_class_horizon_component",
+    "exit_class_horizon_compensated",
+    "pdelclass_X_martingale",
+    "pdelclass_comp_martingale",
+    "pstopped_law_horizon_component",
+    "pstopped_law_horizon_compensated",
+    "pdelclass_norm_mean_le",
+    "pdelclass_comp_norm_mean_le",
+    "exit_class_aglue"
+   ],
+   "est_lines_saved": 300,
+   "status_now": "applies",
+   "evidence": "Dynamic_Programming_Conditioning.thy:41 (27), :69 (29); Dynamic_Programming_Stopping_Clauses.thy:21 (24), :79 (26); Dynamic_Programming_Delayed_Class.thy:438 (65), :504 (74), :950 (128), :1079 (121), :1214 (39), :1254 (45); Dynamic_Programming_Additive_Glue.thy:251 exit_class_aglue (102).",
+   "risk": "medium",
+   "gated": true,
+   "source": "review",
+   "group": "G6-class-dpp",
+   "other_areas": []
+  }
+ }
+}
