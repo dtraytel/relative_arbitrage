@@ -28,8 +28,7 @@ text \<open>The \<open>\<le>\<close> half, one class member at a time, at an arb
   function \<open>\<theta>\<close> with values in \<open>[0,T]\<close> (no stopping-time property and no
   measurability is needed): the essential infimum of the exit time under
   \<open>P\<close> is below the essential infimum of the DPP integrand under the same
-  \<open>P\<close>.  This is the \<open>key\<close> step of @{thm [source] exit_val_dpp_le_of_cond},
-  with its hypothesis discharged by @{thm [source] exit_val_cond_time}.\<close>
+  \<open>P\<close>.  The conditioning step is @{thm [source] exit_val_cond_time}.\<close>
 
 lemma exit_val_dpp_ess_inf_mono_time:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"

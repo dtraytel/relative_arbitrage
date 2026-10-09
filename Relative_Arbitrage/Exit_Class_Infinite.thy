@@ -115,15 +115,8 @@ proof -
   \<comment> \<open>clause (i): the initial condition\<close>
   have start': "AE \<omega> in ?Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
   proof -
-    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
-      by (rule pair_law_eval_measurable[OF refl])
     have mset: "{\<omega> \<in> space ?B. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
-    proof -
-      have "{\<omega> \<in> space ?B. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0}
-          = (\<lambda>\<omega> :: 'n pairpath. \<omega> 0) -` {(x, 0)} \<inter> space ?B"
-        by (auto simp: prod_eq_iff)
-      then show ?thesis using measurable_sets[OF ev] by simp
-    qed
+      by (rule start_set_sets[OF refl])
     have iff: "(AE \<omega> in ?Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0)
         = (AE \<omega> in P. fst (pcut S \<omega> 0) = x \<and> snd (pcut S \<omega> 0) = 0)"
       unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
@@ -170,14 +163,10 @@ proof -
   have mgX': "martingale ?Q ?G 0 (\<lambda>u \<omega>. fst (\<omega> (min u S)) :: real^'n)"
   proof (rule martingale_pair_law[OF P.prob_space_axioms phim adap])
     fix u :: real assume u: "0 \<le> u"
-    have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-        \<in> borel_measurable borel"
-      by (intro borel_measurable_continuous_onI continuous_intros)
     have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u S)) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use u S in auto)
+      by (rule natural_filtration_eval) (use u S in auto)
     show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u S))) \<in> borel_measurable (?G u)"
-      by (rule measurable_compose[OF ev fstB])
+      by (rule measurable_compose[OF ev pair_fst_borel])
   next
     show "martingale P ?F 0 (\<lambda>u \<omega>. fst (pcut S \<omega> (min u S)) :: real^'n)"
     proof (rule martingale_cong_ge
@@ -195,20 +184,11 @@ proof -
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u S)) :: real^'n) - snd (\<omega> (min u S)))"
   proof (rule martingale_pair_law[OF P.prob_space_axioms phim adap])
     fix u :: real assume u: "0 \<le> u"
-    have e: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
-        = (\<lambda>p. \<chi> i j. fst p $ i * fst p $ j - snd p $ i $ j)"
-      by (rule ext) (simp add: outerp_def vec_eq_iff)
-    have cB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
-        \<in> borel_measurable borel"
-      unfolding e
-      by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
-          continuous_intros)
     have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u S)) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use u S in auto)
+      by (rule natural_filtration_eval) (use u S in auto)
     show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min u S))) - snd (\<omega> (min u S)))
         \<in> borel_measurable (?G u)"
-      by (rule measurable_compose[OF ev cB])
+      by (rule measurable_compose[OF ev compensated_map_borel])
   next
     show "martingale P ?F 0 (\<lambda>u \<omega>. outerp (fst (pcut S \<omega> (min u S)) :: real^'n)
         - snd (pcut S \<omega> (min u S)))"
@@ -609,7 +589,7 @@ proof -
     assume "p \<in> space (Q \<Otimes>\<^sub>M ?R)"
     then have "fst p \<in> space Q" by (auto simp: space_pair_measure)
     then show "pcut T (fst p) = fst p"
-      using space_of_path_sets[OF setsQ] by (simp add: pcut_id_on_mspace)
+      using space_of_path_sets[OF setsQ] by (simp add: pcut_def mspace_path_restrict_self)
   qed
   also have "\<dots> = Q" by (rule PR.distr_pair_fst)
   finally show ?thesis .
@@ -714,8 +694,7 @@ proof -
     have fstB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p) \<in> borel_measurable borel"
       by (intro borel_measurable_continuous_onI continuous_intros)
     have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use u in auto)
+      by (rule natural_filtration_eval) (use u in auto)
     show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u)) \<in> borel_measurable (?G u)"
       by (rule measurable_compose[OF ev fstB])
   next
@@ -735,20 +714,11 @@ proof -
       (\<lambda>u \<omega>. outerp (fst (\<omega> u) :: real^'n) - snd (\<omega> u))"
   proof (rule martingale_of_cuts[OF prob sets_iextend])
     fix u :: real assume u: "0 \<le> u"
-    have e: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
-        = (\<lambda>p. \<chi> i j. fst p $ i * fst p $ j - snd p $ i $ j)"
-      by (rule ext) (simp add: outerp_def vec_eq_iff)
-    have cB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
-        \<in> borel_measurable borel"
-      unfolding e
-      by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
-          continuous_intros)
     have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use u in auto)
+      by (rule natural_filtration_eval) (use u in auto)
     show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u)) - snd (\<omega> u))
         \<in> borel_measurable (?G u)"
-      by (rule measurable_compose[OF ev cB])
+      by (rule measurable_compose[OF ev compensated_map_borel])
   next
     fix u S :: real and \<omega> :: "'n pairpath"
     assume "0 \<le> u" "u \<le> S"

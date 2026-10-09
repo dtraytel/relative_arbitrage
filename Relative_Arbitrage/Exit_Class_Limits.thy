@@ -544,8 +544,7 @@ proof -
     proof (unfold_locales)
       fix u :: real assume u: "0 \<le> u"
       have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> ?F u \<rightarrow>\<^sub>M borel"
-        unfolding natural_filtration_def
-        by (rule measurable_family_vimage_algebra) (use u T in auto)
+        by (rule natural_filtration_eval) (use u T in auto)
       show "?Y u \<in> borel_measurable (?F u)"
         by (rule measurable_compose[OF ev fst_coord_borel])
     qed

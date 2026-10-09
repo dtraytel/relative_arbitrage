@@ -38,12 +38,7 @@ proof -
     by (rule path_stopping_time_le[OF st])
   have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
       \<in> borel_measurable ?B"
-  proof -
-    have "(\<lambda>\<omega> :: 'n pairpath. pexit T K (pfst T \<omega>)) \<in> borel_measurable ?B"
-      by (rule measurable_compose[OF pfst_measurable[OF T0 refl]
-            pexit_measurable[OF T0 Kc]])
-    then show ?thesis by (simp add: pexit_pfst)
-  qed
+    by (rule pexit_path_measurable[OF T0 Kc refl])
   have mset: "{\<omega> \<in> space ?B. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))} \<in> sets ?B"
     using taum by measurable
   have inner: "AE w in \<kappa> p'. c \<le> pexit T K (\<lambda>t. fst (padd T p' w t))"
@@ -60,13 +55,7 @@ proof -
     have rT: "?r \<le> T" by (rule thT)
     have Tr: "0 \<le> T - ?r" using rT by simp
     have c0: "0 \<le> ?c" by simp
-    have cle: "?c \<le> T - ?r"
-    proof -
-      have "ennreal ?c = exit_val k L (T - ?r) K ?y"
-        using exit_val_neq_top[of "T - ?r" k L K ?y] Tr by (simp add: less_top)
-      also have "\<dots> \<le> ennreal (T - ?r)" by (rule exit_val_le_T[OF Tr])
-      finally show ?thesis using Tr by simp
-    qed
+    have cle: "?c \<le> T - ?r" by (rule enn2real_leI[OF Tr exit_val_le_T[OF Tr]])
     have stop: "p' t = p' ?r" if t: "t \<in> {0..T}" and rt: "?r \<le> t" for t
     proof -
       have "p' t = pstopped T \<theta> p' t" unfolding idem ..
@@ -114,10 +103,8 @@ proof -
 qed
 
 text \<open>What the selector delivers, in the form @{thm [source] aglue_law_pexit_ge}
-  consumes: its optimality is an \<^const>\<open>ess_inf_time\<close> equality, and
-  @{thm [source] ess_inf_time_AE} turns the \<open>\<ge>\<close> direction of that into the
-  almost-sure bound, once the \<^const>\<open>pshift_law\<close> and \<^const>\<open>prebase\<close>
-  layers are peeled off.\<close>
+  consumes: @{thm [source] exit_val_le_pexit_AE}, pulled back through
+  \<^const>\<open>prebase\<close>.\<close>
 
 lemma selector_value_AE:
   fixes \<nu> :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
@@ -132,79 +119,21 @@ lemma selector_value_AE:
       \<le> pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u))"
 proof -
   let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
-  let ?\<mu> = "distr \<nu> ?Bs (prebase s T)"
-  let ?v = "exit_val k L (T - s) K y"
+  let ?v = "enn2real (exit_val k L (T - s) K y)"
   have Ts: "0 \<le> T - s" using sT by simp
   have reb: "prebase s T \<in> \<nu> \<rightarrow>\<^sub>M ?Bs"
     unfolding measurable_cong_sets[OF setsnu refl]
     by (rule prebase_measurable[OF s0 sT])
-  have setsmu: "sets ?\<mu> = sets ?Bs" by simp
-  have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit (T - s) K (\<lambda>t. fst (\<omega> t)))
+  have sh: "(\<lambda>\<omega> :: 'n pairpath. pexit (T - s) K (\<lambda>t. y + fst (\<omega> t)))
       \<in> borel_measurable ?Bs"
-  proof -
-    have "(\<lambda>\<omega> :: 'n pairpath. pexit (T - s) K (pfst (T - s) \<omega>))
-        \<in> borel_measurable ?Bs"
-      by (rule measurable_compose[OF pfst_measurable[OF Ts refl]
-            pexit_measurable[OF Ts Kc]])
-    then show ?thesis by (simp add: pexit_pfst)
-  qed
-  have mset: "{\<omega> \<in> space ?Bs.
-      ?v \<le> ennreal (pexit (T - s) K (\<lambda>t. y + fst (\<omega> t)))} \<in> sets ?Bs"
-  proof -
-    have sh: "(\<lambda>\<omega> :: 'n pairpath. pexit (T - s) K (\<lambda>t. y + fst (\<omega> t)))
-        \<in> borel_measurable ?Bs"
-    proof -
-      have shm: "pshift (T - s) y \<in> ?Bs \<rightarrow>\<^sub>M ?Bs"
-        by (rule pshift_measurable[OF Ts])
-      have "(\<lambda>\<omega> :: 'n pairpath.
-          pexit (T - s) K (\<lambda>t. fst (pshift (T - s) y \<omega> t)))
-          \<in> borel_measurable ?Bs"
-        by (rule measurable_compose[OF shm taum])
-      moreover have "pexit (T - s) K (\<lambda>t. fst (pshift (T - s) y \<omega> t))
-          = pexit (T - s) K (\<lambda>t. y + fst (\<omega> t))" for \<omega> :: "'n pairpath"
-        by (rule pexit_cong_on) (simp add: pshift_fst)
-      ultimately show ?thesis by simp
-    qed
-    show ?thesis using sh by measurable
-  qed
-  \<comment> \<open>the optimality, as an almost-sure bound on the SHIFTED law\<close>
-  have ae1: "AE \<omega> in pshift_law (T - s) y ?\<mu>.
-      ?v \<le> ennreal (pexit (T - s) K (\<lambda>t. fst (\<omega> t)))"
-    unfolding val[symmetric] by (rule ess_inf_time_AE)
-  have ae2: "AE \<omega> in ?\<mu>.
-      ?v \<le> ennreal (pexit (T - s) K (\<lambda>t. y + fst (\<omega> t)))"
-  proof -
-    have "AE \<omega> in ?\<mu>.
-        ?v \<le> ennreal (pexit (T - s) K (\<lambda>t. fst (pshift (T - s) y \<omega> t)))"
-      using ae1 unfolding AE_pshift_law_iff[OF Ts setsmu] .
-    then show ?thesis
-    proof (rule eventually_mono)
-      fix \<omega> :: "'n pairpath"
-      assume h: "?v \<le> ennreal (pexit (T - s) K
-          (\<lambda>t. fst (pshift (T - s) y \<omega> t)))"
-      have "pexit (T - s) K (\<lambda>t. fst (pshift (T - s) y \<omega> t))
-          = pexit (T - s) K (\<lambda>t. y + fst (\<omega> t))"
-        by (rule pexit_cong_on) (simp add: pshift_fst)
-      with h show "?v \<le> ennreal (pexit (T - s) K (\<lambda>t. y + fst (\<omega> t)))"
-        by simp
-    qed
-  qed
-  have ae3: "AE w in \<nu>. ?v
-      \<le> ennreal (pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u)))"
-    using ae2 unfolding AE_distr_iff[OF reb mset] .
-  show ?thesis using ae3
-  proof (rule eventually_mono)
-    fix w :: "'n pairpath"
-    assume h: "?v \<le> ennreal (pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u)))"
-    have fin: "?v \<noteq> \<top>" by (rule exit_val_neq_top[OF Ts])
-    have nn: "0 \<le> pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u))"
-      by (rule pexit_nonneg[OF Ts])
-    have "enn2real ?v
-        \<le> enn2real (ennreal (pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u))))"
-      by (rule enn2real_mono[OF h]) simp
-    then show "enn2real ?v
-        \<le> pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u))" using nn by simp
-  qed
+    using measurable_compose[OF pshift_measurable[OF Ts, where x = y]
+        pexit_path_measurable[OF Ts Kc refl]]
+    by (simp add: pexit_pshift)
+  have mset: "{\<omega> \<in> space ?Bs. ?v \<le> pexit (T - s) K (\<lambda>t. y + fst (\<omega> t))}
+      \<in> sets ?Bs" using sh by measurable
+  have "AE \<omega> in distr \<nu> ?Bs (prebase s T). ?v \<le> pexit (T - s) K (\<lambda>t. y + fst (\<omega> t))"
+    by (rule exit_val_le_pexit_AE[OF Ts _ val]) simp
+  then show ?thesis unfolding AE_distr_iff[OF reb mset] .
 qed
 
 text \<open>The continuation kernel itself: read the freezing time and the
@@ -242,11 +171,8 @@ proof -
     by (rule path_eval_at_measurable_time
         [where X = "\<lambda>p' :: 'n pairpath. p'" and g = \<theta>, OF T0 idm thQ])
        (use th0 thT in auto)
-  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-      \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
   have xm: "(\<lambda>p' :: 'n pairpath. fst (p' (\<theta> p'))) \<in> borel_measurable Q"
-    by (rule measurable_compose[OF ev fstB])
+    by (rule measurable_compose[OF ev pair_fst_borel])
   have pm: "(\<lambda>p' :: 'n pairpath. (\<theta> p', fst (p' (\<theta> p'))))
       \<in> Q \<rightarrow>\<^sub>M (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)"
     by (rule measurable_Pair[OF thQ xm])
@@ -745,25 +671,17 @@ proof -
     by (rule path_stopping_time_le[OF st])
   have idm: "(\<lambda>p' :: 'n pairpath. p') \<in> ?B \<rightarrow>\<^sub>M ?B"
     by (rule measurable_ident_sets[OF refl])
-  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-      \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
   have xm: "(\<lambda>p' :: 'n pairpath. fst (p' (\<theta> p'))) \<in> borel_measurable ?B"
   proof -
     have "(\<lambda>p' :: 'n pairpath. p' (\<theta> p')) \<in> borel_measurable ?B"
       by (rule path_eval_at_measurable_time
           [where X = "\<lambda>p' :: 'n pairpath. p'" and g = \<theta>, OF T0' idm thM])
          (use th0 thT in auto)
-    then show ?thesis by (rule measurable_compose[OF _ fstB])
+    then show ?thesis by (rule measurable_compose[OF _ pair_fst_borel])
   qed
   have taum: "(\<lambda>p' :: 'n pairpath. pexit T K (\<lambda>t. fst (p' t)))
       \<in> borel_measurable ?B"
-  proof -
-    have "(\<lambda>p' :: 'n pairpath. pexit T K (pfst T p')) \<in> borel_measurable ?B"
-      by (rule measurable_compose[OF pfst_measurable[OF T0' refl]
-            pexit_measurable[OF T0' Kc]])
-    then show ?thesis by (simp add: pexit_pfst)
-  qed
+    by (rule pexit_path_measurable[OF T0' Kc refl])
   \<comment> \<open>the exit time at the RANDOM horizon is the fixed-horizon one, capped\<close>
   have pe: "(\<lambda>p' :: 'n pairpath. pexit (\<theta> p') K (\<lambda>t. fst (p' t)))
       = (\<lambda>p'. min (pexit T K (\<lambda>t. fst (p' t))) (\<theta> p'))"

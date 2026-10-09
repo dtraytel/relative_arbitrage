@@ -176,21 +176,11 @@ text \<open>Clause (ii) is inheritance: the future's increment over \<open>[p,q]
   the path's increment over \<open>[r+p, r+q]\<close>, the base point cancelling, and the
   two time spans agree.\<close>
 
-definition pshift_law ::
+abbreviation pshift_law ::
   "real \<Rightarrow> 'a::{polish_space,banach} \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b)) measure"
-  where "pshift_law T x Q = distr Q
-     (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-     (pshift T x)"
+  where "pshift_law T x Q \<equiv> pair_law_of T (pshift T x) Q"
 
-lemma sets_pshift_law[simp]:
-  "sets (pshift_law T x Q)
-     = sets (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
-  unfolding pshift_law_def by simp
-
-lemma space_pshift_law:
-  "space (pshift_law T x Q)
-     = mspace (path_metric T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) metric)"
-  unfolding pshift_law_def by (simp add: space_borel_of)
+lemmas pshift_law_def = pair_law_of_def[where \<phi> = "pshift T x" for T x]
 
 lemma prob_space_pshift_law:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and x :: "'a"
@@ -210,7 +200,7 @@ lemma natural_filtration_pshift_law:
   shows "natural_filtration (pshift_law T x Q) 0 (\<lambda>v \<omega>. \<omega> v)
        = natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v)"
   unfolding natural_filtration_def
-  using space_of_path_sets[OF setsQ] space_pshift_law[of T x Q] by simp
+  using space_of_path_sets[OF setsQ] space_pair_law_of[of T "pshift T x" Q] by simp
 
 text \<open>The martingale property transports.  Everything is arranged so that
   the filtration does not move (\<open>natural_filtration_pshift_law\<close>): only the
@@ -238,7 +228,7 @@ proof -
     by (rule natural_filtration_pshift_law[OF setsQ])
   have spQ: "space Q = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'x)) metric)"
     by (rule space_of_path_sets[OF setsQ])
-  have spQ': "space ?Q' = space Q" using spQ by (simp add: space_pshift_law)
+  have spQ': "space ?Q' = space Q" using spQ by (simp add: space_pair_law_of)
   have setsQ': "sets ?Q' = sets ?B" by simp
   have prob': "prob_space ?Q'" by (rule prob_space_pshift_law[OF T prob setsQ])
   have fin': "finite_measure ?Q'" using prob' by (simp add: prob_space_def)
@@ -246,7 +236,7 @@ proof -
     using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
   have SP: "Stochastic_Process.stochastic_process ?Q' (0::real)
       (\<lambda>u \<omega> :: (real \<Rightarrow> 'a \<times> 'x). \<omega> u)"
-    by unfold_locales (rule pair_law_eval_measurable[OF sets_pshift_law])
+    by unfold_locales (rule pair_law_eval_measurable[OF sets_pair_law_of])
   interpret SF: finite_filtered_measure ?Q' ?F 0
     using Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration
       [OF SP fin'] unfolding FF .
@@ -312,17 +302,13 @@ text \<open>The shift is a bijection of the path space with measurable inverse,
   almost-sure clauses of (1.7) be transported without any measurability
   hypothesis on the property itself.\<close>
 
-definition aglue_law :: "real \<Rightarrow> ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}) \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b)) measure)
+abbreviation aglue_law :: "real \<Rightarrow> ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}) \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b)) measure)
     \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b)) measure \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b)) measure"
-  where "aglue_law T \<kappa> Q = distr
-      (ksemi Q (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure) \<kappa>)
-      (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-      (\<lambda>p. padd T (fst p) (snd p))"
+  where "aglue_law T \<kappa> Q \<equiv> pair_law_of T (\<lambda>p. padd T (fst p) (snd p))
+      (ksemi Q (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure) \<kappa>)"
 
-lemma sets_aglue_law:
-  "sets (aglue_law T \<kappa> Q)
-    = sets (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
-  unfolding aglue_law_def by (rule sets_distr)
+lemmas aglue_law_def =
+  pair_law_of_def[where \<phi> = "\<lambda>p. padd T (fst p) (snd p)" and M = "ksemi Q B \<kappa>" for T Q B \<kappa>]
 
 lemma pshift_law_weak_conv_joint:
   fixes ym :: "nat \<Rightarrow> 'a::{polish_space,banach}" and Rm :: "nat \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure"
@@ -577,7 +563,7 @@ proof -
   have spQ: "space Q = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have spQ': "space (pshift_law T x Q) = space Q"
-    using spQ by (simp add: space_pshift_law)
+    using spQ by (simp add: space_pair_law_of)
   have shm: "pshift T x \<in> Q \<rightarrow>\<^sub>M ?B"
     using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
   have shmQ: "pshift T (- x) \<in> Q \<rightarrow>\<^sub>M Q"
@@ -653,16 +639,8 @@ lemma aglue_law_start:
   shows "AE \<omega> in aglue_law T \<kappa> Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
 proof -
   let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  have ev0: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> 0) \<in> borel_measurable ?B"
-    by (rule pair_law_eval_measurable[OF refl])
   have Phi: "{\<omega> \<in> space ?B. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
-  proof -
-    have "{\<omega> \<in> space ?B. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0}
-        = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> 0) -` {(x, 0)} \<inter> space ?B"
-      by (auto simp: prod_eq_iff)
-    then show ?thesis
-      using measurable_sets[OF ev0 borel_closed[OF closed_singleton]] by simp
-  qed
+    by (rule start_set_sets[OF refl])
   have z: "(0 :: real) \<in> {0..T}" using T0 by simp
   have "AE p' in Q. AE w in \<kappa> p'.
       fst (padd T p' w 0) = x \<and> snd (padd T p' w 0) = 0"
@@ -915,7 +893,7 @@ next
   assume h: "AE \<omega> in ?Q'. P \<omega>"
   have setsQ': "sets ?Q' = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)" by simp
   have spQ': "space ?Q' = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    by (rule space_pshift_law)
+    by (rule space_pair_law_of)
   have id': "AE \<omega> in ?Q'. pshift T x (pshift T (- x) \<omega>) = \<omega>"
   proof (rule AE_I2)
     fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" assume "\<omega> \<in> space ?Q'"
@@ -936,6 +914,33 @@ next
   show "AE \<omega> in Q. P (pshift T x \<omega>)" using step unfolding eqQ .
 qed
 
+text \<open>Cutting a law at \<open>S \<le> T\<close> caps the essential infimum of its exit time
+  at \<open>S\<close>: \<^term>\<open>pexit S K f = min (pexit T K f) S\<close>, and capping by a
+  constant commutes with the essential infimum.\<close>
+
+lemma ess_inf_pexit_pair_law_pcut:
+  fixes R :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and K :: "('a) set"
+  assumes S0: "0 \<le> S" and ST: "S \<le> T" and PR: "prob_space R"
+    and setsR: "sets R = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and K: "closed K"
+  shows "ess_inf_time (pair_law_of S (pcut S) R) (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
+      = min (ess_inf_time R (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
+proof -
+  let ?BS = "(path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  have cutm: "pcut S \<in> R \<rightarrow>\<^sub>M ?BS" by (rule pcut_measurable[OF S0 ST setsR])
+  have mset: "{\<omega> \<in> space ?BS. c \<le> ennreal (pexit S K (\<lambda>t. fst (\<omega> t)))}
+      \<in> sets ?BS" for c :: ennreal
+    using pexit_path_measurable[OF S0 K refl] by measurable
+  have "ess_inf_time (pair_law_of S (pcut S) R) (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
+      = ess_inf_time R (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (pcut S \<omega> t)))"
+    unfolding pair_law_of_def by (rule ess_inf_time_distr[OF cutm mset])
+  also have "\<dots> = ess_inf_time R (\<lambda>\<omega>. min (pexit T K (\<lambda>t. fst (\<omega> t))) S)"
+    unfolding pexit_pcut pexit_min_horizon[OF S0 ST] ..
+  also have "\<dots> = min (ess_inf_time R (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
+      (ennreal S)" by (rule ess_inf_time_min_const[OF PR])
+  finally show ?thesis .
+qed
+
 lemma ess_inf_pexit_pcut_law:
   fixes R :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and K :: "('a) set"
   assumes S0: "0 \<le> S" and ST: "S \<le> T" and PR: "prob_space R"
@@ -946,41 +951,10 @@ lemma ess_inf_pexit_pcut_law:
       = min (ess_inf_time (pshift_law T y R)
           (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
 proof -
-  let ?BS = "(path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  let ?P = "pshift_law T y R"
   have T0: "0 \<le> T" using S0 ST by simp
-  have setsP: "sets ?P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)" by simp
-  have PP: "prob_space ?P" by (rule prob_space_pshift_law[OF T0 PR setsR])
-  have cutm: "pcut S \<in> ?P \<rightarrow>\<^sub>M ?BS" by (rule pcut_measurable[OF S0 ST setsP])
-  have taum: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pexit S K (\<lambda>t. fst (\<omega> t)))
-      \<in> borel_measurable ?BS"
-  proof -
-    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pexit S K (pfst S \<omega>)) \<in> borel_measurable ?BS"
-      by (rule measurable_compose[OF pfst_measurable[OF S0 refl]
-            pexit_measurable[OF S0 K]])
-    then show ?thesis by (simp add: pexit_pfst)
-  qed
-  have mset: "{\<omega> \<in> space ?BS. c \<le> ennreal (pexit S K (\<lambda>t. fst (\<omega> t)))}
-      \<in> sets ?BS" for c :: ennreal using taum by measurable
-  have "ess_inf_time (pshift_law S y (pair_law_of S (pcut S) R))
-        (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
-      = ess_inf_time (pair_law_of S (pcut S) ?P)
-        (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))"
-    unfolding pshift_law_pcut[OF S0 ST setsR] ..
-  also have "\<dots> = ess_inf_time ?P (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (pcut S \<omega> t)))"
-    unfolding pair_law_of_def by (rule ess_inf_time_distr[OF cutm mset])
-  also have "\<dots> = ess_inf_time ?P (\<lambda>\<omega>. min (pexit T K (\<lambda>t. fst (\<omega> t))) S)"
-  proof (rule arg_cong[where f = "ess_inf_time ?P"], rule ext)
-    fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-    have "pexit S K (\<lambda>t. fst (pcut S \<omega> t)) = pexit S K (\<lambda>t. fst (\<omega> t))"
-      by (rule pexit_cong_on) (auto simp: pcut_apply)
-    then show "pexit S K (\<lambda>t. fst (pcut S \<omega> t))
-        = min (pexit T K (\<lambda>t. fst (\<omega> t))) S"
-      using pexit_min_horizon[OF S0 ST, of K "\<lambda>t. fst (\<omega> t)"] by simp
-  qed
-  also have "\<dots> = min (ess_inf_time ?P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
-      (ennreal S)" by (rule ess_inf_time_min_const[OF PP])
-  finally show ?thesis .
+  show ?thesis
+    unfolding pshift_law_pcut[OF S0 ST setsR]
+    by (rule ess_inf_pexit_pair_law_pcut[OF S0 ST prob_space_pshift_law[OF T0 PR setsR] _ K]) simp
 qed
 
 subsection \<open>The selector\<close>
@@ -1662,14 +1636,8 @@ proof -
   have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
     using K measurable_cong_sets[OF setsQ refl] by blast
-  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w 0) \<in> borel_measurable ?Y"
-    by (rule pair_law_eval_measurable[OF refl])
   have CY: "?C \<in> sets ?Y"
-  proof -
-    have "?C = (\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w 0) -` {(0, 0)} \<inter> space ?Y"
-      by (auto simp: prod_eq_iff)
-    then show ?thesis using measurable_sets[OF ev] by simp
-  qed
+    by (rule start_set_sets[OF refl])
   have C': "space ?Y - ?C \<in> sets ?Y" using CY by (rule sets.compl_sets)
   have rect: "space ?X \<times> (space ?Y - ?C) \<in> sets (?X \<Otimes>\<^sub>M ?Y)" using C' by simp
   have empty: "?\<phi> -` (space ?X \<times> (space ?Y - ?C)) \<inter> space P = {}"
@@ -2195,15 +2163,8 @@ proof -
   have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
     unfolding measurable_cong_sets[OF setsP refl]
     by (rule pstopped_measurable[OF T0 thM th0 thT])
-  have ev: "(\<lambda>p' :: (real \<Rightarrow> 'a \<times> 'b). p' 0) \<in> borel_measurable ?B"
-    by (rule pair_law_eval_measurable[OF refl])
   have mset: "{p' \<in> space ?B. fst (p' 0) = x \<and> snd (p' 0) = 0} \<in> sets ?B"
-  proof -
-    have "{p' \<in> space ?B. fst (p' 0) = x \<and> snd (p' 0) = 0}
-        = (\<lambda>p' :: (real \<Rightarrow> 'a \<times> 'b). p' 0) -` {(x, 0)} \<inter> space ?B"
-      by (auto simp: prod_eq_iff)
-    then show ?thesis using measurable_sets[OF ev] by simp
-  qed
+    by (rule start_set_sets[OF refl])
   have z: "(0::real) \<in> {0..T}" using T0 by simp
   have "AE \<omega> in P. fst (pstopped T \<theta> \<omega> 0) = x \<and> snd (pstopped T \<theta> \<omega> 0) = 0"
     using P0
@@ -2649,11 +2610,9 @@ proof -
   proof (cases "v \<le> ?S")
     case True
     have m1: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (r + v)) \<in> borel_measurable (?FF u)"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use r v vu True in auto)
+      by (rule natural_filtration_eval) (use r v vu True in auto)
     have m2: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> r) \<in> borel_measurable (?FF u)"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use r v vu True Tr in auto)
+      by (rule natural_filtration_eval) (use r v vu True Tr in auto)
     have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (r + v) - \<omega> r) \<in> borel_measurable (?FF u)"
       by (rule borel_measurable_diff[OF m1 m2])
     moreover have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pfut r T \<omega> v) = (\<lambda>\<omega>. \<omega> (r + v) - \<omega> r)"
@@ -3168,7 +3127,7 @@ proof -
   have spQ: "space Q = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have pin: "pcut s \<in> space Q \<rightarrow> mspace ?ms"
-    using restrict_in_mspace[OF s sT] spQ unfolding pcut_def by auto
+    using restrict_mspace_path_metric[OF s sT] spQ unfolding pcut_def by auto
   define E where "E = ?pb ` D"
 
   have cE: "countable E" unfolding E_def by (rule countable_image[OF cD])
@@ -3204,6 +3163,33 @@ proof -
     finally show ?thesis .
   qed
   show thesis by (rule that[OF cE EInt Epow Etop Egen])
+qed
+
+text \<open>One such \<open>\<pi>\<close>-system for every time at once.\<close>
+
+lemma countable_pi_systems_natural_filtration_path:
+  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+  assumes setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  shows "\<exists>Eg. \<forall>s \<in> {0..T}. countable (Eg s) \<and> Int_stable (Eg s)
+      \<and> Eg s \<subseteq> Pow (space Q) \<and> space Q \<in> Eg s
+      \<and> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s) = sigma_sets (space Q) (Eg s)"
+proof -
+  have "\<exists>E. countable E \<and> Int_stable E \<and> E \<subseteq> Pow (space Q) \<and> space Q \<in> E
+      \<and> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s) = sigma_sets (space Q) E"
+    if s: "s \<in> {0..T}" for s
+  proof (rule countable_pi_system_natural_filtration_path[OF setsQ, where s = s])
+    show "0 \<le> s" "s \<le> T" using s by auto
+    fix E assume "countable E" "Int_stable E" "E \<subseteq> Pow (space Q)" "space Q \<in> E"
+      "sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s) = sigma_sets (space Q) E"
+    then show "\<exists>E. countable E \<and> Int_stable E \<and> E \<subseteq> Pow (space Q) \<and> space Q \<in> E
+        \<and> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s) = sigma_sets (space Q) E"
+      by (intro exI[of _ E] conjI)
+  qed
+  then have "\<forall>s \<in> {0..T}. \<exists>E. countable E \<and> Int_stable E \<and> E \<subseteq> Pow (space Q)
+      \<and> space Q \<in> E
+      \<and> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s) = sigma_sets (space Q) E"
+    by blast
+  then show ?thesis by (rule bchoice)
 qed
 
 subsection \<open>The martingale property at a fixed law\<close>

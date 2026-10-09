@@ -118,16 +118,9 @@ proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have phim: "sbmpair S T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF T])
-  have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable ?B"
-    by (rule pair_law_eval_measurable[OF refl])
   have mset: "{\<omega> \<in> space ?B. fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0}
       \<in> sets ?B"
-  proof -
-    have "{\<omega> \<in> space ?B. fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0}
-        = (\<lambda>\<omega> :: 'n pairpath. \<omega> 0) -` {(0, 0)} \<inter> space ?B"
-      by (auto simp: prod_eq_iff)
-    then show ?thesis using measurable_sets[OF ev] by simp
-  qed
+    by (rule start_set_sets[OF refl])
   have iff: "(AE \<omega> in pair_law_of T (sbmpair S T) ?M.
         fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0)
       = (AE \<omega> in ?M. fst (sbmpair S T \<omega> 0) = (0 :: real^'n)
@@ -283,16 +276,12 @@ proof -
   let ?Q = "pair_law_of T (sbmpair S T) ?M"
   let ?F = "natural_filtration ?M 0 (cbmX (0 :: real^'n))"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-      \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI continuous_intros)
   have Zm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T))) \<in> borel_measurable (?G u)"
     if u: "0 \<le> u" for u
   proof -
     have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use u T in auto)
-    show ?thesis by (rule measurable_compose[OF ev fstB])
+      by (rule natural_filtration_eval) (use u T in auto)
+    show ?thesis by (rule measurable_compose[OF ev pair_fst_borel])
   qed
   have mg: "martingale ?M ?F 0 (\<lambda>u \<omega>. fst (sbmpair S T \<omega> (min u T)))"
   proof (rule martingale_cong_ge[OF martingale_bounded_linear_image
@@ -320,22 +309,13 @@ proof -
   let ?Q = "pair_law_of T (sbmpair S T) ?M"
   let ?F = "natural_filtration ?M 0 (cbmX (0 :: real^'n))"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  have e: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
-      = (\<lambda>p. \<chi> i j. fst p $ i * fst p $ j - snd p $ i $ j)"
-    by (rule ext) (simp add: outerp_def vec_eq_iff)
-  have cB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). outerp (fst p) - snd p)
-      \<in> borel_measurable borel"
-    unfolding e
-    by (intro borel_measurable_continuous_onI continuous_on_vec_lambda
-        continuous_intros)
   have Zm: "(\<lambda>\<omega> :: 'n pairpath.
         outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))
       \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
   proof -
     have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use u T in auto)
-    show ?thesis by (rule measurable_compose[OF ev cB])
+      by (rule natural_filtration_eval) (use u T in auto)
+    show ?thesis by (rule measurable_compose[OF ev compensated_map_borel])
   qed
   have mg: "martingale ?M ?F 0
       (\<lambda>u \<omega>. outerp (fst (sbmpair S T \<omega> (min u T)))
@@ -821,21 +801,12 @@ next
     by (rule exit_class_sets[OF Q])
   have hpos: "0 < (h :: real)" by (rule h0)
   note pack = sbm_kernel_package[OF hpos L1 SFc SFs]
-  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-      \<in> borel_measurable borel"
-    using measurable_fst[of "borel :: (real^'n) measure"
-        "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
   have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r))
       \<in> borel_measurable (eulerp SF x h j)"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] mfst])
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] pair_fst_borel])
   have eF: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r))
       \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel"
-  proof (rule measurable_compose[OF _ mfst])
-    show "(\<lambda>\<omega> :: 'n pairpath. \<omega> r)
-        \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel"
-      unfolding natural_filtration_def
-      by (rule measurable_family_vimage_algebra) (use r0 in auto)
-  qed
+    by (rule measurable_compose[OF natural_filtration_eval[OF r0 order_refl] pair_fst_borel])
   have Kp: "(\<lambda>\<omega> :: 'n pairpath.
       pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
       \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra ((path_borel (T' - r) :: ('n pairpath) measure))"
@@ -1729,12 +1700,8 @@ next
   have setsQ: "sets ?Q = sets ?Br" by (rule exit_class_sets[OF Qc])
   have ne: "space ?Q \<noteq> {}" by (rule PQ.not_empty)
   note pack = sbm_kernel_package[OF h0 L1 SFc SFs]
-  have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-      \<in> borel_measurable borel"
-    using measurable_fst[of "borel :: (real^'n) measure"
-        "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
   have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?Q"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] mfst])
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] pair_fst_borel])
   have Kp: "?K \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?MR"
     unfolding hT by (rule measurable_compose[OF eQ pack(1)])
   have Ee: "eulerp SF x h (Suc N) = kglue_law' r T' ?K ?Q"
@@ -2080,12 +2047,8 @@ next
     have setsQ: "sets ?Q = sets ?Br" by (rule exit_class_sets[OF Qc])
     have ne: "space ?Q \<noteq> {}" by (rule PQ.not_empty)
     note pack = sbm_kernel_package[OF h0 L1 SFc SFs]
-    have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-        \<in> borel_measurable borel"
-      using measurable_fst[of "borel :: (real^'n) measure"
-          "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
     have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?Q"
-      by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] mfst])
+      by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] pair_fst_borel])
     have Kp: "?K \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?MR"
       unfolding hT by (rule measurable_compose[OF eQ pack(1)])
     have Ee: "eulerp SF x h (Suc N) = kglue_law' r T' ?K ?Q"

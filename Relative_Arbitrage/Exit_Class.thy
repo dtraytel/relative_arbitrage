@@ -256,6 +256,12 @@ lemma exit_class_sets:
   shows "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   using Q unfolding exit_class_eq_covariation by (rule covariation_class_sets)
 
+lemma exit_class_start:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes Q: "Q \<in> exit_class k L T x"
+  shows "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+  using Q unfolding exit_class_eq_covariation by (rule covariation_class_start)
+
 
 lemma closedin_diffquot_constraint:
   fixes s t :: real
@@ -446,10 +452,7 @@ lemma exit_class_eval_measurable:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<lambda>\<omega>. \<omega> t) \<in> borel_measurable Q"
-proof (rule covariation_class_eval_measurable)
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed (use assms in auto)
+  by (rule pair_law_eval_measurable[OF exit_class_sets[OF Q]])
 
 lemma exit_class_Y_entry_bound_ae:
   fixes Q :: "(('n::finite) pairpath) measure"
@@ -482,7 +485,7 @@ lemma exit_class_compensated_martingale:
   assumes Q: "Q \<in> exit_class k L T x"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
-proof (rule covariation_class_compensated_martingale)
+proof (rule covariation_class_martingale_compensated)
   show "Q \<in> covariation_class (sconstraint k L) T x"
     using Q unfolding exit_class_eq_covariation .
 qed
@@ -588,12 +591,7 @@ proof -
   have mm: "{\<omega> \<in> space Q. \<omega> 0 = (x, 0)} \<in> sets Q"
     unfolding sp setsQ by (rule borel_of_closed[OF closedin_start_point[OF T]])
   have ae: "AE \<omega> in Q. \<omega> 0 = (x, 0)"
-  proof -
-    have "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-      using Q unfolding exit_class_def by blast
-    then show ?thesis
-      by (rule eventually_mono) (simp add: prod_eq_iff)
-  qed
+    using exit_class_start[OF Q] by (rule eventually_mono) (simp add: prod_eq_iff)
   show ?thesis using P.prob_Collect_eq_1[OF mm] ae unfolding sp by blast
 qed
 

@@ -142,7 +142,6 @@ proof (rule order.antisym)
     by (intro min.boundedI exit_val_horizon_mono[OF S0 ST L K] exit_val_le_T[OF S0])
   show "min (exit_val k L T K x) (ennreal S) \<le> exit_val k L S K x"
   proof (rule ccontr)
-    let ?BS = "(path_borel S :: ('n pairpath) measure)"
     assume "\<not> min (exit_val k L T K x) (ennreal S) \<le> exit_val k L S K x"
     then have "exit_val k L S K x < min (exit_val k L T K x) (ennreal S)"
       by (rule not_le_imp_less)
@@ -162,37 +161,10 @@ proof (rule order.antisym)
       by (auto simp: less_Sup_iff)
     have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
       by (rule exit_class_sets[OF Q])
-    have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
-    have cutm: "pcut S \<in> Q \<rightarrow>\<^sub>M ?BS" by (rule pcut_measurable[OF S0 ST setsQ])
-    have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit S K (\<lambda>t. fst (\<omega> t)))
-        \<in> borel_measurable ?BS"
-    proof -
-      have "(\<lambda>\<omega> :: 'n pairpath. pexit S K (pfst S \<omega>)) \<in> borel_measurable ?BS"
-        by (rule measurable_compose[OF pfst_measurable[OF S0 refl]
-              pexit_measurable[OF S0 K]])
-      then show ?thesis by (simp add: pexit_pfst)
-    qed
-    have mset: "{\<omega> \<in> space ?BS. c \<le> ennreal (pexit S K (\<lambda>t. fst (\<omega> t)))}
-        \<in> sets ?BS" for c :: ennreal using taum by measurable
-    have "ess_inf_time (pair_law_of S (pcut S) Q)
+    have val: "ess_inf_time (pair_law_of S (pcut S) Q)
           (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
-        = ess_inf_time Q (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (pcut S \<omega> t)))"
-      unfolding pair_law_of_def by (rule ess_inf_time_distr[OF cutm mset])
-    also have "\<dots> = ess_inf_time Q (\<lambda>\<omega>. min (pexit T K (\<lambda>t. fst (\<omega> t))) S)"
-    proof (rule arg_cong[where f = "ess_inf_time Q"], rule ext)
-      fix \<omega> :: "'n pairpath"
-      have "pexit S K (\<lambda>t. fst (pcut S \<omega> t)) = pexit S K (\<lambda>t. fst (\<omega> t))"
-        by (rule pexit_cong_on) (auto simp: pcut_apply)
-      then show "pexit S K (\<lambda>t. fst (pcut S \<omega> t))
-          = min (pexit T K (\<lambda>t. fst (\<omega> t))) S"
-        using pexit_min_horizon[OF S0 ST, of K "\<lambda>t. fst (\<omega> t)"] by simp
-    qed
-    also have "\<dots> = min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
-        (ennreal S)"
-      by (rule ess_inf_time_min_const[OF PQ])
-    finally have val: "ess_inf_time (pair_law_of S (pcut S) Q)
-          (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
-        = min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)" .
+        = min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
+      by (rule ess_inf_pexit_pair_law_pcut[OF S0 ST exit_class_prob[OF Q] setsQ K])
     have inS: "pair_law_of S (pcut S) Q \<in> exit_class k L S x"
       by (rule exit_class_pcut[OF S0 ST Q])
     have "b < min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
@@ -489,12 +461,9 @@ proof -
     proof -
       have a: "0 \<le> min u T" using u T0 by simp
       have b: "min u T \<le> u" by simp
-      have fstB: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-          \<in> borel_measurable borel"
-        by (intro borel_measurable_continuous_onI continuous_intros)
       show ?thesis
         by (rule measurable_compose
-            [OF path_eval_natural_filtration[OF a b] fstB])
+            [OF natural_filtration_eval[OF a b] pair_fst_borel])
     qed
     show "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
         (\<lambda>u w. fst (pembed s T w (min u T)))" by (rule tc)
@@ -524,7 +493,7 @@ proof -
   let ?F = "natural_filtration \<mu> 0 (\<lambda>v w :: 'n pairpath. w v)"
   have mgb: "martingale \<mu> ?F 0
       (\<lambda>t w. outerp (fst (w (min t (T - s)))) - snd (w (min t (T - s))))"
-    by (rule exit_class_comp_martingale[OF mu])
+    by (rule exit_class_compensated_martingale[OF mu])
   have tc: "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
       (\<lambda>u w. outerp (fst (pembed s T w (min u T)))
           - snd (pembed s T w (min u T)))"
@@ -562,13 +531,9 @@ proof -
     proof -
       have a: "0 \<le> min u T" using u T0 by simp
       have b: "min u T \<le> u" by simp
-      have cm: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). outerp (fst z) - snd z)
-          \<in> borel_measurable borel"
-        unfolding outerp_def
-        by (intro borel_measurable_continuous_onI continuous_intros)
       show ?thesis
         by (rule measurable_compose
-            [OF path_eval_natural_filtration[OF a b] cm])
+            [OF natural_filtration_eval[OF a b] compensated_map_borel])
     qed
     show "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
         (\<lambda>u w. outerp (fst (pembed s T w (min u T)))
@@ -1019,13 +984,10 @@ proof -
     have fcB: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). fst z $ c)
         \<in> borel_measurable borel"
     proof -
-      have s: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-          \<in> borel_measurable borel"
-        by (intro borel_measurable_continuous_onI continuous_intros)
-      show ?thesis by (rule measurable_compose[OF s borel_measurable_nth])
+      show ?thesis by (rule measurable_compose[OF pair_fst_borel borel_measurable_nth])
     qed
     show ?thesis
-      by (rule measurable_compose[OF path_eval_natural_filtration[OF a b] fcB])
+      by (rule measurable_compose[OF natural_filtration_eval[OF a b] fcB])
   qed
   have mgQ: "martingale ?Q ?G 0 ?Z"
   proof (rule martingale_pair_law[where T = T and FF = ?F])
@@ -1050,10 +1012,7 @@ proof -
       moreover have "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). fst z $ c)
           \<in> borel_measurable borel"
       proof -
-        have s': "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
-            \<in> borel_measurable borel"
-          by (intro borel_measurable_continuous_onI continuous_intros)
-        show ?thesis by (rule measurable_compose[OF s' borel_measurable_nth])
+        show ?thesis by (rule measurable_compose[OF pair_fst_borel borel_measurable_nth])
       qed
       ultimately have "(\<lambda>p' :: 'n pairpath. ?Z s p') \<in> borel_measurable ?B"
         by (rule measurable_compose)
@@ -1129,18 +1088,7 @@ proof -
         [OF T0 HZ cap contT th0 tstop s])
   have entB: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n).
       (outerp (fst z) - snd z) $ c $ d) \<in> borel_measurable borel"
-  proof -
-    have s: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). outerp (fst z) - snd z)
-        \<in> borel_measurable borel"
-      unfolding outerp_def
-      by (intro borel_measurable_continuous_onI continuous_intros)
-    have bl: "bounded_linear (\<lambda>M :: real^'n^'n. M $ c $ d)"
-      by (rule bounded_linear_compose[OF bounded_linear_vec_nth
-          bounded_linear_vec_nth])
-    have n: "(\<lambda>M :: real^'n^'n. M $ c $ d) \<in> borel_measurable borel"
-      by (rule borel_measurable_continuous_onI) (rule linear_continuous_on[OF bl])
-    show ?thesis by (rule measurable_compose[OF s n])
-  qed
+    by (rule compensated_entry_borel)
   have mgp: "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))"
   proof (rule martingale_cong_ge[OF mgs])
     fix u :: real assume u: "0 \<le> u"
@@ -1157,7 +1105,7 @@ proof -
     have a: "0 \<le> min u T" using u T0' by simp
     have b: "min u T \<le> u" by simp
     show ?thesis
-      by (rule measurable_compose[OF path_eval_natural_filtration[OF a b] entB])
+      by (rule measurable_compose[OF natural_filtration_eval[OF a b] entB])
   qed
   have mgQ: "martingale ?Q ?G 0 ?Z"
   proof (rule martingale_pair_law[where T = T and FF = ?F])

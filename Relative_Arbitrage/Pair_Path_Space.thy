@@ -1296,6 +1296,32 @@ proof -
     using measurable_cong_sets[OF setsN refl] by blast
 qed
 
+lemma continuous_on_iglue:
+  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
+  assumes r: "0 \<le> r"
+    and c1: "continuous_on {0..r} \<omega>"
+    and c2: "continuous_on {0..} \<omega>'"
+  shows "continuous_on {0..}
+      (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
+proof -
+  let ?f = "\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)"
+  have U: "{0..} = {0..r} \<union> {r..}" using r by auto
+  have A: "continuous_on {0..r} ?f"
+    by (rule continuous_on_eq[OF c1]) simp
+  have B: "continuous_on {r..} ?f"
+  proof (rule continuous_on_eq)
+    have "continuous_on {r..} (\<lambda>t. \<omega>' (t - r))"
+      by (rule continuous_on_compose2[OF c2 continuous_on_diff
+            [OF continuous_on_id continuous_on_const]]) auto
+    then show "continuous_on {r..} (\<lambda>t. \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
+      by (intro continuous_intros)
+  next
+    fix t :: real assume "t \<in> {r..}"
+    then show "\<omega> r + (\<omega>' (t - r) - \<omega>' 0) = ?f t" by (cases "t = r") auto
+  qed
+  show ?thesis unfolding U by (rule continuous_on_closed_Un[OF _ _ A B]) auto
+qed
+
 lemma continuous_on_pglue:
   fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
@@ -1304,22 +1330,17 @@ lemma continuous_on_pglue:
   shows "continuous_on {0..T}
       (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
 proof -
-  let ?f = "\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (\<omega>' (t - r) - \<omega>' 0)"
-  have U: "{0..T} = {0..r} \<union> {r..T}" using r rT by auto
-  have A: "continuous_on {0..r} ?f"
-    by (rule continuous_on_eq[OF c1]) simp
-  have B: "continuous_on {r..T} ?f"
-  proof (rule continuous_on_eq)
-    have "continuous_on {r..T} (\<lambda>t. \<omega>' (t - r))"
-      by (rule continuous_on_compose2[OF c2 continuous_on_diff
-            [OF continuous_on_id continuous_on_const]]) auto
-    then show "continuous_on {r..T} (\<lambda>t. \<omega> r + (\<omega>' (t - r) - \<omega>' 0))"
-      by (intro continuous_intros)
-  next
-    fix t :: real assume "t \<in> {r..T}"
-    then show "\<omega> r + (\<omega>' (t - r) - \<omega>' 0) = ?f t" by (cases "t = r") auto
-  qed
-  show ?thesis unfolding U by (rule continuous_on_closed_Un[OF _ _ A B]) auto
+  let ?w = "\<lambda>t. \<omega>' (min t (T - r))"
+  have "continuous_on {0..} ?w"
+    by (rule continuous_on_compose2[OF c2 continuous_on_min[OF continuous_on_id
+          continuous_on_const]]) (use rT in auto)
+  then have "continuous_on {0..}
+      (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (?w (t - r) - ?w 0))"
+    by (rule continuous_on_iglue[OF r c1])
+  then have "continuous_on {0..T}
+      (\<lambda>t. if t \<le> r then \<omega> t else \<omega> r + (?w (t - r) - ?w 0))"
+    by (rule continuous_on_subset) auto
+  then show ?thesis by (rule continuous_on_eq) (use r rT in \<open>auto simp: min_def\<close>)
 qed
 
 lemma continuous_map_diffquot:
