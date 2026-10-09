@@ -33,16 +33,6 @@ text \<open>The doubled function lives on \<open>'a \<times> 'b\<close>, itself 
   to each slice, letting the single product Hessian be read as two
   separate matrices.\<close>
 
-lemma norm_Pair_right_zero:
-  fixes h :: "'a::euclidean_space"
-  shows "norm ((h, 0) :: 'a \<times> 'b::euclidean_space) = norm h"
-  by (simp add: norm_prod_def)
-
-lemma norm_Pair_left_zero:
-  fixes h :: "'b::euclidean_space"
-  shows "norm ((0, h) :: 'a::euclidean_space \<times> 'b) = norm h"
-  by (simp add: norm_prod_def)
-
 lemma expansion_restrict_fst:
   fixes \<Psi> :: "'a::euclidean_space \<times> 'b::euclidean_space \<Rightarrow> real"
   assumes exp: "((\<lambda>k. (\<Psi> (z + k) - \<Psi> z - q \<bullet> k - (k \<bullet> Z k)/2) / (norm k)\<^sup>2)
@@ -74,7 +64,7 @@ proof -
     have inn2: "(h, 0::'b) \<bullet> Z (h, 0::'b) = h \<bullet> fst (Z (h, 0::'b))"
       by (cases "Z (h, 0::'b)") simp
     show ?thesis
-      unfolding zsum inn1 inn2 norm_Pair_right_zero ..
+      unfolding zsum inn1 inn2 norm_Pair2 ..
   qed
   show ?thesis using c unfolding eq .
 qed
@@ -110,7 +100,7 @@ proof -
     have inn2: "(0::'a, h) \<bullet> Z (0::'a, h) = h \<bullet> snd (Z (0::'a, h))"
       by (cases "Z (0::'a, h)") simp
     show ?thesis
-      unfolding zsum inn1 inn2 norm_Pair_left_zero ..
+      unfolding zsum inn1 inn2 norm_Pair1 ..
   qed
   show ?thesis using c unfolding eq .
 qed
@@ -119,10 +109,10 @@ subsection \<open>Semiconvexity calculus for the doubled functional\<close>
 
 text \<open>The doubled functional
   \<open>(x,y) \<mapsto> u x - w y - (\<alpha>/2) * norm (x - y)\<^sup>2\<close> must first be known
-  semiconvex on the product.  Three closure properties suffice:
-  semiconvexity adds (with the constants), it survives composition with
-  \<open>fst\<close> and \<open>snd\<close>, and the concave penalty is itself semiconvex with
-  constant \<open>2*\<alpha>\<close>.\<close>
+  semiconvex on the product.  Two closure properties are proved here:
+  semiconvexity adds (with the constants), and it survives composition with
+  \<open>fst\<close> and \<open>snd\<close>; the penalty's own semiconvexity is
+  \<open>semiconvex_penalty_gen\<close> in \<open>Doubling_Of_Variables\<close>.\<close>
 
 lemma convex_on_norm_sq:
   fixes S :: "'a::real_inner set"
@@ -204,21 +194,6 @@ proof (rule convex_onI)
       \<le> (1 - t) * h (snd z1) + t * h (snd z2)" by simp
 qed simp
 
-lemma convex_on_scaleR_nonneg:
-  fixes h :: "'a::real_vector \<Rightarrow> real"
-  assumes h: "convex_on UNIV h" and c: "0 \<le> c"
-  shows "convex_on UNIV (\<lambda>x. c * h x)"
-proof (rule convex_onI)
-  fix t :: real and x y :: 'a
-  assume t: "0 < t" "t < 1"
-  have "h ((1 - t) *\<^sub>R x + t *\<^sub>R y) \<le> (1 - t) * h x + t * h y"
-    using t by (intro convex_onD[OF h]) auto
-  hence "c * h ((1 - t) *\<^sub>R x + t *\<^sub>R y) \<le> c * ((1 - t) * h x + t * h y)"
-    using c by (rule mult_left_mono)
-  thus "c * h ((1 - t) *\<^sub>R x + t *\<^sub>R y) \<le> (1 - t) * (c * h x) + t * (c * h y)"
-    by (simp add: algebra_simps)
-qed simp
-
 lemma convex_on_proj_sum:
   fixes h :: "'a::euclidean_space \<Rightarrow> real"
   assumes h: "convex_on UNIV h"
@@ -243,40 +218,6 @@ lemma norm_prod_sq:
   shows "(norm z)\<^sup>2 = (norm (fst z))\<^sup>2 + (norm (snd z))\<^sup>2"
   by (simp add: norm_prod_def)
 
-text \<open>The concave penalty is semiconvex with constant \<open>2*\<alpha>\<close>.  Adding
-  \<open>\<alpha> * (norm x\<^sup>2 + norm y\<^sup>2)\<close> to \<open>-(\<alpha>/2) * norm (x-y)\<^sup>2\<close> gives exactly
-  \<open>(\<alpha>/2) * norm (x+y)\<^sup>2\<close>, a convex function outright.\<close>
-
-lemma semiconvex_penalty:
-  fixes \<alpha> :: real
-  assumes a: "0 \<le> \<alpha>"
-  shows "convex_on UNIV (\<lambda>z::'a::euclidean_space \<times> 'a.
-      - ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2) + ((2*\<alpha>)/2) * (norm z)\<^sup>2)"
-proof -
-  have eq: "(\<lambda>z::'a \<times> 'a. - ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-        + ((2*\<alpha>)/2) * (norm z)\<^sup>2)
-      = (\<lambda>z::'a \<times> 'a. (\<alpha>/2) * (norm (fst z + snd z))\<^sup>2)"
-  proof (rule ext)
-    fix z :: "'a \<times> 'a"
-    have d: "(norm (fst z - snd z))\<^sup>2
-        = (norm (fst z))\<^sup>2 - 2*(fst z \<bullet> snd z) + (norm (snd z))\<^sup>2"
-      by (simp add: power2_norm_eq_inner inner_diff_left inner_diff_right
-          inner_commute)
-    have s: "(norm (fst z + snd z))\<^sup>2
-        = (norm (fst z))\<^sup>2 + 2*(fst z \<bullet> snd z) + (norm (snd z))\<^sup>2"
-      by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
-          inner_commute)
-    show "- ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2) + ((2*\<alpha>)/2) * (norm z)\<^sup>2
-        = (\<alpha>/2) * (norm (fst z + snd z))\<^sup>2"
-      unfolding norm_prod_sq d s by (simp add: algebra_simps)
-  qed
-  have cn: "convex_on UNIV (\<lambda>x::'a. (norm x)\<^sup>2)"
-    by (rule convex_on_norm_sq[OF convex_UNIV])
-  have "convex_on UNIV (\<lambda>z::'a \<times> 'a. (\<alpha>/2) * (norm (fst z + snd z))\<^sup>2)"
-    using a by (intro convex_on_scaleR_nonneg convex_on_proj_sum[OF cn]) simp
-  thus ?thesis unfolding eq .
-qed
-
 lemma semiconvex_of_fst:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
   assumes f: "convex_on UNIV (\<lambda>x. f x + (c/2) * (norm x)\<^sup>2)" and c: "0 \<le> c"
@@ -289,7 +230,7 @@ proof -
   have cn: "convex_on UNIV (\<lambda>x::'b. (norm x)\<^sup>2)"
     by (rule convex_on_norm_sq[OF convex_UNIV])
   have p2: "convex_on UNIV (\<lambda>z::'a \<times> 'b. (c/2) * (norm (snd z))\<^sup>2)"
-    using c by (intro convex_on_scaleR_nonneg convex_on_snd[OF cn]) simp
+    using c by (intro convex_on_cmul convex_on_snd[OF cn]) simp
   have "convex_on UNIV (\<lambda>z::'a \<times> 'b.
       (f (fst z) + (c/2) * (norm (fst z))\<^sup>2) + (c/2) * (norm (snd z))\<^sup>2)"
     by (rule convex_on_add[OF p1 p2])
@@ -312,7 +253,7 @@ proof -
   have cn: "convex_on UNIV (\<lambda>x::'a. (norm x)\<^sup>2)"
     by (rule convex_on_norm_sq[OF convex_UNIV])
   have p2: "convex_on UNIV (\<lambda>z::'a \<times> 'b. (c/2) * (norm (fst z))\<^sup>2)"
-    using c by (intro convex_on_scaleR_nonneg convex_on_fst[OF cn]) simp
+    using c by (intro convex_on_cmul convex_on_fst[OF cn]) simp
   have "convex_on UNIV (\<lambda>z::'a \<times> 'b.
       (f (snd z) + (c/2) * (norm (snd z))\<^sup>2) + (c/2) * (norm (fst z))\<^sup>2)"
     by (rule convex_on_add[OF p1 p2])
@@ -321,108 +262,6 @@ proof -
       = (\<lambda>z::'a \<times> 'b. f (snd z) + (c/2) * (norm z)\<^sup>2)"
     by (rule ext) (simp add: norm_prod_sq algebra_simps)
   ultimately show ?thesis by simp
-qed
-
-text \<open>The doubled functional is semiconvex, with constant
-  \<open>1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>\<close> --- the hypothesis Rademacher, Alexandrov and
-  Jensen need before being pointed at the doubling of variables, and
-  what opens the theorem on sums.\<close>
-
-theorem doubled_functional_semiconvex:
-  fixes u v :: "'a::euclidean_space \<Rightarrow> real"
-  assumes Bu: "\<And>y. u y \<le> Bu" and Bv: "\<And>y. v y \<le> Bv"
-    and e: "0 < \<epsilon>" and a: "0 \<le> \<alpha>"
-  shows "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-        - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)"
-proof -
-  have ce: "0 \<le> 1/\<epsilon>" using e by simp
-  have A: "convex_on UNIV
-      (\<lambda>z::'a \<times> 'a. supconv u \<epsilon> (fst z) + ((1/\<epsilon>)/2) * (norm z)\<^sup>2)"
-    by (rule semiconvex_of_fst[OF supconv_semiconvex'[OF Bu e] ce])
-  have B: "convex_on UNIV
-      (\<lambda>z::'a \<times> 'a. supconv v \<epsilon> (snd z) + ((1/\<epsilon>)/2) * (norm z)\<^sup>2)"
-    by (rule semiconvex_of_snd[OF supconv_semiconvex'[OF Bv e] ce])
-  have AB: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z))
-      + ((1/\<epsilon> + 1/\<epsilon>)/2) * (norm z)\<^sup>2)"
-    by (rule semiconvex_add[OF A B])
-  have C: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      - ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2) + ((2*\<alpha>)/2) * (norm z)\<^sup>2)"
-    by (rule semiconvex_penalty[OF a])
-  have ABC: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z))
-        + - ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2))
-      + (((1/\<epsilon> + 1/\<epsilon>) + 2*\<alpha>)/2) * (norm z)\<^sup>2)"
-    by (rule semiconvex_add[OF AB C])
-  have eq: "(\<lambda>z::'a \<times> 'a.
-        ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z))
-          + - ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2))
-        + (((1/\<epsilon> + 1/\<epsilon>) + 2*\<alpha>)/2) * (norm z)\<^sup>2)
-      = (\<lambda>z::'a \<times> 'a.
-        (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-          - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-        + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)"
-    by (rule ext) simp
-  show ?thesis using ABC unfolding eq .
-qed
-
-text \<open>The doubled functional perturbed by \<open>-\<delta>\<parallel>z - \<xi>\<parallel>\<^sup>2\<close> is still
-  semiconvex, with the constant raised by \<open>2\<delta>\<close>, turning a plain
-  maximizer into a strict one, as Jensen's lemma needs.
-
-  The perturbation splits across the two blocks,
-  \<open>\<parallel>z - \<xi>\<parallel>\<^sup>2 = \<parallel>fst z - fst \<xi>\<parallel>\<^sup>2 + \<parallel>snd z - snd \<xi>\<parallel>\<^sup>2\<close>, so the perturbed
-  functional keeps the doubled form downstream lemmas expect, and the
-  cost is affine, since \<open>\<parallel>z\<parallel>\<^sup>2 - \<parallel>z - \<xi>\<parallel>\<^sup>2 = 2 z \<bullet> \<xi> - \<parallel>\<xi>\<parallel>\<^sup>2\<close>.\<close>
-
-theorem doubled_functional_semiconvex_shifted:
-  fixes u v :: "'a::euclidean_space \<Rightarrow> real"
-  assumes Bu: "\<And>y. u y \<le> Bu" and Bv: "\<And>y. v y \<le> Bv"
-    and e: "0 < \<epsilon>" and a: "0 \<le> \<alpha>"
-  shows "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-          - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-        - \<delta> * (norm (z - \<xi>))\<^sup>2)
-      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2)"
-proof -
-  have cvx: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-        - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)"
-    by (rule doubled_functional_semiconvex[OF Bu Bv e a])
-  have aff: "convex_on UNIV
-      (\<lambda>z::'a \<times> 'a. (- (\<delta> * (norm \<xi>)\<^sup>2)) + inner z ((2*\<delta>) *\<^sub>R \<xi>))"
-    by (rule convex_on_affine_inner)
-  have eq: "(\<lambda>z::'a \<times> 'a.
-        ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-          - \<delta> * (norm (z - \<xi>))\<^sup>2)
-        + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2)
-      = (\<lambda>z::'a \<times> 'a.
-        ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-          + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)
-        + ((- (\<delta> * (norm \<xi>)\<^sup>2)) + inner z ((2*\<delta>) *\<^sub>R \<xi>)))"
-  proof (rule ext)
-    fix z :: "'a \<times> 'a"
-    have sh': "(norm (z - \<xi>))\<^sup>2 = (norm z)\<^sup>2 - 2 * (z \<bullet> \<xi>) + (norm \<xi>)\<^sup>2"
-      by (rule norm_sq_diff_expand)
-    have iz: "inner z ((2*\<delta>) *\<^sub>R \<xi>) = 2 * \<delta> * (z \<bullet> \<xi>)"
-      by simp
-    show "((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-          - \<delta> * (norm (z - \<xi>))\<^sup>2)
-        + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2
-      = ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-          + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)
-        + ((- (\<delta> * (norm \<xi>)\<^sup>2)) + inner z ((2*\<delta>) *\<^sub>R \<xi>))"
-      unfolding iz sh' by (simp add: algebra_simps)
-  qed
-  show ?thesis
-    unfolding eq by (rule convex_on_add[OF cvx aff])
 qed
 
 subsection \<open>The engine in general form\<close>

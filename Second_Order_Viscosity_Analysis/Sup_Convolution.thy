@@ -214,25 +214,6 @@ proof -
     by (intro convex_on_cSUP convex_on_affine_inner bddx)
 qed
 
-text \<open>The sup-convolution is continuous: it is a finite convex function
-  (continuous by \<open>convex_on_continuous\<close>) minus the smooth \<open>|x|\<^sup>2/(2\<epsilon>)\<close>.\<close>
-
-theorem supconv_continuous:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
-  shows "continuous_on UNIV (supconv u \<epsilon>)"
-proof -
-  have g: "continuous_on UNIV (\<lambda>x. supconv u \<epsilon> x + (norm x)\<^sup>2 / (2*\<epsilon>))"
-    by (rule convex_on_continuous[OF open_UNIV supconv_semiconvex[OF B e]])
-  have h: "continuous_on UNIV (\<lambda>x :: 'a. (norm x)\<^sup>2 / (2*\<epsilon>))"
-    using e by (intro continuous_intros) simp
-  have eq: "supconv u \<epsilon> = (\<lambda>x. (supconv u \<epsilon> x + (norm x)\<^sup>2 / (2*\<epsilon>))
-      - (norm x)\<^sup>2 / (2*\<epsilon>))"
-    by (rule ext) simp
-  show ?thesis
-    by (subst eq) (intro continuous_on_diff g h)
-qed
-
 text \<open>Near-optimizers of the sup-convolution lie within an explicit
   \<open>\<epsilon>\<close>-dependent radius controlled by the oscillation of \<open>u\<close>.\<close>
 
@@ -349,6 +330,14 @@ proof -
   qed
   show ?thesis unfolding eq by (rule supconv_semiconvex[OF B e])
 qed
+
+text \<open>The sup-convolution is continuous, being semiconvex.\<close>
+
+theorem supconv_continuous:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
+  shows "continuous_on UNIV (supconv u \<epsilon>)"
+  by (rule semiconvex_continuous[OF supconv_semiconvex'[OF B e]])
 
 text \<open>The sup-convolution of any bounded-above function is twice
   differentiable almost everywhere: the fact that supplies genuine

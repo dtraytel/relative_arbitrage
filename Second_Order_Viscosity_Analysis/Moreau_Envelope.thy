@@ -313,36 +313,6 @@ lemma moreau_grad_has_derivative:
   shows "((\<lambda>y. y - prox f y) has_derivative (\<lambda>h. h - D h)) (at x)"
   by (intro has_derivative_diff has_derivative_ident D)
 
-theorem moreau_twice_differentiable_AE:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes cvx: "convex_on UNIV f"
-  shows "AE x in lborel. \<exists>A. bounded_linear A
-      \<and> (\<forall>y. (moreau f has_derivative (\<lambda>h. h \<bullet> (y - prox f y))) (at y))
-      \<and> ((\<lambda>y. y - prox f y) has_derivative A) (at x)
-      \<and> (\<forall>h. 0 \<le> h \<bullet> A h)"
-proof -
-  have grad: "\<forall>y. (moreau f has_derivative (\<lambda>h. h \<bullet> (y - prox f y))) (at y)"
-    using moreau_has_derivative[OF cvx] by blast
-  show ?thesis
-  proof (rule eventually_mono[OF prox_differentiable_AE[OF cvx]])
-    fix x :: 'a assume "(prox f) differentiable (at x)"
-    then obtain D where D: "(prox f has_derivative D) (at x)"
-      unfolding differentiable_def by blast
-    have blD: "bounded_linear D" by (rule has_derivative_bounded_linear[OF D])
-    have blA: "bounded_linear (\<lambda>h. h - D h)"
-      using blD by (intro bounded_linear_sub bounded_linear_ident)
-    have hess: "((\<lambda>y. y - prox f y) has_derivative (\<lambda>h. h - D h)) (at x)"
-      by (rule moreau_grad_has_derivative[OF D])
-    have psd: "0 \<le> h \<bullet> (h - D h)" for h
-      by (rule moreau_hessian_psd[OF cvx D])
-    show "\<exists>A. bounded_linear A
-        \<and> (\<forall>y. (moreau f has_derivative (\<lambda>h. h \<bullet> (y - prox f y))) (at y))
-        \<and> ((\<lambda>y. y - prox f y) has_derivative A) (at x)
-        \<and> (\<forall>h. 0 \<le> h \<bullet> A h)"
-      using blA grad hess psd by blast
-  qed
-qed
-
 subsection \<open>Integral representation of the envelope's increments\<close>
 
 text \<open>The bridge to a genuine second-order Taylor expansion: since the
@@ -539,29 +509,46 @@ text \<open>Alexandrov's theorem for the \<open>C\<^sup>1\<^sup>,\<^sup>1\<close
   quadratic form.  Transporting the expansion to \<open>f\<close> itself along the
   resolvent remains.\<close>
 
+theorem moreau_second_order_AE:
+  fixes f :: "'a::euclidean_space \<Rightarrow> real"
+  assumes cvx: "convex_on UNIV f"
+  shows "AE x in lborel. \<exists>A. bounded_linear A \<and> (\<forall>h. 0 \<le> h \<bullet> A h)
+      \<and> ((\<lambda>y. y - prox f y) has_derivative A) (at x)
+      \<and> ((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
+          - (h \<bullet> A h) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+  using prox_differentiable_AE[OF cvx]
+proof eventually_elim
+  case (elim x)
+  then obtain D where D: "(prox f has_derivative D) (at x)"
+    unfolding differentiable_def by blast
+  have "bounded_linear (\<lambda>h. h - D h)"
+    using has_derivative_bounded_linear[OF D]
+    by (intro bounded_linear_sub bounded_linear_ident)
+  then show ?case
+    using moreau_hessian_psd[OF cvx D] moreau_grad_has_derivative[OF D]
+      moreau_second_order_taylor[OF cvx D] by blast
+qed
+
+text \<open>The two packagings used downstream: with the (everywhere valid)
+  gradient formula, and with the expansion alone.\<close>
+
+theorem moreau_twice_differentiable_AE:
+  fixes f :: "'a::euclidean_space \<Rightarrow> real"
+  assumes cvx: "convex_on UNIV f"
+  shows "AE x in lborel. \<exists>A. bounded_linear A
+      \<and> (\<forall>y. (moreau f has_derivative (\<lambda>h. h \<bullet> (y - prox f y))) (at y))
+      \<and> ((\<lambda>y. y - prox f y) has_derivative A) (at x)
+      \<and> (\<forall>h. 0 \<le> h \<bullet> A h)"
+  using moreau_second_order_AE[OF cvx]
+  by eventually_elim (use moreau_has_derivative[OF cvx] in blast)
+
 theorem moreau_alexandrov_AE:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
   assumes cvx: "convex_on UNIV f"
   shows "AE x in lborel. \<exists>A. bounded_linear A \<and> (\<forall>h. 0 \<le> h \<bullet> A h)
       \<and> ((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
           - (h \<bullet> A h) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-proof (rule eventually_mono[OF prox_differentiable_AE[OF cvx]])
-  fix x :: 'a assume "(prox f) differentiable (at x)"
-  then obtain D where D: "(prox f has_derivative D) (at x)"
-    unfolding differentiable_def by blast
-  have blD: "bounded_linear D" by (rule has_derivative_bounded_linear[OF D])
-  have blA: "bounded_linear (\<lambda>h. h - D h)"
-    using blD by (intro bounded_linear_sub bounded_linear_ident)
-  have psd: "0 \<le> h \<bullet> (h - D h)" for h
-    by (rule moreau_hessian_psd[OF cvx D])
-  have tay: "((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
-      - (h \<bullet> (h - D h)) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    by (rule moreau_second_order_taylor[OF cvx D])
-  show "\<exists>A. bounded_linear A \<and> (\<forall>h. 0 \<le> h \<bullet> A h)
-      \<and> ((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
-          - (h \<bullet> A h) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    using blA psd tay by blast
-qed
+  using moreau_second_order_AE[OF cvx] by eventually_elim blast
 
 
 (*<*)

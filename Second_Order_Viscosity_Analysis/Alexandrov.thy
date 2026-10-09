@@ -337,25 +337,17 @@ theorem moreau_alexandrov_sym_AE:
       \<and> (\<forall>u v. u \<bullet> A v = v \<bullet> A u)
       \<and> ((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
           - (h \<bullet> A h) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-proof (rule eventually_mono[OF prox_differentiable_AE[OF cvx]])
-  fix x :: 'a assume "(prox f) differentiable (at x)"
-  then obtain D where D: "(prox f has_derivative D) (at x)"
-    unfolding differentiable_def by blast
-  have blD: "bounded_linear D" by (rule has_derivative_bounded_linear[OF D])
-  have blA: "bounded_linear (\<lambda>h. h - D h)"
-    using blD by (intro bounded_linear_sub bounded_linear_ident)
-  have psd: "0 \<le> h \<bullet> (h - D h)" for h
-    by (rule moreau_hessian_psd[OF cvx D])
-  have sym: "u \<bullet> (v - D v) = v \<bullet> (u - D u)" for u v
-    by (rule moreau_hessian_symmetric[OF cvx D])
-  have tay: "((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
-      - (h \<bullet> (h - D h)) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    by (rule moreau_second_order_taylor[OF cvx D])
-  show "\<exists>A. bounded_linear A \<and> (\<forall>h. 0 \<le> h \<bullet> A h)
-      \<and> (\<forall>u v. u \<bullet> A v = v \<bullet> A u)
-      \<and> ((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
-          - (h \<bullet> A h) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    using blA psd sym tay by blast
+  using moreau_second_order_AE[OF cvx]
+proof eventually_elim
+  case (elim x)
+  have sym: "u \<bullet> A v = v \<bullet> A u"
+    if "((\<lambda>y. y - prox f y) has_derivative A) (at x)" for A u v
+  proof -
+    have "(prox f has_derivative (\<lambda>h. h - A h)) (at x)"
+      using has_derivative_diff[OF has_derivative_ident that] by simp
+    from moreau_hessian_symmetric[OF cvx this, of u v] show ?thesis by simp
+  qed
+  show ?case using elim sym by blast
 qed
 
 subsection \<open>Transporting Alexandrov from the envelope to the function\<close>
@@ -414,40 +406,6 @@ next
   have "f u + p \<bullet> (v - u) \<le> f v" by (rule subdiffD[OF p])
   hence "f u + r * norm p \<le> M" using M[OF vm] unfolding pv by linarith
   thus ?thesis using r by (simp add: field_simps)
-qed
-
-lemma convex_bdd_above_cball:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes cvx: "convex_on UNIV f"
-  shows "\<exists>M. \<forall>v \<in> cball u r. f v \<le> M"
-proof -
-  have cf: "continuous_on UNIV f"
-    by (rule convex_on_continuous[OF open_UNIV cvx])
-  have "compact (f ` cball u r)"
-    by (rule compact_continuous_image[OF continuous_on_subset[OF cf subset_UNIV]
-        compact_cball])
-  hence "bdd_above (f ` cball u r)"
-    by (simp add: compact_imp_bounded bounded_imp_bdd_above)
-  hence "f v \<le> Sup (f ` cball u r)" if "v \<in> cball u r" for v
-    using that by (intro cSup_upper) auto
-  thus ?thesis by blast
-qed
-
-lemma convex_bdd_below_cball:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes cvx: "convex_on UNIV f"
-  shows "\<exists>m. \<forall>v \<in> cball u r. m \<le> f v"
-proof -
-  have cf: "continuous_on UNIV f"
-    by (rule convex_on_continuous[OF open_UNIV cvx])
-  have "compact (f ` cball u r)"
-    by (rule compact_continuous_image[OF continuous_on_subset[OF cf subset_UNIV]
-        compact_cball])
-  hence "bdd_below (f ` cball u r)"
-    by (simp add: compact_imp_bounded bounded_imp_bdd_below)
-  hence "Inf (f ` cball u r) \<le> f v" if "v \<in> cball u r" for v
-    using that by (intro cInf_lower) auto
-  thus ?thesis by blast
 qed
 
 text \<open>The subdifferential is convex, being cut out by linear inequalities.\<close>
@@ -543,10 +501,14 @@ lemma prox_fibre_bounded:
   assumes cvx: "convex_on UNIV f"
   shows "\<exists>C. \<forall>z. dist (prox f z) y \<le> 1 \<longrightarrow> norm (z - prox f z) \<le> C"
 proof -
+  have cf: "continuous_on (cball y r) f" for r
+    by (rule continuous_on_subset[OF convex_on_continuous[OF open_UNIV cvx] subset_UNIV])
   obtain M where M: "\<And>v. v \<in> cball y 2 \<Longrightarrow> f v \<le> M"
-    using convex_bdd_above_cball[OF cvx, of y 2] by blast
+    using compact_continuous_image[OF cf compact_cball, of 2]
+    by (meson bdd_above.E bounded_imp_bdd_above compact_imp_bounded imageI)
   obtain m where m: "\<And>v. v \<in> cball y 1 \<Longrightarrow> m \<le> f v"
-    using convex_bdd_below_cball[OF cvx, of y 1] by blast
+    using compact_continuous_image[OF cf compact_cball, of 1]
+    by (meson bdd_below.E bounded_imp_bdd_below compact_imp_bounded imageI)
   have "norm (z - prox f z) \<le> M - m" if zz: "dist (prox f z) y \<le> 1" for z
   proof -
     have sd: "z - prox f z \<in> subdiff f (prox f z)" by (rule prox_subdiff[OF cvx])

@@ -595,7 +595,7 @@ text \<open>In the doubling, the shared gradient at the maximising pair
 
 subsection \<open>The penalty estimate\<close>
 
-text \<open>\<open>doubling_penalty_bound\<close> and \<open>doubling_dist_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+text \<open>\<open>doubling_dist_bound\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The dichotomy for a general penalty\<close>
 

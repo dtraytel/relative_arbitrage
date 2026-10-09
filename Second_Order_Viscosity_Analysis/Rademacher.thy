@@ -574,8 +574,22 @@ lemma borel_measurable_ddir:
   by (intro borel_measurable_lim_metric borel_measurable_continuous_onI
       continuous_on_dquot[OF cf])
 
-text \<open>The Lipschitz bound passes to the derivative, \<open>|D_v f| \<le> B |v|\<close>,
-  making \<open>ddir\<close> integrable on boxes.\<close>
+text \<open>The Lipschitz bound bounds the difference quotients uniformly, and
+  passes to the derivative, \<open>|D_v f| \<le> B |v|\<close>, making \<open>ddir\<close> integrable
+  on boxes.\<close>
+
+lemma norm_dquot_le:
+  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
+  assumes lip: "\<And>y z. norm (f y - f z) \<le> B * norm (y - z)" and t: "t \<noteq> 0"
+  shows "norm (dquot f v x t) \<le> B * norm v"
+proof -
+  have "norm (dquot f v x t) = norm (f (x + t *\<^sub>R v) - f x) / \<bar>t\<bar>"
+    unfolding dquot_def by (simp add: divide_inverse mult.commute)
+  also have "\<dots> \<le> (B * norm (t *\<^sub>R v)) / \<bar>t\<bar>"
+    using lip[of "x + t *\<^sub>R v" x] t by (intro divide_right_mono) auto
+  also have "\<dots> = B * norm v" using t by simp
+  finally show ?thesis .
+qed
 
 lemma norm_ddir_le:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -584,15 +598,7 @@ lemma norm_ddir_le:
   shows "norm (ddir f v x) \<le> B * norm v"
 proof -
   have q: "norm (dquot f v x t) \<le> B * norm v" if t: "t \<noteq> 0" for t
-  proof -
-    have "norm (dquot f v x t) = norm (f (x + t *\<^sub>R v) - f x) / \<bar>t\<bar>"
-      unfolding dquot_def by (simp add: divide_inverse mult.commute)
-    also have "\<dots> \<le> (B * norm (t *\<^sub>R v)) / \<bar>t\<bar>"
-      using lip[of "x + t *\<^sub>R v" x] t by (intro divide_right_mono) auto
-    also have "\<dots> = B * norm v"
-      using t by simp
-    finally show ?thesis .
-  qed
+    by (rule norm_dquot_le[OF lip t])
   have ev: "eventually (\<lambda>t. norm (dquot f v x t) \<le> B * norm v) (at (0::real))"
   proof -
     have "eventually (\<lambda>t::real. t \<noteq> 0) (at 0)"
@@ -1019,22 +1025,8 @@ proof -
   show ?thesis using pos neg by eventually_elim linarith
 qed
 
-text \<open>Two facts for the dominated-convergence step below: the difference
-  quotients are uniformly bounded and Borel measurable in \<open>x\<close> for fixed
-  \<open>t\<close>.\<close>
-
-lemma norm_dquot_le:
-  fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
-  assumes lip: "\<And>y z. norm (f y - f z) \<le> B * norm (y - z)" and t: "t \<noteq> 0"
-  shows "norm (dquot f v x t) \<le> B * norm v"
-proof -
-  have "norm (dquot f v x t) = norm (f (x + t *\<^sub>R v) - f x) / \<bar>t\<bar>"
-    unfolding dquot_def by (simp add: divide_inverse mult.commute)
-  also have "\<dots> \<le> (B * norm (t *\<^sub>R v)) / \<bar>t\<bar>"
-    using lip[of "x + t *\<^sub>R v" x] t by (intro divide_right_mono) auto
-  also have "\<dots> = B * norm v" using t by simp
-  finally show ?thesis .
-qed
+text \<open>For the dominated-convergence step below: the difference quotients
+  are Borel measurable in \<open>x\<close> for fixed \<open>t\<close>.\<close>
 
 lemma borel_measurable_dquot:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::{banach,second_countable_topology}"
@@ -1046,6 +1038,24 @@ subsection \<open>Box integrals of difference quotients converge\<close>
 
 text \<open>Since \<open>ddir\<close> is the limit along \<open>t = 1/(n+1)\<close>, dominated
   convergence applies directly, bounded by \<open>B |v|\<close>.\<close>
+
+lemma AE_dlim_set:
+  fixes f :: "'a::euclidean_space \<Rightarrow> real"
+  assumes lip: "\<And>y z. norm (f y - f z) \<le> B * norm (y - z)" and v: "v \<noteq> 0"
+  shows "AE x in lborel. x \<in> dlim_set f v"
+proof -
+  have cf: "continuous_on UNIV f" by (rule lipschitz_continuous_on_UNIV[OF lip])
+  have cB: "- dlim_set f v \<in> sets borel"
+  proof -
+    have "space (borel :: 'a measure) - dlim_set f v \<in> sets borel"
+      by (rule sets.compl_sets[OF borel_dlim_set[OF cf]])
+    thus ?thesis by (simp add: Compl_eq_Diff_UNIV)
+  qed
+  have "negligible (- dlim_set f v)" by (rule negligible_no_dderiv[OF lip v])
+  hence "- dlim_set f v \<in> null_sets lborel"
+    using negligible_iff_null_lborel[OF cB] by simp
+  thus ?thesis by (simp add: eventually_ae_filter) blast
+qed
 
 lemma ddir_LIMSEQ:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -1072,19 +1082,8 @@ proof -
   have lim: "AE x in lborel. (\<lambda>n. dquot f v x (inverse (real (Suc n)))
       * indicator S x) \<longlonglongrightarrow> ddir f v x * indicator S x"
   proof -
-    have cB: "- dlim_set f v \<in> sets borel"
-    proof -
-      have "space (borel :: 'a measure) - dlim_set f v \<in> sets borel"
-        by (rule sets.compl_sets[OF borel_dlim_set[OF cf]])
-      thus ?thesis by (simp add: Compl_eq_Diff_UNIV)
-    qed
-    have "negligible (- dlim_set f v)" by (rule negligible_no_dderiv[OF lip v])
-    hence "- dlim_set f v \<in> null_sets lborel"
-      using negligible_iff_null_lborel[OF cB] by simp
-    hence ae: "AE x in lborel. x \<in> dlim_set f v"
-      by (simp add: eventually_ae_filter) blast
     show ?thesis
-    proof (rule eventually_mono[OF ae])
+    proof (rule eventually_mono[OF AE_dlim_set[OF lip v]])
       fix x assume x: "x \<in> dlim_set f v"
       have h: "(\<lambda>n. dquot f v x (inverse (real (Suc n)))) \<longlonglongrightarrow> ddir f v x"
         by (rule ddir_LIMSEQ[OF x])
@@ -1156,27 +1155,21 @@ text \<open>Integrating the algebraic split over a box gives an exact identity:
   the \<open>(u+v)\<close>-quotient equals the \<open>v\<close>-quotient over the translated box
   plus the \<open>u\<close>-quotient over the original.\<close>
 
-lemma dquot_indicator_bound:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes lip: "\<And>y z. norm (f y - f z) \<le> B * norm (y - z)" and t: "t \<noteq> 0"
-  shows "norm (dquot f v y t * indicator S x)
-       \<le> norm ((\<bar>B\<bar> * norm v) * indicator S x)"
-proof -
-  have h1: "\<bar>dquot f v y t\<bar> \<le> \<bar>B\<bar> * norm v"
-  proof -
-    have "\<bar>dquot f v y t\<bar> \<le> B * norm v"
-      using norm_dquot_le[OF lip t, of v y] by simp
-    also have "\<dots> \<le> \<bar>B\<bar> * norm v" by (intro mult_right_mono) auto
-    finally show ?thesis .
-  qed
-  have "norm (dquot f v y t * indicator S x)
-      = \<bar>dquot f v y t\<bar> * \<bar>indicator S x :: real\<bar>"
-    by (simp add: abs_mult)
-  also have "\<dots> \<le> (\<bar>B\<bar> * norm v) * \<bar>indicator S x :: real\<bar>"
-    using h1 by (intro mult_right_mono) auto
-  also have "\<dots> = norm ((\<bar>B\<bar> * norm v) * indicator S x)"
-    by (simp add: abs_mult)
-  finally show ?thesis .
+text \<open>Integrability on a finite-measure set of a function bounded almost
+  everywhere, in particular of the difference quotients.\<close>
+
+lemma integrable_bounded_indicator:
+  fixes h :: "'a::euclidean_space \<Rightarrow> real"
+  assumes hm: "h \<in> borel_measurable borel" and hb: "AE x in lborel. \<bar>h x\<bar> \<le> M"
+    and S: "S \<in> sets borel" and Sfin: "emeasure lborel S < top"
+  shows "integrable lborel (\<lambda>x. h x * indicator S x)"
+proof (rule Bochner_Integration.integrable_bound)
+  show "integrable lborel (\<lambda>x. \<bar>M\<bar> * indicator S x :: real)"
+    using S Sfin by (intro integrable_mult_right) simp
+  show "(\<lambda>x. h x * indicator S x) \<in> borel_measurable lborel"
+    using hm S by measurable
+  show "AE x in lborel. norm (h x * indicator S x) \<le> norm (\<bar>M\<bar> * indicator S x)"
+    using hb by eventually_elim (auto simp: indicator_def)
 qed
 
 lemma integrable_dquot_indicator:
@@ -1184,15 +1177,11 @@ lemma integrable_dquot_indicator:
   assumes lip: "\<And>y z. norm (f y - f z) \<le> B * norm (y - z)"
     and t: "t \<noteq> 0" and S: "S \<in> sets borel" and Sfin: "emeasure lborel S < top"
   shows "integrable lborel (\<lambda>x. dquot f v x t * indicator S x)"
-proof (rule Bochner_Integration.integrable_bound)
-  show "integrable lborel (\<lambda>x. (\<bar>B\<bar> * norm v) * indicator S x :: real)"
-    using S Sfin by (intro integrable_mult_right) simp
-  have cf: "continuous_on UNIV f" by (rule lipschitz_continuous_on_UNIV[OF lip])
-  show "(\<lambda>x. dquot f v x t * indicator S x) \<in> borel_measurable lborel"
-    using borel_measurable_dquot[OF cf] S by measurable
-  show "AE x in lborel. norm (dquot f v x t * indicator S x)
-      \<le> norm ((\<bar>B\<bar> * norm v) * indicator S x)"
-    by (rule AE_I2) (rule dquot_indicator_bound[OF lip t])
+proof (rule integrable_bounded_indicator[where M = "B * norm v", OF _ _ S Sfin])
+  show "(\<lambda>x. dquot f v x t) \<in> borel_measurable borel"
+    by (rule borel_measurable_dquot[OF lipschitz_continuous_on_UNIV[OF lip]])
+  show "AE x in lborel. \<bar>dquot f v x t\<bar> \<le> B * norm v"
+    by (rule AE_I2) (use norm_dquot_le[OF lip t, of v] in simp)
 qed
 
 theorem box_integral_add_split:
@@ -1210,18 +1199,12 @@ proof -
     by (rule integrable_dquot_indicator[OF lip t _ fin]) simp
   have ishift: "integrable lborel
       (\<lambda>x. dquot f v (x + t *\<^sub>R u) t * indicator (box l r) x)"
-  proof (rule Bochner_Integration.integrable_bound)
-    show "integrable lborel
-        (\<lambda>x. (\<bar>B\<bar> * norm v) * indicator (box l r) x :: real)"
-      using fin by (intro integrable_mult_right) simp
-    show "(\<lambda>x. dquot f v (x + t *\<^sub>R u) t * indicator (box l r) x)
-        \<in> borel_measurable lborel"
+  proof (rule integrable_bounded_indicator[where M = "B * norm v", OF _ _ _ fin])
+    show "(\<lambda>x. dquot f v (x + t *\<^sub>R u) t) \<in> borel_measurable borel"
       using borel_measurable_dquot[OF cf, of v t] by measurable
-    show "AE x in lborel. norm (dquot f v (x + t *\<^sub>R u) t
-        * indicator (box l r) x)
-        \<le> norm ((\<bar>B\<bar> * norm v) * indicator (box l r) x)"
-      by (rule AE_I2) (rule dquot_indicator_bound[OF lip t])
-  qed
+    show "AE x in lborel. \<bar>dquot f v (x + t *\<^sub>R u) t\<bar> \<le> B * norm v"
+      by (rule AE_I2) (use norm_dquot_le[OF lip t, of v] in simp)
+  qed simp
   have split: "(\<lambda>x. dquot f (u + v) x t * indicator (box l r) x)
       = (\<lambda>x. dquot f v (x + t *\<^sub>R u) t * indicator (box l r) x
           + dquot f u x t * indicator (box l r) x)"
@@ -1276,31 +1259,8 @@ lemma indicator_diff_abs:
   shows "\<bar>(indicator A x :: real) - indicator C x\<bar>
        = indicator A x + indicator C x - 2 * indicator (A \<inter> C) x"
   by (simp add: indicator_def)
-text \<open>Two building blocks for the moving-domain bound: integrability on a
-  finite-measure set, and the symmetric-difference indicator integral.\<close>
-
-lemma integrable_bounded_indicator:
-  fixes h :: "'a::euclidean_space \<Rightarrow> real"
-  assumes hm: "h \<in> borel_measurable borel" and hb: "\<And>x. \<bar>h x\<bar> \<le> M"
-    and S: "S \<in> sets borel" and Sfin: "emeasure lborel S < top"
-  shows "integrable lborel (\<lambda>x. h x * indicator S x)"
-proof (rule Bochner_Integration.integrable_bound)
-  show "integrable lborel (\<lambda>x. \<bar>M\<bar> * indicator S x :: real)"
-    using S Sfin by (intro integrable_mult_right) simp
-  show "(\<lambda>x. h x * indicator S x) \<in> borel_measurable lborel"
-    using hm S by measurable
-  show "AE x in lborel. norm (h x * indicator S x)
-      \<le> norm (\<bar>M\<bar> * indicator S x)"
-  proof (rule AE_I2)
-    fix x
-    have "\<bar>h x\<bar> \<le> \<bar>M\<bar>" using hb[of x] by simp
-    hence "\<bar>h x\<bar> * \<bar>indicator S x :: real\<bar>
-        \<le> \<bar>M\<bar> * \<bar>indicator S x :: real\<bar>"
-      by (intro mult_right_mono) auto
-    thus "norm (h x * indicator S x) \<le> norm (\<bar>M\<bar> * indicator S x)"
-      by (simp add: abs_mult)
-  qed
-qed
+text \<open>A building block for the moving-domain bound: the symmetric-difference
+  indicator integral.\<close>
 
 lemma integral_indicator_symdiff:
   fixes A C :: "'a::euclidean_space set"
@@ -1342,9 +1302,9 @@ proof -
   have ACfin: "emeasure lborel (A \<inter> C) < top"
     by (rule le_less_trans[OF emeasure_mono[of "A \<inter> C" A]]) (use A Afin in auto)
   have iA: "integrable lborel (\<lambda>x. h x * indicator A x)"
-    by (rule integrable_bounded_indicator[OF hm hb A Afin])
+    by (rule integrable_bounded_indicator[where M = M, OF hm _ A Afin]) (simp add: hb)
   have iC: "integrable lborel (\<lambda>x. h x * indicator C x)"
-    by (rule integrable_bounded_indicator[OF hm hb C Cfin])
+    by (rule integrable_bounded_indicator[where M = M, OF hm _ C Cfin]) (simp add: hb)
   have idiff: "integrable lborel (\<lambda>x. h x * indicator A x - h x * indicator C x)"
     by (rule Bochner_Integration.integrable_diff[OF iA iC])
   have iAi: "integrable lborel (\<lambda>x. indicator A x :: real)" using A Afin by simp
@@ -1652,52 +1612,16 @@ qed
 
 subsection \<open>Almost-everywhere additivity in the direction\<close>
 
-lemma AE_dlim_set:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes lip: "\<And>y z. norm (f y - f z) \<le> B * norm (y - z)" and v: "v \<noteq> 0"
-  shows "AE x in lborel. x \<in> dlim_set f v"
-proof -
-  have cf: "continuous_on UNIV f" by (rule lipschitz_continuous_on_UNIV[OF lip])
-  have cB: "- dlim_set f v \<in> sets borel"
-  proof -
-    have "space (borel :: 'a measure) - dlim_set f v \<in> sets borel"
-      by (rule sets.compl_sets[OF borel_dlim_set[OF cf]])
-    thus ?thesis by (simp add: Compl_eq_Diff_UNIV)
-  qed
-  have "negligible (- dlim_set f v)" by (rule negligible_no_dderiv[OF lip v])
-  hence "- dlim_set f v \<in> null_sets lborel"
-    using negligible_iff_null_lborel[OF cB] by simp
-  thus ?thesis by (simp add: eventually_ae_filter) blast
-qed
-
 lemma integrable_ddir_indicator:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
   assumes lip: "\<And>y z. norm (f y - f z) \<le> B * norm (y - z)" and v: "v \<noteq> 0"
     and S: "S \<in> sets borel" and Sfin: "emeasure lborel S < top"
   shows "integrable lborel (\<lambda>x. ddir f v x * indicator S x)"
-proof (rule Bochner_Integration.integrable_bound)
-  have cf: "continuous_on UNIV f" by (rule lipschitz_continuous_on_UNIV[OF lip])
-  show "integrable lborel (\<lambda>x. (\<bar>B\<bar> * norm v) * indicator S x :: real)"
-    using S Sfin by (intro integrable_mult_right) simp
-  show "(\<lambda>x. ddir f v x * indicator S x) \<in> borel_measurable lborel"
-    using borel_measurable_ddir[OF cf] S by measurable
-  show "AE x in lborel. norm (ddir f v x * indicator S x)
-      \<le> norm ((\<bar>B\<bar> * norm v) * indicator S x)"
-  proof (rule eventually_mono[OF AE_dlim_set[OF lip v]])
-    fix x assume x: "x \<in> dlim_set f v"
-    have "\<bar>ddir f v x\<bar> \<le> \<bar>B\<bar> * norm v"
-    proof -
-      have "\<bar>ddir f v x\<bar> \<le> B * norm v" using norm_ddir_le[OF lip x] by simp
-      also have "\<dots> \<le> \<bar>B\<bar> * norm v" by (intro mult_right_mono) auto
-      finally show ?thesis .
-    qed
-    hence "\<bar>ddir f v x\<bar> * \<bar>indicator S x :: real\<bar>
-        \<le> (\<bar>B\<bar> * norm v) * \<bar>indicator S x :: real\<bar>"
-      by (intro mult_right_mono) auto
-    thus "norm (ddir f v x * indicator S x)
-        \<le> norm ((\<bar>B\<bar> * norm v) * indicator S x)"
-      by (simp add: abs_mult)
-  qed
+proof (rule integrable_bounded_indicator[where M = "B * norm v", OF _ _ S Sfin])
+  show "ddir f v \<in> borel_measurable borel"
+    by (rule borel_measurable_ddir[OF lipschitz_continuous_on_UNIV[OF lip]])
+  show "AE x in lborel. \<bar>ddir f v x\<bar> \<le> B * norm v"
+    using AE_dlim_set[OF lip v] by eventually_elim (use norm_ddir_le[OF lip] in simp)
 qed
 
 text \<open>The direction map of a Lipschitz function is additive a.e.: every
@@ -1746,23 +1670,7 @@ proof -
       by (simp add: emeasure_lborel_box_eq)
     have Bsets: "(box l r :: 'a set) \<in> sets borel" by simp
     have ig: "integrable lborel (\<lambda>x. g x * indicator (box l r) x)"
-    proof (rule Bochner_Integration.integrable_bound)
-      show "integrable lborel (\<lambda>x. \<bar>M\<bar> * indicator (box l r) x :: real)"
-        using Bsets Bfin by (intro integrable_mult_right) simp
-      show "(\<lambda>x. g x * indicator (box l r) x) \<in> borel_measurable lborel"
-        using gm Bsets by measurable
-      show "AE x in lborel. norm (g x * indicator (box l r) x)
-          \<le> norm (\<bar>M\<bar> * indicator (box l r) x)"
-      proof (rule eventually_mono[OF gb])
-        fix x assume "\<bar>g x\<bar> \<le> M"
-        hence "\<bar>g x\<bar> * \<bar>indicator (box l r) x :: real\<bar>
-            \<le> \<bar>M\<bar> * \<bar>indicator (box l r) x :: real\<bar>"
-          by (intro mult_right_mono) auto
-        thus "norm (g x * indicator (box l r) x)
-            \<le> norm (\<bar>M\<bar> * indicator (box l r) x)"
-          by (simp add: abs_mult)
-      qed
-    qed
+      by (rule integrable_bounded_indicator[OF gm gb Bsets Bfin])
     have zero: "(\<integral>x. g x * indicator (box l r) x \<partial>lborel) = 0"
     proof -
       have iuv: "integrable lborel

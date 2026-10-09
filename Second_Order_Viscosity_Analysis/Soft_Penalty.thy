@@ -147,20 +147,8 @@ lemma soft_pen_rem_aux:
   using R by (simp add: field_simps)
 
 text \<open>One input to the remainder limit: \<open>(d \<bullet> h)\<^sup>2/\<parallel>h\<parallel>\<^sup>2\<close> is bounded,
-  uniformly in \<open>h\<close>, by \<open>\<parallel>d\<parallel>\<^sup>2\<close> (Cauchy-Schwarz squared), enabling
-  \<open>Lim_null_comparison\<close>.\<close>
-
-lemma inner_sq_over_norm_sq_le:
-  fixes d h :: "real^'n::finite"
-  shows "(d \<bullet> h)\<^sup>2 \<le> (norm d)\<^sup>2 * (norm h)\<^sup>2"
-proof -
-  have cs: "\<bar>d \<bullet> h\<bar> \<le> norm d * norm h"
-    by (rule Cauchy_Schwarz_ineq2)
-  have "(\<bar>d \<bullet> h\<bar>)\<^sup>2 \<le> (norm d * norm h)\<^sup>2"
-    by (rule power_mono[OF cs]) simp
-  then show ?thesis
-    by (simp add: power_mult_distrib)
-qed
+  uniformly in \<open>h\<close>, by \<open>\<parallel>d\<parallel>\<^sup>2\<close> (Cauchy-Schwarz squared, HOL's
+  \<open>Cauchy_Schwarz_ineq\<close>), enabling \<open>Lim_null_comparison\<close>.\<close>
 
 corollary inner_sq_quotient_bounded:
   fixes d h :: "real^'n::finite"
@@ -169,7 +157,7 @@ corollary inner_sq_quotient_bounded:
 proof -
   have b: "0 < (norm h)\<^sup>2" using h by simp
   show ?thesis
-    using inner_sq_over_norm_sq_le[of d h] b
+    using Cauchy_Schwarz_ineq[of d h, folded power2_norm_eq_inner] b
     by (simp add: pos_divide_le_eq)
 qed
 
@@ -334,25 +322,6 @@ text \<open>The gradient field of \<open>soft_pen \<kappa>\<close> is Lipschitz 
   \<open>|\<parallel>x\<parallel> - \<parallel>y\<parallel>| \<le> \<parallel>x-y\<parallel>\<close> gives the bound after cancelling the positive
   factor \<open>Rx+Ry\<close>.\<close>
 
-lemma norm_le_soft_R:
-  fixes x :: "real^'n::finite"
-  shows "norm x \<le> sqrt ((norm x)\<^sup>2 + 1)"
-proof -
-  have "norm x = sqrt ((norm x)\<^sup>2)" by simp
-  also have "\<dots> \<le> sqrt ((norm x)\<^sup>2 + 1)" by (rule real_sqrt_le_mono) simp
-  finally show ?thesis .
-qed
-
-lemma abs_norm_diff_le:
-  fixes x y :: "'a::real_normed_vector"
-  shows "\<bar>norm x - norm y\<bar> \<le> norm (x - y)"
-proof -
-  have a: "norm x - norm y \<le> norm (x - y)" by (rule norm_triangle_ineq2)
-  have b: "norm y - norm x \<le> norm (y - x)" by (rule norm_triangle_ineq2)
-  have c: "norm (y - x) = norm (x - y)" by (rule norm_minus_commute)
-  show ?thesis using a b unfolding c by linarith
-qed
-
 lemma soft_R_lipschitz:
   fixes x y :: "real^'n::finite"
   shows "\<bar>sqrt ((norm x)\<^sup>2 + 1) - sqrt ((norm y)\<^sup>2 + 1)\<bar> \<le> norm (x - y)"
@@ -390,9 +359,10 @@ proof -
     finally show ?thesis .
   qed
   \<comment> \<open>and now the two elementary bounds\<close>
-  have b1: "\<bar>norm x - norm y\<bar> \<le> norm (x - y)" by (rule abs_norm_diff_le)
+  have b1: "\<bar>norm x - norm y\<bar> \<le> norm (x - y)" by (rule norm_triangle_ineq3)
   have b2: "norm x + norm y \<le> ?s + ?t"
-    using norm_le_soft_R[of x] norm_le_soft_R[of y] by linarith
+    using real_sqrt_sum_squares_ge1[of "norm x" 1] real_sqrt_sum_squares_ge1[of "norm y" 1]
+    by (simp add: add_mono)
   have chain: "\<bar>?s - ?t\<bar> * (?s + ?t) \<le> norm (x - y) * (?s + ?t)"
   proof -
     have "\<bar>norm x - norm y\<bar> * (norm x + norm y)
@@ -847,7 +817,7 @@ proof -
     by (rule soft_pen_rem_aux[OF R])
 qed
 
-text \<open>\<open>inner_sq_over_norm_sq_le\<close>, \<open>inner_sq_quotient_bounded\<close>, \<open>soft_pen_T_tendsto\<close>, \<open>soft_pen_bracket_tendsto\<close>, \<open>soft_pen_second_summand_tendsto\<close>, \<open>rem_split_aux\<close> live in \<open>Soft_Penalty\<close>.\<close>
+text \<open>\<open>inner_sq_quotient_bounded\<close>, \<open>soft_pen_T_tendsto\<close>, \<open>soft_pen_bracket_tendsto\<close>, \<open>soft_pen_second_summand_tendsto\<close>, \<open>rem_split_aux\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 text \<open>The jet assembles the analysis above via \<open>soft_pen_rem\<close> and
   \<open>rem_split_aux\<close>, killing the first summand by \<open>Lim_null_comparison\<close> and
@@ -1138,7 +1108,7 @@ lemma soft_hess_bound:
 
 subsection \<open>\<open>soft_grad\<close> is Lipschitz, at a non-sharp elementary constant\<close>
 
-text \<open>\<open>norm_le_soft_R\<close>, \<open>abs_norm_diff_le\<close>, \<open>soft_R_lipschitz\<close>, \<open>soft_shrink\<close> live in \<open>Soft_Penalty\<close>.\<close>
+text \<open>\<open>soft_R_lipschitz\<close>, \<open>soft_shrink\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_grad_split:
   fixes d :: "real^'n::finite"
@@ -1190,7 +1160,7 @@ proof -
     have "\<bar>?s - ?t\<bar> \<le> norm (x - y)" by (rule soft_R_lipschitz)
     then show ?thesis by (simp add: abs_minus_commute)
   qed
-  have ny: "norm y \<le> ?t" by (rule norm_le_soft_R)
+  have ny: "norm y \<le> ?t" using real_sqrt_sum_squares_ge1[of "norm y" 1] by simp
   have prod: "\<bar>?t - ?s\<bar> * norm y \<le> ?t * norm (x - y)"
   proof -
     have "\<bar>?t - ?s\<bar> * norm y \<le> norm (x - y) * norm y"
@@ -1289,10 +1259,9 @@ text \<open>\<open>exists_small_rho_aux\<close>, \<open>soft_gap_pos\<close>, \<
 
 subsection \<open>Jensen's semiconvexity input, for a general penalty\<close>
 
-text \<open>\<open>doubled_functional_semiconvex\<close> transcribed for a general penalty
-  \<open>Pn\<close>, replacing the quadratic-specific semiconvexity step by the
-  hypothesis \<open>sc\<close>; the doubled constant becomes \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>,
-  matching the quadratic case at \<open>\<kappa> = \<alpha>\<close>.\<close>
+text \<open>\<open>doubled_functional_semiconvex_gen\<close> takes the semiconvexity of
+  the penalty \<open>Pn\<close> as the hypothesis \<open>sc\<close>; the doubled constant is
+  \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>.\<close>
 
 lemma soft_pen_zero: "soft_pen \<kappa> (0 :: real^'n::finite) = 0"
   unfolding soft_pen_def by simp
@@ -1482,7 +1451,7 @@ lemma doubling_near_soft:
   shows "dist xh yh < \<beta>"
 proof -
   have pb: "soft_pen \<kappa> (xh - yh) \<le> C - (u z - w z)"
-    by (rule doubling_penalty_bound_gen[OF mx soft_pen_zero xh yh z bnd])
+    by (rule doubling_penalty_bound_gen[OF mx soft_pen_zero IntI[OF z z] bnd])
   have coer: "C - (u z - w z) < soft_pen \<kappa> x" if "\<beta> \<le> norm x"
     for x :: "real^'n"
     by (rule soft_pen_coercive_outside[OF k bnn big that])
