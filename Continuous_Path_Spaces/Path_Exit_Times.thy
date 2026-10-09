@@ -705,7 +705,7 @@ text \<open>\<open>ess_inf_time_mono\<close> lives in
 
 text \<open>Capping the integrand by a constant caps the essential infimum by the
   same constant.  Both halves are elementary, but the \<open>\<ge>\<close> half has to be
-  run through \<open>ennreal_strict_between\<close>: the defining
+  run through the density of the order on @{typ ennreal}: the defining
   supremum need not be attained.\<close>
 
 lemma positive_mass_at_some_qtime:

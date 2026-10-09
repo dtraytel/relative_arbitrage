@@ -1544,9 +1544,9 @@ proof -
         = z \<bullet> ((\<Sum>u\<in>S. outer_prod u u) *v z) + z \<bullet> (R *v z)"
       by (simp add: inner_add_right)
     moreover have "z \<bullet> ((\<Sum>u\<in>S. outer_prod u u) *v z) = (\<Sum>u\<in>S. (u \<bullet> z)\<^sup>2)"
-      using quadform_sum_outer[OF finS, where c = "\<lambda>_. 1" and z = z] by simp
+      using quadform_weighted_outer_sum_eq[OF finS, where g = "\<lambda>_. 1" and x = z] by simp
     moreover have "z \<bullet> (R *v z) = (\<Sum>u\<in>B. rho u * (u \<bullet> z)\<^sup>2)"
-      unfolding R_def by (rule quadform_sum_outer[OF finB])
+      unfolding R_def by (rule quadform_weighted_outer_sum_eq[OF finB])
     ultimately show ?thesis by simp
   qed
   have quad_a_nn: "0 \<le> z \<bullet> (a *v z)" for z
@@ -1619,7 +1619,7 @@ proof -
         \<le> (\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2) + (L - 1) * (\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2)"
       unfolding quad_a by (simp add: sum_distrib_left)
     also have "\<dots> = L * (\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2)" by (simp add: algebra_simps)
-    also have "\<dots> = L * (z \<bullet> z)" by (simp add: onormal_parseval[OF B])
+    also have "\<dots> = L * (z \<bullet> z)" by (simp add: parseval_onormal[OF B])
     finally show "z \<bullet> (a *v z) \<le> L * (z \<bullet> z)" .
   qed
   have feas: "a \<in> feasible k L q"

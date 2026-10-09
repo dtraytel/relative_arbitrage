@@ -316,9 +316,11 @@ proof (rule ccontr)
   have uscut: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> ut y < c" if lt: "ut z < c" for c z
   proof -
     have lt': "(if z \<in> K then u z else C) < c" using lt unfolding ut_def .
+    have uK: "\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
+      if "u z < c" for z c using uscu[OF that] by blast
+    have CK: "C \<le> u y" if "y \<in> K" for y using loK[OF that] CleB by linarith
     have "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> (if y \<in> K then u y else C) < c"
-      by (rule usc_extend_const_below
-          [OF compact_imp_closed[OF cK] uscu loK CleB lt'])
+      by (rule usc_extend_rel[OF compact_imp_closed[OF cK] uK CK lt'])
     then show ?thesis unfolding ut_def .
   qed
   have uut: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> \<theta> * ut y < c"

@@ -188,61 +188,6 @@ proof -
   qed
 qed
 
-text \<open>Extension of a bounded usc function off a closed set.  The extension
-  value must be \<^emph>\<open>below\<close> every value on \<open>K\<close>: extending by \<open>0\<close> need not be
-  usc.  Semicontinuity is stated in the \<open>\<epsilon>\<close>-form the comparison chain
-  consumes.\<close>
-
-lemma usc_extension_bounded:
-  fixes u :: "'a::metric_space \<Rightarrow> real" and K :: "('a) set"
-  assumes cl: "closed K"
-    and usc: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
-      \<exists>e>0. \<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c"
-    and Bd: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B"
-    and B0: "0 \<le> B"
-  obtains u' where "\<And>y. y \<in> K \<Longrightarrow> u' y = u y"
-    and "\<And>y. \<bar>u' y\<bar> \<le> B"
-    and "\<And>c z. u' z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u' y < c"
-proof -
-  define u' where "u' = (\<lambda>y. if y \<in> K then u y else - B)"
-  have agree: "\<And>y. y \<in> K \<Longrightarrow> u' y = u y" unfolding u'_def by simp
-  have bnd: "\<And>y. \<bar>u' y\<bar> \<le> B" unfolding u'_def using Bd B0 by auto
-  have ue: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u' y < c" if lt: "u' z < c" for c z
-  proof (cases "z \<in> K")
-    case True
-    have uzc: "u z < c" using lt agree[OF True] by simp
-    obtain e where e0: "0 < e"
-      and eK: "\<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c"
-      using usc[OF True uzc] by blast
-    have "- B \<le> u z" using Bd[OF True] by linarith
-    then have mBc: "- B < c" using uzc by linarith
-    have "u' y < c" if "dist z y < e" for y
-      using eK that mBc unfolding u'_def by (cases "y \<in> K") auto
-    then show ?thesis using e0 by blast
-  next
-    case False
-    then have znK: "z \<notin> K" by simp
-    have mBc: "- B < c" using lt znK unfolding u'_def by simp
-    show ?thesis
-    proof (cases "K = {}")
-      case True
-      have "u' y < c" for y using mBc True unfolding u'_def by simp
-      then show ?thesis by (intro exI[of _ 1]) auto
-    next
-      case False
-      have d0: "0 < infdist z K"
-        by (rule infdist_pos_not_in_closed[OF cl False znK])
-      have "u' y < c" if dy: "dist z y < infdist z K" for y
-      proof -
-        have "y \<notin> K" using infdist_le[of y K z] dy by (auto simp: dist_commute)
-        then show ?thesis using mBc unfolding u'_def by simp
-      qed
-      then show ?thesis using d0 by blast
-    qed
-  qed
-  show ?thesis by (rule that[OF agree bnd ue])
-qed
-
 lemma lsc_diff_continuous:
   fixes f \<psi> :: "'a::metric_space \<Rightarrow> real"
   assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
@@ -336,6 +281,28 @@ next
   show ?thesis
     by (rule exI[of _ e]) (use e0 b Cc in \<open>auto simp: dist_commute\<close>)
 qed
+
+text \<open>Extension of a bounded usc function off a closed set: the case
+  \<open>C = -B\<close> of \<open>usc_extend_rel\<close>.  The extension value must be \<^emph>\<open>below\<close>
+  every value on \<open>K\<close>: extending by \<open>0\<close> need not be usc.  Semicontinuity is
+  stated in the \<open>\<epsilon>\<close>-form the comparison chain consumes.\<close>
+
+lemma usc_extension_bounded:
+  fixes u :: "'a::metric_space \<Rightarrow> real" and K :: "('a) set"
+  assumes cl: "closed K"
+    and usc: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
+      \<exists>e>0. \<forall>y \<in> K. dist z y < e \<longrightarrow> u y < c"
+    and Bd: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B"
+    and B0: "0 \<le> B"
+  obtains u' where "\<And>y. y \<in> K \<Longrightarrow> u' y = u y"
+    and "\<And>y. \<bar>u' y\<bar> \<le> B"
+    and "\<And>c z. u' z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u' y < c"
+proof (rule that)
+  have lo: "- B \<le> u y" if "y \<in> K" for y using Bd[OF that] by linarith
+  show "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> (if y \<in> K then u y else - B) < c"
+    if "(if z \<in> K then u z else - B) < c" for c z
+    by (rule usc_extend_rel[OF cl usc lo that])
+qed (use Bd B0 in auto)
 
 lemma open_usc_sublevel:
   fixes f :: "'a::metric_space \<Rightarrow> real"

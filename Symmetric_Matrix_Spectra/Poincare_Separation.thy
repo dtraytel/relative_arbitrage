@@ -428,19 +428,9 @@ lemma psd_weighted_outer_sum:
   fixes c :: "real^'n::finite \<Rightarrow> real"
   assumes B: "onormal B" and c0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> c u"
   shows "psd (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)"
-proof -
-  have finB: "finite B"
-    by (rule onormal_finite[OF B])
-  show ?thesis
-    unfolding psd_def
-  proof (intro conjI allI)
-    show "transpose (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)
-        = (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)"
-      by (rule transpose_weighted_outer_sum[OF finB])
-    show "0 \<le> x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x)" for x
-      by (rule quadform_weighted_outer_sum_nonneg[OF B c0])
-  qed
-qed
+  unfolding psd_def
+  using transpose_weighted_outer_sum[OF onormal_finite[OF B]]
+    quadform_weighted_outer_sum_nonneg[OF B, of c] c0 by blast
 
 text \<open>The sum annihilates \<open>p\<close> as soon as every basis vector carrying a nonzero
   weight is orthogonal to \<open>p\<close>.\<close>

@@ -724,24 +724,18 @@ lemma eigen_ub_weighted_outer_sum:
     and cL: "\<And>u. u \<in> B \<Longrightarrow> c u \<le> L"
   shows "eigen_ub (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) L"
   unfolding eigen_ub_def
-proof (intro allI)
+proof
   fix x :: "real^'n"
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have "x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x) = (\<Sum>u\<in>B. c u * (u \<bullet> x)^2)"
-    by (rule quadform_weighted_outer_sum_eq[OF finB])
-  also have "\<dots> \<le> (\<Sum>u\<in>B. L * (u \<bullet> x)^2)"
+  have "(\<Sum>u\<in>B. c u * (u \<bullet> x)^2) \<le> (\<Sum>u\<in>B. L * (u \<bullet> x)^2)"
     using cL by (intro sum_mono mult_right_mono) auto
-  also have "\<dots> = L * (\<Sum>u\<in>B. (u \<bullet> x)^2)"
-    by (simp add: sum_distrib_left)
-  also have "\<dots> = L * (x \<bullet> x)"
-    by (simp add: parseval_onormal[OF B])
-  finally show "x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x) \<le> L * (x \<bullet> x)" .
+  then show "x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x) \<le> L * (x \<bullet> x)"
+    by (simp add: quadform_weighted_outer_sum_eq[OF onormal_finite[OF B(1)]]
+        parseval_onormal[OF B] flip: sum_distrib_left)
 qed
 
 text \<open>The lower eigenvalue bound: a subset of the basis on which the weights are
   at least \<open>1\<close> spans a subspace witnessing \<open>eigen_lb\<close>, of dimension its
-  cardinality.\<close>
+  cardinality, by Parseval on that span.\<close>
 
 lemma eigen_lb_weighted_outer_sum:
   fixes c :: "real^'n::finite \<Rightarrow> real"
@@ -751,43 +745,29 @@ lemma eigen_lb_weighted_outer_sum:
     and m: "m \<le> card S"
   shows "eigen_lb (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) m"
   unfolding eigen_lb_def
-proof (intro exI[of _ "span S"] conjI)
+proof (intro exI[of _ "span S"] conjI ballI)
   have finB: "finite B"
     by (rule onormal_finite[OF B(1)])
-  show "subspace (span S)"
-    by (rule subspace_span)
   have onS: "onormal S"
     by (rule onormal_subset[OF B(1) S])
-  have "card S = dim (span S)"
-    by (rule onormal_card_dim_span[OF onS])
-  then show "m \<le> dim (span S)"
-    using m by simp
-  show "\<forall>x\<in>span S. x \<bullet> x \<le> x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x)"
-  proof (intro ballI)
-    fix x assume x: "x \<in> span S"
-    have vanish: "u \<bullet> x = 0" if u: "u \<in> B - S" for u
-    proof (rule onormal_orthogonal_to_span_complement[OF B(1) _ S _ x])
-      show "u \<in> B" using u by blast
-      show "u \<notin> S" using u by blast
-    qed
-    have "x \<bullet> x = (\<Sum>u\<in>B. (u \<bullet> x)^2)"
-      by (rule parseval_onormal[OF B, symmetric])
-    also have "\<dots> = (\<Sum>u\<in>S. (u \<bullet> x)^2)"
-      by (rule sum.mono_neutral_right[OF finB S]) (auto simp: vanish)
-    also have "\<dots> \<le> (\<Sum>u\<in>S. c u * (u \<bullet> x)^2)"
-    proof (rule sum_mono)
-      fix u assume u: "u \<in> S"
-      have "1 * (u \<bullet> x)^2 \<le> c u * (u \<bullet> x)^2"
-        using cS[OF u] by (intro mult_right_mono) auto
-      then show "(u \<bullet> x)^2 \<le> c u * (u \<bullet> x)^2"
-        by simp
-    qed
-    also have "\<dots> = (\<Sum>u\<in>B. c u * (u \<bullet> x)^2)"
-      by (rule sum.mono_neutral_right[OF finB S, symmetric]) (auto simp: vanish)
-    also have "\<dots> = x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x)"
-      by (rule quadform_weighted_outer_sum_eq[OF finB, symmetric])
-    finally show "x \<bullet> x \<le> x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x)" .
+  show "subspace (span S)"
+    by (rule subspace_span)
+  show "m \<le> dim (span S)"
+    using m onormal_card_dim_span[OF onS] by simp
+  fix x assume x: "x \<in> span S"
+  have "x \<bullet> x = (\<Sum>u\<in>S. (u \<bullet> x)^2)"
+    by (rule onormal_span_parseval[OF onS x, symmetric])
+  also have "\<dots> \<le> (\<Sum>u\<in>S. c u * (u \<bullet> x)^2)"
+  proof (rule sum_mono)
+    fix u assume "u \<in> S"
+    then show "(u \<bullet> x)^2 \<le> c u * (u \<bullet> x)^2"
+      using mult_right_mono[OF cS[OF \<open>u \<in> S\<close>], of "(u \<bullet> x)^2"] by simp
   qed
+  also have "\<dots> \<le> (\<Sum>u\<in>B. c u * (u \<bullet> x)^2)"
+    using c0 by (intro sum_mono2[OF finB S]) auto
+  also have "\<dots> = x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x)"
+    by (rule quadform_weighted_outer_sum_eq[OF finB, symmetric])
+  finally show "x \<bullet> x \<le> x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x)" .
 qed
 
 lemma Mp_quadform_unit_p:

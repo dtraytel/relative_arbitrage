@@ -707,8 +707,6 @@ proof (intro ballI allI impI)
     using sub x tf gl' unfolding visc_subsol_env2_def by blast
 qed
 
-text \<open>\<open>usc_extend_const_below\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
 text \<open>Far from \<open>K\<close> the extended function's sup-convolution returns to the
   constant, since the whole competing ball misses \<open>K\<close>: this confines the
   doubling maximiser to a bounded neighbourhood of \<open>K\<close> without boundary

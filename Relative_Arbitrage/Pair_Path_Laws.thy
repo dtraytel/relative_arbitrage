@@ -17,14 +17,7 @@ text \<open>Laws of pair paths as a family: the second-moment bounds that make a
   functional to a limit law.\<close>
 
 lemma psd_mat_1: "psd (mat 1 :: real^'n::finite^'n)"
-  unfolding psd_def
-proof (intro conjI allI)
-  show "transpose (mat 1 :: real^'n^'n) = mat 1"
-    by simp
-  fix x :: "real^'n"
-  show "0 \<le> x \<bullet> (mat 1 *v x)"
-    by simp
-qed
+  by (simp add: psd_def)
 
 lemma comp_shift_split:
   fixes x v :: "real^'n::finite" and w :: "real^'n^'n"
@@ -427,21 +420,7 @@ theorem compactin_pair_holder_ball:
   by (rule compactin_path_holder_ball[OF T ga c])
 
 lemma outerp_sq: "outerp u ** outerp u = (u \<bullet> u) *\<^sub>R outerp u"
-proof -
-  have "(outerp u ** outerp u) $ i $ j = ((u \<bullet> u) *\<^sub>R outerp u) $ i $ j"
-    for i j
-  proof -
-    have "(outerp u ** outerp u) $ i $ j
-        = (\<Sum>l\<in>UNIV. (u $ i * u $ l) * (u $ l * u $ j))"
-      by (simp add: outerp_def matrix_matrix_mult_def)
-    also have "\<dots> = u $ i * u $ j * (\<Sum>l\<in>UNIV. u $ l * u $ l)"
-      by (simp add: sum_distrib_left mult_ac)
-    also have "\<dots> = ((u \<bullet> u) *\<^sub>R outerp u) $ i $ j"
-      by (simp add: outerp_def inner_vec_def mult_ac)
-    finally show ?thesis .
-  qed
-  then show ?thesis by (simp add: vec_eq_iff)
-qed
+  by (simp add: outerp_eq_outer_prod outer_prod_mult)
 
 lemma pair_holder_ball_mem:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and x :: "'a"
@@ -637,7 +616,7 @@ subsection \<open>Full mass of the two closed clauses on a class member\<close>
 lemma trace_outerp:
   fixes v :: "real^'n::finite"
   shows "trace (outerp v) = v \<bullet> v"
-  by (simp add: outerp_def trace_def inner_vec_def)
+  by (simp add: outerp_eq_outer_prod)
 
 lemma closedin_start_point:
   fixes x :: "'a::{polish_space,banach}"
@@ -1693,20 +1672,6 @@ proof -
   then show ?thesis by (simp add: power2_eq_square)
 qed
 
-lemma matvec_sum_outer:
-  fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
-  assumes finS: "finite S"
-  shows "(\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z = (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
-proof -
-  have "(\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z
-      = (\<Sum>u\<in>S. (c u *\<^sub>R outer_prod u u) *v z)"
-    by (rule matrix_vector_mult_sum)
-  also have "\<dots> = (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
-    by (rule sum.cong[OF refl])
-      (simp add: scaleR_matrix_vector)
-  finally show ?thesis .
-qed
-
 lemma pair_test_F_functional_cont:
   fixes F :: "'a::{polish_space,banach} \<times> 'b::{polish_space,banach} \<Rightarrow> real"
     and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
@@ -1732,23 +1697,6 @@ proof -
   show ?thesis by (rule continuous_map_real_mult[OF part2 part1])
 qed
 
-lemma quadform_sum_outer:
-  fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
-  assumes finS: "finite S"
-  shows "z \<bullet> ((\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z) = (\<Sum>u\<in>S. c u * (u \<bullet> z)\<^sup>2)"
-proof -
-  have "z \<bullet> ((\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z)
-      = z \<bullet> (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
-    by (simp add: matvec_sum_outer[OF finS])
-  also have "\<dots> = (\<Sum>u\<in>S. z \<bullet> ((c u * (u \<bullet> z)) *\<^sub>R u))"
-    by (rule inner_sum_right)
-  also have "\<dots> = (\<Sum>u\<in>S. c u * (u \<bullet> z)\<^sup>2)"
-    by (rule sum.cong[OF refl])
-      (simp add: inner_commute power2_eq_square
-        algebra_simps)
-  finally show ?thesis .
-qed
-
 lemma pair_law_F_measurable:
   fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
     and F :: "'a \<times> 'b \<Rightarrow> real"
@@ -1770,26 +1718,8 @@ lemma traceM_sum_outer:
     and M :: "real^'n^'n"
   shows "trace (M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u))
       = (\<Sum>u\<in>S. c u * (u \<bullet> (M *v u)))"
-proof -
-  have "M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u)
-      = (\<Sum>u\<in>S. M ** (c u *\<^sub>R outer_prod u u))"
-    by (rule matrix_mult_sum_right)
-  then have "trace (M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u))
-      = (\<Sum>u\<in>S. trace (M ** (c u *\<^sub>R outer_prod u u)))"
-    by (simp add: trace_matrix_sum)
-  also have "\<dots> = (\<Sum>u\<in>S. c u * (u \<bullet> (M *v u)))"
-  proof (rule sum.cong[OF refl])
-    fix u assume "u \<in> S"
-    have "trace (M ** (c u *\<^sub>R outer_prod u u))
-        = c u * trace (M ** outer_prod u u)"
-      by (rule trace_mult_scaleR)
-    also have "trace (M ** outer_prod u u) = u \<bullet> (M *v u)"
-      using trace_mult_outerp[of M u] by (simp add: outerp_eq_outer_prod)
-    finally show "trace (M ** (c u *\<^sub>R outer_prod u u))
-        = c u * (u \<bullet> (M *v u))" .
-  qed
-  finally show ?thesis .
-qed
+  by (simp add: matrix_mult_sum_right trace_matrix_sum trace_mult_scaleR mult_outer_prod
+      inner_commute)
 
 text \<open>\<open>trace_mult_add\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
@@ -1807,22 +1737,6 @@ proof -
     using continuous_map_measurable[OF pair_eval_F_sq_cont[OF Fc u]]
     by (simp add: borel_of_euclidean)
   then show ?thesis using measurable_cong_sets[OF setsN refl] by blast
-qed
-
-lemma onormal_parseval:
-  fixes B :: "(real^'n::finite) set"
-  assumes B: "onormal B" and sp: "span B = UNIV"
-  shows "(\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2) = z \<bullet> z"
-proof -
-  have finB: "finite B" by (rule onormal_finite[OF B])
-  have "(\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2) = (\<Sum>u\<in>B. 1 * (u \<bullet> z)\<^sup>2)" by simp
-  also have "\<dots> = z \<bullet> ((\<Sum>u\<in>B. 1 *\<^sub>R outer_prod u u) *v z)"
-    by (rule quadform_sum_outer[OF finB, symmetric])
-  also have "(\<Sum>u\<in>B. (1::real) *\<^sub>R outer_prod u u) = (\<Sum>u\<in>B. outer_prod u u)"
-    by simp
-  also have "\<dots> = mat 1" by (rule onormal_complete[OF B sp])
-  also have "z \<bullet> (mat 1 *v z) = z \<bullet> z" by simp
-  finally show ?thesis .
 qed
 
 lemma pair_law_F_sq_integrable_of_nn_bound:
@@ -1844,22 +1758,6 @@ proof -
     finally show ?thesis .
   qed
   show ?thesis unfolding integrable_iff_bounded using m lt by blast
-qed
-
-lemma onormal_span_parseval:
-  fixes S :: "(real^'n::finite) set"
-  assumes S: "onormal S" and x: "x \<in> span S"
-  shows "(\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2) = x \<bullet> x"
-proof -
-  have finS: "finite S" by (rule onormal_finite[OF S])
-  have "x \<bullet> x = x \<bullet> (\<Sum>u\<in>S. (u \<bullet> x) *\<^sub>R u)"
-    by (simp add: onormal_expand[OF S x])
-  also have "\<dots> = (\<Sum>u\<in>S. x \<bullet> ((u \<bullet> x) *\<^sub>R u))"
-    by (rule inner_sum_right)
-  also have "\<dots> = (\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2)"
-    by (rule sum.cong[OF refl])
-      (simp add: inner_commute power2_eq_square)
-  finally show ?thesis by simp
 qed
 
 section \<open>Selecting a value-minimal index set: the threshold argument\<close>
@@ -2124,10 +2022,7 @@ proof -
 qed
 
 lemma norm_outerp: "norm (outerp (v :: real^'n::finite)) = norm v * norm v"
-proof -
-  have "outerp v = outer_prod v v" by (simp add: outerp_def outer_prod_def)
-  then show ?thesis by (simp add: norm_outer_prod)
-qed
+  by (simp add: outerp_eq_outer_prod norm_outer_prod)
 
 text \<open>\<open>pair_fst_borel\<close>, \<open>pair_snd_borel\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 

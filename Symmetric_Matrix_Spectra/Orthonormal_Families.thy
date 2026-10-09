@@ -81,6 +81,18 @@ proof -
     using ss xs by simp
 qed
 
+text \<open>Parseval's identity on the span of an orthonormal family.\<close>
+
+lemma onormal_span_parseval:
+  fixes S :: "(real^'n::finite) set"
+  assumes S: "onormal S" and x: "x \<in> span S"
+  shows "(\<Sum>u\<in>S. (u \<bullet> x)\<^sup>2) = x \<bullet> x"
+proof -
+  have "x \<bullet> x = (\<Sum>u\<in>S. (u \<bullet> x) *\<^sub>R u) \<bullet> (\<Sum>u\<in>S. (u \<bullet> x) *\<^sub>R u)"
+    by (simp add: onormal_expand[OF S x])
+  then show ?thesis by (simp add: onormal_inner_sums[OF S] power2_eq_square)
+qed
+
 section \<open>Completeness relation and traces in orthonormal bases\<close>
 
 lemma onormal_complete:

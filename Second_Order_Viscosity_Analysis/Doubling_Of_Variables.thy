@@ -2037,45 +2037,6 @@ proof -
     by simp
 qed
 
-text \<open>Extending an usc \<open>u\<close> off a closed \<open>K\<close> by a constant at or below its
-  minimum on \<open>K\<close> keeps it usc; \<open>usc_extension_bounded\<close> in the
-  \<open>Semicontinuous_Analysis\<close> session does the \<open>-B\<close> case, needed as negative
-  as required so the doubled functional cannot be maximised off \<open>K\<close>.\<close>
-
-lemma usc_extend_const_below:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real" and K :: "('a) set"
-  assumes cl: "closed K"
-    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
-    and lo: "\<And>y. y \<in> K \<Longrightarrow> Bl \<le> u y" and CB: "C \<le> Bl"
-    and lt: "(if z \<in> K then u z else C) < c"
-  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> (if y \<in> K then u y else C) < c"
-proof (cases "z \<in> K")
-  case True
-  then have uz: "u z < c" using lt by simp
-  have Cc: "C < c" using CB lo[OF True] uz by linarith
-  obtain e where e0: "0 < e" and h: "\<And>y. dist z y < e \<Longrightarrow> u y < c"
-    using uscu[OF uz] by blast
-  show ?thesis
-  proof (rule exI[of _ e], intro conjI allI impI e0)
-    fix y assume "dist z y < e"
-    then show "(if y \<in> K then u y else C) < c" using h Cc by simp
-  qed
-next
-  case False
-  then have Cc: "C < c" using lt by simp
-  have opn: "open (- K)" using cl by (rule open_Compl)
-  have zin: "z \<in> - K" using False by simp
-  obtain e where e0: "0 < e" and bl: "ball z e \<subseteq> - K"
-    using opn zin unfolding open_contains_ball by blast
-  show ?thesis
-  proof (rule exI[of _ e], intro conjI allI impI e0)
-    fix y assume dy: "dist z y < e"
-    then have "y \<in> ball z e" by (simp add: dist_commute)
-    then have "y \<notin> K" using bl by blast
-    then show "(if y \<in> K then u y else C) < c" using Cc by simp
-  qed
-qed
-
 text \<open>The two-domain localised maximiser drops the \<open>x\<close>-side boundary
   avoidance of the one-domain version: maximise the doubled sup-convolved
   functional over the compact

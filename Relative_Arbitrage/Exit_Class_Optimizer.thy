@@ -261,7 +261,7 @@ text \<open>The optimizer of @{thm [source] exit_val_attained} can be chosen
   beating \<open>b\<close>, extract a convergent subsequence by
   @{thm [source] Metric_space.compactin_sequentially}, and let the joint
   statement close the gap --- attainment is not needed, only \<open>b < c\<close> for
-  every \<open>b\<close> below \<open>c\<close> (@{thm [source] ennreal_strict_between}).\<close>
+  every \<open>b\<close> below \<open>c\<close> (the order on @{typ ennreal} is dense).\<close>
 
 theorem exit_val_measurable_selector:
   fixes K :: "(real^'n::finite) set"
@@ -384,7 +384,7 @@ proof -
         assume "\<not> c \<le> Sup (?g y ` Cs)"
         then have "Sup (?g y ` Cs) < c" by simp
         then obtain b where "Sup (?g y ` Cs) < b" and "b < c"
-          using ennreal_strict_between by blast
+          using dense by blast
         with below[of b] show False by simp
       qed
       then show "y \<in> {y. c \<le> Sup (?g y ` Cs)}" by blast

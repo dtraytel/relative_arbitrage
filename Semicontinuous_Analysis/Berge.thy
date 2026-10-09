@@ -23,306 +23,20 @@ text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close> cites L
 
   The hypothesis \<open>box\<close> below is joint upper semicontinuity at \<open>(x,P)\<close>,
   written via a product neighbourhood rather than \<open>nhds (x,P)\<close>, independent
-  of how the product topology is packaged.
+  of how the product topology is packaged.  The index space carries a
+  \<open>topology\<close> value \<open>Y\<close> rather than a type-class topology: the weak topology
+  on laws is a \<open>topology\<close> value (\<open>weak_conv_topology\<close>), not a type-class
+  instance, since different base spaces induce different weak topologies on
+  the same type \<open>'a measure\<close>.  The conclusion stays in the type class, being
+  about \<open>nhds x\<close>.
 
   Proof idea: pick \<open>c'\<close> strictly between the supremum and \<open>c\<close>; every
   \<open>P \<in> C\<close> has \<open>F x P < c'\<close>, so joint usc gives a box \<open>U\<^sub>P \<times> V\<^sub>P\<close> with
-  \<open>F < c'\<close> there; the \<open>V\<^sub>P\<close> cover the compact \<open>C\<close>, so finitely many suffice,
-  and the matching finite intersection of the \<open>U\<^sub>P\<close> is a neighbourhood of
-  \<open>x\<close> on which the whole supremum is \<open>\<le> c' < c\<close>.\<close>
-
-theorem usc_sup_over_compact:
-  fixes F :: "'a::topological_space \<Rightarrow> 'b::topological_space \<Rightarrow> real"
-    and C :: "'b set" and x :: 'a and c :: real
-  assumes cC: "compact C" and neC: "C \<noteq> {}"
-    and bdd: "\<And>y. bdd_above (F y ` C)"
-    and lt: "Sup (F x ` C) < c"
-    and box: "\<And>P d. P \<in> C \<Longrightarrow> F x P < d \<Longrightarrow>
-        \<exists>U V. open U \<and> open V \<and> x \<in> U \<and> P \<in> V
-              \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. F y Q < d)"
-  shows "eventually (\<lambda>y. Sup (F y ` C) < c) (nhds x)"
-proof -
-  obtain c' where c1: "Sup (F x ` C) < c'" and c2: "c' < c"
-    using lt dense by blast
-  have small: "F x P < c'" if P: "P \<in> C" for P
-  proof -
-    have "F x P \<le> Sup (F x ` C)"
-      by (rule cSup_upper) (use P bdd in auto)
-    with c1 show ?thesis by linarith
-  qed
-  have ex: "\<forall>P \<in> C. \<exists>U V. open U \<and> open V \<and> x \<in> U \<and> P \<in> V
-      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. F y Q < c')"
-    using box small by blast
-  \<comment> \<open>choose the two neighbourhoods together, as a pair: a double \<open>bchoice\<close> is
-      beyond \<open>metis\<close> here, but one choice over pairs is routine\<close>
-  have ex': "\<forall>P \<in> C. \<exists>W :: 'a set \<times> 'b set.
-      open (fst W) \<and> open (snd W) \<and> x \<in> fst W \<and> P \<in> snd W
-      \<and> (\<forall>y \<in> fst W. \<forall>Q \<in> snd W. F y Q < c')"
-  proof
-    fix P assume P: "P \<in> C"
-    \<comment> \<open>eliminate only the two existentials: chaining the bounded \<open>\<forall>P\<in>C\<close> into
-        the same \<open>blast\<close> makes it search without terminating\<close>
-    from bspec[OF ex P] obtain U V where
-      "open U" "open V" "x \<in> U" "P \<in> V" "\<forall>y\<in>U. \<forall>Q\<in>V. F y Q < c'"
-      by blast
-    then show "\<exists>W :: 'a set \<times> 'b set.
-        open (fst W) \<and> open (snd W) \<and> x \<in> fst W \<and> P \<in> snd W
-        \<and> (\<forall>y \<in> fst W. \<forall>Q \<in> snd W. F y Q < c')"
-      by (intro exI[of _ "(U,V)"]) simp
-  qed
-  \<comment> \<open>eliminate the choice in exactly the shape \<open>bchoice\<close> produces: bridging
-      \<open>\<forall>P\<in>C\<close> to \<open>\<And>P. P \<in> C \<Longrightarrow>\<close> inside the \<open>obtain\<close> sends \<open>blast\<close> searching
-      without terminating\<close>
-  have exf: "\<exists>WW. \<forall>P\<in>C.
-      open (fst (WW P)) \<and> open (snd (WW P)) \<and> x \<in> fst (WW P) \<and> P \<in> snd (WW P)
-      \<and> (\<forall>y \<in> fst (WW P). \<forall>Q \<in> snd (WW P). F y Q < c')"
-    by (rule bchoice[OF ex'])
-  then obtain WW where Wb: "\<forall>P\<in>C.
-      open (fst (WW P)) \<and> open (snd (WW P)) \<and> x \<in> fst (WW P) \<and> P \<in> snd (WW P)
-      \<and> (\<forall>y \<in> fst (WW P). \<forall>Q \<in> snd (WW P). F y Q < c')"
-    by (rule exE)
-  define UU where "UU = (\<lambda>P. fst (WW P))"
-  define VV where "VV = (\<lambda>P. snd (WW P))"
-  have oU: "open (UU P)" if P: "P \<in> C" for P
-    unfolding UU_def using bspec[OF Wb P] by simp
-  have oV: "open (VV P)" if P: "P \<in> C" for P
-    unfolding VV_def using bspec[OF Wb P] by simp
-  have xU: "x \<in> UU P" if P: "P \<in> C" for P
-    unfolding UU_def using bspec[OF Wb P] by simp
-  have PV: "P \<in> VV P" if P: "P \<in> C" for P
-    unfolding VV_def using bspec[OF Wb P] by simp
-  have less: "F y Q < c'" if P: "P \<in> C" and y: "y \<in> UU P" and Q: "Q \<in> VV P"
-    for P y Q
-    using bspec[OF Wb P] y Q unfolding UU_def VV_def by simp
-  have cover: "C \<subseteq> (\<Union>P\<in>C. VV P)" using PV by blast
-  have oVall: "\<And>T. T \<in> C \<Longrightarrow> open (VV T)" by (rule oV)
-  obtain D where D1: "D \<subseteq> C" and D2: "finite D" and D3: "C \<subseteq> (\<Union>P\<in>D. VV P)"
-    by (rule compactE_image[OF cC oVall cover])
-  define U where "U = (\<Inter>P\<in>D. UU P)"
-  \<comment> \<open>\<open>open_INT\<close> takes a bounded-\<open>\<forall>\<close> premise, not a \<open>\<And>\<close>-rule\<close>
-  have oUD: "\<forall>P\<in>D. open (UU P)" using oU D1 by blast
-  have openU: "open U" unfolding U_def by (rule open_INT[OF D2 oUD])
-  have xinU: "x \<in> U" unfolding U_def using xU D1 by blast
-  have key: "Sup (F y ` C) \<le> c'" if yU: "y \<in> U" for y
-  proof (rule cSup_least)
-    show "F y ` C \<noteq> {}" using neC by blast
-  next
-    fix z assume "z \<in> F y ` C"
-    then obtain Q where Q: "Q \<in> C" and zdef: "z = F y Q" by blast
-    from Q D3 obtain P where P: "P \<in> D" and QV: "Q \<in> VV P" by blast
-    have "y \<in> UU P" using yU P unfolding U_def by blast
-    then have "F y Q < c'" using less[of P y Q] P D1 QV by blast
-    then show "z \<le> c'" unfolding zdef by linarith
-  qed
-  have final: "Sup (F y ` C) < c" if yU: "y \<in> U" for y
-    using key[OF yU] c2 by linarith
-  have ballU: "\<forall>y \<in> U. Sup (F y ` C) < c" by (intro ballI) (rule final)
-  show ?thesis
-    unfolding eventually_nhds
-    by (rule exI[of _ U]) (intro conjI openU xinU ballU)
-qed
-
-section \<open>Feeding \<open>box\<close> from a sequential statement\<close>
-
-text \<open>
-  \<open>usc_sup_over_compact\<close> asks for \<open>box\<close> topologically, but weak convergence
-  of measures is naturally a statement about sequences -- the form of the
-  AFP's Portmanteau theorems and of \<open>Exit_Time_Semicontinuity.etime_shift_box\<close>.
-
-  The two are equivalent when both spaces are metrizable, by the
-  Levy--Prokhorov theorem (\<open>metrizable_weak_conv_topology\<close>), applicable
-  since the path space is metrizable and separable. This lemma is that
-  equivalence; nothing about measures enters it.
-
-  The direction proved is sequences to neighbourhoods. Its contrapositive
-  picks, for each \<open>n\<close>, a counterexample inside the \<open>1/Suc n\<close> balls, and
-  those assemble into convergent sequences the hypothesis forbids --
-  countable choice does the work, so metrizability cannot be dropped.
-\<close>
-
-lemma box_of_sequential:
-  fixes X :: "'a topology" and Y :: "'b topology" and S :: "'b set"
-  assumes mX: "metrizable_space X" and mY: "metrizable_space Y"
-    and x: "x \<in> topspace X" and P: "P \<in> topspace Y"
-    and seq: "\<And>yi Qi. limitin X yi x sequentially
-        \<Longrightarrow> limitin Y Qi P sequentially
-        \<Longrightarrow> (\<And>i. Qi i \<in> S)
-        \<Longrightarrow> eventually (\<lambda>i. R (yi i) (Qi i)) sequentially"
-  shows "\<exists>U V. openin X U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
-      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> S. R y Q)"
-proof (rule ccontr)
-  assume neg: "\<not> ?thesis"
-  text \<open>\<open>metrizable_space_def\<close> quantifies over the carrier as well as the metric,
-    so the carrier has to be identified with \<open>topspace X\<close> afterwards rather than
-    assumed to be it.\<close>
-  obtain MXs dX where dX: "Metric_space MXs dX"
-    and tX: "X = Metric_space.mtopology MXs dX"
-    using mX unfolding metrizable_space_def by blast
-  obtain MYs dY where dY: "Metric_space MYs dY"
-    and tY: "Y = Metric_space.mtopology MYs dY"
-    using mY unfolding metrizable_space_def by blast
-  interpret MX: Metric_space MXs dX by (rule dX)
-  interpret MY: Metric_space MYs dY by (rule dY)
-  have tsX: "topspace X = MXs" unfolding tX by (rule MX.topspace_mtopology)
-  have tsY: "topspace Y = MYs" unfolding tY by (rule MY.topspace_mtopology)
-  have xM: "x \<in> MXs" using x tsX by simp
-  have PM: "P \<in> MYs" using P tsY by simp
-
-  have pick: "\<exists>z W. z \<in> MX.mball x (1 / Suc n)
-      \<and> W \<in> MY.mball P (1 / Suc n) \<and> W \<in> S \<and> \<not> R z W" for n :: nat
-  proof -
-    have oU: "openin X (MX.mball x (1 / Suc n))"
-      unfolding tX by (rule MX.openin_mball)
-    have oV: "openin Y (MY.mball P (1 / Suc n))"
-      unfolding tY by (rule MY.openin_mball)
-    have xU: "x \<in> MX.mball x (1 / Suc n)" using xM by simp
-    have PV: "P \<in> MY.mball P (1 / Suc n)" using PM by simp
-    show ?thesis using neg oU oV xU PV by blast
-  qed
-  obtain y Q where yQ: "\<And>n. y n \<in> MX.mball x (1 / Suc n)"
-    "\<And>n. Q n \<in> MY.mball P (1 / Suc n)" "\<And>n. Q n \<in> S"
-    "\<And>n. \<not> R (y n) (Q n)"
-    using pick by metis
-
-  have limy: "limitin X y x sequentially"
-  proof -
-    have "limitin MX.mtopology y x sequentially"
-      unfolding MX.limitin_metric
-    proof (intro conjI allI impI xM)
-      fix e :: real assume e: "0 < e"
-      obtain N :: nat where N: "1 / Suc N < e" using e nat_approx_posE by blast
-      have "y n \<in> MXs \<and> dX (y n) x < e" if n: "N \<le> n" for n
-      proof -
-        have lt: "dX x (y n) < 1 / Suc n"
-          using yQ(1)[of n] unfolding MX.mball_def by simp
-        have "(1::real) / Suc n \<le> 1 / Suc N" using n by (simp add: frac_le)
-        with lt N have "dX x (y n) < e" by linarith
-        thus ?thesis
-          using yQ(1)[of n] unfolding MX.mball_def by (simp add: MX.commute)
-      qed
-      thus "eventually (\<lambda>n. y n \<in> MXs \<and> dX (y n) x < e) sequentially"
-        unfolding eventually_sequentially by blast
-    qed
-    thus ?thesis unfolding tX .
-  qed
-  have limQ: "limitin Y Q P sequentially"
-  proof -
-    have "limitin MY.mtopology Q P sequentially"
-      unfolding MY.limitin_metric
-    proof (intro conjI allI impI PM)
-      fix e :: real assume e: "0 < e"
-      obtain N :: nat where N: "1 / Suc N < e" using e nat_approx_posE by blast
-      have "Q n \<in> MYs \<and> dY (Q n) P < e" if n: "N \<le> n" for n
-      proof -
-        have lt: "dY P (Q n) < 1 / Suc n"
-          using yQ(2)[of n] unfolding MY.mball_def by simp
-        have "(1::real) / Suc n \<le> 1 / Suc N" using n by (simp add: frac_le)
-        with lt N have "dY P (Q n) < e" by linarith
-        thus ?thesis
-          using yQ(2)[of n] unfolding MY.mball_def by (simp add: MY.commute)
-      qed
-      thus "eventually (\<lambda>n. Q n \<in> MYs \<and> dY (Q n) P < e) sequentially"
-        unfolding eventually_sequentially by blast
-    qed
-    thus ?thesis unfolding tY .
-  qed
-  from seq[OF limy limQ yQ(3)]
-  have "eventually (\<lambda>i. R (y i) (Q i)) sequentially" .
-  thus False using yQ(4) by simp
-qed
-
-text \<open>The specialisation used: the first factor is a metric type, so Berge's
-  \<open>box\<close> wants type-class \<open>open\<close> rather than \<open>openin euclidean\<close>.  Since
-  \<open>euclidean\<close> abbreviates \<open>topology open\<close>, \<open>unfolding open_openin\<close> rewrites
-  the bare \<open>open\<close> inside \<open>euclidean\<close> and regenerates its own redex, looping;
-  the \<open>[symmetric]\<close> orientation is the safe declared simp rule.\<close>
-
-lemma box_of_sequential_euclidean:
-  fixes Y :: "'b topology" and S :: "'b set" and x :: "'a::metric_space"
-  assumes mY: "metrizable_space Y" and P: "P \<in> topspace Y"
-    and seq: "\<And>yi Qi. yi \<longlonglongrightarrow> x
-        \<Longrightarrow> limitin Y Qi P sequentially
-        \<Longrightarrow> (\<And>i. Qi i \<in> S)
-        \<Longrightarrow> eventually (\<lambda>i. R (yi i) (Qi i)) sequentially"
-  shows "\<exists>U V. open U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
-      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> S. R y Q)"
-proof -
-  have "\<exists>U V. openin (euclidean :: 'a topology) U \<and> openin Y V
-      \<and> x \<in> U \<and> P \<in> V \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> S. R y Q)"
-  proof (rule box_of_sequential)
-    show "metrizable_space (euclidean :: 'a topology)"
-      by (rule metrizable_space_euclidean)
-    show "metrizable_space Y" by (rule mY)
-    show "x \<in> topspace (euclidean :: 'a topology)" by simp
-    show "P \<in> topspace Y" by (rule P)
-  next
-    fix yi :: "nat \<Rightarrow> 'a" and Qi :: "nat \<Rightarrow> 'b"
-    assume ly: "limitin (euclidean :: 'a topology) yi x sequentially"
-      and lQ: "limitin Y Qi P sequentially" and inS: "\<And>i. Qi i \<in> S"
-    have "yi \<longlonglongrightarrow> x" using ly by simp
-    from seq[OF this lQ inS]
-    show "eventually (\<lambda>i. R (yi i) (Qi i)) sequentially" .
-  qed
-  thus ?thesis by simp
-qed
-
-section \<open>Sequential compactness gives \<open>compactin\<close> in a metrizable space\<close>
-
-text \<open>
-  The glue between Lemmas 2.2 and 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> and Berge's theorem. Those lemmas
-  deliver sequential compactness of the law set -- 2.2 extracts a weakly
-  convergent subsequence, 2.3 puts the limit back in the set -- whereas
-  \<open>usc_sup_over_compactin\<close> consumes \<open>compactin\<close>. In a metrizable space the
-  two coincide (\<open>Metric_space.compactin_sequentially\<close>); this lemma
-  transports that fact to a \<open>topology\<close> value, the interface Lemma 2.3 needs
-  to supply.
-\<close>
-
-lemma compactin_of_seq_compact:
-  fixes Y :: "'b topology" and C :: "'b set"
-  assumes mY: "metrizable_space Y" and sub: "C \<subseteq> topspace Y"
-    and seq: "\<And>\<sigma> :: nat \<Rightarrow> 'b. range \<sigma> \<subseteq> C \<Longrightarrow>
-        \<exists>l r. l \<in> C \<and> strict_mono r \<and> limitin Y (\<sigma> \<circ> r) l sequentially"
-  shows "compactin Y C"
-proof -
-  obtain MYs dY where dY: "Metric_space MYs dY"
-    and tY: "Y = Metric_space.mtopology MYs dY"
-    using mY unfolding metrizable_space_def by blast
-  interpret MY: Metric_space MYs dY by (rule dY)
-  have tsY: "topspace Y = MYs" unfolding tY by (rule MY.topspace_mtopology)
-  have "compactin MY.mtopology C"
-    unfolding MY.compactin_sequentially
-  proof
-    show "C \<subseteq> MYs" using sub tsY by simp
-  next
-    show "\<forall>\<sigma>::nat \<Rightarrow> 'b. range \<sigma> \<subseteq> C \<longrightarrow>
-        (\<exists>l r. l \<in> C \<and> strict_mono r
-             \<and> limitin MY.mtopology (\<sigma> \<circ> r) l sequentially)"
-      using seq unfolding tY[symmetric] by blast
-  qed
-  thus ?thesis unfolding tY .
-qed
-
-text \<open>Two closure companions, both for a metrizable topology: a point of the
-  closure of \<open>A\<close> is a sequential limit of points of \<open>A\<close>; and -- the form
-  Lemma 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> consumes -- subsequence extraction on \<open>A\<close> extends to its
-  closure, by approximating the given sequence within \<open>1/(n+1)\<close> and carrying
-  the extracted limit across via the triangle inequality.\<close>
-
-section \<open>Berge over a \<open>topology\<close>-valued index space\<close>
-
-text \<open>
-  \<open>usc_sup_over_compact\<close> is stated with type-class \<open>open\<close>/\<open>compact\<close> on both
-  factors -- fine for \<open>x\<close> in \<open>'c::metric_space\<close>, but not for the laws: the weak
-  topology is a \<open>topology\<close> value (\<open>weak_conv_topology\<close>), not a type-class
-  instance, since different base spaces induce different weak topologies on
-  the same type \<open>'a measure\<close>.
-
-  So the second factor is re-stated with \<open>openin\<close>/\<open>compactin\<close>. Only the
-  covering argument changes: \<open>compactinD\<close> hands back a finite set of opens
-  rather than a finite index set, recovered via \<open>finite_subset_image\<close>. The
-  conclusion stays in the type class, being about \<open>nhds x\<close>.
-\<close>
+  \<open>F < c'\<close> there; the \<open>V\<^sub>P\<close> cover the compact \<open>C\<close>, so finitely many suffice
+  (\<open>compactinD\<close> hands back a finite set of opens, turned back into a finite
+  set of indices by \<open>finite_subset_image\<close>), and the matching finite
+  intersection of the \<open>U\<^sub>P\<close> is a neighbourhood of \<open>x\<close> on which the whole
+  supremum is \<open>\<le> c' < c\<close>.\<close>
 
 theorem usc_sup_over_compactin:
   fixes F :: "'a::topological_space \<Rightarrow> 'b \<Rightarrow> real"
@@ -416,6 +130,168 @@ proof -
     by (rule exI[of _ U]) (intro conjI openU xinU ballU)
 qed
 
+text \<open>The type-class instance: \<open>Y = euclidean\<close>, where \<open>compactin\<close> is
+  \<open>compact\<close> and \<open>openin\<close> is \<open>open\<close>.\<close>
+
+theorem usc_sup_over_compact:
+  fixes F :: "'a::topological_space \<Rightarrow> 'b::topological_space \<Rightarrow> real"
+    and C :: "'b set" and x :: 'a and c :: real
+  assumes cC: "compact C" and neC: "C \<noteq> {}"
+    and bdd: "\<And>y. bdd_above (F y ` C)"
+    and lt: "Sup (F x ` C) < c"
+    and box: "\<And>P d. P \<in> C \<Longrightarrow> F x P < d \<Longrightarrow>
+        \<exists>U V. open U \<and> open V \<and> x \<in> U \<and> P \<in> V
+              \<and> (\<forall>y \<in> U. \<forall>Q \<in> V. F y Q < d)"
+  shows "eventually (\<lambda>y. Sup (F y ` C) < c) (nhds x)"
+proof (rule usc_sup_over_compactin[where Y = euclidean])
+  fix P d assume "P \<in> C" "F x P < d"
+  from box[OF this] show "\<exists>U V. open U \<and> openin euclidean V \<and> x \<in> U \<and> P \<in> V
+      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> C. F y Q < d)"
+    by auto
+qed (use cC neC bdd lt in auto)
+
+section \<open>Feeding \<open>box\<close> from a sequential statement\<close>
+
+text \<open>Two helpers.  \<open>metrizable_space_def\<close> quantifies over the carrier as well
+  as the metric; the carrier can always be taken to be \<open>topspace X\<close>.  And a
+  sequence converges once its distance to the limit is dominated by a null
+  sequence.\<close>
+
+lemma metrizable_space_metric:
+  assumes "metrizable_space X"
+  obtains d where "Metric_space (topspace X) d"
+    and "Metric_space.mtopology (topspace X) d = X"
+  using assms unfolding metrizable_space_def by (metis Metric_space.topspace_mtopology)
+
+lemma (in Metric_space) limitin_of_dist_bound:
+  assumes "\<And>n. x n \<in> M" and "y \<in> M" and "\<And>n. d (x n) y \<le> r n"
+    and "(r \<longlongrightarrow> 0) F"
+  shows "limitin mtopology x y F"
+proof -
+  have "((\<lambda>n. d (x n) y) \<longlongrightarrow> 0) F"
+    by (rule tendsto_sandwich[of "\<lambda>_. 0" _ _ r]) (use assms in auto)
+  then show ?thesis using assms unfolding limitin_metric_dist_null by simp
+qed
+
+text \<open>
+  \<open>usc_sup_over_compactin\<close> asks for \<open>box\<close> topologically, but weak convergence
+  of measures is naturally a statement about sequences -- the form of the
+  AFP's Portmanteau theorems and of \<open>Exit_Time_Semicontinuity.etime_shift_box\<close>.
+
+  The two are equivalent when both spaces are metrizable, by the
+  Levy--Prokhorov theorem (\<open>metrizable_weak_conv_topology\<close>), applicable
+  since the path space is metrizable and separable. This lemma is that
+  equivalence; nothing about measures enters it.
+
+  The direction proved is sequences to neighbourhoods. Its contrapositive
+  picks, for each \<open>n\<close>, a counterexample inside the \<open>1/Suc n\<close> balls, and
+  those assemble into convergent sequences the hypothesis forbids --
+  countable choice does the work, so metrizability cannot be dropped.
+\<close>
+
+lemma box_of_sequential:
+  fixes X :: "'a topology" and Y :: "'b topology" and S :: "'b set"
+  assumes mX: "metrizable_space X" and mY: "metrizable_space Y"
+    and x: "x \<in> topspace X" and P: "P \<in> topspace Y"
+    and seq: "\<And>yi Qi. limitin X yi x sequentially
+        \<Longrightarrow> limitin Y Qi P sequentially
+        \<Longrightarrow> (\<And>i. Qi i \<in> S)
+        \<Longrightarrow> eventually (\<lambda>i. R (yi i) (Qi i)) sequentially"
+  shows "\<exists>U V. openin X U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
+      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> S. R y Q)"
+proof (rule ccontr)
+  assume neg: "\<not> ?thesis"
+  obtain dX dY where dX: "Metric_space (topspace X) dX"
+    and tX: "Metric_space.mtopology (topspace X) dX = X"
+    and dY: "Metric_space (topspace Y) dY"
+    and tY: "Metric_space.mtopology (topspace Y) dY = Y"
+    using metrizable_space_metric[OF mX] metrizable_space_metric[OF mY] by metis
+  interpret MX: Metric_space "topspace X" dX by (rule dX)
+  interpret MY: Metric_space "topspace Y" dY by (rule dY)
+  have "\<exists>z W. z \<in> MX.mball x (1 / Suc n)
+      \<and> W \<in> MY.mball P (1 / Suc n) \<and> W \<in> S \<and> \<not> R z W" for n :: nat
+  proof -
+    have "openin X (MX.mball x (1 / Suc n))" "openin Y (MY.mball P (1 / Suc n))"
+      using MX.openin_mball MY.openin_mball unfolding tX tY by blast+
+    moreover have "x \<in> MX.mball x (1 / Suc n)" "P \<in> MY.mball P (1 / Suc n)"
+      using x P by simp_all
+    ultimately show ?thesis using neg by blast
+  qed
+  then obtain y Q where yQ: "\<And>n. y n \<in> MX.mball x (1 / Suc n)"
+    "\<And>n. Q n \<in> MY.mball P (1 / Suc n)" "\<And>n. Q n \<in> S"
+    "\<And>n. \<not> R (y n) (Q n)"
+    by metis
+  have r: "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0" by (rule LIMSEQ_Suc[OF lim_1_over_n])
+  have limy: "limitin X y x sequentially"
+    using MX.limitin_of_dist_bound[OF _ x _ r] yQ(1) unfolding tX
+    by (simp add: MX.commute less_imp_le)
+  have limQ: "limitin Y Q P sequentially"
+    using MY.limitin_of_dist_bound[OF _ P _ r] yQ(2) unfolding tY
+    by (simp add: MY.commute less_imp_le)
+  from seq[OF limy limQ yQ(3)] show False using yQ(4) by simp
+qed
+
+text \<open>The specialisation used: the first factor is a metric type, so Berge's
+  \<open>box\<close> wants type-class \<open>open\<close> rather than \<open>openin euclidean\<close>.  Since
+  \<open>euclidean\<close> abbreviates \<open>topology open\<close>, \<open>unfolding open_openin\<close> rewrites
+  the bare \<open>open\<close> inside \<open>euclidean\<close> and regenerates its own redex, looping;
+  the \<open>[symmetric]\<close> orientation is the safe declared simp rule.\<close>
+
+lemma box_of_sequential_euclidean:
+  fixes Y :: "'b topology" and S :: "'b set" and x :: "'a::metric_space"
+  assumes mY: "metrizable_space Y" and P: "P \<in> topspace Y"
+    and seq: "\<And>yi Qi. yi \<longlonglongrightarrow> x
+        \<Longrightarrow> limitin Y Qi P sequentially
+        \<Longrightarrow> (\<And>i. Qi i \<in> S)
+        \<Longrightarrow> eventually (\<lambda>i. R (yi i) (Qi i)) sequentially"
+  shows "\<exists>U V. open U \<and> openin Y V \<and> x \<in> U \<and> P \<in> V
+      \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> S. R y Q)"
+proof -
+  have "\<exists>U V. openin (euclidean :: 'a topology) U \<and> openin Y V
+      \<and> x \<in> U \<and> P \<in> V \<and> (\<forall>y \<in> U. \<forall>Q \<in> V \<inter> S. R y Q)"
+  proof (rule box_of_sequential)
+    show "metrizable_space (euclidean :: 'a topology)"
+      by (rule metrizable_space_euclidean)
+    show "metrizable_space Y" by (rule mY)
+    show "x \<in> topspace (euclidean :: 'a topology)" by simp
+    show "P \<in> topspace Y" by (rule P)
+  next
+    fix yi :: "nat \<Rightarrow> 'a" and Qi :: "nat \<Rightarrow> 'b"
+    assume ly: "limitin (euclidean :: 'a topology) yi x sequentially"
+      and lQ: "limitin Y Qi P sequentially" and inS: "\<And>i. Qi i \<in> S"
+    have "yi \<longlonglongrightarrow> x" using ly by simp
+    from seq[OF this lQ inS]
+    show "eventually (\<lambda>i. R (yi i) (Qi i)) sequentially" .
+  qed
+  thus ?thesis by simp
+qed
+
+section \<open>Sequential compactness gives \<open>compactin\<close> in a metrizable space\<close>
+
+text \<open>
+  The glue between Lemmas 2.2 and 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> and Berge's theorem. Those lemmas
+  deliver sequential compactness of the law set -- 2.2 extracts a weakly
+  convergent subsequence, 2.3 puts the limit back in the set -- whereas
+  \<open>usc_sup_over_compactin\<close> consumes \<open>compactin\<close>. In a metrizable space the
+  two coincide (\<open>Metric_space.compactin_sequentially\<close>); this lemma
+  transports that fact to a \<open>topology\<close> value, the interface Lemma 2.3 needs
+  to supply.
+\<close>
+
+lemma compactin_of_seq_compact:
+  fixes Y :: "'b topology" and C :: "'b set"
+  assumes mY: "metrizable_space Y" and sub: "C \<subseteq> topspace Y"
+    and seq: "\<And>\<sigma> :: nat \<Rightarrow> 'b. range \<sigma> \<subseteq> C \<Longrightarrow>
+        \<exists>l r. l \<in> C \<and> strict_mono r \<and> limitin Y (\<sigma> \<circ> r) l sequentially"
+  shows "compactin Y C"
+proof -
+  obtain dY where dY: "Metric_space (topspace Y) dY"
+    and tY: "Metric_space.mtopology (topspace Y) dY = Y"
+    using metrizable_space_metric[OF mY] by metis
+  interpret MY: Metric_space "topspace Y" dY by (rule dY)
+  show ?thesis
+    using MY.compactin_sequentially[of C] sub seq unfolding tY by blast
+qed
 
 (*<*)
 end
