@@ -377,12 +377,6 @@ text \<open>The doubled functional perturbed by \<open>-\<delta>\<parallel>z - \
   functional keeps the doubled form downstream lemmas expect, and the
   cost is affine, since \<open>\<parallel>z\<parallel>\<^sup>2 - \<parallel>z - \<xi>\<parallel>\<^sup>2 = 2 z \<bullet> \<xi> - \<parallel>\<xi>\<parallel>\<^sup>2\<close>.\<close>
 
-lemma norm_sq_diff_shift:
-  fixes z c :: "'a::euclidean_space"
-  shows "(norm z)\<^sup>2 - (norm (z - c))\<^sup>2 = 2 * (z \<bullet> c) - (norm c)\<^sup>2"
-  by (simp add: power2_norm_eq_inner
-      inner_commute algebra_simps)
-
 theorem doubled_functional_semiconvex_shifted:
   fixes u v :: "'a::euclidean_space \<Rightarrow> real"
   assumes Bu: "\<And>y. u y \<le> Bu" and Bv: "\<And>y. v y \<le> Bv"
@@ -413,12 +407,11 @@ proof -
         + ((- (\<delta> * (norm \<xi>)\<^sup>2)) + inner z ((2*\<delta>) *\<^sub>R \<xi>)))"
   proof (rule ext)
     fix z :: "'a \<times> 'a"
-    have sh: "(norm z)\<^sup>2 - (norm (z - \<xi>))\<^sup>2 = 2 * (z \<bullet> \<xi>) - (norm \<xi>)\<^sup>2"
-      by (rule norm_sq_diff_shift)
     have sh': "(norm (z - \<xi>))\<^sup>2 = (norm z)\<^sup>2 - 2 * (z \<bullet> \<xi>) + (norm \<xi>)\<^sup>2"
-      using sh by linarith
+      by (rule norm_sq_diff_expand)
     have iz: "inner z ((2*\<delta>) *\<^sub>R \<xi>) = 2 * \<delta> * (z \<bullet> \<xi>)"
-      by simp    show "((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
+      by simp
+    show "((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
             - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
           - \<delta> * (norm (z - \<xi>))\<^sup>2)
         + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2

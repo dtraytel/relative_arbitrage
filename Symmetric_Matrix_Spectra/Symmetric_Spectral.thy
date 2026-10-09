@@ -504,7 +504,7 @@ text \<open>The quadratic form of \<open>W\<close> is bounded in absolute value 
 
 subsection \<open>From the quadratic-form bound to a genuine operator bound\<close>
 
-text \<open>\<open>polarization_symmetric\<close>, \<open>parallelogram_norm\<close>, \<open>symmetric_form_bound\<close>, \<open>symmetric_form_bound_unit\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
+text \<open>\<open>polarization_symmetric\<close>, \<open>symmetric_form_bound\<close>, \<open>symmetric_form_bound_unit\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
 
 subsection \<open>Boundedness to a limit point, and limit point to nearby points\<close>
 

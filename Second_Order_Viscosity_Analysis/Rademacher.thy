@@ -390,30 +390,11 @@ lemma lipschitz_continuous_on_UNIV:
   fixes f :: "'a::real_normed_vector \<Rightarrow> 'b::real_normed_vector"
   assumes lip: "\<And>x y. norm (f x - f y) \<le> B * norm (x - y)"
   shows "continuous_on UNIV f"
-proof -
-  define C where "C = max B 1"
-  have C: "0 < C" by (simp add: C_def)
-  have lipC: "norm (f x - f y) \<le> C * norm (x - y)" for x y
-  proof -
-    have "B * norm (x - y) \<le> C * norm (x - y)"
-      by (intro mult_right_mono) (auto simp: C_def)
-    thus ?thesis using lip[of x y] by linarith
-  qed
-  show ?thesis
-    unfolding continuous_on_iff
-  proof (intro ballI allI impI)
-    fix x :: 'a and e :: real assume e: "0 < e"
-    show "\<exists>d>0. \<forall>x'\<in>UNIV. dist x' x < d \<longrightarrow> dist (f x') (f x) < e"
-    proof (intro exI[of _ "e/C"] conjI ballI impI)
-      show "0 < e/C" using e C by simp
-      fix x' :: 'a assume "dist x' x < e/C"
-      hence "C * dist x' x < e" using C by (simp add: field_simps)
-      moreover have "dist (f x') (f x) \<le> C * dist x' x"
-        using lipC[of x' x] by (simp add: dist_norm)
-      ultimately show "dist (f x') (f x) < e" by linarith
-    qed
-  qed
-qed
+proof (rule lipschitz_on_continuous_on[of "max B 0"], rule lipschitz_onI)
+  show "dist (f x) (f y) \<le> max B 0 * dist x y" for x y
+    using lip[of x y] mult_right_mono[of B "max B 0" "norm (x - y)"]
+    by (simp add: dist_norm)
+qed simp
 
 theorem negligible_no_dderiv_basis:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::{euclidean_space,banach}"
@@ -857,19 +838,6 @@ text \<open>A box and its small translate overlap in almost all of their volume;
   \<open>Int_interval\<close> keeps the overlap a box, giving an explicit content
   formula.\<close>
 
-lemma inner_sum_scaleR_Basis:
-  fixes j :: "'a::euclidean_space"
-  assumes j: "j \<in> Basis"
-  shows "(\<Sum>i\<in>Basis. c i *\<^sub>R i) \<bullet> j = c j"
-proof -
-  have "(\<Sum>i\<in>Basis. c i *\<^sub>R i) \<bullet> j = (\<Sum>i\<in>Basis. c i * (i \<bullet> j))"
-    by (simp add: inner_sum_left)
-  also have "\<dots> = (\<Sum>i\<in>Basis. if i = j then c i else 0)"
-    using j by (intro sum.cong[OF refl]) (auto simp: inner_Basis)
-  also have "\<dots> = c j" using j by simp
-  finally show ?thesis .
-qed
-
 lemma content_box_int_translate:
   fixes a b w :: "'a::euclidean_space"
   shows "content (cbox a b \<inter> cbox (a + w) (b + w))
@@ -879,9 +847,9 @@ proof -
   define L :: 'a where "L = (\<Sum>i\<in>Basis. max (a \<bullet> i) ((a + w) \<bullet> i) *\<^sub>R i)"
   define U :: 'a where "U = (\<Sum>i\<in>Basis. min (b \<bullet> i) ((b + w) \<bullet> i) *\<^sub>R i)"
   have Lc: "L \<bullet> j = max (a \<bullet> j) ((a + w) \<bullet> j)" if "j \<in> Basis" for j :: 'a
-    unfolding L_def by (rule inner_sum_scaleR_Basis[OF that])
+    unfolding L_def by (rule inner_sum_left_Basis[OF that])
   have Uc: "U \<bullet> j = min (b \<bullet> j) ((b + w) \<bullet> j)" if "j \<in> Basis" for j :: 'a
-    unfolding U_def by (rule inner_sum_scaleR_Basis[OF that])
+    unfolding U_def by (rule inner_sum_left_Basis[OF that])
   have box_eq: "cbox a b \<inter> cbox (a + w) (b + w) = cbox L U"
     unfolding L_def U_def by (rule Int_interval)
   show ?thesis
@@ -1916,7 +1884,7 @@ proof -
   define w where "w = (\<Sum>b\<in>Basis. c b *\<^sub>R (b :: 'a))"
   have wmem: "w \<in> rat_dirs" unfolding w_def rat_dirs_def using cPiE by blast
   have wc: "w \<bullet> b = c b" if "b \<in> Basis" for b
-    unfolding w_def by (rule inner_sum_scaleR_Basis[OF that])
+    unfolding w_def by (rule inner_sum_left_Basis[OF that])
   have "norm (v - w) \<le> (\<Sum>b\<in>Basis. \<bar>(v - w) \<bullet> b\<bar>)" by (rule norm_le_l1)
   also have "\<dots> = (\<Sum>b\<in>Basis. \<bar>v \<bullet> b - c b\<bar>)"
     by (rule sum.cong[OF refl]) (simp add: inner_diff_left wc)
@@ -2242,7 +2210,7 @@ proof -
         and weq: "w = (\<Sum>b\<in>Basis. c b *\<^sub>R b)"
         using w unfolding rat_dirs_def by blast
       have coord: "w \<bullet> b = c b" if "b \<in> Basis" for b
-        unfolding weq by (rule inner_sum_scaleR_Basis[OF that])
+        unfolding weq by (rule inner_sum_left_Basis[OF that])
       have ne: "(\<Sum>b\<in>Basis. c b *\<^sub>R b) \<noteq> 0" using False weq by simp
       have "ddir f w x = (\<Sum>b\<in>Basis. c b * ddir f b x)"
         using ddir_rat_dir_sum[OF gd gadd gsc c finite_Basis subset_refl] ne weq

@@ -462,12 +462,12 @@ Crandall_Ishii_Sums.supconv_attained_usc    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.quad_root_bound    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.doubled_supconv_pointwise_bound    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.usc_eventually_lt    # FIX_THEN_KEEP
-Crandall_Ishii_Sums.norm_sq_add_expand    # FIX_THEN_KEEP
+Convex_Subgradients.norm_sq_add_expand    # FIX_THEN_KEEP (generalised to real_inner, moved from Crandall_Ishii_Sums in phase 4)
 Crandall_Ishii_Sums.superjet_of_transfer    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.supconv_superjet_at_optimizer    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.sym_add_scaleR    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.theorem_on_sums_stage    # FIX_THEN_KEEP
-Crandall_Ishii_Sums.norm_sq_diff_expand    # FIX_THEN_KEEP
+Convex_Subgradients.norm_sq_diff_expand    # FIX_THEN_KEEP (generalised to real_inner, moved from Crandall_Ishii_Sums in phase 4)
 Crandall_Ishii_Sums.deconv_sos_identity    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.deconv_moreau_bound    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.deconv_doubled_le    # FIX_THEN_KEEP

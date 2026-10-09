@@ -1275,15 +1275,7 @@ lemma penalty_difference_identity:
   fixes x y h :: "'a::euclidean_space"
   shows "(\<alpha>/2) * (norm (x + h - y))\<^sup>2 - (\<alpha>/2) * (norm (x - y))\<^sup>2
        = \<alpha> * ((x - y) \<bullet> h) + (\<alpha>/2) * (norm h)\<^sup>2"
-proof -
-  have "(norm (x + h - y))\<^sup>2 = (norm ((x - y) + h))\<^sup>2"
-    by (simp add: algebra_simps)
-  also have "\<dots> = (norm (x - y))\<^sup>2 + 2 * ((x - y) \<bullet> h) + (norm h)\<^sup>2"
-    by (simp add: power2_norm_eq_inner
-        inner_commute algebra_simps)
-  finally show ?thesis
-    by (simp add: field_simps)
-qed
+  unfolding diff_add_eq[symmetric] norm_sq_add_expand by (simp add: algebra_simps)
 
 text \<open>The slice embedding is a legitimate change of filter: as \<open>h\<close> tends
   to \<open>0\<close> in \<open>'a\<close> avoiding \<open>0\<close>, the pair \<open>(h, 0)\<close> tends to \<open>0\<close> in
@@ -1708,13 +1700,6 @@ proof -
     unfolding e1 e2 s by simp
 qed
 
-lemma parallelogram_norm:
-  fixes u v :: "'a::euclidean_space"
-  shows "(norm (u + v))\<^sup>2 + (norm (u - v))\<^sup>2
-       = 2*(norm u)\<^sup>2 + 2*(norm v)\<^sup>2"
-  by (simp add: power2_norm_eq_inner
-      inner_commute algebra_simps)
-
 theorem symmetric_form_bound:
   fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
   assumes lin: "linear W" and sym: "\<And>v w. v \<bullet> W w = w \<bullet> W v"
@@ -1737,7 +1722,7 @@ proof -
     using b2 by (simp add: abs_le_iff)
   have par: "(norm (u + v))\<^sup>2 + (norm (u - v))\<^sup>2
       = 2*(norm u)\<^sup>2 + 2*(norm v)\<^sup>2"
-    by (rule parallelogram_norm)
+    using norm_sq_add_expand[of u v] norm_sq_diff_expand[of u v] by simp
   have e: "c * (norm (u + v))\<^sup>2 + c * (norm (u - v))\<^sup>2
       = 2 * (c * ((norm u)\<^sup>2 + (norm v)\<^sup>2))"
   proof -
@@ -1827,10 +1812,7 @@ lemma tendsto_of_norm_bound:
   fixes Z :: "nat \<Rightarrow> 'a::real_normed_vector"
   assumes b: "\<And>i. norm (Z i) \<le> D i" and D: "D \<longlonglongrightarrow> 0"
   shows "Z \<longlonglongrightarrow> 0"
-proof (rule Lim_null_comparison[OF _ D])
-  show "\<forall>\<^sub>F i in sequentially. norm (Z i) \<le> D i"
-    using b by simp
-qed
+  using b by (intro Lim_null_comparison[OF _ D]) simp
 
 text \<open>The doubling supplies tilts bounded by a sequence \<open>dd\<^sub>i \<rightarrow> 0\<close>, exactly
   what re-running Jensen with a shrinking tilt parameter gives.\<close>
@@ -2711,42 +2693,8 @@ theorem tilted_doubled_hessian_nonpositive:
         - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
         - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
   shows "v \<bullet> W v \<le> 0"
-proof -
-  have dpos: "0 < r - dist zh \<xi>"
-    by (rule interior_radius_pos[OF rz])
-  have mxT: "(a (fst (zh + k)) + b (snd (zh + k))
-        - (\<alpha>/2) * (norm (fst (zh + k) - snd (zh + k)))\<^sup>2) + pt \<bullet> (zh + k)
-      \<le> (a (fst zh) + b (snd zh)
-            - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2) + pt \<bullet> zh"
-    if kk: "norm k < r - dist zh \<xi>" for k
-    by (rule global_max_imp_interior_max
-        [where \<Psi> = "\<lambda>z. (a (fst z) + b (snd z)
-              - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2) + pt \<bullet> z"
-           and \<xi> = \<xi> and r = r and zh = zh and k = k, OF mx kk])
-  have eq: "(((a (fst (zh + k)) + b (snd (zh + k))
-          - (\<alpha>/2) * (norm (fst (zh + k) - snd (zh + k)))\<^sup>2) + pt \<bullet> (zh + k))
-        - ((a (fst zh) + b (snd zh)
-              - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2) + pt \<bullet> zh)
-        - (q + pt) \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2
-      = ((a (fst (zh + k)) + b (snd (zh + k))
-          - (\<alpha>/2) * (norm (fst (zh + k) - snd (zh + k)))\<^sup>2)
-        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
-        - q \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2" for k
-    by (simp add: algebra_simps)
-  have expT: "((\<lambda>k. (((a (fst (zh + k)) + b (snd (zh + k))
-          - (\<alpha>/2) * (norm (fst (zh + k) - snd (zh + k)))\<^sup>2) + pt \<bullet> (zh + k))
-        - ((a (fst zh) + b (snd zh)
-              - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2) + pt \<bullet> zh)
-        - (q + pt) \<bullet> k - (k \<bullet> W k)/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    unfolding eq by (rule expPsi)
-  have "(q + pt) \<bullet> v = 0 \<and> v \<bullet> W v \<le> 0"
-    by (rule second_order_interior_max
-        [where f = "\<lambda>z. (a (fst z) + b (snd z)
-              - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2) + pt \<bullet> z"
-           and x = zh and q = "q + pt" and X = W and \<delta> = "r - dist zh \<xi>",
-         OF blW dpos mxT expT])
-  then show ?thesis by simp
-qed
+  by (rule tilted_doubled_hessian_nonpositive_gen[where P = "\<lambda>d. (\<alpha>/2) * (norm d)\<^sup>2",
+        OF blW rz mx expPsi])
 
 lemma norm_Pair_le:
   fixes a :: "'a::real_normed_vector" and b :: "'b::real_normed_vector"

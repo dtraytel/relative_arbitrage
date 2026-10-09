@@ -45,9 +45,26 @@ proof -
   thus ?thesis by simp
 qed
 
+text \<open>The two arguments of the gradient on the segment stay within
+  \<open>\<bar>t\<bar>(\<parallel>v\<parallel> + \<parallel>u\<parallel>)\<close> and \<open>\<bar>t\<bar>\<parallel>u\<parallel>\<close> of the base point.\<close>
+
+lemma second_difference_arg_bounds:
+  fixes u v :: "'a::real_normed_vector"
+  assumes s: "0 \<le> s" "s \<le> 1"
+  shows "norm (s *\<^sub>R (t *\<^sub>R u)) \<le> \<bar>t\<bar> * norm u"
+    and "norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)) \<le> \<bar>t\<bar> * (norm v + norm u)"
+proof -
+  show b2: "norm (s *\<^sub>R (t *\<^sub>R u)) \<le> \<bar>t\<bar> * norm u"
+    using s mult_right_mono[of s 1 "\<bar>t\<bar> * norm u"] by (simp add: abs_mult)
+  show "norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)) \<le> \<bar>t\<bar> * (norm v + norm u)"
+    using norm_triangle_ineq[of "t *\<^sub>R v" "s *\<^sub>R (t *\<^sub>R u)"] b2
+    by (simp add: algebra_simps)
+qed
+
 text \<open>Pointwise on the segment, the integrand differs from
   \<open>t\<^sup>2 (u \<cdot> A v)\<close> by at most \<open>\<epsilon> t\<^sup>2 \<parallel>u\<parallel>(\<parallel>v\<parallel> + 2\<parallel>u\<parallel>)\<close>, so the second
-  difference divided by \<open>t\<^sup>2\<close> converges to \<open>u \<cdot> A v\<close>.\<close>
+  difference divided by \<open>t\<^sup>2\<close> converges to \<open>u \<cdot> A v\<close>.  The bound is stated
+  in the left-associated form \<open>moreau_ftc\<close> produces.\<close>
 
 lemma second_difference_integrand_bound:
   fixes G :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -57,38 +74,25 @@ lemma second_difference_integrand_bound:
     and w1: "norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)) < \<delta>"
     and w2: "norm (s *\<^sub>R (t *\<^sub>R u)) < \<delta>"
     and s: "0 \<le> s" "s \<le> 1"
-  shows "\<bar>(t *\<^sub>R u) \<bullet> (G (x + (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)))
+  shows "\<bar>(t *\<^sub>R u) \<bullet> (G (x + t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))
         - G (x + s *\<^sub>R (t *\<^sub>R u))) - t\<^sup>2 * (u \<bullet> A v)\<bar>
       \<le> e2 * t\<^sup>2 * (norm u * (norm v + 2 * norm u))"
 proof -
   define R1 where "R1 = G (x + (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))) - G x
       - A (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))"
   define R2 where "R2 = G (x + s *\<^sub>R (t *\<^sub>R u)) - G x - A (s *\<^sub>R (t *\<^sub>R u))"
-  have decomp: "G (x + (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))) - G (x + s *\<^sub>R (t *\<^sub>R u))
+  have decomp: "G (x + t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)) - G (x + s *\<^sub>R (t *\<^sub>R u))
       = t *\<^sub>R A v + (R1 - R2)"
-    unfolding R1_def R2_def by (rule gradient_increment_decomp[OF lin])
-  have main: "(t *\<^sub>R u) \<bullet> (G (x + (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)))
+    unfolding R1_def R2_def add.assoc by (rule gradient_increment_decomp[OF lin])
+  have main: "(t *\<^sub>R u) \<bullet> (G (x + t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))
       - G (x + s *\<^sub>R (t *\<^sub>R u))) - t\<^sup>2 * (u \<bullet> A v) = t * (u \<bullet> (R1 - R2))"
     unfolding decomp by (simp add: power2_eq_square algebra_simps)
   have n1: "norm R1 \<le> e2 * norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))"
     unfolding R1_def by (rule rem[OF w1])
   have n2: "norm R2 \<le> e2 * norm (s *\<^sub>R (t *\<^sub>R u))"
     unfolding R2_def by (rule rem[OF w2])
-  have b2: "norm (s *\<^sub>R (t *\<^sub>R u)) \<le> \<bar>t\<bar> * norm u"
-  proof -
-    have "norm (s *\<^sub>R (t *\<^sub>R u)) = s * (\<bar>t\<bar> * norm u)"
-      using s by (simp add: abs_mult)
-    also have "\<dots> \<le> 1 * (\<bar>t\<bar> * norm u)"
-      using s by (intro mult_right_mono) auto
-    finally show ?thesis by simp
-  qed
-  have b1: "norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)) \<le> \<bar>t\<bar> * (norm v + norm u)"
-  proof -
-    have "norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))
-        \<le> norm (t *\<^sub>R v) + norm (s *\<^sub>R (t *\<^sub>R u))"
-      by (rule norm_triangle_ineq)
-    thus ?thesis using b2 by (simp add: algebra_simps)
-  qed
+  note b2 = second_difference_arg_bounds(1)[OF s, where t = t and u = u]
+  note b1 = second_difference_arg_bounds(2)[OF s, where t = t and u = u and v = v]
   have r1: "norm R1 \<le> e2 * (\<bar>t\<bar> * (norm v + norm u))"
   proof -
     have "e2 * norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))
@@ -129,28 +133,7 @@ subsection \<open>Symmetry of the Hessian\<close>
 text \<open>Integrating the pointwise bound gives the limit
   \<open>\<Delta>(t)/t\<^sup>2 \<rightarrow> u \<cdot> A v\<close>, and trivial symmetry of the second difference
   then forces \<open>u \<cdot> A v = v \<cdot> A u\<close>.\<close>
-text \<open>The same bound in the left-associated form \<open>moreau_ftc\<close> actually
-  produces, kept separate so \<open>simp\<close> does not distribute the inner
-  product and lose the shape.\<close>
 
-lemma second_difference_integrand_bound_left:
-  fixes G :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes lin: "linear A"
-    and rem: "\<And>w. norm w < \<delta> \<Longrightarrow> norm (G (x + w) - G x - A w) \<le> e2 * norm w"
-    and e2: "0 \<le> e2"
-    and w1: "norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)) < \<delta>"
-    and w2: "norm (s *\<^sub>R (t *\<^sub>R u)) < \<delta>"
-    and s: "0 \<le> s" "s \<le> 1"
-  shows "\<bar>(t *\<^sub>R u) \<bullet> (G (x + t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))
-        - G (x + s *\<^sub>R (t *\<^sub>R u))) - t\<^sup>2 * (u \<bullet> A v)\<bar>
-      \<le> e2 * t\<^sup>2 * (norm u * (norm v + 2 * norm u))"
-proof -
-  have assoc: "x + t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)
-      = x + (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))" by (simp add: add.assoc)
-  show ?thesis
-    unfolding assoc
-    by (rule second_difference_integrand_bound[OF lin rem e2 w1 w2 s])
-qed
 text \<open>The second difference as a single integral, in exactly the shape
   the pointwise bound expects.\<close>
 
@@ -202,26 +185,12 @@ proof (rule tendstoI)
   have C: "0 < C" by (simp add: C_def add_nonneg_pos)
   define e2 where "e2 = (\<epsilon>/2) / C"
   have e2: "0 < e2" using \<epsilon> C by (simp add: e2_def)
-  have "((\<lambda>w. norm ((x + w - prox f (x + w)) - (x - prox f x) - A w)
-      / norm w) \<longlongrightarrow> 0) (at 0)"
-    using GA unfolding has_derivative_at by simp
-  from tendstoD[OF this e2] obtain \<delta> where \<delta>: "0 < \<delta>"
-    and db: "\<And>w. w \<noteq> 0 \<Longrightarrow> dist w 0 < \<delta>
-      \<Longrightarrow> dist (norm ((x + w - prox f (x + w)) - (x - prox f x) - A w)
-          / norm w) 0 < e2"
-    unfolding eventually_at by blast
+  obtain \<delta> where \<delta>: "0 < \<delta>" and rem0: "\<And>y. norm (y - x) < \<delta> \<Longrightarrow>
+      norm ((y - prox f y) - (x - prox f x) - A (y - x)) \<le> e2 * norm (y - x)"
+    using GA e2 unfolding has_derivative_at_alt by blast
   have rem: "norm ((x + w - prox f (x + w)) - (x - prox f x) - A w)
-      \<le> e2 * norm w" if w: "norm w < \<delta>" for w
-  proof (cases "w = 0")
-    case True
-    have "A 0 = 0" using blA by (simp add: linear_simps(3))
-    thus ?thesis unfolding True by simp
-  next
-    case False
-    have "norm ((x + w - prox f (x + w)) - (x - prox f x) - A w) / norm w < e2"
-      using db[OF False] w by (simp add: dist_norm)
-    thus ?thesis using False by (simp add: divide_less_eq)
-  qed
+      \<le> e2 * norm w" if "norm w < \<delta>" for w
+    using rem0[of "x + w"] that by simp
   define M where "M = norm v + 2 * norm u + 1"
   have M: "0 < M" by (simp add: M_def add_nonneg_pos)
   define \<delta>' where "\<delta>' = \<delta> / M"
@@ -257,21 +226,8 @@ proof (rule tendstoI)
       if s: "s \<in> cbox (0::real) 1" for s
     proof -
       have s01: "0 \<le> s" "s \<le> 1" using s by auto
-      have nb2: "norm (s *\<^sub>R (t *\<^sub>R u)) \<le> \<bar>t\<bar> * norm u"
-      proof -
-        have "norm (s *\<^sub>R (t *\<^sub>R u)) = s * (\<bar>t\<bar> * norm u)"
-          using s01 by (simp add: abs_mult)
-        also have "\<dots> \<le> 1 * (\<bar>t\<bar> * norm u)"
-          using s01 by (intro mult_right_mono) auto
-        finally show ?thesis by simp
-      qed
-      have nb1: "norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)) \<le> \<bar>t\<bar> * (norm v + norm u)"
-      proof -
-        have "norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u))
-            \<le> norm (t *\<^sub>R v) + norm (s *\<^sub>R (t *\<^sub>R u))"
-          by (rule norm_triangle_ineq)
-        thus ?thesis using nb2 by (simp add: algebra_simps)
-      qed
+      note nb2 = second_difference_arg_bounds(1)[OF s01, where t = t and u = u]
+      note nb1 = second_difference_arg_bounds(2)[OF s01, where t = t and u = u and v = v]
       have lt1: "norm (t *\<^sub>R v + s *\<^sub>R (t *\<^sub>R u)) < \<delta>"
       proof -
         have "\<bar>t\<bar> * (norm v + norm u) \<le> \<bar>t\<bar> * M"
@@ -285,7 +241,7 @@ proof (rule tendstoI)
         thus ?thesis using nb2 tM by linarith
       qed
       show ?thesis
-        using second_difference_integrand_bound_left
+        using second_difference_integrand_bound
           [OF linA rem less_imp_le[OF e2] lt1 lt2 s01] by simp
     qed
     have bound: "norm ((moreau f (x + t *\<^sub>R v + t *\<^sub>R u)
@@ -422,9 +378,7 @@ next
   have rw: "y + p - z = p - (z - y)" by simp
   have exp: "(dist (y + p) z)\<^sup>2
       = (norm p)\<^sup>2 - 2 * (p \<bullet> (z - y)) + (norm (z - y))\<^sup>2"
-    unfolding dist_norm rw
-    by (simp add: power2_norm_eq_inner inner_diff_left inner_diff_right
-        inner_commute)
+    unfolding dist_norm rw by (rule norm_sq_diff_expand)
   have d1: "(dist (y + p) y)\<^sup>2 = (norm p)\<^sup>2" by (simp add: dist_norm)
   have nn: "0 \<le> (norm (z - y))\<^sup>2" by simp
   show "f y + (dist (y + p) y)\<^sup>2/2 \<le> f z + (dist (y + p) z)\<^sup>2/2"
@@ -577,18 +531,12 @@ text \<open>The resolvent is continuous, and its fibres over a bounded set are
   bounded, since \<open>z - prox f z\<close> is a subgradient at \<open>prox f z\<close> and
   subgradients are locally bounded.\<close>
 
-lemma prox_lipschitz_on:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes cvx: "convex_on UNIV f"
-  shows "lipschitz_on 1 UNIV (prox f)"
-  by (intro lipschitz_onI) (auto simp: prox_nonexpansive[OF cvx])
-
 lemma continuous_on_prox:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
   assumes cvx: "convex_on UNIV f"
   shows "continuous_on S (prox f)"
   by (rule continuous_on_subset[OF
-      lipschitz_on_continuous_on[OF prox_lipschitz_on[OF cvx]] subset_UNIV])
+      lipschitz_continuous_on_UNIV[OF prox_lipschitz[OF cvx]] subset_UNIV])
 
 lemma prox_fibre_bounded:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -724,53 +672,12 @@ proof -
     unfolding moreau_def y_def by (simp add: dist_norm)
   have e2: "moreau f (x + h) = f w + (norm (x + h - w))\<^sup>2/2"
     unfolding moreau_def w_def by (simp add: dist_norm)
-  have s1: "(norm (x + h - w))\<^sup>2 = (x + h - w) \<bullet> (x + h - w)"
-    by (rule power2_norm_eq_inner)
-  have s2: "(norm (x - y))\<^sup>2 = (x - y) \<bullet> (x - y)"
-    by (rule power2_norm_eq_inner)
-  have s3: "(norm ((x + h - w) - (x - y)))\<^sup>2
-      = ((x + h - w) - (x - y)) \<bullet> ((x + h - w) - (x - y))"
-    by (rule power2_norm_eq_inner)
   show ?thesis
-    unfolding y_def[symmetric] w_def[symmetric] e1 e2 s1 s2 s3
+    unfolding y_def[symmetric] w_def[symmetric] e1 e2 power2_norm_eq_inner
     by (simp add: inner_commute algebra_simps) argo
 qed
 
-text \<open>Three quantitative ingredients: the displacement's first-order
-  remainder, the envelope's second-order remainder, and a lower bound
-  for an injective linear map.\<close>
-
-lemma prox_remainder_small:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes D: "(prox f has_derivative D) (at x)" and \<eta>: "0 < \<eta>"
-  shows "\<exists>\<delta>>0. \<forall>h. norm h < \<delta> \<longrightarrow>
-      norm ((x + h - prox f (x + h)) - (x - prox f x) - (h - D h)) \<le> \<eta> * norm h"
-proof -
-  define G where "G = (\<lambda>z :: 'a. z - prox f z)"
-  define A where "A = (\<lambda>k :: 'a. k - D k)"
-  have GA: "(G has_derivative A) (at x)"
-    unfolding G_def A_def by (rule moreau_grad_has_derivative[OF D])
-  have blA: "bounded_linear A" by (rule has_derivative_bounded_linear[OF GA])
-  have "((\<lambda>u. norm (G (x + u) - G x - A u) / norm u) \<longlongrightarrow> 0) (at 0)"
-    using GA unfolding has_derivative_at by blast
-  from tendstoD[OF this \<eta>] obtain \<delta> where d: "0 < \<delta>"
-    and db: "\<And>u. u \<noteq> 0 \<Longrightarrow> dist u 0 < \<delta>
-      \<Longrightarrow> dist (norm (G (x + u) - G x - A u) / norm u) 0 < \<eta>"
-    unfolding eventually_at by blast
-  have "norm (G (x + h) - G x - A h) \<le> \<eta> * norm h" if hh: "norm h < \<delta>" for h
-  proof (cases "h = 0")
-    case True
-    have "A 0 = 0" using blA by (simp add: linear_simps(3))
-    thus ?thesis unfolding True by simp
-  next
-    case False
-    hence nh: "0 < norm h" by simp
-    have "norm (G (x + h) - G x - A h) / norm h < \<eta>"
-      using db[OF False] hh by (simp add: dist_norm)
-    thus ?thesis using nh by (simp add: field_simps)
-  qed
-  thus ?thesis unfolding G_def A_def using d by blast
-qed
+text \<open>A quantitative form of the envelope's second-order expansion.\<close>
 
 lemma moreau_taylor_bound:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -800,26 +707,6 @@ proof -
     thus ?thesis using nh by (simp add: field_simps)
   qed
   thus ?thesis unfolding T_def using d by blast
-qed
-
-lemma inj_linear_bounded_below:
-  fixes D :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes bl: "bounded_linear D" and injD: "inj D"
-  shows "\<exists>K>0. \<forall>u. norm u \<le> K * norm (D u)"
-proof -
-  have lin: "linear D" using bl by (rule bounded_linear.linear)
-  obtain D' where lin': "linear D'" and inv: "D' \<circ> D = id"
-    using linear_injective_left_inverse[OF lin injD] by blast
-  obtain K where K: "\<And>v. norm (D' v) \<le> K * norm v"
-    using lin' linear_bounded by blast
-  have K1: "\<And>v. norm (D' v) \<le> (max K 1) * norm v"
-    using K by (meson max.cobounded1 mult_right_mono norm_ge_zero order_trans)
-  have "norm u \<le> (max K 1) * norm (D u)" for u
-  proof -
-    have "u = D' (D u)" using inv by (simp add: pointfree_idE)
-    thus ?thesis using K1[of "D u"] by simp
-  qed
-  thus ?thesis by (intro exI[of _ "max K 1"]) auto
 qed
 
 text \<open>The algebraic heart of the transport: with \<open>A u = u - D u\<close> and
@@ -871,7 +758,11 @@ proof (rule tendstoI)
   obtain NB where NB0: "0 < NB" and NBb: "\<And>u. norm (D' u - u) \<le> norm u * NB"
     using bounded_linear.pos_bounded[OF blB] by blast
   obtain K where K0: "0 < K" and Kb: "\<And>u. norm u \<le> K * norm (D u)"
-    using inj_linear_bounded_below[OF blD injD] by blast
+  proof -
+    obtain B where "0 < B" "\<And>u. B * norm u \<le> norm (D u)"
+      using linear_inj_bounded_below_pos[OF has_derivative_linear[OF D] injD] by blast
+    then show ?thesis by (intro that[of "1/B"]) (auto simp: field_simps)
+  qed
   define C where "C = 2 + NA + 2*NB"
   have C0: "0 < C" unfolding C_def using NA0 NB0 by simp
   define \<eta> where "\<eta> = min (min 1 (1/(2*K))) (\<epsilon>/(C * 8 * K\<^sup>2))"
@@ -879,9 +770,12 @@ proof (rule tendstoI)
     unfolding \<eta>_def by auto
   have \<eta>0: "0 < \<eta>" unfolding \<eta>_def using K0 \<epsilon> C0 by simp
   obtain \<delta>1 where \<delta>1: "0 < \<delta>1"
-    and B1: "\<And>h. norm h < \<delta>1 \<Longrightarrow>
-      norm ((x + h - prox f (x + h)) - (x - prox f x) - (h - D h)) \<le> \<eta> * norm h"
-    using prox_remainder_small[OF D \<eta>0] by blast
+    and B1': "\<And>y. norm (y - x) < \<delta>1 \<Longrightarrow> norm ((y - prox f y) - (x - prox f x)
+      - ((y - x) - D (y - x))) \<le> \<eta> * norm (y - x)"
+    using moreau_grad_has_derivative[OF D] \<eta>0 unfolding has_derivative_at_alt by blast
+  have B1: "norm ((x + h - prox f (x + h)) - (x - prox f x) - (h - D h)) \<le> \<eta> * norm h"
+    if "norm h < \<delta>1" for h
+    using B1'[of "x + h"] that by simp
   obtain \<delta>2 where \<delta>2: "0 < \<delta>2"
     and B2: "\<And>h. norm h < \<delta>2 \<Longrightarrow>
       \<bar>moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
@@ -1041,24 +935,6 @@ text \<open>The transported form \<open>B = D' - id\<close> inherits symmetry an
   semidefiniteness from the resolvent's derivative, so it really is a
   Hessian.\<close>
 
-lemma linear_inj_two_sided_inverse:
-  fixes D :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes lD: "linear D" and injD: "inj D"
-  shows "\<exists>D'. linear D' \<and> (\<forall>u. D' (D u) = u) \<and> (\<forall>u. D (D' u) = u)"
-proof -
-  obtain D' where lin': "linear D'" and inv: "D' \<circ> D = id"
-    using linear_injective_left_inverse[OF lD injD] by blast
-  have left: "D' (D u) = u" for u using inv by (simp add: pointfree_idE)
-  have surjD: "surj D"
-    by (rule linear_injective_imp_surjective[OF lD injD]) simp
-  have right: "D (D' u) = u" for u
-  proof -
-    obtain b where ub: "u = D b" using surjD unfolding surj_def by blast
-    show ?thesis unfolding ub left ..
-  qed
-  show ?thesis using lin' left right by blast
-qed
-
 lemma prox_deriv_symmetric:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
   assumes cvx: "convex_on UNIV f" and D: "(prox f has_derivative D) (at x)"
@@ -1118,7 +994,7 @@ proof -
     using has_derivative_bounded_linear[OF D] by (rule bounded_linear.linear)
   obtain D' where lin': "linear D'" and left: "\<And>u. D' (D u) = u"
     and right: "\<And>u. D (D' u) = u"
-    using linear_inj_two_sided_inverse[OF lD injD] by blast
+    using linear_injective_isomorphism[OF lD injD] by auto
   have blD': "bounded_linear D'" using lin' by (simp add: linear_conv_bounded_linear)
   have blB: "bounded_linear (\<lambda>u. D' u - u)"
     by (intro bounded_linear_sub bounded_linear_ident blD')
@@ -1292,78 +1168,11 @@ qed
 text \<open>The form Crandall--Ishii consumes: a semiconvex function is twice
   differentiable a.e.  Subtracting the quadratic shifts the gradient by
   \<open>c *\<^sub>R y\<close> and the Hessian by \<open>c\<close> times the identity, leaving the
-  remainder untouched; positive semidefiniteness is lost.\<close>
-
-corollary semiconvex_alexandrov:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real" and c :: real
-  assumes cvx: "convex_on UNIV (\<lambda>x. u x + (c/2) * (norm x)\<^sup>2)"
-  shows "negligible {y. \<not> (\<exists>p B. bounded_linear B \<and> (\<forall>v w. v \<bullet> B w = w \<bullet> B v)
-      \<and> ((\<lambda>k. (u (y + k) - u y - p \<bullet> k - (k \<bullet> B k)/2) / (norm k)\<^sup>2)
-          \<longlongrightarrow> 0) (at 0))}"
-proof (rule negligible_subset[OF convex_alexandrov[OF cvx]])
-  show "{y. \<not> (\<exists>p B. bounded_linear B \<and> (\<forall>v w. v \<bullet> B w = w \<bullet> B v)
-      \<and> ((\<lambda>k. (u (y + k) - u y - p \<bullet> k - (k \<bullet> B k)/2) / (norm k)\<^sup>2)
-          \<longlongrightarrow> 0) (at 0))}
-    \<subseteq> {y. \<not> (\<exists>p B. bounded_linear B \<and> (\<forall>k. 0 \<le> k \<bullet> B k)
-      \<and> (\<forall>v w. v \<bullet> B w = w \<bullet> B v)
-      \<and> ((\<lambda>k. (u (y + k) + (c/2) * (norm (y + k))\<^sup>2
-          - (u y + (c/2) * (norm y)\<^sup>2) - p \<bullet> k - (k \<bullet> B k)/2) / (norm k)\<^sup>2)
-          \<longlongrightarrow> 0) (at 0))}"
-  proof (rule subsetI, rule CollectI, rule notI, erule CollectE, erule notE)
-    fix y :: 'a
-    assume "\<exists>p B. bounded_linear B \<and> (\<forall>k. 0 \<le> k \<bullet> B k)
-      \<and> (\<forall>v w. v \<bullet> B w = w \<bullet> B v)
-      \<and> ((\<lambda>k. (u (y + k) + (c/2) * (norm (y + k))\<^sup>2
-          - (u y + (c/2) * (norm y)\<^sup>2) - p \<bullet> k - (k \<bullet> B k)/2) / (norm k)\<^sup>2)
-          \<longlongrightarrow> 0) (at 0)"
-    then obtain p B where blB: "bounded_linear B"
-      and symB: "\<And>v w. v \<bullet> B w = w \<bullet> B v"
-      and lim: "((\<lambda>k. (u (y + k) + (c/2) * (norm (y + k))\<^sup>2
-          - (u y + (c/2) * (norm y)\<^sup>2) - p \<bullet> k - (k \<bullet> B k)/2) / (norm k)\<^sup>2)
-          \<longlongrightarrow> 0) (at 0)" by blast
-    have blB': "bounded_linear (\<lambda>w. B w - c *\<^sub>R w)"
-      by (intro bounded_linear_sub blB bounded_linear_scaleR_right)
-    have symB': "v \<bullet> (B w - c *\<^sub>R w) = w \<bullet> (B v - c *\<^sub>R v)" for v w
-      using symB[of v w] by (simp add: inner_diff_right inner_commute)
-    have eq: "(\<lambda>k. (u (y + k) - u y - (p - c *\<^sub>R y) \<bullet> k
-            - (k \<bullet> (B k - c *\<^sub>R k))/2) / (norm k)\<^sup>2)
-        = (\<lambda>k. (u (y + k) + (c/2) * (norm (y + k))\<^sup>2
-            - (u y + (c/2) * (norm y)\<^sup>2) - p \<bullet> k - (k \<bullet> B k)/2) / (norm k)\<^sup>2)"
-    proof (rule ext)
-      fix k :: 'a
-      have sq: "(norm (y + k))\<^sup>2 = (norm y)\<^sup>2 + 2*(y \<bullet> k) + (norm k)\<^sup>2"
-        by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
-            inner_commute)
-      have i1: "(p - c *\<^sub>R y) \<bullet> k = p \<bullet> k - c * (y \<bullet> k)"
-        by (simp add: inner_diff_left)
-      have i2: "k \<bullet> (B k - c *\<^sub>R k) = k \<bullet> B k - c * (norm k)\<^sup>2"
-        by (simp add: inner_diff_right power2_norm_eq_inner)
-      have num: "u (y + k) - u y - (p - c *\<^sub>R y) \<bullet> k
-            - (k \<bullet> (B k - c *\<^sub>R k))/2
-          = u (y + k) + (c/2) * (norm (y + k))\<^sup>2
-            - (u y + (c/2) * (norm y)\<^sup>2) - p \<bullet> k - (k \<bullet> B k)/2"
-        unfolding sq i1 i2 by argo
-      show "(u (y + k) - u y - (p - c *\<^sub>R y) \<bullet> k
-            - (k \<bullet> (B k - c *\<^sub>R k))/2) / (norm k)\<^sup>2
-          = (u (y + k) + (c/2) * (norm (y + k))\<^sup>2
-            - (u y + (c/2) * (norm y)\<^sup>2) - p \<bullet> k - (k \<bullet> B k)/2) / (norm k)\<^sup>2"
-        unfolding num ..
-    qed
-    have "((\<lambda>k. (u (y + k) - u y - (p - c *\<^sub>R y) \<bullet> k
-        - (k \<bullet> (B k - c *\<^sub>R k))/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-      unfolding eq by (rule lim)
-    thus "\<exists>p B. bounded_linear B \<and> (\<forall>v w. v \<bullet> B w = w \<bullet> B v)
-        \<and> ((\<lambda>k. (u (y + k) - u y - p \<bullet> k - (k \<bullet> B k)/2) / (norm k)\<^sup>2)
-            \<longlongrightarrow> 0) (at 0)"
-      using blB' symB' by blast
-  qed
-qed
-
-text \<open>The same statement, propagating the psd clause \<open>convex_alexandrov\<close>
-  establishes: with \<open>W = \<lambda>w. B w - c *\<^sub>R w\<close>, the identity
-  \<open>k \<bullet> (B k - c *\<^sub>R k) = k \<bullet> B k - c \<parallel>k\<parallel>\<^sup>2\<close> gives the lower bound
-  \<open>-c \<parallel>k\<parallel>\<^sup>2 \<le> k \<bullet> W k\<close> for free, which a compactness argument over a
-  family of Hessians needs.\<close>
+  remainder untouched.  The positive semidefinite \<open>B\<close> of
+  \<open>convex_alexandrov\<close> becomes a lower bound for \<open>W = \<lambda>w. B w - c *\<^sub>R w\<close>:
+  the identity \<open>k \<bullet> (B k - c *\<^sub>R k) = k \<bullet> B k - c \<parallel>k\<parallel>\<^sup>2\<close> gives
+  \<open>-c \<parallel>k\<parallel>\<^sup>2 \<le> k \<bullet> W k\<close>, which a compactness argument over a family of
+  Hessians needs.\<close>
 
 corollary semiconvex_alexandrov_bounded:
   fixes u :: "'a::euclidean_space \<Rightarrow> real" and c :: real
@@ -1413,8 +1222,7 @@ proof (rule negligible_subset[OF convex_alexandrov[OF cvx]])
     proof (rule ext)
       fix k :: 'a
       have sq: "(norm (y + k))\<^sup>2 = (norm y)\<^sup>2 + 2*(y \<bullet> k) + (norm k)\<^sup>2"
-        by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
-            inner_commute)
+        by (rule norm_sq_add_expand)
       have i1: "(p - c *\<^sub>R y) \<bullet> k = p \<bullet> k - c * (y \<bullet> k)"
         by (simp add: inner_diff_left)
       have i2: "k \<bullet> (B k - c *\<^sub>R k) = k \<bullet> B k - c * (norm k)\<^sup>2"
@@ -1440,6 +1248,16 @@ proof (rule negligible_subset[OF convex_alexandrov[OF cvx]])
       using blB' symB' lowB' by blast
   qed
 qed
+
+text \<open>Dropping the lower bound gives the plain form.\<close>
+
+corollary semiconvex_alexandrov:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real" and c :: real
+  assumes cvx: "convex_on UNIV (\<lambda>x. u x + (c/2) * (norm x)\<^sup>2)"
+  shows "negligible {y. \<not> (\<exists>p B. bounded_linear B \<and> (\<forall>v w. v \<bullet> B w = w \<bullet> B v)
+      \<and> ((\<lambda>k. (u (y + k) - u y - p \<bullet> k - (k \<bullet> B k)/2) / (norm k)\<^sup>2)
+          \<longlongrightarrow> 0) (at 0))}"
+  by (rule negligible_subset[OF semiconvex_alexandrov_bounded[OF cvx]]) blast
 
 
 (*<*)

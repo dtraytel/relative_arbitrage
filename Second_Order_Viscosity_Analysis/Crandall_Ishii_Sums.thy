@@ -14,8 +14,10 @@ text \<open>The machinery of @{theory Second_Order_Viscosity_Analysis.Theorem_On
   argument consumes.  This theory assembles it into standalone statements in
   the standard vocabulary of the literature: second-order semijets, their
   closures, and two named theorems for the quadratic coupling
-  \<open>(\<alpha>/2)\<parallel>x - y\<parallel>\<^sup>2\<close> --- the instance every standard uniqueness proof,
-  including the one in this development, actually uses.  The staged form
+  \<open>(\<alpha>/2)\<parallel>x - y\<parallel>\<^sup>2\<close>, the coupling of the textbook uniqueness proofs.
+  (The paper couples by \<open>\<epsilon>\<^sup>-\<^sup>1\<parallel>x - y\<parallel>\<^sup>4\<close>, and the comparison proof of this
+  development by the soft penalty of \<open>Soft_Penalty\<close>; both rest on the
+  general-penalty forms of the doubling lemmas.)  The staged form
   (\<open>theorem_on_sums_quadratic\<close>) exhibits genuine jets with quantitative
   control; the closed-jet form (\<open>theorem_on_sums_quadratic_closed\<close>) is the
   classical statement, with the two-sided bound \<open>-(1/\<lambda>) I \<preceq> X \<preceq> Y \<preceq> (1/\<lambda>) I\<close>
@@ -36,11 +38,7 @@ definition subjet :: "('a::euclidean_space \<Rightarrow> real) \<Rightarrow> 'a 
         w x + p \<bullet> k + (k \<bullet> X k)/2 - e * (norm k)\<^sup>2 \<le> w (x + k))}"
 
 lemma linear_neg_iff: "linear (\<lambda>k. - f k) \<longleftrightarrow> linear f"
-proof
-  assume "linear (\<lambda>k. - f k)"
-  then have "linear (\<lambda>k. - (- f k))" by (rule linear_compose_neg)
-  then show "linear f" by simp
-qed (rule linear_compose_neg)
+  using linear_compose_neg[of "\<lambda>k. - f k"] linear_compose_neg[of f] by auto
 
 lemma subjet_neg_superjet:
   "(p, X) \<in> subjet w x \<longleftrightarrow> (- p, \<lambda>k. - X k) \<in> superjet (\<lambda>z. - w z) x"
@@ -436,12 +434,6 @@ qed
 
 section \<open>From exact expansions to semijets\<close>
 
-lemma norm_sq_add_expand:
-  fixes a k :: "'a::euclidean_space"
-  shows "(norm (a + k))\<^sup>2 = (norm a)\<^sup>2 + 2 * (a \<bullet> k) + (norm k)\<^sup>2"
-  by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
-      inner_commute)
-
 text \<open>Adding an exactly expanded quadratic to an exact second-order
   expansion shifts the gradient and the form and changes nothing else:
   the remainders are literally equal.\<close>
@@ -549,20 +541,8 @@ lemma tendsto_of_dist_bound:
   fixes zf :: "nat \<Rightarrow> 'a::metric_space"
   assumes b: "\<And>n. dist (zf n) z \<le> \<rho> n" and r: "\<rho> \<longlonglongrightarrow> 0"
   shows "zf \<longlonglongrightarrow> z"
-proof (rule tendstoI)
-  fix e :: real assume e: "0 < e"
-  have ev: "\<forall>\<^sub>F n in sequentially. dist (\<rho> n) 0 < e"
-    by (rule tendstoD[OF r e])
-  show "\<forall>\<^sub>F n in sequentially. dist (zf n) z < e"
-    using ev
-  proof (rule eventually_mono)
-    fix n assume h: "dist (\<rho> n) 0 < e"
-    have "dist (zf n) z \<le> \<rho> n" by (rule b)
-    also have "\<rho> n \<le> \<bar>\<rho> n\<bar>" by (rule abs_ge_self)
-    also have "\<bar>\<rho> n\<bar> < e" using h by (simp add: dist_real_def)
-    finally show "dist (zf n) z < e" .
-  qed
-qed
+  by (rule metric_tendsto_imp_tendsto[OF r always_eventually])
+    (use b in \<open>auto simp: dist_real_def intro: order_trans[OF _ abs_ge_self]\<close>)
 
 section \<open>Small algebraic helpers\<close>
 
@@ -570,19 +550,7 @@ lemma linear_add_scaleR:
   fixes F :: "'a::euclidean_space \<Rightarrow> 'a"
   assumes lF: "linear F"
   shows "linear (\<lambda>k. F k + c *\<^sub>R k)"
-proof (rule linearI)
-  fix x y :: 'a
-  have "F (x + y) = F x + F y"
-    using lF unfolding linear_iff by blast
-  then show "F (x + y) + c *\<^sub>R (x + y) = (F x + c *\<^sub>R x) + (F y + c *\<^sub>R y)"
-    by (simp add: algebra_simps)
-next
-  fix r :: real and x :: 'a
-  have "F (r *\<^sub>R x) = r *\<^sub>R F x"
-    using lF unfolding linear_iff by blast
-  then show "F (r *\<^sub>R x) + c *\<^sub>R (r *\<^sub>R x) = r *\<^sub>R (F x + c *\<^sub>R x)"
-    by (simp add: algebra_simps)
-qed
+  by (intro linear_compose_add lF linear_scaleR)
 
 lemma sym_add_scaleR:
   fixes F :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -1436,12 +1404,6 @@ qed
 
 section \<open>Deconvolving the quadratic penalty\<close>
 
-lemma norm_sq_diff_expand:
-  fixes a b :: "'a::euclidean_space"
-  shows "(norm (a - b))\<^sup>2 = (norm a)\<^sup>2 - 2 * (a \<bullet> b) + (norm b)\<^sup>2"
-  by (simp add: power2_norm_eq_inner inner_diff_left inner_diff_right
-      inner_commute)
-
 lemma deconv_sos_identity:
   fixes d r :: "'a::euclidean_space" and \<alpha> lam al :: real
   assumes l0: "0 < lam" and a0: "0 < \<alpha>" and la1: "2 * lam * \<alpha> < 1"
@@ -1651,10 +1613,10 @@ qed
 section \<open>Semiconvexity bounds the forms of every superjet\<close>
 
 lemma superjet_supconv_form_lower:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real" and h :: 'a
-  assumes B: "\<And>y. u y \<le> B" and l0: "0 < lam"
-    and jet: "(p, F) \<in> superjet (supconv u lam) x"
-  shows "- ((norm h)\<^sup>2 / lam) \<le> h \<bullet> F h"
+  fixes v :: "'a::euclidean_space \<Rightarrow> real" and h :: 'a
+  assumes cvx: "convex_on UNIV (\<lambda>z. v z + (c/2) * (norm z)\<^sup>2)"
+    and jet: "(p, F) \<in> superjet v x"
+  shows "- (c * (norm h)\<^sup>2) \<le> h \<bullet> F h"
 proof (cases "h = 0")
   case True
   have "linear F" using jet unfolding superjet_def by blast
@@ -1662,51 +1624,28 @@ proof (cases "h = 0")
   then show ?thesis unfolding True by simp
 next
   case False
-  define v where "v = supconv u lam"
-  have linF: "linear F" using jet unfolding superjet_def v_def by blast
-  have cvx: "convex_on UNIV (\<lambda>z. v z + (norm z)\<^sup>2 / (2*lam))"
-    unfolding v_def by (rule supconv_semiconvex[OF B l0])
-  have key: "2 * v z \<le> v (z + k) + v (z - k) + (norm k)\<^sup>2 / lam"
-    for z k :: 'a
+  have linF: "linear F" using jet unfolding superjet_def by blast
+  have key: "2 * v z \<le> v (z + k) + v (z - k) + c * (norm k)\<^sup>2" for z k :: 'a
   proof -
     have mid: "(1 - 1/2) *\<^sub>R (z + k) + (1/2) *\<^sub>R (z - k) = z"
-    proof -
-      have "(1/2) *\<^sub>R (z + k) + (1/2) *\<^sub>R (z - k)
-          = (1/2) *\<^sub>R z + (1/2) *\<^sub>R z"
-        by (simp add: scaleR_add_right scaleR_diff_right)
-      also have "\<dots> = ((1::real)/2 + 1/2) *\<^sub>R z"
-        by (simp add: scaleR_add_left[symmetric])
-      finally show ?thesis by simp
-    qed
+      by (simp flip: scaleR_add_right)
     have "v ((1 - 1/2) *\<^sub>R (z + k) + (1/2) *\<^sub>R (z - k))
-        + (norm ((1 - 1/2) *\<^sub>R (z + k) + (1/2) *\<^sub>R (z - k)))\<^sup>2 / (2*lam)
-        \<le> (1 - 1/2) * (v (z + k) + (norm (z + k))\<^sup>2 / (2*lam))
-          + (1/2) * (v (z - k) + (norm (z - k))\<^sup>2 / (2*lam))"
+        + (c/2) * (norm ((1 - 1/2) *\<^sub>R (z + k) + (1/2) *\<^sub>R (z - k)))\<^sup>2
+        \<le> (1 - 1/2) * (v (z + k) + (c/2) * (norm (z + k))\<^sup>2)
+          + (1/2) * (v (z - k) + (c/2) * (norm (z - k))\<^sup>2)"
       by (rule convex_onD[OF cvx]) auto
-    then have h1: "v z + (norm z)\<^sup>2 / (2*lam)
-        \<le> (v (z + k) + (norm (z + k))\<^sup>2 / (2*lam)) / 2
-          + (v (z - k) + (norm (z - k))\<^sup>2 / (2*lam)) / 2"
-      unfolding mid by simp
-    have par: "(norm (z + k))\<^sup>2 + (norm (z - k))\<^sup>2
-        = 2 * (norm z)\<^sup>2 + 2 * (norm k)\<^sup>2"
-      unfolding norm_sq_add_expand[of z k] norm_sq_diff_expand[of z k]
-      by simp
-    have h2: "(norm (z + k))\<^sup>2 / (2*lam) / 2 + (norm (z - k))\<^sup>2 / (2*lam) / 2
-        - (norm z)\<^sup>2 / (2*lam) = (norm k)\<^sup>2 / (2*lam)"
-      using l0 par by (simp add: field_simps)
-    have h3: "(norm k)\<^sup>2 / (2*lam) \<le> (norm k)\<^sup>2 / lam"
-      using l0 by (simp add: field_simps)
-    show ?thesis using h1 h2 h3 by argo
+    then show ?thesis
+      unfolding mid norm_sq_add_expand[of z k] norm_sq_diff_expand[of z k]
+      by (simp add: algebra_simps)
   qed
-  have main: "- ((norm h)\<^sup>2 / lam) \<le> h \<bullet> F h + 2 * e * (norm h)\<^sup>2"
+  have main: "- (c * (norm h)\<^sup>2) \<le> h \<bullet> F h + 2 * e * (norm h)\<^sup>2"
     if e: "0 < e" for e
   proof -
     obtain d where d: "0 < d" and sj: "\<And>k. norm k < d \<Longrightarrow>
         v (x + k) \<le> v x + p \<bullet> k + (k \<bullet> F k)/2 + e * (norm k)\<^sup>2"
-      using jet e unfolding superjet_def v_def by blast
+      using jet e unfolding superjet_def by blast
     define t where "t = min (d / (2 * norm h)) 1"
     have t0: "0 < t" unfolding t_def using d False by simp
-    have t1: "t \<le> 1" unfolding t_def by simp
     have tnh: "norm (t *\<^sub>R h) < d"
     proof -
       have "t * norm h \<le> (d / (2 * norm h)) * norm h"
@@ -1721,43 +1660,23 @@ next
     have s2: "v (x - t *\<^sub>R h) \<le> v x + p \<bullet> (- (t *\<^sub>R h))
         + ((- (t *\<^sub>R h)) \<bullet> F (- (t *\<^sub>R h)))/2 + e * (norm (- (t *\<^sub>R h)))\<^sup>2"
       using sj[of "- (t *\<^sub>R h)"] tnh by simp
-    have negF: "(- (t *\<^sub>R h)) \<bullet> F (- (t *\<^sub>R h)) = (t *\<^sub>R h) \<bullet> F (t *\<^sub>R h)"
-    proof -
-      have "F (- (t *\<^sub>R h)) = - F (t *\<^sub>R h)"
-        using linF by (simp add: linear_neg)
-      then show ?thesis by simp
-    qed
-    have scF: "(t *\<^sub>R h) \<bullet> F (t *\<^sub>R h) = t\<^sup>2 * (h \<bullet> F h)"
-    proof -
-      have "F (t *\<^sub>R h) = t *\<^sub>R F h" by (rule linear_cmul[OF linF])
-      then show ?thesis by (simp add: power2_eq_square)
-    qed
-    have comb: "- ((norm (t *\<^sub>R h))\<^sup>2 / lam)
-        \<le> (t *\<^sub>R h) \<bullet> F (t *\<^sub>R h) + 2 * e * (norm (t *\<^sub>R h))\<^sup>2"
-      using key[of x "t *\<^sub>R h"] s1 s2 unfolding negF by simp
-    have nsc: "(norm (t *\<^sub>R h))\<^sup>2 = t\<^sup>2 * (norm h)\<^sup>2"
-      by (simp add: power_mult_distrib abs_mult power2_eq_square)
-    have t2p: "0 < t\<^sup>2" using t0 by simp
-    have sc: "t\<^sup>2 * (- ((norm h)\<^sup>2 / lam))
-        \<le> t\<^sup>2 * (h \<bullet> F h + 2 * e * (norm h)\<^sup>2)"
-      using comb unfolding scF nsc by (simp add: algebra_simps)
-    have iff: "(t\<^sup>2 * (- ((norm h)\<^sup>2 / lam))
-        \<le> t\<^sup>2 * (h \<bullet> F h + 2 * e * (norm h)\<^sup>2))
-        = (- ((norm h)\<^sup>2 / lam) \<le> h \<bullet> F h + 2 * e * (norm h)\<^sup>2)"
-      by (rule mult_le_cancel_left_pos[OF t2p])
-    show ?thesis using sc iff by blast
+    have scF: "F (t *\<^sub>R h) = t *\<^sub>R F h" "F (- (t *\<^sub>R h)) = - (t *\<^sub>R F h)"
+      using linF by (simp_all add: linear_cmul linear_neg)
+    have "t\<^sup>2 * (- (c * (norm h)\<^sup>2)) \<le> t\<^sup>2 * (h \<bullet> F h + 2 * e * (norm h)\<^sup>2)"
+      using key[of x "t *\<^sub>R h"] s1 s2 unfolding scF
+      by (simp add: power_mult_distrib power2_eq_square algebra_simps)
+    then show ?thesis by (rule mult_left_le_imp_le) (use t0 in simp)
   qed
   show ?thesis
   proof (rule field_le_epsilon)
     fix ee :: real assume ee: "0 < ee"
     have hpos: "0 < (norm h)\<^sup>2" using False by simp
-    have e: "0 < ee / (2 * (norm h)\<^sup>2)" using ee hpos by simp
-    have "- ((norm h)\<^sup>2 / lam)
+    have "- (c * (norm h)\<^sup>2)
         \<le> h \<bullet> F h + 2 * (ee / (2 * (norm h)\<^sup>2)) * (norm h)\<^sup>2"
-      by (rule main[OF e])
+      by (rule main) (use ee hpos in simp)
     also have "2 * (ee / (2 * (norm h)\<^sup>2)) * (norm h)\<^sup>2 = ee"
       using hpos by simp
-    finally show "- ((norm h)\<^sup>2 / lam) \<le> h \<bullet> F h + ee" .
+    finally show "- (c * (norm h)\<^sup>2) \<le> h \<bullet> F h + ee" .
   qed
 qed
 
@@ -2292,9 +2211,9 @@ proof -
       using o7n[of n] by (simp add: dist_norm)
   qed
   have lowH: "- ((norm v)\<^sup>2 / lam) \<le> v \<bullet> HH n v" for n v
-    by (rule superjet_supconv_form_lower[OF Bu l0 jetuL])
+    using superjet_supconv_form_lower[OF supconv_semiconvex'[OF Bu l0] jetuL, of v] by simp
   have lowII: "- ((norm v)\<^sup>2 / lam) \<le> v \<bullet> II n v" for n v
-    by (rule superjet_supconv_form_lower[OF Bb l0 jetbL])
+    using superjet_supconv_form_lower[OF supconv_semiconvex'[OF Bb l0] jetbL, of v] by simp
   have cbH: "\<bar>v \<bullet> HH n v\<bar> \<le> (1/lam + 2) * (norm v)\<^sup>2" for n v
   proof -
     have d1: "(norm v)\<^sup>2 / lam = (1/lam) * (norm v)\<^sup>2" by simp
