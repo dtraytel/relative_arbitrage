@@ -862,9 +862,7 @@ text \<open>The passage from a constant lower bound to the essential infimum
   time is deterministic: it needs only that the integrand lies between \<open>0\<close>
   and \<open>T\<close>, which holds for every \<open>0 \<le> \<theta> \<omega> \<le> T\<close>, with no measurability
   and no stopping-time property.  So
-  the whole \<open>\<ge>\<close> half at a random time reduces to the constant statement,
-  exactly as @{thm [source] exit_val_dpp_sup_ge} reduces to
-  @{thm [source] exit_val_dpp_ge_const}.\<close>
+  the whole \<open>\<ge>\<close> half at a random time reduces to the constant statement.\<close>
 
 theorem exit_val_dpp_sup_ge_time_of_const:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -928,6 +926,48 @@ proof (rule exit_val_dpp_sup_ge_time_of_const)
     by (rule exit_val_dpp_ge_const_time[OF T0 L1 Kc st thM P bnd])
 qed
 
+
+
+subsection \<open>The \<open>\<ge>\<close> half at a deterministic time\<close>
+
+text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close> states the dynamic programming
+  principle
+    \<open>v x = (SUP P \<in> exit_class k L T x. P-ess-inf
+      (\<theta> \<and> \<tau>\<^sub>K + v (X \<theta>) * 1\<^sub>{\<theta> \<le> \<tau>\<^sub>K}))\<close>.
+  Its \<open>\<ge>\<close> half at a deterministic time \<open>\<theta> = r\<close> is the case of a constant
+  stopping time.  Both summands are read off the first piece: \<open>r \<and> \<tau>\<^sub>K\<close> is
+  the exit time capped at \<open>r\<close>, i.e. \<open>pexit r K\<close>, and \<open>1\<^sub>{r \<le> \<tau>\<^sub>K}\<close> is
+  \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close>.\<close>
+
+lemma path_stopping_time_const:
+  "0 \<le> r \<Longrightarrow> r \<le> T \<Longrightarrow> path_stopping_time T (\<lambda>_. r)"
+  unfolding path_stopping_time_def by simp
+
+corollary exit_val_dpp_sup_ge:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and K: "closed K"
+  shows "(SUP P \<in> exit_class k L T x. ess_inf_time P
+            (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+              + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+                 then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)))
+      \<le> exit_val k L T K x"
+proof -
+  have T0: "0 < T" using r rT by linarith
+  show ?thesis
+    by (rule exit_val_dpp_sup_ge_time[OF T0 L1 K
+          path_stopping_time_const[OF r less_imp_le[OF rT]] borel_measurable_const])
+qed
+
+corollary exit_val_dpp_ge:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and P :: "('n pairpath) measure"
+  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and K: "closed K"
+    and P: "P \<in> exit_class k L T x"
+  shows "ess_inf_time P (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
+            + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
+               then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0))
+      \<le> exit_val k L T K x"
+  by (rule order.trans[OF SUP_upper[OF P] exit_val_dpp_sup_ge[OF r rT L1 K]])
 
 (*<*)
 end
