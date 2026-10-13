@@ -105,8 +105,6 @@ text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, at the marke
 
 section \<open>Diagonal entries under the eigenvalue constraints\<close>
 
-text \<open>\<open>diag_entry_quadform\<close> lives in \<open>Matrix_Algebra\<close>.\<close>
-
 
 text \<open>\<open>radial_sq_upto\<close> transports the growth identity to the
   endpoint of a half-open confinement interval.  Nothing in its proof is
@@ -426,7 +424,7 @@ lemma psd_diag_nonneg:
   fixes a :: "real^'m::finite^'m"
   assumes "psd a"
   shows "0 \<le> a $ l $ l"
-  using assms diag_entry_quadform[where a = a and l = l]
+  using assms diag_eq_inner_axis[where a = a and i = l, symmetric]
   by (auto simp: psd_def dest: spec[of _ "axis l 1"])
 
 theorem etime_shift_box_half:
@@ -678,7 +676,7 @@ proof -
       by (intro continuous_intros)
     have mv: "continuous_on A (\<lambda>y :: real^'n. M *v (y - x))"
       by (rule continuous_on_compose2[OF
-          linear_continuous_on[OF matvec_blin] d]) auto
+          linear_continuous_on[OF matrix_vector_mul_bounded_linear] d]) auto
     show ?thesis by (intro continuous_intros mv)
   qed
   show ?thesis
@@ -738,7 +736,7 @@ proof -
   ultimately show ?thesis by (simp add: vec_eq_iff)
 qed
 
-text \<open>\<open>matmul_scaleR_right\<close>, \<open>sandwich_mat1\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>sandwich_mat1\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 lemma outerp_scale_self:
   fixes u :: "real^'n::finite"

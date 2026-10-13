@@ -19,21 +19,7 @@ unbundle inner_syntax
 
 section \<open>Preliminaries\<close>
 
-text \<open>\<open>inner_transpose_matrix\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-lemma sym_inner_swap:
-  fixes a :: "real^'n^'n"
-  assumes "transpose a = a"
-  shows "x \<bullet> (a *v y) = y \<bullet> (a *v x)"
-proof -
-  have "x \<bullet> (a *v y) = (transpose a *v x) \<bullet> y"
-    by (rule inner_transpose_matrix)
-  also have "\<dots> = (a *v x) \<bullet> y"
-    by (simp add: assms)
-  also have "\<dots> = y \<bullet> (a *v x)"
-    by (rule inner_commute)
-  finally show ?thesis .
-qed
+text \<open>\<open>inner_transpose_matrix\<close> and \<open>sym_inner_swap\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 text \<open>A linear coefficient dominated by a quadratic must vanish:\<close>
 
@@ -385,28 +371,14 @@ qed
 lemma psd_convex_comb:
   assumes "psd a" "psd b" and s: "0 \<le> s" "s \<le> 1"
   shows "psd (s *\<^sub>R a + (1 - s) *\<^sub>R b)"
-proof -
-  have "transpose (s *\<^sub>R a + (1 - s) *\<^sub>R b) = s *\<^sub>R a + (1 - s) *\<^sub>R b"
-    using assms by (simp add: transpose_add transpose_scalar psd_def)
-  moreover have "0 \<le> x \<bullet> ((s *\<^sub>R a + (1 - s) *\<^sub>R b) *v x)" for x
-  proof -
-    have "x \<bullet> ((s *\<^sub>R a + (1 - s) *\<^sub>R b) *v x)
-        = s * (x \<bullet> (a *v x)) + (1 - s) * (x \<bullet> (b *v x))"
-      by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector
-          inner_add_right)
-    also have "\<dots> \<ge> 0"
-      using assms by (intro add_nonneg_nonneg mult_nonneg_nonneg)
-        (auto simp: psd_def)
-    finally show ?thesis .
-  qed
-  ultimately show ?thesis
-    by (simp add: psd_def)
-qed
+  using assms unfolding psd_def
+  by (auto simp: transpose_add transpose_scalar quadform_convex_comb
+      intro!: add_nonneg_nonneg mult_nonneg_nonneg)
 
 lemma trace_mult_convex_comb:
   "trace ((s *\<^sub>R a + (1 - s) *\<^sub>R b) ** P)
      = s * trace (a ** P) + (1 - s) * trace (b ** P)"
-  by (simp add: matrix_add_rdistrib scaleR_matrix_mult trace_add trace_scaleR)
+  by (simp add: matrix_add_rdistrib scalar_matrix_assoc[symmetric] trace_add trace_scaleR)
 
 text \<open>Every symmetric matrix is the sum, over an eigenbasis, of its
   eigenvalues weighted against the rank-one projections onto each
@@ -423,7 +395,7 @@ proof -
   proof -
     have "(\<Sum>u\<in>B. (u \<bullet> (A *v u)) *\<^sub>R outer_prod u u) *v w
         = (\<Sum>u\<in>B. (u \<bullet> (A *v u)) *\<^sub>R ((u \<bullet> w) *\<^sub>R u))"
-      by (simp add: matrix_vector_mult_sum scaleR_matrix_vector)
+      by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
     also have "\<dots> = (\<Sum>u\<in>B. if u = w then (w \<bullet> (A *v w)) *\<^sub>R w else 0)"
       by (intro sum.cong refl)
         (use B(1) w in \<open>auto dest: onormal_inner_distinct

@@ -407,9 +407,6 @@ qed
 
 section \<open>The capped trace bound\<close>
 
-text \<open>\<open>trace_mult_spectral_proj\<close> lives in
-  @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
-
 lemma Pi_constraint_capped_trace:
   fixes a :: "real^'n::finite^'n"
   assumes a: "a \<in> Pi_constraint k" and k: "k < CARD('n)"
@@ -465,7 +462,7 @@ proof -
       using onormal_proj(2)[OF onS]
       by (intro Pi_proj_le[OF psd_a onormal_proj(1)[OF onS]]) (simp add: m_def)
     also have "\<dots> = (\<Sum>u\<in>S. lam u)"
-      unfolding lam_def by (rule trace_mult_spectral_proj[OF B(1) S_sub eig])
+      unfolding lam_def by (rule trace_mult_outer_sum)
     finally have key: "real (m - k) \<le> (\<Sum>u\<in>S. lam u)" .
     have capS: "(\<Sum>u\<in>S. min (lam u) 1) = (\<Sum>u\<in>S. lam u)"
       by (rule sum.cong[OF refl]) (auto simp: S_def T_def)

@@ -268,19 +268,7 @@ lemma onormal_span_card:
   fixes B :: "(real^'n::finite) set"
   assumes B: "onormal B" and sp: "span B = UNIV"
   shows "card B = CARD('n)"
-proof -
-  have nz: "0 \<notin> B"
-    using B by (auto simp: onormal_def)
-  have ind: "independent B"
-    using B nz by (intro pairwise_orthogonal_independent) (auto simp: onormal_def)
-  have "card B = dim B"
-    using ind by (simp add: dim_eq_card_independent)
-  also have "dim B = dim (UNIV :: (real^'n) set)"
-    using sp dim_span[of B] by simp
-  also have "\<dots> = CARD('n)"
-    by simp
-  finally show ?thesis .
-qed
+  using onormal_card_dim_span[OF B] sp by simp
 
 lemma onormal_extension_within:
   assumes B: "onormal B" and W: "subspace W" and BW: "B \<subseteq> W"

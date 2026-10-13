@@ -1279,8 +1279,6 @@ qed
 
 subsection \<open>Transporting the envelopes along an \<open>F\<close>-preserving homeomorphism\<close>
 
-text \<open>\<open>matvec_diff_right\<close>, \<open>matvec_scaleR_right\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 text \<open>\<open>matrix_mul_diff_right\<close> and \<open>matrix_mul_diff_left\<close> live in
   @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
@@ -1415,7 +1413,7 @@ proof -
   have isom: "dist (\<Psi> v) (\<Psi> v') = dist v v'" for v v'
   proof -
     have p1: "R *v fst v - R *v fst v' = R *v (fst v - fst v')"
-      by (rule matvec_diff_right[symmetric])
+      by (rule matrix_vector_mult_diff_distrib[symmetric])
     have p2: "R ** snd v ** transpose R - R ** snd v' ** transpose R
         = R ** (snd v - snd v') ** transpose R"
       by (simp add: matrix_mul_diff_right matrix_mul_diff_left)
@@ -1470,7 +1468,7 @@ text \<open>Monotonicity of \<open>lsc_env\<close>/\<open>usc_env\<close> and th
 
 subsection \<open>Affine maps commute with \<open>interior\<close>\<close>
 
-text \<open>\<open>open_orth_image\<close>, \<open>open_affine_image\<close>, \<open>affine_interior_sub\<close>, \<open>affine_inv_shape\<close>, \<open>affine_inv_left\<close>, \<open>affine_inv_right\<close>, \<open>affine_interior_image\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>affine_interior_image\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 section \<open>A constant is a subsolution off \<open>K\<close>\<close>

@@ -69,7 +69,7 @@ proof -
   proof -
     have sym: "transpose a = a" using that by (simp add: feasible_def psd_def)
     show ?thesis
-      by (simp add: scaleR_matrix_mult matrix_add_rdistrib trace_add trace_scaleR
+      by (simp add: scalar_matrix_assoc[symmetric] matrix_add_rdistrib trace_add trace_scaleR
             trace_transpose_mult_sym[OF sym])
   qed
   then show ?thesis unfolding ell_op_def by (intro arg_cong[where f = Inf] image_cong) auto
@@ -85,7 +85,7 @@ proof -
   have ax: "axis l 1 \<bullet> (axis l 1 :: real^'m) = 1"
     by (simp add: inner_vec_def axis_def if_distrib cong: if_cong)
   show ?thesis
-    using assms diag_entry_quadform[where a = a and l = l] ax
+    using assms diag_eq_inner_axis[where a = a and i = l, symmetric] ax
     by (auto simp: eigen_ub_def dest: spec[of _ "axis l 1"])
 qed
 

@@ -108,8 +108,6 @@ proof -
   ultimately show ?thesis by (simp add: vec_eq_iff)
 qed
 
-text \<open>\<open>exists_enum_of_card\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 subsection \<open>Continuity of the Gaussian member in its volatility\<close>
 
@@ -910,7 +908,7 @@ proof -
     have meq: "M *v (y' - x) = M *v (y - x)"
       using g0 unfolding \<eta>_def by (simp add: algebra_simps)
     have yeq: "y' = y"
-      using invertible_matrix_vector_inj[OF inv meq] by simp
+      using injD[OF inj_matrix_vector_mult[OF inv] meq] by simp
     show ?thesis
     proof (rule quad_minimality_pinch[OF symM Cb])
       show "M *v (y - x) + \<eta> = 0" using g0 unfolding yeq .
@@ -1254,7 +1252,7 @@ proof -
   have c1: "continuous_on UNIV
       (\<lambda>p :: (real^'n) \<times> (real^'n^'n). M *v (fst p - x))"
     by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF matvec_blin] c0]) auto
+        linear_continuous_on[OF matrix_vector_mul_bounded_linear] c0]) auto
   have cq: "continuous_on UNIV
       (\<lambda>p :: (real^'n) \<times> (real^'n^'n). q \<bullet> (fst p - x))"
     by (rule continuous_on_compose2[OF
@@ -3180,7 +3178,7 @@ proof -
   have c1: "continuous_on UNIV
       (\<lambda>p :: (real^'n) \<times> (real^'n^'n). M *v (fst p - x))"
     by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF matvec_blin] c0]) auto
+        linear_continuous_on[OF matrix_vector_mul_bounded_linear] c0]) auto
   have cq: "continuous_on UNIV
       (\<lambda>p :: (real^'n) \<times> (real^'n^'n). q \<bullet> (fst p - x))"
     by (rule continuous_on_compose2[OF

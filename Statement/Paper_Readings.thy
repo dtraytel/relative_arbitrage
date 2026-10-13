@@ -589,7 +589,7 @@ proof (cases "\<exists>i j. i \<noteq> j \<and> a $ i $ j \<noteq> 0")
     show "axis i 1 \<bullet> axis j (1::real) = 0"
       using ij by (simp add: inner_axis_axis)
     show "axis i 1 \<bullet> (a *v axis j 1) \<noteq> 0"
-      using ij by (simp add: inner_axis_one matrix_vector_axis_one)
+      using ij by (simp add: inner_axis' matrix_vector_mult_basis column_def)
     show "\<forall>k. k \<noteq> i \<longrightarrow> k \<noteq> j \<longrightarrow>
         axis j 1 $ k = 0 \<and> axis j 1 $ k = 0 \<and> axis i (1::real) $ k = 0"
       by (simp add: axis_def)
@@ -619,8 +619,8 @@ next
       using \<open>i \<noteq> j\<close> by (simp add: inner_add_right inner_diff_left inner_axis_axis)
     show "(axis i 1 - axis j 1) \<bullet> (a *v (axis i 1 + axis j (1::real))) \<noteq> 0"
       using ij off[OF \<open>i \<noteq> j\<close>] off[of j i] \<open>i \<noteq> j\<close>
-      by (simp add: matrix_vector_right_distrib inner_diff_left inner_axis_one
-          matrix_vector_axis_one)
+      by (simp add: matrix_vector_right_distrib inner_diff_left inner_axis'
+          matrix_vector_mult_basis column_def)
     show "\<forall>k. k \<noteq> i \<longrightarrow> k \<noteq> j \<longrightarrow> (axis i 1 + axis j (1::real)) $ k = 0 \<and>
         axis i (1::real) $ k = 0 \<and> (axis i 1 - axis j (1::real)) $ k = 0"
       by (simp add: axis_def)

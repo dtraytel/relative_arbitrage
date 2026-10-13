@@ -36,8 +36,6 @@ text \<open>Below \<open>sums_matrix_inequality\<close> the \<open>psd\<close> c
   \<open>R (e k)\<close>. Although \<open>e\<close> is not injective near \<open>0\<close>, the limit survives
   because \<open>e\<close> is 2-Lipschitz and kills only the diagonal, where \<open>R 0 = 0\<close>.\<close>
 
-text \<open>\<open>matrix_vector_mult_diff_gen\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 text \<open>\<open>doubled_penalty_jet\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Semiconvexity of the doubled functional, for a general penalty\<close>

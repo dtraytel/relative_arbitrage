@@ -131,9 +131,9 @@ lemma psd_eigen_ub_diag:
   shows "0 \<le> a $ i $ i" and "a $ i $ i \<le> L"
 proof -
   have q: "axis i (1 :: real) \<bullet> (a *v axis i (1 :: real)) = a $ i $ i"
-    by (simp add: inner_axis_one matrix_vector_axis_one)
+    by (simp add: inner_axis' matrix_vector_mult_basis column_def)
   have nn: "axis i (1 :: real) \<bullet> axis i (1 :: real) = 1"
-    unfolding inner_axis_one by (simp add: axis_def)
+    unfolding inner_axis' by (simp add: axis_def)
   show "0 \<le> a $ i $ i"
     using a[unfolded psd_def, THEN conjunct2, rule_format, of "axis i 1"] q
     by simp

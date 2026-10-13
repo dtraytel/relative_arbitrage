@@ -447,7 +447,7 @@ proof (rule example_3_1_from_lower[OF kn L1 T0 r0])
     have "projmat b m *v y = projmat b m *v (norm y *\<^sub>R b 0)"
       by (rule arg_cong[where f = "\<lambda>w. projmat b m *v w", OF yb])
     also have "\<dots> = norm y *\<^sub>R (projmat b m *v b 0)"
-      by (rule matvec_scaleR_right)
+      by (rule matrix_vector_mult_scaleR)
     also have "\<dots> = norm y *\<^sub>R b 0"
       by (simp add: projmat_fix[OF orth m0])
     also have "\<dots> = y" by (rule yb[symmetric])

@@ -25,8 +25,7 @@ text \<open>Definition 3.1 takes the envelopes of \<open>F\<close> over \<open>\
 
 text \<open>\<open>trace_mul_comm\<close> is HOL-Analysis's \<open>trace_mul_sym\<close>.\<close>
 
-text \<open>\<open>matrix_mult_scaleR_left\<close> is \<open>scaleR_matrix_mult\<close> from
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>matrix_mult_scaleR_left\<close> is HOL-Analysis's \<open>scalar_matrix_assoc\<close>, reversed.\<close>
 
 lemma visc_subsol_env2_cong:
   fixes f1 f2 :: "real^'n::finite \<Rightarrow> real"
@@ -461,7 +460,7 @@ proof -
     for a :: "real^'n^'n"
   proof -
     have "(\<theta> *\<^sub>R M) ** a = \<theta> *\<^sub>R (M ** a)"
-      by (rule scaleR_matrix_mult)
+      by (rule scalar_matrix_assoc[symmetric])
     thus ?thesis by (simp add: trace_scaleR)
   qed
   have img: "(\<lambda>a. - trace ((\<theta> *\<^sub>R M) ** a) / 2) ` feasible k L p
@@ -661,7 +660,7 @@ text \<open>\<open>visc_subsol_scaled_uniform\<close> and \<open>supersol_jet\<c
 
 text \<open>\<open>quad_form_shift_identity\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>matrix_vector_neg_left\<close>, \<open>quad_form_shift_identity_neg\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>quad_form_shift_identity_neg\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 text \<open>The mirror image for the supersolution side: a subjet of \<open>v\<close> at \<open>yh\<close>
   gives the local-min statement, with correction \<open>- \<delta> I\<close>, following from

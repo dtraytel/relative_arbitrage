@@ -198,47 +198,6 @@ proof -
     using onormal_proj[OF onT] T(2) by (intro that[of "\<Sum>u\<in>T. outer_prod u u"]) auto
 qed
 
-lemma trace_proj_psd_nonneg:
-  assumes a: "psd a" and P: "is_proj P"
-  shows "0 \<le> trace (a ** P)"
-proof -
-  obtain C where C: "onormal C" "P = (\<Sum>u\<in>C. outer_prod u u)"
-    "real (card C) = trace P"
-    using is_proj_decomp[OF P] by metis
-  have "trace (a ** P) = (\<Sum>u\<in>C. u \<bullet> (a *v u))"
-    by (simp add: C(2) trace_mult_outer_sum)
-  also have "\<dots> \<ge> 0"
-    using a by (intro sum_nonneg) (auto simp: psd_def)
-  finally show ?thesis .
-qed
-
-text \<open>The trace of \<open>a\<close> against the spectral projection onto a subset of the
-  eigenbasis is the sum of the corresponding eigenvalues.\<close>
-
-lemma trace_mult_spectral_proj:
-  fixes a :: "real^'n::finite^'n"
-  assumes B: "onormal B" and S: "S \<subseteq> B"
-    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-  shows "trace (a ** (\<Sum>u\<in>S. outer_prod u u)) = (\<Sum>u\<in>S. u \<bullet> (a *v u))"
-proof -
-  have finS: "finite S"
-    using B S by (auto simp: onormal_def elim: finite_subset)
-  have "trace (a ** (\<Sum>u\<in>S. outer_prod u u))
-      = (\<Sum>u\<in>S. trace (a ** outer_prod u u))"
-    by (simp add: matrix_mult_sum_right trace_matrix_sum)
-  also have "\<dots> = (\<Sum>u\<in>S. u \<bullet> (a *v u))"
-  proof (rule sum.cong[OF refl])
-    fix u assume "u \<in> S"
-    have "trace (a ** outer_prod u u) = trace (outer_prod (a *v u) u)"
-      by (simp add: mult_outer_prod)
-    also have "\<dots> = (a *v u) \<bullet> u"
-      by simp
-    finally show "trace (a ** outer_prod u u) = u \<bullet> (a *v u)"
-      by (simp add: inner_commute)
-  qed
-  finally show ?thesis .
-qed
-
 text \<open>If one coefficient is strictly between \<open>0\<close> and \<open>1\<close> then so is a second
   one: otherwise the total would be that coefficient plus an integer, forcing
   it to be an integer itself.\<close>
@@ -478,6 +437,22 @@ proof -
     using q by (simp add: x_def)
 qed
 
+lemma is_proj_norm_le:
+  assumes P: "is_proj P"
+  shows "norm (P *v w) \<le> norm w"
+  unfolding norm_le using proj_quadform_le_self[OF P, of w] proj_quadform_self[OF P, of w]
+  by linarith
+
+lemma is_proj_psd:
+  assumes P: "is_proj P"
+  shows "psd P"
+  using P proj_quadform_nonneg[OF P] by (simp add: psd_def is_proj_def)
+
+lemma trace_proj_psd_nonneg:
+  assumes a: "psd a" and P: "is_proj P"
+  shows "0 \<le> trace (a ** P)"
+  by (rule trace_mult_psd_nonneg[OF a is_proj_psd[OF P]])
+
 lemma proj_quadform_le_one:
   assumes P: "is_proj P" and B: "onormal B" and u: "u \<in> B"
   shows "u \<bullet> (P *v u) \<le> 1"
@@ -549,7 +524,6 @@ text \<open>The set of \<open>m\<close>-element subsets of the eigenbasis, and t
 lemma spectral_proj_trace:
   fixes a :: "real^'n::finite^'n"
   assumes B: "onormal B" and T: "T \<subseteq> B" "card T = m"
-    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
   shows "is_proj (\<Sum>u\<in>T. outer_prod u u)"
     and "trace (\<Sum>u\<in>T. outer_prod u u) = real m"
     and "trace (a ** (\<Sum>u\<in>T. outer_prod u u)) = (\<Sum>u\<in>T. u \<bullet> (a *v u))"
@@ -561,7 +535,7 @@ proof -
   show "trace (\<Sum>u\<in>T. outer_prod u u) = real m"
     using onormal_proj(2)[OF onT] T(2) by simp
   show "trace (a ** (\<Sum>u\<in>T. outer_prod u u)) = (\<Sum>u\<in>T. u \<bullet> (a *v u))"
-    by (rule trace_mult_spectral_proj[OF B T(1) eig])
+    by (rule trace_mult_outer_sum)
 qed
 
 text \<open>Ky Fan's maximum principle, in the form needed here: the supremum
@@ -643,7 +617,7 @@ proof -
     have p1: "is_proj P0" and p2: "trace P0 = real m"
       and tr: "trace (a ** P0) = (\<Sum>u\<in>T0. lam u)"
       unfolding P0_def lam_def
-      using spectral_proj_trace[OF B(1) T0sub cardT0 eig] by blast+
+      using spectral_proj_trace[OF B(1) T0sub cardT0] by blast+
     have "g T0 = trace (a ** P0)"
       unfolding g_def using tr by simp
     then show ?thesis
@@ -743,28 +717,23 @@ lemma kyfan_0:
   fixes a :: "real^'n::finite^'n"
   shows "kyfan 0 a = 0"
 proof -
-  have trz: "trace (a ** (0 :: real^'n^'n)) = 0"
-    by (simp add: trace_def matrix_matrix_mult_def)
   have pz: "is_proj (0 :: real^'n^'n)"
     by (auto simp: is_proj_def transpose_def matrix_matrix_mult_def vec_eq_iff)
-  have "{trace (a ** P) | P :: real^'n^'n. is_proj P \<and> trace P = real (0::nat)}
-      = {0}"
-  proof (rule equalityI, rule subsetI)
-    fix x
-    assume "x \<in> {trace (a ** P) | P :: real^'n^'n. is_proj P \<and> trace P = real (0::nat)}"
-    then obtain P :: "real^'n^'n" where P: "is_proj P" "trace P = real (0::nat)"
-      and x: "x = trace (a ** P)"
-      by blast
-    have "P = 0"
-      using is_proj_trace_zero[OF P(1)] P(2) by simp
+  have "{trace (a ** P) | P :: real^'n^'n. is_proj P \<and> trace P = real (0::nat)} = {0}"
+  proof (intro set_eqI iffI)
+    fix x assume "x \<in> {trace (a ** P) | P :: real^'n^'n. is_proj P \<and> trace P = real (0::nat)}"
+    then obtain P :: "real^'n^'n" where "is_proj P" "trace P = 0" "x = trace (a ** P)"
+      by auto
     then show "x \<in> {0}"
-      using x trz by simp
+      using is_proj_trace_zero[of P] by (simp add: trace_mult_zero_right)
   next
-    show "{0} \<subseteq> {trace (a ** P) | P :: real^'n^'n. is_proj P \<and> trace P = real (0::nat)}"
-      using pz trz by (auto intro!: exI[of _ "0 :: real^'n^'n"])
+    have "trace (0 :: real^'n^'n) = real (0::nat)"
+      by (simp add: trace_def)
+    then show "x \<in> {trace (a ** P) | P :: real^'n^'n. is_proj P \<and> trace P = real (0::nat)}"
+      if "x \<in> {0}" for x
+      using that pz trace_mult_zero_right[of a] by (auto intro!: exI[of _ "0 :: real^'n^'n"])
   qed
-  then show ?thesis
-    by (simp add: kyfan_def)
+  then show ?thesis by (simp add: kyfan_def)
 qed
 
 text \<open>The \<open>i\<close>-th largest eigenvalue of a symmetric matrix, \<open>1 \<le> i \<le> n\<close>.
@@ -805,23 +774,6 @@ text \<open>\<open>kyfan_attained\<close> produces a maximiser for each \<open>m
   \<open>T \<subseteq> B\<close> with \<open>card T = m\<close> a \<^emph>\<open>threshold set\<close> when every value inside
   dominates every value outside; deleting a minimal element leaves a
   threshold set one size down, and iterating produces the nested chain.\<close>
-
-text \<open>A minimiser of a real-valued function on a finite nonempty set.\<close>
-
-lemma finite_arg_min_on:
-  fixes f :: "'a \<Rightarrow> real"
-  assumes fin: "finite T" and ne: "T \<noteq> {}"
-  obtains w where "w \<in> T" and "\<And>u. u \<in> T \<Longrightarrow> f w \<le> f u"
-proof -
-  have "Min (f ` T) \<in> f ` T"
-    using fin ne by (intro Min_in) auto
-  then obtain w where w: "w \<in> T" and fw: "f w = Min (f ` T)"
-    by (metis imageE)
-  have wmin: "f w \<le> f u" if u: "u \<in> T" for u
-    unfolding fw using fin u by simp
-  show thesis
-    by (rule that[OF w wmin])
-qed
 
 lemma threshold_sum_maximal:
   fixes lam :: "'a \<Rightarrow> real"
@@ -1027,7 +979,8 @@ proof -
     using T(2) by auto
   obtain w where w: "w \<in> T"
     and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using finite_arg_min_on[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)", OF finT Tne]
+    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
+        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
     by metis
   have e1: "eigval (Suc i) a = w \<bullet> (a *v w)"
     by (rule eigval_eq_min_of_threshold[OF B sym eig T thresh w wmin])
@@ -1055,8 +1008,8 @@ proof -
   qed
   obtain w' where w': "w' \<in> T - {w}"
     and w'min: "\<And>u. u \<in> T - {w} \<Longrightarrow> w' \<bullet> (a *v w') \<le> u \<bullet> (a *v u)"
-    using finite_arg_min_on[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)",
-        OF finT1 T1ne]
+    using arg_min_if_finite(1)[OF finT1 T1ne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
+        arg_min_least[OF finT1 T1ne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
     by metis
   have e0: "eigval i a = w' \<bullet> (a *v w')"
     unfolding ij
@@ -1261,98 +1214,6 @@ lemma bracket_eq_sum:
   using possum_eq_sum_pos[OF sym order_refl] kyfan_minus_possum[OF sym m]
   by (simp add: bracket_def)
 
-section \<open>Evaluating \<open>possum\<close> in an eigenbasis\<close>
-
-text \<open>A concrete feasible matrix built from an eigenbasis needs the
-  positive-part sum expressed over the eigenbasis rather than the index
-  range \<open>1..n\<close>.
-
-  The set \<open>T = {u \<in> B. 0 < u \<bullet> M u}\<close> of positive directions is
-  automatically a threshold set, so \<open>kyfan_threshold\<close> evaluates
-  \<open>kyfan (card T) M\<close> at it, and that value is already the maximum.\<close>
-
-lemma possum_full_eq_sum_basis:
-  fixes a :: "real^'n::finite^'n"
-  assumes B: "onormal B" "span B = UNIV"
-    and sym: "transpose a = a"
-    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-  shows "possum CARD('n) a = (\<Sum>u\<in>B. max (u \<bullet> (a *v u)) 0)"
-proof -
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
-  define T where "T = {u \<in> B. 0 < u \<bullet> (a *v u)}"
-  have Tsub: "T \<subseteq> B"
-    by (auto simp: T_def)
-  have cardT: "card T \<le> CARD('n)"
-    using card_mono[OF finB Tsub] cardB by simp
-  text \<open>The positive directions form a threshold set.\<close>
-  have thresh: "v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)" if "u \<in> T" "v \<in> B - T" for u v
-  proof -
-    have "0 < u \<bullet> (a *v u)"
-      using that(1) by (simp add: T_def)
-    moreover have "v \<bullet> (a *v v) \<le> 0"
-      using that(2) by (auto simp: T_def)
-    ultimately show ?thesis by simp
-  qed
-  have kT: "kyfan (card T) a = (\<Sum>u\<in>T. u \<bullet> (a *v u))"
-    by (rule kyfan_threshold[OF B sym eig Tsub refl thresh])
-  have sumT: "(\<Sum>u\<in>B. max (u \<bullet> (a *v u)) 0) = (\<Sum>u\<in>T. u \<bullet> (a *v u))"
-  proof -
-    have split: "(\<Sum>u\<in>B. max (u \<bullet> (a *v u)) 0)
-        = (\<Sum>u\<in>B - T. max (u \<bullet> (a *v u)) 0) + (\<Sum>u\<in>T. max (u \<bullet> (a *v u)) 0)"
-      using Tsub finB by (rule sum.subset_diff)
-    have out: "(\<Sum>u\<in>B - T. max (u \<bullet> (a *v u)) 0) = 0"
-      by (intro sum.neutral ballI) (auto simp: T_def)
-    have inn: "(\<Sum>u\<in>T. max (u \<bullet> (a *v u)) 0) = (\<Sum>u\<in>T. u \<bullet> (a *v u))"
-      by (intro sum.cong refl) (auto simp: T_def)
-    show ?thesis
-      using split out inn by simp
-  qed
-  show ?thesis
-  proof (rule antisym)
-    text \<open>Every Ky Fan sum is a sum of eigenvalues over some subset of \<open>B\<close>,
-      hence at most the sum of all the positive parts.\<close>
-    have bound: "\<forall>x \<in> (\<lambda>j. kyfan j a) ` {..CARD('n)}.
-        x \<le> (\<Sum>u\<in>B. max (u \<bullet> (a *v u)) 0)"
-    proof
-      fix x assume "x \<in> (\<lambda>j. kyfan j a) ` {..CARD('n)}"
-      then obtain j where j: "j \<le> CARD('n)" and x: "x = kyfan j a"
-        by auto
-      obtain T' where T': "T' \<subseteq> B" "card T' = j"
-        and kf: "kyfan j a = (\<Sum>u\<in>T'. u \<bullet> (a *v u))"
-        using kyfan_attained[OF B sym eig j] by metis
-      have "(\<Sum>u\<in>T'. u \<bullet> (a *v u)) \<le> (\<Sum>u\<in>T'. max (u \<bullet> (a *v u)) 0)"
-        by (intro sum_mono) simp
-      also have "\<dots> \<le> (\<Sum>u\<in>B. max (u \<bullet> (a *v u)) 0)"
-        using finB T'(1) by (intro sum_mono2) auto
-      finally show "x \<le> (\<Sum>u\<in>B. max (u \<bullet> (a *v u)) 0)"
-        unfolding x kf .
-    qed
-    show "possum CARD('n) a \<le> (\<Sum>u\<in>B. max (u \<bullet> (a *v u)) 0)"
-      using bound unfolding possum_def by (subst Max_le_iff) auto
-  next
-    have "(\<Sum>u\<in>B. max (u \<bullet> (a *v u)) 0) = kyfan (card T) a"
-      using kT sumT by simp
-    also have "\<dots> \<le> possum CARD('n) a"
-      by (rule possum_ge_kyfan[OF cardT])
-    finally show "(\<Sum>u\<in>B. max (u \<bullet> (a *v u)) 0) \<le> possum CARD('n) a" .
-  qed
-qed
-
-text \<open>The companion statement for the negative-part term,
-
-    \<open>kyfan m a - possum m a = (\<Sum>u\<in>S. min (u \<bullet> a u) 0)\<close>  for a threshold set
-    \<open>S \<subseteq> B\<close> of size \<open>m\<close>,
-
-  is not established here. The positive-part half above goes through because
-  \<open>{u \<in> B. 0 < u \<bullet> a u}\<close> is itself a threshold set of \<open>B\<close>; the restricted
-  version is harder, needing for every \<open>j \<le> m\<close> a threshold subset of
-  \<open>S\<close> of size \<open>j\<close> --- i.e. that \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>), \<dots>, \<lambda>\<^sub>(\<^sub>m\<^sub>)\<close> are exactly the
-  \<open>S\<close>-eigenvalues in decreasing order, true by iterating
-  \<open>threshold_remove_min\<close> downwards from \<open>S\<close>, but a separate induction.\<close>
-
 section \<open>The positive-part sum inside a threshold set\<close>
 
 text \<open>On a threshold set \<open>S\<close> of size \<open>m\<close>, \<open>possum m a\<close> is the sum of the
@@ -1372,7 +1233,8 @@ lemma threshold_shrink_one:
 proof -
   obtain w where w: "w \<in> S"
     and wmin: "\<And>u. u \<in> S \<Longrightarrow> lam w \<le> lam u"
-    using finite_arg_min_on[where f = lam, OF finS Sne] by metis
+    using arg_min_if_finite(1)[OF finS Sne, of lam]
+        arg_min_least[OF finS Sne, of _ lam] by metis
   have sub: "S - {w} \<subseteq> S"
     by blast
   have cardw: "card (S - {w}) = card S - 1"
@@ -1632,6 +1494,17 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>Over a whole eigenbasis the threshold condition is vacuous, so
+  \<open>possum CARD('n) a\<close> is the sum of the positive parts of all eigenvalues.\<close>
+
+lemma possum_full_eq_sum_basis:
+  fixes a :: "real^'n::finite^'n"
+  assumes B: "onormal B" "span B = UNIV"
+    and sym: "transpose a = a"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+  shows "possum CARD('n) a = (\<Sum>u\<in>B. max (u \<bullet> (a *v u)) 0)"
+  by (rule possum_within_threshold[OF B sym eig subset_refl onormal_span_card[OF B]]) auto
+
 section \<open>The linear program with an approximate weight sum\<close>
 
 lemma reduce_weights_to_exact:
@@ -1811,62 +1684,17 @@ proof -
           OF finB T0(1) T0(2) threshmin T(1) T(2)])
 qed
 
-
-
 subsection \<open>Selecting a subset minimal for a weight\<close>
 
-text \<open>The linear-programming core of the face argument, done by hand: given
-  weights \<open>c \<in> [0,1]\<close> with total mass \<open>\<ge> m\<close>, some set of \<open>\<ge> m\<close> indices
-  beats the weighted value.  No convexity and no induction on fractional
-  entries: one threshold comparison against the \<open>m\<close>-th smallest value
-  settles it.\<close>
+text \<open>The mirror image of \<open>exists_top_subset\<close>: some \<open>m\<close>-element subset
+  carries the \<open>m\<close> smallest values of \<open>w\<close>.\<close>
 
 lemma exists_min_subset:
   fixes w :: "'a \<Rightarrow> real"
   assumes finB: "finite B"
   shows "m \<le> card B \<Longrightarrow> \<exists>S. S \<subseteq> B \<and> card S = m
       \<and> (\<forall>u\<in>S. \<forall>v\<in>B - S. w u \<le> w v)"
-proof (induction m)
-  case 0
-  then show ?case by (intro exI[of _ "{}"]) simp
-next
-  case (Suc m)
-  then obtain S where S: "S \<subseteq> B" "card S = m"
-    and least: "\<forall>u\<in>S. \<forall>v\<in>B - S. w u \<le> w v"
-    using Suc_leD by blast
-  have ne: "B - S \<noteq> {}"
-  proof
-    assume "B - S = {}"
-    then have "B \<subseteq> S" by blast
-    with S(1) have "S = B" by blast
-    with S(2) Suc.prems show False by simp
-  qed
-  have finD: "finite (B - S)" using finB by simp
-  have "Min (w ` (B - S)) \<in> w ` (B - S)"
-    by (intro Min_in finite_imageI finD) (use ne in blast)
-  then obtain v0 where v0: "v0 \<in> B - S" and v0min: "w v0 = Min (w ` (B - S))"
-    by auto
-  have v0le: "\<And>v. v \<in> B - S \<Longrightarrow> w v0 \<le> w v"
-    unfolding v0min by (intro Min_le finite_imageI finD) blast
-  have cS: "card (insert v0 S) = Suc m"
-    using S v0 finB by (simp add: finite_subset)
-  have sub: "insert v0 S \<subseteq> B" using S(1) v0 by blast
-  have prp: "\<forall>u\<in>insert v0 S. \<forall>v\<in>B - insert v0 S. w u \<le> w v"
-  proof (intro ballI)
-    fix u v assume u: "u \<in> insert v0 S" and v: "v \<in> B - insert v0 S"
-    have vBS: "v \<in> B - S" using v by blast
-    show "w u \<le> w v"
-    proof (cases "u = v0")
-      case True
-      then show ?thesis using v0le[OF vBS] by simp
-    next
-      case False
-      then have "u \<in> S" using u by simp
-      then show ?thesis using least vBS by blast
-    qed
-  qed
-  show ?case by (intro exI[of _ "insert v0 S"]) (use cS sub prp in blast)
-qed
+  using exists_top_subset[where f = "\<lambda>u. - w u", OF finB] by (metis neg_le_iff_le)
 
 (*<*)
 end

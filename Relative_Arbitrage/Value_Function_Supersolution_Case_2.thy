@@ -115,7 +115,7 @@ proof -
   define M where "M = H - (2 * \<gamma> + \<delta>) *\<^sub>R mat 1"
   have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
   have symM: "transpose M = M"
-    unfolding M_def by (rule transpose_sub_smat[OF symH])
+    unfolding M_def by (rule transpose_shift_diff[OF symH])
   define \<eta> where "\<eta> = \<eta>\<^sub>0 / 2"
   have e0: "0 < \<eta>" unfolding \<eta>_def using h00 by simp
   have trM: "2 * \<eta> \<le> 1 + trace (M ** a) / 2"
@@ -745,7 +745,7 @@ text \<open>Case 2's tilt step for the value function.  The minimiser \<open>y\<
 
 subsection \<open>Case 2, second horn: quadratic pinching forces local constancy\<close>
 
-text \<open>\<open>pinch_segment_bound\<close>, \<open>pinch_implies_constant\<close>, \<open>quad_form_bounded_below\<close>, \<open>quad_minimality_pinch\<close>, \<open>singular_matrix_avoids_range\<close>, \<open>invertible_matrix_vector_inj\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>pinch_segment_bound\<close>, \<open>pinch_implies_constant\<close>, \<open>quad_form_bounded_below\<close>, \<open>quad_minimality_pinch\<close>, \<open>singular_matrix_avoids_range\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 theorem exit_val_not_locally_constant:
@@ -908,7 +908,7 @@ lemma exit_val_case2_at_minimiser:
       (H - \<epsilon> *\<^sub>R mat 1)"
 proof -
   have symM: "transpose (H - \<epsilon> *\<^sub>R mat 1) = H - \<epsilon> *\<^sub>R mat 1"
-    by (rule transpose_sub_smat[OF symH])
+    by (rule transpose_shift_diff[OF symH])
   have rp: "0 < \<rho> - dist x y" using dxy by simp
   have yi: "y \<in> interior K"
   proof -
@@ -971,7 +971,7 @@ proof -
   let ?M = "H - \<epsilon> *\<^sub>R mat 1"
   have L1': "1 \<le> L" using L1 by linarith
   have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
-  have symM: "transpose ?M = ?M" by (rule transpose_sub_smat[OF symH])
+  have symM: "transpose ?M = ?M" by (rule transpose_shift_diff[OF symH])
   have c0: "0 < \<epsilon> / 4" using e0 by simp
   have tv0: "\<And>u. (0 :: real) \<le> enn2real (exit_val k L T K u)" by simp
   have lscW: "\<exists>d>0. \<forall>u. dist z u < d \<longrightarrow> a < ?W u"

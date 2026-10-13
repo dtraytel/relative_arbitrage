@@ -282,7 +282,7 @@ proof -
         + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1)
       = matrix (\<lambda>v. fst (Wf i (v, 0)) + Zf (fst (zf i) - snd (zf i)) *v v)
         + (2*(D\<^sub>0/(2 + real i))) *\<^sub>R mat 1" for i
-    by (rule transpose_shifted_block
+    by (rule transpose_shift_add
         [OF transpose_matrix_block_fst_gen[OF blW symW symZ]])
   have symYs: "transpose (matrix (\<lambda>v. - (snd (Wf i (0, v))
             + Zf (fst (zf i) - snd (zf i)) *v v))
@@ -300,7 +300,7 @@ proof -
       by simp
     show ?thesis
       unfolding eqm
-      by (rule transpose_shifted_block
+      by (rule transpose_shift_add
           [OF transpose_matrix_block_snd_gen[OF blW symW symZ]])
   qed
   have bXun: "norm (matrix (\<lambda>v. fst (Wf i (v, 0))

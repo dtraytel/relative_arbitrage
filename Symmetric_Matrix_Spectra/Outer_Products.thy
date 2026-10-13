@@ -48,7 +48,7 @@ lemma matvec_sum_outer:
   fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
   assumes finS: "finite S"
   shows "(\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z = (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
-  by (simp add: matrix_vector_mult_sum scaleR_matrix_vector)
+  by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
 
 
 subsection \<open>The projector \<open>u u\<^sup>T\<close> as an operator\<close>

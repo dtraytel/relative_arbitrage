@@ -20,11 +20,6 @@ text \<open>
 
 unbundle inner_syntax
 
-lemma trace_diff_matrix:
-  fixes A B :: "real^'n::finite^'n"
-  shows "trace (A - B) = trace A - trace B"
-  unfolding trace_def by (simp add: sum_subtractf)
-
 
 lemma kyfan_full_eq_trace:
   fixes a :: "real^'n::finite^'n"
@@ -41,7 +36,7 @@ proof -
   have "kyfan CARD('n) a = (\<Sum>u\<in>B. u \<bullet> (a *v u))"
     by (rule kyfan_threshold[OF B sym eig subset_refl cardB vac])
   also have "\<dots> = trace (a ** (\<Sum>u\<in>B. outer_prod u u))"
-    by (rule trace_mult_spectral_proj[OF B(1) subset_refl eig, symmetric])
+    by (rule trace_mult_outer_sum[symmetric])
   also have "\<dots> = trace (a ** mat 1)"
     by (simp add: onormal_complete[OF B])
   also have "\<dots> = trace a"
@@ -95,7 +90,7 @@ proof -
     by (simp add: card_gt_0_iff)
   have "trace (mat 1 - outer_prod x x :: real^'n^'n)
       = trace (mat 1 :: real^'n^'n) - trace (outer_prod x x)"
-    by (rule trace_diff_matrix)
+    by (rule trace_sub)
   also have "\<dots> = real CARD('n) - 1"
     by (simp add: trace_I xx)
   also have "\<dots> = real (CARD('n) - 1)"
@@ -157,7 +152,7 @@ proof -
   proof -
     have "trace (a ** (mat 1 - outer_prod x x))
         = trace (a ** mat 1) - trace (a ** outer_prod x x)"
-      by (simp add: matrix_mul_diff_right trace_diff_matrix)
+      by (simp add: matrix_mul_diff_right trace_sub)
     also have "\<dots> = trace a - x \<bullet> (a *v x)"
       by (simp add: trace_mult_rank1)
     finally show ?thesis .
@@ -206,7 +201,7 @@ proof -
   have uu: "u \<bullet> u = 1"
     using nu by (simp add: dot_square_norm)
   have "(\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v) *v u = (\<Sum>v\<in>B. g v *\<^sub>R ((v \<bullet> u) *\<^sub>R v))"
-    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector)
+    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
   also have "\<dots> = (\<Sum>v\<in>B. if v = u then g u *\<^sub>R u else 0)"
     by (intro sum.cong refl)
       (use B u in \<open>auto dest: onormal_inner_distinct\<close>)
@@ -232,7 +227,7 @@ lemma quadform_weighted_outer_sum_eq:
   shows "x \<bullet> ((\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v) *v x) = (\<Sum>v\<in>B. g v * (v \<bullet> x)^2)"
 proof -
   have "(\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v) *v x = (\<Sum>v\<in>B. g v *\<^sub>R ((v \<bullet> x) *\<^sub>R v))"
-    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector)
+    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
   then have "x \<bullet> ((\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v) *v x)
       = (\<Sum>v\<in>B. g v * ((v \<bullet> x) * (x \<bullet> v)))"
     by (simp add: inner_sum_right mult.assoc)
@@ -264,8 +259,8 @@ proof -
     using T(2) m by auto
   obtain w where w: "w \<in> T"
     and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using finite_arg_min_on[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)",
-        OF finT Tne] by metis
+    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
+        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"] by metis
   obtain i where mi: "m = Suc i"
     using m by (cases m) auto
   have cardT: "card T = Suc i"
@@ -402,17 +397,11 @@ proof -
     unfolding diff
     using le by (intro quadform_weighted_outer_sum_nonneg[OF B]) simp
   have "x \<bullet> ((N - c) *v x) = x \<bullet> (N *v x) - x \<bullet> (c *v x)"
-    by (simp add: matrix_vector_mult_diff inner_diff_right)
+    by (simp add: matrix_vector_mult_diff_rdistrib inner_diff_right)
   with nn show ?thesis
     by simp
 qed
 
-
-lemma transpose_sum_matrix:
-  fixes f :: "'a \<Rightarrow> real^'n::finite^'n"
-  assumes "finite S"
-  shows "transpose (\<Sum>u\<in>S. f u) = (\<Sum>u\<in>S. transpose (f u))"
-  using assms by (induct S) (simp_all add: transpose_add transpose_def vec_eq_iff)
 
 
 lemma transpose_weighted_outer_sum:
@@ -421,7 +410,7 @@ lemma transpose_weighted_outer_sum:
   shows "transpose (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)
        = (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)"
   using finB
-  by (simp add: transpose_sum_matrix transpose_scalar)
+  by (simp add: transpose_matrix_sum transpose_scalar)
 
 
 lemma psd_weighted_outer_sum:
@@ -635,8 +624,8 @@ proof -
     using T(2) m by auto
   obtain w where w: "w \<in> T"
     and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using finite_arg_min_on[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)",
-        OF finT Tne] by metis
+    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
+        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"] by metis
   obtain i where mi: "m = Suc i"
     using m by (cases m) auto
   have cardT: "card T = Suc i"
@@ -681,56 +670,25 @@ lemma possum_lipschitz:
   shows "\<bar>possum m A - possum m B\<bar>
        \<le> real CARD('n) * entrysum (A - B)"
 proof -
-  have fin: "finite ((\<lambda>j. kyfan j A) ` {..m})"
-    by simp
-  have ne: "(\<lambda>j. kyfan j A) ` {..m} \<noteq> {}"
-    by simp
-  have step: "\<bar>kyfan j A - kyfan j B\<bar> \<le> real CARD('n) * entrysum (A - B)"
-    if j: "j \<le> m" for j
-  proof -
-    have jn: "j \<le> CARD('n)"
-      using j m by simp
-    have "\<bar>kyfan j A - kyfan j B\<bar> \<le> real j * entrysum (A - B)"
-      by (rule kyfan_lipschitz[OF symA symB jn])
-    also have "\<dots> \<le> real CARD('n) * entrysum (A - B)"
-      using jn entrysum_nonneg[of "A - B"] by (simp add: mult_right_mono)
-    finally show ?thesis .
-  qed
-  have "possum m A \<le> possum m B + real CARD('n) * entrysum (A - B)"
-    unfolding possum_def[of m A]
-  proof (rule Max.boundedI[OF fin ne])
-    fix y assume "y \<in> (\<lambda>j. kyfan j A) ` {..m}"
-    then obtain j where j: "j \<le> m" and y: "y = kyfan j A"
+  text \<open>Each Ky Fan sum moves by at most the bound, so the maximum does too;
+    the bound is symmetric in \<open>A\<close> and \<open>B\<close>, so one half suffices.\<close>
+  have half: "possum m X \<le> possum m Y + real CARD('n) * entrysum (X - Y)"
+    if symX: "transpose X = X" and symY: "transpose Y = Y" for X Y :: "real^'n^'n"
+    unfolding possum_def[of m X]
+  proof (rule Max.boundedI)
+    fix y assume "y \<in> (\<lambda>j. kyfan j X) ` {..m}"
+    then obtain j where j: "j \<le> m" and y: "y = kyfan j X"
       by auto
-    have a: "kyfan j A \<le> kyfan j B + real CARD('n) * entrysum (A - B)"
-      using step[OF j] by simp
-    have b: "kyfan j B \<le> possum m B"
-      by (rule possum_ge_kyfan[OF j])
-    show "y \<le> possum m B + real CARD('n) * entrysum (A - B)"
-      unfolding y using a b by simp
-  qed
-  moreover have "possum m B \<le> possum m A + real CARD('n) * entrysum (A - B)"
-  proof -
-    have finB: "finite ((\<lambda>j. kyfan j B) ` {..m})"
-      by simp
-    have neB: "(\<lambda>j. kyfan j B) ` {..m} \<noteq> {}"
-      by simp
-    show ?thesis
-      unfolding possum_def[of m B]
-    proof (rule Max.boundedI[OF finB neB])
-      fix y assume "y \<in> (\<lambda>j. kyfan j B) ` {..m}"
-      then obtain j where j: "j \<le> m" and y: "y = kyfan j B"
-        by auto
-      have a: "kyfan j B \<le> kyfan j A + real CARD('n) * entrysum (A - B)"
-        using step[OF j] by simp
-      have b: "kyfan j A \<le> possum m A"
-        by (rule possum_ge_kyfan[OF j])
-      show "y \<le> possum m A + real CARD('n) * entrysum (A - B)"
-        unfolding y using a b by simp
-    qed
-  qed
-  ultimately show ?thesis
-    by simp
+    have "kyfan j X - kyfan j Y \<le> real j * entrysum (X - Y)"
+      using abs_le_D1[OF kyfan_lipschitz[OF symX symY order_trans[OF j m]]] .
+    also have "\<dots> \<le> real CARD('n) * entrysum (X - Y)"
+      using order_trans[OF j m] entrysum_nonneg[of "X - Y"] by (simp add: mult_right_mono)
+    finally show "y \<le> possum m Y + real CARD('n) * entrysum (X - Y)"
+      using possum_ge_kyfan[OF j, of Y] y by linarith
+  qed simp_all
+  show ?thesis
+    unfolding abs_le_iff
+    using half[OF symA symB] half[OF symB symA, unfolded entrysum_sym[of B A]] by linarith
 qed
 
 
@@ -1054,34 +1012,7 @@ text \<open>Assembling: \<open>M\<^sub>p\<close> is Lipschitz in \<open>p\<close
   correction coefficient \<open>c = min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> is \<open>p\<close>-independent, so it
   contributes only \<open>\<bar>c\<bar> * norm D\<close>.\<close>
 
-
-lemma entry_abs_le_norm:
-  fixes D :: "real^'n::finite^'n"
-  shows "\<bar>D $ i $ j\<bar> \<le> norm D"
-proof -
-  have "\<bar>D $ i $ j\<bar> \<le> norm (D $ i)"
-    by (rule component_le_norm_cart)
-  also have "\<dots> \<le> norm D"
-    by (rule Finite_Cartesian_Product.norm_nth_le)
-  finally show ?thesis .
-qed
-
-
-lemma entrysum_le_norm:
-  fixes D :: "real^'n::finite^'n"
-  shows "entrysum D \<le> real (CARD('n) * CARD('n)) * norm D"
-proof -
-  have "entrysum D = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>D $ i $ j\<bar>)"
-    unfolding entrysum_def by (rule refl)
-  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). norm D)"
-    by (intro sum_mono entry_abs_le_norm)
-  also have "\<dots> = real (CARD('n) * CARD('n)) * norm D"
-    by simp
-  finally show ?thesis .
-qed
-
 text \<open>Hence the bracket is Lipschitz in the norm as well.\<close>
-
 
 corollary bracket_lipschitz_norm:
   fixes A B :: "real^'n::finite^'n"
@@ -1111,14 +1042,7 @@ text \<open>\<open>continuous_on_matrix_entry\<close> lives in
 lemma continuous_on_quadform:
   fixes x :: "real^'n::finite"
   shows "continuous_on UNIV (\<lambda>a :: real^'n^'n. x \<bullet> (a *v x))"
-proof -
-  have eq: "x \<bullet> (a *v x) = (\<Sum>i\<in>UNIV. x $ i * (\<Sum>j\<in>UNIV. a $ i $ j * x $ j))"
-    for a :: "real^'n^'n"
-    unfolding inner_vec_def matrix_vector_mult_def by simp
-  show ?thesis
-    unfolding eq
-    by (intro continuous_intros continuous_on_matrix_entry continuous_on_id)
-qed
+  by (rule linear_continuous_on[OF bounded_linear_quadform])
 
 
 lemma closed_symmetric_matrices:

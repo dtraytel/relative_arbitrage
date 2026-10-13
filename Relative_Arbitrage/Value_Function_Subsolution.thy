@@ -892,7 +892,7 @@ proof -
     proof
       fix z :: "real^'n"
       have e: "z \<bullet> (((1 / \<theta> \<omega>) *\<^sub>R ?Y \<omega>) *v z) = (1 / \<theta> \<omega>) * (z \<bullet> (?Y \<omega> *v z))"
-        by (simp add: scaleR_matrix_vector)
+        by (simp add: scaleR_matrix_vector_assoc[symmetric])
       have lo: "0 \<le> (1 / \<theta> \<omega>) * (z \<bullet> (?Y \<omega> *v z))"
         using hp unfolding psd_def e[symmetric] by blast
       have hi: "(1 / \<theta> \<omega>) * (z \<bullet> (?Y \<omega> *v z)) \<le> L * (z \<bullet> z)"
@@ -959,7 +959,7 @@ proof -
       also have "\<dots> \<le> trace (((1 / \<theta> \<omega>) *\<^sub>R ?Y \<omega>) ** Pm)"
         by (rule Pi_proj_le[OF hp pj tp])
       also have "\<dots> = (1 / \<theta> \<omega>) * trace (?Y \<omega> ** Pm)"
-        by (simp add: scaleR_matrix_mult trace_scaleR)
+        by (simp add: scalar_matrix_assoc[symmetric] trace_scaleR)
       finally have "real (m - k) \<le> (1 / \<theta> \<omega>) * trace (?Y \<omega> ** Pm)" .
       then show "real (m - k) * \<theta> \<omega> \<le> trace (?Y \<omega> ** Pm)"
         using t0 by (simp add: field_simps)
@@ -1035,7 +1035,7 @@ proof -
     moreover have "0 \<le> z \<bullet> (b *v z)" for z :: "real^'n"
     proof -
       have "z \<bullet> (b *v z) = (1 / et) * (z \<bullet> (EY *v z))"
-        unfolding b_def by (simp add: scaleR_matrix_vector)
+        unfolding b_def by (simp add: scaleR_matrix_vector_assoc[symmetric])
       then show ?thesis using qlo[of z] et0 by simp
     qed
     ultimately show ?thesis unfolding psd_def by blast
@@ -1045,7 +1045,7 @@ proof -
     have "z \<bullet> (b *v z) \<le> L * (z \<bullet> z)" for z :: "real^'n"
     proof -
       have "z \<bullet> (b *v z) = (1 / et) * (z \<bullet> (EY *v z))"
-        unfolding b_def by (simp add: scaleR_matrix_vector)
+        unfolding b_def by (simp add: scaleR_matrix_vector_assoc[symmetric])
       also have "\<dots> \<le> (1 / et) * (et * (L * (z \<bullet> z)))"
         using qhi[of z] et0 by (intro mult_left_mono) auto
       also have "\<dots> = L * (z \<bullet> z)" using et0 by simp
@@ -1059,7 +1059,7 @@ proof -
     fix Pm :: "real^'n^'n"
     assume pj: "is_proj Pm" and tp: "trace Pm = real m"
     have e1: "trace (b ** Pm) = (1 / et) * trace (EY ** Pm)"
-      unfolding b_def by (simp add: scaleR_matrix_mult trace_scaleR)
+      unfolding b_def by (simp add: scalar_matrix_assoc[symmetric] trace_scaleR)
     then have e2: "et * trace (b ** Pm) = trace (EY ** Pm)"
       using et0 by (simp add: field_simps)
     have "et * real (m - k) \<le> et * trace (b ** Pm)"
@@ -1697,7 +1697,7 @@ qed
 
 section \<open>Small pointwise bounds\<close>
 
-text \<open>\<open>quadform_abs_le\<close>, \<open>axis1_inner\<close>, \<open>axis1_self\<close>, \<open>matvec_axis1\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>quadform_abs_le\<close>, \<open>axis1_self\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 section \<open>Moments at a stopping time, assembled\<close>
@@ -2324,7 +2324,7 @@ next
     have sEq: "s = et * (q \<bullet> (b *v q))"
     proof -
       have "EY *v q = et *\<^sub>R (b *v q)"
-        by (subst EYb) (simp add: scaleR_matrix_vector)
+        by (subst EYb) (simp add: scaleR_matrix_vector_assoc[symmetric])
       then have "q \<bullet> (EY *v q) = et * (q \<bullet> (b *v q))"
         by simp
       then show ?thesis using svar by simp
@@ -2772,7 +2772,7 @@ proof (intro ballI allI impI)
       have "(H + \<delta> *\<^sub>R mat 1) ** a = H ** a + (\<delta> *\<^sub>R mat 1) ** a"
         by (rule matrix_add_rdistrib)
       moreover have "(\<delta> *\<^sub>R mat 1) ** a = \<delta> *\<^sub>R a"
-        by (simp add: scaleR_matrix_mult)
+        by (simp add: scalar_matrix_assoc[symmetric])
       ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** a)
           = trace (H ** a + \<delta> *\<^sub>R a)" by simp
       have e2: "trace (H ** a + \<delta> *\<^sub>R a) = trace (H ** a) + trace (\<delta> *\<^sub>R a)"

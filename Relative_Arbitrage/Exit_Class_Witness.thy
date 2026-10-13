@@ -947,7 +947,7 @@ proof -
           \<le> trace ((1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)))"
         by (rule sconstraint_trace_ge[OF k mem])
       also have "\<dots> = (trace (snd (\<omega> t)) - trace (snd (\<omega> s))) / (t - s)"
-        by (simp add: trace_scaleR trace_diff_matrix)
+        by (simp add: trace_scaleR trace_sub)
       finally show "real (CARD('n) - k) * (t - s)
           \<le> trace (snd (\<omega> t)) - trace (snd (\<omega> s))"
         using st by (simp add: pos_le_divide_eq)
@@ -1020,7 +1020,7 @@ proof -
   qed
   have ptw: "AE \<omega> in Q. trace (outerp (fst (\<omega> t)) - snd (\<omega> t))
       + real (CARD('n) - k) * t \<le> fst (\<omega> t) \<bullet> fst (\<omega> t)"
-    using rate by eventually_elim (simp add: trace_diff_matrix trace_outerp)
+    using rate by eventually_elim (simp add: trace_sub trace_outerp)
   have "(\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
       + real (CARD('n) - k) * t
       = (\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t))

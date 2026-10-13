@@ -59,7 +59,7 @@ lemma perp_proj_fixes_perp:
   fixes p :: "real^'n::finite"
   assumes y: "p \<bullet> y = 0"
   shows "(mat 1 - rank1proj p) *v y = y"
-  by (simp add: matrix_vector_mult_diff rank1proj_annihilates_perp[OF y])
+  by (simp add: matrix_vector_mult_diff_rdistrib rank1proj_annihilates_perp[OF y])
 
 lemma Mp_apply_perp:
   fixes M :: "real^'n::finite^'n"
@@ -73,7 +73,7 @@ proof -
   have MpQ: "Mp p M = Q ** M ** Q + c *\<^sub>R rank1proj p"
     unfolding Mp_def Q_def c_def using p by simp
   have "Mp p M *v y = (Q ** M ** Q) *v y + (c *\<^sub>R rank1proj p) *v y"
-    unfolding MpQ by (rule matrix_vector_mult_add)
+    unfolding MpQ by (rule matrix_vector_mult_add_rdistrib)
   also have "\<dots> = Q *v (M *v (Q *v y)) + c *\<^sub>R (rank1proj p *v y)"
     by (simp add: matrix_vector_mul_assoc matrix_mul_assoc
         scaleR_matrix_vector_assoc[symmetric])
@@ -134,7 +134,7 @@ proof -
   have symQ: "transpose (mat 1 - rank1proj p :: real^'n^'n) = mat 1 - rank1proj p"
     by (rule symmetric_perp_proj)
   have Qp: "(mat 1 - rank1proj p) *v p = 0"
-    by (simp add: matrix_vector_mult_diff rank1proj_apply_self[OF p])
+    by (simp add: matrix_vector_mult_diff_rdistrib rank1proj_apply_self[OF p])
   have "p \<bullet> (Mp p M *v y) = p \<bullet> ((mat 1 - rank1proj p) *v (M *v y))"
     by (simp add: Mp_apply_perp[OF p y])
   also have "\<dots> = (M *v y) \<bullet> ((mat 1 - rank1proj p) *v p)"
@@ -312,8 +312,8 @@ proof -
     using T(2) m(1) by auto
   obtain w where w: "w \<in> T"
     and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using finite_arg_min_on[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)",
-        OF finT Tne] by metis
+    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
+        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"] by metis
   obtain i where mi: "m = Suc i"
     using m(1) by (cases m) auto
   have cardT: "card T = Suc i"
@@ -444,8 +444,8 @@ proof -
     using T(2) m(1) by auto
   obtain w where w: "w \<in> T"
     and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using finite_arg_min_on[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)",
-        OF finT Tne] by metis
+    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
+        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"] by metis
   obtain i where mi: "m = Suc i"
     using m(1) by (cases m) auto
   have cardT: "card T = Suc i"
@@ -703,7 +703,7 @@ lemma weighted_outer_sum_annihilates:
   shows "(\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v p = 0"
 proof -
   have "(\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v p = (\<Sum>u\<in>B. c u *\<^sub>R ((u \<bullet> p) *\<^sub>R u))"
-    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector)
+    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
   also have "\<dots> = (\<Sum>u\<in>B. 0)"
   proof (intro sum.cong refl)
     fix u assume u: "u \<in> B"

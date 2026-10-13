@@ -218,7 +218,7 @@ proof -
     using b by (auto simp: suff_volatile_def)
   have quad_add: "x \<bullet> ((b + t *\<^sub>R outer_prod u u) *v x)
       = x \<bullet> (b *v x) + t * (u \<bullet> x)\<^sup>2" for x
-    by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector
+    by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector_assoc[symmetric]
         inner_add_right power2_eq_square
         inner_commute mult_ac)
   have psd': "psd (b + t *\<^sub>R outer_prod u u)"

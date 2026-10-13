@@ -204,8 +204,6 @@ proof -
   qed
 qed
 
-text \<open>\<open>conj_mat_continuous\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 theorem test_fun_at_affine:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n" and R :: "real^'n^'n" and b x :: "real^'n"
@@ -222,7 +220,7 @@ proof -
   have distA: "dist (A x) (A y) = c * dist x y" for y
   proof -
     have "A x - A y = c *\<^sub>R (R *v (x - y))"
-      unfolding A_def by (simp add: matvec_diff_right scaleR_right_diff_distrib)
+      unfolding A_def by (simp add: matrix_vector_mult_diff_distrib scaleR_right_diff_distrib)
     then show ?thesis
       unfolding dist_norm using c0
       by (simp add: norm_orthogonal_matrix_vector[OF orth])
@@ -298,10 +296,10 @@ proof -
         = ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) *v h" for h :: "real^'n"
     proof -
       have e1: "H *v (c *\<^sub>R (R *v h)) = c *\<^sub>R (H *v (R *v h))"
-        by (rule matvec_scaleR_right)
+        by (rule matrix_vector_mult_scaleR)
       have e2: "transpose R *v (c *\<^sub>R (H *v (R *v h)))
           = c *\<^sub>R (transpose R *v (H *v (R *v h)))"
-        by (rule matvec_scaleR_right)
+        by (rule matrix_vector_mult_scaleR)
       have e3: "transpose R *v (H *v (R *v h)) = (transpose R ** H ** R) *v h"
         by (metis matrix_vector_mul_assoc)
       have e4: "((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) *v h
@@ -403,9 +401,9 @@ proof -
       fix h :: "real^'n"
       have "c *\<^sub>R (transpose R *v (G (A y) *v (c *\<^sub>R (R *v h))))
           = c *\<^sub>R (transpose R *v (c *\<^sub>R (G (A y) *v (R *v h))))"
-        by (simp add: matvec_scaleR_right)
+        by (simp add: matrix_vector_mult_scaleR)
       also have "\<dots> = (c * c) *\<^sub>R (transpose R *v (G (A y) *v (R *v h)))"
-        by (simp add: matvec_scaleR_right)
+        by (simp add: matrix_vector_mult_scaleR)
       also have "\<dots> = (c * c) *\<^sub>R ((transpose R ** G (A y) ** R) *v h)"
         by (simp add: matrix_vector_mul_assoc matrix_mul_assoc)
       also have "\<dots> = ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)) *v h"
@@ -427,7 +425,7 @@ proof -
       by (simp add: transpose_scalar)
   next
     show "continuous_on UNIV (\<lambda>y. (c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R))"
-      using conj_mat_continuous[OF GA] by (intro continuous_intros)
+      using bounded_linear.continuous_on[OF matmul_sandwich_blin[of "transpose R"] GA, simplified] by (intro continuous_intros)
   next
     show "(c\<^sup>2) *\<^sub>R (transpose R ** G (A x) ** R)
         = (c\<^sup>2) *\<^sub>R (transpose R ** H ** R)" by (simp add: G(5))
@@ -806,7 +804,7 @@ proof -
             - t * (\<delta> * (v \<bullet> v))"
       proof -
         have m1: "(H - \<delta> *\<^sub>R mat 1) *v v = H *v v - \<delta> *\<^sub>R v"
-          by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector
+          by (simp add: matrix_vector_mult_diff_rdistrib scaleR_matrix_vector_assoc[symmetric]
               )
         have m2: "H *v (t *\<^sub>R v) = t *\<^sub>R (H *v v)"
           by (simp add: matrix_vector_mult_scaleR)
@@ -931,7 +929,7 @@ proof -
           = (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v - t * (\<delta> * (v \<bullet> v))"
       proof -
         have m1: "(H + \<delta> *\<^sub>R mat 1) *v v = H *v v + \<delta> *\<^sub>R v"
-          by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector
+          by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector_assoc[symmetric]
               )
         have m2: "H *v (t *\<^sub>R v) = t *\<^sub>R (H *v v)"
           by (simp add: matrix_vector_mult_scaleR)
@@ -1004,11 +1002,11 @@ proof -
   proof -
     have e1: "(H - \<epsilon> *\<^sub>R mat 1) *v (z - x) = H *v (z - x) - \<epsilon> *\<^sub>R (z - x)"
       by (simp add: matrix_vector_mult_diff_rdistrib
-          scaleR_matrix_vector)
+          scaleR_matrix_vector_assoc[symmetric])
     have e2: "(H - (\<epsilon>/2) *\<^sub>R mat 1) *v (z - x)
         = H *v (z - x) - (\<epsilon>/2) *\<^sub>R (z - x)"
       by (simp add: matrix_vector_mult_diff_rdistrib
-          scaleR_matrix_vector)
+          scaleR_matrix_vector_assoc[symmetric])
     have i1: "(z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))
         = (z - x) \<bullet> (H *v (z - x)) - \<epsilon> * ((z - x) \<bullet> (z - x))"
       unfolding e1 by (simp add: inner_diff_right)
@@ -1269,8 +1267,7 @@ qed
 
 subsection \<open>Test functions compose with invertible affine maps\<close>
 
-text \<open>\<open>matvec_add_right'\<close> is \<open>matvec_add_right\<close> from
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>matvec_add_right'\<close> is HOL-Analysis's \<open>matrix_vector_right_distrib\<close>.\<close>
 
 text \<open>\<open>affine_linear\<close>, \<open>affine_has_derivative\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
