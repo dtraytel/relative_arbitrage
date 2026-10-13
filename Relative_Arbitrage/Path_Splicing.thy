@@ -168,47 +168,21 @@ lemma Lipschitz_pfut:
   assumes r: "0 \<le> r" and rT: "r \<le> T"
   shows "Lipschitz_continuous_map (path_metric T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) metric)
       (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (pfut r T)"
-  unfolding Lipschitz_continuous_map_def
-proof (intro conjI)
-  show "pfut r T \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-      \<rightarrow> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    by (intro funcsetI pfut_in_mspace[OF r rT])
-  have T0: "0 \<le> T" using r rT by simp
-  have Tr: "0 \<le> T - r" using rT by simp
-  have key: "mdist (path_metric (T - r)) (pfut r T f) (pfut r T g)
-      \<le> 2 * mdist (path_metric T) f g"
-    if f: "f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      and g: "g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)" for f g
-  proof -
-    have sf: "pfut r T f \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by (rule pfut_in_mspace[OF r rT f])
-    have sg: "pfut r T g \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by (rule pfut_in_mspace[OF r rT g])
-    have pw: "\<forall>t\<in>{0..T}. dist (f t) (g t) \<le> mdist (path_metric T) f g"
-      using path_mdist_le_iff_all[OF T0 f g] by blast
-    have pws: "dist (pfut r T f s) (pfut r T g s) \<le> 2 * mdist (path_metric T) f g"
-      if s: "s \<in> {0..T - r}" for s
-    proof -
-      have rs: "r + s \<in> {0..T}" using s r rT by simp
-      have r0: "r \<in> {0..T}" using r rT by simp
-      have "dist (pfut r T f s) (pfut r T g s)
-          = dist (f (r + s) - f r) (g (r + s) - g r)"
-        using s by (simp add: pfut_apply)
-      also have "\<dots> = norm ((f (r + s) - g (r + s)) - (f r - g r))"
-        by (simp add: dist_norm algebra_simps)
-      also have "\<dots> \<le> norm (f (r + s) - g (r + s)) + norm (f r - g r)"
-        by (rule norm_triangle_ineq4)
-      also have "\<dots> = dist (f (r + s)) (g (r + s)) + dist (f r) (g r)"
-        by (simp add: dist_norm)
-      finally show ?thesis using bspec[OF pw rs] bspec[OF pw r0] by simp
-    qed
-    show ?thesis using path_mdist_le_iff_all[OF Tr sf sg] pws by blast
-  qed
-  show "\<exists>B. \<forall>f\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-      \<forall>g\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-        mdist (path_metric (T - r)) (pfut r T f) (pfut r T g)
-          \<le> B * mdist (path_metric T) f g"
-    by (intro exI[of _ 2] ballI key)
+proof (rule Lipschitz_path_mapI[OF _ pfut_in_mspace[OF r rT], where B = 2])
+  show "0 \<le> T - r" using rT by simp
+  fix f g :: "real \<Rightarrow> 'a \<times> 'b" and s :: real
+  assume f: "f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and g: "g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and s: "s \<in> {0..T - r}"
+  have rs: "r + s \<in> {0..T}" and r0: "r \<in> {0..T}" using s r rT by auto
+  have "dist (pfut r T f s) (pfut r T g s) = dist (f (r + s) - f r) (g (r + s) - g r)"
+    using s by (simp add: pfut_apply)
+  also have "\<dots> = norm ((f (r + s) - g (r + s)) - (f r - g r))"
+    by (simp add: dist_norm algebra_simps)
+  also have "\<dots> \<le> dist (f (r + s)) (g (r + s)) + dist (f r) (g r)"
+    unfolding dist_norm by (rule norm_triangle_ineq4)
+  finally show "dist (pfut r T f s) (pfut r T g s) \<le> 2 * mdist (path_metric T) f g"
+    using path_dist_le_mdist[OF f g rs] path_dist_le_mdist[OF f g r0] by linarith
 qed
 
 lemma pshift_zero:
@@ -281,42 +255,18 @@ lemma Lipschitz_pshift:
   assumes T: "0 \<le> T"
   shows "Lipschitz_continuous_map (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) metric)
       (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (pshift T x)"
-  unfolding Lipschitz_continuous_map_def
-proof (intro conjI)
-  show "pshift T x \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-      \<rightarrow> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    by (intro funcsetI pshift_in_mspace)
-  have key: "mdist (path_metric T) (pshift T x f) (pshift T x g)
-      \<le> 1 * mdist (path_metric T) f g"
-    if f: "f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      and g: "g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)" for f g
-  proof -
-    have sf: "pshift T x f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by (rule pshift_in_mspace[OF f])
-    have sg: "pshift T x g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by (rule pshift_in_mspace[OF g])
-    have pw: "\<forall>t\<in>{0..T}. dist (f t) (g t) \<le> mdist (path_metric T) f g"
-      using path_mdist_le_iff_all[OF T f g] by blast
-    have pws: "dist (pshift T x f t) (pshift T x g t)
-        \<le> mdist (path_metric T) f g" if t: "t \<in> {0..T}" for t
-    proof -
-      have "dist (pshift T x f t) (pshift T x g t)
-          = dist (x + fst (f t), snd (f t)) (x + fst (g t), snd (g t))"
-        using t by (simp add: pshift_def)
-      also have "\<dots> = dist (f t) (g t)"
-        by (simp add: dist_prod_def dist_norm)
-      finally show ?thesis using bspec[OF pw t] by simp
-    qed
-    have "mdist (path_metric T) (pshift T x f) (pshift T x g)
-        \<le> mdist (path_metric T) f g"
-      using path_mdist_le_iff_all[OF T sf sg] pws by blast
-    then show ?thesis by simp
-  qed
-  show "\<exists>B. \<forall>f\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-      \<forall>g\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-        mdist (path_metric T) (pshift T x f) (pshift T x g)
-          \<le> B * mdist (path_metric T) f g"
-    by (intro exI[of _ 1] ballI key)
+proof (rule Lipschitz_path_mapI[OF T pshift_in_mspace, where B = 1])
+  fix f g :: "real \<Rightarrow> 'a \<times> 'b" and t :: real
+  assume f: "f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and g: "g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and t: "t \<in> {0..T}"
+  have "dist (pshift T x f t) (pshift T x g t)
+      = dist (x + fst (f t), snd (f t)) (x + fst (g t), snd (g t))"
+    using t by (simp add: pshift_def)
+  also have "\<dots> = dist (f t) (g t)"
+    by (simp add: dist_prod_def dist_norm)
+  finally show "dist (pshift T x f t) (pshift T x g t) \<le> 1 * mdist (path_metric T) f g"
+    using path_dist_le_mdist[OF f g t] by simp
 qed
 
 lemma padd_measurable:
@@ -901,44 +851,16 @@ lemma Lipschitz_pfst:
   assumes T: "0 \<le> T"
   shows "Lipschitz_continuous_map (path_metric T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) metric)
       (path_metric T :: (real \<Rightarrow> 'a) metric) (pfst T)"
-  unfolding Lipschitz_continuous_map_def
-proof (intro conjI)
-  show "pfst T \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-      \<rightarrow> mspace (path_metric T :: (real \<Rightarrow> 'a) metric)"
-    by (intro funcsetI pfst_mspace[OF T])
-  have key: "mdist (path_metric T :: (real \<Rightarrow> 'a) metric)
-        (pfst T \<omega>) (pfst T \<omega>')
+proof (rule Lipschitz_path_mapI[OF T pfst_mspace[OF T], where B = 1])
+  fix \<omega> \<omega>' :: "real \<Rightarrow> 'a \<times> 'b" and t :: real
+  assume w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and w': "\<omega>' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and t: "t \<in> {0..T}"
+  have "dist (fst (\<omega> t)) (fst (\<omega>' t)) \<le> dist (\<omega> t) (\<omega>' t)"
+    by (rule dist_fst_le)
+  then show "dist (pfst T \<omega> t) (pfst T \<omega>' t)
       \<le> 1 * mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<omega> \<omega>'"
-    if w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      and w': "\<omega>' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)" for \<omega> \<omega>'
-  proof -
-    have rw: "pfst T \<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'a) metric)"
-      by (rule pfst_mspace[OF T w])
-    have rw': "pfst T \<omega>' \<in> mspace (path_metric T :: (real \<Rightarrow> 'a) metric)"
-      by (rule pfst_mspace[OF T w'])
-    have pw: "\<forall>t\<in>{0..T}. dist (\<omega> t) (\<omega>' t)
-        \<le> mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<omega> \<omega>'"
-      using path_mdist_le_iff_all[OF T w w'] by blast
-    have pwr: "dist (pfst T \<omega> t) (pfst T \<omega>' t)
-        \<le> mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<omega> \<omega>'"
-      if t: "t \<in> {0..T}" for t
-    proof -
-      have "dist (fst (\<omega> t)) (fst (\<omega>' t)) \<le> dist (\<omega> t) (\<omega>' t)"
-        by (rule dist_fst_le)
-      then show ?thesis using bspec[OF pw t] t by (simp add: pfst_def)
-    qed
-    have "mdist (path_metric T :: (real \<Rightarrow> 'a) metric)
-          (pfst T \<omega>) (pfst T \<omega>')
-        \<le> mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<omega> \<omega>'"
-      using path_mdist_le_iff_all[OF T rw rw'] pwr by blast
-    then show ?thesis by simp
-  qed
-  show "\<exists>B. \<forall>\<omega>\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-      \<forall>\<omega>'\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-        mdist (path_metric T :: (real \<Rightarrow> 'a) metric)
-            (pfst T \<omega>) (pfst T \<omega>')
-          \<le> B * mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<omega> \<omega>'"
-    by (intro exI[of _ 1] ballI key)
+    using path_dist_le_mdist[OF w w' t] t by (simp add: pfst_def)
 qed
 
 lemma pexit_pfst: "pexit S K (pfst S \<omega>) = pexit S K (\<lambda>t. fst (\<omega> t))"
@@ -1079,59 +1001,40 @@ lemma Lipschitz_pglue:
         (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
       (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
       (\<lambda>p. pglue r T (fst p) (snd p))"
-  unfolding Lipschitz_continuous_map_def
-proof (intro conjI)
-  show "(\<lambda>p. pglue r T (fst p) (snd p))
-      \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-          (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
-        \<rightarrow> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    using pglue_in_mspace[OF r rT] by (intro funcsetI) auto
-  show "\<exists>B. \<forall>p \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-          (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)).
-      \<forall>q \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-          (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)).
-        mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-            ((\<lambda>p. pglue r T (fst p) (snd p)) p) ((\<lambda>p. pglue r T (fst p) (snd p)) q)
-          \<le> B * mdist (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-              (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) p q"
-  proof (intro exI[of _ 3] ballI)
-    fix p q :: "(real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b)"
-    assume p: "p \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
-      and q: "q \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
-    from p have p1: "fst p \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      and p2: "snd p \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by auto
-    from q have q1: "fst q \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      and q2: "snd q \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by auto
-    let ?a = "mdist (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (fst p) (fst q)"
-    let ?b = "mdist (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (snd p) (snd q)"
-    let ?pd = "mdist (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) p q"
-    have pdeq: "?pd = sqrt (?a\<^sup>2 + ?b\<^sup>2)"
-      by (simp add: prod_dist_def case_prod_unfold)
-    have c1: "?a \<le> ?pd"
-    proof -
-      have "?a = sqrt (?a\<^sup>2)" by simp
-      also have "\<dots> \<le> sqrt (?a\<^sup>2 + ?b\<^sup>2)" by (simp add: real_sqrt_le_mono)
-      finally show ?thesis using pdeq by simp
-    qed
-    have c2: "?b \<le> ?pd"
-    proof -
-      have "?b = sqrt (?b\<^sup>2)" by simp
-      also have "\<dots> \<le> sqrt (?a\<^sup>2 + ?b\<^sup>2)" by (simp add: real_sqrt_le_mono)
-      finally show ?thesis using pdeq by simp
-    qed
-    have "mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (pglue r T (fst p) (snd p)) (pglue r T (fst q) (snd q)) \<le> ?a + 2 * ?b"
-      by (rule mdist_pglue_le[OF r rT p1 q1 p2 q2])
-    also have "\<dots> \<le> 3 * ?pd" using c1 c2 by simp
-    finally show "mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        ((\<lambda>p. pglue r T (fst p) (snd p)) p) ((\<lambda>p. pglue r T (fst p) (snd p)) q)
-        \<le> 3 * ?pd" by simp
-  qed
+proof (rule Lipschitz_path_mapI[where B = 3])
+  show "0 \<le> T" using r rT by simp
+  show "pglue r T (fst p) (snd p) \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    if "p \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))" for p
+    using pglue_in_mspace[OF r rT] that by auto
+  fix p q :: "(real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b)" and t :: real
+  assume p: "p \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+      (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
+    and q: "q \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+      (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
+    and t: "t \<in> {0..T}"
+  from p have p1: "fst p \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and p2: "snd p \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    by auto
+  from q have q1: "fst q \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and q2: "snd q \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    by auto
+  let ?a = "mdist (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (fst p) (fst q)"
+  let ?b = "mdist (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (snd p) (snd q)"
+  let ?pd = "mdist (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+      (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) p q"
+  have pdeq: "?pd = sqrt (?a\<^sup>2 + ?b\<^sup>2)"
+    by (simp add: prod_dist_def case_prod_unfold)
+  have c: "?a \<le> ?pd" "?b \<le> ?pd"
+    unfolding pdeq by (rule real_sqrt_sum_squares_ge1 real_sqrt_sum_squares_ge2)+
+  have "dist (pglue r T (fst p) (snd p) t) (pglue r T (fst q) (snd q) t)
+      \<le> mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+        (pglue r T (fst p) (snd p)) (pglue r T (fst q) (snd q))"
+    by (rule path_dist_le_mdist[OF pglue_in_mspace[OF r rT p1 p2]
+          pglue_in_mspace[OF r rT q1 q2] t])
+  also have "\<dots> \<le> ?a + 2 * ?b" by (rule mdist_pglue_le[OF r rT p1 q1 p2 q2])
+  also have "\<dots> \<le> 3 * ?pd" using c by linarith
+  finally show "dist (pglue r T (fst p) (snd p) t) (pglue r T (fst q) (snd q) t) \<le> 3 * ?pd" .
 qed
 
 subsection \<open>Weak convergence of the semidirect products\<close>

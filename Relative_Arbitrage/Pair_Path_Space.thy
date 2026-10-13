@@ -1237,7 +1237,7 @@ section \<open>The constraint passes to weak limits, without Skorokhod\<close>
 
 text \<open>The paper passes the covariation constraint to the limit law via
   Skorokhod's representation theorem; this instead uses the closed-set half
-  of the portmanteau theorem (\<open>weak_conv_closed_full_mass\<close>). For fixed
+  of the portmanteau theorem (\<open>weak_conv_closed_full_measure\<close>). For fixed
   times \<open>s < t\<close> the difference quotient is a continuous function of the
   path and the constraint set is closed, so
   \<open>{\<omega>. (Y t \<omega> - Y s \<omega>)/(t - s) \<in> S}\<close> is closed and has full mass under

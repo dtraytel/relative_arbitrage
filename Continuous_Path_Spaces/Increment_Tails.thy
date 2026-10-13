@@ -51,6 +51,37 @@ proof -
   thus ?thesis by (simp add: seteq)
 qed
 
+text \<open>A vector is long only if some coordinate is: the tail of the norm is at
+  most the sum of the coordinate tails at the level divided by the dimension.\<close>
+
+lemma norm_tail_le_coord_tails:
+  fixes Y :: "'a \<Rightarrow> real^'n::finite"
+  assumes P: "prob_space M"
+    and Ym[measurable]: "\<And>i. (\<lambda>\<omega>. Y \<omega> $ i) \<in> borel_measurable M"
+    and l: "0 < l"
+  shows "measure M {\<omega> \<in> space M. l \<le> norm (Y \<omega>)}
+    \<le> (\<Sum>i\<in>UNIV. measure M {\<omega> \<in> space M. l / real CARD('n) \<le> \<bar>Y \<omega> $ i\<bar>})"
+proof -
+  interpret P: prob_space M by (rule P)
+  let ?E = "\<lambda>i. {\<omega> \<in> space M. l / real CARD('n) \<le> \<bar>Y \<omega> $ i\<bar>}"
+  have n0: "0 < real CARD('n)" by (simp add: card_gt_0_iff)
+  have Em: "?E i \<in> sets M" for i by measurable
+  have "{\<omega> \<in> space M. l \<le> norm (Y \<omega>)} \<subseteq> (\<Union>i. ?E i)"
+  proof (intro subsetI, rule ccontr)
+    fix \<omega> assume w: "\<omega> \<in> {\<omega> \<in> space M. l \<le> norm (Y \<omega>)}" and "\<omega> \<notin> (\<Union>i. ?E i)"
+    then have "\<bar>Y \<omega> $ i\<bar> < l / real CARD('n)" for i by (auto simp: not_le)
+    then have "(\<Sum>i\<in>UNIV. \<bar>Y \<omega> $ i\<bar>) < (\<Sum>i\<in>(UNIV :: 'n set). l / real CARD('n))"
+      by (intro sum_strict_mono) auto
+    also have "\<dots> = l" using n0 by simp
+    finally show False using norm_le_l1_cart[of "Y \<omega>"] w by simp
+  qed
+  then have "measure M {\<omega> \<in> space M. l \<le> norm (Y \<omega>)} \<le> measure M (\<Union>i. ?E i)"
+    using Em by (intro P.finite_measure_mono) auto
+  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. measure M (?E i))"
+    by (rule measure_UNION_le) (use Em in auto)
+  finally show ?thesis .
+qed
+
 subsection \<open>The tail bound at one partition level\<close>
 
 text \<open>

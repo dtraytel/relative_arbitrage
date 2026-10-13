@@ -116,6 +116,139 @@ qed
 
 subsection \<open>The per-law bound: mass outside the H\"older ball\<close>
 
+text \<open>
+  The bound is proved once for paths in a Euclidean space and read
+  componentwise along the basis. The bad event is the union of the
+  component bad events (factor \<open>DIM('b)\<close> by the union bound); on its
+  complement every component is H\"older, so the path is H\"older with
+  constant \<open>DIM('b) * holder_const \<gamma> T n\<close> via \<open>norm_le_l1\<close>, and the
+  compact ball comes from \<open>compactin_path_holder_ball\<close>. The real-valued
+  and the \<open>\<real>\<^sup>n\<close>-valued forms are its instances.
+\<close>
+
+theorem path_law_holder_ball_bound_basis:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::euclidean_space" and M :: "'a measure" and T C \<gamma> :: real
+    and x :: 'b and n :: nat
+  assumes P: "prob_space M"
+    and T0: "0 \<le> T"
+    and g0: "0 < \<gamma>" and g2: "\<gamma> < 1/4"
+    and Xm: "\<And>u. 0 \<le> u \<Longrightarrow> X u \<in> borel_measurable M"
+    and cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..T} (\<lambda>t. X t \<omega>)"
+    and start: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> X 0 \<omega> = x"
+    and int4: "\<And>b u v. b \<in> Basis \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        integrable M (\<lambda>\<omega>. (X v \<omega> \<bullet> b - X u \<omega> \<bullet> b)^4)"
+    and mom: "\<And>b u v. b \<in> Basis \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        (\<integral>\<omega>. (X v \<omega> \<bullet> b - X u \<omega> \<bullet> b)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+  shows "measure (path_law M X T)
+      (space (path_law M X T)
+        - {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+             f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
+               norm (f t - f s)
+                 \<le> real DIM('b) * holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)})
+    \<le> real DIM('b)
+        * (8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>))))"
+proof -
+  interpret P: prob_space M by (rule P)
+  let ?PS = "(path_borel T :: (real \<Rightarrow> 'b) measure)"
+  define c where "c = real DIM('b) * holder_const \<gamma> T n"
+  define K where "K = {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+      f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
+        norm (f t - f s) \<le> c * \<bar>t - s\<bar> powr \<gamma>)}"
+  define pf where "pf = (\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..T})"
+  have g1': "\<gamma> \<le> 1" using g2 by linarith
+  have c0: "0 \<le> c"
+    unfolding c_def
+    by (intro mult_nonneg_nonneg holder_const_nonneg[OF g0]) simp
+  have Xmi: "(\<lambda>\<omega>. X u \<omega> \<bullet> b) \<in> borel_measurable M" if "0 \<le> u" for u b
+    by (intro borel_measurable_inner Xm[OF that] borel_measurable_const)
+  have Xm': "X t \<in> borel_measurable M" if "t \<in> {0..T}" for t
+    using that by (intro Xm) simp
+  have pfm: "pf \<in> M \<rightarrow>\<^sub>M ?PS"
+    unfolding pf_def by (rule pathify_measurable[OF T0 Xm' cont])
+  have cK: "compactin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) K"
+    unfolding K_def by (rule compactin_path_holder_ball[OF T0 g0 c0])
+  have haus: "Hausdorff_space (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+    unfolding mtopology_of_def
+    by (rule Metric_space.Hausdorff_space_mtopology[OF Metric_space_mspace_mdist])
+  have KD: "space ?PS - K \<in> sets ?PS"
+    by (rule sets.compl_sets[OF borel_of_closed[OF compactin_imp_closedin[OF haus cK]]])
+  define Bad where "Bad = (\<lambda>b. {\<omega> \<in> space M. \<exists>j\<ge>n. \<exists>k\<in>{1..\<lfloor>2^j * T\<rfloor>}.
+      2 powr (-\<gamma>*real j)
+        \<le> \<bar>X (real_of_int k / 2^j) \<omega> \<bullet> b - X (real_of_int (k - 1) / 2^j) \<omega> \<bullet> b\<bar>})"
+  have BadS: "Bad b \<in> sets M" for b
+    unfolding Bad_def
+    by (intro dyadic_bad_event_sets[where X = "\<lambda>u \<omega>. X u \<omega> \<bullet> b"] Xmi)
+  have sub: "pf -` (space ?PS - K) \<inter> space M \<subseteq> (\<Union>b\<in>Basis. Bad b)"
+  proof
+    fix \<omega> assume A: "\<omega> \<in> pf -` (space ?PS - K) \<inter> space M"
+    have w: "\<omega> \<in> space M" using A by blast
+    have notK: "pf \<omega> \<notin> K" using A by blast
+    show "\<omega> \<in> (\<Union>b\<in>Basis. Bad b)"
+    proof (rule ccontr)
+      assume nB: "\<omega> \<notin> (\<Union>b\<in>Basis. Bad b)"
+      have coordH: "\<bar>X t \<omega> \<bullet> b - X s \<omega> \<bullet> b\<bar> \<le> holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>"
+        if b: "b \<in> Basis" and s: "s \<in> {0..T}" and t: "t \<in> {0..T}" for b and s t :: real
+      proof (rule holder_of_good_dyadics[where f = "\<lambda>t. X t \<omega> \<bullet> b", OF T0 g0 g1' _ _ t s])
+        show "continuous_on {0..T} (\<lambda>t. X t \<omega> \<bullet> b)"
+          by (intro continuous_on_inner cont[OF w] continuous_on_const)
+        fix j k assume "n \<le> j" "k \<in> {1..\<lfloor>2^j * T\<rfloor>}"
+        then have "\<not> 2 powr (-\<gamma>*real j)
+            \<le> \<bar>X (real_of_int k / 2^j) \<omega> \<bullet> b - X (real_of_int (k - 1) / 2^j) \<omega> \<bullet> b\<bar>"
+          using nB w b unfolding Bad_def by blast
+        then show "\<bar>X (real_of_int k / 2^j) \<omega> \<bullet> b - X (real_of_int (k - 1) / 2^j) \<omega> \<bullet> b\<bar>
+            \<le> 2 powr (-\<gamma>*real j)" by linarith
+      qed
+      have vecH: "norm (pf \<omega> t - pf \<omega> s) \<le> c * \<bar>t - s\<bar> powr \<gamma>"
+        if s: "s \<in> {0..T}" and t: "t \<in> {0..T}" for s t
+      proof -
+        have "norm (X t \<omega> - X s \<omega>) \<le> (\<Sum>b\<in>Basis. \<bar>(X t \<omega> - X s \<omega>) \<bullet> b\<bar>)"
+          by (rule norm_le_l1)
+        also have "\<dots> = (\<Sum>b\<in>Basis. \<bar>X t \<omega> \<bullet> b - X s \<omega> \<bullet> b\<bar>)"
+          by (simp add: inner_diff_left)
+        also have "\<dots> \<le> (\<Sum>b\<in>(Basis::'b set). holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)"
+          by (intro sum_mono coordH[OF _ s t])
+        also have "\<dots> = c * \<bar>t - s\<bar> powr \<gamma>"
+          unfolding c_def by simp
+        finally show ?thesis using s t unfolding pf_def by simp
+      qed
+      have f0: "pf \<omega> 0 = x"
+        unfolding pf_def using T0 start[OF w] by simp
+      have pfin: "pf \<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+        unfolding pf_def by (rule mspace_path_metricI[OF cont[OF w]])
+      have "pf \<omega> \<in> K"
+        unfolding K_def using pfin f0 vecH by auto
+      with notK show False by contradiction
+    qed
+  qed
+  have UB: "(\<Union>b\<in>Basis. Bad b) \<in> sets M"
+    by (intro sets.countable_UN'' BadS countable_finite[OF finite_Basis])
+  have pl: "path_law M X T = distr M ?PS pf"
+    unfolding path_law_def pf_def by (rule refl)
+  have "measure (path_law M X T) (space (path_law M X T) - K)
+      = measure (distr M ?PS pf) (space ?PS - K)"
+    unfolding pl by simp
+  also have "\<dots> = measure M (pf -` (space ?PS - K) \<inter> space M)"
+    by (rule measure_distr[OF pfm KD])
+  also have "\<dots> \<le> measure M (\<Union>b\<in>Basis. Bad b)"
+    by (rule P.finite_measure_mono[OF sub UB])
+  also have "\<dots> \<le> (\<Sum>b\<in>(Basis::'b set). measure M (Bad b))"
+    by (rule P.finite_measure_subadditive_finite) (auto intro: BadS)
+  also have "\<dots> \<le> (\<Sum>b\<in>(Basis::'b set).
+      8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>))))"
+  proof (rule sum_mono)
+    fix b :: 'b assume b: "b \<in> Basis"
+    show "measure M (Bad b)
+        \<le> 8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>)))"
+      unfolding Bad_def
+      by (rule dyadic_bad_event_tail_mom[where X = "\<lambda>u \<omega>. X u \<omega> \<bullet> b",
+            OF P Xmi int4[OF b] mom[OF b] T0 g2])
+  qed
+  also have "\<dots> = real DIM('b)
+      * (8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>))))"
+    by simp
+  finally show ?thesis unfolding K_def c_def .
+qed
+
 theorem path_law_holder_ball_bound:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and M :: "'a measure" and T C \<gamma> x :: real and n :: nat
   assumes P: "prob_space M"
@@ -134,244 +267,9 @@ theorem path_law_holder_ball_bound:
              f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
                norm (f t - f s) \<le> holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)})
     \<le> 8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>)))"
-proof -
-  interpret P: prob_space M by (rule P)
-  let ?PS = "(path_borel T :: (real \<Rightarrow> real) measure)"
-  define K where "K = {f \<in> mspace (path_metric T :: (real \<Rightarrow> real) metric).
-      f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
-        norm (f t - f s) \<le> holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)}"
-  define pf where "pf = (\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..T})"
-  have g1': "\<gamma> \<le> 1" using g2 by linarith
-  have Xm': "X t \<in> borel_measurable M" if "t \<in> {0..T}" for t
-    using that by (intro Xm) simp
-  have pfm: "pf \<in> M \<rightarrow>\<^sub>M ?PS"
-    unfolding pf_def by (rule pathify_measurable[OF T0 Xm' cont])
-  have cK: "compactin (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric)) K"
-    unfolding K_def
-    by (rule compactin_path_holder_ball[OF T0 g0 holder_const_nonneg[OF g0]])
-  have haus: "Hausdorff_space (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))"
-    unfolding mtopology_of_def
-    by (rule Metric_space.Hausdorff_space_mtopology[OF Metric_space_mspace_mdist])
-  have Ksets: "K \<in> sets ?PS"
-    by (rule borel_of_closed[OF compactin_imp_closedin[OF haus cK]])
-  have KD: "space ?PS - K \<in> sets ?PS"
-    by (rule sets.compl_sets[OF Ksets])
-  have spN: "space (path_law M X T) = space ?PS"
-    unfolding path_law_def by simp
-  define Bad where "Bad = {\<omega> \<in> space M. \<exists>j\<ge>n. \<exists>k\<in>{1..\<lfloor>2^j * T\<rfloor>}.
-      2 powr (-\<gamma>*real j)
-        \<le> \<bar>X (real_of_int k / 2^j) \<omega> - X (real_of_int (k - 1) / 2^j) \<omega>\<bar>}"
-  have BadS: "Bad \<in> sets M"
-    unfolding Bad_def by (rule dyadic_bad_event_sets[OF Xm])
-  have sub: "pf -` (space ?PS - K) \<inter> space M \<subseteq> Bad"
-  proof
-    fix \<omega> assume A: "\<omega> \<in> pf -` (space ?PS - K) \<inter> space M"
-    have w: "\<omega> \<in> space M" using A by blast
-    have notK: "pf \<omega> \<notin> K" using A by blast
-    show "\<omega> \<in> Bad"
-    proof (rule ccontr)
-      assume nB: "\<omega> \<notin> Bad"
-      have good: "\<bar>X (real_of_int k / 2^j) \<omega> - X (real_of_int (k - 1) / 2^j) \<omega>\<bar>
-          \<le> 2 powr (-\<gamma>*real j)"
-        if jk: "n \<le> j" "k \<in> {1..\<lfloor>2^j * T\<rfloor>}" for j k
-      proof -
-        have "\<not> 2 powr (-\<gamma>*real j)
-            \<le> \<bar>X (real_of_int k / 2^j) \<omega> - X (real_of_int (k - 1) / 2^j) \<omega>\<bar>"
-          using nB w jk unfolding Bad_def by blast
-        thus ?thesis by linarith
-      qed
-      have k0: "0 \<le> real_of_int (k - 1) / 2^j" if "k \<in> {1..\<lfloor>2^j * T\<rfloor>}" for j k
-        using that by simp
-      have kk: "real_of_int (k - 1) / 2^j \<le> real_of_int k / 2^j" for j k
-        by (intro divide_right_mono) simp_all
-      have kT: "real_of_int k / 2^j \<le> T" if "k \<in> {1..\<lfloor>2^j * T\<rfloor>}" for j k
-      proof -
-        from that have "real_of_int k \<le> real_of_int \<lfloor>2^j * T\<rfloor>" by simp
-        also have "\<dots> \<le> 2^j * T" by (rule of_int_floor_le)
-        finally show ?thesis by (simp add: field_simps)
-      qed
-      have m1: "real_of_int k / 2^j \<in> {0..T}" if "k \<in> {1..\<lfloor>2^j * T\<rfloor>}" for j k
-        using k0[OF that] kk[of k j] kT[OF that] by auto
-      have m2: "real_of_int (k - 1) / 2^j \<in> {0..T}" if "k \<in> {1..\<lfloor>2^j * T\<rfloor>}" for j k
-        using k0[OF that] kk[of k j] kT[OF that] by auto
-      have contf: "continuous_on {0..T} (pf \<omega>)"
-        unfolding pf_def
-        by (rule continuous_on_cong[OF refl, THEN iffD2, OF _ cont[OF w]]) simp
-      have f0: "pf \<omega> 0 = x"
-        unfolding pf_def using T0 start[OF w] by simp
-      have goodf: "\<bar>pf \<omega> (real_of_int k / 2^j) - pf \<omega> (real_of_int (k - 1) / 2^j)\<bar>
-          \<le> 2 powr (-\<gamma>*real j)"
-        if jk: "n \<le> j" "k \<in> {1..\<lfloor>2^j * T\<rfloor>}" for j k
-        using good[OF jk] m1[OF jk(2)] m2[OF jk(2)] unfolding pf_def by simp
-      have holderf: "norm (pf \<omega> t - pf \<omega> s)
-          \<le> holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>"
-        if s: "s \<in> {0..T}" and t: "t \<in> {0..T}" for s t
-      proof -
-        have "\<bar>pf \<omega> t - pf \<omega> s\<bar> \<le> holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>"
-          by (rule holder_of_good_dyadics[OF T0 g0 g1' contf goodf t s])
-        thus ?thesis by simp
-      qed
-      have pfin: "pf \<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> real) metric)"
-        unfolding pf_def by (rule mspace_path_metricI[OF cont[OF w]])
-      have inK: "pf \<omega> \<in> K"
-        unfolding K_def using pfin f0 holderf by auto
-      with notK show False by contradiction
-    qed
-  qed
-  have pl: "path_law M X T = distr M ?PS pf"
-    unfolding path_law_def pf_def by (rule refl)
-  have "measure (path_law M X T) (space (path_law M X T) - K)
-      = measure (distr M ?PS pf) (space ?PS - K)"
-    unfolding pl by simp
-  also have "\<dots> = measure M (pf -` (space ?PS - K) \<inter> space M)"
-    by (rule measure_distr[OF pfm KD])
-  also have "\<dots> \<le> measure M Bad"
-    by (rule P.finite_measure_mono[OF sub BadS])
-  also have "\<dots> \<le> 8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>)))"
-    unfolding Bad_def
-    by (rule dyadic_bad_event_tail_mom[OF P Xm int4 mom T0 g2])
-  finally have res: "measure (path_law M X T) (space (path_law M X T) - K)
-      \<le> 8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>)))" .
-  show ?thesis by (rule res[unfolded K_def])
-qed
-
-subsection \<open>Tightness of a family of path laws\<close>
-
-theorem tight_on_set_path_laws:
-  fixes MM :: "'i \<Rightarrow> 'a measure" and XX :: "'i \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real"
-    and I :: "'i set" and T C \<gamma> x :: real
-  assumes T0: "0 \<le> T" and g0: "0 < \<gamma>" and g2: "\<gamma> < 1/4"
-    and P: "\<And>i. i \<in> I \<Longrightarrow> prob_space (MM i)"
-    and Xm: "\<And>i u. i \<in> I \<Longrightarrow> 0 \<le> u \<Longrightarrow> XX i u \<in> borel_measurable (MM i)"
-    and cont: "\<And>i \<omega>. i \<in> I \<Longrightarrow> \<omega> \<in> space (MM i) \<Longrightarrow>
-        continuous_on {0..T} (\<lambda>t. XX i t \<omega>)"
-    and start: "\<And>i \<omega>. i \<in> I \<Longrightarrow> \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x"
-    and int4: "\<And>i u v. i \<in> I \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
-        integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> - XX i u \<omega>)^4)"
-    and mom: "\<And>i u v. i \<in> I \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
-        (\<integral>\<omega>. (XX i v \<omega> - XX i u \<omega>)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
-  shows "tight_on_set (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))
-      ((\<lambda>i. path_law (MM i) (XX i) T) ` I)"
-proof -
-  have part1: "\<forall>N\<in>(\<lambda>i. path_law (MM i) (XX i) T) ` I.
-      finite_measure N
-      \<and> sets (path_borel T :: (real \<Rightarrow> real) measure)
-        = sets N"
-  proof
-    fix N assume "N \<in> (\<lambda>i. path_law (MM i) (XX i) T) ` I"
-    then obtain i where i: "i \<in> I" and Ni: "N = path_law (MM i) (XX i) T" by blast
-    have Xm': "XX i t \<in> borel_measurable (MM i)" if "t \<in> {0..T}" for t
-      using that by (intro Xm[OF i]) simp
-    have PN: "prob_space N"
-      unfolding Ni by (rule prob_space_path_law[OF P[OF i] T0 Xm' cont[OF i]])
-    have fN: "finite_measure N" by (rule prob_space.axioms(1)[OF PN])
-    have sN: "sets (path_borel T :: (real \<Rightarrow> real) measure)
-        = sets N"
-      unfolding Ni by (rule sets_path_law[symmetric])
-    show "finite_measure N
-        \<and> sets (path_borel T :: (real \<Rightarrow> real) measure)
-          = sets N"
-      using fN sN by blast
-  qed
-  have part2: "\<exists>K. compactin (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric)) K
-      \<and> (\<forall>N\<in>(\<lambda>i. path_law (MM i) (XX i) T) ` I. measure N (space N - K) < e)"
-    if e: "0 < e" for e :: real
-  proof -
-    define q where "q = 2 powr (-(1-4*\<gamma>))"
-    have q0: "0 \<le> q" unfolding q_def by simp
-    have q1: "q < 1" unfolding q_def by (rule powr_less_one) (use g2 in simp_all)
-    have lim: "(\<lambda>n. 8*C\<^sup>2*T * q^n / (1 - q)) \<longlonglongrightarrow> 0"
-    proof -
-      have e1: "(\<lambda>n. q^n) \<longlonglongrightarrow> 0" by (rule LIMSEQ_realpow_zero[OF q0 q1])
-      have e2: "(\<lambda>n. (8*C\<^sup>2*T/(1 - q)) * q^n) \<longlonglongrightarrow> 0"
-        by (rule tendsto_mult_right_zero[OF e1])
-      have e3: "(8*C\<^sup>2*T/(1 - q)) * q^n = 8*C\<^sup>2*T * q^n / (1 - q)" for n
-        by simp
-      show ?thesis using e2 unfolding e3 .
-    qed
-    obtain n where nn: "8*C\<^sup>2*T * q^n / (1 - q) < e"
-      using order_tendstoD(2)[OF lim e] by (auto simp: eventually_sequentially)
-    define K where "K = {f \<in> mspace (path_metric T :: (real \<Rightarrow> real) metric).
-        f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
-          norm (f t - f s) \<le> holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)}"
-    have cK: "compactin (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric)) K"
-      unfolding K_def
-      by (rule compactin_path_holder_ball[OF T0 g0 holder_const_nonneg[OF g0]])
-    have bnd: "measure N (space N - K) < e"
-      if N: "N \<in> (\<lambda>i. path_law (MM i) (XX i) T) ` I" for N
-    proof -
-      obtain i where i: "i \<in> I" and Ni: "N = path_law (MM i) (XX i) T"
-        using N by blast
-      have "measure N (space N - K) \<le> 8*C\<^sup>2*T * q^n / (1 - q)"
-        unfolding Ni K_def q_def
-        by (rule path_law_holder_ball_bound[OF P[OF i] T0 g0 g2 Xm[OF i]
-              cont[OF i] start[OF i] int4[OF i] mom[OF i]])
-      with nn show ?thesis by linarith
-    qed
-    show ?thesis using cK bnd by blast
-  qed
-  show ?thesis
-    unfolding tight_on_set_def using part1 part2 by blast
-qed
-
-subsection \<open>The subsequence extraction of Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, per horizon\<close>
-
-text \<open>
-  Combining the tightness theorem with the AFP's
-  \<open>tight_on_set_imp_convergent_subsequence\<close>: every sequence of laws whose
-  processes satisfy the uniform Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> package has a weakly convergent
-  subsequence on \<open>C({0..T})\<close>. This is the relative-compactness content of
-  Lemma 2.2 at a fixed horizon; the \<open>C([0,\<infinity>))\<close> statement extends it to
-  unbounded time.
-\<close>
-
-corollary path_laws_convergent_subsequence:
-  fixes MM :: "nat \<Rightarrow> 'a measure" and XX :: "nat \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real"
-    and T C \<gamma> x :: real
-  assumes T0: "0 \<le> T" and g0: "0 < \<gamma>" and g2: "\<gamma> < 1/4"
-    and P: "\<And>i. prob_space (MM i)"
-    and Xm: "\<And>i u. 0 \<le> u \<Longrightarrow> XX i u \<in> borel_measurable (MM i)"
-    and cont: "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> continuous_on {0..T} (\<lambda>t. XX i t \<omega>)"
-    and start: "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x"
-    and int4: "\<And>i u v. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
-        integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> - XX i u \<omega>)^4)"
-    and mom: "\<And>i u v. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
-        (\<integral>\<omega>. (XX i v \<omega> - XX i u \<omega>)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
-  shows "\<exists>a N. strict_mono a \<and> finite_measure N
-      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real) measure)
-      \<and> N (space N) \<le> ennreal 1
-      \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
-          (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))"
-proof (rule tight_on_set_imp_convergent_subsequence)
-  show "metrizable_space (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))"
-    unfolding mtopology_of_def
-    by (rule Metric_space.metrizable_space_mtopology[OF Metric_space_mspace_mdist])
-  show "separable_space (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))"
-    by (rule separable_path_metric)
-  show "tight_on_set (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))
-      (range (\<lambda>i. path_law (MM i) (XX i) T))"
-    by (intro tight_on_set_path_laws[OF T0 g0 g2, where x = x and C = C]
-          P Xm cont start int4 mom)
-  fix i :: nat
-  have Xm': "XX i t \<in> borel_measurable (MM i)" if "t \<in> {0..T}" for t
-    using that by (intro Xm) simp
-  have "prob_space (path_law (MM i) (XX i) T)"
-    by (rule prob_space_path_law[OF P T0 Xm' cont])
-  thus "path_law (MM i) (XX i) T (space (path_law (MM i) (XX i) T)) \<le> ennreal 1"
-    by (simp add: prob_space.emeasure_space_1)
-qed
-
-subsection \<open>The vector-valued layer\<close>
-
-text \<open>
-  The paths of \<^cite>\<open>LaiShkolnikovSoner\<close> are \<open>\<real>\<^sup>n\<close>-valued while the moment machinery above
-  is real-valued; this layer closes the gap coordinatewise. The bad event
-  is the union of the coordinate bad events (factor \<open>CARD('m)\<close> by the union
-  bound); on its complement every coordinate is H\"older, so the vector path
-  is H\"older with constant \<open>CARD('m) * holder_const \<gamma> T n\<close> via
-  \<open>norm_le_l1_cart\<close>, and the compact ball comes from
-  \<open>compactin_path_holder_ball\<close> at \<open>'b = real^'m\<close>.
-\<close>
+  by (rule path_law_holder_ball_bound_basis[where C = C, OF P T0 g0 g2 Xm cont start,
+        unfolded DIM_real of_nat_1 mult_1_left])
+    (auto simp: int4 mom)
 
 theorem path_law_holder_ball_bound_vec:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'m::finite" and M :: "'a measure" and T C \<gamma> :: real
@@ -394,130 +292,123 @@ theorem path_law_holder_ball_bound_vec:
                  \<le> real CARD('m) * holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)})
     \<le> real CARD('m)
         * (8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>))))"
-proof -
-  interpret P: prob_space M by (rule P)
-  let ?PS = "(path_borel T :: (real \<Rightarrow> real^'m) measure)"
-  define c where "c = real CARD('m) * holder_const \<gamma> T n"
-  define K where "K = {f \<in> mspace (path_metric T :: (real \<Rightarrow> real^'m) metric).
-      f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
-        norm (f t - f s) \<le> c * \<bar>t - s\<bar> powr \<gamma>)}"
-  define pf where "pf = (\<lambda>\<omega>. restrict (\<lambda>t. X t \<omega>) {0..T})"
-  have g1': "\<gamma> \<le> 1" using g2 by linarith
-  have c0: "0 \<le> c"
-    unfolding c_def
-    by (intro mult_nonneg_nonneg holder_const_nonneg[OF g0]) simp
-  have Xmi: "(\<lambda>\<omega>. X u \<omega> $ i) \<in> borel_measurable M" if "0 \<le> u" for u i
-    by (rule measurable_compose[OF Xm[OF that] borel_measurable_nth])
-  have Xm': "X t \<in> borel_measurable M" if "t \<in> {0..T}" for t
-    using that by (intro Xm) simp
-  have pfm: "pf \<in> M \<rightarrow>\<^sub>M ?PS"
-    unfolding pf_def by (rule pathify_measurable[OF T0 Xm' cont])
-  have cK: "compactin (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)) K"
-    unfolding K_def by (rule compactin_path_holder_ball[OF T0 g0 c0])
-  have haus: "Hausdorff_space (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
-    unfolding mtopology_of_def
-    by (rule Metric_space.Hausdorff_space_mtopology[OF Metric_space_mspace_mdist])
-  have Ksets: "K \<in> sets ?PS"
-    by (rule borel_of_closed[OF compactin_imp_closedin[OF haus cK]])
-  have KD: "space ?PS - K \<in> sets ?PS"
-    by (rule sets.compl_sets[OF Ksets])
-  have spN: "space (path_law M X T) = space ?PS"
-    unfolding path_law_def by simp
-  define Bad where "Bad = (\<lambda>i. {\<omega> \<in> space M. \<exists>j\<ge>n. \<exists>k\<in>{1..\<lfloor>2^j * T\<rfloor>}.
-      2 powr (-\<gamma>*real j)
-        \<le> \<bar>X (real_of_int k / 2^j) \<omega> $ i - X (real_of_int (k - 1) / 2^j) \<omega> $ i\<bar>})"
-  have BadS: "Bad i \<in> sets M" for i
-    unfolding Bad_def
-    by (intro dyadic_bad_event_sets[where X = "\<lambda>u \<omega>. X u \<omega> $ i"] Xmi)
-  have sub: "pf -` (space ?PS - K) \<inter> space M \<subseteq> (\<Union>i\<in>UNIV. Bad i)"
-  proof
-    fix \<omega> assume A: "\<omega> \<in> pf -` (space ?PS - K) \<inter> space M"
-    have w: "\<omega> \<in> space M" using A by blast
-    have notK: "pf \<omega> \<notin> K" using A by blast
-    show "\<omega> \<in> (\<Union>i\<in>UNIV. Bad i)"
-    proof (rule ccontr)
-      assume nB: "\<omega> \<notin> (\<Union>i\<in>UNIV. Bad i)"
-      have nBi: "\<omega> \<notin> Bad i" for i using nB by blast
-      have good: "\<bar>X (real_of_int k / 2^j) \<omega> $ i - X (real_of_int (k - 1) / 2^j) \<omega> $ i\<bar>
-          \<le> 2 powr (-\<gamma>*real j)"
-        if jk: "n \<le> j" "k \<in> {1..\<lfloor>2^j * T\<rfloor>}" for i j k
-      proof -
-        have "\<not> 2 powr (-\<gamma>*real j)
-            \<le> \<bar>X (real_of_int k / 2^j) \<omega> $ i - X (real_of_int (k - 1) / 2^j) \<omega> $ i\<bar>"
-          using nBi[of i] w jk unfolding Bad_def by blast
-        thus ?thesis by linarith
-      qed
-      have coordH: "\<bar>X t \<omega> $ i - X s \<omega> $ i\<bar> \<le> holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>"
-        if s: "s \<in> {0..T}" and t: "t \<in> {0..T}" for i and s t :: real
-      proof -
-        have c1: "continuous_on {0..T} (\<lambda>t. X t \<omega> $ i)"
-          by (rule continuous_on_component[OF cont[OF w]])
-        have gi: "\<And>j k. n \<le> j \<Longrightarrow> k \<in> {1..\<lfloor>2^j * T\<rfloor>} \<Longrightarrow>
-            \<bar>X (real_of_int k / 2^j) \<omega> $ i - X (real_of_int (k - 1) / 2^j) \<omega> $ i\<bar>
-              \<le> 2 powr (-\<gamma>*real j)"
-          by (rule good)
-        show ?thesis
-          by (rule holder_of_good_dyadics[OF T0 g0 g1' c1 gi t s])
-      qed
-      have vecH: "norm (pf \<omega> t - pf \<omega> s) \<le> c * \<bar>t - s\<bar> powr \<gamma>"
-        if s: "s \<in> {0..T}" and t: "t \<in> {0..T}" for s t
-      proof -
-        have pft: "pf \<omega> t = X t \<omega>" unfolding pf_def using t by simp
-        have pfs: "pf \<omega> s = X s \<omega>" unfolding pf_def using s by simp
-        have "norm (X t \<omega> - X s \<omega>) \<le> (\<Sum>i\<in>UNIV. \<bar>(X t \<omega> - X s \<omega>) $ i\<bar>)"
-          by (rule norm_le_l1_cart)
-        also have "\<dots> = (\<Sum>i\<in>UNIV. \<bar>X t \<omega> $ i - X s \<omega> $ i\<bar>)"
-          by simp
-        also have "\<dots> \<le> (\<Sum>i\<in>(UNIV::'m set). holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)"
-          by (intro sum_mono coordH[OF s t])
-        also have "\<dots> = c * \<bar>t - s\<bar> powr \<gamma>"
-          unfolding c_def by simp
-        finally show ?thesis unfolding pft pfs .
-      qed
-      have f0: "pf \<omega> 0 = x"
-        unfolding pf_def using T0 start[OF w] by simp
-      have pfin: "pf \<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> real^'m) metric)"
-        unfolding pf_def by (rule mspace_path_metricI[OF cont[OF w]])
-      have inK: "pf \<omega> \<in> K"
-        unfolding K_def using pfin f0 vecH by auto
-      with notK show False by contradiction
-    qed
-  qed
-  have UB: "(\<Union>i\<in>UNIV. Bad i) \<in> sets M"
-    by (intro sets.countable_UN'' BadS countableI_type)
-  have bnd_i: "measure M (Bad i)
-      \<le> 8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>)))" for i
-    unfolding Bad_def
-    by (intro dyadic_bad_event_tail_mom[where X = "\<lambda>u \<omega>. X u \<omega> $ i" and C = C]
-          P Xmi int4 mom T0 g2)
-  have "measure M (\<Union>i\<in>UNIV. Bad i) \<le> (\<Sum>i\<in>(UNIV::'m set). measure M (Bad i))"
-    by (rule P.finite_measure_subadditive_finite) (auto intro: BadS)
-  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV::'m set).
-      8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>))))"
-    by (intro sum_mono bnd_i)
-  also have "\<dots> = real CARD('m)
-      * (8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>))))"
-    by simp
-  finally have Ubnd: "measure M (\<Union>i\<in>UNIV. Bad i)
-      \<le> real CARD('m)
-        * (8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>))))" .
-  have pl: "path_law M X T = distr M ?PS pf"
-    unfolding path_law_def pf_def by (rule refl)
-  have "measure (path_law M X T) (space (path_law M X T) - K)
-      = measure (distr M ?PS pf) (space ?PS - K)"
-    unfolding pl by simp
-  also have "\<dots> = measure M (pf -` (space ?PS - K) \<inter> space M)"
-    by (rule measure_distr[OF pfm KD])
-  also have "\<dots> \<le> measure M (\<Union>i\<in>UNIV. Bad i)"
-    by (rule P.finite_measure_mono[OF sub UB])
-  also have "\<dots> \<le> real CARD('m)
-      * (8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>))))"
-    by (rule Ubnd)
-  finally have res: "measure (path_law M X T) (space (path_law M X T) - K)
-      \<le> real CARD('m)
-        * (8*C\<^sup>2*T * (2 powr (-(1-4*\<gamma>)))^n / (1 - 2 powr (-(1-4*\<gamma>))))" .
-  show ?thesis by (rule res[unfolded K_def c_def])
+  by (rule path_law_holder_ball_bound_basis[where C = C, OF P T0 g0 g2 Xm cont start,
+        unfolded DIM_cart DIM_real mult_1_right])
+    (auto simp: Basis_vec_def inner_axis int4 mom)
+
+subsection \<open>Tightness of a family of path laws\<close>
+
+text \<open>A family of path laws is tight as soon as, for every \<open>e\<close>, some
+  H\"older ball --- compact by @{thm [source] compactin_path_holder_ball} ---
+  carries all but \<open>e\<close> of every law's mass.\<close>
+
+theorem tight_on_set_of_holder_charge:
+  fixes \<Gamma> :: "(real \<Rightarrow> 'b::{polish_space, real_normed_vector, heine_borel}) measure set"
+    and x :: 'b
+  assumes T: "0 \<le> T" and ga: "0 < ga"
+    and fm: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> finite_measure N"
+    and st: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> sets (path_borel T :: (real \<Rightarrow> 'b) measure) = sets N"
+    and charge: "\<And>e. 0 < e \<Longrightarrow> \<exists>c. 0 \<le> c \<and> (\<forall>N\<in>\<Gamma>. measure N (space N -
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
+              norm (f t - f s) \<le> c * \<bar>t - s\<bar> powr ga)}) < e)"
+  shows "tight_on_set (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) \<Gamma>"
+  unfolding tight_on_set_def
+proof (intro conjI allI impI)
+  show "\<forall>M\<in>\<Gamma>. finite_measure M \<and> sets (path_borel T :: (real \<Rightarrow> 'b) measure) = sets M"
+    using fm st by blast
+  fix e :: real assume e: "0 < e"
+  obtain c where c: "0 \<le> c"
+    and ch: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> measure N (space N -
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
+              norm (f t - f s) \<le> c * \<bar>t - s\<bar> powr ga)}) < e"
+    using charge[OF e] by blast
+  show "\<exists>K. compactin (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric)) K
+      \<and> (\<forall>M\<in>\<Gamma>. measure M (space M - K) < e)"
+    by (intro exI[of _ "{f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
+              norm (f t - f s) \<le> c * \<bar>t - s\<bar> powr ga)}"]
+        conjI ballI compactin_path_holder_ball[OF T ga c] ch)
 qed
+
+theorem tight_on_set_path_laws_basis:
+  fixes MM :: "'i \<Rightarrow> 'a measure" and XX :: "'i \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> 'b::euclidean_space"
+    and I :: "'i set" and T C \<gamma> :: real and x :: 'b
+  assumes T0: "0 \<le> T" and g0: "0 < \<gamma>" and g2: "\<gamma> < 1/4"
+    and P: "\<And>i. i \<in> I \<Longrightarrow> prob_space (MM i)"
+    and Xm: "\<And>i u. i \<in> I \<Longrightarrow> 0 \<le> u \<Longrightarrow> XX i u \<in> borel_measurable (MM i)"
+    and cont: "\<And>i \<omega>. i \<in> I \<Longrightarrow> \<omega> \<in> space (MM i) \<Longrightarrow>
+        continuous_on {0..T} (\<lambda>t. XX i t \<omega>)"
+    and start: "\<And>i \<omega>. i \<in> I \<Longrightarrow> \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x"
+    and int4: "\<And>i b u v. i \<in> I \<Longrightarrow> b \<in> Basis \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> \<bullet> b - XX i u \<omega> \<bullet> b)^4)"
+    and mom: "\<And>i b u v. i \<in> I \<Longrightarrow> b \<in> Basis \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        (\<integral>\<omega>. (XX i v \<omega> \<bullet> b - XX i u \<omega> \<bullet> b)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+  shows "tight_on_set (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+      ((\<lambda>i. path_law (MM i) (XX i) T) ` I)"
+proof (rule tight_on_set_of_holder_charge[OF T0 g0, where x = x])
+  fix N assume "N \<in> (\<lambda>i. path_law (MM i) (XX i) T) ` I"
+  then obtain i where i: "i \<in> I" and Ni: "N = path_law (MM i) (XX i) T" by blast
+  have "prob_space N"
+    unfolding Ni by (rule prob_space_path_law[OF P[OF i] T0]) (use Xm[OF i] cont[OF i] in auto)
+  then show "finite_measure N" by (rule prob_space.axioms(1))
+  show "sets (path_borel T :: (real \<Rightarrow> 'b) measure) = sets N" unfolding Ni by simp
+next
+  fix e :: real assume e: "0 < e"
+  define q where "q = 2 powr (-(1-4*\<gamma>))"
+  have q0: "0 \<le> q" unfolding q_def by simp
+  have q1: "q < 1" unfolding q_def by (rule powr_less_one) (use g2 in simp_all)
+  have "(\<lambda>n. real DIM('b) * (8*C\<^sup>2*T * q^n / (1 - q)))
+      \<longlonglongrightarrow> real DIM('b) * (8*C\<^sup>2*T * 0 / (1 - q))"
+    by (intro tendsto_intros LIMSEQ_realpow_zero) (use q0 q1 in auto)
+  then have "(\<lambda>n. real DIM('b) * (8*C\<^sup>2*T * q^n / (1 - q))) \<longlonglongrightarrow> 0" by simp
+  then have "eventually (\<lambda>n. real DIM('b) * (8*C\<^sup>2*T * q^n / (1 - q)) < e) sequentially"
+    by (rule order_tendstoD(2)[OF _ e])
+  then obtain n where n: "real DIM('b) * (8*C\<^sup>2*T * q^n / (1 - q)) < e"
+    unfolding eventually_sequentially by blast
+  show "\<exists>c. 0 \<le> c \<and> (\<forall>N\<in>(\<lambda>i. path_law (MM i) (XX i) T) ` I. measure N (space N -
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
+              norm (f t - f s) \<le> c * \<bar>t - s\<bar> powr \<gamma>)}) < e)"
+  proof (intro exI[of _ "real DIM('b) * holder_const \<gamma> T n"] conjI ballI)
+    show "0 \<le> real DIM('b) * holder_const \<gamma> T n"
+      using holder_const_nonneg[OF g0, of T n] by simp
+    fix N assume "N \<in> (\<lambda>i. path_law (MM i) (XX i) T) ` I"
+    then obtain i where i: "i \<in> I" and Ni: "N = path_law (MM i) (XX i) T" by blast
+    have "measure N (space N -
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
+              norm (f t - f s) \<le> real DIM('b) * holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)})
+        \<le> real DIM('b) * (8*C\<^sup>2*T * q^n / (1 - q))"
+      unfolding Ni q_def
+      by (rule path_law_holder_ball_bound_basis[OF P[OF i] T0 g0 g2 Xm[OF i]
+            cont[OF i] start[OF i] int4[OF i] mom[OF i]])
+    with n show "measure N (space N -
+      {f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric).
+         f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
+              norm (f t - f s) \<le> real DIM('b) * holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)}) < e"
+      by linarith
+  qed
+qed
+
+theorem tight_on_set_path_laws:
+  fixes MM :: "'i \<Rightarrow> 'a measure" and XX :: "'i \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real"
+    and I :: "'i set" and T C \<gamma> x :: real
+  assumes T0: "0 \<le> T" and g0: "0 < \<gamma>" and g2: "\<gamma> < 1/4"
+    and P: "\<And>i. i \<in> I \<Longrightarrow> prob_space (MM i)"
+    and Xm: "\<And>i u. i \<in> I \<Longrightarrow> 0 \<le> u \<Longrightarrow> XX i u \<in> borel_measurable (MM i)"
+    and cont: "\<And>i \<omega>. i \<in> I \<Longrightarrow> \<omega> \<in> space (MM i) \<Longrightarrow>
+        continuous_on {0..T} (\<lambda>t. XX i t \<omega>)"
+    and start: "\<And>i \<omega>. i \<in> I \<Longrightarrow> \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x"
+    and int4: "\<And>i u v. i \<in> I \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> - XX i u \<omega>)^4)"
+    and mom: "\<And>i u v. i \<in> I \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        (\<integral>\<omega>. (XX i v \<omega> - XX i u \<omega>)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+  shows "tight_on_set (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))
+      ((\<lambda>i. path_law (MM i) (XX i) T) ` I)"
+  by (rule tight_on_set_path_laws_basis[where C = C, OF T0 g0 g2 P Xm cont start])
+    (auto simp: int4 mom)
 
 theorem tight_on_set_path_laws_vec:
   fixes MM :: "'i \<Rightarrow> 'a measure" and XX :: "'i \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real^'m::finite"
@@ -534,70 +425,98 @@ theorem tight_on_set_path_laws_vec:
         (\<integral>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
   shows "tight_on_set (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
       ((\<lambda>i. path_law (MM i) (XX i) T) ` I)"
+  by (rule tight_on_set_path_laws_basis[where C = C, OF T0 g0 g2 P Xm cont start])
+    (auto simp: Basis_vec_def inner_axis int4 mom)
+
+subsection \<open>The subsequence extraction of Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, per horizon\<close>
+
+text \<open>
+  Combining the tightness theorem with the AFP's
+  \<open>tight_on_set_imp_convergent_subsequence\<close>: every sequence of laws whose
+  processes satisfy the uniform Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> package has a weakly convergent
+  subsequence on \<open>C({0..T})\<close>. This is the relative-compactness content of
+  Lemma 2.2 at a fixed horizon; the \<open>C([0,\<infinity>))\<close> statement extends it to
+  unbounded time.
+\<close>
+
+corollary path_laws_convergent_subsequence_basis:
+  fixes MM :: "nat \<Rightarrow> 'a measure" and XX :: "nat \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> 'b::euclidean_space"
+    and T C \<gamma> :: real and x :: 'b
+  assumes T0: "0 \<le> T" and g0: "0 < \<gamma>" and g2: "\<gamma> < 1/4"
+    and P: "\<And>i. prob_space (MM i)"
+    and Xm: "\<And>i u. 0 \<le> u \<Longrightarrow> XX i u \<in> borel_measurable (MM i)"
+    and cont: "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> continuous_on {0..T} (\<lambda>t. XX i t \<omega>)"
+    and start: "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x"
+    and int4: "\<And>i b u v. b \<in> Basis \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> \<bullet> b - XX i u \<omega> \<bullet> b)^4)"
+    and mom: "\<And>i b u v. b \<in> Basis \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        (\<integral>\<omega>. (XX i v \<omega> \<bullet> b - XX i u \<omega> \<bullet> b)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+  shows "\<exists>a N. strict_mono a \<and> finite_measure N
+      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> 'b) measure)
+      \<and> prob_space N
+      \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
 proof -
-  have part1: "\<forall>N\<in>(\<lambda>i. path_law (MM i) (XX i) T) ` I.
-      finite_measure N
-      \<and> sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
-        = sets N"
-  proof
-    fix N assume "N \<in> (\<lambda>i. path_law (MM i) (XX i) T) ` I"
-    then obtain i where i: "i \<in> I" and Ni: "N = path_law (MM i) (XX i) T" by blast
-    have Xm': "XX i t \<in> borel_measurable (MM i)" if "t \<in> {0..T}" for t
-      using that by (intro Xm[OF i]) simp
-    have PN: "prob_space N"
-      unfolding Ni by (rule prob_space_path_law[OF P[OF i] T0 Xm' cont[OF i]])
-    have fN: "finite_measure N" by (rule prob_space.axioms(1)[OF PN])
-    have sN: "sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
-        = sets N"
-      unfolding Ni by (rule sets_path_law[symmetric])
-    show "finite_measure N
-        \<and> sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
-          = sets N"
-      using fN sN by blast
+  have Pl: "prob_space (path_law (MM i) (XX i) T)" for i
+    by (rule prob_space_path_law[OF P T0]) (use Xm cont in auto)
+  have "\<exists>a N. strict_mono a \<and> finite_measure N
+      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> 'b) measure)
+      \<and> N (space N) \<le> ennreal 1
+      \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+  proof (rule tight_on_set_imp_convergent_subsequence)
+    show "metrizable_space (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+      unfolding mtopology_of_def
+      by (rule Metric_space.metrizable_space_mtopology[OF Metric_space_mspace_mdist])
+    show "separable_space (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
+      by (rule separable_path_metric)
+    show "tight_on_set (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))
+        (range (\<lambda>i. path_law (MM i) (XX i) T))"
+      by (intro tight_on_set_path_laws_basis[OF T0 g0 g2, where x = x and C = C]
+            P Xm cont start int4 mom)
+    show "path_law (MM i) (XX i) T (space (path_law (MM i) (XX i) T)) \<le> ennreal 1" for i
+      using Pl[of i] by (simp add: prob_space.emeasure_space_1)
   qed
-  have part2: "\<exists>K. compactin (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)) K
-      \<and> (\<forall>N\<in>(\<lambda>i. path_law (MM i) (XX i) T) ` I. measure N (space N - K) < e)"
-    if e: "0 < e" for e :: real
-  proof -
-    define q where "q = 2 powr (-(1-4*\<gamma>))"
-    have q0: "0 \<le> q" unfolding q_def by simp
-    have q1: "q < 1" unfolding q_def by (rule powr_less_one) (use g2 in simp_all)
-    have lim: "(\<lambda>n. real CARD('m) * (8*C\<^sup>2*T * q^n / (1 - q))) \<longlonglongrightarrow> 0"
-    proof -
-      have e1: "(\<lambda>n. q^n) \<longlonglongrightarrow> 0" by (rule LIMSEQ_realpow_zero[OF q0 q1])
-      have e2: "(\<lambda>n. (8*C\<^sup>2*T/(1 - q)) * q^n) \<longlonglongrightarrow> 0"
-        by (rule tendsto_mult_right_zero[OF e1])
-      have e3: "(8*C\<^sup>2*T/(1 - q)) * q^n = 8*C\<^sup>2*T * q^n / (1 - q)" for n
-        by simp
-      have e4: "(\<lambda>n. 8*C\<^sup>2*T * q^n / (1 - q)) \<longlonglongrightarrow> 0"
-        using e2 unfolding e3 .
-      show ?thesis by (rule tendsto_mult_right_zero[OF e4])
-    qed
-    obtain n where nn: "real CARD('m) * (8*C\<^sup>2*T * q^n / (1 - q)) < e"
-      using order_tendstoD(2)[OF lim e] by (auto simp: eventually_sequentially)
-    define K where "K = {f \<in> mspace (path_metric T :: (real \<Rightarrow> real^'m) metric).
-        f 0 = x \<and> (\<forall>s\<in>{0..T}. \<forall>t\<in>{0..T}.
-          norm (f t - f s)
-            \<le> real CARD('m) * holder_const \<gamma> T n * \<bar>t - s\<bar> powr \<gamma>)}"
-    have c0: "0 \<le> real CARD('m) * holder_const \<gamma> T n"
-      by (intro mult_nonneg_nonneg holder_const_nonneg[OF g0]) simp
-    have cK: "compactin (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric)) K"
-      unfolding K_def by (rule compactin_path_holder_ball[OF T0 g0 c0])
-    have bnd: "measure N (space N - K) < e"
-      if N: "N \<in> (\<lambda>i. path_law (MM i) (XX i) T) ` I" for N
-    proof -
-      obtain i where i: "i \<in> I" and Ni: "N = path_law (MM i) (XX i) T"
-        using N by blast
-      have "measure N (space N - K) \<le> real CARD('m) * (8*C\<^sup>2*T * q^n / (1 - q))"
-        unfolding Ni K_def q_def
-        by (rule path_law_holder_ball_bound_vec[OF P[OF i] T0 g0 g2 Xm[OF i]
-              cont[OF i] start[OF i] int4[OF i] mom[OF i]])
-      with nn show ?thesis by linarith
-    qed
-    show ?thesis using cK bnd by blast
-  qed
-  show ?thesis
-    unfolding tight_on_set_def using part1 part2 by blast
+  then obtain a N where "strict_mono a" "finite_measure N"
+      "sets N = sets (path_borel T :: (real \<Rightarrow> 'b) measure)"
+      and wc: "weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))" by blast
+  moreover have "prob_space N" by (rule weak_conv_on_prob_space[OF wc]) (simp add: Pl)
+  ultimately show ?thesis by blast
+qed
+
+corollary path_laws_convergent_subsequence:
+  fixes MM :: "nat \<Rightarrow> 'a measure" and XX :: "nat \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real"
+    and T C \<gamma> x :: real
+  assumes T0: "0 \<le> T" and g0: "0 < \<gamma>" and g2: "\<gamma> < 1/4"
+    and P: "\<And>i. prob_space (MM i)"
+    and Xm: "\<And>i u. 0 \<le> u \<Longrightarrow> XX i u \<in> borel_measurable (MM i)"
+    and cont: "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> continuous_on {0..T} (\<lambda>t. XX i t \<omega>)"
+    and start: "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x"
+    and int4: "\<And>i u v. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> - XX i u \<omega>)^4)"
+    and mom: "\<And>i u v. 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T \<Longrightarrow>
+        (\<integral>\<omega>. (XX i v \<omega> - XX i u \<omega>)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+  shows "\<exists>a N. strict_mono a \<and> finite_measure N
+      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real) measure)
+      \<and> N (space N) \<le> ennreal 1
+      \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))"
+proof -
+  have "\<exists>a N. strict_mono a \<and> finite_measure N
+      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real) measure)
+      \<and> prob_space N
+      \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))"
+    by (rule path_laws_convergent_subsequence_basis[where C = C, OF T0 g0 g2 P Xm cont start])
+      (auto simp: int4 mom)
+  then obtain a N where a: "strict_mono a" and N: "finite_measure N"
+      "sets N = sets (path_borel T :: (real \<Rightarrow> real) measure)" "prob_space N"
+    and wc: "weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> real) metric))"
+    by blast
+  have "N (space N) \<le> ennreal 1" using prob_space.emeasure_space_1[OF N(3)] by simp
+  with a N wc show ?thesis by blast
 qed
 
 corollary path_laws_convergent_subsequence_vec:
@@ -617,34 +536,8 @@ corollary path_laws_convergent_subsequence_vec:
       \<and> prob_space N
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
           (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
-proof -
-  have Pl: "prob_space (path_law (MM i) (XX i) T)" for i
-    by (rule prob_space_path_law[OF P T0]) (use Xm cont in auto)
-  have "\<exists>a N. strict_mono a \<and> finite_measure N
-      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
-      \<and> N (space N) \<le> ennreal 1
-      \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
-          (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
-  proof (rule tight_on_set_imp_convergent_subsequence)
-    show "metrizable_space (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
-      unfolding mtopology_of_def
-      by (rule Metric_space.metrizable_space_mtopology[OF Metric_space_mspace_mdist])
-    show "separable_space (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
-      by (rule separable_path_metric)
-    show "tight_on_set (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))
-        (range (\<lambda>i. path_law (MM i) (XX i) T))"
-      by (intro tight_on_set_path_laws_vec[OF T0 g0 g2, where x = x and C = C]
-            P Xm cont start int4 mom)
-    show "path_law (MM i) (XX i) T (space (path_law (MM i) (XX i) T)) \<le> ennreal 1" for i
-      using Pl[of i] by (simp add: prob_space.emeasure_space_1)
-  qed
-  then obtain a N where "strict_mono a" "finite_measure N"
-      "sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)"
-      and wc: "weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
-          (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))" by blast
-  moreover have "prob_space N" by (rule weak_conv_on_prob_space[OF wc]) (simp add: Pl)
-  ultimately show ?thesis by blast
-qed
+  by (rule path_laws_convergent_subsequence_basis[where C = C, OF T0 g0 g2 P Xm cont start])
+    (auto simp: Basis_vec_def inner_axis int4 mom)
 
 subsection \<open>The finite-dimensional marginal maps\<close>
 
@@ -844,7 +737,8 @@ text \<open>Passing an integral to a weak limit when the family is uniformly
 
 text \<open>A finite Borel measure on a metric space is determined by its
   integrals against bounded continuous functions: apply the closed-set
-  Portmanteau bound to the constant sequence both ways, then extend from
+  Portmanteau bound (@{thm [source] weak_conv_closedin_limsup}) to the
+  constant sequence both ways, then extend from
   closed sets (\<open>sets_borel_of_closed\<close>) by \<open>measure_eqI_generator_eq\<close>.
   This monotone-class engine upgrades the integrated identities on
   closure points from continuous past functionals to arbitrary past
@@ -860,12 +754,6 @@ lemma metric_measure_eqI_bounded_cts:
         (\<integral>x. g x \<partial>M1) = (\<integral>x. g x \<partial>M2)"
   shows "M1 = M2"
 proof -
-  interpret PM: Metric_space "mspace m" "mdist m"
-    by (rule Metric_space_mspace_mdist)
-  have top: "PM.mtopology = mtopology_of m"
-    by (simp add: mtopology_of_def)
-  have tsp: "topspace (mtopology_of m) = mspace m"
-    using top PM.topspace_mtopology by simp
   have le: "measure Ma A \<le> measure Mb A"
     if sa: "sets Ma = sets (borel_of (mtopology_of m))"
     and sb: "sets Mb = sets (borel_of (mtopology_of m))"
@@ -876,44 +764,16 @@ proof -
     and clA: "closedin (mtopology_of m) A"
     for Ma Mb :: "'a measure" and A
   proof -
-    interpret MW: mweak_conv_fin "mspace m" "mdist m" "\<lambda>_ :: nat. Ma"
-        Mb sequentially
-    proof
-      show "\<forall>\<^sub>F i in sequentially.
-          sets ((\<lambda>_ :: nat. Ma) i) = sets (borel_of PM.mtopology)"
-        using sa top by simp
-      show "sets Mb = sets (borel_of PM.mtopology)"
-        using sb top by simp
-      show "\<forall>\<^sub>F i in sequentially. finite_measure ((\<lambda>_ :: nat. Ma) i)"
-        using fa by simp
-      show "\<exists>A. countable A \<and> A \<subseteq> sets Mb \<and> \<Union> A = space Mb
-          \<and> (\<forall>a\<in>A. emeasure Mb a \<noteq> \<infinity>)"
-        by (intro exI[of _ "{space Mb}"])
-          (auto simp: finite_measure.emeasure_eq_measure[OF fb])
-      show "emeasure Mb (space Mb) \<noteq> \<top>"
-        by (simp add: finite_measure.emeasure_eq_measure[OF fb])
-    qed
-    have key: "Limsup sequentially (\<lambda>x. ereal (measure Ma A))
-        \<le> ereal (measure Mb A)"
-    proof (rule MW.mweak_conv2)
-      fix g :: "'a \<Rightarrow> real"
-      assume u: "uniformly_continuous_map PM.Self euclidean_metric g"
-        and b: "\<exists>B. \<forall>x\<in>mspace m. \<bar>g x\<bar> \<le> B"
-      have cg: "continuous_map (mtopology_of m) euclideanreal g"
-        using uniformly_continuous_imp_continuous_map[OF u]
-        by (simp add: mtopology_of_def)
-      have "(\<integral>x. g x \<partial>Ma) = (\<integral>x. g x \<partial>Mb)"
-        by (rule eqab[OF cg]) (use b in \<open>simp add: tsp\<close>)
-      then show "((\<lambda>i. \<integral>x. g x \<partial>((\<lambda>_ :: nat. Ma) i))
-          \<longlongrightarrow> (\<integral>x. g x \<partial>Mb)) sequentially"
-        by simp
-    next
-      show "closedin PM.mtopology A" using clA top by simp
-    qed
-    have "Limsup sequentially (\<lambda>x. ereal (measure Ma A))
-        = ereal (measure Ma A)"
-      by (simp add: Limsup_const)
-    with key show ?thesis by simp
+    have "weak_conv_on (\<lambda>_ :: nat. Ma) Mb sequentially (mtopology_of m)"
+      unfolding weak_conv_on_def
+    proof (intro conjI allI impI)
+      show "\<forall>\<^sub>F i in sequentially. sets Ma = sets (borel_of (mtopology_of m))
+          \<and> finite_measure Ma" using sa fa by simp
+      fix g assume "continuous_map (mtopology_of m) euclideanreal g"
+        "\<exists>B. \<forall>x\<in>topspace (mtopology_of m). \<bar>g x\<bar> \<le> B"
+      then show "(\<lambda>i. \<integral>x. g x \<partial>Ma) \<longlonglongrightarrow> (\<integral>x. g x \<partial>Mb)" by (simp add: eqab)
+    qed (use sb fb in auto)
+    from weak_conv_closedin_limsup[OF this clA] show ?thesis by (simp add: Limsup_const)
   qed
   have eqC: "emeasure M1 C = emeasure M2 C"
     if C: "closedin (mtopology_of m) C" for C

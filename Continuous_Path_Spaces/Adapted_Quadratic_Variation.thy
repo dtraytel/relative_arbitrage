@@ -445,22 +445,10 @@ qed
 lemma qvsa_continuous:
   assumes C: "0 \<le> C"
   shows "continuous_on {0..} (qvsa C w)"
-proof -
-  have "C-lipschitz_on {0..} (qvsa C w)"
-  proof (rule lipschitz_onI[OF _ C])
-    fix a b :: real assume ab: "a \<in> {0..}" "b \<in> {0..}"
-    show "dist (qvsa C w a) (qvsa C w b) \<le> C * dist a b"
-    proof (cases "a \<le> b")
-      case True
-      with qvsa_lip[OF C, of a b w] qvsa_mono[OF C, of a b w] show ?thesis
-        by (simp add: dist_real_def abs_diff_le_iff) linarith?
-    next
-      case False
-      with qvsa_lip[OF C, of b a w] qvsa_mono[OF C, of b a w] show ?thesis
-        by (simp add: dist_real_def abs_diff_le_iff) linarith?
-    qed
-  qed
-  then show ?thesis by (rule lipschitz_on_continuous_on)
+proof (rule rate_continuous_on[OF C], intro allI impI conjI)
+  fix u v :: real assume "0 \<le> u" "u \<le> v"
+  then show "0 \<le> qvsa C w v - qvsa C w u" "qvsa C w v - qvsa C w u \<le> C * (v - u)"
+    using qvsa_mono[OF C, of u v w] qvsa_lip[OF C, of u v w] by simp_all
 qed
 
 text \<open>On the good event no value is discarded, so the running cut agrees with

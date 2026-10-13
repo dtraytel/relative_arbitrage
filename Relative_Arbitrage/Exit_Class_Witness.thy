@@ -1031,113 +1031,6 @@ proof -
   finally show ?thesis unfolding mean .
 qed
 
-text \<open>Clause (3) on the ball: a member starting on the boundary that kept
-  \<open>|X| \<le> r\<close> up to a positive time would have expected squared norm at most
-  \<open>r\<^sup>2\<close> at an interior time, but \<open>exit_class_sq_norm_mean_ge\<close> forces
-  it to be at least \<open>r\<^sup>2 + (n-k)t > r\<^sup>2\<close>.  So the exit time's essential
-  infimum, and hence its supremum, is \<open>0\<close>.\<close>
-
-theorem exit_val_boundary_zero:
-  fixes r :: real and x :: "real^'n::finite"
-  assumes k: "k < CARD('n)" and T: "0 < T" and L: "0 \<le> L"
-    and x: "norm x = r"
-  shows "exit_val k L T (cball 0 r) x = 0"
-proof -
-  have T0: "0 \<le> T" using T by simp
-  have r0: "0 \<le> r" using x by (metis norm_ge_zero)
-  have "exit_val k L T (cball 0 r) x \<le> 0"
-    unfolding exit_val_def
-  proof (rule Sup_least)
-    fix e :: ennreal
-    assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T (cball 0 r) (\<lambda>t. fst (\<omega> t))))
-        ` exit_class k L T x"
-    then obtain Q :: "('n pairpath) measure"
-      where Q: "Q \<in> exit_class k L T x"
-        and e: "e = ess_inf_time Q
-            (\<lambda>\<omega>. pexit T (cball 0 r) (\<lambda>t. fst (\<omega> t)))" by blast
-    interpret P: prob_space Q by (rule exit_class_prob[OF Q])
-    show "e \<le> 0"
-    proof (rule ccontr)
-      assume "\<not> e \<le> 0"
-      then have epos: "0 < e" by (simp add: zero_less_iff_neq_zero)
-      have ele: "e \<le> ennreal T"
-        unfolding e
-        by (rule ess_inf_time_le_const[OF P.prob_space_axioms])
-          (simp add: pexit_def etime_le_T[OF T0])
-      have efin: "e < \<top>"
-        using ele ennreal_less_top by (rule order_le_less_trans)
-      define c where "c = enn2real e"
-      have ec: "e = ennreal c" unfolding c_def using efin by simp
-      have c0: "0 < c"
-      proof (rule ccontr)
-        assume "\<not> 0 < c"
-        then have "ennreal c = 0" by (simp add: ennreal_neg)
-        with ec epos show False by simp
-      qed
-      define t where "t = min (c/2) (T/2)"
-      have t0: "0 < t" unfolding t_def using c0 T by simp
-      have tc: "t < c" unfolding t_def using c0 by simp
-      have tT: "t \<le> T" unfolding t_def using T by simp
-      have tI: "t \<in> {0..T}" using t0 tT by simp
-      have ae1: "AE \<omega> in Q. e \<le> ennreal (pexit T (cball 0 r) (\<lambda>s. fst (\<omega> s)))"
-        unfolding e by (rule ess_inf_time_AE)
-      have ae2: "AE \<omega> in Q. fst (\<omega> t) \<bullet> fst (\<omega> t) \<le> r * r"
-      proof (rule eventually_mono[OF ae1])
-        fix \<omega> :: "'n pairpath"
-        assume "e \<le> ennreal (pexit T (cball 0 r) (\<lambda>s. fst (\<omega> s)))"
-        then have "ennreal c \<le> ennreal (pexit T (cball 0 r) (\<lambda>s. fst (\<omega> s)))"
-          using ec by simp
-        moreover have nn: "0 \<le> pexit T (cball 0 r) (\<lambda>s. fst (\<omega> s))"
-          unfolding pexit_def by (rule etime_nonneg[OF T0])
-        ultimately have ct: "c \<le> pexit T (cball 0 r) (\<lambda>s. fst (\<omega> s))"
-          by simp
-        have inK: "fst (\<omega> t) \<in> cball 0 r"
-        proof (rule ccontr)
-          assume notin: "fst (\<omega> t) \<notin> cball 0 r"
-          \<comment> \<open>let the CONCLUSION fix \<open>X\<close>, \<open>A\<close> and \<open>\<omega>\<close>; a pre-instantiated
-              membership premise beta-reduces and no longer matches.\<close>
-          have "pexit T (cball 0 r) (\<lambda>s. fst (\<omega> s)) \<le> t"
-            unfolding pexit_def
-            by (rule etime_le_of_mem[OF T0 less_imp_le[OF t0] tT])
-              (use notin in simp)
-          with ct tc show False by simp
-        qed
-        have "norm (fst (\<omega> t)) \<le> r" using inK by (simp add: dist_norm)
-        then have "(norm (fst (\<omega> t)))\<^sup>2 \<le> r\<^sup>2"
-          by (rule power_mono) simp
-        then show "fst (\<omega> t) \<bullet> fst (\<omega> t) \<le> r * r"
-          by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
-      qed
-      have ni: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
-        by (rule exit_class_norm_sq_integrable[OF T0 L Q tI])
-      have lo: "x \<bullet> x + real (CARD('n) - k) * t
-          \<le> (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
-        by (rule exit_class_sq_norm_mean_ge[OF k T0 L Q tI])
-      have hi: "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q) \<le> r * r"
-      proof -
-        have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q) \<le> (\<integral>\<omega>. r * r \<partial>Q)"
-          by (rule integral_mono_AE) (use ni ae2 in auto)
-        also have "\<dots> = r * r" by (simp add: P.prob_space)
-        finally show ?thesis .
-      qed
-      have xx: "x \<bullet> x = r * r"
-        using x by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
-      \<comment> \<open>simp normalises \<open>real (CARD('n) - k)\<close> to \<open>real CARD('n) - real k\<close>
-          inside \<open>lo\<close>, so state the factor in the SAME form or the atoms
-          do not agree.\<close>
-      have pos: "0 < (real CARD('n) - real k) * t"
-      proof (rule mult_pos_pos)
-        show "0 < real CARD('n) - real k" using k by simp
-        show "0 < t" by (rule t0)
-      qed
-      have cast: "real (CARD('n) - k) = real CARD('n) - real k"
-        using k by simp
-      from lo hi pos show False unfolding xx cast by simp
-    qed
-  qed
-  then show ?thesis by simp
-qed
-
 text \<open>Example 3.1, inequality (3.10): if the target set fits inside a ball
   of radius \<open>r\<close>, then \<open>v(x) \<le> (r\<^sup>2 - |x|\<^sup>2) / (n - k)\<close>, independent of the
   horizon \<open>T\<close> --- the quantitative form of clause (0), and why the horizon
@@ -1248,6 +1141,22 @@ proof -
     qed
   qed
   from main show ?thesis unfolding B_def .
+qed
+
+text \<open>Clause (3) on the ball: a member starting on the boundary
+  \<open>|x| = r\<close> has exit value \<open>0\<close>, the case \<open>x \<bullet> x = r\<^sup>2\<close> of the
+  bound above.\<close>
+
+theorem exit_val_boundary_zero:
+  fixes r :: real and x :: "real^'n::finite"
+  assumes k: "k < CARD('n)" and T: "0 < T" and L: "0 \<le> L"
+    and x: "norm x = r"
+  shows "exit_val k L T (cball 0 r) x = 0"
+proof -
+  have "x \<bullet> x = r * r"
+    using x by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
+  then show ?thesis
+    using exit_val_le_ball_bound[OF k _ L order_refl, of T r x] T by simp
 qed
 
 

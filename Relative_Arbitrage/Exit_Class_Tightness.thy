@@ -104,7 +104,7 @@ proof -
     using c0 B0 by simp
   \<comment> \<open>the ball is compact, hence closed, hence measurable\<close>
   have compK: "compactin (mtopology_of (path_metric T :: ('n pairpath) metric)) ?K"
-    by (rule compactin_pair_holder_ball[OF T0 ga cB0])
+    by (rule compactin_path_holder_ball[OF T0 ga cB0])
   have haus: "Hausdorff_space
       (mtopology_of (path_metric T :: ('n pairpath) metric))"
     unfolding mtopology_of_def
@@ -242,7 +242,7 @@ proof -
   have q0: "0 < ?q" by simp
   have q1: "?q < 1" by (rule powr_less_one) (use ga4 in simp_all)
   show ?thesis
-  proof (rule tight_on_set_pair_holder_charge[OF T0 ga0])
+  proof (rule tight_on_set_of_holder_charge[OF T0 ga0, where x = "(x, 0)"])
     show "finite_measure N" if "N \<in> \<Gamma>" for N
       using exit_class_prob[OF mem[OF that]]
       by (simp add: prob_space_def)

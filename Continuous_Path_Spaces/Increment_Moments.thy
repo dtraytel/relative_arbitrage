@@ -251,530 +251,6 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-subsection \<open>Second moments along a partition, from per-interval covariation data\<close>
-
-text \<open>
-  A localised variant of @{thm [source] increment_second_moment_bound}: the
-  conditional expectation of the squared increment over \<open>[t k, t (Suc k)]\<close>
-  agrees with that of the compensator increment \<open>dA k\<close>, growing at rate at
-  most @{term C} -- the form in which the admissible laws of \<^cite>\<open>LaiShkolnikovSoner\<close>
-  supply their covariation constraint.
-\<close>
-
-theorem second_moment_partition_bound:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and t :: "nat \<Rightarrow> real" and dA :: "nat \<Rightarrow> 'a \<Rightarrow> real"
-  assumes P: "prob_space M"
-    and X: "martingale M F (0::real) X"
-    and t0: "\<And>k. 0 \<le> t k" and tmono: "mono t"
-    and sq: "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (\<lambda>\<omega>. (X u \<omega>)\<^sup>2)"
-    and dA_int: "\<And>k. integrable M (dA k)"
-    and dA_bounds: "\<And>k. AE \<omega> in M. 0 \<le> dA k \<omega> \<and> dA k \<omega> \<le> C * (t (Suc k) - t k)"
-    and cov: "\<And>k. AE \<omega> in M.
-        cond_exp M (F (t k)) (\<lambda>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2) \<omega>
-          = cond_exp M (F (t k)) (dA k) \<omega>"
-  shows "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M) \<le> C * (t n - t 0)"
-proof -
-  interpret P: prob_space M by (rule P)
-  interpret MX: martingale M F "0::real" X by (rule X)
-  have XmM[measurable]: "X (t k) \<in> borel_measurable M" for k
-    by (rule borel_measurable_integrable[OF MX.integrable[OF t0]])
-  have sqk: "integrable M (\<lambda>\<omega>. (X (t k) \<omega>)\<^sup>2)" for k by (rule sq[OF t0])
-  have tles: "t 0 \<le> t k" for k by (rule monoD[OF tmono]) simp
-  have sfs: "sigma_finite_subalgebra M (F (t k))" for k
-    by (rule MX.sigma_finite_subalgebra_F[OF t0])
-  have spF: "space M \<in> sets (F (t k))" for k
-    using sets.top[of "F (t k)"] MX.space_F[OF t0] by simp
-  have iY2: "integrable M (\<lambda>\<omega>. (X (t j) \<omega> - X (t k) \<omega>)\<^sup>2)" for j k
-    by (rule integrable_sq_diff'[OF sqk sqk XmM XmM])
-  have iYd: "integrable M (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)
-                              * (X (t (Suc n)) \<omega> - X (t n) \<omega>))" for n
-    by (intro integrable_prod_of_squares[OF iY2 iY2]
-              borel_measurable_diff XmM)
-
-  have EYd: "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)
-                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>) \<partial>M) = 0" for n
-  proof -
-    have dint: "integrable M (\<lambda>\<omega>. X (t (Suc n)) \<omega> - X (t n) \<omega>)"
-      by (intro Bochner_Integration.integrable_diff MX.integrable t0)
-    have Ymeas: "(\<lambda>\<omega>. X (t n) \<omega> - X (t 0) \<omega>) \<in> borel_measurable (F (t n))"
-      by (intro borel_measurable_diff MX.adaptedD[OF t0 order.refl]
-                MX.adaptedD[OF t0 tles])
-    have pull: "AE \<omega> in M.
-        cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)
-                                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<omega>
-          = (X (t n) \<omega> - X (t 0) \<omega>)
-            * cond_exp M (F (t n)) (\<lambda>\<omega>. X (t (Suc n)) \<omega> - X (t n) \<omega>) \<omega>"
-      by (intro sigma_finite_subalgebra.cond_exp_measurable_mult(2)[OF sfs]
-                iYd dint Ymeas)
-    have zero: "AE \<omega> in M.
-        cond_exp M (F (t n)) (\<lambda>\<omega>. X (t (Suc n)) \<omega> - X (t n) \<omega>) \<omega> = 0"
-      by (rule MX.cond_exp_diff_eq_zero[OF t0 monoD[OF tmono]]) simp
-    have z2: "AE \<omega> in M.
-        cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)
-                                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<omega> = 0"
-      using pull zero by eventually_elim simp
-    have "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)
-               * (X (t (Suc n)) \<omega> - X (t n) \<omega>) \<partial>M)
-            = (\<integral>\<omega>. cond_exp M (F (t n))
-                     (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)
-                          * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<omega> \<partial>M)"
-      by (rule expectation_cond_exp[OF sfs spF iYd, symmetric])
-    also have "\<dots> = (\<integral>\<omega>. (0::real) \<partial>M)"
-      by (intro integral_cong_AE
-                sigma_finite_subalgebra.borel_measurable_cond_exp'[OF sfs]
-                borel_measurable_const z2)
-    also have "\<dots> = 0" by simp
-    finally show ?thesis .
-  qed
-
-  have Ed2: "(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)
-               \<le> C * (t (Suc n) - t n)" for n
-  proof -
-    have "(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)
-            = (\<integral>\<omega>. cond_exp M (F (t n))
-                     (\<lambda>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<omega> \<partial>M)"
-      by (rule expectation_cond_exp[OF sfs spF iY2, symmetric])
-    also have "\<dots> = (\<integral>\<omega>. cond_exp M (F (t n)) (dA n) \<omega> \<partial>M)"
-      by (intro integral_cong_AE
-                sigma_finite_subalgebra.borel_measurable_cond_exp'[OF sfs] cov)
-    also have "\<dots> = (\<integral>\<omega>. dA n \<omega> \<partial>M)"
-      by (rule expectation_cond_exp[OF sfs spF dA_int])
-    also have "\<dots> \<le> (\<integral>\<omega>. C * (t (Suc n) - t n) \<partial>M)"
-    proof (rule integral_mono_AE)
-      show "integrable M (dA n)" by (rule dA_int)
-      show "integrable M (\<lambda>\<omega>. C * (t (Suc n) - t n))" by simp
-      show "AE \<omega> in M. dA n \<omega> \<le> C * (t (Suc n) - t n)"
-        using dA_bounds[of n] by eventually_elim linarith
-    qed
-    also have "(\<integral>\<omega>. C * (t (Suc n) - t n) \<partial>M) = C * (t (Suc n) - t n)"
-      by (simp add: P.prob_space)
-    finally show ?thesis .
-  qed
-
-  show ?thesis
-  proof (induction n)
-    case 0
-    show ?case by simp
-  next
-    case (Suc n)
-    have expand: "(X (t (Suc n)) \<omega> - X (t 0) \<omega>)\<^sup>2
-        = (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-          + (2 * ((X (t n) \<omega> - X (t 0) \<omega>) * (X (t (Suc n)) \<omega> - X (t n) \<omega>))
-             + (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)" for \<omega>
-      by algebra
-    have i2: "integrable M
-        (\<lambda>\<omega>. 2 * ((X (t n) \<omega> - X (t 0) \<omega>) * (X (t (Suc n)) \<omega> - X (t n) \<omega>))
-             + (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)"
-      using iYd[of n] iY2[of "Suc n" n] by simp
-    have split: "(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M)
-        = (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M)
-          + ((\<integral>\<omega>. 2 * ((X (t n) \<omega> - X (t 0) \<omega>)
-                        * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<partial>M)
-             + (\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M))"
-    proof -
-      have "(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M)
-          = (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-              + (2 * ((X (t n) \<omega> - X (t 0) \<omega>)
-                      * (X (t (Suc n)) \<omega> - X (t n) \<omega>))
-                 + (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<partial>M)"
-        by (simp add: expand)
-      also have "\<dots> = (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M)
-          + ((\<integral>\<omega>. 2 * ((X (t n) \<omega> - X (t 0) \<omega>)
-                        * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<partial>M)
-             + (\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M))"
-        using Bochner_Integration.integral_add[OF iY2 i2]
-              Bochner_Integration.integral_add[OF _ iY2]
-        by (simp add: iYd iY2)
-      finally show ?thesis .
-    qed
-    have E2Yd: "(\<integral>\<omega>. 2 * ((X (t n) \<omega> - X (t 0) \<omega>)
-                          * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<partial>M) = 0"
-      using EYd[of n] by simp
-    have arith: "C*(t n - t 0) + C*(t (Suc n) - t n) = C*(t (Suc n) - t 0)"
-      by algebra
-    from split E2Yd Ed2[of n] Suc.IH arith show ?case by linarith
-  qed
-qed
-
-subsection \<open>Fourth moments along a partition: Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> with an explicit remainder\<close>
-
-text \<open>
-  Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> is derived there through the Burkholder-Davis-Gundy
-  inequality, which
-  is absent from Isabelle and the AFP. The theorem below reaches the same bound by
-  expanding \<open>(Y + d)^4\<close> directly along the partition using only conditional
-  pull-outs: with a common constant \<open>8 C\<^sup>2\<close> (that route gives \<open>66 C\<^sup>2\<close>), the
-  fourth moment of the increment is bounded by \<open>8 C\<^sup>2 (t-s)\<^sup>2\<close> plus three times the
-  accumulated fourth moments of the partition increments, an explicit remainder
-  vanishing in the mesh limit for continuous paths.
-
-  The fourth-moment integrability hypothesis is discharged in the intended
-  application by localisation: up to the exit time the paths live in the compact
-  @{term K}, so all moments exist.
-\<close>
-
-theorem fourth_moment_partition_bound:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and t :: "nat \<Rightarrow> real" and dA :: "nat \<Rightarrow> 'a \<Rightarrow> real"
-  assumes P: "prob_space M"
-    and X: "martingale M F (0::real) X"
-    and t0: "\<And>k. 0 \<le> t k" and tmono: "mono t"
-    and q4: "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (\<lambda>\<omega>. (X u \<omega>)^4)"
-    and dA_int: "\<And>k. integrable M (dA k)"
-    and dA_bounds: "\<And>k. AE \<omega> in M. 0 \<le> dA k \<omega> \<and> dA k \<omega> \<le> C * (t (Suc k) - t k)"
-    and cov: "\<And>k. AE \<omega> in M.
-        cond_exp M (F (t k)) (\<lambda>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2) \<omega>
-          = cond_exp M (F (t k)) (dA k) \<omega>"
-    and C: "0 \<le> C"
-  shows "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
-           \<le> 8 * C\<^sup>2 * (t n - t 0)\<^sup>2
-             + 3 * (\<Sum>k<n. (\<integral>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)^4 \<partial>M))"
-proof -
-  interpret P: prob_space M by (rule P)
-  interpret MX: martingale M F "0::real" X by (rule X)
-  have XmM[measurable]: "X (t k) \<in> borel_measurable M" for k
-    by (rule borel_measurable_integrable[OF MX.integrable[OF t0]])
-  have sq: "integrable M (\<lambda>\<omega>. (X u \<omega>)\<^sup>2)" if u: "0 \<le> u" for u
-    by (rule integrable_sq_of_pow4[OF P q4[OF u]
-          borel_measurable_integrable[OF MX.integrable[OF u]]])
-  have tles: "t 0 \<le> t k" for k by (rule monoD[OF tmono]) simp
-  have tSk: "t k \<le> t (Suc k)" for k by (rule monoD[OF tmono]) simp
-  have dt_nn: "0 \<le> t (Suc k) - t k" for k using tSk[of k] by simp
-  have t0k_nn: "0 \<le> t k - t 0" for k using tles[of k] by simp
-  have sfs: "sigma_finite_subalgebra M (F (t k))" for k
-    by (rule MX.sigma_finite_subalgebra_F[OF t0])
-  have spF: "space M \<in> sets (F (t k))" for k
-    using sets.top[of "F (t k)"] MX.space_F[OF t0] by simp
-  have q4k: "integrable M (\<lambda>\<omega>. (X (t k) \<omega>)^4)" for k by (rule q4[OF t0])
-  have iY4: "integrable M (\<lambda>\<omega>. (X (t j) \<omega> - X (t k) \<omega>)^4)" for j k
-    by (rule integrable_pow4_diff[OF q4k q4k XmM XmM])
-  have Ymeas: "(\<lambda>\<omega>. X (t j) \<omega> - X (t k) \<omega>) \<in> borel_measurable M" for j k
-    by measurable
-  have iY2: "integrable M (\<lambda>\<omega>. (X (t j) \<omega> - X (t k) \<omega>)\<^sup>2)" for j k
-    by (rule integrable_sq_of_pow4[OF P iY4 Ymeas])
-  have iY2d2: "integrable M (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                                * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)" for n
-    by (rule integrable_prod_sq_sq[OF iY4 iY4 Ymeas Ymeas])
-  have iY3d: "integrable M (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
-                               * (X (t (Suc n)) \<omega> - X (t n) \<omega>))" for n
-    by (rule integrable_cube_prod[OF iY4 iY4 Ymeas Ymeas])
-  have iYd3: "integrable M (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)
-                               * (X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)" for n
-    by (rule integrable_prod_cube[OF iY4 iY4 Ymeas Ymeas])
-
-  text \<open>The cubic cross term has vanishing expectation.\<close>
-  have EY3d: "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
-                    * (X (t (Suc n)) \<omega> - X (t n) \<omega>) \<partial>M) = 0" for n
-  proof -
-    have dint: "integrable M (\<lambda>\<omega>. X (t (Suc n)) \<omega> - X (t n) \<omega>)"
-      by (intro Bochner_Integration.integrable_diff MX.integrable t0)
-    have Y3meas: "(\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3) \<in> borel_measurable (F (t n))"
-      by (intro borel_measurable_power borel_measurable_diff
-                MX.adaptedD[OF t0 order.refl] MX.adaptedD[OF t0 tles])
-    have pull: "AE \<omega> in M.
-        cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
-                                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<omega>
-          = (X (t n) \<omega> - X (t 0) \<omega>)^3
-            * cond_exp M (F (t n)) (\<lambda>\<omega>. X (t (Suc n)) \<omega> - X (t n) \<omega>) \<omega>"
-      by (intro sigma_finite_subalgebra.cond_exp_measurable_mult(2)[OF sfs]
-                iY3d dint Y3meas)
-    have zero: "AE \<omega> in M.
-        cond_exp M (F (t n)) (\<lambda>\<omega>. X (t (Suc n)) \<omega> - X (t n) \<omega>) \<omega> = 0"
-      by (rule MX.cond_exp_diff_eq_zero[OF t0 monoD[OF tmono]]) simp
-    have z2: "AE \<omega> in M.
-        cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
-                                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<omega> = 0"
-      using pull zero by eventually_elim simp
-    have "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
-               * (X (t (Suc n)) \<omega> - X (t n) \<omega>) \<partial>M)
-            = (\<integral>\<omega>. cond_exp M (F (t n))
-                     (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
-                          * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<omega> \<partial>M)"
-      by (rule expectation_cond_exp[OF sfs spF iY3d, symmetric])
-    also have "\<dots> = (\<integral>\<omega>. (0::real) \<partial>M)"
-      by (intro integral_cong_AE
-                sigma_finite_subalgebra.borel_measurable_cond_exp'[OF sfs]
-                borel_measurable_const z2)
-    also have "\<dots> = 0" by simp
-    finally show ?thesis .
-  qed
-
-  text \<open>The mixed square term is controlled by the covariation rate and the
-    second-moment bound.\<close>
-  have EY2d2: "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                    * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)
-                 \<le> C\<^sup>2 * ((t (Suc n) - t n) * (t n - t 0))" for n
-  proof -
-    have Y2meas: "(\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2) \<in> borel_measurable (F (t n))"
-      by (intro borel_measurable_power borel_measurable_diff
-                MX.adaptedD[OF t0 order.refl] MX.adaptedD[OF t0 tles])
-    have iY2dA: "integrable M (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>)"
-    proof (rule Bochner_Integration.integrable_bound
-             [of _ "\<lambda>\<omega>. (C * (t (Suc n) - t n)) * (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2"])
-      show "integrable M (\<lambda>\<omega>. (C * (t (Suc n) - t n))
-                              * (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2)"
-        using iY2 by simp
-      show "(\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>) \<in> borel_measurable M"
-        using borel_measurable_integrable[OF dA_int[of n]] by measurable
-      show "AE \<omega> in M. norm ((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>)
-              \<le> norm ((C * (t (Suc n) - t n)) * (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2)"
-        using dA_bounds[of n]
-      proof eventually_elim
-        case (elim \<omega>)
-        have nn: "0 \<le> (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>"
-          using elim by simp
-        have le: "(X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>
-                    \<le> (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * (C * (t (Suc n) - t n))"
-          using elim by (intro mult_left_mono) simp_all
-        have nn2: "0 \<le> (C * (t (Suc n) - t n)) * (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2"
-          using C dt_nn[of n] by simp
-        show ?case using nn le nn2 by (simp add: mult.commute)
-      qed
-    qed
-    have pull1: "AE \<omega> in M.
-        cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<omega>
-          = (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-            * cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<omega>"
-      by (intro sigma_finite_subalgebra.cond_exp_measurable_mult(2)[OF sfs]
-                iY2d2 iY2 Y2meas)
-    have pull2: "AE \<omega> in M.
-        cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>) \<omega>
-          = (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-            * cond_exp M (F (t n)) (dA n) \<omega>"
-      by (intro sigma_finite_subalgebra.cond_exp_measurable_mult(2)[OF sfs]
-                iY2dA dA_int Y2meas)
-    have chain: "AE \<omega> in M.
-        cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<omega>
-          = cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>) \<omega>"
-      using pull1 pull2 cov[of n] by eventually_elim simp
-    have "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-               * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)
-            = (\<integral>\<omega>. cond_exp M (F (t n))
-                     (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                          * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<omega> \<partial>M)"
-      by (rule expectation_cond_exp[OF sfs spF iY2d2, symmetric])
-    also have "\<dots> = (\<integral>\<omega>. cond_exp M (F (t n))
-                          (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>) \<omega> \<partial>M)"
-      by (intro integral_cong_AE
-                sigma_finite_subalgebra.borel_measurable_cond_exp'[OF sfs] chain)
-    also have "\<dots> = (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega> \<partial>M)"
-      by (rule expectation_cond_exp[OF sfs spF iY2dA])
-    also have "\<dots> \<le> (\<integral>\<omega>. (C * (t (Suc n) - t n))
-                          * (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M)"
-    proof (rule integral_mono_AE)
-      show "integrable M (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>)"
-        by (rule iY2dA)
-      show "integrable M (\<lambda>\<omega>. (C * (t (Suc n) - t n))
-                              * (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2)"
-        using iY2 by simp
-      show "AE \<omega> in M. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>
-              \<le> (C * (t (Suc n) - t n)) * (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2"
-        using dA_bounds[of n]
-      proof eventually_elim
-        case (elim \<omega>)
-        have "(X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * dA n \<omega>
-                \<le> (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * (C * (t (Suc n) - t n))"
-          using elim by (intro mult_left_mono) simp_all
-        thus ?case by (simp add: mult.commute)
-      qed
-    qed
-    also have "\<dots> = (C * (t (Suc n) - t n))
-                    * (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M)"
-      by simp
-    also have "\<dots> \<le> (C * (t (Suc n) - t n)) * (C * (t n - t 0))"
-    proof (rule mult_left_mono)
-      show "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M) \<le> C * (t n - t 0)"
-        by (rule second_moment_partition_bound[of M _ X t, OF P X t0 tmono sq dA_int
-              dA_bounds cov])
-      show "0 \<le> C * (t (Suc n) - t n)" using C dt_nn[of n] by simp
-    qed
-    also have "(C * (t (Suc n) - t n)) * (C * (t n - t 0))
-                 = C\<^sup>2 * ((t (Suc n) - t n) * (t n - t 0))" by algebra
-    finally show ?thesis .
-  qed
-
-  text \<open>The odd cross term is absorbed into the mixed square and the remainder.\<close>
-  have EYd3: "(\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
-                      * (X (t (Suc n)) \<omega> - X (t n) \<omega>)^3) \<partial>M)
-                \<le> 2*(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                          * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)
-                  + 2*(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)" for n
-  proof -
-    have iA: "integrable M (\<lambda>\<omega>. 2*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2))"
-      using iY2d2 by simp
-    have iB: "integrable M (\<lambda>\<omega>. 2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)"
-      using iY4 by simp
-    have "(\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
-                  * (X (t (Suc n)) \<omega> - X (t n) \<omega>)^3) \<partial>M)
-            \<le> (\<integral>\<omega>. 2*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                       * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                    + 2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
-    proof (rule integral_mono)
-      show "integrable M (\<lambda>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
-                                 * (X (t (Suc n)) \<omega> - X (t n) \<omega>)^3))"
-        using iYd3 by simp
-      show "integrable M (\<lambda>\<omega>. 2*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                                 * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                              + 2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)"
-        using iA iB by simp
-      show "\<And>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
-                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-              \<le> 2*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                    * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                + 2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^4"
-        by (rule four_prod_cube_le)
-    qed
-    also have "\<dots> = (\<integral>\<omega>. 2*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                            * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<partial>M)
-                    + (\<integral>\<omega>. 2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
-      by (rule Bochner_Integration.integral_add[OF iA iB])
-    also have "\<dots> = 2*(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                          * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)
-                    + 2*(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
-      by simp
-    finally show ?thesis .
-  qed
-  text \<open>The per-interval recursion, from the binomial expansion of \<open>(Y + d)^4\<close>.\<close>
-  have step: "(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
-                \<le> (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
-                  + 8*(C\<^sup>2*((t (Suc n) - t n)*(t n - t 0)))
-                  + 3*(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)" for n
-  proof -
-    have i_r3: "integrable M
-        (\<lambda>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-             + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)"
-      using iYd3[of n] iY4 by simp
-    have i_r2: "integrable M
-        (\<lambda>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-             + (4*((X (t n) \<omega> - X (t 0) \<omega>)*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4))"
-      using iY2d2[of n] i_r3 by simp
-    have i_r1: "integrable M
-        (\<lambda>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
-             + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                + (4*((X (t n) \<omega> - X (t 0) \<omega>)*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                   + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)))"
-      using iY3d[of n] i_r2 by simp
-    have i4Y3d: "integrable M
-        (\<lambda>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>)))"
-      using iY3d[of n] by simp
-    have i6Y2d2: "integrable M
-        (\<lambda>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2))"
-      using iY2d2[of n] by simp
-    have i4Yd3: "integrable M
-        (\<lambda>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3))"
-      using iYd3[of n] by simp
-    have expand: "(X (t (Suc n)) \<omega> - X (t 0) \<omega>)^4
-        = (X (t n) \<omega> - X (t 0) \<omega>)^4
-          + (4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
-             + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                + (4*((X (t n) \<omega> - X (t 0) \<omega>)
-                      *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                   + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)))" for \<omega>
-      by algebra
-    have calc: "(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
-        = (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
-          + (\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
-                 + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                    + (4*((X (t n) \<omega> - X (t 0) \<omega>)
-                          *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                       + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)) \<partial>M)"
-    proof -
-      have "(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
-          = (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^4
-              + (4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
-                 + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                    + (4*((X (t n) \<omega> - X (t 0) \<omega>)
-                          *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                       + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4))) \<partial>M)"
-        by (rule Bochner_Integration.integral_cong[OF refl]) (rule expand)
-      also have "\<dots> = (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
-          + (\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
-                 + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                    + (4*((X (t n) \<omega> - X (t 0) \<omega>)
-                          *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                       + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)) \<partial>M)"
-        by (rule Bochner_Integration.integral_add[OF iY4 i_r1])
-      finally show ?thesis .
-    qed
-    have sr1: "(\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
-                    + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                          *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                       + (4*((X (t n) \<omega> - X (t 0) \<omega>)
-                             *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                          + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)) \<partial>M)
-        = (\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3
-                   *(X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<partial>M)
-          + (\<integral>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                     *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                 + (4*((X (t n) \<omega> - X (t 0) \<omega>)
-                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                    + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4) \<partial>M)"
-      by (rule Bochner_Integration.integral_add[OF i4Y3d i_r2])
-    have sr2: "(\<integral>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
-                    + (4*((X (t n) \<omega> - X (t 0) \<omega>)
-                          *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                       + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4) \<partial>M)
-        = (\<integral>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                   *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<partial>M)
-          + (\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
-                     *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                 + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
-      by (rule Bochner_Integration.integral_add[OF i6Y2d2 i_r3])
-    have sr3: "(\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
-                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
-                    + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)
-        = (\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
-                   *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3) \<partial>M)
-          + (\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
-      by (rule Bochner_Integration.integral_add[OF i4Yd3 iY4])
-    have v1: "(\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3
-                      *(X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<partial>M) = 0"
-      using EY3d[of n] by simp
-    have v2: "(\<integral>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                      *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<partial>M)
-        = 6*(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
-                 *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)"
-      by simp
-    show ?thesis
-      using calc sr1 sr2 sr3 v1 v2 EY2d2[of n] EYd3[of n] by linarith
-  qed
-
-  show ?thesis
-  proof (induction n)
-    case 0
-    show ?case by simp
-  next
-    case (Suc n)
-    have e1: "8*C\<^sup>2*(t n - t 0)\<^sup>2 + 8*(C\<^sup>2*((t (Suc n) - t n)*(t n - t 0)))
-                = 8*C\<^sup>2*((t (Suc n) - t 0)*(t n - t 0))" by algebra
-    have bnn: "0 \<le> t (Suc n) - t 0" using t0k_nn[of "Suc n"] .
-    have ab: "t n - t 0 \<le> t (Suc n) - t 0" using tSk[of n] by linarith
-    have e3: "8*C\<^sup>2*((t (Suc n) - t 0)*(t n - t 0)) \<le> 8*C\<^sup>2*(t (Suc n) - t 0)\<^sup>2"
-    proof -
-      have h: "(t (Suc n) - t 0)*(t n - t 0) \<le> (t (Suc n) - t 0)\<^sup>2"
-      proof -
-        have "(t (Suc n) - t 0)*(t n - t 0)
-                \<le> (t (Suc n) - t 0)*(t (Suc n) - t 0)"
-          by (rule mult_left_mono[OF ab bnn])
-        thus ?thesis by (simp add: power2_eq_square)
-      qed
-      show ?thesis by (rule mult_left_mono[OF h]) simp
-    qed
-    have ssum: "(\<Sum>k<Suc n. (\<integral>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)^4 \<partial>M))
-                  = (\<Sum>k<n. (\<integral>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)^4 \<partial>M))
-                    + (\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
-      by simp
-    from step[of n] Suc.IH e1 e3 ssum show ?case by linarith
-  qed
-qed
-
 subsection \<open>Per-interval energy, standalone\<close>
 
 text \<open>
@@ -958,6 +434,344 @@ proof -
   also have "\<dots> = (C * (t (Suc k) - t k)) * (\<integral>\<omega>. (f \<omega>)\<^sup>2 \<partial>M)"
     by simp
   finally show ?thesis .
+qed
+
+subsection \<open>Second moments along a partition, from per-interval covariation data\<close>
+
+text \<open>
+  A localised variant of @{thm [source] increment_second_moment_bound}: the
+  conditional expectation of the squared increment over \<open>[t k, t (Suc k)]\<close>
+  agrees with that of the compensator increment \<open>dA k\<close>, growing at rate at
+  most @{term C} -- the form in which the admissible laws of \<^cite>\<open>LaiShkolnikovSoner\<close>
+  supply their covariation constraint.
+\<close>
+
+theorem second_moment_partition_bound:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and t :: "nat \<Rightarrow> real" and dA :: "nat \<Rightarrow> 'a \<Rightarrow> real"
+  assumes P: "prob_space M"
+    and X: "martingale M F (0::real) X"
+    and t0: "\<And>k. 0 \<le> t k" and tmono: "mono t"
+    and sq: "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (\<lambda>\<omega>. (X u \<omega>)\<^sup>2)"
+    and dA_int: "\<And>k. integrable M (dA k)"
+    and dA_bounds: "\<And>k. AE \<omega> in M. 0 \<le> dA k \<omega> \<and> dA k \<omega> \<le> C * (t (Suc k) - t k)"
+    and cov: "\<And>k. AE \<omega> in M.
+        cond_exp M (F (t k)) (\<lambda>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2) \<omega>
+          = cond_exp M (F (t k)) (dA k) \<omega>"
+  shows "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M) \<le> C * (t n - t 0)"
+proof -
+  have tle: "t k \<le> t j" if "k \<le> j" for j k by (rule monoD[OF tmono that])
+  have "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M)
+      = (\<integral>\<omega>. (X (t n) \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. (X (t 0) \<omega>)\<^sup>2 \<partial>M)"
+    by (rule expectation_increment_sq[OF X sq t0 tle]) simp_all
+  also have "\<dots> = (\<Sum>k<n. (\<integral>\<omega>. (X (t (Suc k)) \<omega>)\<^sup>2 \<partial>M) - (\<integral>\<omega>. (X (t k) \<omega>)\<^sup>2 \<partial>M))"
+    by (rule sum_lessThan_telescope[symmetric])
+  also have "\<dots> = (\<Sum>k<n. \<integral>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2 \<partial>M)"
+    by (intro sum.cong refl expectation_increment_sq[OF X sq t0 tle, symmetric]) simp_all
+  also have "\<dots> \<le> (\<Sum>k<n. C * (t (Suc k) - t k))"
+    by (intro sum_mono interval_sq_le[of M _ X t, OF P X t0 tmono sq dA_int dA_bounds cov])
+  also have "\<dots> = C * (t n - t 0)"
+    by (simp add: sum_distrib_left[symmetric] sum_lessThan_telescope)
+  finally show ?thesis .
+qed
+
+subsection \<open>Fourth moments along a partition: Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> with an explicit remainder\<close>
+
+text \<open>
+  Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> is derived there through the Burkholder-Davis-Gundy
+  inequality, which
+  is absent from Isabelle and the AFP. The theorem below reaches the same bound by
+  expanding \<open>(Y + d)^4\<close> directly along the partition using only conditional
+  pull-outs: with a common constant \<open>8 C\<^sup>2\<close> (that route gives \<open>66 C\<^sup>2\<close>), the
+  fourth moment of the increment is bounded by \<open>8 C\<^sup>2 (t-s)\<^sup>2\<close> plus three times the
+  accumulated fourth moments of the partition increments, an explicit remainder
+  vanishing in the mesh limit for continuous paths.
+
+  The fourth-moment integrability hypothesis is discharged in the intended
+  application by localisation: up to the exit time the paths live in the compact
+  @{term K}, so all moments exist.
+\<close>
+
+theorem fourth_moment_partition_bound:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and t :: "nat \<Rightarrow> real" and dA :: "nat \<Rightarrow> 'a \<Rightarrow> real"
+  assumes P: "prob_space M"
+    and X: "martingale M F (0::real) X"
+    and t0: "\<And>k. 0 \<le> t k" and tmono: "mono t"
+    and q4: "\<And>u. 0 \<le> u \<Longrightarrow> integrable M (\<lambda>\<omega>. (X u \<omega>)^4)"
+    and dA_int: "\<And>k. integrable M (dA k)"
+    and dA_bounds: "\<And>k. AE \<omega> in M. 0 \<le> dA k \<omega> \<and> dA k \<omega> \<le> C * (t (Suc k) - t k)"
+    and cov: "\<And>k. AE \<omega> in M.
+        cond_exp M (F (t k)) (\<lambda>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)\<^sup>2) \<omega>
+          = cond_exp M (F (t k)) (dA k) \<omega>"
+    and C: "0 \<le> C"
+  shows "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
+           \<le> 8 * C\<^sup>2 * (t n - t 0)\<^sup>2
+             + 3 * (\<Sum>k<n. (\<integral>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)^4 \<partial>M))"
+proof -
+  interpret P: prob_space M by (rule P)
+  interpret MX: martingale M F "0::real" X by (rule X)
+  have XmM[measurable]: "X (t k) \<in> borel_measurable M" for k
+    by (rule borel_measurable_integrable[OF MX.integrable[OF t0]])
+  have sq: "integrable M (\<lambda>\<omega>. (X u \<omega>)\<^sup>2)" if u: "0 \<le> u" for u
+    by (rule integrable_sq_of_pow4[OF P q4[OF u]
+          borel_measurable_integrable[OF MX.integrable[OF u]]])
+  have tles: "t 0 \<le> t k" for k by (rule monoD[OF tmono]) simp
+  have tSk: "t k \<le> t (Suc k)" for k by (rule monoD[OF tmono]) simp
+  have dt_nn: "0 \<le> t (Suc k) - t k" for k using tSk[of k] by simp
+  have t0k_nn: "0 \<le> t k - t 0" for k using tles[of k] by simp
+  have sfs: "sigma_finite_subalgebra M (F (t k))" for k
+    by (rule MX.sigma_finite_subalgebra_F[OF t0])
+  have spF: "space M \<in> sets (F (t k))" for k
+    using sets.top[of "F (t k)"] MX.space_F[OF t0] by simp
+  have q4k: "integrable M (\<lambda>\<omega>. (X (t k) \<omega>)^4)" for k by (rule q4[OF t0])
+  have iY4: "integrable M (\<lambda>\<omega>. (X (t j) \<omega> - X (t k) \<omega>)^4)" for j k
+    by (rule integrable_pow4_diff[OF q4k q4k XmM XmM])
+  have Ymeas: "(\<lambda>\<omega>. X (t j) \<omega> - X (t k) \<omega>) \<in> borel_measurable M" for j k
+    by measurable
+  have iY2: "integrable M (\<lambda>\<omega>. (X (t j) \<omega> - X (t k) \<omega>)\<^sup>2)" for j k
+    by (rule integrable_sq_of_pow4[OF P iY4 Ymeas])
+  have iY2d2: "integrable M (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                                * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)" for n
+    by (rule integrable_prod_sq_sq[OF iY4 iY4 Ymeas Ymeas])
+  have iY3d: "integrable M (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
+                               * (X (t (Suc n)) \<omega> - X (t n) \<omega>))" for n
+    by (rule integrable_cube_prod[OF iY4 iY4 Ymeas Ymeas])
+  have iYd3: "integrable M (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)
+                               * (X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)" for n
+    by (rule integrable_prod_cube[OF iY4 iY4 Ymeas Ymeas])
+
+  text \<open>The cubic cross term has vanishing expectation.\<close>
+  have EY3d: "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
+                    * (X (t (Suc n)) \<omega> - X (t n) \<omega>) \<partial>M) = 0" for n
+  proof -
+    have dint: "integrable M (\<lambda>\<omega>. X (t (Suc n)) \<omega> - X (t n) \<omega>)"
+      by (intro Bochner_Integration.integrable_diff MX.integrable t0)
+    have Y3meas: "(\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3) \<in> borel_measurable (F (t n))"
+      by (intro borel_measurable_power borel_measurable_diff
+                MX.adaptedD[OF t0 order.refl] MX.adaptedD[OF t0 tles])
+    have pull: "AE \<omega> in M.
+        cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
+                                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<omega>
+          = (X (t n) \<omega> - X (t 0) \<omega>)^3
+            * cond_exp M (F (t n)) (\<lambda>\<omega>. X (t (Suc n)) \<omega> - X (t n) \<omega>) \<omega>"
+      by (intro sigma_finite_subalgebra.cond_exp_measurable_mult(2)[OF sfs]
+                iY3d dint Y3meas)
+    have zero: "AE \<omega> in M.
+        cond_exp M (F (t n)) (\<lambda>\<omega>. X (t (Suc n)) \<omega> - X (t n) \<omega>) \<omega> = 0"
+      by (rule MX.cond_exp_diff_eq_zero[OF t0 monoD[OF tmono]]) simp
+    have z2: "AE \<omega> in M.
+        cond_exp M (F (t n)) (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
+                                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<omega> = 0"
+      using pull zero by eventually_elim simp
+    have "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
+               * (X (t (Suc n)) \<omega> - X (t n) \<omega>) \<partial>M)
+            = (\<integral>\<omega>. cond_exp M (F (t n))
+                     (\<lambda>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^3
+                          * (X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<omega> \<partial>M)"
+      by (rule expectation_cond_exp[OF sfs spF iY3d, symmetric])
+    also have "\<dots> = (\<integral>\<omega>. (0::real) \<partial>M)"
+      by (intro integral_cong_AE
+                sigma_finite_subalgebra.borel_measurable_cond_exp'[OF sfs]
+                borel_measurable_const z2)
+    also have "\<dots> = 0" by simp
+    finally show ?thesis .
+  qed
+
+  text \<open>The mixed square term is controlled by the covariation rate and the
+    second-moment bound.\<close>
+  have EY2d2: "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                    * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)
+                 \<le> C\<^sup>2 * ((t (Suc n) - t n) * (t n - t 0))" for n
+  proof -
+    have "(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)
+        \<le> (C * (t (Suc n) - t n)) * (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2 \<partial>M)"
+      by (rule weighted_interval_bound[OF P X t0 tmono q4 dA_int dA_bounds cov C iY4
+            borel_measurable_diff[OF MX.adaptedD[OF t0 order.refl] MX.adaptedD[OF t0 tles]]])
+    also have "\<dots> \<le> (C * (t (Suc n) - t n)) * (C * (t n - t 0))"
+      using C dt_nn[of n]
+      by (intro mult_left_mono second_moment_partition_bound[of M _ X t, OF P X t0 tmono sq
+            dA_int dA_bounds cov]) (simp_all add: mult_nonneg_nonneg)
+    finally show ?thesis by (simp add: power2_eq_square ac_simps)
+  qed
+
+  text \<open>The odd cross term is absorbed into the mixed square and the remainder.\<close>
+  have EYd3: "(\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
+                      * (X (t (Suc n)) \<omega> - X (t n) \<omega>)^3) \<partial>M)
+                \<le> 2*(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                          * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)
+                  + 2*(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)" for n
+  proof -
+    have iA: "integrable M (\<lambda>\<omega>. 2*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2))"
+      using iY2d2 by simp
+    have iB: "integrable M (\<lambda>\<omega>. 2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)"
+      using iY4 by simp
+    have "(\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
+                  * (X (t (Suc n)) \<omega> - X (t n) \<omega>)^3) \<partial>M)
+            \<le> (\<integral>\<omega>. 2*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                       * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                    + 2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
+    proof (rule integral_mono)
+      show "integrable M (\<lambda>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
+                                 * (X (t (Suc n)) \<omega> - X (t n) \<omega>)^3))"
+        using iYd3 by simp
+      show "integrable M (\<lambda>\<omega>. 2*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                                 * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                              + 2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)"
+        using iA iB by simp
+      show "\<And>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
+                   * (X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+              \<le> 2*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                    * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                + 2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^4"
+        by (rule four_prod_cube_le)
+    qed
+    also have "\<dots> = (\<integral>\<omega>. 2*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                            * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<partial>M)
+                    + (\<integral>\<omega>. 2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
+      by (rule Bochner_Integration.integral_add[OF iA iB])
+    also have "\<dots> = 2*(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                          * (X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)
+                    + 2*(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
+      by simp
+    finally show ?thesis .
+  qed
+  text \<open>The per-interval recursion, from the binomial expansion of \<open>(Y + d)^4\<close>.\<close>
+  have step: "(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
+                \<le> (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
+                  + 8*(C\<^sup>2*((t (Suc n) - t n)*(t n - t 0)))
+                  + 3*(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)" for n
+  proof -
+    have i_r3: "integrable M
+        (\<lambda>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+             + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)"
+      using iYd3[of n] iY4 by simp
+    have i_r2: "integrable M
+        (\<lambda>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+             + (4*((X (t n) \<omega> - X (t 0) \<omega>)*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4))"
+      using iY2d2[of n] i_r3 by simp
+    have i_r1: "integrable M
+        (\<lambda>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
+             + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                + (4*((X (t n) \<omega> - X (t 0) \<omega>)*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                   + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)))"
+      using iY3d[of n] i_r2 by simp
+    have i4Y3d: "integrable M
+        (\<lambda>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>)))"
+      using iY3d[of n] by simp
+    have i6Y2d2: "integrable M
+        (\<lambda>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2))"
+      using iY2d2[of n] by simp
+    have i4Yd3: "integrable M
+        (\<lambda>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)*(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3))"
+      using iYd3[of n] by simp
+    have expand: "(X (t (Suc n)) \<omega> - X (t 0) \<omega>)^4
+        = (X (t n) \<omega> - X (t 0) \<omega>)^4
+          + (4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
+             + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2*(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                + (4*((X (t n) \<omega> - X (t 0) \<omega>)
+                      *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                   + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)))" for \<omega>
+      by algebra
+    have calc: "(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
+        = (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
+          + (\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
+                 + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                    + (4*((X (t n) \<omega> - X (t 0) \<omega>)
+                          *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                       + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)) \<partial>M)"
+    proof -
+      have "(\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
+          = (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^4
+              + (4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
+                 + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                    + (4*((X (t n) \<omega> - X (t 0) \<omega>)
+                          *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                       + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4))) \<partial>M)"
+        by (rule Bochner_Integration.integral_cong[OF refl]) (rule expand)
+      also have "\<dots> = (\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)^4 \<partial>M)
+          + (\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
+                 + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                    + (4*((X (t n) \<omega> - X (t 0) \<omega>)
+                          *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                       + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)) \<partial>M)"
+        by (rule Bochner_Integration.integral_add[OF iY4 i_r1])
+      finally show ?thesis .
+    qed
+    have sr1: "(\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3*(X (t (Suc n)) \<omega> - X (t n) \<omega>))
+                    + (6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                          *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                       + (4*((X (t n) \<omega> - X (t 0) \<omega>)
+                             *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                          + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4)) \<partial>M)
+        = (\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3
+                   *(X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<partial>M)
+          + (\<integral>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                     *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                 + (4*((X (t n) \<omega> - X (t 0) \<omega>)
+                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                    + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4) \<partial>M)"
+      by (rule Bochner_Integration.integral_add[OF i4Y3d i_r2])
+    have sr2: "(\<integral>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2)
+                    + (4*((X (t n) \<omega> - X (t 0) \<omega>)
+                          *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                       + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4) \<partial>M)
+        = (\<integral>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                   *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<partial>M)
+          + (\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
+                     *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                 + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
+      by (rule Bochner_Integration.integral_add[OF i6Y2d2 i_r3])
+    have sr3: "(\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
+                       *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3)
+                    + (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)
+        = (\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)
+                   *(X (t (Suc n)) \<omega> - X (t n) \<omega>)^3) \<partial>M)
+          + (\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
+      by (rule Bochner_Integration.integral_add[OF i4Yd3 iY4])
+    have v1: "(\<integral>\<omega>. 4*((X (t n) \<omega> - X (t 0) \<omega>)^3
+                      *(X (t (Suc n)) \<omega> - X (t n) \<omega>)) \<partial>M) = 0"
+      using EY3d[of n] by simp
+    have v2: "(\<integral>\<omega>. 6*((X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                      *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2) \<partial>M)
+        = 6*(\<integral>\<omega>. (X (t n) \<omega> - X (t 0) \<omega>)\<^sup>2
+                 *(X (t (Suc n)) \<omega> - X (t n) \<omega>)\<^sup>2 \<partial>M)"
+      by simp
+    show ?thesis
+      using calc sr1 sr2 sr3 v1 v2 EY2d2[of n] EYd3[of n] by linarith
+  qed
+
+  show ?thesis
+  proof (induction n)
+    case 0
+    show ?case by simp
+  next
+    case (Suc n)
+    have e1: "8*C\<^sup>2*(t n - t 0)\<^sup>2 + 8*(C\<^sup>2*((t (Suc n) - t n)*(t n - t 0)))
+                = 8*C\<^sup>2*((t (Suc n) - t 0)*(t n - t 0))" by algebra
+    have bnn: "0 \<le> t (Suc n) - t 0" using t0k_nn[of "Suc n"] .
+    have ab: "t n - t 0 \<le> t (Suc n) - t 0" using tSk[of n] by linarith
+    have e3: "8*C\<^sup>2*((t (Suc n) - t 0)*(t n - t 0)) \<le> 8*C\<^sup>2*(t (Suc n) - t 0)\<^sup>2"
+    proof -
+      have h: "(t (Suc n) - t 0)*(t n - t 0) \<le> (t (Suc n) - t 0)\<^sup>2"
+      proof -
+        have "(t (Suc n) - t 0)*(t n - t 0)
+                \<le> (t (Suc n) - t 0)*(t (Suc n) - t 0)"
+          by (rule mult_left_mono[OF ab bnn])
+        thus ?thesis by (simp add: power2_eq_square)
+      qed
+      show ?thesis by (rule mult_left_mono[OF h]) simp
+    qed
+    have ssum: "(\<Sum>k<Suc n. (\<integral>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)^4 \<partial>M))
+                  = (\<Sum>k<n. (\<integral>\<omega>. (X (t (Suc k)) \<omega> - X (t k) \<omega>)^4 \<partial>M))
+                    + (\<integral>\<omega>. (X (t (Suc n)) \<omega> - X (t n) \<omega>)^4 \<partial>M)"
+      by simp
+    from step[of n] Suc.IH e1 e3 ssum show ?case by linarith
+  qed
 qed
 
 text \<open>The diagonal terms, for a martingale bounded by @{term R}: the fourth
@@ -1293,6 +1107,42 @@ qed
 
 subsection \<open>The two pointwise steps of the mesh limit\<close>
 
+lemma abs_diff_le_two:
+  fixes a b C :: real
+  assumes "\<bar>a\<bar> \<le> C" and "\<bar>b\<bar> \<le> C"
+  shows "\<bar>a - b\<bar> \<le> 2 * C"
+  using assms by (simp add: abs_le_iff)
+
+text \<open>The largest squared increment along a partition: nonnegative,
+  measurable, and at most \<open>4 R\<^sup>2\<close> for a process bounded by \<open>R\<close>.\<close>
+
+lemma max_sq_incr_nonneg:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  shows "0 \<le> Max ((\<lambda>k. (X (u (Suc k)) \<omega> - X (u k) \<omega>)\<^sup>2) ` {..<Suc m})"
+  by (rule order_trans[OF zero_le_power2
+        Max_ge[where x = "(X (u (Suc 0)) \<omega> - X (u 0) \<omega>)\<^sup>2"]]) auto
+
+lemma max_sq_incr_le:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes "\<And>k. \<bar>X (u k) \<omega>\<bar> \<le> R"
+  shows "Max ((\<lambda>k. (X (u (Suc k)) \<omega> - X (u k) \<omega>)\<^sup>2) ` {..<Suc m}) \<le> 4*R\<^sup>2"
+proof -
+  have "(X (u (Suc k)) \<omega> - X (u k) \<omega>)\<^sup>2 \<le> 4*R\<^sup>2" for k
+  proof -
+    have "\<bar>X (u (Suc k)) \<omega> - X (u k) \<omega>\<bar>\<^sup>2 \<le> (2*R)\<^sup>2"
+      by (rule power_mono[OF abs_diff_le_two[OF assms assms] abs_ge_zero])
+    then show ?thesis by (simp add: power_mult_distrib)
+  qed
+  then show ?thesis by (subst Max_le_iff) auto
+qed
+
+lemma max_sq_incr_measurable:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes "\<And>k. X (u k) \<in> borel_measurable M"
+  shows "(\<lambda>\<omega>. Max ((\<lambda>k. (X (u (Suc k)) \<omega> - X (u k) \<omega>)\<^sup>2) ` {..<Suc m}))
+      \<in> borel_measurable M"
+  using assms by (intro borel_measurable_Max) auto
+
 
 lemma prod_le_K_split:
   fixes Wv Sv K B :: real
@@ -1352,63 +1202,16 @@ proof -
     by (rule upart_mem[OF sT])
   have XmM: "X (upart s T m k) \<in> borel_measurable M" for m k
     by (rule Xmeas[OF upt_nonneg])
-  have dk_meas: "(\<lambda>\<omega>. (X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>)\<^sup>2)
-                   \<in> borel_measurable M" for m k
-    using XmM by measurable
   have Wmeas: "W m \<in> borel_measurable M" for m
-    unfolding W_def by (intro borel_measurable_Max) (auto intro: dk_meas)
+    unfolding W_def by (rule max_sq_incr_measurable[where X = X and u = "upart s T m"] XmM)+
   have Wnn: "0 \<le> W m \<omega>" for m \<omega>
+    unfolding W_def by (rule max_sq_incr_nonneg[of X "upart s T m"])
+  have Wbnd: "AE \<omega> in M. W m \<omega> \<le> 4*R\<^sup>2" for m
   proof -
-    have mem: "(X (upart s T m (Suc 0)) \<omega> - X (upart s T m 0) \<omega>)\<^sup>2
-        \<in> (\<lambda>k. (X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m}"
-      by (rule imageI) simp
-    have "(X (upart s T m (Suc 0)) \<omega> - X (upart s T m 0) \<omega>)\<^sup>2 \<le> W m \<omega>"
-      unfolding W_def by (intro Max_ge finite_imageI finite_lessThan mem)    thus ?thesis
-      using zero_le_power2[of "X (upart s T m (Suc 0)) \<omega> - X (upart s T m 0) \<omega>"]
-      by linarith
-  qed
-  have bnd_all: "AE \<omega> in M. \<forall>m k. \<bar>X (upart s T m k) \<omega>\<bar> \<le> R"
-  proof (subst AE_all_countable, intro allI)
-    fix m show "AE \<omega> in M. \<forall>k. \<bar>X (upart s T m k) \<omega>\<bar> \<le> R"
+    have "AE \<omega> in M. \<forall>k. \<bar>X (upart s T m k) \<omega>\<bar> \<le> R"
       by (subst AE_all_countable) (intro allI bnd upt_nonneg)
-  qed
-  have Wbnd: "AE \<omega> in M. \<forall>m. W m \<omega> \<le> 4*R\<^sup>2"
-    using bnd_all
-  proof eventually_elim
-    case (elim \<omega>)
-    show "\<forall>m. W m \<omega> \<le> 4*R\<^sup>2"
-    proof
-      fix m
-      show "W m \<omega> \<le> 4*R\<^sup>2"
-        unfolding W_def
-      proof (subst Max_le_iff)
-        show "finite ((\<lambda>k. (X (upart s T m (Suc k)) \<omega>
-                            - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m})" by simp
-        show "(\<lambda>k. (X (upart s T m (Suc k)) \<omega>
-                    - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m} \<noteq> {}" by auto
-        show "\<forall>x \<in> (\<lambda>k. (X (upart s T m (Suc k)) \<omega>
-                         - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m}. x \<le> 4*R\<^sup>2"
-        proof
-          fix x assume "x \<in> (\<lambda>k. (X (upart s T m (Suc k)) \<omega>
-                                  - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m}"
-          then obtain k where xk:
-              "x = (X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>)\<^sup>2"
-            by auto
-          have b1: "\<bar>X (upart s T m (Suc k)) \<omega>\<bar> \<le> R" using elim by blast
-          have b2: "\<bar>X (upart s T m k) \<omega>\<bar> \<le> R" using elim by blast
-          have tri: "\<bar>X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>\<bar>
-                       \<le> \<bar>X (upart s T m (Suc k)) \<omega>\<bar> + \<bar>X (upart s T m k) \<omega>\<bar>"
-            by (rule abs_triangle_ineq4)
-          have habs: "\<bar>X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>\<bar> \<le> 2*R"
-            using tri b1 b2 by linarith
-          have "\<bar>X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>\<bar>\<^sup>2 \<le> (2*R)\<^sup>2"
-            by (rule power_mono[OF habs abs_ge_zero])
-          hence "x \<le> (2*R)\<^sup>2" using xk by simp
-          also have "(2*R)\<^sup>2 = 4*R\<^sup>2" by algebra
-          finally show "x \<le> 4*R\<^sup>2" .
-        qed
-      qed
-    qed
+    then show ?thesis
+      unfolding W_def by eventually_elim (rule max_sq_incr_le[of X "upart s T m"], blast)
   qed
   have Wconv: "AE \<omega> in M. (\<lambda>m. W m \<omega>) \<longlonglongrightarrow> 0"
     using cont
@@ -1488,7 +1291,7 @@ proof -
     show "integrable M (\<lambda>_. 4*R\<^sup>2)" by (rule P.integrable_const)
     show "AE \<omega> in M. (\<lambda>m. W m \<omega>) \<longlonglongrightarrow> 0" by (rule Wconv)
     show "AE \<omega> in M. norm (W m \<omega>) \<le> 4*R\<^sup>2" for m
-      using Wbnd by eventually_elim (simp add: Wnn)
+      using Wbnd[of m] by eventually_elim (simp add: Wnn)
   qed
   thus ?thesis unfolding W_def by simp
 qed
@@ -1594,9 +1397,6 @@ proof -
   have dmeas: "(\<lambda>\<omega>. X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>)
                  \<in> borel_measurable M" for m k
     by measurable
-  have dk2meas: "(\<lambda>\<omega>. (X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>)\<^sup>2)
-                   \<in> borel_measurable M" for m k
-    by measurable
   have iY2: "integrable M (\<lambda>\<omega>. (X (upart s T m (Suc k)) \<omega>
                                - X (upart s T m k) \<omega>)\<^sup>2)" for m k
     by (rule integrable_sq_of_pow4[OF P iY4 dmeas])
@@ -1637,55 +1437,15 @@ proof -
   define W where "W = (\<lambda>m \<omega>. Max ((\<lambda>k. (X (upart s T m (Suc k)) \<omega>
                                         - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m}))"
   have Wmeas: "W m \<in> borel_measurable M" for m
-    unfolding W_def by (intro borel_measurable_Max) (auto intro: dk2meas)
+    unfolding W_def by (rule max_sq_incr_measurable[where X = X and u = "upart s T m"] XmM)+
   have Wnn: "0 \<le> W m \<omega>" for m \<omega>
-  proof -
-    have mem: "(X (upart s T m (Suc 0)) \<omega> - X (upart s T m 0) \<omega>)\<^sup>2
-        \<in> (\<lambda>k. (X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m}"
-      by (rule imageI) simp
-    have "(X (upart s T m (Suc 0)) \<omega> - X (upart s T m 0) \<omega>)\<^sup>2 \<le> W m \<omega>"
-      unfolding W_def by (intro Max_ge finite_imageI finite_lessThan mem)
-    thus ?thesis
-      using zero_le_power2[of "X (upart s T m (Suc 0)) \<omega> - X (upart s T m 0) \<omega>"]
-      by linarith
-  qed
+    unfolding W_def by (rule max_sq_incr_nonneg[of X "upart s T m"])
   have Wub: "AE \<omega> in M. W m \<omega> \<le> 4*R\<^sup>2" for m
   proof -
-    have allk: "AE \<omega> in M. \<forall>k. \<bar>X (upart s T m k) \<omega>\<bar> \<le> R"
+    have "AE \<omega> in M. \<forall>k. \<bar>X (upart s T m k) \<omega>\<bar> \<le> R"
       by (subst AE_all_countable) (intro allI bndm)
-    show ?thesis using allk
-    proof eventually_elim
-      case (elim \<omega>)
-      show "W m \<omega> \<le> 4*R\<^sup>2"
-        unfolding W_def
-      proof (subst Max_le_iff)
-        show "finite ((\<lambda>k. (X (upart s T m (Suc k)) \<omega>
-                            - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m})" by simp
-        show "(\<lambda>k. (X (upart s T m (Suc k)) \<omega>
-                    - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m} \<noteq> {}" by auto
-        show "\<forall>x \<in> (\<lambda>k. (X (upart s T m (Suc k)) \<omega>
-                         - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m}. x \<le> 4*R\<^sup>2"
-        proof
-          fix x assume "x \<in> (\<lambda>k. (X (upart s T m (Suc k)) \<omega>
-                                  - X (upart s T m k) \<omega>)\<^sup>2) ` {..<Suc m}"
-          then obtain k where xk:
-              "x = (X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>)\<^sup>2"
-            by auto
-          have b1: "\<bar>X (upart s T m (Suc k)) \<omega>\<bar> \<le> R" using elim by blast
-          have b2: "\<bar>X (upart s T m k) \<omega>\<bar> \<le> R" using elim by blast
-          have tri: "\<bar>X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>\<bar>
-                       \<le> \<bar>X (upart s T m (Suc k)) \<omega>\<bar> + \<bar>X (upart s T m k) \<omega>\<bar>"
-            by (rule abs_triangle_ineq4)
-          have habs: "\<bar>X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>\<bar> \<le> 2*R"
-            using tri b1 b2 by linarith
-          have "\<bar>X (upart s T m (Suc k)) \<omega> - X (upart s T m k) \<omega>\<bar>\<^sup>2 \<le> (2*R)\<^sup>2"
-            by (rule power_mono[OF habs abs_ge_zero])
-          hence "x \<le> (2*R)\<^sup>2" using xk by simp
-          also have "(2*R)\<^sup>2 = 4*R\<^sup>2" by algebra
-          finally show "x \<le> 4*R\<^sup>2" .
-        qed
-      qed
-    qed
+    then show ?thesis
+      unfolding W_def by eventually_elim (rule max_sq_incr_le[of X "upart s T m"], blast)
   qed
   have iW: "integrable M (W m)" for m
   proof (rule Bochner_Integration.integrable_bound[of _ "\<lambda>_. 4*R\<^sup>2"])
@@ -2038,20 +1798,6 @@ proof -
   finally show ?thesis unfolding diff .
 qed
 
-
-subsection \<open>Elementary bounds used by the moment estimates\<close>
-
-text \<open>Pathwise the localization is eventually inactive: a path is
-  continuous on the compact \<open>{0..T}\<close>, hence bounded there, so once \<open>R\<close>
-  exceeds that bound the level is never reached and \<open>\<tau>\<^sub>R = T\<close>.  The stopped
-  increments are therefore eventually equal to the unstopped ones, and
-  Fatou turns the uniform bound above into the bound itself.\<close>
-
-lemma abs_diff_le_two:
-  fixes a b C :: real
-  assumes "\<bar>a\<bar> \<le> C" and "\<bar>b\<bar> \<le> C"
-  shows "\<bar>a - b\<bar> \<le> 2 * C"
-  using assms by (simp add: abs_le_iff)
 
 subsection \<open>Difference quotients of a continuous path, tested at rationals\<close>
 

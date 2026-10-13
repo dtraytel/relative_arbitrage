@@ -804,61 +804,18 @@ proof -
   have sq: "integrable Q (\<lambda>\<omega>. (pcoord T i s \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
     unfolding pcoord_def
     using T0 s by (intro exit_class_sq_integrable[OF T0 L Q]) simp
-  have adp: "adapted_process Q ?F 0 (pcoord T i)"
-    unfolding pcoord_def by (rule exit_class_coord_adapted[OF Q])
   have cont0: "continuous_on {0..} (\<lambda>s. pcoord T i s \<omega>)"
     if w: "\<omega> \<in> space Q" for \<omega>
     unfolding pcoord_def
     by (rule exit_class_coord_paths_cont[OF T0 setsQ w])
-  have contu: "continuous_on {0..u} (\<lambda>s. pcoord T i s \<omega>)"
-    if w: "\<omega> \<in> space Q" for \<omega> u
-    by (rule continuous_on_subset[OF cont0[OF w]]) auto
-  have lnn: "0 \<le> ploc T i R \<omega>" for \<omega> by (rule ploc_nonneg[OF T0])
-  interpret HM: horizon_sq_int_martingale Q ?F "pcoord T i" T
-    by (intro horizon_sq_int_martingale.intro
-        horizon_sq_int_martingale_axioms.intro mg T prob sq)
-  have domT: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
-    by (rule HM.Dsup_dominates) (intro AE_I2 contu)
-  \<comment> \<open>past the horizon the process no longer moves, so the envelope built at
-      \<open>T\<close> dominates it at every later time as well.\<close>
-  have domA: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
-    for u
-    using domT
-  proof (rule eventually_mono)
-    fix \<omega> :: "'n pairpath"
-    assume h: "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
-    show "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
-    proof (intro allI impI)
-      fix s :: real assume s: "0 \<le> s"
-      have "pcoord T i s \<omega> = pcoord T i (min s T) \<omega>"
-        unfolding pcoord_def by simp
-      moreover have "\<bar>pcoord T i (min s T) \<omega>\<bar> \<le> HM.Dsup \<omega>"
-        using h s T0 by simp
-      ultimately show "\<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>" by simp
-    qed
-  qed
   show ?thesis
-  proof (rule optional_stopping[where D = "\<lambda>_. HM.Dsup"])
-    show "martingale Q ?F 0 (pcoord T i)" by (rule mg)
-    show "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> 0 \<le> ploc T i R \<omega>" by (rule lnn)
-    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space Q. ploc T i R \<omega> \<le> s} \<in> sets (?F s)"
-      by (rule exit_class_ploc_stopping[OF T0 setsQ Q])
-    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q. continuous_on {0..u} (\<lambda>s. pcoord T i s \<omega>)"
-      by (intro AE_I2 contu)
-    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q.
-        \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
-      by (rule domA)
-    show "\<And>u. 0 < u \<Longrightarrow> integrable Q HM.Dsup" by (rule HM.Dsup_integrable)
-    show "\<And>v. 0 \<le> v \<Longrightarrow> (\<lambda>\<omega>. pcoord T i (min v (ploc T i R \<omega>)) \<omega>)
-        \<in> borel_measurable (?F v)"
-      by (rule stopped_adapted_of_cont
-          [OF adp lnn exit_class_ploc_stopping[OF T0 setsQ Q] cont0])
-  qed
+    by (rule stopped_martingale_L2[OF prob mg sq cont0 _
+          exit_class_ploc_stopping[OF T0 setsQ Q]]) (auto intro: ploc_nonneg[OF T0])
 qed
 
 text \<open>The compensated process is stopped by the same argument.  Its
-  envelope is \<open>Dsup\<^sup>2 + n\<sqdot>L\<sqdot>T\<close>: the squared coordinate is dominated by the
-  square of Doob's envelope (\<open>Dsup_sq_integrable\<close>) and the compensator by
+  envelope is \<open>D\<^sup>2 + n\<sqdot>L\<sqdot>T\<close>: the squared coordinate is dominated by the
+  square of Doob's envelope (\<open>L2_martingale_envelope\<close>) and the compensator by
   the class's Lipschitz bound on \<open>Y\<close>.\<close>
 
 theorem exit_class_stopped_comp_martingale:
@@ -877,49 +834,36 @@ proof -
   have prob: "prob_space Q" by (rule exit_class_prob[OF Q])
   have mgZ: "martingale Q ?F 0 ?Z"
     by (rule exit_class_compensated_coord_martingale[OF Q])
-  have adpZ: "adapted_process Q ?F 0 ?Z"
-  proof -
-    interpret MZ: martingale Q ?F 0 ?Z by (rule mgZ)
-    show ?thesis by unfold_locales
-  qed
   have contZ: "continuous_on {0..} (\<lambda>s. ?Z s \<omega>)" if w: "\<omega> \<in> space Q" for \<omega>
     by (rule exit_class_comp_paths_cont[OF T0 setsQ w])
-  have contZu: "continuous_on {0..u} (\<lambda>s. ?Z s \<omega>)"
-    if w: "\<omega> \<in> space Q" for \<omega> u
-    by (rule continuous_on_subset[OF contZ[OF w]]) auto
-  have lnn: "0 \<le> ploc T i R \<omega>" for \<omega> by (rule ploc_nonneg[OF T0])
   \<comment> \<open>the \<open>X\<close>-side envelope, from Doob, exactly as for the coordinate.\<close>
   have mg: "martingale Q ?F 0 (pcoord T i)"
     unfolding pcoord_def by (rule exit_class_coord_martingale[OF Q])
   have sq: "integrable Q (\<lambda>\<omega>. (pcoord T i s \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
     unfolding pcoord_def
     using T0 s by (intro exit_class_sq_integrable[OF T0 L Q]) simp
-  have contX: "continuous_on {0..u} (\<lambda>s. pcoord T i s \<omega>)"
-    if w: "\<omega> \<in> space Q" for \<omega> u
-    unfolding pcoord_def
-    by (rule continuous_on_subset
-        [OF exit_class_coord_paths_cont[OF T0 setsQ w]]) auto
-  interpret HM: horizon_sq_int_martingale Q ?F "pcoord T i" T
-    by (intro horizon_sq_int_martingale.intro
-        horizon_sq_int_martingale_axioms.intro mg T prob sq)
-  have domT: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
-    by (rule HM.Dsup_dominates) (intro AE_I2 contX)
+  have contX: "continuous_on {0..} (\<lambda>s. pcoord T i s \<omega>)"
+    if w: "\<omega> \<in> space Q" for \<omega>
+    unfolding pcoord_def by (rule exit_class_coord_paths_cont[OF T0 setsQ w])
+  obtain D where domT: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> D \<omega>"
+    and D2: "integrable Q (\<lambda>\<omega>. (D \<omega>)\<^sup>2)"
+    using L2_martingale_envelope[OF prob mg sq contX T] by blast
   \<comment> \<open>the \<open>Y\<close>-side envelope is the class's own Lipschitz bound.\<close>
   have ybnd: "AE \<omega> in Q. \<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
     by (rule exit_class_Y_bounded_ae[OF T0 L Q])
   have domZ: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
-      \<bar>?Z s \<omega>\<bar> \<le> (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T" for u
+      \<bar>?Z s \<omega>\<bar> \<le> (D \<omega>)\<^sup>2 + real CARD('n) * L * T" for u
     using domT ybnd
   proof eventually_elim
     case (elim \<omega>)
-    then have hX: "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> HM.Dsup \<omega>"
+    then have hX: "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> D \<omega>"
       and hY: "\<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
       by blast+
     show ?case
     proof (intro allI impI)
       fix s :: real assume s: "0 \<le> s"
       have mT: "min s T \<in> {0..T}" using s T0 by simp
-      have bX: "\<bar>fst (\<omega> (min s T)) $ i\<bar> \<le> HM.Dsup \<omega>"
+      have bX: "\<bar>fst (\<omega> (min s T)) $ i\<bar> \<le> D \<omega>"
         using hX mT unfolding pcoord_def by simp
       have "\<bar>snd (\<omega> (min s T)) $ i $ i\<bar> \<le> norm (snd (\<omega> (min s T)) $ i)"
         using Finite_Cartesian_Product.norm_nth_le[of "snd (\<omega> (min s T)) $ i" i]
@@ -930,40 +874,25 @@ proof -
       finally have bY: "\<bar>snd (\<omega> (min s T)) $ i $ i\<bar> \<le> real CARD('n) * L * T" .
       have sqe: "(fst (\<omega> (min s T)) $ i)\<^sup>2 = \<bar>fst (\<omega> (min s T)) $ i\<bar>\<^sup>2"
         by simp
-      have bX2: "(fst (\<omega> (min s T)) $ i)\<^sup>2 \<le> (HM.Dsup \<omega>)\<^sup>2"
+      have bX2: "(fst (\<omega> (min s T)) $ i)\<^sup>2 \<le> (D \<omega>)\<^sup>2"
         unfolding sqe by (rule power_mono[OF bX abs_ge_zero])
       have t1: "\<bar>?Z s \<omega>\<bar> \<le> (fst (\<omega> (min s T)) $ i)\<^sup>2
           + \<bar>snd (\<omega> (min s T)) $ i $ i\<bar>"
         using abs_triangle_ineq4[of "(fst (\<omega> (min s T)) $ i)\<^sup>2"
             "snd (\<omega> (min s T)) $ i $ i"]
         by simp
-      show "\<bar>?Z s \<omega>\<bar> \<le> (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T"
+      show "\<bar>?Z s \<omega>\<bar> \<le> (D \<omega>)\<^sup>2 + real CARD('n) * L * T"
         using t1 bX2 bY by linarith
     qed
   qed
-  have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
-  have envint: "integrable Q (\<lambda>\<omega>. (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T)"
-    by (intro Bochner_Integration.integrable_add HM.Dsup_sq_integrable
-        finite_measure.integrable_const[OF fmQ])
   show ?thesis
-  proof (rule optional_stopping
-      [where D = "\<lambda>_ \<omega>. (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T"])
-    show "martingale Q ?F 0 ?Z" by (rule mgZ)
-    show "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> 0 \<le> ploc T i R \<omega>" by (rule lnn)
-    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space Q. ploc T i R \<omega> \<le> s} \<in> sets (?F s)"
-      by (rule exit_class_ploc_stopping[OF T0 setsQ Q])
-    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q. continuous_on {0..u} (\<lambda>s. ?Z s \<omega>)"
-      by (intro AE_I2 contZu)
-    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
-        \<bar>?Z s \<omega>\<bar> \<le> (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T"
-      by (rule domZ)
-    show "\<And>u. 0 < u \<Longrightarrow>
-        integrable Q (\<lambda>\<omega>. (HM.Dsup \<omega>)\<^sup>2 + real CARD('n) * L * T)"
-      by (rule envint)
-    show "\<And>v. 0 \<le> v \<Longrightarrow> (\<lambda>\<omega>. ?Z (min v (ploc T i R \<omega>)) \<omega>)
-        \<in> borel_measurable (?F v)"
-      by (rule stopped_adapted_of_cont
-          [OF adpZ lnn exit_class_ploc_stopping[OF T0 setsQ Q] contZ])
+  proof (rule optional_stopping_cont[OF mgZ _ exit_class_ploc_stopping[OF T0 setsQ Q] contZ])
+    show "0 \<le> ploc T i R \<omega>" if "\<omega> \<in> space Q" for \<omega> by (rule ploc_nonneg[OF T0])
+    show "\<exists>D. (AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>?Z s \<omega>\<bar> \<le> D \<omega>)
+        \<and> integrable Q D" for u
+      by (intro exI[of _ "\<lambda>\<omega>. (D \<omega>)\<^sup>2 + real CARD('n) * L * T"] conjI domZ
+          Bochner_Integration.integrable_add[OF D2
+            finite_measure.integrable_const[OF prob_space.finite_measure[OF prob]]])
   qed
 qed
 
