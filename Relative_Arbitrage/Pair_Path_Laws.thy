@@ -2261,7 +2261,7 @@ qed
 
 subsection \<open>From a generating \<open>\<pi>\<close>-system to the whole sub-\<open>\<sigma>\<close>-algebra\<close>
 
-text \<open>The conditioning set \<open>A'\<close> of \<open>pfut_rcd_X_increment_zero\<close>
+text \<open>The conditioning set \<open>A'\<close> of \<open>pfut_rcd_F_increment_zero\<close>
   also ranges over a countable family, so what arrives at almost every \<open>p'\<close>
   is the vanishing of the set integral on a \<open>\<pi>\<close>-system only.  Upgrading that
   to the generated \<open>\<sigma>\<close>-algebra is a Dynkin argument: \<open>sigma_sets_induct_disjoint\<close> does the induction and \<open>lebesgue_integral_countable_add\<close> discharges its disjoint-union case.  The
@@ -2921,9 +2921,9 @@ qed
 
 text \<open>Clause (iii) of (1.7) for the conditional law, assembled from:
 
-  \<^item> \<open>pfut_rcd_X_increment_zero\<close>, supplying one almost-sure
-    condition per \<open>(q, A', c)\<close>, countably many since \<open>q\<close> is rational,
-    \<open>A'\<close> ranges over the \<open>\<pi>\<close>-system of
+  \<^item> \<open>pfut_rcd_F_increment_zero\<close>, supplying one almost-sure
+    condition per \<open>(q, A')\<close> for each coordinate \<open>c\<close>, countably many
+    since \<open>q\<close> is rational, \<open>A'\<close> ranges over the \<open>\<pi>\<close>-system of
     \<open>countable_pi_system_natural_filtration_path\<close>, and \<open>c\<close>
     ranges over the finite index type;
   \<^item> \<open>AE_ball_countable'\<close>, turning "for each, almost surely"

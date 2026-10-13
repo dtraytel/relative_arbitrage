@@ -1562,7 +1562,7 @@ qed
 
 section \<open>The increment identity moves to the kernel\<close>
 
-text \<open>The stopping-time twin of \<open>pfut_rcd_X_increment_zero\<close>,
+text \<open>The stopping-time twin of \<open>pfut_rcd_F_increment_zero\<close>,
   stated once for an arbitrary real integrand \<open>h\<close> on the future factor
   together with the identity \<open>hP\<close> pulling it back to an increment of a
   horizon martingale \<open>Y\<close> of \<open>P\<close>.  Every clause of the class surviving the
