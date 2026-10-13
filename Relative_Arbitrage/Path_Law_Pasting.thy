@@ -1522,13 +1522,6 @@ proof -
   show ?thesis by (rule AE_kernel_full[OF KQ neQ CY null'])
 qed
 
-text \<open>A rational-hypothesis variant of
-  \<open>exit_class_diffquot_of_pairs\<close>.  The original demands
-  the pairwise bound at all real pairs, which an almost-sure argument cannot
-  supply, since only countably many conditions survive the passage from "for
-  each, almost surely" to "almost surely, for all".  Its proof already uses
-  the hypothesis at rational pairs only, so the weakening is free.\<close>
-
 lemma ksemi_weak_conv:
   fixes Krm :: "nat \<Rightarrow> 'a \<Rightarrow> 'b measure" and X :: "'a topology" and Y :: "'b topology"
   assumes PM: "prob_space M"
@@ -1763,10 +1756,6 @@ text \<open>@{thm [source] AE_kernel_full} delivers \<open>emeasure (\<kappa> p)
 
 text \<open>\<open>AE_mem_of_emeasure_1\<close> lives in
   @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
-
-text \<open>Clause (ii) for the conditional law, at rational pairs only, since an
-  almost-sure statement survives only countably many conditions, which is
-  what \<open>exit_class_diffquot_of_rational_pairs\<close> supplies.\<close>
 
 lemma AE_integrable_ksemi_section:
   fixes g :: "'a \<times> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
