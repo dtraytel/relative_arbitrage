@@ -177,13 +177,10 @@ theorem rotSF_exists:
 proof -
   have psda: "psd a" using aF unfolding feasible_def by blast
   have syma: "transpose a = a" using psda unfolding psd_def by blast
-  obtain B where Bon: "onormal B" and sp: "span B = UNIV"
+  obtain B and f :: "'n \<Rightarrow> real^'n" where Bon: "onormal B" and sp: "span B = UNIV"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF syma] by blast
-  have finB: "finite B" by (rule onormal_finite[OF Bon])
-  have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF Bon sp])
-  obtain f :: "'n \<Rightarrow> real^'n" where bij: "bij_betw f (UNIV :: 'n set) B"
-    using finite_same_card_bij[of "UNIV :: 'n set" B] finB cardB by auto
+    and bij: "bij_betw f (UNIV :: 'n set) B"
+    using symmetric_eigendecomposition[OF syma] by metis
   define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (a *v u))"
   have lam_nn: "0 \<le> lam u" for u
     using psda unfolding lam_def psd_def by blast

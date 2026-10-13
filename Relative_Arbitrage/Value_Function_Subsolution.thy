@@ -1419,10 +1419,9 @@ proof -
     using b unfolding sconstraint_def Pi_constraint_def by auto
   have sym_b: "transpose b = b" using psd_b by (simp add: psd_def)
   obtain B :: "(real^'n) set" where B: "onormal B" "span B = UNIV"
+    and cardB: "card B = CARD('n)" and finB: "finite B"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> b *v u = (u \<bullet> (b *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym_b] by blast
-  have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF B])
-  have finB: "finite B" by (rule onormal_finite[OF B(1)])
+    using symmetric_eigendecomposition[OF sym_b] by metis
   define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (b *v u))"
   have lam_nn: "0 \<le> lam u" for u
     using psd_b by (simp add: lam_def psd_def)

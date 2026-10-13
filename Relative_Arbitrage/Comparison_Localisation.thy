@@ -288,21 +288,12 @@ theorem ell_op_lsc_le_of_nearby:
   shows "ell_op_lsc k L p M \<le> ereal c"
   unfolding ell_op_lsc_def
 proof (rule SUP_least)
-  fix e :: real
-  assume "e \<in> {0<..}"
-  then have e0: "0 < e" by simp
-  obtain p' M' where d: "dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, M) < e"
-    and bd: "ell_op k L p' M' \<le> c"
-    using b[OF e0] by blast
-  have mem: "((p', M') :: (real^'n) \<times> (real^'n^'n)) \<in> ball (p, M) e"
-    using d by (simp add: dist_commute)
-  have "(INF v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)
-      \<le> ell_op_pair k L (p', M')"
-    by (rule INF_lower[OF mem])
-  also have "\<dots> \<le> ereal c"
-    using bd by (simp add: ell_op_pair_def)
-  finally show "(INF v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)
-      \<le> ereal c" .
+  fix e :: real assume "e \<in> {0<..}"
+  then obtain p' M' where "((p', M') :: (real^'n) \<times> (real^'n^'n)) \<in> ball (p, M) e"
+    and "ell_op k L p' M' \<le> c"
+    using b[of e] by (auto simp: dist_commute)
+  then show "(INF v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v) \<le> ereal c"
+    by (intro INF_lower2) (auto simp: ell_op_pair_def)
 qed
 
 theorem ell_op_usc_ge_of_nearby:
@@ -313,20 +304,12 @@ theorem ell_op_usc_ge_of_nearby:
   shows "ereal c \<le> ell_op_usc k L p M"
   unfolding ell_op_usc_def
 proof (rule INF_greatest)
-  fix e :: real
-  assume "e \<in> {0<..}"
-  then have e0: "0 < e" by simp
-  obtain p' M' where d: "dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, M) < e"
-    and bd: "c \<le> ell_op k L p' M'"
-    using b[OF e0] by blast
-  have mem: "((p', M') :: (real^'n) \<times> (real^'n^'n)) \<in> ball (p, M) e"
-    using d by (simp add: dist_commute)
-  have "ereal c \<le> ell_op_pair k L (p', M')"
-    using bd by (simp add: ell_op_pair_def)
-  also have "\<dots> \<le> (SUP v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)"
-    by (rule SUP_upper[OF mem])
-  finally show "ereal c
-      \<le> (SUP v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)" .
+  fix e :: real assume "e \<in> {0<..}"
+  then obtain p' M' where "((p', M') :: (real^'n) \<times> (real^'n^'n)) \<in> ball (p, M) e"
+    and "c \<le> ell_op k L p' M'"
+    using b[of e] by (auto simp: dist_commute)
+  then show "ereal c \<le> (SUP v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)"
+    by (intro SUP_upper2) (auto simp: ell_op_pair_def)
 qed
 
 text \<open>The closing contradiction in that generality. Its hypotheses do not

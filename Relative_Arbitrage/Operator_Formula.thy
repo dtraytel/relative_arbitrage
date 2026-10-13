@@ -294,12 +294,9 @@ theorem eigval_ge_of_subspace:
   shows "c \<le> eigval m a"
 proof -
   obtain B where B: "onormal B" "span B = UNIV"
+    and finB: "finite B" and cardB: "card B = CARD('n)"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym] by metis
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
+    using symmetric_eigendecomposition[OF sym] by metis
   obtain T w where T: "T \<subseteq> B" "card T = m"
     and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
     and w: "w \<in> T" and "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
@@ -441,10 +438,9 @@ theorem sum_min_weights_ge:
   shows "real m \<le> (\<Sum>u\<in>B. min (u \<bullet> (a *v u)) 1)"
 proof -
   obtain V where V: "onormal V" "span V = UNIV"
+    and finV: "finite V"
     and eig: "\<And>v. v \<in> V \<Longrightarrow> a *v v = (v \<bullet> (a *v v)) *\<^sub>R v"
-    using symmetric_eigenbasis[OF sym] by metis
-  have finV: "finite V"
-    by (rule onormal_finite[OF V(1)])
+    using symmetric_eigendecomposition[OF sym] by metis
   define lam where "lam = (\<lambda>v :: real^'n. v \<bullet> (a *v v))"
   define c where "c = (\<Sum>v\<in>V. min (lam v) 1 *\<^sub>R outer_prod v v)"
   have adecomp: "a = (\<Sum>v\<in>V. lam v *\<^sub>R outer_prod v v)"
@@ -1409,12 +1405,9 @@ proof -
   have symMp: "transpose (Mp p M) = Mp p M"
     by (rule transpose_Mp[OF sym])
   obtain B where B: "onormal B" "span B = UNIV"
+    and finB: "finite B" and cardB: "card B = CARD('n)"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> M *v u = (u \<bullet> (M *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym] by metis
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
+    using symmetric_eigendecomposition[OF sym] by metis
   have siB: "Suc i \<le> card B"
     using i(2) cardB by simp
   obtain T where T: "T \<subseteq> B" "card T = Suc i"
@@ -1895,12 +1888,9 @@ proof
 next
   assume ge: "1 \<le> eigval m a"
   obtain B where B: "onormal B" "span B = UNIV"
+    and finB: "finite B" and cardB: "card B = CARD('n)"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym] by metis
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
+    using symmetric_eigendecomposition[OF sym] by metis
   have mB: "m \<le> card B"
     using m(2) cardB by simp
   obtain T where T: "T \<subseteq> B" "card T = m"

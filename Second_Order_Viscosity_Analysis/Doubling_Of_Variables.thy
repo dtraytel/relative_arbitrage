@@ -96,21 +96,6 @@ proof -
   show ?thesis by (rule that) (use main in blast)
 qed
 
-text \<open>The affine gradient field of a quadratic has the same derivative at every
-  point, not just at the base point, which is what a Hessian \<^emph>\<open>field\<close> needs.\<close>
-
-lemma quadratic_grad_derivative_at:
-  fixes H :: "real^'n::finite^'n" and p x y :: "real^'n"
-  shows "((\<lambda>z. p + H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at y)"
-proof -
-  have blH: "bounded_linear ((*v) H)" by (rule matrix_vector_mul_bounded_linear)
-  have shift: "((\<lambda>z::real^'n. z - x) has_derivative (\<lambda>h. h)) (at y)"
-    by (auto intro!: derivative_eq_intros)
-  have "((\<lambda>z. H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at y)"
-    using bounded_linear.has_derivative[OF blH shift] by simp
-  then show ?thesis by (auto intro!: derivative_eq_intros)
-qed
-
 lemma quad_bdd_below_on_bounded:
   fixes p yh :: "real^'n::finite" and M :: "real^'n^'n"
     and K :: "(real^'n) set"

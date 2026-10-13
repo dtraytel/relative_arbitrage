@@ -215,6 +215,26 @@ qed
 
 section \<open>Orthonormal eigenbases of invariant subspaces\<close>
 
+text \<open>The orthogonal complement of a family of eigenvectors within an
+  invariant subspace is again invariant.\<close>
+
+lemma eigen_orth_complement_invariant:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a" and inv: "\<forall>x\<in>S. a *v x \<in> S"
+    and eigC: "\<forall>u\<in>C. a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+  shows "\<forall>x\<in>{y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}. a *v x \<in> {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}"
+proof (intro ballI)
+  fix x assume x: "x \<in> {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}"
+  have "c \<bullet> (a *v x) = 0" if c: "c \<in> C" for c
+  proof -
+    have "c \<bullet> (a *v x) = x \<bullet> (a *v c)" by (rule sym_inner_swap[OF sym])
+    also have "\<dots> = (c \<bullet> (a *v c)) * (c \<bullet> x)"
+      using eigC c by (metis inner_commute inner_scaleR_right)
+    finally show ?thesis using x c by simp
+  qed
+  then show "a *v x \<in> {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}" using x inv by blast
+qed
+
 lemma invariant_subspace_eigenbasis_ex:
   fixes a :: "real^'n^'n"
   assumes sym: "transpose a = a"
@@ -233,93 +253,27 @@ proof (induction "dim S" arbitrary: S rule: less_induct)
     obtain u where u: "u \<in> S" "norm u = 1"
       and umax: "\<And>v. v \<in> S \<Longrightarrow> norm v = 1 \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
       using rayleigh_maximizer[OF less.prems(1) False] by metis
-    have uu: "u \<bullet> u = 1"
-      using u(2) by (simp add: norm_eq_1)
-    have eig_u: "a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-      by (rule rayleigh_maximizer_eigenvector[OF sym less.prems(1) _ u umax])
-        (use less.prems(2) in blast)
-    define S' where "S' = {x \<in> S. u \<bullet> x = 0}"
-    have S'_eq: "S' = S \<inter> {x. u \<bullet> x = 0}"
-      by (auto simp: S'_def)
+    have eig_u: "\<forall>w\<in>{u}. a *v w = (w \<bullet> (a *v w)) *\<^sub>R w"
+      using rayleigh_maximizer_eigenvector[OF sym less.prems(1) _ u umax] less.prems(2)
+      by blast
+    define S' where "S' = {y \<in> S. \<forall>c\<in>{u}. c \<bullet> y = 0}"
     have subS': "subspace S'"
-      unfolding S'_eq
-      by (intro subspace_inter less.prems(1) subspace_hyperplane)
-    have invS': "\<forall>x\<in>S'. a *v x \<in> S'"
-    proof
-      fix x assume "x \<in> S'"
-      then have xS: "x \<in> S" and xu: "u \<bullet> x = 0"
-        by (auto simp: S'_def)
-      have "a *v x \<in> S"
-        using less.prems(2) xS by blast
-      moreover have "u \<bullet> (a *v x) = 0"
-      proof -
-        have "u \<bullet> (a *v x) = x \<bullet> (a *v u)"
-          by (rule sym_inner_swap[OF sym])
-        also have "\<dots> = (u \<bullet> (a *v u)) * (x \<bullet> u)"
-          by (subst (1) eig_u) simp
-        also have "\<dots> = 0"
-          using xu by (simp add: inner_commute)
-        finally show ?thesis .
-      qed
-      ultimately show "a *v x \<in> S'"
-        by (simp add: S'_def)
-    qed
-    have uS': "u \<notin> S'"
-      using uu by (auto simp: S'_def)
-    have dimlt: "dim S' < dim S"
-    proof -
-      have sub: "S' \<subseteq> S"
-        by (auto simp: S'_def)
-      then have le: "dim S' \<le> dim S"
-        by (rule dim_subset)
-      have "S' \<noteq> S"
-        using uS' u(1) by auto
-      then have "dim S' \<noteq> dim S"
-        using subS' less.prems(1) sub
-        by (metis subspace_dim_equal order_refl)
-      with le show ?thesis
-        by simp
-    qed
-    from less.hyps[OF dimlt subS' invS'] obtain B' where
+      unfolding S'_def using subspace_inter[OF less.prems(1) subspace_hyperplane[of u]]
+      by (simp add: Int_def conj_commute)
+    have "u \<notin> S'" using u(2) by (auto simp: S'_def norm_eq_1)
+    then have "S' \<subseteq> S" "S' \<noteq> S" using u(1) unfolding S'_def by blast+
+    then have dimlt: "dim S' < dim S"
+      using subS' less.prems(1) by (metis dim_subset order_less_le subspace_dim_equal)
+    from less.hyps[OF dimlt subS'] obtain B' where
       B': "onormal B'" "B' \<subseteq> S'" "span B' = S'"
         "\<forall>w\<in>B'. a *v w = (w \<bullet> (a *v w)) *\<^sub>R w"
-      by blast
-    define B where "B = insert u B'"
-    have BS: "B \<subseteq> S"
-      using u(1) B'(2) by (auto simp: B_def S'_def)
-    have onB: "onormal B"
-    proof -
-      have "orthogonal u b" if "b \<in> B'" for b
-        using B'(2) that by (auto simp: S'_def orthogonal_def)
-      then show ?thesis
-        using B'(1) u(2)
-        by (auto simp: onormal_def B_def pairwise_insert orthogonal_commute)
-    qed
-    have spanB: "span B = S"
-    proof -
-      have "span B \<subseteq> S"
-        using BS less.prems(1) by (simp add: span_minimal)
-      moreover have "S \<subseteq> span B"
-      proof
-        fix x assume xS: "x \<in> S"
-        have "u \<bullet> (x - (u \<bullet> x) *\<^sub>R u) = 0"
-          by (simp add: inner_diff_right uu)
-        moreover have "x - (u \<bullet> x) *\<^sub>R u \<in> S"
-          using xS u(1) less.prems(1)
-          by (simp add: subspace_diff subspace_scale)
-        ultimately have "x - (u \<bullet> x) *\<^sub>R u \<in> span B'"
-          by (simp add: B'(3) S'_def)
-        then show "x \<in> span B"
-          unfolding B_def
-          by (metis span_breakdown_eq)
-      qed
-      ultimately show ?thesis
-        by blast
-    qed
-    have eigB: "\<forall>w\<in>B. a *v w = (w \<bullet> (a *v w)) *\<^sub>R w"
-      using B'(4) eig_u by (auto simp: B_def)
+      using eigen_orth_complement_invariant[OF sym less.prems(2) eig_u]
+      unfolding S'_def by blast
+    have u1: "onormal {u}" using u(2) by (simp add: onormal_def)
     show ?thesis
-      using onB BS spanB eigB by blast
+      using onormal_union_orth_complement[OF less.prems(1) u1 _ B'(1) B'(3)[unfolded S'_def]]
+        u(1) B'(2,4) eig_u
+      by (intro exI[of _ "{u} \<union> B'"]) (auto simp: S'_def)
   qed
 qed
 
@@ -329,6 +283,46 @@ theorem symmetric_eigenbasis:
   obtains B where "onormal B" "span B = UNIV"
     "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
   using invariant_subspace_eigenbasis_ex[OF assms subspace_UNIV] by auto
+
+text \<open>Every orthonormal family of eigenvectors of a symmetric matrix extends
+  to an orthonormal eigenbasis of each invariant subspace containing it.\<close>
+
+lemma invariant_subspace_eigenbasis_extend:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a" and S: "subspace S" and inv: "\<forall>x\<in>S. a *v x \<in> S"
+    and C: "onormal C" "C \<subseteq> S" and eigC: "\<forall>u\<in>C. a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+  obtains B where "onormal B" "C \<subseteq> B" "B \<subseteq> S" "span B = S"
+    "\<forall>u\<in>B. a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+proof -
+  have subH: "subspace {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}"
+    using subspace_inter[OF S subspace_orthogonal_to_vectors[of C]]
+    by (simp add: Int_def orthogonal_def)
+  obtain B0 where B0: "onormal B0" "B0 \<subseteq> {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}"
+      "span B0 = {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}" "\<forall>u\<in>B0. a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    using invariant_subspace_eigenbasis_ex[OF sym subH
+        eigen_orth_complement_invariant[OF sym inv eigC]] by blast
+  show ?thesis
+    using onormal_union_orth_complement[OF S C B0(1,3)] B0(2,4) C(2) eigC
+    by (intro that[of "C \<union> B0"]) auto
+qed
+
+text \<open>In particular a single unit eigenvector extends to an orthonormal
+  eigenbasis of the whole space.\<close>
+
+lemma eigenbasis_containing_eigenvector:
+  fixes A :: "real^'n::finite^'n"
+  assumes sym: "transpose A = A" and q: "norm q = 1"
+    and eigq: "A *v q = (q \<bullet> (A *v q)) *\<^sub>R q"
+  shows "\<exists>B. onormal B \<and> span B = UNIV \<and> q \<in> B
+      \<and> (\<forall>u\<in>B. A *v u = (u \<bullet> (A *v u)) *\<^sub>R u)
+      \<and> (\<forall>u \<in> B - {q}. q \<bullet> u = 0)"
+proof -
+  obtain B where B: "onormal B" "q \<in> B" "span B = UNIV"
+      "\<forall>u\<in>B. A *v u = (u \<bullet> (A *v u)) *\<^sub>R u"
+    using invariant_subspace_eigenbasis_extend[OF sym subspace_UNIV _, of "{q}"] q eigq
+    by (auto simp: onormal_def)
+  then show ?thesis by (blast dest: onormal_inner_distinct)
+qed
 
 section \<open>Positive semidefinite matrices\<close>
 
@@ -445,6 +439,27 @@ proof -
   qed
   then show ?thesis
     unfolding matrix_eq by blast
+qed
+
+text \<open>The eigendecomposition of a symmetric matrix in the form most callers
+  consume it: an orthonormal eigenbasis, its size, the spectral sum, and an
+  enumeration of the basis by the index type.\<close>
+
+lemma symmetric_eigendecomposition:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a"
+  obtains B and f :: "'n \<Rightarrow> real^'n" where "onormal B" "span B = UNIV" "finite B"
+    "card B = CARD('n)" "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    "a = (\<Sum>u\<in>B. (u \<bullet> (a *v u)) *\<^sub>R outer_prod u u)" "bij_betw f UNIV B"
+proof -
+  obtain B where B: "onormal B" "span B = UNIV"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    using symmetric_eigenbasis[OF sym] by metis
+  moreover have "card B = CARD('n)" by (rule onormal_span_card[OF B])
+  moreover obtain f :: "'n \<Rightarrow> real^'n" where "bij_betw f UNIV B"
+    using finite_same_card_bij[of "UNIV :: 'n set" B] onormal_finite[OF B(1)] calculation(4) by auto
+  ultimately show thesis
+    using that spectral_decomposition[OF B eig] onormal_finite[OF B(1)] by blast
 qed
 
 

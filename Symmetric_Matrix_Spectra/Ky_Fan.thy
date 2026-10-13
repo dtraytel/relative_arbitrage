@@ -889,6 +889,21 @@ proof -
     by (rule that)
 qed
 
+text \<open>Every ordered eigenvalue is attained by a unit eigenvector.\<close>
+
+lemma exists_eigenvector_eigval:
+  fixes M :: "real^'n::finite^'n"
+  assumes sym: "transpose M = M" and i: "1 \<le> i" "i \<le> CARD('n)"
+  shows "\<exists>q. norm q = 1 \<and> M *v q = (q \<bullet> (M *v q)) *\<^sub>R q \<and> q \<bullet> (M *v q) = eigval i M"
+proof -
+  obtain B where B: "onormal B" "span B = UNIV"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> M *v u = (u \<bullet> (M *v u)) *\<^sub>R u"
+    using symmetric_eigenbasis[OF sym] by metis
+  obtain T w where "T \<subseteq> B" "w \<in> T" "eigval i M = w \<bullet> (M *v w)"
+    using eigval_threshold_witness[OF B sym eig _ i(2)] i(1) by (metis less_eq_Suc_le One_nat_def)
+  then show ?thesis using B(1) eig by (metis onormal_def subsetD)
+qed
+
 text \<open>The ordered eigenvalues decrease. Applying the previous lemma to a
   threshold set of size \<open>i+1\<close> and then to the same set with its minimum
   deleted exhibits \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)\<close> and \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)\<close> as the minima of a set and of a

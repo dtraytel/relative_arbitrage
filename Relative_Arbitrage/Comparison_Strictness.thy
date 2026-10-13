@@ -278,24 +278,8 @@ proof (intro ballI allI impI)
       by (rule visc_supersol_env2_local[OF sup x tfp wlo Bp r0' lm'])
     then show ?thesis unfolding ggx .
   qed
-  define es where "es = (\<lambda>j :: nat. 1 / real (Suc j))"
-  have es0: "0 < es j" for j unfolding es_def by simp
-  have ge: "1 \<le> ell_op_usc k L (g x) (H - es j *\<^sub>R mat 1)" for j
-    by (rule step[OF es0])
-  have lim: "(\<lambda>j. (g x, H - es j *\<^sub>R mat 1)) \<longlonglongrightarrow> (g x, H)"
-  proof -
-    have "es \<longlonglongrightarrow> 0" unfolding es_def
-      using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
-    then have "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0 *\<^sub>R mat 1"
-      by (rule tendsto_scaleR[OF _ tendsto_const])
-    then have z: "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0" by simp
-    have "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H - 0"
-      by (rule tendsto_diff[OF tendsto_const z])
-    then have m: "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H" by simp
-    show ?thesis by (rule tendsto_Pair[OF tendsto_const m])
-  qed
   show "1 \<le> ell_op_usc k L (g x) H"
-    by (rule ell_op_usc_ge_one_limit[OF ge lim])
+    by (rule ell_op_usc_ge_one_shift[OF step])
 qed
 
 text \<open>\<open>quad_bdd_below_on_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>

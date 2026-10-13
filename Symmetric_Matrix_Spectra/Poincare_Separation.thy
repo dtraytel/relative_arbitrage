@@ -27,10 +27,9 @@ lemma kyfan_full_eq_trace:
   shows "kyfan CARD('n) a = trace a"
 proof -
   obtain B where B: "onormal B" "span B = UNIV"
+    and cardB: "card B = CARD('n)"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym] by metis
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
+    using symmetric_eigendecomposition[OF sym] by metis
   have vac: "v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)" if "u \<in> B" "v \<in> B - B" for u v
     using that by simp
   have "kyfan CARD('n) a = (\<Sum>u\<in>B. u \<bullet> (a *v u))"
@@ -384,149 +383,12 @@ proof -
 qed
 
 
-lemma eigenbasis_containing_eigenvector:
-  fixes A :: "real^'n::finite^'n"
-  assumes sym: "transpose A = A" and q: "norm q = 1"
-    and eigq: "A *v q = (q \<bullet> (A *v q)) *\<^sub>R q"
-  shows "\<exists>B. onormal B \<and> span B = UNIV \<and> q \<in> B
-      \<and> (\<forall>u\<in>B. A *v u = (u \<bullet> (A *v u)) *\<^sub>R u)
-      \<and> (\<forall>u \<in> B - {q}. q \<bullet> u = 0)"
-proof -
-  define H where "H = {y :: real^'n. q \<bullet> y = 0}"
-  have qq: "q \<bullet> q = 1"
-    using q by (simp add: dot_square_norm)
-  have subH: "subspace H"
-    unfolding H_def by (simp add: subspace_hyperplane)
-  text \<open>Bind the eigenvalue before using \<open>eigq\<close> as a rewrite: its right hand side
-    mentions \<open>A *v q\<close> again, so unfolding it directly loops.\<close>
-  define mu where "mu = q \<bullet> (A *v q)"
-  have eigq': "A *v q = mu *\<^sub>R q"
-    unfolding mu_def by (rule eigq)
-  have invH: "\<forall>y\<in>H. A *v y \<in> H"
-  proof (intro ballI)
-    fix y assume y: "y \<in> H"
-    then have qy: "q \<bullet> y = 0"
-      unfolding H_def by simp
-    have "q \<bullet> (A *v y) = y \<bullet> (A *v q)"
-      by (rule sym_inner_swap[OF sym])
-    also have "\<dots> = mu * (y \<bullet> q)"
-      unfolding eigq' by simp
-    also have "\<dots> = 0"
-      using qy by (simp add: inner_commute)
-    finally show "A *v y \<in> H"
-      unfolding H_def by simp
-  qed
-  obtain B0 where B0: "onormal B0" "B0 \<subseteq> H" "span B0 = H"
-    and eig0: "\<forall>u\<in>B0. A *v u = (u \<bullet> (A *v u)) *\<^sub>R u"
-    using invariant_subspace_eigenbasis_ex[OF sym subH invH] by blast
-  have finB0: "finite B0"
-    by (rule onormal_finite[OF B0(1)])
-  have qperp: "q \<bullet> u = 0" if u: "u \<in> B0" for u
-    using u B0(2) unfolding H_def by blast
-  have qnotin: "q \<notin> B0"
-    using qq B0(2) unfolding H_def by auto
-  define B where "B = insert q B0"
-  have onB: "onormal B"
-    unfolding B_def onormal_def
-  proof (intro conjI)
-    show "finite (insert q B0)"
-      using finB0 by simp
-    show "pairwise orthogonal (insert q B0)"
-      using B0(1) qperp
-      by (auto simp: onormal_def pairwise_insert orthogonal_def inner_commute)
-    show "\<forall>u\<in>insert q B0. norm u = 1"
-      using q B0(1) by (auto simp: onormal_def)
-  qed
-  have spanB: "span B = UNIV"
-  proof -
-    have "x \<in> span B" for x :: "real^'n"
-    proof -
-      define z where "z = x - (q \<bullet> x) *\<^sub>R q"
-      have qz: "q \<bullet> z = 0"
-        unfolding z_def by (simp add: inner_diff_right qq)
-      then have zB0: "z \<in> span B0"
-        using B0(3) unfolding H_def by simp
-      have sub: "B0 \<subseteq> insert q B0"
-        by blast
-      have zB: "z \<in> span B"
-        unfolding B_def using zB0 span_mono[OF sub] by blast
-      have qB: "q \<in> span B"
-        unfolding B_def by (simp add: span_base)
-      have "x = (q \<bullet> x) *\<^sub>R q + z"
-        unfolding z_def by simp
-      also have "\<dots> \<in> span B"
-        using qB zB by (intro span_add span_scale)
-      finally show ?thesis .
-    qed
-    then show ?thesis by auto
-  qed
-  have eigB: "\<forall>u\<in>B. A *v u = (u \<bullet> (A *v u)) *\<^sub>R u"
-    unfolding B_def
-  proof (intro ballI)
-    fix u assume uin: "u \<in> insert q B0"
-    show "A *v u = (u \<bullet> (A *v u)) *\<^sub>R u"
-    proof (cases "u = q")
-      case True
-      show ?thesis
-        unfolding True by (rule eigq)
-    next
-      case False
-      then have "u \<in> B0"
-        using uin by simp
-      then show ?thesis
-        using eig0 by blast
-    qed
-  qed
-  have restperp: "\<forall>u \<in> B - {q}. q \<bullet> u = 0"
-    unfolding B_def using qperp by auto
-  have qBmem: "q \<in> B"
-    unfolding B_def by simp
-  show ?thesis
-    by (rule exI[of _ B]) (intro conjI onB spanB qBmem eigB restperp)
-qed
-
-
 lemma exists_top_eigenvector:
   fixes M :: "real^'n::finite^'n"
   assumes sym: "transpose M = M"
   shows "\<exists>q. norm q = 1 \<and> M *v q = (q \<bullet> (M *v q)) *\<^sub>R q
       \<and> q \<bullet> (M *v q) = eigval 1 M"
-proof -
-  obtain B where B: "onormal B" "span B = UNIV"
-    and eig: "\<And>u. u \<in> B \<Longrightarrow> M *v u = (u \<bullet> (M *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym] by metis
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
-  have pos: "0 < CARD('n)"
-    by (simp add: card_gt_0_iff)
-  have oneB: "1 \<le> card B"
-    using pos cardB by simp
-  obtain T where T: "T \<subseteq> B" "card T = 1"
-    and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T
-        \<Longrightarrow> v \<bullet> (M *v v) \<le> u \<bullet> (M *v u)"
-    using exists_top_subset[where f = "\<lambda>u :: real^'n. u \<bullet> (M *v u)", OF finB oneB]
-    by metis
-  obtain q where Tq: "T = {q}"
-    using T(2) by (metis card_1_singletonE)
-  have qB: "q \<in> B"
-    using T(1) Tq by blast
-  have nq: "norm q = 1"
-    using qB B(1) by (simp add: onormal_def)
-  have eigq: "M *v q = (q \<bullet> (M *v q)) *\<^sub>R q"
-    by (rule eig[OF qB])
-  have "kyfan 1 M = (\<Sum>u\<in>T. u \<bullet> (M *v u))"
-    by (rule kyfan_threshold[OF B sym eig T(1) T(2) thresh])
-  then have "kyfan 1 M = q \<bullet> (M *v q)"
-    unfolding Tq by simp
-  moreover have "eigval 1 (M :: real^'n^'n) = kyfan 1 M"
-    by (rule eigval_1)
-  ultimately have top: "q \<bullet> (M *v q) = eigval 1 M"
-    by simp
-  show ?thesis
-    by (rule exI[of _ q]) (intro conjI nq eigq top)
-qed
+  by (rule exists_eigenvector_eigval[OF sym]) (simp_all add: Suc_le_eq)
 
 text \<open>On the span of a threshold set, the Rayleigh quotient is bounded below by
   the smallest eigenvalue occurring there, namely \<open>eigval m a\<close>.\<close>

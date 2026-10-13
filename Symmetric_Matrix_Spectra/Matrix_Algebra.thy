@@ -1646,19 +1646,11 @@ proof -
 qed
 
 lemma quadratic_test_grad_derivative:
-  fixes H :: "real^'n::finite^'n" and p x :: "real^'n"
-  shows "((\<lambda>z. p + H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at x)"
-proof -
-  have blH: "bounded_linear ((*v) H)" by (rule matrix_vector_mul_bounded_linear)
-  have shift: "((\<lambda>z::real^'n. z - x) has_derivative (\<lambda>h. h)) (at x)"
-    by (auto intro!: derivative_eq_intros)
-  have dHl: "(((*v) H) has_derivative ((*v) H)) (at (x - x))"
-    using bounded_linear.has_derivative[OF blH has_derivative_ident] by simp
-  have inner_d: "((\<lambda>z. H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at x)"
-    using diff_chain_at[OF shift dHl] by (simp add: comp_def)
-  show ?thesis
-    using has_derivative_add[OF has_derivative_const inner_d] by simp
-qed
+  fixes H :: "real^'n::finite^'n" and p x y :: "real^'n"
+  shows "((\<lambda>z. p + H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at y)"
+  using bounded_linear.has_derivative[OF matrix_vector_mul_bounded_linear[of H]
+      has_derivative_diff[OF has_derivative_ident has_derivative_const[of x]]]
+  by (auto intro!: derivative_eq_intros)
 
 subsection \<open>A difference of linear maps, read as a matrix\<close>
 

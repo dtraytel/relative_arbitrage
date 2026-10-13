@@ -1124,24 +1124,9 @@ theorem exit_val_case2:
     and cap: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
   shows "1 \<le> ell_op_usc k L 0 H"
 proof -
-  define es where "es = (\<lambda>j :: nat. 1 / real (Suc j))"
-  have es0: "0 < es j" for j unfolding es_def by simp
-  have eslim: "es \<longlonglongrightarrow> 0"
-    unfolding es_def using LIMSEQ_inverse_real_of_nat
-    by (simp add: divide_inverse)
-  have ge: "1 \<le> ell_op_usc k L 0 (H - es j *\<^sub>R mat 1)" for j
-    by (rule exit_val_case2_eps[OF T0 L1 k1 kn Kc xi tf gx0 rho0 tmin cap es0])
-  have lim: "(\<lambda>j. (0 :: real^'n, H - es j *\<^sub>R mat 1)) \<longlonglongrightarrow> (0, H)"
-  proof -
-    have "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0 *\<^sub>R mat 1"
-      by (rule tendsto_scaleR[OF eslim tendsto_const])
-    then have z: "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0" by simp
-    have "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H - 0"
-      by (rule tendsto_diff[OF tendsto_const z])
-    then have m: "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H" by simp
-    show ?thesis by (rule tendsto_Pair[OF tendsto_const m])
-  qed
-  show ?thesis by (rule ell_op_usc_ge_one_limit[OF ge lim])
+  show ?thesis
+    by (rule ell_op_usc_ge_one_shift, rule exit_val_case2_eps[OF T0 L1 k1 kn Kc xi tf gx0
+          rho0 tmin cap])
 qed
 
 text \<open>Definition 3.1(b) for the paper's own value function.  Case 1

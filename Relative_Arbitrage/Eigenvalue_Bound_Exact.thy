@@ -526,12 +526,9 @@ proof
   have sym_a: "transpose a = a"
     using psd_a by (simp add: psd_def)
   obtain B :: "(real^'n) set" where B: "onormal B" "span B = UNIV"
+    and finB: "finite B" and cardB: "card B = CARD('n)"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym_a] by blast
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
+    using symmetric_eigendecomposition[OF sym_a] by metis
   define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (a *v u))"
   have lam_nn: "0 \<le> lam u" for u
     using psd_a by (simp add: lam_def psd_def)

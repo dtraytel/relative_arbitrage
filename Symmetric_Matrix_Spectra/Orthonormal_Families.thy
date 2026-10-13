@@ -227,6 +227,43 @@ lemma onormal_extension:
   obtains C where "onormal C" "B \<subseteq> C" "span C = UNIV"
   using onormal_extension_within[OF B subspace_UNIV subset_UNIV] by metis
 
+text \<open>An orthonormal family \<open>C\<close> in a subspace \<open>S\<close>, together with an
+  orthonormal basis of the orthogonal complement of \<open>C\<close> within \<open>S\<close>, is an
+  orthonormal basis of \<open>S\<close>.\<close>
+
+lemma onormal_union_orth_complement:
+  fixes C :: "(real^'n::finite) set"
+  assumes S: "subspace S" and C: "onormal C" "C \<subseteq> S"
+    and B0: "onormal B0" "span B0 = {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}"
+  shows "onormal (C \<union> B0)" "span (C \<union> B0) = S"
+proof -
+  have B0S: "B0 \<subseteq> S" "\<And>b c. b \<in> B0 \<Longrightarrow> c \<in> C \<Longrightarrow> c \<bullet> b = 0"
+    using span_superset[of B0] unfolding B0(2) by blast+
+  show "onormal (C \<union> B0)"
+    using C(1) B0(1) B0S(2) unfolding onormal_def pairwise_def orthogonal_def
+    by (metis UnE finite_UnI inner_commute)
+  show "span (C \<union> B0) = S"
+  proof
+    show "span (C \<union> B0) \<subseteq> S"
+      using S C(2) B0S(1) by (simp add: span_minimal)
+    show "S \<subseteq> span (C \<union> B0)"
+    proof
+      fix x assume x: "x \<in> S"
+      obtain y z where y: "y \<in> span C" and z: "\<And>w. w \<in> span C \<Longrightarrow> orthogonal z w"
+        and xyz: "x = y + z"
+        using orthogonal_subspace_decomp_exists[of C x] by metis
+      have "y \<in> S" using span_minimal[OF C(2) S] y by (rule subsetD)
+      then have "z \<in> S" using x xyz S by (metis add_diff_cancel_left' subspace_diff)
+      moreover have "c \<bullet> z = 0" if "c \<in> C" for c
+        using z[OF span_base[OF that]] by (simp add: orthogonal_def inner_commute)
+      ultimately have "z \<in> span B0" unfolding B0(2) by simp
+      then show "x \<in> span (C \<union> B0)"
+        unfolding xyz by (intro span_add) (use y span_mono[of C "C \<union> B0"]
+            span_mono[of B0 "C \<union> B0"] in auto)
+    qed
+  qed
+qed
+
 section \<open>The trace lower bound (Courant--Fischer/Ky Fan argument)\<close>
 
 lemma trace_ge_dim:
