@@ -56,36 +56,6 @@ text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>â‚€á
   continued density --- difference quotients in the constraint set for every
   \<open>0 \<le> s < t\<close>: the covariation half of \<open>exit_class\<close>.\<close>
 
-subsection \<open>The martingale identity passes to the weak limit\<close>
-
-lemma cols_mult_transpose:
-  fixes w :: "'m::finite \<Rightarrow> real^'n::finite"
-  shows "(\<chi> i j. w j $ i) ** transpose (\<chi> i j. w j $ i)
-       = (\<Sum>j\<in>UNIV. outerp (w j))"
-proof -
-  have "((\<chi> i j. w j $ i) ** transpose (\<chi> i j. w j $ i)) $ i $ l
-      = (\<Sum>j\<in>UNIV. w j $ i * w j $ l)" for i l
-    by (simp add: matrix_matrix_mult_def transpose_def)
-  moreover have "(\<Sum>j\<in>UNIV. outerp (w j)) $ i $ l
-      = (\<Sum>j\<in>UNIV. w j $ i * w j $ l)" for i l
-    by (induction "UNIV :: 'm set" rule: infinite_finite_induct)
-      (simp_all add: outerp_def)
-  ultimately show ?thesis by (simp add: vec_eq_iff)
-qed
-
-
-subsection \<open>Continuity of the Gaussian member in its volatility\<close>
-
-lemma trace_outerp_mult:
-  fixes B :: "real^'n::finite^'n" and v :: "real^'n"
-  shows "trace (outerp v ** B) = v \<bullet> (B *v v)"
-  by (subst trace_mul_sym) (rule trace_mult_outerp)
-
-lemma quadform_outerp:
-  fixes q z :: "real^'n::finite"
-  shows "z \<bullet> (outerp q *v z) = (q \<bullet> z)\<^sup>2"
-  by (simp add: outerp_eq_outer_prod power2_eq_square inner_commute)
-
 section \<open>The relaxed operator, and the inequality the class really gives\<close>
 
 text \<open>Eq. (1.9) takes its infimum over \<open>feasible\<close>, which carries the
@@ -369,15 +339,6 @@ lemma pair_holder_ball_mem:
   using mem start
   by (auto intro!: pair_holder_of_components[OF T ga c B X Y])
 
-lemma outerp_add:
-  fixes a b :: "real^'n::finite"
-  shows "outerp (a + b) = outerp a + outerp b
-      + ((\<chi> i j. a $ i * b $ j) + (\<chi> i j. b $ i * a $ j))"
-  by (simp add: outerp_def vec_eq_iff algebra_simps)
-
-lemma outerp_zero: "outerp (0 :: real^'n::finite) = 0"
-  by (simp add: outerp_def vec_eq_iff)
-
 text \<open>Clause (iv).  Beyond \<open>r\<close> the glued pair is \<open>(X\<^sub>r + W, Y\<^sub>r + \<langle>W\<rangle>)\<close>, so
   its compensated process expands as
 
@@ -499,11 +460,6 @@ text \<open>Lemma 2.3 of the paper says the class is closed, passing each defini
   the integrated identities instead (\<open>weak_conv_integral_of_L2_bound\<close>).\<close>
 
 subsection \<open>Full mass of the two closed clauses on a class member\<close>
-
-lemma trace_outerp:
-  fixes v :: "real^'n::finite"
-  shows "trace (outerp v) = v \<bullet> v"
-  by (simp add: outerp_eq_outer_prod)
 
 lemma closedin_start_point:
   fixes x :: "'a::{polish_space,banach}"
@@ -1309,14 +1265,6 @@ lemma pair_law_coord_measurable:
   by (rule pair_law_F_measurable[where F = "\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p $ i",
         OF _ setsN u]) (intro continuous_intros)
 
-lemma traceM_sum_outer:
-  fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
-    and M :: "real^'n^'n"
-  shows "trace (M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u))
-      = (\<Sum>u\<in>S. c u * (u \<bullet> (M *v u)))"
-  by (simp add: matrix_mult_sum_right trace_matrix_sum trace_mult_scaleR mult_outer_prod
-      inner_commute)
-
 text \<open>\<open>trace_mult_add\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 lemma pair_law_F_sq_measurable:
@@ -1483,9 +1431,6 @@ proof -
   also have "\<dots> = 4 * B\<^sup>2 * C" by simp
   finally show "(\<integral>\<omega>. (?f \<omega>)\<^sup>2 \<partial>N) \<le> 4 * B\<^sup>2 * C" .
 qed
-
-lemma norm_outerp: "norm (outerp (v :: real^'n::finite)) = norm v * norm v"
-  by (simp add: outerp_eq_outer_prod norm_outer_prod)
 
 text \<open>\<open>pair_fst_borel\<close>, \<open>pair_snd_borel\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 

@@ -2,7 +2,7 @@
 (*<*)
 theory Operator_Continuity
   imports
-    "Symmetric_Matrix_Spectra.Ky_Fan"
+    "Symmetric_Matrix_Spectra.Ky_Fan" "Symmetric_Matrix_Spectra.Orthogonal_Projections"
 begin
 
 (*>*)
@@ -34,88 +34,6 @@ text \<open>\<open>scaleR_matrix_matrix_left\<close> is HOL-Analysis's \<open>sc
 text \<open>\<open>trace_scaleR_matrix\<close> is \<open>trace_scaleR\<close> from
   @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-section \<open>The rank-one projection onto \<open>span p\<close>\<close>
-
-definition rank1proj :: "real^'n::finite \<Rightarrow> real^'n^'n" where
-  "rank1proj p = outer_prod p p /\<^sub>R (p \<bullet> p)"
-
-lemma transpose_rank1proj: "transpose (rank1proj p) = rank1proj p"
-  by (simp add: rank1proj_def transpose_scalar)
-
-lemma rank1proj_annihilates_perp:
-  fixes p :: "real^'n::finite"
-  assumes y: "p \<bullet> y = 0"
-  shows "rank1proj p *v y = 0"
-  by (simp add: rank1proj_def scaleR_matrix_vector_assoc[symmetric] y)
-
-text \<open>A symmetric \<open>a\<close> annihilating \<open>p\<close> also kills the range of the
-  projection, in both orders.\<close>
-
-lemma rank1proj_annihilates:
-  fixes a :: "real^'n::finite^'n"
-  assumes sym: "transpose a = a" and ap: "a *v p = 0"
-  shows "rank1proj p *v (a *v x) = 0"
-  by (rule rank1proj_annihilates_perp) (simp add: sym_inner_swap[OF sym, of p x] ap)
-
-lemma proj_perp_left:
-  fixes a :: "real^'n::finite^'n"
-  assumes sym: "transpose a = a" and ap: "a *v p = 0"
-  shows "(mat 1 - rank1proj p) ** a = a"
-proof -
-  have "((mat 1 - rank1proj p) ** a) *v x = a *v x" for x
-  proof -
-    have "((mat 1 - rank1proj p) ** a) *v x
-        = (mat 1 - rank1proj p) *v (a *v x)"
-      by (simp add: matrix_vector_mul_assoc)
-    also have "\<dots> = a *v x - rank1proj p *v (a *v x)"
-      by (simp add: matrix_vector_mult_diff_rdistrib)
-    also have "\<dots> = a *v x"
-      by (simp add: rank1proj_annihilates[OF sym ap])
-    finally show ?thesis .
-  qed
-  then show ?thesis
-    unfolding matrix_eq by blast
-qed
-
-lemma symmetric_perp_proj:
-  "transpose (mat 1 - rank1proj p :: real^'n::finite^'n) = mat 1 - rank1proj p"
-  by (simp add: transpose_diff_matrix transpose_rank1proj)
-
-lemma proj_perp_right:
-  fixes a :: "real^'n::finite^'n"
-  assumes sym: "transpose a = a" and ap: "a *v p = 0"
-  shows "a ** (mat 1 - rank1proj p) = a"
-proof -
-  have "transpose (a ** (mat 1 - rank1proj p))
-      = transpose (mat 1 - rank1proj p) ** transpose a"
-    by (rule matrix_transpose_mul)
-  also have "\<dots> = (mat 1 - rank1proj p) ** a"
-    by (simp add: symmetric_perp_proj sym)
-  also have "\<dots> = a"
-    by (rule proj_perp_left[OF sym ap])
-  finally have "transpose (a ** (mat 1 - rank1proj p)) = a" .
-  then have "transpose (transpose (a ** (mat 1 - rank1proj p))) = transpose a"
-    by simp
-  then show ?thesis
-    using sym by simp
-qed
-
-lemma trace_rank1proj_mult:
-  fixes a :: "real^'n::finite^'n"
-  assumes ap: "a *v p = 0"
-  shows "trace (rank1proj p ** a) = 0"
-proof -
-  have "trace (outer_prod p p ** a) = trace (a ** outer_prod p p)"
-    by (rule trace_mul_sym)
-  also have "\<dots> = trace (outer_prod (a *v p) p)"
-    by (simp add: mult_outer_prod)
-  also have "\<dots> = 0"
-    by (simp add: ap)
-  finally have z: "trace (outer_prod p p ** a) = 0" .
-  show ?thesis
-    by (simp add: rank1proj_def scalar_matrix_assoc[symmetric] trace_scaleR z)
-qed
-
 section \<open>The matrix \<open>M\<^sub>p\<close> of Eq. (3.4)\<close>
 
 definition Mp :: "real^'n::finite \<Rightarrow> real^'n^'n \<Rightarrow> real^'n^'n" where
@@ -127,26 +45,6 @@ definition Mp :: "real^'n::finite \<Rightarrow> real^'n^'n \<Rightarrow> real^'n
 lemma Mp_zero [simp]: "Mp 0 M = M"
   by (simp add: Mp_def)
 
-
-lemma rank1proj_apply_self:
-  fixes p :: "real^'n::finite"
-  assumes p: "p \<noteq> 0"
-  shows "rank1proj p *v p = p"
-proof -
-  have nz: "p \<bullet> p \<noteq> 0"
-    using p by simp
-  have mv: "outer_prod p p *v p = (p \<bullet> p) *\<^sub>R p"
-    by (rule outer_prod_mv)
-  have "rank1proj p *v p = inverse (p \<bullet> p) *\<^sub>R (outer_prod p p *v p)"
-    unfolding rank1proj_def by (rule scaleR_matrix_vector_assoc[symmetric])
-  also have "\<dots> = inverse (p \<bullet> p) *\<^sub>R ((p \<bullet> p) *\<^sub>R p)"
-    unfolding mv by (rule refl)
-  also have "\<dots> = (inverse (p \<bullet> p) * (p \<bullet> p)) *\<^sub>R p"
-    by (rule scaleR_scaleR)
-  also have "\<dots> = p"
-    using nz by simp
-  finally show ?thesis .
-qed
 
 lemma Mp_apply_p:
   fixes M :: "real^'n::finite^'n"

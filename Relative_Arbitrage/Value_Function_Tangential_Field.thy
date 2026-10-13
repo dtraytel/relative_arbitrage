@@ -27,82 +27,6 @@ text \<open>\<open>trace_matrix_diff\<close> is HOL-Analysis's \<open>trace_sub\
 text \<open>\<open>unit_normalize\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-subsection \<open>The projector onto an orthonormal family\<close>
-
-definition projmat :: "(nat \<Rightarrow> real^'n::finite) \<Rightarrow> nat \<Rightarrow> real^'n^'n" where
-  "projmat b m = (\<Sum>i < m. outer_prod (b i) (b i))"
-
-lemma projmat_sym: "transpose (projmat b m) = projmat b m"
-  unfolding projmat_def by (simp add: transpose_matrix_sum)
-
-lemma projmat_mv: "projmat b m *v z = (\<Sum>i < m. (b i \<bullet> z) *\<^sub>R b i)"
-  unfolding projmat_def by (simp add: matrix_vector_mult_sum)
-
-lemma projmat_trace:
-  fixes b :: "nat \<Rightarrow> real^'n::finite"
-  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-  shows "trace (projmat b m) = real m"
-proof -
-  have "trace (projmat b m) = (\<Sum>i < m. trace (outer_prod (b i) (b i)))"
-    unfolding projmat_def by (rule trace_matrix_sum)
-  also have "\<dots> = (\<Sum>i < m. b i \<bullet> b i)" by simp
-  also have "\<dots> = (\<Sum>i < m. 1 :: real)" using orth by simp
-  also have "\<dots> = real m" by simp
-  finally show ?thesis .
-qed
-
-lemma projmat_fix:
-  fixes b :: "nat \<Rightarrow> real^'n::finite"
-  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and i: "i < m"
-  shows "projmat b m *v b i = b i"
-proof -
-  have "projmat b m *v b i = (\<Sum>l < m. (b l \<bullet> b i) *\<^sub>R b l)" by (rule projmat_mv)
-  also have "\<dots> = (\<Sum>l < m. if l = i then b i else 0)"
-    by (rule sum.cong[OF refl]) (use orth i in auto)
-  also have "\<dots> = b i" using i by simp
-  finally show ?thesis .
-qed
-
-lemma projmat_idem:
-  fixes b :: "nat \<Rightarrow> real^'n::finite"
-  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-  shows "projmat b m ** projmat b m = projmat b m"
-proof -
-  have key: "projmat b m *v (projmat b m *v z) = projmat b m *v z" for z
-  proof -
-    have "projmat b m *v (projmat b m *v z)
-        = projmat b m *v (\<Sum>l < m. (b l \<bullet> z) *\<^sub>R b l)"
-      by (simp only: projmat_mv)
-    also have "\<dots> = (\<Sum>l < m. projmat b m *v ((b l \<bullet> z) *\<^sub>R b l))"
-      by (rule matrix_vector_mult_vsum)
-    also have "\<dots> = (\<Sum>l < m. (b l \<bullet> z) *\<^sub>R (projmat b m *v b l))"
-      by (rule sum.cong[OF refl]) (simp add: matrix_vector_mult_scaleR)
-    also have "\<dots> = (\<Sum>l < m. (b l \<bullet> z) *\<^sub>R b l)"
-      by (rule sum.cong[OF refl]) (simp add: projmat_fix[OF orth])
-    also have "\<dots> = projmat b m *v z" by (rule projmat_mv[symmetric])
-    finally show ?thesis .
-  qed
-  show ?thesis
-    unfolding matrix_eq using key by (metis matrix_vector_mul_assoc)
-qed
-
-lemma projmat_span_fix:
-  fixes b :: "nat \<Rightarrow> real^'n::finite"
-  assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and x: "x \<in> span (b ` {..<m})"
-  shows "projmat b m *v x = x"
-proof -
-  have sub: "subspace {y :: real^'n. projmat b m *v y = y}"
-    unfolding subspace_def
-    by (auto simp: matrix_vector_right_distrib matrix_vector_mult_scaleR)
-  have "b ` {..<m} \<subseteq> {y :: real^'n. projmat b m *v y = y}"
-    using projmat_fix[OF orth] by auto
-  then have "span (b ` {..<m}) \<subseteq> {y :: real^'n. projmat b m *v y = y}"
-    using sub by (simp add: span_minimal)
-  then show ?thesis using x by blast
-qed
-
 text \<open>\<open>orthonormal_inj\<close>, \<open>orthonormal_dim_span\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
@@ -755,17 +679,6 @@ proof -
       qed
     qed
   qed
-qed
-
-lemma projmat_full_id:
-  fixes b :: "nat \<Rightarrow> real^'n::finite"
-  assumes orth: "\<And>i j. i < CARD('n) \<Longrightarrow> j < CARD('n) \<Longrightarrow>
-      b i \<bullet> b j = (if i = j then 1 else 0)"
-  shows "projmat b CARD('n) *v w = w"
-proof (rule projmat_span_fix[OF orth])
-  have "span (b ` {..<CARD('n)}) = UNIV"
-    using orthonormal_dim_span[OF orth] dim_eq_full[of "b ` {..<CARD('n)}"] by simp
-  then show "w \<in> span (b ` {..<CARD('n)})" by simp
 qed
 
 subsection \<open>Deterministic confinement and the ball lower bound\<close>

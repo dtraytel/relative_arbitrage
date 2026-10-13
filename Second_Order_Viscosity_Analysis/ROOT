@@ -1,4 +1,4 @@
-session Second_Order_Viscosity_Analysis = "HOL-Analysis" +
+session Second_Order_Viscosity_Analysis = Symmetric_Matrix_Spectra +
   description "
     The complete second-order machinery for comparison proofs between
     viscosity solutions: Rademacher's theorem, Alexandrov's theorem, Jensen's
@@ -10,7 +10,7 @@ session Second_Order_Viscosity_Analysis = "HOL-Analysis" +
   "
   options [document = pdf, document_output = "output"]
   sessions
-    Symmetric_Matrix_Spectra
+    Semicontinuous_Analysis
   theories
     Convex_Subgradients
     Rademacher

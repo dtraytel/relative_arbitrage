@@ -626,89 +626,8 @@ text \<open>
   essential infimum is never \<open>\<top>\<close>.
 \<close>
 
-definition outerp :: "real^'n::finite \<Rightarrow> real^'n^'n" where
-  "outerp x = (\<chi> i j. x $ i * x $ j)"
-
-text \<open>\<open>outerp\<close> is the rank-one projector \<open>x x\<^sup>T\<close> of the compensated
-  martingale clause.  It is HOL's own \<open>outer_prod\<close> at equal arguments
-  (\<open>outerp_eq_outer_prod\<close> below); it stays a definition of its own because
-  making it an abbreviation unfolds it in every simp set that mentions it,
-  and two proofs of the subsolution half then diverge.\<close>
-
-lemma outerp_matvec_image:
-  fixes S :: "real^'n::finite^'n" and w :: "real^'n"
-  shows "outerp (S *v w) = S ** outerp w ** transpose S"
-proof -
-  have "outerp (S *v w) $ i $ j
-      = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l)"
-    for i j
-  proof -
-    have "outerp (S *v w) $ i $ j
-        = (\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (\<Sum>l\<in>UNIV. S $ j $ l * w $ l)"
-      by (simp add: outerp_def matrix_vector_mult_def)
-    also have "\<dots> = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * w $ k)
-        * (S $ j $ l * w $ l))"
-      by (rule sum_distrib_left)
-    also have "\<dots> = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l))
-        * S $ j $ l)"
-    proof (rule sum.cong[OF refl])
-      fix l :: 'n
-      have "(\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (S $ j $ l * w $ l)
-          = (\<Sum>k\<in>UNIV. S $ i $ k * w $ k * (S $ j $ l * w $ l))"
-        by (rule sum_distrib_right)
-      also have "\<dots> = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l) * S $ j $ l)"
-        by (rule sum.cong[OF refl]) (simp only: mult_ac)
-      also have "\<dots> = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l"
-        by (rule sum_distrib_right[symmetric])
-      finally show "(\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (S $ j $ l * w $ l)
-          = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l" .
-    qed
-    finally show ?thesis .
-  qed
-  moreover have "(S ** outerp w ** transpose S) $ i $ j
-      = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l)"
-    for i j
-    by (simp add: matrix_matrix_mult_def transpose_def outerp_def)
-  ultimately show ?thesis by (simp add: vec_eq_iff)
-qed
-
-text \<open>\<open>sandwich_mat1\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-lemma outerp_scale_self:
-  fixes u :: "real^'n::finite"
-  shows "outerp (c *\<^sub>R u) = (c * c) *\<^sub>R outer_prod u u"
-  by (simp add: vec_eq_iff outerp_def outer_prod_def)
-
-lemma outerp_eq_outer_prod:
-  fixes v :: "real^'n::finite"
-  shows "outerp v = outer_prod v v"
-  by (simp add: outerp_def outer_prod_def)
-
-lemma trace_mult_outerp:
-  fixes M :: "real^'n::finite^'n" and v :: "real^'n"
-  shows "trace (M ** outerp v) = v \<bullet> (M *v v)"
-  by (simp add: outerp_eq_outer_prod mult_outer_prod inner_commute)
-
 text \<open>\<open>trace_mult_sum\<close>, \<open>bounded_linear_trace_mult_left\<close>, \<open>bounded_linear_trace_mult_right\<close>, \<open>bounded_linear_quadform\<close>, \<open>trace_mult_diff\<close>, \<open>trace_mult_scaleR\<close>, \<open>bounded_linear_transpose\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-
-subsection \<open>The averaged covariation stays in the constraint set\<close>
-
-text \<open>Every condition defining \<open>sconstraint\<close> is a linear (in)equality in
-  the matrix: \<^const>\<open>psd\<close> and \<open>eigen_ub\<close> are conditions on the
-  quadratic form \<open>z \<bullet> (a *v z)\<close>, linear in \<open>a\<close>, and \<open>c \<le> Pi_proj a m\<close> is by
-  \<open>Pi_proj_ge\<close> an intersection of the half-spaces
-  \<open>c \<le> trace (a ** P)\<close>, again linear in \<open>a\<close>.  The set is an intersection of
-  closed half-spaces and passes through the integral.\<close>
-
-text \<open>\<open>trace_mult_zero_right\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-lemma trace_mult_outerp_sum:
-  fixes M :: "real^'n::finite^'n" and w :: "'b \<Rightarrow> real^'n" and F :: "'b set"
-  assumes finF: "finite F"
-  shows "trace (M ** (\<Sum>u\<in>F. outerp (w u))) = (\<Sum>u\<in>F. w u \<bullet> (M *v w u))"
-  by (simp add: matrix_mult_sum_right trace_matrix_sum trace_mult_outerp)
 
 subsection \<open>The constant-volatility Gaussian member\<close>
 
@@ -1224,12 +1143,6 @@ text \<open>
   exit time across it, connecting the semicontinuity results above to
   \<open>\<P>\<^sub>x\<close>.
 \<close>
-
-lemma outerp_diff:
-  fixes a b :: "real^'n::finite"
-  shows "outerp (a - b) = outerp a - ((\<chi> i j. a $ i * b $ j)
-      + (\<chi> i j. b $ i * a $ j)) + outerp b"
-  by (simp add: outerp_def vec_eq_iff algebra_simps)
 
 lemma outerp_diff_compensated:
   fixes a b :: "real^'n::finite" and Ya Yb :: "real^'n^'n"

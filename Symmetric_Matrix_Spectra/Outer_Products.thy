@@ -9,7 +9,8 @@ begin
 text \<open>
   The outer product \<open>u v\<^sup>T\<close> of two vectors, as a rank-one matrix: the basic
   algebra of forming it, applying it, and summing it against an orthonormal
-  family, and its Frobenius norm.
+  family, and its Frobenius norm.  Last, the outer square \<open>x x\<^sup>T\<close> as a
+  constant of its own, with its algebra, traces and norm.
 \<close>
 
 unbundle inner_syntax
@@ -67,11 +68,41 @@ lemma trace_mult_outer_sum:
   by (simp add: matrix_mult_sum_right trace_matrix_sum mult_outer_prod
       inner_commute)
 
+lemma traceM_sum_outer:
+  fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
+    and M :: "real^'n^'n"
+  shows "trace (M ** (\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u))
+      = (\<Sum>u\<in>S. c u * (u \<bullet> (M *v u)))"
+  by (simp add: matrix_mult_sum_right trace_matrix_sum trace_mult_scaleR mult_outer_prod
+      inner_commute)
+
 lemma matvec_sum_outer:
   fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
   assumes finS: "finite S"
   shows "(\<Sum>u\<in>S. c u *\<^sub>R outer_prod u u) *v z = (\<Sum>u\<in>S. (c u * (u \<bullet> z)) *\<^sub>R u)"
   by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
+
+text \<open>A weighted sum of outer squares annihilates every vector orthogonal to
+  each member that carries a nonzero weight.\<close>
+
+lemma weighted_outer_sum_annihilates:
+  fixes c :: "real^'n::finite \<Rightarrow> real"
+  assumes finB: "finite B"
+    and van: "\<And>u. u \<in> B \<Longrightarrow> c u = 0 \<or> p \<bullet> u = 0"
+  shows "(\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v p = 0"
+proof -
+  have "(\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v p = (\<Sum>u\<in>B. c u *\<^sub>R ((u \<bullet> p) *\<^sub>R u))"
+    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
+  also have "\<dots> = (\<Sum>u\<in>B. 0)"
+  proof (intro sum.cong refl)
+    fix u assume u: "u \<in> B"
+    show "c u *\<^sub>R ((u \<bullet> p) *\<^sub>R u) = 0"
+      using van[OF u] by (auto simp: inner_commute)
+  qed
+  also have "\<dots> = 0"
+    by simp
+  finally show ?thesis .
+qed
 
 
 subsection \<open>The projector \<open>u u\<^sup>T\<close> as an operator\<close>
@@ -196,6 +227,124 @@ proof -
   then show ?thesis
     by (simp add: norm_eq_sqrt_inner)
 qed
+
+section \<open>The outer square \<open>outerp\<close>\<close>
+
+definition outerp :: "real^'n::finite \<Rightarrow> real^'n^'n" where
+  "outerp x = (\<chi> i j. x $ i * x $ j)"
+
+text \<open>\<open>outerp x\<close> is the outer square \<open>x x\<^sup>T\<close>: the \<open>outer_prod\<close> of this
+  theory at equal arguments (\<open>outerp_eq_outer_prod\<close> below).  This theory's
+  \<open>outer_prod\<close> shadows an identical constant of HOL-Analysis
+  (\<open>Higher_Differentiability_Multi\<close>).  \<open>outerp\<close> stays a definition of its own
+  because making it an abbreviation unfolds it in every simp set that
+  mentions it, and proofs that rely on it as a unit then diverge.\<close>
+
+lemma outerp_eq_outer_prod:
+  fixes v :: "real^'n::finite"
+  shows "outerp v = outer_prod v v"
+  by (simp add: outerp_def outer_prod_def)
+
+lemma outerp_scale_self:
+  fixes u :: "real^'n::finite"
+  shows "outerp (c *\<^sub>R u) = (c * c) *\<^sub>R outer_prod u u"
+  by (simp add: vec_eq_iff outerp_def outer_prod_def)
+
+lemma outerp_zero: "outerp (0 :: real^'n::finite) = 0"
+  by (simp add: outerp_def vec_eq_iff)
+
+lemma outerp_add:
+  fixes a b :: "real^'n::finite"
+  shows "outerp (a + b) = outerp a + outerp b
+      + ((\<chi> i j. a $ i * b $ j) + (\<chi> i j. b $ i * a $ j))"
+  by (simp add: outerp_def vec_eq_iff algebra_simps)
+
+lemma outerp_diff:
+  fixes a b :: "real^'n::finite"
+  shows "outerp (a - b) = outerp a - ((\<chi> i j. a $ i * b $ j)
+      + (\<chi> i j. b $ i * a $ j)) + outerp b"
+  by (simp add: outerp_def vec_eq_iff algebra_simps)
+
+lemma outerp_matvec_image:
+  fixes S :: "real^'n::finite^'n" and w :: "real^'n"
+  shows "outerp (S *v w) = S ** outerp w ** transpose S"
+proof -
+  have "outerp (S *v w) $ i $ j
+      = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l)"
+    for i j
+  proof -
+    have "outerp (S *v w) $ i $ j
+        = (\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (\<Sum>l\<in>UNIV. S $ j $ l * w $ l)"
+      by (simp add: outerp_def matrix_vector_mult_def)
+    also have "\<dots> = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * w $ k)
+        * (S $ j $ l * w $ l))"
+      by (rule sum_distrib_left)
+    also have "\<dots> = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l))
+        * S $ j $ l)"
+    proof (rule sum.cong[OF refl])
+      fix l :: 'n
+      have "(\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (S $ j $ l * w $ l)
+          = (\<Sum>k\<in>UNIV. S $ i $ k * w $ k * (S $ j $ l * w $ l))"
+        by (rule sum_distrib_right)
+      also have "\<dots> = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l) * S $ j $ l)"
+        by (rule sum.cong[OF refl]) (simp only: mult_ac)
+      also have "\<dots> = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l"
+        by (rule sum_distrib_right[symmetric])
+      finally show "(\<Sum>k\<in>UNIV. S $ i $ k * w $ k) * (S $ j $ l * w $ l)
+          = (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l" .
+    qed
+    finally show ?thesis .
+  qed
+  moreover have "(S ** outerp w ** transpose S) $ i $ j
+      = (\<Sum>l\<in>UNIV. (\<Sum>k\<in>UNIV. S $ i $ k * (w $ k * w $ l)) * S $ j $ l)"
+    for i j
+    by (simp add: matrix_matrix_mult_def transpose_def outerp_def)
+  ultimately show ?thesis by (simp add: vec_eq_iff)
+qed
+
+lemma cols_mult_transpose:
+  fixes w :: "'m::finite \<Rightarrow> real^'n::finite"
+  shows "(\<chi> i j. w j $ i) ** transpose (\<chi> i j. w j $ i)
+       = (\<Sum>j\<in>UNIV. outerp (w j))"
+proof -
+  have "((\<chi> i j. w j $ i) ** transpose (\<chi> i j. w j $ i)) $ i $ l
+      = (\<Sum>j\<in>UNIV. w j $ i * w j $ l)" for i l
+    by (simp add: matrix_matrix_mult_def transpose_def)
+  moreover have "(\<Sum>j\<in>UNIV. outerp (w j)) $ i $ l
+      = (\<Sum>j\<in>UNIV. w j $ i * w j $ l)" for i l
+    by (induction "UNIV :: 'm set" rule: infinite_finite_induct)
+      (simp_all add: outerp_def)
+  ultimately show ?thesis by (simp add: vec_eq_iff)
+qed
+
+lemma trace_outerp:
+  fixes v :: "real^'n::finite"
+  shows "trace (outerp v) = v \<bullet> v"
+  by (simp add: outerp_eq_outer_prod)
+
+lemma trace_mult_outerp:
+  fixes M :: "real^'n::finite^'n" and v :: "real^'n"
+  shows "trace (M ** outerp v) = v \<bullet> (M *v v)"
+  by (simp add: outerp_eq_outer_prod mult_outer_prod inner_commute)
+
+lemma trace_outerp_mult:
+  fixes B :: "real^'n::finite^'n" and v :: "real^'n"
+  shows "trace (outerp v ** B) = v \<bullet> (B *v v)"
+  by (subst trace_mul_sym) (rule trace_mult_outerp)
+
+lemma trace_mult_outerp_sum:
+  fixes M :: "real^'n::finite^'n" and w :: "'b \<Rightarrow> real^'n" and F :: "'b set"
+  assumes finF: "finite F"
+  shows "trace (M ** (\<Sum>u\<in>F. outerp (w u))) = (\<Sum>u\<in>F. w u \<bullet> (M *v w u))"
+  by (simp add: matrix_mult_sum_right trace_matrix_sum trace_mult_outerp)
+
+lemma quadform_outerp:
+  fixes q z :: "real^'n::finite"
+  shows "z \<bullet> (outerp q *v z) = (q \<bullet> z)\<^sup>2"
+  by (simp add: outerp_eq_outer_prod power2_eq_square inner_commute)
+
+lemma norm_outerp: "norm (outerp (v :: real^'n::finite)) = norm v * norm v"
+  by (simp add: outerp_eq_outer_prod norm_outer_prod)
 
 (*<*)
 end

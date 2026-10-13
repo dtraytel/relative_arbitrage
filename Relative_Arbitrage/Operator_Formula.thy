@@ -39,13 +39,9 @@ section \<open>\<open>M\<^sub>p\<close> on the hyperplane \<open>p\<^sup>\<botto
 text \<open>On \<open>p\<^sup>\<bottom>\<close> the projection \<open>I - pp'/|p|\<^sup>2\<close> acts as the identity, so
   \<open>M\<^sub>p\<close> has exactly the Rayleigh quotients of \<open>M\<close> there, and its
   \<open>p\<close>-direction eigenvalue \<open>min(\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0)\<close> is the smallest of its
-  spectrum, as needed for Eq. (3.5).\<close>
-
-lemma perp_proj_fixes_perp:
-  fixes p :: "real^'n::finite"
-  assumes y: "p \<bullet> y = 0"
-  shows "(mat 1 - rank1proj p) *v y = y"
-  by (simp add: matrix_vector_mult_diff_rdistrib rank1proj_annihilates_perp[OF y])
+  spectrum, as needed for Eq. (3.5).  The first fact is
+  @{thm [source] perp_proj_fixes_perp} in
+  @{theory Symmetric_Matrix_Spectra.Orthogonal_Projections}.\<close>
 
 lemma Mp_apply_perp:
   fixes M :: "real^'n::finite^'n"
@@ -367,26 +363,9 @@ section \<open>Feasibility of weighted outer-product sums\<close>
 text \<open>For the reverse inequality of Eq. (3.5) a feasible \<open>a\<close> attaining the
   bracket must be exhibited, of the form
   \<open>a = (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)\<close> for an orthonormal basis \<open>B\<close>.  This
-  section checks each clause of \<open>feasible\<close> for such a sum.\<close>
-
-lemma weighted_outer_sum_annihilates:
-  fixes c :: "real^'n::finite \<Rightarrow> real"
-  assumes finB: "finite B"
-    and van: "\<And>u. u \<in> B \<Longrightarrow> c u = 0 \<or> p \<bullet> u = 0"
-  shows "(\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v p = 0"
-proof -
-  have "(\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v p = (\<Sum>u\<in>B. c u *\<^sub>R ((u \<bullet> p) *\<^sub>R u))"
-    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
-  also have "\<dots> = (\<Sum>u\<in>B. 0)"
-  proof (intro sum.cong refl)
-    fix u assume u: "u \<in> B"
-    show "c u *\<^sub>R ((u \<bullet> p) *\<^sub>R u) = 0"
-      using van[OF u] by (auto simp: inner_commute)
-  qed
-  also have "\<dots> = 0"
-    by simp
-  finally show ?thesis .
-qed
+  section checks each clause of \<open>feasible\<close> for such a sum; the
+  annihilation clause is @{thm [source] weighted_outer_sum_annihilates} in
+  @{theory Symmetric_Matrix_Spectra.Outer_Products}.\<close>
 
 text \<open>The upper eigenvalue bound: all weights below \<open>L\<close> gives \<open>eigen_ub \<dots> L\<close>,
   by Parseval.\<close>
@@ -659,33 +638,11 @@ text \<open>And in the paper's displayed form, as sums over the ordered
 
 section \<open>Scale invariance: the paper's sequence is constant\<close>
 
-text \<open>\<open>rank1proj\<close> depends only on the line through \<open>p\<close>, so \<open>M\<^sub>p\<close> does too.
+text \<open>\<open>rank1proj\<close> depends only on the line through \<open>p\<close>
+  (@{thm [source] rank1proj_scaleR} in
+  @{theory Symmetric_Matrix_Spectra.Orthogonal_Projections}), so \<open>M\<^sub>p\<close> does too.
   Hence the paper's sequence \<open>(q\<^sub>1/m, M)\<close> for the lower bound of Eq. (3.6)
   is constant in \<open>m\<close>: \<open>M\<^sub>q\<^sub>1\<^sub>/\<^sub>m = M\<^sub>q\<^sub>1\<close>, so only \<open>p\<^sup>m \<longrightarrow> 0\<close> matters.\<close>
-
-lemma rank1proj_scaleR:
-  fixes p :: "real^'n::finite"
-  assumes c: "c \<noteq> 0" and p: "p \<noteq> 0"
-  shows "rank1proj (c *\<^sub>R p) = rank1proj p"
-proof -
-  have pp: "p \<bullet> p \<noteq> 0"
-    using p by simp
-  have c2: "c * c \<noteq> 0"
-    using c by simp
-  have num: "outer_prod (c *\<^sub>R p) (c *\<^sub>R p) = (c * c) *\<^sub>R outer_prod p p"
-    by (simp add: outer_prod_scaleR_left outer_prod_scaleR_right)
-  have den: "(c *\<^sub>R p) \<bullet> (c *\<^sub>R p) = (c * c) * (p \<bullet> p)"
-    by simp
-  have "rank1proj (c *\<^sub>R p)
-      = inverse ((c * c) * (p \<bullet> p)) *\<^sub>R ((c * c) *\<^sub>R outer_prod p p)"
-    unfolding rank1proj_def num den by (rule refl)
-  also have "\<dots> = (inverse ((c * c) * (p \<bullet> p)) * (c * c)) *\<^sub>R outer_prod p p"
-    by (rule scaleR_scaleR)
-  also have "\<dots> = inverse (p \<bullet> p) *\<^sub>R outer_prod p p"
-    using c2 pp by (simp add: field_simps)
-  finally show ?thesis
-    unfolding rank1proj_def .
-qed
 
 text \<open>\<open>F\<close> is constant along the paper's sequence: the feasible set sees only
   the direction of \<open>p\<close>.\<close>
@@ -1215,104 +1172,25 @@ text \<open>Every feasible \<open>a\<close> is symmetric, and against a symmetri
 text \<open>Consequently Eq. (3.5) holds for an arbitrary \<open>M\<close>, symmetric or not,
   with \<open>M\<close> replaced by its symmetric part on the right hand side.\<close>
 
-section \<open>The norm of an outer product, and \<open>rank1proj\<close> as a unit outer product\<close>
+section \<open>\<open>rank1proj\<close> is Lipschitz away from the origin\<close>
 
 text \<open>Towards continuity of \<open>(p, M) \<mapsto> M\<^sub>p\<close> off \<open>p = 0\<close>.  The correction
   coefficient \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> does not depend on \<open>p\<close>, so the only
   \<open>p\<close>-dependence is through \<open>rank1proj p\<close>, reducing to an estimate on
-  \<open>norm (rank1proj p' - rank1proj p)\<close>.\<close>
-
-lemma rank1proj_eq_outer_unit:
-  fixes p :: "real^'n::finite"
-  assumes p: "p \<noteq> 0"
-  shows "rank1proj p = outer_prod (p /\<^sub>R norm p) (p /\<^sub>R norm p)"
-proof -
-  have np: "norm p \<noteq> 0"
-    using p by simp
-  have pp: "p \<bullet> p = norm p * norm p"
-    by (simp add: dot_square_norm power2_eq_square)
-  have "outer_prod (inverse (norm p) *\<^sub>R p) (inverse (norm p) *\<^sub>R p)
-      = (inverse (norm p) * inverse (norm p)) *\<^sub>R outer_prod p p"
-    by (simp add: outer_prod_scaleR_left outer_prod_scaleR_right)
-  also have "\<dots> = inverse (p \<bullet> p) *\<^sub>R outer_prod p p"
-    unfolding pp using np by (simp add: field_simps)
-  finally show ?thesis
-    unfolding rank1proj_def by simp
-qed
-
-section \<open>\<open>rank1proj\<close> is Lipschitz away from the origin\<close>
-
-text \<open>Since \<open>rank1proj p = outer_prod q q\<close> with \<open>q = p/|p|\<close> a unit vector,
-  and \<open>outer_prod\<close> is bilinear, it suffices to bound the normalisation map,
-  Lipschitz with constant \<open>2/|p|\<close> away from the origin, blowing up as
-  \<open>p \<rightarrow> 0\<close>, why Eq. (3.6) differs there.\<close>
-
-theorem norm_rank1proj_diff_le:
-  fixes p p' :: "real^'n::finite"
-  assumes p: "p \<noteq> 0" and p': "p' \<noteq> 0"
-  shows "norm (rank1proj p' - rank1proj p) \<le> 4 * norm (p' - p) / norm p"
-proof -
-  define q where "q = p /\<^sub>R norm p"
-  define q' where "q' = p' /\<^sub>R norm p'"
-  have nq: "norm q = 1"
-    unfolding q_def using p by simp
-  have nq': "norm q' = 1"
-    unfolding q'_def using p' by simp
-  have r: "rank1proj p = outer_prod q q"
-    unfolding q_def by (rule rank1proj_eq_outer_unit[OF p])
-  have r': "rank1proj p' = outer_prod q' q'"
-    unfolding q'_def by (rule rank1proj_eq_outer_unit[OF p'])
-  have bil: "outer_prod q' q' - outer_prod q q
-      = outer_prod (q' - q) q' + outer_prod q (q' - q)"
-    by (simp add: outer_prod_diff_left outer_prod_diff_right)
-  have "norm (rank1proj p' - rank1proj p)
-      \<le> norm (outer_prod (q' - q) q') + norm (outer_prod q (q' - q))"
-    unfolding r r' bil by (rule norm_triangle_ineq)
-  also have "\<dots> = 2 * norm (q' - q)"
-    by (simp add: norm_outer_prod nq nq')
-  also have "\<dots> \<le> 2 * (2 * norm (p' - p) / norm p)"
-    using norm_unit_diff_le[OF p p'] unfolding q_def q'_def by simp
-  also have "\<dots> = 4 * norm (p' - p) / norm p"
-    by simp
-  finally show ?thesis .
-qed
+  \<open>norm (rank1proj p' - rank1proj p)\<close>.  Since \<open>rank1proj p = outer_prod q q\<close>
+  with \<open>q = p/|p|\<close> a unit vector, and the normalisation map is Lipschitz with
+  constant \<open>2/|p|\<close> away from the origin, the estimate has constant \<open>4/|p|\<close>,
+  blowing up as \<open>p \<rightarrow> 0\<close>, why Eq. (3.6) differs there.  The estimate,
+  @{thm [source] norm_rank1proj_diff_le}, and the two constants that turn the
+  toolkit into an explicit Lipschitz constant for \<open>(p, M) \<mapsto> M\<^sub>p\<close>,
+  @{thm [source] norm_rank1proj} and @{thm [source] norm_perp_proj_le}, are in
+  @{theory Symmetric_Matrix_Spectra.Orthogonal_Projections}.\<close>
 
 section \<open>The Frobenius norm: transpose invariance and submultiplicativity\<close>
 
 text \<open>The last two tools for the continuity clause of Lemma 3.1:
   \<open>norm (A ** B) \<le> norm A * norm B\<close>, and that the Frobenius norm inherited
   on \<open>real^'n^'n\<close> satisfies it; neither is in this HOL-Analysis.\<close>
-
-section \<open>The two constants: \<open>norm (rank1proj p)\<close> and \<open>norm (mat 1)\<close>\<close>
-
-text \<open>The last numbers needed to turn the toolkit into an explicit Lipschitz
-  constant for \<open>(p, M) \<mapsto> M\<^sub>p\<close>: a rank-one orthogonal projection has Frobenius
-  norm \<open>1\<close>, and the identity has Frobenius norm \<open>\<surd>n\<close>.\<close>
-
-lemma norm_rank1proj:
-  fixes p :: "real^'n::finite"
-  assumes p: "p \<noteq> 0"
-  shows "norm (rank1proj p) = 1"
-proof -
-  have "norm (rank1proj p) = norm (p /\<^sub>R norm p) * norm (p /\<^sub>R norm p)"
-    unfolding rank1proj_eq_outer_unit[OF p] by (rule norm_outer_prod)
-  also have "\<dots> = 1"
-    using p by simp
-  finally show ?thesis .
-qed
-
-corollary norm_perp_proj_le:
-  fixes p :: "real^'n::finite"
-  assumes p: "p \<noteq> 0"
-  shows "norm (mat 1 - rank1proj p :: real^'n^'n) \<le> sqrt (real CARD('n)) + 1"
-proof -
-  have "norm (mat 1 - rank1proj p :: real^'n^'n)
-      \<le> norm (mat 1 :: real^'n^'n) + norm (rank1proj p)"
-    by (rule norm_triangle_ineq4)
-  also have "\<dots> = sqrt (real CARD('n)) + 1"
-    by (simp add: norm_mat_1 norm_rank1proj[OF p])
-  finally show ?thesis .
-qed
 
 section \<open>The conjugation expansion, and the Lipschitz bound for \<open>M\<^sub>p\<close>\<close>
 
