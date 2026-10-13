@@ -604,15 +604,7 @@ proof -
         [of T Q ?\<kappa> K, OF T0' PQ setsQ Kp Kc L1 st Qst Qbnd Kfr Kval])
 
   \<comment> \<open>hence \<open>c\<close> is below the value function\<close>
-  have "ennreal c \<le> ess_inf_time ?R (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
-    unfolding ess_inf_time_def
-  proof (intro Sup_upper CollectI)
-    show "AE \<omega> in ?R. ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
-      using Rbnd by (rule eventually_mono) (simp add: ennreal_leI)
-  qed
-  also have "\<dots> \<le> exit_val k L T K x"
-    unfolding exit_val_def using Rmem by (intro Sup_upper imageI)
-  finally show ?thesis .
+  show ?thesis by (rule exit_val_ge_of_AE[OF Rmem Rbnd])
 qed
 
 subsection \<open>Transporting the bound from the law to its stopped version\<close>

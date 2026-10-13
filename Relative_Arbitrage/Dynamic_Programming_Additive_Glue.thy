@@ -63,37 +63,20 @@ proof -
       unfolding split using B[OF late stlt tT] by simp
   next
     case mid
-    let ?a = "(1 / (r - s)) *\<^sub>R (snd (p' r) - snd (p' s))"
-    let ?b = "(1 / (t - r)) *\<^sub>R (snd (w t) - snd (w r))"
-    have rI: "r \<in> {0..T}" using r0 rT by simp
-    have aA: "?a \<in> sconstraint k L" by (rule A[OF s mid(1) order_refl])
-    have bB: "?b \<in> sconstraint k L" by (rule B[OF order_refl mid(2) tT])
-    have pos: "0 < r - s" "0 < t - r" "0 < t - s" using mid stlt by auto
-    have sum1: "(r - s) / (t - s) + (t - r) / (t - s) = 1"
-      by (subst add_divide_distrib[symmetric]) (use pos(3) in simp)
-    have cc: "((r - s) / (t - s)) *\<^sub>R ?a + ((t - r) / (t - s)) *\<^sub>R ?b
-        \<in> sconstraint k L"
-      using pos by (intro convexD[OF sconstraint_convex aA bB] sum1) auto
-    have e1: "((r - s) / (t - s)) *\<^sub>R ?a
-        = (1 / (t - s)) *\<^sub>R (snd (p' r) - snd (p' s))"
-      using pos by simp
-    have e2: "((t - r) / (t - s)) *\<^sub>R ?b
-        = (1 / (t - s)) *\<^sub>R (snd (w t) - snd (w r))"
-      using pos by simp
     have pt: "p' t = p' r" using idem[OF tI] mid(2) by simp
     have ws: "w s = 0" by (rule w0[OF sT]) (use mid(1) in simp)
-    have wr: "w r = 0" by (rule w0[OF rI]) simp
-    have "snd (padd T p' w t) - snd (padd T p' w s)
+    have wr: "w r = 0" by (rule w0) (use r0 rT in simp_all)
+    have eq: "snd (padd T p' w t) - snd (padd T p' w s)
         = (snd (p' r) - snd (p' s)) + (snd (w t) - snd (w r))"
       unfolding split pt using ws wr by simp
-    then show ?thesis
-      using cc unfolding e1 e2 by (simp add: scaleR_right_distrib)
+    show ?thesis
+      unfolding eq by (rule diffquot_convex_split[OF sconstraint_convex mid
+          A[OF s mid(1) order_refl] B[OF order_refl mid(2) tT]])
   qed
 qed
 
-text \<open>Clause (iii) for the glued law.  @{thm [source] exit_class_diffquot_of_pairs}
-  reduces it to one pair of deterministic times, where the predicate is a
-  closed set (@{thm [source] closedin_diffquot_constraint}) and so passes
+text \<open>Clause (iii) for the glued law.  The whole clause is a closed set
+  (@{thm [source] closedin_diffquot_constraint_all}) and so passes
   through @{thm [source] AE_aglue_law}; the pathwise content is then
   @{thm [source] padd_diffquot}.\<close>
 
@@ -112,23 +95,13 @@ lemma aglue_law_diffquot:
         \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
   shows "AE \<omega> in aglue_law T \<kappa> Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T
       \<longrightarrow> (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-proof (rule exit_class_diffquot_of_pairs[OF sets_pair_law_of])
-  fix p q :: real
-  assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
-    by (simp add: space_borel_of)
-  have mset: "{\<omega> \<in> space ?B.
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
-    unfolding spB
-    by (rule borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
+proof -
   have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
     by (rule path_stopping_time_le[OF st])
-  show "AE \<omega> in aglue_law T \<kappa> Q.
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-    unfolding AE_aglue_law[OF T0 PQ setsQ Kp mset]
+  show ?thesis
+    unfolding AE_aglue_law[OF T0 PQ setsQ Kp diffquot_all_sets]
     using Qst Qcov AE_space
   proof eventually_elim
     case (elim p')
@@ -150,24 +123,26 @@ proof (rule exit_class_diffquot_of_pairs[OF sets_pair_law_of])
             \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
         by blast+
       show ?case
-      proof (rule padd_diffquot[where r = "\<theta> p'"])
-        show "0 \<le> T" by (rule T0)
-        show "0 \<le> \<theta> p'" by (rule th0)
-        show "\<theta> p' \<le> T" by (rule thT)
-        show "p' u = p' (min u (\<theta> p'))" if "u \<in> {0..T}" for u
-          by (rule idem[OF that])
-        show "w u = 0" if "u \<in> {0..T}" "u \<le> \<theta> p'" for u
-          using w0 that by blast
-        show "(1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
-          if "0 \<le> a" "a < b" "b \<le> \<theta> p'" for a b
-          using cov that by blast
-        show "(1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
-          if "\<theta> p' \<le> a" "a < b" "b \<le> T" for a b
-          using wcov that by blast
-        show "0 \<le> p" using pq(1) by simp
-        show "p < q" by (rule pq(3))
-        show "q \<le> T" using pq(2) by simp
-      qed    qed
+      proof (intro allI impI)
+        fix p q :: real assume pq: "0 \<le> p" "p < q" "q \<le> T"
+        show "(1 / (q - p)) *\<^sub>R (snd (padd T p' w q) - snd (padd T p' w p)) \<in> sconstraint k L"
+        proof (rule padd_diffquot[where r = "\<theta> p'"])
+          show "0 \<le> T" by (rule T0)
+          show "0 \<le> \<theta> p'" by (rule th0)
+          show "\<theta> p' \<le> T" by (rule thT)
+          show "p' u = p' (min u (\<theta> p'))" if "u \<in> {0..T}" for u
+            by (rule idem[OF that])
+          show "w u = 0" if "u \<in> {0..T}" "u \<le> \<theta> p'" for u
+            using w0 that by blast
+          show "(1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+            if "0 \<le> a" "a < b" "b \<le> \<theta> p'" for a b
+            using cov that by blast
+          show "(1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+            if "\<theta> p' \<le> a" "a < b" "b \<le> T" for a b
+            using wcov that by blast
+        qed (use pq in simp_all)
+      qed
+    qed
   qed
 qed
 

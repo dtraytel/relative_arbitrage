@@ -101,16 +101,12 @@ theorem iexit_class_pcut:
 proof -
   let ?Q = "pair_law_of S (pcut S) P"
   let ?B = "(path_borel S :: ('n pairpath) measure)"
-  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   interpret P: prob_space P by (rule iexit_class_prob[OF P])
   have phim: "pcut S \<in> P \<rightarrow>\<^sub>M ?B"
     by (rule ipcut_measurable[OF S iexit_class_sets[OF P]])
   have prob': "prob_space ?Q"
     unfolding pair_law_of_def by (rule P.prob_space_distr[OF phim])
-  have adap: "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) \<in> borel_measurable (?F u)"
-    if "0 \<le> r" "r \<le> u" for r u
-    by (rule pcut_adapted[OF S that])
 
   \<comment> \<open>clause (i): the initial condition\<close>
   have start': "AE \<omega> in ?Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
@@ -131,77 +127,24 @@ proof -
   \<comment> \<open>clause (ii): the covariation constraint\<close>
   have cov': "AE \<omega> in ?Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-  proof (rule exit_class_diffquot_of_pairs[OF sets_pair_law_of])
-    fix p q :: real
-    assume pq: "p \<in> {0..S}" "q \<in> {0..S}" "p < q"
-    have mm: "{\<omega> \<in> space ?B.
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
-      using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]]
-      by (simp add: space_borel_of)
-    have iff: "(AE \<omega> in ?Q.
-          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L)
-        = (AE \<omega> in P. (1 / (q - p))
-            *\<^sub>R (snd (pcut S \<omega> q) - snd (pcut S \<omega> p)) \<in> sconstraint k L)"
-      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mm])
+  proof -
     have "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
       by (rule iexit_class_diffquot[OF P])
-    then have "AE \<omega> in P. (1 / (q - p))
-        *\<^sub>R (snd (pcut S \<omega> q) - snd (pcut S \<omega> p)) \<in> sconstraint k L"
-    proof eventually_elim
-      case (elim \<omega>)
-      have "(1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-        using elim pq by auto
-      then show ?case using pq by (simp add: pcut_apply)
-    qed
-    then show "AE \<omega> in ?Q.
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      unfolding iff .
+    then have "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (pcut S \<omega> t) - snd (pcut S \<omega> s)) \<in> sconstraint k L"
+      by eventually_elim (auto simp: pcut_apply)
+    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets] .
   qed
 
-  \<comment> \<open>clause (iii): \<open>X\<close> is a martingale\<close>
+  \<comment> \<open>clauses (iii) and (iv): the martingales\<close>
   have mgX': "martingale ?Q ?G 0 (\<lambda>u \<omega>. fst (\<omega> (min u S)) :: real^'n)"
-  proof (rule martingale_pair_law[OF P.prob_space_axioms phim adap])
-    fix u :: real assume u: "0 \<le> u"
-    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u S)) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      by (rule natural_filtration_eval) (use u S in auto)
-    show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u S))) \<in> borel_measurable (?G u)"
-      by (rule measurable_compose[OF ev pair_fst_borel])
-  next
-    show "martingale P ?F 0 (\<lambda>u \<omega>. fst (pcut S \<omega> (min u S)) :: real^'n)"
-    proof (rule martingale_cong_ge
-        [OF martingale_stopped_const[OF S iexit_class_X_martingale[OF P]]])
-      fix u :: real assume u: "0 \<le> u"
-      have mI: "min u S \<in> {0..S}" using u S by simp
-      show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u S)))
-          = (\<lambda>\<omega>. fst (pcut S \<omega> (min u S)) :: real^'n)"
-        by (rule ext) (simp add: pcut_apply[OF mI])
-    qed
-  qed
-
-  \<comment> \<open>clause (iv): the compensated process is a martingale\<close>
+    by (rule martingale_pcut_law[OF S P.prob_space_axioms phim pair_fst_borel
+          martingale_stopped_const[OF S iexit_class_X_martingale[OF P]]])
   have mgC': "martingale ?Q ?G 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u S)) :: real^'n) - snd (\<omega> (min u S)))"
-  proof (rule martingale_pair_law[OF P.prob_space_axioms phim adap])
-    fix u :: real assume u: "0 \<le> u"
-    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u S)) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      by (rule natural_filtration_eval) (use u S in auto)
-    show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min u S))) - snd (\<omega> (min u S)))
-        \<in> borel_measurable (?G u)"
-      by (rule measurable_compose[OF ev compensated_map_borel])
-  next
-    show "martingale P ?F 0 (\<lambda>u \<omega>. outerp (fst (pcut S \<omega> (min u S)) :: real^'n)
-        - snd (pcut S \<omega> (min u S)))"
-    proof (rule martingale_cong_ge[OF martingale_stopped_const
-          [OF S iexit_class_comp_martingale[OF P]]])
-      fix u :: real assume u: "0 \<le> u"
-      have mI: "min u S \<in> {0..S}" using u S by simp
-      show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min u S))) - snd (\<omega> (min u S)))
-          = (\<lambda>\<omega>. outerp (fst (pcut S \<omega> (min u S)) :: real^'n)
-              - snd (pcut S \<omega> (min u S)))"
-        by (rule ext) (simp add: pcut_apply[OF mI])
-    qed
-  qed
+    by (rule martingale_pcut_law[OF S P.prob_space_axioms phim compensated_map_borel
+          martingale_stopped_const[OF S iexit_class_comp_martingale[OF P]]])
 
   show ?thesis
     unfolding exit_class_def mem_Collect_eq
@@ -209,6 +152,37 @@ proof -
 qed
 
 subsection \<open>The capped value dominates the capped uncapped value\<close>
+
+text \<open>The exit time of the cut law is the uncapped exit time capped at the
+  horizon, in essential infimum.\<close>
+
+lemma ess_inf_pexit_cut:
+  fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
+  assumes T: "0 \<le> T" and Kc: "closed K"
+    and setsP: "sets P = sets (ipath_space :: ('n pairpath) measure)"
+  shows "ess_inf_time (pair_law_of T (pcut T) P) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+      = ess_inf P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
+proof -
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  have phim: "pcut T \<in> P \<rightarrow>\<^sub>M ?B" by (rule ipcut_measurable[OF T setsP])
+  have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))) \<in> borel_measurable ?B"
+    by (rule pexit_path_measurable[OF T Kc refl])
+  have "ess_inf_time (pair_law_of T (pcut T) P) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+      = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (pcut T \<omega> t)))"
+    unfolding pair_law_of_def
+  proof (rule ess_inf_time_distr[OF phim])
+    fix c :: ennreal
+    show "{\<omega> \<in> space ?B. c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?B"
+      using taum by measurable
+  qed
+  also have "\<dots> = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+    by (simp add: pexit_pcut)
+  also have "\<dots> = ess_inf P (\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
+    by (rule ess_inf_ennreal[symmetric])
+  also have "\<dots> = ess_inf P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
+    by (simp add: iexit_cap[OF T])
+  finally show ?thesis .
+qed
 
 text \<open>Restricting a member of the uncapped class to \<open>[0,T]\<close> gives a competitor
   for @{const exit_val} whose exit time is the uncapped one capped at \<open>T\<close>.
@@ -224,38 +198,14 @@ proof -
       \<le> exit_val k L T K x"
     if P: "P \<in> iexit_class k L x" for P :: "('n pairpath) measure"
   proof -
-    let ?Q = "pair_law_of T (pcut T) P"
-    let ?B = "(path_borel T :: ('n pairpath) measure)"
-    have Q: "?Q \<in> exit_class k L T x" by (rule iexit_class_pcut[OF T P])
-    have phim: "pcut T \<in> P \<rightarrow>\<^sub>M ?B"
-      by (rule ipcut_measurable[OF T iexit_class_sets[OF P]])
-    have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
-        \<in> borel_measurable ?B"
-      by (rule pexit_path_measurable[OF T Kc refl])
-    have "ess_inf_time ?Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-        = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (pcut T \<omega> t)))"
-      unfolding pair_law_of_def
-    proof (rule ess_inf_time_distr[OF phim])
-      fix c :: ennreal
-      show "{\<omega> \<in> space ?B. c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?B"
-        using taum by measurable
-    qed
-    also have "\<dots> = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
-      by (simp add: pexit_pcut)
-    also have "\<dots> = ess_inf P (\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
-      by (rule ess_inf_ennreal[symmetric])
-    also have "\<dots> = ess_inf P
-        (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
-      by (simp add: iexit_cap[OF T])
-    finally have eq: "ess_inf_time ?Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-        = ess_inf P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))" .
     have "min (ess_inf P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))) (ennreal T)
         \<le> ess_inf P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
       by (rule ess_inf_min_const)
-    also have "\<dots> = ess_inf_time ?Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
-      using eq by simp
+    also have "\<dots> = ess_inf_time (pair_law_of T (pcut T) P)
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+      by (rule ess_inf_pexit_cut[OF T Kc iexit_class_sets[OF P], symmetric])
     also have "\<dots> \<le> exit_val k L T K x"
-      unfolding exit_val_def using Q by (intro Sup_upper) blast
+      by (rule exit_val_ge_ess_inf[OF iexit_class_pcut[OF T P]])
     finally show ?thesis .
   qed
   show ?thesis
@@ -306,25 +256,10 @@ proof (rule Sup_least)
   obtain P :: "('n pairpath) measure"
     where P: "P \<in> iexit_class k L x" and cut: "pair_law_of T (pcut T) P = Q"
     using ext[OF Q] by blast
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have phim: "pcut T \<in> P \<rightarrow>\<^sub>M ?B"
-    by (rule ipcut_measurable[OF T iexit_class_sets[OF P]])
-  have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
-      \<in> borel_measurable ?B"
-    by (rule pexit_path_measurable[OF T Kc refl])
-  have "w = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (pcut T \<omega> t)))"
-    unfolding w cut[symmetric] pair_law_of_def
-  proof (rule ess_inf_time_distr[OF phim])
-    fix c :: ennreal
-    show "{\<omega> \<in> space ?B. c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?B"
-      using taum by measurable
-  qed
-  also have "\<dots> = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
-    by (simp add: pexit_pcut)
-  also have "\<dots> = ess_inf P (\<lambda>\<omega>. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))"
-    by (rule ess_inf_ennreal[symmetric])
+  have "w = ess_inf P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
+    unfolding w cut[symmetric] by (rule ess_inf_pexit_cut[OF T Kc iexit_class_sets[OF P]])
   also have "\<dots> \<le> ess_inf P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))"
-    by (rule ess_inf_mono) (simp add: pexit_le_iexit[OF T])
+    by (rule ess_inf_mono) simp
   also have "\<dots> \<le> iexit_val k L K x"
     unfolding iexit_val_def using P by (intro Sup_upper) blast
   finally show "w \<le> iexit_val k L K x" .
@@ -629,6 +564,36 @@ next
   finally show ?thesis using exit_class_pcut[OF S ST Q] by simp
 qed
 
+lemma martingale_of_cut_laws:
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'x::{polish_space,banach})) measure"
+    and f :: "'a \<times> 'x \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes prob: "prob_space P"
+    and setsP: "sets P = sets (ipath_space :: ((real \<Rightarrow> 'a \<times> 'x)) measure)"
+    and f: "f \<in> borel_measurable borel"
+    and mg: "\<And>S. 0 \<le> S \<Longrightarrow> martingale (pair_law_of S (pcut S) P)
+        (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+        (\<lambda>u \<omega>. f (\<omega> (min u S)))"
+  shows "martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) 0 (\<lambda>u \<omega>. f (\<omega> u))"
+proof (rule martingale_of_cuts[OF prob setsP])
+  fix u :: real assume u: "0 \<le> u"
+  have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'x). \<omega> u)
+      \<in> borel_measurable (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u)"
+    by (rule natural_filtration_eval) (use u in auto)
+  then show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'x). f (\<omega> u))
+      \<in> borel_measurable (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u)"
+    by (rule measurable_compose[OF _ f])
+next
+  fix u S :: real and \<omega> :: "real \<Rightarrow> 'a \<times> 'x"
+  assume "0 \<le> u" "u \<le> S"
+  then show "f (pcut S \<omega> u) = f (\<omega> u)" by (simp add: pcut_def)
+next
+  fix S :: real assume "0 \<le> S"
+  then show "martingale (pair_law_of S (pcut S) P)
+      (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. f (\<omega> (min u S)))"
+    by (rule mg)
+qed
+
 theorem iextend_in_iexit_class:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T" and L: "1 \<le> L" and Q: "Q \<in> exit_class k L T x"
@@ -687,50 +652,14 @@ proof -
     qed
   qed
 
-  \<comment> \<open>clause (iii): the coordinate process is a martingale\<close>
+  \<comment> \<open>clauses (iii) and (iv): the martingales, from those of the cuts\<close>
   have Xmg: "martingale ?P ?G 0 (\<lambda>u \<omega>. fst (\<omega> u) :: real^'n)"
-  proof (rule martingale_of_cuts[OF prob sets_iextend])
-    fix u :: real assume u: "0 \<le> u"
-    have fstB: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p) \<in> borel_measurable borel"
-      by (intro borel_measurable_continuous_onI continuous_intros)
-    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      by (rule natural_filtration_eval) (use u in auto)
-    show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u)) \<in> borel_measurable (?G u)"
-      by (rule measurable_compose[OF ev fstB])
-  next
-    fix u S :: real and \<omega> :: "'n pairpath"
-    assume "0 \<le> u" "u \<le> S"
-    then show "fst (pcut S \<omega> u) = fst (\<omega> u)" by (auto simp: pcut_def)
-  next
-    fix S :: real assume S: "0 \<le> S"
-    show "martingale (pair_law_of S (pcut S) ?P)
-        (natural_filtration (pair_law_of S (pcut S) ?P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
-        (\<lambda>u \<omega>. fst (\<omega> (min u S)) :: real^'n)"
-      by (rule exit_class_X_martingale[OF cls[OF S]])
-  qed
-
-  \<comment> \<open>clause (iv): the compensated process is a martingale\<close>
+    by (rule martingale_of_cut_laws[OF prob sets_iextend pair_fst_borel])
+      (rule exit_class_X_martingale[OF cls])
   have Cmg: "martingale ?P ?G 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> u) :: real^'n) - snd (\<omega> u))"
-  proof (rule martingale_of_cuts[OF prob sets_iextend])
-    fix u :: real assume u: "0 \<le> u"
-    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      by (rule natural_filtration_eval) (use u in auto)
-    show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u)) - snd (\<omega> u))
-        \<in> borel_measurable (?G u)"
-      by (rule measurable_compose[OF ev compensated_map_borel])
-  next
-    fix u S :: real and \<omega> :: "'n pairpath"
-    assume "0 \<le> u" "u \<le> S"
-    then show "outerp (fst (pcut S \<omega> u) :: real^'n) - snd (pcut S \<omega> u)
-        = outerp (fst (\<omega> u)) - snd (\<omega> u)" by (auto simp: pcut_def)
-  next
-    fix S :: real assume S: "0 \<le> S"
-    show "martingale (pair_law_of S (pcut S) ?P)
-        (natural_filtration (pair_law_of S (pcut S) ?P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
-        (\<lambda>u \<omega>. outerp (fst (\<omega> (min u S)) :: real^'n) - snd (\<omega> (min u S)))"
-      by (rule exit_class_compensated_martingale[OF cls[OF S]])
-  qed
+    by (rule martingale_of_cut_laws[OF prob sets_iextend compensated_map_borel])
+      (rule exit_class_compensated_martingale[OF cls])
 
   show ?thesis
     unfolding iexit_class_def mem_Collect_eq

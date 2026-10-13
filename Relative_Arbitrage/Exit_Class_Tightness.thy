@@ -297,85 +297,10 @@ qed
 
 section \<open>The class is sequentially compact\<close>
 
-text \<open>Tightness gives a convergent subsequence with mass at most one; that
-  the limit still has mass one is not automatic, and is where tightness is
-  used a second time: a compact set carrying all but \<open>e\<close> of every
-  approximating law is closed, so portmanteau keeps at least \<open>1 - e\<close> of the
-  mass in the limit, for every \<open>e\<close>.\<close>
-
-theorem exit_class_weak_limit_prob_space:
-  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and mem: "\<And>m. Qm m \<in> exit_class k L T x"
-    and wc: "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    and fin: "finite_measure Q"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and le1: "emeasure Q (space Q) \<le> ennreal 1"
-  shows "prob_space Q"
-proof -
-  interpret FQ: finite_measure Q by (rule fin)
-  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsQ])
-  have haus: "Hausdorff_space
-      (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    unfolding mtopology_of_def
-    by (rule Metric_space.Hausdorff_space_mtopology[OF Metric_space_mspace_mdist])
-  have tight: "tight_on_set
-      (mtopology_of (path_metric T :: ('n pairpath) metric)) (range Qm)"
-    by (rule tight_on_set_paper_pair_class[OF T L]) (use mem in auto)
-  have ge: "1 \<le> measure Q (space Q) + e" if e: "0 < e" for e
-  proof -
-    obtain K where
-      compK: "compactin (mtopology_of (path_metric T :: ('n pairpath) metric)) K"
-      and chK: "\<And>m. measure (Qm m) (space (Qm m) - K) < e"
-      using tight e unfolding tight_on_set_def by auto
-    have Kcl: "closedin (mtopology_of (path_metric T :: ('n pairpath) metric)) K"
-      by (rule compactin_imp_closedin[OF haus compK])
-    have Ksub: "K \<subseteq> space Q"
-      using compactin_subset_topspace[OF compK] spQ by simp
-    have mK: "1 - e < measure (Qm m) K" for m
-    proof -
-      interpret Pm: prob_space "Qm m" by (rule exit_class_prob[OF mem])
-      have setsm: "sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)"
-        by (rule exit_class_sets[OF mem])
-      have Km: "K \<in> sets (Qm m)"
-        using borel_of_closed[OF Kcl] setsm by simp
-      have "measure (Qm m) (space (Qm m) - K) = 1 - measure (Qm m) K"
-        by (rule Pm.prob_compl[OF Km])
-      then show ?thesis using chK[of m] by simp
-    qed
-    have step1: "ereal (1 - e) \<le> ereal (measure Q K)"
-    proof -
-      have "ereal (1 - e) = Limsup sequentially (\<lambda>m :: nat. ereal (1 - e))"
-        by (simp add: Limsup_const)
-      also have "\<dots> \<le> Limsup sequentially (\<lambda>m. ereal (measure (Qm m) K))"
-      proof (rule Limsup_mono, rule always_eventually, rule allI)
-        fix m :: nat
-        show "ereal (1 - e) \<le> ereal (measure (Qm m) K)"
-          using mK[of m] by simp
-      qed
-      also have "\<dots> \<le> ereal (measure Q K)"
-        by (rule weak_conv_closed_limsup[OF wc Kcl])
-      finally show ?thesis .
-    qed
-    have "measure Q K \<le> measure Q (space Q)"
-      by (rule FQ.finite_measure_mono[OF Ksub]) simp
-    with step1 show ?thesis by simp
-  qed
-  have ge1: "1 \<le> measure Q (space Q)"
-    by (rule field_le_epsilon) (use ge in simp)
-  have le: "measure Q (space Q) \<le> 1"
-    using le1 by (simp add: FQ.emeasure_eq_measure)
-  have "emeasure Q (space Q) = 1"
-    using ge1 le by (simp add: FQ.emeasure_eq_measure)
-  then show ?thesis by (rule prob_spaceI)
-qed
-
 text \<open>Sequential compactness of the paper's class: every sequence of
   members has a subsequence converging weakly to a member.  Tightness
-  supplies the subsequence and the mass, weak closedness supplies
+  supplies the subsequence, weak convergence keeps the mass
+  (@{thm [source] weak_conv_on_prob_space}), and weak closedness supplies
   membership of the limit.\<close>
 
 corollary exit_class_convergent_subsequence:
@@ -402,16 +327,14 @@ proof -
       using exit_class_prob[OF mem]
       by (simp add: prob_space.emeasure_space_1)
   qed
-  then obtain a N where sm: "strict_mono a" and finN: "finite_measure N"
+  then obtain a N where sm: "strict_mono a"
     and setsN: "sets N = sets (borel_of ?X)"
-    and leN: "N (space N) \<le> ennreal 1"
     and wcN: "weak_conv_on (Qm \<circ> a) N sequentially ?X"
     by blast
   have memA: "(Qm \<circ> a) m \<in> exit_class k L T x" for m
     by (simp add: mem)
   have probN: "prob_space N"
-    by (rule exit_class_weak_limit_prob_space
-        [OF T L memA wcN finN setsN leN])
+    by (rule weak_conv_on_prob_space[OF wcN exit_class_prob[OF memA]])
   have "N \<in> exit_class k L T x"
     by (rule exit_class_weak_closed[OF T L memA wcN probN setsN])
   with sm wcN show ?thesis by blast

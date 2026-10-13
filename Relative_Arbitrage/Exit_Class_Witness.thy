@@ -440,6 +440,26 @@ qed
 
 section \<open>Consolidating the clauses onto the paper's value function\<close>
 
+text \<open>Lower bounds for \<open>exit_val\<close>: every member of the class bounds it
+  from below by its essential infimum, so an almost-sure lower bound on one
+  member's exit time is a lower bound for the value.\<close>
+
+lemma exit_val_ge_ess_inf:
+  assumes "Q \<in> exit_class k L T x"
+  shows "ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) \<le> exit_val k L T K x"
+  unfolding exit_val_def using assms by (intro Sup_upper imageI)
+
+lemma exit_val_ge_of_AE:
+  assumes Q: "Q \<in> exit_class k L T x"
+    and ae: "AE \<omega> in Q. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
+  shows "ennreal c \<le> exit_val k L T K x"
+proof -
+  have "ennreal c \<le> ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
+    unfolding ess_inf_time_def
+    by (intro Sup_upper CollectI) (use ae in \<open>auto elim: eventually_mono intro: ennreal_leI\<close>)
+  then show ?thesis using exit_val_ge_ess_inf[OF Q] by (rule order_trans)
+qed
+
 text \<open>Clause (0) for \<open>exit_val\<close>: the exit functional of Eq. (1.6) is capped
   at the horizon, so the value is bounded by it outright.  The sharp bound
   \<open>exit_val \<le> ball_v\<close>, giving also clause (3), needs the class-level
@@ -602,8 +622,7 @@ qed
 text \<open>Example 3.1, inequality (3.10): if the target set fits inside a ball
   of radius \<open>r\<close>, then \<open>v(x) \<le> (r\<^sup>2 - |x|\<^sup>2) / (n - k)\<close>, independent of the
   horizon \<open>T\<close> --- the quantitative form of clause (0), and why the horizon
-  cap is eventually invisible.  \<open>exit_val_boundary_zero\<close> is the case
-  \<open>|x| = r\<close>.  The paper derives (3.10) from It\<open>\<^bold>o\<close>'s formula; here it
+  cap is eventually invisible.  The paper derives (3.10) from It\<open>\<^bold>o\<close>'s formula; here it
   follows from \<open>exit_class_sq_norm_mean_ge\<close>, Lemma 2.1's estimate at
   a fixed time, with no stochastic calculus.\<close>
 
@@ -726,7 +745,6 @@ proof -
   then show ?thesis
     using exit_val_le_ball_bound[OF k _ L order_refl, of T r x] T by simp
 qed
-
 
 (*<*)
 end

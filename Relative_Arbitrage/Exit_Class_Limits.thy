@@ -134,42 +134,17 @@ proof -
     by (rule exit_class_X_martingale_limit[OF T L mem wc prob setsQ])
 qed
 
-section \<open>The uniform fourth moment of the class, by localization\<close>
+section \<open>The uniform fourth moment of the class\<close>
 
-text \<open>This bound supplies the compensated clause of Lemma 2.3.  The
-  repo's estimate \<open>Increment_Moments.fourth_moment_bound_bounded\<close> wants a
-  uniform sup bound on the process, which a class member does not have and
-  which is structural to that estimate (it also fixes the constant of
-  \<open>remainder_tendsto_zero\<close>).  The process stopped at
-  \<open>\<tau>\<^sub>R = inf {t. R \<le> \<bar>X\<^sub>t\<bar>}\<close> does have a sup bound by construction; applying
-  the estimate there gives a bound uniform in \<open>R\<close>, and path continuity on
-  the compact \<open>[0,T]\<close> makes \<open>\<tau>\<^sub>R > T\<close> for large \<open>R\<close> pathwise, so Fatou
-  removes the localization.  This avoids Burkholder--Davis--Gundy, using
-  instead \<open>Stopping_Times.etime_stopping_time\<close> for \<open>\<tau>\<^sub>R\<close>,
-  \<open>Doob_Inequality.horizon_sq_int_martingale\<close> for the integrable envelope
-  that \<open>Optional_Sampling.optional_stopping\<close> asks for, and
-  \<open>optional_stopping\<close> itself.\<close>
+text \<open>This bound supplies the compensated clause of Lemma 2.3.  A
+  coordinate of a class member is an \<open>L\<^sup>2\<close> martingale whose square is
+  compensated by a diagonal entry of \<open>Y\<close>, which grows at rate at most
+  \<open>L\<close>; so the generic estimate @{thm [source] fourth_moment_L2} applies,
+  once the start and rate conditions, which the class states only almost
+  surely, are made pointwise by restricting to a full-measure event
+  (@{thm [source] martingale_restrict_full}).\<close>
 
 subsection \<open>The coordinate process, its compensator, and its paths\<close>
-
-lemma exit_class_coord_adapted:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x"
-  shows "adapted_process Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. fst (\<omega> (min u T)) $ i)"
-proof -
-  interpret MG: martingale Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)" 0
-      "\<lambda>u \<omega>. fst (\<omega> (min u T)) $ i"
-    by (rule exit_class_coord_martingale[OF Q])
-  show ?thesis by unfold_locales
-qed
-
-text \<open>Continuity holds on the whole half-line, not just on \<open>{0..T}\<close>: the
-  stopped process is constant after the horizon.  That is the form
-  \<open>Stopped_Adaptedness.stopped_adapted_of_cont\<close> asks for.\<close>
-
-
-
 
 lemma exit_class_compensated_coord_martingale:
   fixes Q :: "('n::finite pairpath) measure"
@@ -189,527 +164,6 @@ proof -
   show ?thesis using mg unfolding eq .
 qed
 
-subsection \<open>The localizing stopping time\<close>
-
-text \<open>\<open>ploc T i R\<close> is the first time the \<open>i\<close>-th coordinate reaches level
-  \<open>R\<close> in absolute value, capped at the horizon.  It is a stopping time by
-  \<open>Stopping_Times.etime_stopping_time\<close> --- the set \<open>{y. R \<le> \<bar>y\<bar>}\<close> is closed and
-  nonempty and the paths are continuous --- and the process stopped at it
-  is bounded, which is the whole point.\<close>
-
-
-
-
-
-lemma exit_class_cont_adapted:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and Q: "Q \<in> exit_class k L T x"
-  shows "cont_adapted_process Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u))
-      (pcoord T i) T"
-proof (intro cont_adapted_process.intro cont_adapted_process_axioms.intro)
-  show "adapted_process Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (pcoord T i)"
-    unfolding pcoord_def by (rule exit_class_coord_adapted[OF Q])
-  show "0 \<le> T" by (rule T)
-  show "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> continuous_on {0..T} (\<lambda>s. pcoord T i s \<omega>)"
-    unfolding pcoord_def
-    by (rule continuous_on_subset
-        [OF exit_class_coord_paths_cont[OF T setsQ]]) auto
-qed
-
-lemma exit_class_ploc_stopping:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and Q: "Q \<in> exit_class k L T x"
-    and t: "0 \<le> t"
-  shows "{\<omega> \<in> space Q. ploc T i R \<omega> \<le> t}
-      \<in> sets (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) t)"
-proof -
-  interpret CA: cont_adapted_process Q "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)"
-      "pcoord T i" T
-    by (rule exit_class_cont_adapted[OF T setsQ Q])
-  show ?thesis
-    unfolding ploc_def
-    by (rule CA.etime_stopping_time[OF closed_abs_ge abs_ge_nonempty t])
-qed
-
-text \<open>The point of the localization: below the level the stopped path has
-  not yet reached \<open>R\<close>, and at the level it is exactly \<open>R\<close> by continuity, so
-  the stopped process never exceeds \<open>R\<close> in absolute value --- except
-  possibly at time \<open>0\<close>, where it is the starting coordinate.\<close>
-
-text \<open>At the stopping time itself the path has value exactly \<open>R\<close>, not more,
-  which is why the bound needs continuity and not just the definition of an
-  infimum.  \<open>Stopping_Times.etime_stays_in_cball\<close> is precisely that
-  statement.\<close>
-
-
-theorem exit_class_stopped_coord_martingale:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and Q: "Q \<in> exit_class k L T x"
-  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>v \<omega>. pcoord T i (min v (ploc T i R \<omega>)) \<omega>)"
-proof -
-  let ?F = "natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
-  have T0: "0 \<le> T" using T by simp
-  have prob: "prob_space Q" by (rule exit_class_prob[OF Q])
-  have mg: "martingale Q ?F 0 (pcoord T i)"
-    unfolding pcoord_def by (rule exit_class_coord_martingale[OF Q])
-  have sq: "integrable Q (\<lambda>\<omega>. (pcoord T i s \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
-    unfolding pcoord_def
-    using T0 s by (intro exit_class_sq_integrable[OF T0 L Q]) simp
-  have cont0: "continuous_on {0..} (\<lambda>s. pcoord T i s \<omega>)"
-    if w: "\<omega> \<in> space Q" for \<omega>
-    unfolding pcoord_def
-    by (rule exit_class_coord_paths_cont[OF T0 setsQ w])
-  show ?thesis
-    by (rule stopped_martingale_L2[OF prob mg sq cont0 _
-          exit_class_ploc_stopping[OF T0 setsQ Q]]) (auto intro: ploc_nonneg[OF T0])
-qed
-
-text \<open>The compensated process is stopped by the same argument.  Its
-  envelope is \<open>D\<^sup>2 + n\<sqdot>L\<sqdot>T\<close>: the squared coordinate is dominated by the
-  square of Doob's envelope (\<open>L2_martingale_envelope\<close>) and the compensator by
-  the class's Lipschitz bound on \<open>Y\<close>.\<close>
-
-theorem exit_class_stopped_comp_martingale:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and Q: "Q \<in> exit_class k L T x"
-  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>v \<omega>. (fst (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i)\<^sup>2
-        - snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i)"
-proof -
-  let ?F = "natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
-  let ?Z = "\<lambda>u \<omega> :: 'n pairpath.
-      (fst (\<omega> (min u T)) $ i)\<^sup>2 - snd (\<omega> (min u T)) $ i $ i"
-  have T0: "0 \<le> T" using T by simp
-  have prob: "prob_space Q" by (rule exit_class_prob[OF Q])
-  have mgZ: "martingale Q ?F 0 ?Z"
-    by (rule exit_class_compensated_coord_martingale[OF Q])
-  have contZ: "continuous_on {0..} (\<lambda>s. ?Z s \<omega>)" if w: "\<omega> \<in> space Q" for \<omega>
-    by (rule exit_class_comp_paths_cont[OF T0 setsQ w])
-  \<comment> \<open>the \<open>X\<close>-side envelope, from Doob, exactly as for the coordinate.\<close>
-  have mg: "martingale Q ?F 0 (pcoord T i)"
-    unfolding pcoord_def by (rule exit_class_coord_martingale[OF Q])
-  have sq: "integrable Q (\<lambda>\<omega>. (pcoord T i s \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
-    unfolding pcoord_def
-    using T0 s by (intro exit_class_sq_integrable[OF T0 L Q]) simp
-  have contX: "continuous_on {0..} (\<lambda>s. pcoord T i s \<omega>)"
-    if w: "\<omega> \<in> space Q" for \<omega>
-    unfolding pcoord_def by (rule exit_class_coord_paths_cont[OF T0 setsQ w])
-  obtain D where domT: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> D \<omega>"
-    and D2: "integrable Q (\<lambda>\<omega>. (D \<omega>)\<^sup>2)"
-    using L2_martingale_envelope[OF prob mg sq contX T] by blast
-  \<comment> \<open>the \<open>Y\<close>-side envelope is the class's own Lipschitz bound.\<close>
-  have ybnd: "AE \<omega> in Q. \<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
-    by (rule exit_class_Y_bounded_ae[OF T0 L Q])
-  have domZ: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
-      \<bar>?Z s \<omega>\<bar> \<le> (D \<omega>)\<^sup>2 + real CARD('n) * L * T" for u
-    using domT ybnd
-  proof eventually_elim
-    case (elim \<omega>)
-    then have hX: "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>pcoord T i s \<omega>\<bar> \<le> D \<omega>"
-      and hY: "\<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
-      by blast+
-    show ?case
-    proof (intro allI impI)
-      fix s :: real assume s: "0 \<le> s"
-      have mT: "min s T \<in> {0..T}" using s T0 by simp
-      have bX: "\<bar>fst (\<omega> (min s T)) $ i\<bar> \<le> D \<omega>"
-        using hX mT unfolding pcoord_def by simp
-      have "\<bar>snd (\<omega> (min s T)) $ i $ i\<bar> \<le> norm (snd (\<omega> (min s T)) $ i)"
-        using Finite_Cartesian_Product.norm_nth_le[of "snd (\<omega> (min s T)) $ i" i]
-        by simp
-      also have "\<dots> \<le> norm (snd (\<omega> (min s T)))"
-        by (rule Finite_Cartesian_Product.norm_nth_le)
-      also have "\<dots> \<le> real CARD('n) * L * T" using hY mT by blast
-      finally have bY: "\<bar>snd (\<omega> (min s T)) $ i $ i\<bar> \<le> real CARD('n) * L * T" .
-      have sqe: "(fst (\<omega> (min s T)) $ i)\<^sup>2 = \<bar>fst (\<omega> (min s T)) $ i\<bar>\<^sup>2"
-        by simp
-      have bX2: "(fst (\<omega> (min s T)) $ i)\<^sup>2 \<le> (D \<omega>)\<^sup>2"
-        unfolding sqe by (rule power_mono[OF bX abs_ge_zero])
-      have t1: "\<bar>?Z s \<omega>\<bar> \<le> (fst (\<omega> (min s T)) $ i)\<^sup>2
-          + \<bar>snd (\<omega> (min s T)) $ i $ i\<bar>"
-        using abs_triangle_ineq4[of "(fst (\<omega> (min s T)) $ i)\<^sup>2"
-            "snd (\<omega> (min s T)) $ i $ i"]
-        by simp
-      show "\<bar>?Z s \<omega>\<bar> \<le> (D \<omega>)\<^sup>2 + real CARD('n) * L * T"
-        using t1 bX2 bY by linarith
-    qed
-  qed
-  show ?thesis
-  proof (rule optional_stopping_cont[OF mgZ _ exit_class_ploc_stopping[OF T0 setsQ Q] contZ])
-    show "0 \<le> ploc T i R \<omega>" if "\<omega> \<in> space Q" for \<omega> by (rule ploc_nonneg[OF T0])
-    show "\<exists>D. (AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>?Z s \<omega>\<bar> \<le> D \<omega>)
-        \<and> integrable Q D" for u
-      by (intro exI[of _ "\<lambda>\<omega>. (D \<omega>)\<^sup>2 + real CARD('n) * L * T"] conjI domZ
-          Bochner_Integration.integrable_add[OF D2
-            finite_measure.integrable_const[OF prob_space.finite_measure[OF prob]]])
-  qed
-qed
-
-subsection \<open>The compensator rate at the stopped times\<close>
-
-text \<open>Stopping can only shrink an interval --- \<open>w \<mapsto> min w c\<close> is
-  nondecreasing and 1-Lipschitz --- so the class's diagonal rate bound
-  survives it verbatim.\<close>
-
-lemma exit_class_stopped_compensator_rate:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L" and Q: "Q \<in> exit_class k L T x"
-  shows "AE \<omega> in Q. \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
-      0 \<le> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
-        - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i
-      \<and> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
-        - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i \<le> L * (v - u)"
-proof -
-  have inc: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
-      0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
-      \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
-    by (rule exit_class_Y_diag_increment[OF L Q])
-  from inc show ?thesis
-  proof (rule eventually_mono)
-    fix \<omega> :: "'n pairpath"
-    assume h: "\<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
-        0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
-        \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
-    show "\<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
-        0 \<le> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
-          - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i
-        \<and> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
-          - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i \<le> L * (v - u)"
-    proof (intro allI impI)
-      fix u v :: real assume u: "0 \<le> u" and uv: "u \<le> v"
-      have l0: "0 \<le> ploc T i R \<omega>" by (rule ploc_nonneg[OF T])
-      have anz: "0 \<le> min (min u (ploc T i R \<omega>)) T" using u l0 T by simp
-      have ab: "min (min u (ploc T i R \<omega>)) T
-          \<le> min (min v (ploc T i R \<omega>)) T"
-        by (intro min.mono uv order_refl)
-      have bT: "min (min v (ploc T i R \<omega>)) T \<le> T" by simp
-      have diff: "min (min v (ploc T i R \<omega>)) T
-          - min (min u (ploc T i R \<omega>)) T \<le> v - u"
-        using uv by (auto simp: min_def)
-      have base: "0 \<le> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
-            - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i
-          \<and> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
-            - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i
-            \<le> L * (min (min v (ploc T i R \<omega>)) T
-                - min (min u (ploc T i R \<omega>)) T)"
-        using h anz ab bT by blast
-      have "L * (min (min v (ploc T i R \<omega>)) T
-          - min (min u (ploc T i R \<omega>)) T) \<le> L * (v - u)"
-        by (rule mult_left_mono[OF diff L])
-      then show "0 \<le> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
-            - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i
-          \<and> snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
-            - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i \<le> L * (v - u)"
-        using base by linarith
-    qed
-  qed
-qed
-
-subsection \<open>The stopped process is bounded, hence integrable to any power\<close>
-
-text \<open>On the stopped process every moment is free: the starting
-  coordinate is \<open>x $ i\<close> almost surely, so the strict hypothesis of
-  \<open>pcoord_stopped_bounded\<close> holds as soon as \<open>R\<close> exceeds it.\<close>
-
-lemma exit_class_stopped_abs_le:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and Q: "Q \<in> exit_class k L T x"
-    and R: "0 < R" and xR: "\<bar>x $ i\<bar> < R" and w: "0 \<le> w"
-  shows "AE \<omega> in Q. \<bar>pcoord T i (min w (ploc T i R \<omega>)) \<omega>\<bar> \<le> R"
-proof -
-  have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using Q unfolding exit_class_def by blast
-  from st AE_space show ?thesis
-  proof eventually_elim
-    case (elim \<omega>)
-    then have s0: "fst (\<omega> 0) = x" and mem: "\<omega> \<in> space Q" by blast+
-    have p0: "pcoord T i 0 \<omega> = x $ i"
-      unfolding pcoord_def using T s0 by simp
-    have c: "continuous_on {0..T} (\<lambda>s. pcoord T i s \<omega>)"
-      unfolding pcoord_def
-      by (rule continuous_on_subset
-          [OF exit_class_coord_paths_cont[OF T setsQ mem]]) auto
-    show ?case
-      by (rule pcoord_stopped_bounded[OF T R _ c w]) (use p0 xR in simp)
-  qed
-qed
-
-lemma exit_class_stopped_A_abs_le:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x" and w: "0 \<le> w"
-  shows "AE \<omega> in Q. \<bar>snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i $ i\<bar>
-      \<le> real CARD('n) * L * T"
-proof -
-  have yb: "AE \<omega> in Q. \<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
-    by (rule exit_class_Y_bounded_ae[OF T L Q])
-  from yb show ?thesis
-  proof (rule eventually_mono)
-    fix \<omega> :: "'n pairpath"
-    assume h: "\<forall>u\<in>{0..T}. norm (snd (\<omega> u)) \<le> real CARD('n) * L * T"
-    have m: "min (min w (ploc T i R \<omega>)) T \<in> {0..T}"
-      using w ploc_nonneg[OF T, of i R \<omega>] T by simp
-    have "\<bar>snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i $ i\<bar>
-        \<le> norm (snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i)"
-      using Finite_Cartesian_Product.norm_nth_le
-        [of "snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i" i] by simp
-    also have "\<dots> \<le> norm (snd (\<omega> (min (min w (ploc T i R \<omega>)) T)))"
-      by (rule Finite_Cartesian_Product.norm_nth_le)
-    also have "\<dots> \<le> real CARD('n) * L * T" using h m by blast
-    finally show "\<bar>snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i $ i\<bar>
-        \<le> real CARD('n) * L * T" .
-  qed
-qed
-
-subsection \<open>The conditional identity for the stopped pair\<close>
-
-text \<open>\<open>E[(\<Delta>X\<^sup>\<tau>)\<^sup>2 | \<F>\<^sub>u] = E[\<Delta>A\<^sup>\<tau> | \<F>\<^sub>u]\<close>, the last hypothesis of
-  \<open>Increment_Moments.fourth_moment_bound_bounded\<close> that is not immediate.
-  It is the usual expansion --- the cross term is pulled out because
-  \<open>X\<^sup>\<tau>\<^sub>u\<close> is \<open>\<F>\<^sub>u\<close>-measurable, and the compensated martingale converts
-  \<open>E[(X\<^sup>\<tau>\<^sub>v)\<^sup>2 | \<F>\<^sub>u]\<close> into \<open>(X\<^sup>\<tau>\<^sub>u)\<^sup>2 - A\<^sup>\<tau>\<^sub>u + E[A\<^sup>\<tau>\<^sub>v | \<F>\<^sub>u]\<close>.  Every
-  integrability side condition is free, because the stopped pair is
-  bounded.\<close>
-
-theorem exit_class_stopped_cond_exp:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and Q: "Q \<in> exit_class k L T x"
-    and R: "0 < R" and xR: "\<bar>x $ i\<bar> < R"
-    and uv: "0 \<le> u" "u \<le> v"
-  shows "AE \<omega> in Q.
-      cond_exp Q (natural_filtration Q 0 (\<lambda>w \<omega>. \<omega> w) u)
-        (\<lambda>\<omega>. (pcoord T i (min v (ploc T i R \<omega>)) \<omega>
-              - pcoord T i (min u (ploc T i R \<omega>)) \<omega>)\<^sup>2) \<omega>
-      = cond_exp Q (natural_filtration Q 0 (\<lambda>w \<omega>. \<omega> w) u)
-        (\<lambda>\<omega>. snd (\<omega> (min (min v (ploc T i R \<omega>)) T)) $ i $ i
-              - snd (\<omega> (min (min u (ploc T i R \<omega>)) T)) $ i $ i) \<omega>"
-proof -
-  let ?F = "natural_filtration Q 0 (\<lambda>w \<omega> :: 'n pairpath. \<omega> w)"
-  let ?X = "\<lambda>w \<omega> :: 'n pairpath. pcoord T i (min w (ploc T i R \<omega>)) \<omega>"
-  let ?A = "\<lambda>w \<omega> :: 'n pairpath.
-      snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i $ i"
-  have T0: "0 \<le> T" using T by simp
-  have v0: "0 \<le> v" using uv by simp
-  have prob: "prob_space Q" by (rule exit_class_prob[OF Q])
-  have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
-  interpret MX: martingale Q ?F 0 ?X
-    by (rule exit_class_stopped_coord_martingale[OF T L setsQ Q])
-  have mgZ: "martingale Q ?F 0 (\<lambda>w \<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>)"
-    using exit_class_stopped_comp_martingale[OF T L setsQ Q]
-    unfolding pcoord_def by simp
-  then interpret MZ: martingale Q ?F 0 "\<lambda>w \<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>" .
-  interpret SFS: sigma_finite_subalgebra Q "?F u"
-    by (rule MX.sigma_finite_subalgebra_F[OF uv(1)])
-  \<comment> \<open>bounds and the integrability they buy\<close>
-  have Xb: "AE \<omega> in Q. \<bar>?X w \<omega>\<bar> \<le> R" if w: "0 \<le> w" for w
-    by (rule exit_class_stopped_abs_le[OF T0 setsQ Q R xR w])
-  have Ab: "AE \<omega> in Q. \<bar>?A w \<omega>\<bar> \<le> real CARD('n) * L * T" if w: "0 \<le> w" for w
-    by (rule exit_class_stopped_A_abs_le[OF T0 L Q w])
-  have XQ: "?X w \<in> borel_measurable Q" if w: "0 \<le> w" for w
-    by (rule borel_measurable_integrable[OF MX.integrable[OF w]])
-  have AQ: "?A w \<in> borel_measurable Q" if w: "0 \<le> w" for w
-  proof -
-    have z: "(\<lambda>\<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>) \<in> borel_measurable Q"
-      by (rule borel_measurable_integrable[OF MZ.integrable[OF w]])
-    have "(\<lambda>\<omega>. (?X w \<omega>)\<^sup>2 - ((?X w \<omega>)\<^sup>2 - ?A w \<omega>)) \<in> borel_measurable Q"
-      by (intro borel_measurable_diff borel_measurable_power XQ[OF w] z)
-    then show ?thesis by simp
-  qed
-  have Ai: "integrable Q (?A w)" if w: "0 \<le> w" for w
-  proof (rule finite_measure.integrable_const_bound
-      [OF fmQ _ AQ[OF w], of "real CARD('n) * L * T"])
-    show "AE \<omega> in Q. norm (?A w \<omega>) \<le> real CARD('n) * L * T"
-      using Ab[OF w] by (rule eventually_mono) simp
-  qed
-  have prodb: "integrable Q (\<lambda>\<omega>. ?X a \<omega> * ?X b \<omega>)"
-    if a: "0 \<le> a" and b: "0 \<le> b" for a b
-  proof (rule finite_measure.integrable_const_bound[OF fmQ, of _ "R * R"])
-    show "AE \<omega> in Q. norm (?X a \<omega> * ?X b \<omega>) \<le> R * R"
-      using Xb[OF a] Xb[OF b]
-    proof eventually_elim
-      case (elim \<omega>)
-      then show ?case
-        using R by (simp add: abs_mult mult_mono)
-    qed
-    show "(\<lambda>\<omega>. ?X a \<omega> * ?X b \<omega>) \<in> borel_measurable Q"
-      using XQ[OF a] XQ[OF b] by simp
-  qed
-  have Xsqi: "integrable Q (\<lambda>\<omega>. (?X w \<omega>)\<^sup>2)" if w: "0 \<le> w" for w
-    using prodb[OF w w] by (simp add: power2_eq_square)
-  \<comment> \<open>the cross term: pull out the \<open>\<F>\<^sub>u\<close>-measurable factor\<close>
-  have Xum: "?X u \<in> borel_measurable (?F u)" by (rule MX.adapted[OF uv(1)])
-  have cross: "AE \<omega> in Q.
-      cond_exp Q (?F u) (\<lambda>\<omega>. ?X u \<omega> * ?X v \<omega>) \<omega> = (?X u \<omega>)\<^sup>2"
-  proof -
-    have "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. ?X u \<omega> * ?X v \<omega>) \<omega>
-        = ?X u \<omega> * cond_exp Q (?F u) (?X v) \<omega>"
-      by (rule SFS.cond_exp_measurable_mult(2)
-          [OF prodb[OF uv(1) v0] MX.integrable[OF v0] Xum])
-    moreover have "AE \<omega> in Q. ?X u \<omega> = cond_exp Q (?F u) (?X v) \<omega>"
-      by (rule MX.martingale_property[OF uv])
-    ultimately show ?thesis
-      by eventually_elim (simp add: power2_eq_square)
-  qed
-  \<comment> \<open>the compensated martingale converts the square at \<open>v\<close>.\<close>
-  have zsplit: "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2) \<omega>
-      - cond_exp Q (?F u) (?A v) \<omega> = (?X u \<omega>)\<^sup>2 - ?A u \<omega>"
-  proof -
-    have "AE \<omega> in Q. (?X u \<omega>)\<^sup>2 - ?A u \<omega>
-        = cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - ?A v \<omega>) \<omega>"
-      by (rule MZ.martingale_property[OF uv])
-    moreover have "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - ?A v \<omega>) \<omega>
-        = cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2) \<omega> - cond_exp Q (?F u) (?A v) \<omega>"
-      by (rule SFS.cond_exp_diff[OF Xsqi[OF v0] Ai[OF v0]])
-    ultimately show ?thesis by eventually_elim simp
-  qed
-  \<comment> \<open>and the two terms that are already \<open>\<F>\<^sub>u\<close>-measurable.\<close>
-  have Ameas: "AE \<omega> in Q. cond_exp Q (?F u) (?A u) \<omega> = ?A u \<omega>"
-  proof -
-    have "?A u \<in> borel_measurable (?F u)"
-    proof -
-      have z: "(\<lambda>\<omega>. (?X u \<omega>)\<^sup>2 - ?A u \<omega>) \<in> borel_measurable (?F u)"
-        by (rule MZ.adapted[OF uv(1)])
-      have "(\<lambda>\<omega>. (?X u \<omega>)\<^sup>2 - ((?X u \<omega>)\<^sup>2 - ?A u \<omega>))
-          \<in> borel_measurable (?F u)"
-        by (intro borel_measurable_diff borel_measurable_power Xum z)
-      then show ?thesis by simp
-    qed
-    then show ?thesis by (rule SFS.cond_exp_F_meas[OF Ai[OF uv(1)]])
-  qed
-  have Xusq: "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. (?X u \<omega>)\<^sup>2) \<omega> = (?X u \<omega>)\<^sup>2"
-    by (rule SFS.cond_exp_F_meas[OF Xsqi[OF uv(1)]])
-      (use Xum in \<open>simp add: borel_measurable_power\<close>)
-  \<comment> \<open>expand the square and assemble\<close>
-  have expand: "(\<lambda>\<omega>. (?X v \<omega> - ?X u \<omega>)\<^sup>2)
-      = (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - 2 * (?X u \<omega> * ?X v \<omega>) + (?X u \<omega>)\<^sup>2)"
-    by (rule ext) (simp add: power2_diff mult.commute)
-  have lhs: "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega> - ?X u \<omega>)\<^sup>2) \<omega>
-      = cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2) \<omega>
-        - 2 * (?X u \<omega>)\<^sup>2 + (?X u \<omega>)\<^sup>2"
-  proof -
-    have i1: "integrable Q (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - 2 * (?X u \<omega> * ?X v \<omega>))"
-      by (intro Bochner_Integration.integrable_diff Xsqi[OF v0]
-          integrable_mult_right prodb[OF uv(1) v0])
-    have "AE \<omega> in Q. cond_exp Q (?F u)
-        (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - 2 * (?X u \<omega> * ?X v \<omega>) + (?X u \<omega>)\<^sup>2) \<omega>
-        = cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - 2 * (?X u \<omega> * ?X v \<omega>)) \<omega>
-          + cond_exp Q (?F u) (\<lambda>\<omega>. (?X u \<omega>)\<^sup>2) \<omega>"
-      by (rule SFS.cond_exp_add[OF i1 Xsqi[OF uv(1)]])
-    moreover have "AE \<omega> in Q.
-        cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2 - 2 * (?X u \<omega> * ?X v \<omega>)) \<omega>
-        = cond_exp Q (?F u) (\<lambda>\<omega>. (?X v \<omega>)\<^sup>2) \<omega>
-          - cond_exp Q (?F u) (\<lambda>\<omega>. 2 * (?X u \<omega> * ?X v \<omega>)) \<omega>"
-      by (rule SFS.cond_exp_diff[OF Xsqi[OF v0]
-            integrable_mult_right[OF prodb[OF uv(1) v0]]])
-    moreover have "AE \<omega> in Q.
-        cond_exp Q (?F u) (\<lambda>\<omega>. 2 * (?X u \<omega> * ?X v \<omega>)) \<omega>
-        = 2 * cond_exp Q (?F u) (\<lambda>\<omega>. ?X u \<omega> * ?X v \<omega>) \<omega>"
-      using SFS.cond_exp_scaleR_right
-        [OF prodb[OF uv(1) v0], where c = 2] by simp
-    ultimately show ?thesis using cross Xusq unfolding expand
-      by eventually_elim simp
-  qed
-  have rhs: "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. ?A v \<omega> - ?A u \<omega>) \<omega>
-      = cond_exp Q (?F u) (?A v) \<omega> - ?A u \<omega>"
-  proof -
-    have "AE \<omega> in Q. cond_exp Q (?F u) (\<lambda>\<omega>. ?A v \<omega> - ?A u \<omega>) \<omega>
-        = cond_exp Q (?F u) (?A v) \<omega> - cond_exp Q (?F u) (?A u) \<omega>"
-      by (rule SFS.cond_exp_diff[OF Ai[OF v0] Ai[OF uv(1)]])
-    then show ?thesis using Ameas by eventually_elim simp
-  qed
-  from lhs zsplit rhs show ?thesis
-    unfolding pcoord_def[symmetric] by eventually_elim simp
-qed
-
-subsection \<open>The bounded estimate at the stopped pair\<close>
-
-
-theorem exit_class_stopped_fourth_moment:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and Q: "Q \<in> exit_class k L T x"
-    and R: "0 < R" and xR: "\<bar>x $ i\<bar> < R"
-    and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
-  shows "(\<integral>\<omega>. (pcoord T i (min tt (ploc T i R \<omega>)) \<omega>
-        - pcoord T i (min s (ploc T i R \<omega>)) \<omega>)^4 \<partial>Q)
-      \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
-proof -
-  let ?F = "natural_filtration Q 0 (\<lambda>w \<omega> :: 'n pairpath. \<omega> w)"
-  let ?X = "\<lambda>w \<omega> :: 'n pairpath. pcoord T i (min w (ploc T i R \<omega>)) \<omega>"
-  let ?A = "\<lambda>w \<omega> :: 'n pairpath.
-      snd (\<omega> (min (min w (ploc T i R \<omega>)) T)) $ i $ i"
-  have T0: "0 \<le> T" using T by simp
-  have prob: "prob_space Q" by (rule exit_class_prob[OF Q])
-  have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
-  have mgX: "martingale Q ?F 0 ?X"
-    by (rule exit_class_stopped_coord_martingale[OF T L setsQ Q])
-  then interpret MX: martingale Q ?F 0 ?X .
-  have mgZ: "martingale Q ?F 0 (\<lambda>w \<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>)"
-    using exit_class_stopped_comp_martingale[OF T L setsQ Q]
-    unfolding pcoord_def by simp
-  then interpret MZ: martingale Q ?F 0 "\<lambda>w \<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>" .
-  have Ab: "AE \<omega> in Q. \<bar>?A w \<omega>\<bar> \<le> real CARD('n) * L * T" if w: "0 \<le> w" for w
-    by (rule exit_class_stopped_A_abs_le[OF T0 L Q w])
-  have XQ: "?X w \<in> borel_measurable Q" if w: "0 \<le> w" for w
-    by (rule borel_measurable_integrable[OF MX.integrable[OF w]])
-  have AQ: "?A w \<in> borel_measurable Q" if w: "0 \<le> w" for w
-  proof -
-    have z: "(\<lambda>\<omega>. (?X w \<omega>)\<^sup>2 - ?A w \<omega>) \<in> borel_measurable Q"
-      by (rule borel_measurable_integrable[OF MZ.integrable[OF w]])
-    have "(\<lambda>\<omega>. (?X w \<omega>)\<^sup>2 - ((?X w \<omega>)\<^sup>2 - ?A w \<omega>)) \<in> borel_measurable Q"
-      by (intro borel_measurable_diff borel_measurable_power XQ[OF w] z)
-    then show ?thesis by simp
-  qed
-  have Ai: "integrable Q (?A w)" if w: "0 \<le> w" for w
-  proof (rule finite_measure.integrable_const_bound
-      [OF fmQ _ AQ[OF w], of "real CARD('n) * L * T"])
-    show "AE \<omega> in Q. norm (?A w \<omega>) \<le> real CARD('n) * L * T"
-      using Ab[OF w] by (rule eventually_mono) simp
-  qed
-  have cont: "AE \<omega> in Q. continuous_on {s..tt} (\<lambda>w. ?X w \<omega>)"
-  proof (intro AE_I2)
-    fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space Q"
-    from pcoord_stopped_paths_cont[OF T0 setsQ this]
-    show "continuous_on {s..tt} (\<lambda>w. ?X w \<omega>)"
-      by (rule continuous_on_subset) (use st in auto)
-  qed
-  show ?thesis
-  proof (rule fourth_moment_bound_bounded
-      [OF prob mgX st stt Ai _ _ L _ _ cont])
-    show "AE \<omega> in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a \<le> b \<longrightarrow>
-        0 \<le> ?A b \<omega> - ?A a \<omega> \<and> ?A b \<omega> - ?A a \<omega> \<le> L * (b - a)"
-      by (rule exit_class_stopped_compensator_rate[OF T0 L Q])
-    show "\<And>a b. 0 \<le> a \<Longrightarrow> a \<le> b \<Longrightarrow> AE \<omega> in Q.
-        cond_exp Q (?F a) (\<lambda>\<omega>. (?X b \<omega> - ?X a \<omega>)\<^sup>2) \<omega>
-          = cond_exp Q (?F a) (\<lambda>\<omega>. ?A b \<omega> - ?A a \<omega>) \<omega>"
-      by (rule exit_class_stopped_cond_exp[OF T L setsQ Q R xR])
-    show "0 \<le> R" using R by simp
-    show "\<And>w. 0 \<le> w \<Longrightarrow> AE \<omega> in Q. \<bar>?X w \<omega>\<bar> \<le> R"
-      by (rule exit_class_stopped_abs_le[OF T0 setsQ Q R xR])
-  qed
-qed
-
-subsection \<open>Fatou removes the localization\<close>
-
-text \<open>\<open>abs_diff_le_two\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
-
-
-
 theorem exit_class_fourth_moment:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 < T" and L: "0 \<le> L"
@@ -719,108 +173,104 @@ theorem exit_class_fourth_moment:
   shows "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
       \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
 proof -
-  let ?RR = "\<lambda>m :: nat. \<bar>x $ i\<bar> + 1 + real m"
-  let ?g = "\<lambda>m \<omega> :: 'n pairpath.
-      (pcoord T i (min tt (ploc T i (?RR m) \<omega>)) \<omega>
-        - pcoord T i (min s (ploc T i (?RR m) \<omega>)) \<omega>)^4"
+  let ?F = "natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
+  let ?X = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ i"
+  let ?A = "\<lambda>u \<omega> :: 'n pairpath. snd (\<omega> (min u T)) $ i $ i"
   have T0: "0 \<le> T" using T by simp
-  have prob: "prob_space Q" by (rule exit_class_prob[OF Q])
-  have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
-  have Rpos: "0 < ?RR m" for m by simp
-  have Rgt: "\<bar>x $ i\<bar> < ?RR m" for m by simp
-  have gint: "integrable Q (?g m)" for m
-  proof -
-    have mgX: "martingale Q (natural_filtration Q 0 (\<lambda>w \<omega>. \<omega> w)) 0
-        (\<lambda>w \<omega>. pcoord T i (min w (ploc T i (?RR m) \<omega>)) \<omega>)"
-      by (rule exit_class_stopped_coord_martingale[OF T L setsQ Q])
-    then interpret MX: martingale Q "natural_filtration Q 0 (\<lambda>w \<omega>. \<omega> w)" 0
-        "\<lambda>w \<omega>. pcoord T i (min w (ploc T i (?RR m) \<omega>)) \<omega>" .
-    have tt0: "0 \<le> tt" using st stt by simp
-    have m1: "(\<lambda>\<omega>. pcoord T i (min tt (ploc T i (?RR m) \<omega>)) \<omega>)
-        \<in> borel_measurable Q"
-      by (rule borel_measurable_integrable[OF MX.integrable[OF tt0]])
-    have m2: "(\<lambda>\<omega>. pcoord T i (min s (ploc T i (?RR m) \<omega>)) \<omega>)
-        \<in> borel_measurable Q"
-      by (rule borel_measurable_integrable[OF MX.integrable[OF st]])
-    have b1: "AE \<omega> in Q. \<bar>pcoord T i (min tt (ploc T i (?RR m) \<omega>)) \<omega>\<bar> \<le> ?RR m"
-      by (rule exit_class_stopped_abs_le[OF T0 setsQ Q Rpos Rgt tt0])
-    have b2: "AE \<omega> in Q. \<bar>pcoord T i (min s (ploc T i (?RR m) \<omega>)) \<omega>\<bar> \<le> ?RR m"
-      by (rule exit_class_stopped_abs_le[OF T0 setsQ Q Rpos Rgt st])
-    show ?thesis
-    proof (rule finite_measure.integrable_const_bound
-        [OF fmQ _ _, of _ "(2 * ?RR m)^4"])
-      show "AE \<omega> in Q. norm (?g m \<omega>) \<le> (2 * ?RR m)^4"
-        using b1 b2
-      proof eventually_elim
-        case (elim \<omega>)
-        have le2: "\<bar>pcoord T i (min tt (ploc T i (?RR m) \<omega>)) \<omega>
-              - pcoord T i (min s (ploc T i (?RR m) \<omega>)) \<omega>\<bar> \<le> 2 * ?RR m"
-          using elim by (rule abs_diff_le_two)
-        have "\<bar>pcoord T i (min tt (ploc T i (?RR m) \<omega>)) \<omega>
-              - pcoord T i (min s (ploc T i (?RR m) \<omega>)) \<omega>\<bar>^4
-            \<le> (2 * ?RR m)^4"
-          by (rule power_mono[OF le2 abs_ge_zero])
-        then show ?case by (simp add: power_abs)
+  interpret PQ: prob_space Q by (rule exit_class_prob[OF Q])
+  have mgX: "martingale Q ?F 0 ?X" by (rule exit_class_coord_martingale[OF Q])
+  have mgZ: "martingale Q ?F 0 (\<lambda>u \<omega>. (?X u \<omega>)\<^sup>2 - ?A u \<omega>)"
+    by (rule exit_class_compensated_coord_martingale[OF Q])
+  \<comment> \<open>a full-measure event on which the start and the rate hold pointwise\<close>
+  have "AE \<omega> in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
+      \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> sconstraint k L"
+    using Q unfolding exit_class_def by blast
+  with exit_class_start[OF Q]
+  have "AE \<omega> in Q. (fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0) \<and> (\<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
+      \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> sconstraint k L)"
+    by (rule eventually_conj)
+  then obtain N where good: "\<And>\<omega>. \<omega> \<in> space Q - N \<Longrightarrow>
+      (fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0) \<and> (\<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> sconstraint k L)"
+    and Nn: "N \<in> null_sets Q" by (rule AE_E3) blast
+  define G where "G = space Q - N"
+  have Gs: "G \<in> sets Q" unfolding G_def using Nn by auto
+  have Gfull: "AE \<omega> in Q. \<omega> \<in> G"
+    using AE_not_in[OF Nn] AE_space by eventually_elim (simp add: G_def)
+  note RF = PQ.prob_space_axioms Gs Gfull
+  have spM: "space (restrict_space Q G) = G" by (rule space_restrict_full[OF RF])
+  \<comment> \<open>on that event the bound for an \<open>L\<^sup>2\<close> martingale with Lipschitz compensator applies\<close>
+  have "(\<integral>\<^sup>+\<omega>. ennreal ((?X tt \<omega> - ?X s \<omega>)^4) \<partial>restrict_space Q G)
+      \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
+  proof (rule fourth_moment_L2[where B = "\<bar>x $ i\<bar>"])
+    show "prob_space (restrict_space Q G)" by (rule prob_space_restrict_full[OF RF])
+    show "martingale (restrict_space Q G) (\<lambda>u. restrict_space (?F u) G) 0 ?X"
+      by (rule martingale_restrict_full[OF RF mgX])
+    show "martingale (restrict_space Q G) (\<lambda>u. restrict_space (?F u) G) 0
+        (\<lambda>u \<omega>. (?X u \<omega>)\<^sup>2 - ?A u \<omega>)"
+      by (rule martingale_restrict_full[OF RF mgZ])
+    show "integrable (restrict_space Q G) (\<lambda>\<omega>. (?X u \<omega>)\<^sup>2)" if "0 \<le> u" for u
+      by (rule integrable_restrict_full[OF RF exit_class_sq_integrable[OF T0 L Q]])
+        (use that T0 in simp)
+    show "continuous_on {0..} (\<lambda>u. ?X u \<omega>)" if "\<omega> \<in> space (restrict_space Q G)" for \<omega>
+      by (rule exit_class_coord_paths_cont[OF T0 setsQ]) (use that spM in \<open>simp add: G_def\<close>)
+    show "AE \<omega> in restrict_space Q G. \<bar>?X 0 \<omega>\<bar> \<le> \<bar>x $ i\<bar>"
+    proof (rule AE_I2)
+      fix \<omega> assume "\<omega> \<in> space (restrict_space Q G)"
+      then show "\<bar>?X 0 \<omega>\<bar> \<le> \<bar>x $ i\<bar>"
+        using good[of \<omega>] spM T0 unfolding G_def by (simp add: min_absorb1)
+    qed
+    show "?A 0 \<omega> = 0" if "\<omega> \<in> space (restrict_space Q G)" for \<omega>
+      using good[of \<omega>] that spM T0 unfolding G_def by (simp add: min_absorb1)
+    show "\<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow> 0 \<le> ?A v \<omega> - ?A u \<omega> \<and> ?A v \<omega> - ?A u \<omega> \<le> L * (v - u)"
+      if w: "\<omega> \<in> space (restrict_space Q G)" for \<omega>
+    proof (intro allI impI)
+      fix u v :: real assume uv: "0 \<le> u" "u \<le> v"
+      let ?a = "min u T" and ?b = "min v T"
+      have dq: "\<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
+          \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> sconstraint k L"
+        using good[of \<omega>] w spM unfolding G_def by blast
+      have ba: "?b - ?a \<le> v - u" using uv by (auto simp: min_def)
+      show "0 \<le> ?A v \<omega> - ?A u \<omega> \<and> ?A v \<omega> - ?A u \<omega> \<le> L * (v - u)"
+      proof (cases "?a < ?b")
+        case False
+        then have "?a = ?b" using uv by (auto simp: min_def)
+        then show ?thesis using uv L by simp
+      next
+        case True
+        have m: "(1 / (?b - ?a)) *\<^sub>R (snd (\<omega> ?b) - snd (\<omega> ?a)) \<in> sconstraint k L"
+          by (rule dq[rule_format, OF _ True min.cobounded2]) (use uv T0 in simp)
+        have d0: "0 \<le> (1 / (?b - ?a)) * (?A v \<omega> - ?A u \<omega>)"
+          and dL: "(1 / (?b - ?a)) * (?A v \<omega> - ?A u \<omega>) \<le> L"
+          using sconstraint_diag[OF m, of i] by simp_all
+        have e: "?A v \<omega> - ?A u \<omega> = (?b - ?a) * ((1 / (?b - ?a)) * (?A v \<omega> - ?A u \<omega>))"
+          using True by simp
+        have y0: "0 \<le> ?A v \<omega> - ?A u \<omega>"
+          by (subst e, rule mult_nonneg_nonneg[OF _ d0]) (use True in simp)
+        have "?A v \<omega> - ?A u \<omega> \<le> (?b - ?a) * L"
+          by (subst e, rule mult_left_mono[OF dL]) (use True in simp)
+        also have "\<dots> \<le> (v - u) * L" by (rule mult_right_mono[OF ba L])
+        finally show ?thesis using y0 by (simp add: mult.commute)
       qed
-      show "?g m \<in> borel_measurable Q" using m1 m2 by simp
     qed
-  qed
-  have gbound: "(\<integral>\<omega>. ?g m \<omega> \<partial>Q) \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2" for m
-    by (rule exit_class_stopped_fourth_moment
-        [OF T L setsQ Q Rpos Rgt st stt ttT])
-  have gmeas: "(\<lambda>\<omega>. ennreal (?g m \<omega>)) \<in> borel_measurable Q" for m
-    using borel_measurable_integrable[OF gint] by measurable
-  have lim: "AE \<omega> in Q. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)
-      = liminf (\<lambda>m. ennreal (?g m \<omega>))"
-  proof (intro AE_I2)
-    fix \<omega> :: "'n pairpath" assume mem: "\<omega> \<in> space Q"
-    have c: "continuous_on {0..T} (\<lambda>r. pcoord T i r \<omega>)"
-      unfolding pcoord_def
-      by (rule continuous_on_subset
-          [OF exit_class_coord_paths_cont[OF T0 setsQ mem]]) auto
-    have "bounded ((\<lambda>r. pcoord T i r \<omega>) ` {0..T})"
-      by (intro compact_imp_bounded compact_continuous_image c) simp
-    then obtain B where B: "\<forall>r\<in>{0..T}. \<bar>pcoord T i r \<omega>\<bar> \<le> B"
-      unfolding bounded_iff by auto
-    obtain M0 :: nat where M0: "B - \<bar>x $ i\<bar> - 1 < real M0"
-      using reals_Archimedean2 by blast
-    have eq: "?g m \<omega> = (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4" if m: "M0 \<le> m" for m
-    proof -
-      have RB: "B < ?RR m" using M0 m by simp
-      have "ploc T i (?RR m) \<omega> = T"
-        by (rule ploc_eq_T_of_below) (use B RB in force)
-      then show ?thesis
-        unfolding pcoord_def using st stt ttT T0 by simp
-    qed
-    have ttd: "(\<lambda>m. ennreal (?g m \<omega>))
-        \<longlonglongrightarrow> ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
-      by (rule tendsto_eventually)
-        (use eq in \<open>auto simp: eventually_sequentially\<close>)
-    have "liminf (\<lambda>m. ennreal (?g m \<omega>))
-        = ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
-      by (rule lim_imp_Liminf[OF _ ttd]) simp
-    then show "ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)
-        = liminf (\<lambda>m. ennreal (?g m \<omega>))" by simp
-  qed
-  have bnd: "(\<integral>\<^sup>+\<omega>. ennreal (?g m \<omega>) \<partial>Q) \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
-    for m
+  qed (use L st stt in auto)
+  \<comment> \<open>and the restriction to a full-measure event changes no integral\<close>
+  moreover have "(\<integral>\<^sup>+\<omega>. ennreal ((?X tt \<omega> - ?X s \<omega>)^4) \<partial>restrict_space Q G)
+      = (\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)"
   proof -
-    have "(\<integral>\<^sup>+\<omega>. ennreal (?g m \<omega>) \<partial>Q) = ennreal (\<integral>\<omega>. ?g m \<omega> \<partial>Q)"
-      by (rule nn_integral_eq_integral[OF gint]) simp
-    also have "\<dots> \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
-      using gbound by (rule ennreal_leI)
+    have "(\<integral>\<^sup>+\<omega>. ennreal ((?X tt \<omega> - ?X s \<omega>)^4) \<partial>restrict_space Q G)
+        = (\<integral>\<^sup>+\<omega>. ennreal ((?X tt \<omega> - ?X s \<omega>)^4) * indicator G \<omega> \<partial>Q)"
+      by (rule nn_integral_restrict_space[OF sets_restrict_full[OF RF]])
+    also have "\<dots> = (\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)"
+    proof (rule nn_integral_cong_AE)
+      have sT: "s \<le> T" using stt ttT by simp
+      show "AE \<omega> in Q. ennreal ((?X tt \<omega> - ?X s \<omega>)^4) * indicator G \<omega>
+          = ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
+        using Gfull by eventually_elim (use sT ttT in \<open>simp add: min_absorb1\<close>)
+    qed
     finally show ?thesis .
   qed
-  have "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
-      = (\<integral>\<^sup>+\<omega>. liminf (\<lambda>m. ennreal (?g m \<omega>)) \<partial>Q)"
-    using lim by (rule nn_integral_cong_AE)
-  also have "\<dots> \<le> liminf (\<lambda>m. \<integral>\<^sup>+\<omega>. ennreal (?g m \<omega>) \<partial>Q)"
-    by (rule nn_integral_liminf[OF gmeas])
-  also have "\<dots> \<le> limsup (\<lambda>m. \<integral>\<^sup>+\<omega>. ennreal (?g m \<omega>) \<partial>Q)"
-    by (rule Liminf_le_Limsup) simp
-  also have "\<dots> \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
-    by (rule Limsup_bounded) (intro always_eventually allI bnd)
-  finally show ?thesis .
+  ultimately show ?thesis by simp
 qed
 
 section \<open>The weak-limit machinery, parametric in a state functional\<close>
@@ -937,7 +387,7 @@ qed
 
 text \<open>The \<open>L\<^sup>2\<close> bound the generic chain asks for, at the compensated
   functional.  Pointwise \<open>(ab-c)\<^sup>2 \<le> a\<^sup>4 + b\<^sup>4 + 2c\<^sup>2\<close>: the two fourth
-  moments come from the localization theorem, and \<open>c = Y\<^sub>i\<^sub>j\<close> is bounded
+  moments come from @{thm [source] exit_class_fourth_moment}, and \<open>c = Y\<^sub>i\<^sub>j\<close> is bounded
   outright because the covariation clause makes \<open>Y\<close> Lipschitz from \<open>0\<close>.
   The bound depends only on \<open>k, L, T, x\<close>, hence is uniform over the
   class.\<close>

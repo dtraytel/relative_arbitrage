@@ -18,30 +18,34 @@ text \<open>@{theory Continuous_Time_Martingales.Doob_Inequality}'s \<open>horiz
   (@{thm [source] martingale_vec_nth} for the component) and the
   square-integrability (@{thm [source] exit_class_sq_integrable}).\<close>
 
+lemma exit_class_horizon_of:
+  fixes P :: "('n::finite pairpath) measure" and g :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes T0: "0 < T" and P: "P \<in> exit_class k L T x"
+    and mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. g (\<omega> (min u T)))"
+    and sq: "\<And>t. t \<in> {0..T} \<Longrightarrow> integrable P (\<lambda>\<omega>. (g (\<omega> t))\<^sup>2)"
+  shows "horizon_sq_int_martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
+      (\<lambda>u \<omega>. g (\<omega> (min u T))) T"
+proof -
+  interpret Mg: martingale P "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)" 0
+    "\<lambda>u \<omega>. g (\<omega> (min u T))" by (rule mg)
+  interpret PS: prob_space P by (rule exit_class_prob[OF P])
+  show ?thesis
+  proof unfold_locales
+    show "0 < T" by (rule T0)
+    fix s :: real assume s: "0 \<le> s"
+    show "integrable P (\<lambda>\<omega>. (g (\<omega> (min s T)))\<^sup>2)" by (rule sq) (use s T0 in simp)
+  qed
+qed
+
 lemma exit_class_horizon_component:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
   shows "horizon_sq_int_martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>t \<omega>. fst (\<omega> (min t T)) $ c) T"
-proof -
-  have mgv: "martingale P (natural_filtration P 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
-    using P unfolding exit_class_def by blast
-  have mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
-      (\<lambda>t \<omega>. fst (\<omega> (min t T)) $ c)"
-    by (rule martingale_vec_nth[OF mgv])
-  interpret Mg: martingale P "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)" 0
-    "\<lambda>t \<omega>. fst (\<omega> (min t T)) $ c" by (rule mg)
-  interpret PS: prob_space P by (rule exit_class_prob[OF P])
-  show ?thesis
-  proof unfold_locales
-    show "0 < T" by (rule T0)    fix s :: real assume s: "0 \<le> s"
-    have m: "min s T \<in> {0..T}" using s T0 by simp
-    show "integrable P (\<lambda>\<omega>. (fst (\<omega> (min s T)) $ c)\<^sup>2)"
-      by (rule exit_class_sq_integrable
-          [OF less_imp_le[OF T0] L0 P m])
-  qed
-qed
+  by (rule exit_class_horizon_of[where g = "\<lambda>z. fst z $ c", OF T0 P
+        martingale_vec_nth[OF exit_class_X_martingale[OF P]]])
+    (erule exit_class_sq_integrable[OF less_imp_le[OF T0] L0 P])
 
 text \<open>The \<open>cont\<close> hypothesis of @{thm [source] set_martingale_sampling} for
   the class's component process: the dyadic times converge and the path is
@@ -81,27 +85,9 @@ lemma exit_class_horizon_compensated:
   assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
   shows "horizon_sq_int_martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>t \<omega>. (outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T))) $ c $ d) T"
-proof -
-  have mgm: "martingale P (natural_filtration P 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
-    by (rule exit_class_compensated_martingale[OF P])
-  have mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
-      (\<lambda>t \<omega>. (outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T))) $ c $ d)"
-    by (rule martingale_mat_nth[OF mgm])
-  interpret Mg: martingale P "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)" 0
-    "\<lambda>t \<omega>. (outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T))) $ c $ d"
-    by (rule mg)
-  interpret PS: prob_space P by (rule exit_class_prob[OF P])
-  show ?thesis
-  proof unfold_locales
-    show "0 < T" by (rule T0)
-    fix s :: real assume s: "0 \<le> s"
-    have m: "min s T \<in> {0..T}" using s T0 by simp
-    show "integrable P (\<lambda>\<omega>.
-        ((outerp (fst (\<omega> (min s T))) - snd (\<omega> (min s T))) $ c $ d)\<^sup>2)"
-      by (rule exit_class_comp_entry_sq_integrable[OF T0 L0 P m])
-  qed
-qed
+  by (rule exit_class_horizon_of[where g = "\<lambda>z. (outerp (fst z) - snd z) $ c $ d", OF T0 P
+        martingale_mat_nth[OF exit_class_compensated_martingale[OF P]]])
+    (erule exit_class_comp_entry_sq_integrable[OF T0 L0 P])
 
 section \<open>Clause (iv): the conditioning rectangle at a stopping time\<close>
 

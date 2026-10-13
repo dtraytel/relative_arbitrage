@@ -20,6 +20,24 @@ definition pdelclass :: "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow>
      (\<lambda>\<nu>. distr \<nu> (path_borel T :: ('n pairpath) measure) (pembed s T))
        ` exit_class k L (T - s) (0::real^'n)"
 
+lemma pdelclassE:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  obtains \<mu> where "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and "\<nu> = distr \<mu> (path_borel T) (pembed s T)"
+    and "sets \<mu> = sets (path_borel (T - s) :: ('n pairpath) measure)"
+    and "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
+proof -
+  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> (path_borel T) (pembed s T)"
+    unfolding pdelclass_def by blast
+  have setsmu: "sets \<mu> = sets (path_borel (T - s) :: ('n pairpath) measure)"
+    by (rule exit_class_sets[OF mu])
+  show ?thesis
+    by (rule that[OF mu nu setsmu]) (simp add: measurable_cong_sets[OF setsmu refl]
+        pembed_measurable[OF s0 sT])
+qed
+
 text \<open>A delayed law is a probability law on the \<open>T\<close>-space, it stands still on
   \<open>[0,s]\<close>, and re-basing recovers the original --- which is what makes
   \<^const>\<open>pdelclass\<close> the right object for the additive glue to consume.\<close>
@@ -30,55 +48,15 @@ lemma pdelclass_prob:
   shows "prob_space \<nu>"
     and "sets \<nu> = sets (path_borel T :: ('n pairpath) measure)"
 proof -
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> (path_borel T :: ('n pairpath) measure) (pembed s T)"
-    unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ((path_borel (T - s) :: ('n pairpath) measure))"
-    by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> (path_borel T) (pembed s T)"
+    and setsmu: "sets \<mu> = sets (path_borel (T - s))"
+    and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M (path_borel T)"
+    by (rule pdelclassE[OF s0 sT m])
   show "prob_space \<nu>"
     unfolding nu
     by (rule prob_space.prob_space_distr[OF exit_class_prob[OF mu] pm])
   show "sets \<nu> = sets (path_borel T :: ('n pairpath) measure)" unfolding nu by simp
-qed
-
-lemma pdelclass_frozen_at:
-  fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
-    and u: "u \<in> {0..T}" and us: "u \<le> s"
-  shows "AE w in \<nu>. w u = 0"
-proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
-    unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ((path_borel (T - s) :: ('n pairpath) measure))"
-    by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
-  have ev: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B"
-    by (rule pair_law_eval_measurable[OF refl])
-  have Phi: "{w \<in> space ?B. w u = 0} \<in> sets ?B"
-  proof -
-    have "{w \<in> space ?B. w u = 0}
-        = (\<lambda>w :: 'n pairpath. w u) -` {0} \<inter> space ?B" by auto
-    then show ?thesis
-      using measurable_sets[OF ev borel_closed[OF closed_singleton]] by simp
-  qed
-  have start: "AE v in \<mu>. fst (v 0) = 0 \<and> snd (v 0) = 0"
-    by (rule exit_class_start[OF mu])
-  have "AE v in \<mu>. pembed s T v u = 0"
-    using start
-  proof eventually_elim
-    case (elim v)
-    have "max (u - s) 0 = 0" using us by simp
-    then have "pembed s T v u = v 0" unfolding pembed_apply[OF u] by simp
-    then show ?case using elim by (simp add: prod_eq_iff)
-  qed
-  then show ?thesis unfolding nu AE_distr_iff[OF pm Phi] .
 qed
 
 text \<open>\<open>vanishes_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
@@ -92,14 +70,10 @@ lemma pdelclass_frozen:
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using s0 sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
     and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
-    unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ((path_borel (T - s) :: ('n pairpath) measure))"
-    by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
+    and setsmu: "sets \<mu> = sets (path_borel (T - s))" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    by (rule pdelclassE[OF s0 sT m])
   have Phi: "{w \<in> space ?B. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> s \<longrightarrow> w u = 0} \<in> sets ?B"
     by (rule frozen_set_measurable[OF T0])
   have start: "AE v in \<mu>. fst (v 0) = 0 \<and> snd (v 0) = 0"
@@ -387,9 +361,8 @@ section \<open>The delayed class supplies the additive glue's kernel clauses\<cl
 text \<open>@{thm [source] exit_class_aglue} asks its continuation kernel for
   nine facts.  Four are already in hand for \<^const>\<open>pdelclass\<close> --- \<open>Kp\<close>
   (the selector's own measurability), \<open>prob_space\<close>/\<open>sets\<close>
-  (@{thm [source] pdelclass_prob}), \<open>K0\<close>
-  (@{thm [source] pdelclass_frozen_at} at \<open>u = 0\<close>) and \<open>Kfr\<close>
-  (@{thm [source] pdelclass_frozen}).  The rest follow from one structural
+  (@{thm [source] pdelclass_prob}), and \<open>Kfr\<close> and \<open>K0\<close>
+  (@{thm [source] pdelclass_frozen}, at \<open>u = 0\<close> for \<open>K0\<close>).  The rest follow from one structural
   statement: a delayed law's two class processes are still martingales on
   the fixed \<open>T\<close>-space, in the delayed law's own natural filtration.
 
@@ -407,139 +380,67 @@ text \<open>@{thm [source] exit_class_aglue} asks its continuation kernel for
 
 
 
-theorem pdelclass_X_martingale:
+lemma pdelclass_martingale_of:
   fixes \<nu> :: "('n::finite pairpath) measure"
+    and f :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> 'b::{banach,second_countable_topology}"
   assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
-  shows "martingale \<nu> (natural_filtration \<nu> 0 (\<lambda>v w. w v)) 0
-      (\<lambda>u w. fst (w (min u T)))"
+    and f: "f \<in> borel_measurable borel"
+    and mgb: "\<And>\<mu>. \<mu> \<in> exit_class k L (T - s) (0::real^'n) \<Longrightarrow>
+      martingale \<mu> (natural_filtration \<mu> 0 (\<lambda>v w. w v)) 0 (\<lambda>t w. f (w (min t (T - s))))"
+  shows "martingale \<nu> (natural_filtration \<nu> 0 (\<lambda>v w. w v)) 0 (\<lambda>u w. f (w (min u T)))"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
   let ?rho = "\<lambda>u :: real. min (max (u - s) 0) (T - s)"
   have T0: "0 \<le> T" using s0 sT by simp
   have Ts: "0 \<le> T - s" using sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ?Bs" by (rule exit_class_sets[OF mu])
-  have Pmu: "prob_space \<mu>" by (rule exit_class_prob[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
-  have nu': "\<nu> = pair_law_of T (pembed s T) \<mu>"
-    unfolding nu pair_law_of_def ..
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
+    and setsmu: "sets \<mu> = sets ?Bs" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    by (rule pdelclassE[OF s0 sT m])
   let ?F = "natural_filtration \<mu> 0 (\<lambda>v w :: 'n pairpath. w v)"
-  have mgb: "martingale \<mu> ?F 0 (\<lambda>t w. fst (w (min t (T - s))))"
-    by (rule exit_class_X_martingale[OF mu])
-  have tc: "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
-      (\<lambda>u w. fst (pembed s T w (min u T)))"
-  proof (rule martingale_time_change_cong[OF mgb])
+  have tc: "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0 (\<lambda>u w. f (pembed s T w (min u T)))"
+  proof (rule martingale_time_change_cong[OF mgb[OF mu]])
     show "0 \<le> ?rho u" if "0 \<le> u" for u :: real using Ts that by simp
     show "?rho u \<le> ?rho v" if "0 \<le> u" "u \<le> v" for u v :: real
       using that by simp
-    show "(\<lambda>w :: 'n pairpath. fst (pembed s T w (min u T)))
-        = (\<lambda>w. fst (w (min (?rho u) (T - s))))" if u: "0 \<le> u" for u :: real
-    proof (rule ext)
-      fix w :: "'n pairpath"
-      have "pembed s T w (min u T) = w (?rho u)"
-        by (rule pembed_eval_min[OF u s0 sT])
-      moreover have "min (?rho u) (T - s) = ?rho u" by simp
-      ultimately show "fst (pembed s T w (min u T))
-          = fst (w (min (?rho u) (T - s)))" by simp
-    qed
+    show "(\<lambda>w :: 'n pairpath. f (pembed s T w (min u T)))
+        = (\<lambda>w. f (w (min (?rho u) (T - s))))" if u: "0 \<le> u" for u :: real
+      by (rule ext) (subst pembed_eval_min[OF u s0 sT], simp)
   qed
+  have nu': "\<nu> = pair_law_of T (pembed s T) \<mu>"
+    unfolding nu pair_law_of_def ..
   show ?thesis
     unfolding nu'
   proof (rule martingale_pair_law[where T = T and FF = "\<lambda>u. ?F (?rho u)"])
-    show "prob_space \<mu>" by (rule Pmu)
+    show "prob_space \<mu>" by (rule exit_class_prob[OF mu])
     show "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B" by (rule pm)
+    show "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0 (\<lambda>u w. f (pembed s T w (min u T)))"
+      by (rule tc)
     show "(\<lambda>w. pembed s T w r) \<in> borel_measurable (?F (?rho u))"
       if "0 \<le> r" "r \<le> u" for u r :: real
       by (rule pembed_eval_le[OF that s0 sT])
-    show "(\<lambda>w :: 'n pairpath. fst (w (min u T))) \<in> borel_measurable
-        (natural_filtration (pair_law_of T (pembed s T) \<mu>)
-          0 (\<lambda>v w. w v) u)" if u: "0 \<le> u" for u :: real
-    proof -
-      have a: "0 \<le> min u T" using u T0 by simp
-      have b: "min u T \<le> u" by simp
-      show ?thesis
-        by (rule measurable_compose
-            [OF natural_filtration_eval[OF a b] pair_fst_borel])
-    qed
-    show "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
-        (\<lambda>u w. fst (pembed s T w (min u T)))" by (rule tc)
+    show "(\<lambda>w :: 'n pairpath. f (w (min u T))) \<in> borel_measurable
+        (natural_filtration (pair_law_of T (pembed s T) \<mu>) 0 (\<lambda>v w. w v) u)"
+      if u: "0 \<le> u" for u :: real
+      by (rule measurable_compose[OF natural_filtration_eval f]) (use u T0 in simp_all)
   qed
 qed
+
+theorem pdelclass_X_martingale:
+  fixes \<nu> :: "('n::finite pairpath) measure"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  shows "martingale \<nu> (natural_filtration \<nu> 0 (\<lambda>v w. w v)) 0
+      (\<lambda>u w. fst (w (min u T)))"
+  by (rule pdelclass_martingale_of[OF s0 sT m pair_fst_borel exit_class_X_martingale])
 
 theorem pdelclass_comp_martingale:
   fixes \<nu> :: "('n::finite pairpath) measure"
   assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
   shows "martingale \<nu> (natural_filtration \<nu> 0 (\<lambda>v w. w v)) 0
       (\<lambda>u w. outerp (fst (w (min u T))) - snd (w (min u T)))"
-proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
-  let ?rho = "\<lambda>u :: real. min (max (u - s) 0) (T - s)"
-  have T0: "0 \<le> T" using s0 sT by simp
-  have Ts: "0 \<le> T - s" using sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ?Bs" by (rule exit_class_sets[OF mu])
-  have Pmu: "prob_space \<mu>" by (rule exit_class_prob[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
-  have nu': "\<nu> = pair_law_of T (pembed s T) \<mu>"
-    unfolding nu pair_law_of_def ..
-  let ?F = "natural_filtration \<mu> 0 (\<lambda>v w :: 'n pairpath. w v)"
-  have mgb: "martingale \<mu> ?F 0
-      (\<lambda>t w. outerp (fst (w (min t (T - s)))) - snd (w (min t (T - s))))"
-    by (rule exit_class_compensated_martingale[OF mu])
-  have tc: "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
-      (\<lambda>u w. outerp (fst (pembed s T w (min u T)))
-          - snd (pembed s T w (min u T)))"
-  proof (rule martingale_time_change_cong[OF mgb])
-    show "0 \<le> ?rho u" if "0 \<le> u" for u :: real using Ts that by simp
-    show "?rho u \<le> ?rho v" if "0 \<le> u" "u \<le> v" for u v :: real
-      using that by simp
-    show "(\<lambda>w :: 'n pairpath. outerp (fst (pembed s T w (min u T)))
-          - snd (pembed s T w (min u T)))
-        = (\<lambda>w. outerp (fst (w (min (?rho u) (T - s))))
-          - snd (w (min (?rho u) (T - s))))" if u: "0 \<le> u" for u :: real
-    proof (rule ext)
-      fix w :: "'n pairpath"
-      have "pembed s T w (min u T) = w (?rho u)"
-        by (rule pembed_eval_min[OF u s0 sT])
-      moreover have "min (?rho u) (T - s) = ?rho u" by simp
-      ultimately show "outerp (fst (pembed s T w (min u T)))
-            - snd (pembed s T w (min u T))
-          = outerp (fst (w (min (?rho u) (T - s))))
-            - snd (w (min (?rho u) (T - s)))" by simp
-    qed
-  qed
-  show ?thesis
-    unfolding nu'
-  proof (rule martingale_pair_law[where T = T and FF = "\<lambda>u. ?F (?rho u)"])
-    show "prob_space \<mu>" by (rule Pmu)
-    show "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B" by (rule pm)
-    show "(\<lambda>w. pembed s T w r) \<in> borel_measurable (?F (?rho u))"
-      if "0 \<le> r" "r \<le> u" for u r :: real
-      by (rule pembed_eval_le[OF that s0 sT])
-    show "(\<lambda>w :: 'n pairpath. outerp (fst (w (min u T))) - snd (w (min u T)))
-        \<in> borel_measurable (natural_filtration
-          (pair_law_of T (pembed s T) \<mu>) 0 (\<lambda>v w. w v) u)"
-      if u: "0 \<le> u" for u :: real
-    proof -
-      have a: "0 \<le> min u T" using u T0 by simp
-      have b: "min u T \<le> u" by simp
-      show ?thesis
-        by (rule measurable_compose
-            [OF natural_filtration_eval[OF a b] compensated_map_borel])
-    qed
-    show "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0
-        (\<lambda>u w. outerp (fst (pembed s T w (min u T)))
-            - snd (pembed s T w (min u T)))" by (rule tc)
-  qed
-qed
+  by (rule pdelclass_martingale_of[where f = "\<lambda>p. outerp (fst p) - snd p",
+        OF s0 sT m compensated_map_borel exit_class_compensated_martingale])
 
 subsection \<open>The covariation clause of the continuation\<close>
 
@@ -560,12 +461,10 @@ proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using s0 sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ?Bs" by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
+    and setsmu: "sets \<mu> = sets ?Bs" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    by (rule pdelclassE[OF s0 sT m])
   have setsnu: "sets \<nu> = sets ?B" unfolding nu by simp
   have cov: "AE w in \<mu>. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T - s \<longrightarrow>
       (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
@@ -646,7 +545,7 @@ subsection \<open>Mean, integrability and the increment identity\<close>
 
 text \<open>A martingale that starts at \<open>0\<close> has mean \<open>0\<close> at every later time; the
   set-integral identity over the whole space is the case \<open>i = 0\<close> of the
-  martingale property, and @{thm [source] pdelclass_frozen_at} supplies the
+  martingale property, and @{thm [source] pdelclass_frozen} supplies the
   start.  \<open>martingale_mean_zero_of_start\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
@@ -656,10 +555,7 @@ lemma pdelclass_start_zero:
   shows "AE w in \<nu>. w (min (0::real) T) = 0"
 proof -
   have T0: "0 \<le> T" using s0 sT by simp
-  have z: "(0::real) \<in> {0..T}" using T0 by simp
-  have "AE w in \<nu>. w (0::real) = 0"
-    by (rule pdelclass_frozen_at[OF s0 sT m z s0])
-  then show ?thesis using T0 by simp
+  show ?thesis using pdelclass_frozen[OF s0 sT m] by eventually_elim (use T0 s0 in auto)
 qed
 
 corollary pdelclass_X_int:
@@ -878,21 +774,26 @@ text \<open>The last input the two martingale clauses need: the stopped path,
 
 
 
-theorem pstopped_law_horizon_component:
+lemma pstopped_law_horizon_of:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
+    and f :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes T0: "0 < T" and P: "P \<in> exit_class k L T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+    and fc: "continuous_on UNIV f"
+    and HZ: "horizon_sq_int_martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
+      (\<lambda>u \<omega>. f (\<omega> (min u T))) T"
   shows "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
       (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
-      (\<lambda>u p'. fst (p' (min u T)) $ c) T"
+      (\<lambda>u p'. f (p' (min u T))) T"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?Q = "pair_law_of T (pstopped T \<theta>) P"
   let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?Z = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ c"
+  let ?Z = "\<lambda>u \<omega> :: 'n pairpath. f (\<omega> (min u T))"
   have T0': "0 \<le> T" using T0 by simp
+  have fB: "f \<in> borel_measurable borel" by (rule borel_measurable_continuous_onI[OF fc])
   have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
   have PS: "prob_space P" by (rule exit_class_prob[OF P])
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
@@ -904,25 +805,12 @@ proof -
     by (rule pstopped_measurable[OF T0' thM th0 thT])
   have PQ: "prob_space ?Q" by (rule pstopped_law_prob[OF T0' PS setsP st thM])
   have sp: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
-  have nf: "?F v = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) v" for v
-    by (rule natural_filtration_cong_space[OF sp])
-  have spF: "space (?F v) = space P" for v
-    unfolding natural_filtration_def by simp
   have tstop: "{\<omega> \<in> space P. \<theta> \<omega> \<le> s} \<in> sets (?F s)" if s: "0 \<le> s" for s
-  proof -
-    have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> s}
-        \<in> sets (natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) s)"
-      by (rule path_stopping_time_event_filtration_all[OF T0' st thM s])
-    then show ?thesis unfolding nf using sp by simp
-  qed
-  have HZ: "horizon_sq_int_martingale P ?F ?Z T"
-    by (rule exit_class_horizon_component[OF T0 L0 P])
+    using path_stopping_time_event_filtration_all[OF T0' st thM s]
+    unfolding natural_filtration_cong_space[OF sp] sp .
   have contT: "continuous_on {0..T} (\<lambda>s. ?Z s \<omega>)" if w: "\<omega> \<in> space P" for \<omega>
-  proof -
-    have "continuous_on {0..} (\<lambda>s. ?Z s \<omega>)"
-      by (rule exit_class_coord_paths_cont[OF T0' setsP w])
-    then show ?thesis by (rule continuous_on_subset) auto
-  qed
+    by (rule continuous_on_subset[OF continuous_on_compose2
+          [OF fc exit_class_path_cont[OF T0' setsP w]]]) auto
   have cap: "?Z s \<omega> = ?Z (min s T) \<omega>" for s and \<omega> :: "'n pairpath" by simp
   have mgs: "martingale P ?F 0 (\<lambda>v \<omega>. ?Z (min v (\<theta> \<omega>)) \<omega>)"
     by (rule horizon_sq_int_martingale_stopped(1)
@@ -930,31 +818,10 @@ proof -
   have sqs: "integrable P (\<lambda>\<omega>. (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
     by (rule horizon_sq_int_martingale_stopped(2)
         [OF T0 HZ cap contT th0 tstop s])
-
-  \<comment> \<open>step two: push the stopped martingale forward\<close>
-  have mgp: "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))"
-  proof (rule martingale_cong_ge[OF mgs])
-    fix u :: real assume u: "0 \<le> u"
-    show "(\<lambda>\<omega>. ?Z (min u (\<theta> \<omega>)) \<omega>)
-        = (\<lambda>\<omega> :: 'n pairpath. ?Z u (pstopped T \<theta> \<omega>))"
-    proof (rule ext)
-      fix \<omega> :: "'n pairpath"
-      show "?Z (min u (\<theta> \<omega>)) \<omega> = ?Z u (pstopped T \<theta> \<omega>)"
-        using pstopped_eval_min_T[OF T0' u, of \<theta> \<omega>] by simp
-    qed
-  qed
-  have Zm: "?Z u \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
-  proof -
-    have a: "0 \<le> min u T" using u T0' by simp
-    have b: "min u T \<le> u" by simp
-    have fcB: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). fst z $ c)
-        \<in> borel_measurable borel"
-    proof -
-      show ?thesis by (rule measurable_compose[OF pair_fst_borel borel_measurable_nth])
-    qed
-    show ?thesis
-      by (rule measurable_compose[OF natural_filtration_eval[OF a b] fcB])
-  qed
+  have stopZ: "?Z (min u (\<theta> \<omega>)) \<omega> = ?Z u (pstopped T \<theta> \<omega>)" if u: "0 \<le> u"
+    for u and \<omega> :: "'n pairpath"
+    using pstopped_eval_min_T[OF T0' u, of \<theta> \<omega>] by simp
+  \<comment> \<open>push the stopped martingale forward\<close>
   have mgQ: "martingale ?Q ?G 0 ?Z"
   proof (rule martingale_pair_law[where T = T and FF = ?F])
     show "prob_space P" by (rule PS)
@@ -964,42 +831,39 @@ proof -
       by (rule pstopped_eval_filtration[OF T0' setsP st thM that])
     show "?Z u \<in> borel_measurable
         (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
-      if "0 \<le> u" for u by (rule Zm[OF that])
-    show "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))" by (rule mgp)
+      if u: "0 \<le> u" for u
+      by (rule measurable_compose[OF natural_filtration_eval fB]) (use u T0' in simp_all)
+    show "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))"
+      by (rule martingale_cong_ge[OF mgs]) (simp add: fun_eq_iff stopZ)
   qed
-
-  \<comment> \<open>step three: square integrability travels with the pushforward\<close>
+  \<comment> \<open>square integrability travels with the pushforward\<close>
   have sqQ: "integrable ?Q (\<lambda>p'. (?Z s p')\<^sup>2)" if s: "0 \<le> s" for s
   proof -
-    have zb: "(\<lambda>p' :: 'n pairpath. (?Z s p')\<^sup>2) \<in> borel_measurable ?B"
-    proof -
-      have "(\<lambda>p' :: 'n pairpath. p' (min s T)) \<in> borel_measurable ?B"
-        by (rule pair_law_eval_measurable[OF refl])
-      moreover have "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). fst z $ c)
-          \<in> borel_measurable borel"
-      proof -
-        show ?thesis by (rule measurable_compose[OF pair_fst_borel borel_measurable_nth])
-      qed
-      ultimately have "(\<lambda>p' :: 'n pairpath. ?Z s p') \<in> borel_measurable ?B"
-        by (rule measurable_compose)
-      then show ?thesis by simp
-    qed
+    have "(\<lambda>p' :: 'n pairpath. ?Z s p') \<in> borel_measurable ?B"
+      by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] fB])
+    then have zb: "(\<lambda>p' :: 'n pairpath. (?Z s p')\<^sup>2) \<in> borel_measurable ?B"
+      by (rule borel_measurable_power)
     have "integrable ?Q (\<lambda>p'. (?Z s p')\<^sup>2)
         = integrable P (\<lambda>\<omega>. (?Z s (pstopped T \<theta> \<omega>))\<^sup>2)"
       unfolding pair_law_of_def by (rule integrable_distr_eq[OF m1 zb])
-    moreover have "(\<lambda>\<omega> :: 'n pairpath. (?Z s (pstopped T \<theta> \<omega>))\<^sup>2)
-        = (\<lambda>\<omega>. (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2)"
-    proof (rule ext)
-      fix \<omega> :: "'n pairpath"
-      show "(?Z s (pstopped T \<theta> \<omega>))\<^sup>2 = (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2"
-        using pstopped_eval_min_T[OF T0' s, of \<theta> \<omega>] by simp
-    qed
-    ultimately show ?thesis using sqs[OF s] by simp
+    then show ?thesis using sqs[OF s] by (simp add: stopZ[OF s])
   qed
   show ?thesis
     by (intro horizon_sq_int_martingale.intro
         horizon_sq_int_martingale_axioms.intro mgQ T0 PQ sqQ)
 qed
+
+theorem pstopped_law_horizon_component:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+  shows "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
+      (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
+      (\<lambda>u p'. fst (p' (min u T)) $ c) T"
+  by (rule pstopped_law_horizon_of[where f = "\<lambda>z. fst z $ c",
+        OF T0 P st thM _ exit_class_horizon_component[OF T0 L0 P]])
+    (intro continuous_intros)
 
 theorem pstopped_law_horizon_compensated:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -1009,108 +873,9 @@ theorem pstopped_law_horizon_compensated:
   shows "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
       (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
-proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
-  let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  let ?Z = "\<lambda>u \<omega> :: 'n pairpath.
-      (outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))) $ c $ d"
-  have T0': "0 \<le> T" using T0 by simp
-  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
-  have PS: "prob_space P" by (rule exit_class_prob[OF P])
-  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_nonneg[OF st])
-  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_le[OF st])
-  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsP refl]
-    by (rule pstopped_measurable[OF T0' thM th0 thT])
-  have PQ: "prob_space ?Q" by (rule pstopped_law_prob[OF T0' PS setsP st thM])
-  have sp: "space P = space ?B" by (rule sets_eq_imp_space_eq[OF setsP])
-  have nf: "?F v = natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) v" for v
-    by (rule natural_filtration_cong_space[OF sp])
-  have tstop: "{\<omega> \<in> space P. \<theta> \<omega> \<le> s} \<in> sets (?F s)" if s: "0 \<le> s" for s
-  proof -
-    have "{\<omega> \<in> space ?B. \<theta> \<omega> \<le> s}
-        \<in> sets (natural_filtration ?B 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) s)"
-      by (rule path_stopping_time_event_filtration_all[OF T0' st thM s])
-    then show ?thesis unfolding nf using sp by simp
-  qed
-  have HZ: "horizon_sq_int_martingale P ?F ?Z T"
-    by (rule exit_class_horizon_compensated[OF T0 L0 P])
-  have contT: "continuous_on {0..T} (\<lambda>s. ?Z s \<omega>)" if w: "\<omega> \<in> space P" for \<omega>
-  proof -
-    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      using w sp by (simp add: space_borel_of)
-    show ?thesis by (rule comp_entry_continuous[OF mw])
-  qed
-  have cap: "?Z s \<omega> = ?Z (min s T) \<omega>" for s and \<omega> :: "'n pairpath" by simp
-  have mgs: "martingale P ?F 0 (\<lambda>v \<omega>. ?Z (min v (\<theta> \<omega>)) \<omega>)"
-    by (rule horizon_sq_int_martingale_stopped(1)
-        [OF T0 HZ cap contT th0 tstop])
-  have sqs: "integrable P (\<lambda>\<omega>. (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
-    by (rule horizon_sq_int_martingale_stopped(2)
-        [OF T0 HZ cap contT th0 tstop s])
-  have entB: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n).
-      (outerp (fst z) - snd z) $ c $ d) \<in> borel_measurable borel"
-    by (rule compensated_entry_borel)
-  have mgp: "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))"
-  proof (rule martingale_cong_ge[OF mgs])
-    fix u :: real assume u: "0 \<le> u"
-    show "(\<lambda>\<omega>. ?Z (min u (\<theta> \<omega>)) \<omega>)
-        = (\<lambda>\<omega> :: 'n pairpath. ?Z u (pstopped T \<theta> \<omega>))"
-    proof (rule ext)
-      fix \<omega> :: "'n pairpath"
-      show "?Z (min u (\<theta> \<omega>)) \<omega> = ?Z u (pstopped T \<theta> \<omega>)"
-        using pstopped_eval_min_T[OF T0' u, of \<theta> \<omega>] by simp
-    qed
-  qed
-  have Zm: "?Z u \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
-  proof -
-    have a: "0 \<le> min u T" using u T0' by simp
-    have b: "min u T \<le> u" by simp
-    show ?thesis
-      by (rule measurable_compose[OF natural_filtration_eval[OF a b] entB])
-  qed
-  have mgQ: "martingale ?Q ?G 0 ?Z"
-  proof (rule martingale_pair_law[where T = T and FF = ?F])
-    show "prob_space P" by (rule PS)
-    show "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B" by (rule m1)
-    show "(\<lambda>\<omega>. pstopped T \<theta> \<omega> r) \<in> borel_measurable (?F u)"
-      if "0 \<le> r" "r \<le> u" for u r :: real
-      by (rule pstopped_eval_filtration[OF T0' setsP st thM that])
-    show "?Z u \<in> borel_measurable
-        (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
-      if "0 \<le> u" for u by (rule Zm[OF that])
-    show "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))" by (rule mgp)
-  qed
-  have sqQ: "integrable ?Q (\<lambda>p'. (?Z s p')\<^sup>2)" if s: "0 \<le> s" for s
-  proof -
-    have zb: "(\<lambda>p' :: 'n pairpath. (?Z s p')\<^sup>2) \<in> borel_measurable ?B"
-    proof -
-      have "(\<lambda>p' :: 'n pairpath. p' (min s T)) \<in> borel_measurable ?B"
-        by (rule pair_law_eval_measurable[OF refl])
-      from measurable_compose[OF this entB]
-      have "(\<lambda>p' :: 'n pairpath. ?Z s p') \<in> borel_measurable ?B" by simp
-      then show ?thesis by simp
-    qed
-    have "integrable ?Q (\<lambda>p'. (?Z s p')\<^sup>2)
-        = integrable P (\<lambda>\<omega>. (?Z s (pstopped T \<theta> \<omega>))\<^sup>2)"
-      unfolding pair_law_of_def by (rule integrable_distr_eq[OF m1 zb])
-    moreover have "(\<lambda>\<omega> :: 'n pairpath. (?Z s (pstopped T \<theta> \<omega>))\<^sup>2)
-        = (\<lambda>\<omega>. (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2)"
-    proof (rule ext)
-      fix \<omega> :: "'n pairpath"
-      show "(?Z s (pstopped T \<theta> \<omega>))\<^sup>2 = (?Z (min s (\<theta> \<omega>)) \<omega>)\<^sup>2"
-        using pstopped_eval_min_T[OF T0' s, of \<theta> \<omega>] by simp
-    qed
-    ultimately show ?thesis using sqs[OF s] by simp
-  qed
-  show ?thesis
-    by (intro horizon_sq_int_martingale.intro
-        horizon_sq_int_martingale_axioms.intro mgQ T0 PQ sqQ)
-qed
+  by (rule pstopped_law_horizon_of[where f = "\<lambda>z. (outerp (fst z) - snd z) $ c $ d",
+        OF T0 P st thM _ exit_class_horizon_compensated[OF T0 L0 P]])
+    (unfold outerp_def, intro continuous_intros)
 
 subsection \<open>Uniform first moments for the delayed class\<close>
 
@@ -1125,6 +890,27 @@ text \<open>The six remaining side conditions of the additive glue are Fubini
   monotone in the horizon.  The same constant works for every freezing
   time \<open>s\<close>, which makes the outer integral finite.\<close>
 
+lemma pdelclass_integral_eq:
+  fixes \<nu> :: "('n::finite pairpath) measure" and g :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+    and u: "u \<in> {0..T}" and g: "continuous_on UNIV g"
+  obtains \<mu> where "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and "(\<integral>w. g (w u) \<partial>\<nu>) = (\<integral>w. g (w (max (u - s) 0)) \<partial>\<mu>)"
+proof -
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
+    by (rule pdelclassE[OF s0 sT m])
+  have nb: "(\<lambda>w :: 'n pairpath. g (w u)) \<in> borel_measurable ?B"
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl]
+          borel_measurable_continuous_onI[OF g]])
+  have "(\<integral>w. g (w u) \<partial>\<nu>) = (\<integral>w'. g (pembed s T w' u) \<partial>\<mu>)"
+    unfolding nu by (rule integral_distr[OF pm nb])
+  also have "\<dots> = (\<integral>w'. g (w' (max (u - s) 0)) \<partial>\<mu>)"
+    by (rule Bochner_Integration.integral_cong[OF refl]) (simp add: pembed_apply[OF u])
+  finally show ?thesis by (rule that[OF mu])
+qed
+
 lemma pdelclass_norm_mean_le:
   fixes \<nu> :: "('n::finite pairpath) measure"
   assumes L0: "0 \<le> L" and s0: "0 \<le> s" and sT: "s \<le> T"
@@ -1132,37 +918,18 @@ lemma pdelclass_norm_mean_le:
   shows "(\<integral>w. norm (fst (w u)) \<partial>\<nu>)
       \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
-  have T0: "0 \<le> T" using s0 sT by simp
   have Ts: "0 \<le> T - s" using sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ?Bs" by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
-  have nb: "(\<lambda>w :: 'n pairpath. norm (fst (w u))) \<in> borel_measurable ?B"
-  proof -
-    have e: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B"
-      by (rule pair_law_eval_measurable[OF refl])
-    have f: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). norm (fst z))
-        \<in> borel_measurable borel"
-      by (intro borel_measurable_continuous_onI continuous_intros)
-    show ?thesis by (rule measurable_compose[OF e f])
-  qed
   have tmem: "max (u - s) 0 \<in> {0..T - s}" using u s0 sT by auto
-  have "(\<integral>w. norm (fst (w u)) \<partial>\<nu>)
-      = (\<integral>w'. norm (fst (pembed s T w' u)) \<partial>\<mu>)"
-    unfolding nu by (rule integral_distr[OF pm nb])
-  also have "\<dots> = (\<integral>w'. norm (fst (w' (max (u - s) 0))) \<partial>\<mu>)"
-    by (rule Bochner_Integration.integral_cong[OF refl])
-       (simp add: pembed_apply[OF u])
-  also have "\<dots> \<le> 1 + real CARD('n) * (real CARD('n) * L * (T - s))"
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and eq: "(\<integral>w. norm (fst (w u)) \<partial>\<nu>) = (\<integral>w. norm (fst (w (max (u - s) 0))) \<partial>\<mu>)"
+    by (rule pdelclass_integral_eq[where g = "\<lambda>z. norm (fst z)", OF s0 sT m u])
+      (auto intro!: continuous_intros)
+  have "(\<integral>w. norm (fst (w (max (u - s) 0))) \<partial>\<mu>)
+      \<le> 1 + real CARD('n) * (real CARD('n) * L * (T - s))"
     by (rule exit_class_norm_mean_le[OF Ts L0 mu tmem])
   also have "\<dots> \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
     using L0 s0 by (intro add_left_mono mult_left_mono mult_left_mono) auto
-  finally show ?thesis .
+  finally show ?thesis unfolding eq .
 qed
 
 lemma pdelclass_comp_norm_mean_le:
@@ -1172,43 +939,19 @@ lemma pdelclass_comp_norm_mean_le:
   shows "(\<integral>w. norm (outerp (fst (w u)) - snd (w u)) \<partial>\<nu>)
       \<le> real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
 proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
-  have T0: "0 \<le> T" using s0 sT by simp
   have Ts: "0 \<le> T - s" using sT by simp
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
-    and nu: "\<nu> = distr \<mu> ?B (pembed s T)" unfolding pdelclass_def by blast
-  have setsmu: "sets \<mu> = sets ?Bs" by (rule exit_class_sets[OF mu])
-  have pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsmu refl]
-    by (rule pembed_measurable[OF s0 sT])
-  have nb: "(\<lambda>w :: 'n pairpath. norm (outerp (fst (w u)) - snd (w u)))
-      \<in> borel_measurable ?B"
-  proof -
-    have e: "(\<lambda>w :: 'n pairpath. w u) \<in> borel_measurable ?B"
-      by (rule pair_law_eval_measurable[OF refl])
-    have f: "(\<lambda>z :: (real^'n) \<times> (real^'n^'n). norm (outerp (fst z) - snd z))
-        \<in> borel_measurable borel"
-      unfolding outerp_def
-      by (intro borel_measurable_continuous_onI continuous_intros)
-    show ?thesis by (rule measurable_compose[OF e f])
-  qed
   have tmem: "max (u - s) 0 \<in> {0..T - s}" using u s0 sT by auto
-  have "(\<integral>w. norm (outerp (fst (w u)) - snd (w u)) \<partial>\<nu>)
-      = (\<integral>w'. norm (outerp (fst (pembed s T w' u))
-            - snd (pembed s T w' u)) \<partial>\<mu>)"
-    unfolding nu by (rule integral_distr[OF pm nb])
-  also have "\<dots> = (\<integral>w'. norm (outerp (fst (w' (max (u - s) 0)))
-        - snd (w' (max (u - s) 0))) \<partial>\<mu>)"
-    by (rule Bochner_Integration.integral_cong[OF refl])
-       (simp add: pembed_apply[OF u])
-  also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L * (T - s))
-      + real CARD('n) * L * (T - s)"
+  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+    and eq: "(\<integral>w. norm (outerp (fst (w u)) - snd (w u)) \<partial>\<nu>)
+      = (\<integral>w. norm (outerp (fst (w (max (u - s) 0))) - snd (w (max (u - s) 0))) \<partial>\<mu>)"
+    by (rule pdelclass_integral_eq[where g = "\<lambda>z. norm (outerp (fst z) - snd z)", OF s0 sT m u])
+      (unfold outerp_def, auto intro!: continuous_intros)
+  have "(\<integral>w. norm (outerp (fst (w (max (u - s) 0))) - snd (w (max (u - s) 0))) \<partial>\<mu>)
+      \<le> real CARD('n) * (real CARD('n) * L * (T - s)) + real CARD('n) * L * (T - s)"
     by (rule exit_class_comp_norm_mean_le[OF Ts L0 mu tmem])
-  also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L * T)
-      + real CARD('n) * L * T"
+  also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
     using L0 s0 by (intro add_mono mult_left_mono mult_left_mono) auto
-  finally show ?thesis .
+  finally show ?thesis unfolding eq .
 qed
 
 section \<open>Fubini over the semidirect product: the glue's side conditions\<close>

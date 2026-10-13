@@ -35,71 +35,31 @@ text \<open>The AFP entry \<open>Levy_Prokhorov_Metric\<close> makes the space o
   closure: the paper's class is a compact subset of a metric space, the
   input @{thm [source] Metric_space.usc_measurable_selection} wants.\<close>
 
+lemma exit_class_subset_weak_topspace:
+  "exit_class k L T x \<subseteq> topspace (weak_conv_topology
+      (mtopology_of (path_metric T :: ('n::finite pairpath) metric)))"
+proof
+  fix N :: "('n pairpath) measure"
+  assume N: "N \<in> exit_class k L T x"
+  show "N \<in> topspace (weak_conv_topology
+      (mtopology_of (path_metric T :: ('n pairpath) metric)))"
+    using exit_class_sets[OF N] prob_space.finite_measure[OF exit_class_prob[OF N]] by simp
+qed
+
 theorem exit_class_compactin_weak:
   fixes x :: "real^'n::finite"
   assumes T: "0 < T" and L: "0 \<le> L"
   shows "compactin (weak_conv_topology
         (mtopology_of (path_metric T :: ('n pairpath) metric)))
       (exit_class k L T x)"
-proof -
-  let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
-  let ?W = "weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?C = "exit_class k L T x"
-  interpret LP: Levy_Prokhorov "mspace (path_metric T :: ('n pairpath) metric)"
-      "mdist (path_metric T :: ('n pairpath) metric)"
-    by (simp add: Levy_Prokhorov_def)
-  have Xeq: "LP.mtopology = ?X" by (simp add: mtopology_of_def)
-  have sep: "separable_space ?X" by (rule separable_path_metric)
-  have met: "metrizable_space ?X"
-    unfolding mtopology_of_def
-    by (rule Metric_space.metrizable_space_mtopology[OF Metric_space_mspace_mdist])
-  have sepLP: "separable_space LP.mtopology" using sep Xeq by simp
-  have LPtop: "LP.LPm.mtopology = ?W"
-    using LP.LPmtopology_eq_weak_conv_topology[OF sepLP] Xeq by simp
-  have bound: "?C \<subseteq> {N. N (space N) \<le> ennreal 1 \<and> sets N = sets (borel_of ?X)}"
-  proof
-    fix N :: "('n pairpath) measure"
-    assume N: "N \<in> ?C"
-    have "prob_space N" by (rule exit_class_prob[OF N])
-    then have "N (space N) \<le> ennreal 1" by (simp add: prob_space.emeasure_space_1)
-    moreover have "sets N = sets (borel_of ?X)" by (rule exit_class_sets[OF N])
-    ultimately show "N \<in> {N. N (space N) \<le> ennreal 1 \<and> sets N = sets (borel_of ?X)}"
-      by simp
-  qed
-  have topC: "?C \<subseteq> topspace ?W"
-  proof
-    fix N :: "('n pairpath) measure"
-    assume N: "N \<in> ?C"
-    have p: "prob_space N" by (rule exit_class_prob[OF N])
-    then have "finite_measure N"
-      by (simp add: prob_space.emeasure_space_1 finite_measureI)
-    with exit_class_sets[OF N] show "N \<in> topspace ?W" by simp
-  qed
-  have tight: "tight_on_set ?X ?C"
-    by (rule tight_on_set_paper_pair_class[OF T L]) simp
-  have rc: "compactin ?W (?W closure_of ?C)"
-    by (rule tight_imp_relatively_compact[OF met sep bound tight])
-  have cl: "?W closure_of ?C \<subseteq> ?C"
-  proof
-    fix Q :: "('n pairpath) measure"
-    assume Qc: "Q \<in> ?W closure_of ?C"
-    then have QL: "Q \<in> LP.LPm.mtopology closure_of ?C" using LPtop by simp
-    then obtain sq :: "nat \<Rightarrow> ('n pairpath) measure"
-      where sq: "range sq \<subseteq> ?C \<inter> LP.\<P>"
-        and lim: "limitin LP.LPm.mtopology sq Q sequentially"
-      by (auto simp: LP.LPm.closure_of_sequentially)
-    have QP: "Q \<in> LP.\<P>" using QL by (auto simp: LP.LPm.closure_of_sequentially)
-    have mem: "sq i \<in> ?C" for i using sq by blast
-    have wc: "weak_conv_on sq Q sequentially ?X" using lim LPtop by simp
-    have prob: "prob_space Q"
-      by (rule weak_conv_on_prob_space[OF wc]) (rule exit_class_prob[OF mem])
-    have setsQ: "sets Q = sets (borel_of ?X)"
-      using QP Xeq by (simp add: LP.inP_iff)
-    show "Q \<in> ?C" by (rule exit_class_weak_closed[OF T L mem wc prob setsQ])
-  qed
-  have sub: "?C \<subseteq> ?W closure_of ?C" by (rule closure_of_subset[OF topC])
-  from cl sub have "?W closure_of ?C = ?C" by blast
-  with rc show ?thesis by simp
+proof (rule compactin_of_seq_compact
+    [OF metrizable_weak_conv_path_topology exit_class_subset_weak_topspace])
+  fix \<sigma> :: "nat \<Rightarrow> ('n pairpath) measure"
+  assume "range \<sigma> \<subseteq> exit_class k L T x"
+  then show "\<exists>l r. l \<in> exit_class k L T x \<and> strict_mono r \<and> limitin
+      (weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric)))
+      (\<sigma> \<circ> r) l sequentially"
+    using exit_class_convergent_subsequence[OF T L, of \<sigma>] by blast
 qed
 
 section \<open>Joint continuity of the shift\<close>
@@ -186,11 +146,9 @@ text \<open>The supremum in (1.6) is attained, and the optimizer can be chosen
   closedness in a metric topology is sequential closedness
   (@{thm [source] Metric_space.closure_of_sequentially}).  Second, the
   supremum over a closed, hence compact, subset is upper semicontinuous
-  in the parameter: for each parameter and each \<open>b < c\<close>, pick a law
-  beating \<open>b\<close>, extract a convergent subsequence by
-  @{thm [source] Metric_space.compactin_sequentially}, and let the joint
-  statement close the gap --- attainment is not needed, only \<open>b < c\<close> for
-  every \<open>b\<close> below \<open>c\<close> (@{thm [source] ennreal_strict_between}).\<close>
+  in the parameter: it is the supremum of the real exit functional
+  (@{thm [source] ess_inf_pexit_Sup_eq_vshift}), to which Berge's theorem
+  applies (@{thm [source] vshift_sup_usc}).\<close>
 
 theorem exit_val_measurable_selector:
   fixes K :: "(real^'n::finite) set"
@@ -265,62 +223,37 @@ proof -
       by (auto simp: not_le)
     ultimately show ?thesis by simp
   qed
-  \<comment> \<open>the second hypothesis: the supremum over a compact set is measurable\<close>
+  \<comment> \<open>the second hypothesis: the supremum over a compact set is measurable,
+    being upper semicontinuous by Berge's theorem\<close>
   have hypB: "(\<lambda>y. Sup (?g y ` Cs)) \<in> borel_measurable (borel :: (real^'n) measure)"
     if Cl: "closedin MC.mtopology Cs" for Cs
-  proof (rule borel_measurableI_ge)
-    fix c :: ennreal
+  proof (cases "Cs = {}")
+    case False
+    let ?A = "{p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K}"
+    let ?f = "\<lambda>y. Sup (vshift T ?A (y, 0) ` Cs)"
     have CsC: "Cs \<subseteq> ?C" using Cl by (metis closedin_subset MC.topspace_mtopology)
-    have Cscpt: "compactin MC.mtopology Cs"
-      by (rule closedin_compact_space[OF Ccpt Cl])
-    have "closed {y :: real^'n. c \<le> Sup (?g y ` Cs)}"
-    proof (subst closed_sequential_limits, intro allI impI)
-      fix ym :: "nat \<Rightarrow> real^'n" and y :: "real^'n"
-      assume h: "(\<forall>m. ym m \<in> {y. c \<le> Sup (?g y ` Cs)}) \<and> ym \<longlonglongrightarrow> y"
-      then have cs: "c \<le> Sup (?g (ym m) ` Cs)" for m by blast
-      have yc: "ym \<longlonglongrightarrow> y" using h by blast
-      have below: "b \<le> Sup (?g y ` Cs)" if b: "b < c" for b
-      proof -
-        have "\<exists>R. R \<in> Cs \<and> b < ?g (ym m) R" for m
-        proof -
-          have "b < Sup (?g (ym m) ` Cs)" using b cs[of m] by simp
-          then show ?thesis by (auto simp: less_Sup_iff)
-        qed
-        then obtain Rm where Rm: "\<And>m. Rm m \<in> Cs"
-          and bR: "\<And>m. b < ?g (ym m) (Rm m)" by metis
-        from Cscpt Rm obtain Rl a where Rl: "Rl \<in> Cs" and sm: "strict_mono a"
-          and lim: "limitin MC.mtopology (Rm \<circ> a) Rl sequentially"
-          unfolding MC.compactin_sequentially by (metis image_subsetI)
-        have RlC: "Rl \<in> ?C" using Rl CsC by blast
-        have RmC: "(Rm \<circ> a) m \<in> ?C" for m using Rm CsC by auto
-        have wc: "weak_conv_on (Rm \<circ> a) Rl sequentially ?X" by (rule convC[OF lim])
-        have yca: "(\<lambda>m. ym (a m)) \<longlonglongrightarrow> y"
-          using LIMSEQ_subseq_LIMSEQ[OF yc sm] by (simp add: o_def)
-        have "Limsup sequentially (\<lambda>m. ?g (ym (a m)) ((Rm \<circ> a) m)) \<le> ?g y Rl"
-          by (rule ess_inf_pexit_pshift_usc
-              [OF T K yca prC[OF RmC] stC[OF RmC] prC[OF RlC] stC[OF RlC] wc])
-        moreover have "b \<le> Liminf sequentially (\<lambda>m. ?g (ym (a m)) ((Rm \<circ> a) m))"
-          using bR by (intro Liminf_bounded always_eventually) (auto simp: less_imp_le)
-        moreover have "Liminf sequentially (\<lambda>m. ?g (ym (a m)) ((Rm \<circ> a) m))
-            \<le> Limsup sequentially (\<lambda>m. ?g (ym (a m)) ((Rm \<circ> a) m))"
-          by (rule Liminf_le_Limsup) simp
-        ultimately have "b \<le> ?g y Rl" by simp
-        also have "\<dots> \<le> Sup (?g y ` Cs)" using Rl by (intro Sup_upper imageI)
-        finally show ?thesis .
-      qed
-      have "c \<le> Sup (?g y ` Cs)"
-      proof (rule ccontr)
-        assume "\<not> c \<le> Sup (?g y ` Cs)"
-        then have "Sup (?g y ` Cs) < c" by simp
-        then obtain b where "Sup (?g y ` Cs) < b" and "b < c"
-          using ennreal_strict_between by blast
-        with below[of b] show False by simp
-      qed
-      then show "y \<in> {y. c \<le> Sup (?g y ` Cs)}" by blast
+    have Cscpt: "compactin ?W Cs"
+      using closedin_compact_space[OF Ccpt Cl] unfolding Ctop by (simp add: compactin_subtopology)
+    have Aopen: "open ?A"
+      using open_vimage_fst[OF open_Compl[OF K]] by (simp add: vimage_def)
+    have "open {y. ?f y < c}" for c
+    proof (subst open_subopen, safe)
+      fix y assume lt: "?f y < c"
+      have "eventually (\<lambda>z. Sup (vshift T ?A z ` Cs) < c) (nhds (y, 0))"
+        by (rule vshift_sup_usc[OF T0 Aopen Cscpt False _ _ lt]) (use CsC stC prC in auto)
+      then have "eventually (\<lambda>z. ?f z < c) (nhds y)"
+        by (rule eventually_compose_filterlim) (auto intro!: tendsto_intros filterlim_ident)
+      then obtain U where "open U" "y \<in> U" "\<forall>z\<in>U. ?f z < c"
+        unfolding eventually_nhds by blast
+      then show "\<exists>U. open U \<and> y \<in> U \<and> U \<subseteq> {y. ?f y < c}" by blast
     qed
-    then show "{y \<in> space (borel :: (real^'n) measure). c \<le> Sup (?g y ` Cs)}
-        \<in> sets (borel :: (real^'n) measure)" by simp
-  qed
+    then have "(\<lambda>y. ennreal (?f y)) \<in> borel_measurable borel"
+      by (intro measurable_compose[OF _ measurable_ennreal] borel_measurableI_less)
+        (simp add: borel_open)
+    moreover have "Sup (?g y ` Cs) = ennreal (?f y)" for y
+      by (rule ess_inf_pexit_Sup_eq_vshift[OF T0 CsC False])
+    ultimately show ?thesis by simp
+  qed simp
   \<comment> \<open>the selection theorem, and the transfer back to the value function\<close>
   obtain s where sm: "s \<in> (borel :: (real^'n) measure) \<rightarrow>\<^sub>M borel_of MC.mtopology"
     and sC: "\<And>y. s y \<in> ?C"
@@ -397,18 +330,9 @@ text \<open>Kernel pasting glues with the Giry monad's @{term bind}, which wants
   algebra of the weak topology.  The AFP supplies the bridge: on a Polish
   space the two agree once one restricts to probability measures with the
   right \<open>sets\<close> (@{thm [source] weak_conv_topology_eq_prob_algebra}), and
-  that is where the selector lands anyway.\<close>
-
-
-
-
-
-
-
-
-
-
-
+  that is where the selector lands anyway.  The same bridge, read backwards,
+  gives the measurability into the compact class that the rounding step
+  of the proof below needs.\<close>
 
 theorem exit_class_kglue_law':
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -416,11 +340,6 @@ theorem exit_class_kglue_law':
     and T0: "0 < T"
     and Q: "Q \<in> exit_class k L r x"
     and Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
-    and Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r
-        \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-            (exit_class k L (T - r) (0::real^'n))
-            (Levy_Prokhorov.LPm (mspace (path_metric (T - r) :: ('n pairpath) metric))
-              (mdist (path_metric (T - r) :: ('n pairpath) metric))))"
     and Kc: "\<And>\<omega>. Kr \<omega> \<in> exit_class k L (T - r) 0"
   shows "kglue_law' r T Kr Q \<in> exit_class k L T x"
 proof -
@@ -445,6 +364,25 @@ proof -
   have Ccpt: "compact_space MC.mtopology"
     by (rule exit_class_compact_metric_space(3)[OF s0 L0])
   have Cne: "?C0 \<noteq> {}" by (rule exit_class_nonempty[OF s0' L1])
+  \<comment> \<open>the kernel is measurable into the class, from the time-\<open>r\<close> \<open>\<sigma>\<close>-algebra\<close>
+  have Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel_of MC.mtopology"
+  proof -
+    have nf: "sets (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r) = sets Q"
+      unfolding natural_filtration_cong_space[OF sets_eq_imp_space_eq[OF setsQ]] setsQ
+      by (rule sets_natural_filtration_path[OF r])
+    have "Q \<rightarrow>\<^sub>M restrict_space (borel_of (weak_conv_topology ?Y))
+        {N. prob_space N \<and> sets N = sets ?MR} = Q \<rightarrow>\<^sub>M prob_algebra ?MR"
+      using measurable_cong_sets[OF refl
+          weak_conv_topology_eq_prob_algebra[OF Polish_space_path_metric]]
+      by (simp add: borel_of_subtopology)
+    then have "Kr \<in> Q \<rightarrow>\<^sub>M restrict_space (borel_of (weak_conv_topology ?Y))
+        {N. prob_space N \<and> sets N = sets ?MR}"
+      using Kp by simp
+    then have "Kr \<in> Q \<rightarrow>\<^sub>M borel_of (weak_conv_topology ?Y)"
+      unfolding measurable_restrict_space2_iff by blast
+    then show ?thesis unfolding Ctop borel_of_subtopology measurable_cong_sets[OF nf refl]
+      by (rule measurable_restrict_space2[rotated]) (use Kc in auto)
+  qed
   \<comment> \<open>round the kernel to a dense sequence of the compact class\<close>
   obtain z :: "nat \<Rightarrow> ('n pairpath) measure"
     and Nm :: "nat \<Rightarrow> 'n pairpath \<Rightarrow> nat"
