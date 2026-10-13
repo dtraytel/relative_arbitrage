@@ -1627,37 +1627,16 @@ corollary eulerp_Xi_chebyshev:
 proof -
   let ?P = "eulerp SF x h N"
   have int: "integrable ?P (\<lambda>\<omega>. (euXi SF M h m \<omega>)\<^sup>2)"
-    and bnd: "(\<integral>\<omega>. (euXi SF M h m \<omega>)\<^sup>2 \<partial>?P)
-      \<le> real m * xiC M L * h\<^sup>2"
+    and bnd: "(\<integral>\<omega>. (euXi SF M h m \<omega>)\<^sup>2 \<partial>?P) \<le> real m * xiC M L * h\<^sup>2"
     using eulerp_Xi_sq_bound_le[OF h0 L1 SFc SFs m] by blast+
-  have seteq: "{\<omega> \<in> space ?P. \<beta>\<^sup>2 \<le> (euXi SF M h m \<omega>)\<^sup>2}
-      = {\<omega> \<in> space ?P. \<beta> \<le> \<bar>euXi SF M h m \<omega>\<bar>}"
-  proof -
-    have iff: "\<beta>\<^sup>2 \<le> y\<^sup>2 \<longleftrightarrow> \<beta> \<le> \<bar>y\<bar>" for y :: real
-    proof
-      assume "\<beta>\<^sup>2 \<le> y\<^sup>2"
-      then have "\<beta>\<^sup>2 \<le> \<bar>y\<bar>\<^sup>2" by simp
-      then show "\<beta> \<le> \<bar>y\<bar>" by (rule power2_le_imp_le) simp
-    next
-      assume a: "\<beta> \<le> \<bar>y\<bar>"
-      have "\<beta>\<^sup>2 \<le> \<bar>y\<bar>\<^sup>2"
-        using a b by (intro power_mono) simp_all
-      then show "\<beta>\<^sup>2 \<le> y\<^sup>2" by simp
-    qed
-    show ?thesis using iff by auto
-  qed
-  have b2: "0 < \<beta>\<^sup>2" using b by simp
-  have "measure ?P {\<omega> \<in> space ?P. \<beta>\<^sup>2 \<le> (euXi SF M h m \<omega>)\<^sup>2}
-      \<le> (\<integral>\<omega>. (euXi SF M h m \<omega>)\<^sup>2 \<partial>?P) / \<beta>\<^sup>2"
-  proof (rule integral_Markov_inequality_measure)
-    show "integrable ?P (\<lambda>\<omega>. (euXi SF M h m \<omega>)\<^sup>2)" by (rule int)
-    show "space ?P \<in> sets ?P" by (rule sets.top)
-    show "AE \<omega> in ?P. 0 \<le> (euXi SF M h m \<omega>)\<^sup>2" by simp
-    show "0 < \<beta>\<^sup>2" by (rule b2)
-  qed
+  have "measure ?P {\<omega> \<in> space ?P. \<beta> \<le> \<bar>euXi SF M h m \<omega>\<bar>}
+      = measure ?P {\<omega> \<in> space ?P. \<beta>\<^sup>2 \<le> (euXi SF M h m \<omega>)\<^sup>2}"
+    using b by (simp flip: abs_le_square_iff)
+  also have "\<dots> \<le> (\<integral>\<omega>. (euXi SF M h m \<omega>)\<^sup>2 \<partial>?P) / \<beta>\<^sup>2"
+    by (rule integral_Markov_inequality_measure[OF int sets.top]) (use b in simp_all)
   also have "\<dots> \<le> real m * xiC M L * h\<^sup>2 / \<beta>\<^sup>2"
-    using bnd b2 by (intro divide_right_mono) simp_all
-  finally show ?thesis using seteq by simp
+    using bnd by (intro divide_right_mono) simp_all
+  finally show ?thesis .
 qed
 
 subsection \<open>The exact quadratic lower bound along the grid\<close>
@@ -1788,57 +1767,16 @@ proof -
     by (rule exit_class_sets[OF Q])
   have int4: "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
     by (rule exit_class_fourth_moment_integrable[OF T L Q st stt ttT])
-  have nn: "AE \<omega> in Q. 0 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4"
-    by (simp add: zero_le_fourth)
-  have intgl: "(\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q)
-      \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
-  proof -
-    have eq: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
-        = ennreal (\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q)"
-      by (rule nn_integral_eq_integral[OF int4 nn])
-    have le: "ennreal (\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q)
-        \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
-    proof -
-      have f4: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
-          \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
-        by (rule exit_class_fourth_moment[OF T L setsQ Q st stt ttT])
-      show ?thesis using f4 unfolding eq .
-    qed
-    have y0: "0 \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
-      by (auto intro!: mult_nonneg_nonneg)
-    show ?thesis using le y0 by simp
-  qed
-  have seteq: "{\<omega> \<in> space Q. l^4 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4}
-      = {\<omega> \<in> space Q. l \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}"
-  proof -
-    have iff: "l^4 \<le> y^4 \<longleftrightarrow> l \<le> \<bar>y\<bar>" for y :: real
-    proof
-      assume "l^4 \<le> y^4"
-      then have "l ^ Suc 3 \<le> \<bar>y\<bar> ^ Suc 3"
-        by (simp add: power_even_abs eval_nat_numeral)
-      then show "l \<le> \<bar>y\<bar>" by (rule power_le_imp_le_base) simp
-    next
-      assume a: "l \<le> \<bar>y\<bar>"
-      then have "l^4 \<le> \<bar>y\<bar>^4" using l by (intro power_mono) simp_all
-      then show "l^4 \<le> y^4" by (simp add: power_even_abs)
-    qed
-    show ?thesis using iff by auto
-  qed
-  have l4: "0 < l^4" using l by simp
-  have "measure Q {\<omega> \<in> space Q.
-      l^4 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4}
+  have intgl: "(\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q) \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
+    by (rule exit_class_fourth_moment_bochner[OF T L Q st stt ttT])
+  have "measure Q {\<omega> \<in> space Q. l \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
       \<le> (\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q) / l^4"
-  proof (rule integral_Markov_inequality_measure)
-    show "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
-      by (rule int4)
-    show "space Q \<in> sets Q" by (rule sets.top)
-    show "AE \<omega> in Q. 0 \<le> (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4"
-      by (rule nn)
-    show "0 < l^4" by (rule l4)
-  qed
+    using st stt ttT
+    by (intro fourth_moment_tail[OF exit_class_prob[OF Q] _ int4 l] borel_measurable_diff
+        pair_law_coord_measurable[OF setsQ]) simp_all
   also have "\<dots> \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2 / l^4"
-    using intgl l4 by (intro divide_right_mono) simp_all
-  finally show ?thesis using seteq by simp
+    using intgl l by (intro divide_right_mono) simp_all
+  finally show ?thesis .
 qed
 
 lemma exit_class_increment_tail_norm:
@@ -1853,70 +1791,18 @@ proof -
   let ?n = "real (CARD('n))"
   have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
-  interpret PQ: prob_space Q by (rule exit_class_prob[OF Q])
-  have cpos: "0 < CARD('n)" by (simp add: card_gt_0_iff)
-  have n0: "0 < ?n" using cpos by simp
+  have n0: "0 < ?n" by (simp add: card_gt_0_iff)
   define l' where "l' = l / ?n"
   have l'0: "0 < l'" unfolding l'_def using l n0 by simp
-  have sI: "s \<in> {0..T}" using st stt ttT by simp
-  have tI: "tt \<in> {0..T}" using st stt ttT by simp
-  have fmi: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> tt) $ i - fst (\<omega> s) $ i)
-      \<in> borel_measurable Q" for i
-    by (intro borel_measurable_diff pair_law_coord_measurable[OF setsQ tI]
-        pair_law_coord_measurable[OF setsQ sI])
-  have Em: "{\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
-      \<in> sets Q" for i
-  proof -
-    have am: "(\<lambda>\<omega>. \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>)
-        \<in> borel_measurable Q"
-      by (intro borel_measurable_abs fmi)
-    have "{\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
-        = (\<lambda>\<omega>. \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>) -` {l'..} \<inter> space Q"
-      by auto
-    then show ?thesis
-      using measurable_sets[OF am borel_closed[OF closed_atLeast]] by simp
-  qed
-  have incl: "{\<omega> \<in> space Q. l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))}
-      \<subseteq> (\<Union>i\<in>(UNIV :: 'n set).
-          {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>})"
-  proof
-    fix \<omega> assume w: "\<omega> \<in> {\<omega> \<in> space Q.
-        l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))}"
-    then have sp: "\<omega> \<in> space Q"
-      and ln: "l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))" by auto
-    have ex: "\<exists>i. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>"
-    proof (rule ccontr)
-      assume nc: "\<not> (\<exists>i. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>)"
-      then have all: "\<And>i. \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar> < l'"
-        by (auto simp: not_le)
-      have "norm (fst (\<omega> tt) - fst (\<omega> s))
-          \<le> (\<Sum>i\<in>UNIV. \<bar>(fst (\<omega> tt) - fst (\<omega> s)) $ i\<bar>)"
-        by (rule norm_le_l1_cart)
-      also have "\<dots> = (\<Sum>i\<in>UNIV. \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>)"
-        by simp
-      also have "\<dots> < (\<Sum>i\<in>(UNIV :: 'n set). l')"
-        by (rule sum_strict_mono) (use all in simp_all)
-      also have "\<dots> = ?n * l'" by simp
-      also have "\<dots> = l" unfolding l'_def using n0 by simp
-      finally show False using ln by simp
-    qed
-    then show "\<omega> \<in> (\<Union>i\<in>(UNIV :: 'n set).
-        {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>})"
-      using sp by auto
-  qed
-  have UNs: "(\<Union>i\<in>(UNIV :: 'n set).
-      {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}) \<in> sets Q"
-    using Em by blast
   have "measure Q {\<omega> \<in> space Q. l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))}
-      \<le> measure Q (\<Union>i\<in>(UNIV :: 'n set).
-          {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>})"
-    by (rule PQ.finite_measure_mono[OF incl UNs])
-  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). measure Q
-      {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>})"
-    by (rule measure_UNION_le) (use Em in simp_all)
+      \<le> (\<Sum>i\<in>UNIV. measure Q
+          {\<omega> \<in> space Q. l' \<le> \<bar>(fst (\<omega> tt) - fst (\<omega> s)) $ i\<bar>})"
+    unfolding l'_def using st stt ttT
+    by (intro norm_tail_le_coord_tails[OF exit_class_prob[OF Q] _ l])
+      (auto intro!: borel_measurable_diff pair_law_coord_measurable[OF setsQ])
   also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). 8 * L\<^sup>2 * (tt - s)\<^sup>2 / l'^4)"
-    by (rule sum_mono)
-      (rule exit_class_increment_tail[OF T L Q st stt ttT l'0])
+    by (intro sum_mono)
+      (use exit_class_increment_tail[OF T L Q st stt ttT l'0] in simp)
   also have "\<dots> = ?n * (8 * L\<^sup>2 * (tt - s)\<^sup>2 / l'^4)" by simp
   also have "\<dots> = ?n ^ 5 * (8 * L\<^sup>2 * (tt - s)\<^sup>2) / l^4"
   proof -

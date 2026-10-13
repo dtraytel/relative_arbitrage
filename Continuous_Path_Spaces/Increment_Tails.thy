@@ -19,14 +19,6 @@ text \<open>
 \<close>
 subsection \<open>Markov's inequality at the fourth power\<close>
 
-lemma abs_pow4: "\<bar>x::real\<bar>^4 = x^4"
-proof -
-  have "\<bar>x\<bar>^4 = (\<bar>x\<bar>\<^sup>2)\<^sup>2" by algebra
-  also have "\<dots> = (x\<^sup>2)\<^sup>2" by simp
-  also have "\<dots> = x^4" by algebra
-  finally show ?thesis .
-qed
-
 lemma fourth_moment_tail:
   fixes f :: "'a \<Rightarrow> real"
   assumes P: "prob_space M"
@@ -40,12 +32,12 @@ proof -
     fix \<omega>
     assume "l \<le> \<bar>f \<omega>\<bar>"
     hence "l^4 \<le> \<bar>f \<omega>\<bar>^4" using l by (intro power_mono) simp_all
-    thus "l^4 \<le> (f \<omega>)^4" by (simp add: abs_pow4)
+    thus "l^4 \<le> (f \<omega>)^4" by simp
   next
     fix \<omega>
     assume "l^4 \<le> (f \<omega>)^4"
     hence h4: "l ^ Suc 3 \<le> \<bar>f \<omega>\<bar> ^ Suc 3"
-      by (simp add: abs_pow4 eval_nat_numeral)
+      by (simp add: eval_nat_numeral)
     show "l \<le> \<bar>f \<omega>\<bar>" by (rule power_le_imp_le_base[OF h4 abs_ge_zero])
   qed
   have l4: "0 < l^4" using l by simp
@@ -57,6 +49,37 @@ proof -
     show "0 < l^4" by (rule l4)
   qed
   thus ?thesis by (simp add: seteq)
+qed
+
+text \<open>A vector is long only if some coordinate is: the tail of the norm is at
+  most the sum of the coordinate tails at the level divided by the dimension.\<close>
+
+lemma norm_tail_le_coord_tails:
+  fixes Y :: "'a \<Rightarrow> real^'n::finite"
+  assumes P: "prob_space M"
+    and Ym[measurable]: "\<And>i. (\<lambda>\<omega>. Y \<omega> $ i) \<in> borel_measurable M"
+    and l: "0 < l"
+  shows "measure M {\<omega> \<in> space M. l \<le> norm (Y \<omega>)}
+    \<le> (\<Sum>i\<in>UNIV. measure M {\<omega> \<in> space M. l / real CARD('n) \<le> \<bar>Y \<omega> $ i\<bar>})"
+proof -
+  interpret P: prob_space M by (rule P)
+  let ?E = "\<lambda>i. {\<omega> \<in> space M. l / real CARD('n) \<le> \<bar>Y \<omega> $ i\<bar>}"
+  have n0: "0 < real CARD('n)" by (simp add: card_gt_0_iff)
+  have Em: "?E i \<in> sets M" for i by measurable
+  have "{\<omega> \<in> space M. l \<le> norm (Y \<omega>)} \<subseteq> (\<Union>i. ?E i)"
+  proof (intro subsetI, rule ccontr)
+    fix \<omega> assume w: "\<omega> \<in> {\<omega> \<in> space M. l \<le> norm (Y \<omega>)}" and "\<omega> \<notin> (\<Union>i. ?E i)"
+    then have "\<bar>Y \<omega> $ i\<bar> < l / real CARD('n)" for i by (auto simp: not_le)
+    then have "(\<Sum>i\<in>UNIV. \<bar>Y \<omega> $ i\<bar>) < (\<Sum>i\<in>(UNIV :: 'n set). l / real CARD('n))"
+      by (intro sum_strict_mono) auto
+    also have "\<dots> = l" using n0 by simp
+    finally show False using norm_le_l1_cart[of "Y \<omega>"] w by simp
+  qed
+  then have "measure M {\<omega> \<in> space M. l \<le> norm (Y \<omega>)} \<le> measure M (\<Union>i. ?E i)"
+    using Em by (intro P.finite_measure_mono) auto
+  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. measure M (?E i))"
+    by (rule measure_UNION_le) (use Em in auto)
+  finally show ?thesis .
 qed
 
 subsection \<open>The tail bound at one partition level\<close>

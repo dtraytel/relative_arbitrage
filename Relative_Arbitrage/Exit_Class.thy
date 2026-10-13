@@ -310,8 +310,8 @@ theorem diffquot_constraint_weak_limit:
   shows "measure \<Lambda>
       {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} = 1"
-  by (rule weak_conv_closed_full_mass
-      [OF wc closedin_diffquot_constraint[OF s t] probs prob full])
+  by (rule weak_conv_closed_full_measure
+      [OF wc closedin_diffquot_constraint[OF s t] full prob])
 
 subsection \<open>Averages of constrained densities stay constrained\<close>
 
@@ -621,8 +621,7 @@ proof -
     unfolding sp setsQ by (rule borel_of_closed[OF closedin_start_point[OF T]])
   have "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
       \<omega> 0 = (x, 0)} = 1"
-  proof (rule weak_conv_closed_full_mass[OF wc closedin_start_point[OF T]])
-    show "\<And>i. prob_space (Qi i)" by (rule exit_class_prob[OF mem])
+  proof (rule weak_conv_closed_full_measure[OF wc closedin_start_point[OF T]])
     show "prob_space Q" by (rule prob)
     show "\<And>i. measure (Qi i)
         {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). \<omega> 0 = (x, 0)} = 1"

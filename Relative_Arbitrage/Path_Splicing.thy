@@ -118,7 +118,7 @@ lemma pfut_in_mspace:
     and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
   shows "pfut r T \<omega> \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
 proof -
-  have cw: "continuous_on {0..T} \<omega>" by (rule mspace_path_metric_continuous[OF w])
+  have cw: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
   have sub: "(\<lambda>s. r + s) ` {0..T - r} \<subseteq> {0..T}" using r rT by auto
   have c1: "continuous_on {0..T - r} (\<lambda>s. \<omega> (r + s))"
     by (rule continuous_on_compose2[OF cw _ sub]) (intro continuous_intros)
@@ -168,47 +168,21 @@ lemma Lipschitz_pfut:
   assumes r: "0 \<le> r" and rT: "r \<le> T"
   shows "Lipschitz_continuous_map (path_metric T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) metric)
       (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (pfut r T)"
-  unfolding Lipschitz_continuous_map_def
-proof (intro conjI)
-  show "pfut r T \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-      \<rightarrow> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    by (intro funcsetI pfut_in_mspace[OF r rT])
-  have T0: "0 \<le> T" using r rT by simp
-  have Tr: "0 \<le> T - r" using rT by simp
-  have key: "mdist (path_metric (T - r)) (pfut r T f) (pfut r T g)
-      \<le> 2 * mdist (path_metric T) f g"
-    if f: "f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      and g: "g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)" for f g
-  proof -
-    have sf: "pfut r T f \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by (rule pfut_in_mspace[OF r rT f])
-    have sg: "pfut r T g \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by (rule pfut_in_mspace[OF r rT g])
-    have pw: "\<forall>t\<in>{0..T}. dist (f t) (g t) \<le> mdist (path_metric T) f g"
-      using path_mdist_le_iff_all[OF T0 f g] by blast
-    have pws: "dist (pfut r T f s) (pfut r T g s) \<le> 2 * mdist (path_metric T) f g"
-      if s: "s \<in> {0..T - r}" for s
-    proof -
-      have rs: "r + s \<in> {0..T}" using s r rT by simp
-      have r0: "r \<in> {0..T}" using r rT by simp
-      have "dist (pfut r T f s) (pfut r T g s)
-          = dist (f (r + s) - f r) (g (r + s) - g r)"
-        using s by (simp add: pfut_apply)
-      also have "\<dots> = norm ((f (r + s) - g (r + s)) - (f r - g r))"
-        by (simp add: dist_norm algebra_simps)
-      also have "\<dots> \<le> norm (f (r + s) - g (r + s)) + norm (f r - g r)"
-        by (rule norm_triangle_ineq4)
-      also have "\<dots> = dist (f (r + s)) (g (r + s)) + dist (f r) (g r)"
-        by (simp add: dist_norm)
-      finally show ?thesis using bspec[OF pw rs] bspec[OF pw r0] by simp
-    qed
-    show ?thesis using path_mdist_le_iff_all[OF Tr sf sg] pws by blast
-  qed
-  show "\<exists>B. \<forall>f\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-      \<forall>g\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-        mdist (path_metric (T - r)) (pfut r T f) (pfut r T g)
-          \<le> B * mdist (path_metric T) f g"
-    by (intro exI[of _ 2] ballI key)
+proof (rule Lipschitz_path_mapI[OF _ pfut_in_mspace[OF r rT], where B = 2])
+  show "0 \<le> T - r" using rT by simp
+  fix f g :: "real \<Rightarrow> 'a \<times> 'b" and s :: real
+  assume f: "f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and g: "g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and s: "s \<in> {0..T - r}"
+  have rs: "r + s \<in> {0..T}" and r0: "r \<in> {0..T}" using s r rT by auto
+  have "dist (pfut r T f s) (pfut r T g s) = dist (f (r + s) - f r) (g (r + s) - g r)"
+    using s by (simp add: pfut_apply)
+  also have "\<dots> = norm ((f (r + s) - g (r + s)) - (f r - g r))"
+    by (simp add: dist_norm algebra_simps)
+  also have "\<dots> \<le> dist (f (r + s)) (g (r + s)) + dist (f r) (g r)"
+    unfolding dist_norm by (rule norm_triangle_ineq4)
+  finally show "dist (pfut r T f s) (pfut r T g s) \<le> 2 * mdist (path_metric T) f g"
+    using path_dist_le_mdist[OF f g rs] path_dist_le_mdist[OF f g r0] by linarith
 qed
 
 lemma pshift_zero:
@@ -269,42 +243,18 @@ lemma Lipschitz_pshift:
   assumes T: "0 \<le> T"
   shows "Lipschitz_continuous_map (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) metric)
       (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (pshift T x)"
-  unfolding Lipschitz_continuous_map_def
-proof (intro conjI)
-  show "pshift T x \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-      \<rightarrow> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    by (intro funcsetI pshift_in_mspace)
-  have key: "mdist (path_metric T) (pshift T x f) (pshift T x g)
-      \<le> 1 * mdist (path_metric T) f g"
-    if f: "f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      and g: "g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)" for f g
-  proof -
-    have sf: "pshift T x f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by (rule pshift_in_mspace[OF f])
-    have sg: "pshift T x g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by (rule pshift_in_mspace[OF g])
-    have pw: "\<forall>t\<in>{0..T}. dist (f t) (g t) \<le> mdist (path_metric T) f g"
-      using path_mdist_le_iff_all[OF T f g] by blast
-    have pws: "dist (pshift T x f t) (pshift T x g t)
-        \<le> mdist (path_metric T) f g" if t: "t \<in> {0..T}" for t
-    proof -
-      have "dist (pshift T x f t) (pshift T x g t)
-          = dist (x + fst (f t), snd (f t)) (x + fst (g t), snd (g t))"
-        using t by (simp add: pshift_def)
-      also have "\<dots> = dist (f t) (g t)"
-        by (simp add: dist_prod_def dist_norm)
-      finally show ?thesis using bspec[OF pw t] by simp
-    qed
-    have "mdist (path_metric T) (pshift T x f) (pshift T x g)
-        \<le> mdist (path_metric T) f g"
-      using path_mdist_le_iff_all[OF T sf sg] pws by blast
-    then show ?thesis by simp
-  qed
-  show "\<exists>B. \<forall>f\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-      \<forall>g\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-        mdist (path_metric T) (pshift T x f) (pshift T x g)
-          \<le> B * mdist (path_metric T) f g"
-    by (intro exI[of _ 1] ballI key)
+proof (rule Lipschitz_path_mapI[OF T pshift_in_mspace, where B = 1])
+  fix f g :: "real \<Rightarrow> 'a \<times> 'b" and t :: real
+  assume f: "f \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and g: "g \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and t: "t \<in> {0..T}"
+  have "dist (pshift T x f t) (pshift T x g t)
+      = dist (x + fst (f t), snd (f t)) (x + fst (g t), snd (g t))"
+    using t by (simp add: pshift_def)
+  also have "\<dots> = dist (f t) (g t)"
+    by (simp add: dist_prod_def dist_norm)
+  finally show "dist (pshift T x f t) (pshift T x g t) \<le> 1 * mdist (path_metric T) f g"
+    using path_dist_le_mdist[OF f g t] by simp
 qed
 
 lemma padd_measurable:
@@ -820,44 +770,16 @@ lemma Lipschitz_pfst:
   assumes T: "0 \<le> T"
   shows "Lipschitz_continuous_map (path_metric T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) metric)
       (path_metric T :: (real \<Rightarrow> 'a) metric) (pfst T)"
-  unfolding Lipschitz_continuous_map_def
-proof (intro conjI)
-  show "pfst T \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-      \<rightarrow> mspace (path_metric T :: (real \<Rightarrow> 'a) metric)"
-    by (intro funcsetI pfst_mspace[OF T])
-  have key: "mdist (path_metric T :: (real \<Rightarrow> 'a) metric)
-        (pfst T \<omega>) (pfst T \<omega>')
+proof (rule Lipschitz_path_mapI[OF T pfst_mspace[OF T], where B = 1])
+  fix \<omega> \<omega>' :: "real \<Rightarrow> 'a \<times> 'b" and t :: real
+  assume w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and w': "\<omega>' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and t: "t \<in> {0..T}"
+  have "dist (fst (\<omega> t)) (fst (\<omega>' t)) \<le> dist (\<omega> t) (\<omega>' t)"
+    by (rule dist_fst_le)
+  then show "dist (pfst T \<omega> t) (pfst T \<omega>' t)
       \<le> 1 * mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<omega> \<omega>'"
-    if w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      and w': "\<omega>' \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)" for \<omega> \<omega>'
-  proof -
-    have rw: "pfst T \<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'a) metric)"
-      by (rule pfst_mspace[OF T w])
-    have rw': "pfst T \<omega>' \<in> mspace (path_metric T :: (real \<Rightarrow> 'a) metric)"
-      by (rule pfst_mspace[OF T w'])
-    have pw: "\<forall>t\<in>{0..T}. dist (\<omega> t) (\<omega>' t)
-        \<le> mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<omega> \<omega>'"
-      using path_mdist_le_iff_all[OF T w w'] by blast
-    have pwr: "dist (pfst T \<omega> t) (pfst T \<omega>' t)
-        \<le> mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<omega> \<omega>'"
-      if t: "t \<in> {0..T}" for t
-    proof -
-      have "dist (fst (\<omega> t)) (fst (\<omega>' t)) \<le> dist (\<omega> t) (\<omega>' t)"
-        by (rule dist_fst_le)
-      then show ?thesis using bspec[OF pw t] t by (simp add: pfst_def)
-    qed
-    have "mdist (path_metric T :: (real \<Rightarrow> 'a) metric)
-          (pfst T \<omega>) (pfst T \<omega>')
-        \<le> mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<omega> \<omega>'"
-      using path_mdist_le_iff_all[OF T rw rw'] pwr by blast
-    then show ?thesis by simp
-  qed
-  show "\<exists>B. \<forall>\<omega>\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-      \<forall>\<omega>'\<in>mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric).
-        mdist (path_metric T :: (real \<Rightarrow> 'a) metric)
-            (pfst T \<omega>) (pfst T \<omega>')
-          \<le> B * mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) \<omega> \<omega>'"
-    by (intro exI[of _ 1] ballI key)
+    using path_dist_le_mdist[OF w w' t] t by (simp add: pfst_def)
 qed
 
 lemma pexit_pfst: "pexit S K (pfst S \<omega>) = pexit S K (\<lambda>t. fst (\<omega> t))"
@@ -991,59 +913,40 @@ lemma Lipschitz_pglue:
         (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
       (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
       (\<lambda>p. pglue r T (fst p) (snd p))"
-  unfolding Lipschitz_continuous_map_def
-proof (intro conjI)
-  show "(\<lambda>p. pglue r T (fst p) (snd p))
-      \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-          (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
-        \<rightarrow> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    using pglue_in_mspace[OF r rT] by (intro funcsetI) auto
-  show "\<exists>B. \<forall>p \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-          (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)).
-      \<forall>q \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-          (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)).
-        mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-            ((\<lambda>p. pglue r T (fst p) (snd p)) p) ((\<lambda>p. pglue r T (fst p) (snd p)) q)
-          \<le> B * mdist (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-              (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) p q"
-  proof (intro exI[of _ 3] ballI)
-    fix p q :: "(real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b)"
-    assume p: "p \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
-      and q: "q \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
-    from p have p1: "fst p \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      and p2: "snd p \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by auto
-    from q have q1: "fst q \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      and q2: "snd q \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-      by auto
-    let ?a = "mdist (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (fst p) (fst q)"
-    let ?b = "mdist (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (snd p) (snd q)"
-    let ?pd = "mdist (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) p q"
-    have pdeq: "?pd = sqrt (?a\<^sup>2 + ?b\<^sup>2)"
-      by (simp add: prod_dist_def case_prod_unfold)
-    have c1: "?a \<le> ?pd"
-    proof -
-      have "?a = sqrt (?a\<^sup>2)" by simp
-      also have "\<dots> \<le> sqrt (?a\<^sup>2 + ?b\<^sup>2)" by (simp add: real_sqrt_le_mono)
-      finally show ?thesis using pdeq by simp
-    qed
-    have c2: "?b \<le> ?pd"
-    proof -
-      have "?b = sqrt (?b\<^sup>2)" by simp
-      also have "\<dots> \<le> sqrt (?a\<^sup>2 + ?b\<^sup>2)" by (simp add: real_sqrt_le_mono)
-      finally show ?thesis using pdeq by simp
-    qed
-    have "mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (pglue r T (fst p) (snd p)) (pglue r T (fst q) (snd q)) \<le> ?a + 2 * ?b"
-      by (rule mdist_pglue_le[OF r rT p1 q1 p2 q2])
-    also have "\<dots> \<le> 3 * ?pd" using c1 c2 by simp
-    finally show "mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        ((\<lambda>p. pglue r T (fst p) (snd p)) p) ((\<lambda>p. pglue r T (fst p) (snd p)) q)
-        \<le> 3 * ?pd" by simp
-  qed
+proof (rule Lipschitz_path_mapI[where B = 3])
+  show "0 \<le> T" using r rT by simp
+  show "pglue r T (fst p) (snd p) \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    if "p \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+        (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))" for p
+    using pglue_in_mspace[OF r rT] that by auto
+  fix p q :: "(real \<Rightarrow> 'a \<times> 'b) \<times> (real \<Rightarrow> 'a \<times> 'b)" and t :: real
+  assume p: "p \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+      (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
+    and q: "q \<in> mspace (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+      (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
+    and t: "t \<in> {0..T}"
+  from p have p1: "fst p \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and p2: "snd p \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    by auto
+  from q have q1: "fst q \<in> mspace (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and q2: "snd q \<in> mspace (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    by auto
+  let ?a = "mdist (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (fst p) (fst q)"
+  let ?b = "mdist (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (snd p) (snd q)"
+  let ?pd = "mdist (prod_metric (path_metric r :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+      (path_metric (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) p q"
+  have pdeq: "?pd = sqrt (?a\<^sup>2 + ?b\<^sup>2)"
+    by (simp add: prod_dist_def case_prod_unfold)
+  have c: "?a \<le> ?pd" "?b \<le> ?pd"
+    unfolding pdeq by (rule real_sqrt_sum_squares_ge1 real_sqrt_sum_squares_ge2)+
+  have "dist (pglue r T (fst p) (snd p) t) (pglue r T (fst q) (snd q) t)
+      \<le> mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
+        (pglue r T (fst p) (snd p)) (pglue r T (fst q) (snd q))"
+    by (rule path_dist_le_mdist[OF pglue_in_mspace[OF r rT p1 p2]
+          pglue_in_mspace[OF r rT q1 q2] t])
+  also have "\<dots> \<le> ?a + 2 * ?b" by (rule mdist_pglue_le[OF r rT p1 q1 p2 q2])
+  also have "\<dots> \<le> 3 * ?pd" using c by linarith
+  finally show "dist (pglue r T (fst p) (snd p) t) (pglue r T (fst q) (snd q) t) \<le> 3 * ?pd" .
 qed
 
 subsection \<open>Weak convergence of the semidirect products\<close>
@@ -1073,44 +976,14 @@ lemma pexit_pglue_ge:
   assumes S: "0 \<le> S" and ST: "S \<le> T"
   shows "pexit S K (\<lambda>t. fst (\<omega> t)) \<le> pexit T K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))"
 proof -
-  have lb: "pexit S K (\<lambda>t. fst (\<omega> t)) \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
-        \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue S T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
-      using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      show ?thesis
-      proof (cases "z \<le> S")
-        case True
-        have zI: "z \<in> {0..T}" using hit by simp
-        have notin: "fst (\<omega> z) \<in> - K"
-          using hit True by (simp add: pglue_le[OF zI])
-        show ?thesis
-          unfolding pexit_def
-          by (rule etime_le_of_mem[OF S hit(1) True]) (use notin in simp)
-      next
-        case False
-        then show ?thesis
-          using pexit_le_T[OF S, of K "\<lambda>t. fst (\<omega> t)"] by linarith
-      qed
-    next
-      case cap
-      then show ?thesis
-        using pexit_le_T[OF S, of K "\<lambda>t. fst (\<omega> t)"] ST by linarith
-    qed
+  have "pexit S K (\<lambda>t. fst (\<omega> t)) = pexit S K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))"
+  proof (rule pexit_cong_on)
+    fix t assume "0 \<le> t" "t \<le> S"
+    then show "fst (\<omega> t) = fst (pglue S T \<omega> \<omega>' t)"
+      using order.trans[OF \<open>t \<le> S\<close> ST] by (simp add: pglue_le)
   qed
-  have "pexit T K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))
-      = Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "pexit S K (\<lambda>t. fst (\<omega> t))
-      \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
+  also have "\<dots> \<le> pexit T K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))" by (rule pexit_mono_T[OF S ST])
+  finally show ?thesis .
 qed
 
 subsection \<open>The selector as a kernel into a family of laws\<close>
@@ -1309,49 +1182,19 @@ lemma pexit_delayed_rebase:
   shows "r + pexit (T - r) K (\<lambda>u. y + fst (prebase r T w u))
       \<le> pexit T K (\<lambda>s. y + fst (w s))"
 proof -
-  let ?g = "\<lambda>s. y + fst (w s)"
-  let ?h = "\<lambda>u. y + fst (prebase r T w u)"
-  have T0: "0 \<le> T" using r rT by simp
-  have Tr: "0 \<le> T - r" using rT by simp
-  have lb: "r + pexit (T - r) K ?h \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T \<and> ?g t \<in> - K} \<union> {T}" for z
+  have stays: "y + fst (w s) \<in> K" if "0 \<le> s" "s \<le> r" for s
   proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "?g z \<in> - K" | (cap) "z = T" using z by blast
-    then show ?thesis
-    proof cases
-      case cap
-      have "pexit (T - r) K ?h \<le> T - r" by (rule pexit_le_T[OF Tr])
-      then show ?thesis unfolding cap by simp
-    next
-      case hit
-      then have zm: "z \<in> {0..T}" by simp
-      have zr: "r < z"
-      proof (rule ccontr)
-        assume "\<not> r < z"
-        then have "z \<le> r" by simp
-        then have "w z = 0" by (rule frz[OF zm])
-        then have "?g z = y" by simp
-        then show False using hit(3) inK by simp
-      qed
-      have um: "z - r \<in> {0..T - r}" using zr hit(2) by simp
-      have pe: "prebase r T w (z - r) = w z"
-      proof -
-        have "prebase r T w (z - r) = w (r + (z - r))" by (rule prebase_apply[OF um])
-        then show ?thesis by simp
-      qed
-      have mem: "?h (z - r) \<in> - K" using hit(3) pe by simp
-      have "pexit (T - r) K ?h \<le> z - r"
-        unfolding pexit_def
-        by (rule etime_le_of_mem[OF Tr _ _]) (use um mem in auto)
-      then show ?thesis by simp
-    qed
+    have "w s = 0" by (rule frz) (use that order.trans[OF that(2) rT] in simp_all)
+    then show ?thesis using inK by simp
   qed
-  have "pexit T K ?g = Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?g t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "r + pexit (T - r) K ?h
-      \<le> Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?g t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
+  have surv: "pexit r K (\<lambda>s. y + fst (w s)) = r"
+    by (rule pexit_eq_of_stays[OF r]) (rule stays)
+  have "pexit T K (\<lambda>s. y + fst (w s)) = r + pexit (T - r) K (\<lambda>s. y + fst (w (r + s)))"
+    by (rule pexit_split_at_r[OF r rT surv]) (rule stays[OF r order_refl])
+  also have "pexit (T - r) K (\<lambda>s. y + fst (w (r + s)))
+      = pexit (T - r) K (\<lambda>u. y + fst (prebase r T w u))"
+    by (rule pexit_cong_on) (simp add: prebase_apply)
+  finally show ?thesis by simp
 qed
 
 section \<open>The exit bound for the glued law\<close>
@@ -1676,78 +1519,46 @@ lemma pexit_padd_dpp:
 proof -
   let ?A = "pexit r K (\<lambda>t. fst (p' t))"
   let ?f = "\<lambda>t. fst (padd T p' w t)"
-  let ?b = "?A + (if ?A = r \<and> fst (p' r) \<in> K then c else 0)"
-  have T0: "0 \<le> T" using r rT by simp
-  have Ar: "?A \<le> r" by (rule pexit_le_T[OF r])
-  have ev: "?f t = fst (p' t) + fst (w t)" if t: "t \<in> {0..T}" for t
-    unfolding padd_eval_split(1)[OF t] ..
-  have lb: "?b \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T \<and> ?f t \<in> - K} \<union> {T}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "?f z \<in> - K" | (cap) "z = T" using z by blast
-    then show ?thesis
-    proof cases
-      case cap
-      have "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) \<le> c" using c by simp
-      with Ar cT show ?thesis unfolding cap by linarith
-    next
-      case hit
-      then have zm: "z \<in> {0..T}" by simp
-      show ?thesis
-      proof (cases "?A = r \<and> fst (p' r) \<in> K")
-        case False
-        then have e0: "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) = 0"
-          by (rule if_not_P)
-        have "?A \<le> z"
-        proof (cases "z \<le> r")
-          case True
-          have fz: "?f z = fst (p' z)"
-            unfolding ev[OF zm] using frz[OF zm True] by simp
-          have mem: "fst (p' z) \<in> - K" using hit(3) fz by simp
-          show ?thesis
-            unfolding pexit_def
-            by (rule etime_le_of_mem[OF r hit(1) True]) (use mem in simp)
-        next
-          case False
-          then show ?thesis using Ar by simp
-        qed
-        then show ?thesis unfolding e0 by simp
-      next
-        case True
-        then have Aeq: "?A = r" and inK: "fst (p' r) \<in> K" by blast+
-        have e1: "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) = c"
-          using True by (rule if_P)
-        have zr: "r < z"
-        proof (rule ccontr)
-          assume "\<not> r < z"
-          then have zle: "z \<le> r" by simp
-          have fz: "?f z = fst (p' z)"
-            unfolding ev[OF zm] using frz[OF zm zle] by simp
-          have mem: "fst (p' z) \<in> - K" using hit(3) fz by simp
-          have "?A \<le> z"
-            unfolding pexit_def
-            by (rule etime_le_of_mem[OF r hit(1) zle]) (use mem in simp)
-          then have "z = r" using zle Aeq by simp
-          then show False using hit(3) fz inK by simp
-        qed
-        have fz: "?f z = fst (p' r) + fst (w z)"
-          unfolding ev[OF zm] using stop[OF zm] zr by simp
-        have "r + c \<le> pexit T K (\<lambda>s. fst (p' r) + fst (w s))"
-          by (rule cont[OF Aeq inK])
-        also have "\<dots> \<le> z"
-          unfolding pexit_def
-          by (rule etime_le_of_mem[OF T0 hit(1) hit(2)])
-             (use hit(3) fz in simp)
-        finally have "r + c \<le> z" .
-        then show ?thesis using e1 Aeq by simp
-      qed
-    qed
+  have w0: "w t = 0" if "0 \<le> t" "t \<le> r" for t
+    by (rule frz) (use that order.trans[OF that(2) rT] in simp_all)
+  have ev: "?f t = fst (p' t) + fst (w t)" if "0 \<le> t" "t \<le> T" for t
+    using that by (simp add: padd_eval_split(1))
+  have Af: "pexit r K ?f = ?A"
+  proof (rule pexit_cong_on)
+    fix t assume t: "0 \<le> t" "t \<le> r"
+    then show "?f t = fst (p' t)"
+      using ev[OF t(1) order.trans[OF t(2) rT]] w0[OF t] by simp
   qed
-  have "pexit T K ?f = Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?f t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "?b \<le> Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?f t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
+  show ?thesis
+  proof (cases "?A = r \<and> fst (p' r) \<in> K")
+    case True
+    then have Aeq: "?A = r" and inK: "fst (p' r) \<in> K" by simp_all
+    have hK: "fst (p' r) + fst (w s) \<in> K" if "0 \<le> s" "s \<le> r" for s
+      using w0[OF that] inK by simp
+    have fr: "?f r \<in> K" using ev[OF r rT] w0[OF r order_refl] inK by simp
+    have rest: "pexit (T - r) K (\<lambda>s. ?f (r + s))
+        = pexit (T - r) K (\<lambda>s. fst (p' r) + fst (w (r + s)))"
+    proof (rule pexit_cong_on)
+      fix s assume "0 \<le> s" "s \<le> T - r"
+      then have rs: "0 \<le> r + s" "r + s \<le> T" "r \<le> r + s" using r by linarith+
+      then show "?f (r + s) = fst (p' r) + fst (w (r + s))"
+        using ev[OF rs(1,2)] stop[of "r + s"] by simp
+    qed
+    have survh: "pexit r K (\<lambda>s. fst (p' r) + fst (w s)) = r"
+      by (rule pexit_eq_of_stays[OF r]) (rule hK)
+    have "pexit T K ?f = r + pexit (T - r) K (\<lambda>s. ?f (r + s))"
+      by (rule pexit_split_at_r[OF r rT]) (simp_all add: Af Aeq fr)
+    also have "\<dots> = pexit T K (\<lambda>s. fst (p' r) + fst (w s))"
+      unfolding rest
+      by (rule pexit_split_at_r[OF r rT survh, symmetric]) (rule hK[OF r order_refl])
+    finally show ?thesis using True cont[OF Aeq inK] by simp
+  next
+    case False
+    have "?A \<le> pexit T K ?f" using pexit_mono_T[OF r rT, of K ?f] Af by simp
+    moreover have "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) = 0"
+      using False by (rule if_not_P)
+    ultimately show ?thesis by simp
+  qed
 qed
 
 text \<open>The bridge between the two clocks: the selector's optimality is a

@@ -144,17 +144,6 @@ proof -
   finally show ?thesis unfolding pq by simp
 qed
 
-lemma powr_ratio_lt_1:
-  fixes \<gamma> :: real
-  assumes "\<gamma> < 1/4"
-  shows "2 powr (-(1-4*\<gamma>)) < 1"
-proof -
-  have "(-(1-4*\<gamma>)) < 0" using assms by simp
-  hence "2 powr (-(1-4*\<gamma>)) < 2 powr 0"
-    by (intro powr_less_mono) simp_all
-  thus ?thesis by simp
-qed
-
 subsection \<open>The bad event over all levels at once\<close>
 
 text \<open>
@@ -185,7 +174,7 @@ proof -
       2 powr (-\<gamma>*real j)
         \<le> \<bar>X (real_of_int k / 2^j) \<omega> - X (real_of_int (k - 1) / 2^j) \<omega>\<bar>}" for j
   have q0: "0 < ?q" by simp
-  have q1: "?q < 1" by (rule powr_ratio_lt_1[OF g2])
+  have q1: "?q < 1" by (rule powr_less_one) (use g2 in simp_all)
   have Xmeas: "X u \<in> borel_measurable M" if "0 \<le> u" for u
     by (rule Xm[OF that])
   have Esets: "E j \<in> sets M" for j
@@ -229,22 +218,7 @@ proof -
       = (\<Union>j\<in>{n..}. E j)"
     unfolding E_def by auto
   have s2: "(\<Union>j\<in>{n..}. E j) = (\<Union>m. E (n + m))"
-  proof -
-    have "(\<Union>j\<in>{n..}. E j) \<subseteq> (\<Union>m. E (n + m))"
-    proof
-      fix x assume "x \<in> (\<Union>j\<in>{n..}. E j)"
-      then obtain j where j: "n \<le> j" "x \<in> E j" by auto
-      from j(1) obtain m where "j = n + m" using le_Suc_ex by blast
-      with j(2) show "x \<in> (\<Union>m. E (n + m))" by auto
-    qed
-    moreover have "(\<Union>m. E (n + m)) \<subseteq> (\<Union>j\<in>{n..}. E j)"
-    proof
-      fix x assume "x \<in> (\<Union>m. E (n + m))"
-      then obtain m where "x \<in> E (n + m)" by auto
-      thus "x \<in> (\<Union>j\<in>{n..}. E j)" by (intro UN_I[of "n + m"]) simp_all
-    qed
-    ultimately show ?thesis by blast
-  qed
+    by (auto dest: le_Suc_ex intro!: bexI[of _ "n + _"])
   have "measure M (\<Union>m. E (n + m)) \<le> (\<Sum>m. measure M (E (n + m)))"
     by (rule P.finite_measure_subadditive_countably) (use Esets msum in auto)
   also have "\<dots> \<le> (\<Sum>m. 8*C\<^sup>2*T * ?q^n * ?q^m)"
@@ -267,31 +241,64 @@ lemma geometric_tail_sum_le:
   fixes r :: real
   assumes r0: "0 \<le> r" and r1: "r < 1"
   shows "(\<Sum>j\<in>{n<..m}. r^j) \<le> r^Suc n / (1 - r)"
-proof (cases "n \<le> m")
+proof (cases "n < m")
   case True
-  have iv: "{n<..m} = {Suc n..<Suc m}" by auto
-  have "(\<Sum>j\<in>{Suc n..<Suc m}. r^j) = (\<Sum>i\<in>{0..<Suc m - Suc n}. r^(i + Suc n))"
-    using sum.shift_bounds_nat_ivl[of "\<lambda>j. r^j" 0 "Suc n" "Suc m - Suc n"] True
-    by simp
-  also have "\<dots> = r^Suc n * (\<Sum>i\<in>{0..<Suc m - Suc n}. r^i)"
-    by (simp add: power_add sum_distrib_left mult_ac)
-  also have "\<dots> \<le> r^Suc n * (1 / (1 - r))"
-  proof (rule mult_left_mono)
-    have "(\<Sum>i\<in>{0..<Suc m - Suc n}. r^i) \<le> (\<Sum>i. r^i)"
-      by (rule sum_le_suminf)
-         (use r0 r1 summable_geometric[of r] in auto)
-    also have "\<dots> = 1 / (1 - r)"
-      using r0 r1 by (simp add: suminf_geometric)
-    finally show "(\<Sum>i\<in>{0..<Suc m - Suc n}. r^i) \<le> 1 / (1 - r)" .
-    show "0 \<le> r^Suc n" using r0 by simp
-  qed
-  finally show ?thesis unfolding iv by simp
+  have "{n<..m} = {Suc n..m}" by auto
+  then show ?thesis
+    using True r0 r1 by (simp add: sum_gp divide_right_mono)
 next
   case False
-  hence "{n<..m} = {}" by auto
-  moreover have "0 \<le> r^Suc n / (1 - r)"
-    using r0 r1 by (intro divide_nonneg_pos) simp_all
-  ultimately show ?thesis by simp
+  then show ?thesis using r0 r1 by simp
+qed
+
+text \<open>
+  The chaining bound for pairs of dyadics, with no continuity hypothesis and in
+  any metric space (\<open>dyadic_chaining\<close>): if every level-\<open>j\<close> dyadic increment,
+  \<open>j \<ge> n\<close>, is at most \<open>E \<cdot> 2 powr (-\<gamma> j)\<close>, then two dyadics at distance at
+  most \<open>1/2^n'\<close>, \<open>n' \<ge> n\<close>, are mapped at most
+  \<open>3 E \<cdot> 2 powr (-\<gamma> n') / (1 - 2 powr (-\<gamma>))\<close> apart.
+\<close>
+
+lemma dyadic_pair_modulus:
+  fixes f :: "real \<Rightarrow> 'b::metric_space" and \<gamma> T E :: real
+  assumes good: "\<And>j k. n \<le> j \<Longrightarrow> k \<in> {1..\<lfloor>2^j * T\<rfloor>} \<Longrightarrow>
+      dist (f (real_of_int (k - 1) / 2^j)) (f (real_of_int k / 2^j))
+        \<le> E * 2 powr (-\<gamma>*real j)"
+    and g0: "0 < \<gamma>" and E0: "0 \<le> E"
+    and w: "w \<in> dyadic_interval_step m 0 T" and z: "z \<in> dyadic_interval_step m 0 T"
+    and wz: "\<bar>w - z\<bar> \<le> 1 / 2 ^ n'"
+    and nn': "n \<le> n'"
+  shows "dist (f w) (f z) \<le> 3 * E * 2 powr (-\<gamma>*real n') / (1 - 2 powr (-\<gamma>))"
+proof -
+  let ?r = "2 powr (-\<gamma>)"
+  have r0: "0 < ?r" by simp
+  have r1: "?r < 1" by (rule powr_less_one) (use g0 in simp_all)
+  have cj: "2 powr (-\<gamma>*real j) = ?r^j" for j
+    by (subst powr_realpow[symmetric]) (simp_all add: powr_powr)
+  define m' where "m' = max m n'"
+  have nm: "n' \<le> m'" unfolding m'_def by simp
+  have w': "w \<in> dyadic_interval_step m' 0 T" and z': "z \<in> dyadic_interval_step m' 0 T"
+    using dyadic_interval_step_mono[OF w] dyadic_interval_step_mono[OF z]
+    unfolding m'_def by simp_all
+  have "dist (f w) (f z)
+      \<le> E * 2 powr (-\<gamma>*real n') + 2 * (\<Sum>j\<in>{n'<..m'}. E * 2 powr (-\<gamma>*real j))"
+    by (rule dyadic_chaining[where f=f, OF w' z' wz nm])
+       (use good[OF order.trans[OF nn']] E0 in simp_all)
+  also have "\<dots> \<le> E * ?r^n' + 2 * (E * (?r^Suc n' / (1 - ?r)))"
+    unfolding cj sum_distrib_left[symmetric]
+    by (intro add_mono order_refl mult_left_mono geometric_tail_sum_le E0) (use r0 r1 in simp_all)
+  also have "\<dots> = (E * ?r^n' * (1 - ?r) + 2 * (E * ?r^Suc n')) / (1 - ?r)"
+    using r1 g0 by (simp add: add_divide_distrib)
+  also have "\<dots> \<le> 3 * (E * ?r^n') / (1 - ?r)"
+  proof (rule divide_right_mono)
+    have "E * ?r^n' * (1 - ?r) \<le> E * ?r^n'"
+      by (rule mult_left_le) (use E0 r0 r1 in simp_all)
+    moreover have "E * ?r^Suc n' \<le> E * ?r^n'"
+      by (intro mult_left_mono power_decreasing) (use E0 r0 r1 in simp_all)
+    ultimately show "E * ?r^n' * (1 - ?r) + 2 * (E * ?r^Suc n') \<le> 3 * (E * ?r^n')"
+      by linarith
+  qed (use r1 in simp)
+  finally show ?thesis unfolding cj by (simp only: mult.assoc)
 qed
 
 text \<open>
@@ -314,69 +321,12 @@ theorem modulus_of_good_path:
     and gap: "\<bar>u - v\<bar> < 1 / 2 ^ n"
   shows "\<bar>f u - f v\<bar> \<le> 3 * 2 powr (-\<gamma>*real n) / (1 - 2 powr (-\<gamma>))"
 proof -
-  let ?r = "2 powr (-\<gamma>)"
-  have r0: "0 < ?r" by simp
-  have r1: "?r < 1"
-  proof -
-    have "(-\<gamma>) < 0" using g0 by simp
-    hence "2 powr (-\<gamma>) < 2 powr 0" by (intro powr_less_mono) simp_all
-    thus ?thesis by simp
-  qed
-  have pos: "0 < 1 - ?r" using r1 by simp
-  have cj: "2 powr (-\<gamma>*real j) = ?r^j" for j
-    by (subst powr_realpow[symmetric]) (simp_all add: powr_powr)
-  have K: "dist (f w) (f z) \<le> 3 * 2 powr (-\<gamma>*real n) / (1 - ?r)"
-    if w: "w \<in> dyadic_interval_step m 0 T" and z: "z \<in> dyadic_interval_step m 0 T"
-      and wz: "\<bar>w - z\<bar> \<le> 1 / 2 ^ n" for m w z
-  proof -
-    define m' where "m' = max m n"
-    have mm: "m \<le> m'" and nm: "n \<le> m'" unfolding m'_def by simp_all
-    have w': "w \<in> dyadic_interval_step m' 0 T"
-      by (rule dyadic_interval_step_mono[OF w mm])
-    have z': "z \<in> dyadic_interval_step m' 0 T"
-      by (rule dyadic_interval_step_mono[OF z mm])
-    have H: "dist (f (real_of_int (k - 1) / 2 ^ j)) (f (real_of_int k / 2 ^ j))
-              \<le> 2 powr (-\<gamma>*real j)"
-      if "n \<le> j" "j \<le> m'" "k \<in> {1..\<lfloor>2 ^ j * T\<rfloor>}" for j k
-      using good[OF that(1) that(3)] by (simp add: dist_real_def abs_minus_commute)
-    have S1: "(\<Sum>j\<in>{n<..m'}. 2 powr (-\<gamma>*real j)) \<le> ?r^Suc n / (1 - ?r)"
-      unfolding cj by (rule geometric_tail_sum_le) (use r0 r1 in simp_all)
-    have "dist (f w) (f z)
-        \<le> 2 powr (-\<gamma>*real n) + 2 * (\<Sum>j\<in>{n<..m'}. 2 powr (-\<gamma>*real j))"
-      by (rule dyadic_chaining[where f=f, OF w' z' wz nm H]) simp_all
-    also have "\<dots> \<le> ?r^n + 2 * (?r^Suc n / (1 - ?r))"
-      using S1 cj[of n] by linarith
-    also have "\<dots> \<le> 3 * ?r^n / (1 - ?r)"
-    proof -
-      have ne: "1 - ?r \<noteq> 0" using pos by linarith
-      have e1: "(?r^n * (1 - ?r) + 2 * ?r^Suc n) / (1 - ?r)
-          = ?r^n + 2 * (?r^Suc n / (1 - ?r))"
-      proof -
-        have "(?r^n * (1 - ?r) + 2 * ?r^Suc n) / (1 - ?r)
-            = ?r^n * (1 - ?r) / (1 - ?r) + 2 * ?r^Suc n / (1 - ?r)"
-          by (rule add_divide_distrib)
-        also have "?r^n * (1 - ?r) / (1 - ?r) = ?r^n"
-          by (rule nonzero_mult_div_cancel_right[OF ne])
-        finally show ?thesis by simp
-      qed
-      have e2: "?r^n * (1 - ?r) + 2 * ?r^Suc n = ?r^n + ?r^Suc n"
-        by (simp add: algebra_simps)
-      have le1: "?r^Suc n \<le> ?r^n"
-        by (intro power_decreasing) (use r0 r1 in simp_all)
-      have rn0: "0 \<le> ?r^n"
-        by (rule zero_le_power[OF less_imp_le[OF r0]])
-      have e3: "?r^n + ?r^Suc n \<le> 3 * ?r^n"
-        using le1 rn0 by linarith
-      have "(?r^n + ?r^Suc n) / (1 - ?r) \<le> (3 * ?r^n) / (1 - ?r)"
-        by (rule divide_right_mono[OF e3]) (use pos in simp)
-      thus ?thesis unfolding e1[symmetric] e2 by simp
-    qed
-    also have "3 * ?r^n / (1 - ?r) = 3 * 2 powr (-\<gamma>*real n) / (1 - ?r)"
-      unfolding cj[of n] by (rule refl)
-    finally show ?thesis .
-  qed
-  have "dist (f u) (f v) \<le> 3 * 2 powr (-\<gamma>*real n) / (1 - ?r)"
-    by (rule dyadic_modulus_extension[OF cont K u v gap])
+  have good': "dist (f (real_of_int (k - 1) / 2^j)) (f (real_of_int k / 2^j))
+      \<le> 1 * 2 powr (-\<gamma>*real j)" if "n \<le> j" "k \<in> {1..\<lfloor>2^j * T\<rfloor>}" for j k
+    using good[OF that] by (simp add: dist_real_def abs_minus_commute)
+  have "dist (f u) (f v) \<le> 3 * 1 * 2 powr (-\<gamma>*real n) / (1 - 2 powr (-\<gamma>))"
+    by (rule dyadic_modulus_extension[OF cont
+          dyadic_pair_modulus[OF good' g0 zero_le_one _ _ _ order_refl] u v gap])
   thus ?thesis by (simp add: dist_real_def)
 qed
 

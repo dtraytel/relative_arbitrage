@@ -20,78 +20,6 @@ text \<open>The clauses of Theorem 1.1 proved for \<open>exit_val\<close> --- th
   Clause (4), uniqueness, is \<open>Value_Function_Uniqueness.theorem_1_1_uniqueness_general\<close>,
   a statement about viscosity solutions rather than about \<open>exit_val\<close>.\<close>
 
-section \<open>The supremum in (1.6) is attained\<close>
-
-
-
-
-theorem exit_val_attained:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
-  shows "\<exists>Q \<in> exit_class k L T x.
-      ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K x"
-proof -
-  let ?C = "exit_class k L T x"
-  let ?S = "\<lambda>Q :: ('n pairpath) measure.
-      ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
-  let ?Y = "mtopology_of (path_metric T :: (real \<Rightarrow> real^'n) metric)"
-  let ?p = "\<lambda>Q :: ('n pairpath) measure. distr Q (borel_of ?Y) (pfst T)"
-  have T0: "0 \<le> T" using T by simp
-  have L0: "0 \<le> L" using L by simp
-  have ne: "?C \<noteq> {}"
-    using exit_class_shift_image[OF T0, of k L x]
-      exit_class_nonempty[OF T0 L] by auto
-  have imne: "?S ` ?C \<noteq> {}" using ne by simp
-  obtain f :: "nat \<Rightarrow> ennreal" where finc: "incseq f"
-    and frange: "range f \<subseteq> ?S ` ?C"
-    and fsup: "Sup (?S ` ?C) = (SUP i. f i)"
-    using ennreal_Sup_countable_SUP[OF imne] by blast
-  have "\<forall>i. \<exists>Q. Q \<in> ?C \<and> f i = ?S Q" using frange by blast
-  then obtain Qm :: "nat \<Rightarrow> ('n pairpath) measure"
-    where Qm: "\<And>i. Qm i \<in> ?C" and fQ: "\<And>i. f i = ?S (Qm i)" by metis
-  have sub: "\<exists>a Q. strict_mono a \<and> Q \<in> ?C
-      \<and> weak_conv_on (Qm \<circ> a) Q sequentially
-          (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    by (rule exit_class_convergent_subsequence[OF T L0]) (rule Qm)
-  obtain a Q where sm: "strict_mono a" and Qc: "Q \<in> ?C"
-    and wc: "weak_conv_on (Qm \<circ> a) Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    using sub by blast
-  have pQ: "prob_space (Qm i)" for i by (rule exit_class_prob[OF Qm])
-  have pQc: "prob_space Q" by (rule exit_class_prob[OF Qc])
-  have wcY: "weak_conv_on (\<lambda>i. ?p (Qm (a i))) (?p Q) sequentially ?Y"
-  proof -
-    have "weak_conv_on (\<lambda>i. distr ((Qm \<circ> a) i) (borel_of ?Y) (pfst T))
-        (distr Q (borel_of ?Y) (pfst T)) sequentially ?Y"
-      by (rule weak_conv_on_pushforward
-          [OF Lipschitz_continuous_imp_continuous_map[OF Lipschitz_pfst[OF T0]] wc])
-    then show ?thesis by simp
-  qed
-  have lim: "Limsup sequentially (\<lambda>i. ess_inf_time (?p (Qm (a i))) (pexit T K))
-      \<le> ess_inf_time (?p Q) (pexit T K)"
-  proof (rule ess_inf_pexit_usc[OF T K wcY])
-    show "prob_space (?p (Qm (a i)))" for i
-      by (rule prob_space.prob_space_distr[OF pQ pfst_measurable[OF T0]])
-        (rule exit_class_sets[OF Qm])
-    show "prob_space (?p Q)"
-      by (rule prob_space.prob_space_distr[OF pQc pfst_measurable[OF T0]])
-        (rule exit_class_sets[OF Qc])
-  qed
-  have eqS: "ess_inf_time (?p R) (pexit T K) = ?S R" if "R \<in> ?C" for R
-    by (rule ess_inf_time_pfst[OF T0 K exit_class_sets[OF that]])
-  have lim': "Limsup sequentially (\<lambda>i. ?S (Qm (a i))) \<le> ?S Q"
-    using lim by (simp add: eqS[OF Qm] eqS[OF Qc])
-  have "f \<longlonglongrightarrow> (SUP i. f i)" using finc by (rule LIMSEQ_SUP)
-  then have "(f \<circ> a) \<longlonglongrightarrow> (SUP i. f i)"
-    by (rule LIMSEQ_subseq_LIMSEQ[OF _ sm])
-  then have "Limsup sequentially (\<lambda>i. ?S (Qm (a i))) = (SUP i. f i)"
-    using fQ by (simp add: lim_imp_Limsup o_def)
-  with lim' fsup have ge: "Sup (?S ` ?C) \<le> ?S Q" by simp
-  have le: "?S Q \<le> Sup (?S ` ?C)" using Qc by (intro Sup_upper imageI)
-  from ge le have "?S Q = Sup (?S ` ?C)" by simp
-  then show ?thesis using Qc unfolding exit_val_def by blast
-qed
-
 text \<open>The measurable selection theorem for upper semicontinuous payoffs,
   Bertsekas--Shreve (1978) Prop. 7.33, lives in
   @{theory Semicontinuous_Analysis.Semicontinuous_Selection}, as
@@ -186,7 +114,8 @@ text \<open>After @{thm [source] exit_class_shift_image} the functional
   uniformly continuous test function is displaced uniformly.  Weak
   convergence may be tested against bounded uniformly continuous
   functions (@{thm [source] mweak_conv_fin.mweak_conv_eq1}), so no
-  tightness is needed.\<close>
+  tightness is needed; @{thm [source] weak_conv_on_pushforward_uniform}
+  packages the argument.\<close>
 
 
 
@@ -245,7 +174,7 @@ qed
 
 section \<open>A measurable optimizer: Larsson--Ruf Proposition 2.2(ii)\<close>
 
-text \<open>The optimizer of @{thm [source] exit_val_attained} can be chosen
+text \<open>The supremum in (1.6) is attained, and the optimizer can be chosen
   measurably in the starting point: the class at the origin is a compact
   metric space (@{thm [source] exit_class_compact_metric_space}),
   the payoff is jointly upper semicontinuous
@@ -443,6 +372,21 @@ proof -
       = exit_val k L T K y" for y
     using sopt[of y] supeq[of y] by simp
   show ?thesis by (rule that[OF smW sC shiftmem sval])
+qed
+
+text \<open>In particular the supremum in (1.6) is attained at every starting point.\<close>
+
+theorem exit_val_attained:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
+  shows "\<exists>Q \<in> exit_class k L T x.
+      ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K x"
+proof -
+  obtain S where "\<And>y. pshift_law T y (S y) \<in> exit_class k L T y"
+    and "\<And>y. ess_inf_time (pshift_law T y (S y)) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+      = exit_val k L T K y"
+    using exit_val_measurable_selector[OF T L K, of k] by metis
+  then show ?thesis by blast
 qed
 
 section \<open>The optimizer as a Giry-monad kernel\<close>

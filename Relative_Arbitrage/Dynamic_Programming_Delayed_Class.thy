@@ -612,24 +612,7 @@ proof -
   have rat: "AE w in \<nu>. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
       p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> s \<le> p \<longrightarrow>
         (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
-  proof (rule AE_ball_countable'[OF _ countable_rat])
-    fix p :: real assume "p \<in> \<rat>"
-    show "AE w in \<nu>. \<forall>q\<in>(\<rat>::real set).
-        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> s \<le> p \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
-    proof (rule AE_ball_countable'[OF _ countable_rat])
-      fix q :: real assume "q \<in> \<rat>"
-      show "AE w in \<nu>. p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> s \<le> p \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
-      proof (cases "p \<in> {0..T} \<and> q \<in> {0..T} \<and> p < q \<and> s \<le> p")
-        case True
-        then show ?thesis using one[of p q] by auto
-      next
-        case False
-        then show ?thesis by auto
-      qed
-    qed
-  qed
+    by (intro AE_ball_countable'[OF _ countable_rat] AE_impI one)
   have spn: "AE w in \<nu>. w \<in> space \<nu>" by (rule AE_space)
   from rat spn show ?thesis
   proof eventually_elim
@@ -849,24 +832,7 @@ proof -
   have rat: "AE p' in ?Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
       p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> q \<le> \<theta> p' \<longrightarrow>
         (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
-  proof (rule AE_ball_countable'[OF _ countable_rat])
-    fix p :: real assume "p \<in> \<rat>"
-    show "AE p' in ?Q. \<forall>q\<in>(\<rat>::real set).
-        p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> q \<le> \<theta> p' \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
-    proof (rule AE_ball_countable'[OF _ countable_rat])
-      fix q :: real assume "q \<in> \<rat>"
-      show "AE p' in ?Q. p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> q \<le> \<theta> p' \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
-      proof (cases "p \<in> {0..T} \<and> q \<in> {0..T} \<and> p < q")
-        case True
-        then show ?thesis using one[of p q] by auto
-      next
-        case False
-        then show ?thesis by auto
-      qed
-    qed
-  qed
+    by (intro AE_ball_countable'[OF _ countable_rat] AE_impI one)
   have spn: "AE p' in ?Q. p' \<in> space ?Q" by (rule AE_space)
   from rat spn show ?thesis
   proof eventually_elim

@@ -365,15 +365,6 @@ subsection \<open>The limit law's process is a martingale\<close>
 
 text \<open>\<open>fst_coord_borel\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-theorem compactin_pair_holder_ball:
-  fixes x :: "real^'n::finite"
-  assumes T: "0 \<le> T" and ga: "0 < ga" and c: "0 \<le> c"
-  shows "compactin (mtopology_of (path_metric T :: ('n pairpath) metric))
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         \<omega> 0 = (x, 0)
-         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}. norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}"
-  by (rule compactin_path_holder_ball[OF T ga c])
-
 lemma outerp_sq: "outerp u ** outerp u = (u \<bullet> u) *\<^sub>R outerp u"
 proof -
   have "(outerp u ** outerp u) $ i $ j = ((u \<bullet> u) *\<^sub>R outerp u) $ i $ j"
@@ -406,11 +397,6 @@ lemma pair_holder_ball_mem:
            norm (\<omega> v - \<omega> u) \<le> (c + B * T powr (1 - ga)) * \<bar>v - u\<bar> powr ga)}"
   using mem start
   by (auto intro!: pair_holder_of_components[OF T ga c B X Y])
-
-text \<open>The tightness criterion the pair laws are checked against: since
-  \<open>compactin_pair_holder_ball\<close> supplies the compact set outright, a
-  family of pair laws is tight as soon as, for every \<open>e\<close>, some Hoelder
-  ball carries all but \<open>e\<close> of every law's mass.\<close>
 
 lemma outerp_add:
   fixes a b :: "real^'n::finite"
@@ -514,45 +500,6 @@ text \<open>Assembling the separation for the value function.  On a small
   below the distance to the complement of \<open>interior K\<close>, so that every
   point of the ball is an admissible touching point in its own right.\<close>
 
-theorem tight_on_set_pair_holder_charge:
-  fixes \<Gamma> :: "(('n::finite) pairpath) measure set" and x :: "real^'n"
-  assumes T: "0 \<le> T" and ga: "0 < ga"
-    and fm: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> finite_measure N"
-    and st: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> sets (path_borel T :: ('n pairpath) measure) = sets N"
-    and charge: "\<And>e. 0 < e \<Longrightarrow> \<exists>c. 0 \<le> c \<and> (\<forall>N\<in>\<Gamma>. measure N (space N -
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         \<omega> 0 = (x, 0)
-         \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-              norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}) < e)"
-  shows "tight_on_set (mtopology_of (path_metric T :: ('n pairpath) metric)) \<Gamma>"
-  unfolding tight_on_set_def
-proof (intro conjI)
-  show "\<forall>M\<in>\<Gamma>. finite_measure M \<and> sets (path_borel T :: ('n pairpath) measure) = sets M"
-    using fm st by blast
-next
-  show "\<forall>e>0. \<exists>K.
-      compactin (mtopology_of (path_metric T :: ('n pairpath) metric)) K
-      \<and> (\<forall>M\<in>\<Gamma>. measure M (space M - K) < e)"
-  proof (intro allI impI)
-    fix e :: real assume e: "0 < e"
-    obtain c where c: "0 \<le> c"
-      and ch: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> measure N (space N -
-        {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-           \<omega> 0 = (x, 0)
-           \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-                norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}) < e"
-      using charge[OF e] by blast
-    show "\<exists>K.
-        compactin (mtopology_of (path_metric T :: ('n pairpath) metric)) K
-        \<and> (\<forall>M\<in>\<Gamma>. measure M (space M - K) < e)"
-      by (intro exI[of _ "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-             \<omega> 0 = (x, 0)
-             \<and> (\<forall>u\<in>{0..T}. \<forall>v\<in>{0..T}.
-                  norm (\<omega> v - \<omega> u) \<le> c * \<bar>v - u\<bar> powr ga)}"] conjI ballI
-          compactin_pair_holder_ball[OF T ga c] ch)
-  qed
-qed
-
 text \<open>The charge splits along the components: the \<open>X\<close>-side Hoelder event and
   the \<open>Y\<close>-side Lipschitz event intersect inside a pair Hoelder ball
   (\<open>pair_holder_of_components\<close>), so their complements cover the ball's
@@ -569,7 +516,7 @@ section \<open>Which clauses survive a weak limit\<close>
 text \<open>Lemma 2.3 of the paper says the class is closed, passing each defining
   clause of (1.7) to the limit law. The paper uses Prokhorov followed by
   Skorokhod's representation theorem; this instead uses the closed-set
-  half of the portmanteau theorem (\<open>weak_conv_closed_full_mass\<close>), needing
+  half of the portmanteau theorem (\<open>weak_conv_closed_full_measure\<close>), needing
   no almost-sure realisation.
 
   This section discharges the two clauses that are closed conditions on
@@ -1073,7 +1020,7 @@ proof -
   proof (rule pathify_measurable[OF T0])
     show "(\<lambda>w. f w t) \<in> borel_measurable M" if "t \<in> {0..T}" for t by (rule ev[OF that])
     show "continuous_on {0..T} (\<lambda>t. f w t)" if "w \<in> space M" for w
-      using mspace_path_metric_continuous[OF into[OF that]] by simp
+      using mspace_path_metricD[OF into[OF that]] by simp
   qed
   finally show ?thesis .
 qed
@@ -1223,7 +1170,7 @@ lemma path_sets_fst_continuous:
 proof -
   have "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     using w space_of_path_sets[OF setsN] by simp
-  then have "continuous_on {0..T} \<omega>" by (rule mspace_path_metric_continuous)
+  then have "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD)
   then show ?thesis by (rule continuous_on_fst)
 qed
 
@@ -1241,7 +1188,6 @@ proof -
   interpret HM: horizon_sq_int_martingale Q F Z T by (rule HZ)
   have T0': "0 \<le> T" using T0 by simp
   have mgZ: "martingale Q F 0 Z" by (rule HM.martingale_axioms)
-  have adp: "adapted_process Q F 0 Z" by unfold_locales
   have cont0: "continuous_on {0..} (\<lambda>s. Z s \<omega>)" if w: "\<omega> \<in> space Q" for \<omega>
   proof -
     have m: "continuous_on {0..} (\<lambda>s :: real. min s T)"
@@ -1251,62 +1197,12 @@ proof -
       by (rule continuous_on_compose2[OF contT[OF w] m im])
     then show ?thesis using cap by simp
   qed
-  have contu: "continuous_on {0..u} (\<lambda>s. Z s \<omega>)"
-    if w: "\<omega> \<in> space Q" for \<omega> u
-    by (rule continuous_on_subset[OF cont0[OF w]]) auto
-  have domT: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>"
-    by (rule HM.Dsup_dominates) (intro AE_I2 contu)
-  have domA: "AE \<omega> in Q. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>" for u
-    using domT
-  proof (rule eventually_mono)
-    fix \<omega> :: 'a
-    assume h: "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> T \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>"
-    show "\<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>"
-    proof (intro allI impI)
-      fix s :: real assume s: "0 \<le> s"
-      have "\<bar>Z (min s T) \<omega>\<bar> \<le> HM.Dsup \<omega>" using h s T0' by simp
-      then show "\<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>" using cap[of s \<omega>] by simp
-    qed
-  qed
-  have tnn': "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> 0 \<le> \<tau> \<omega>" by (rule tnn)
-  have stad: "(\<lambda>\<omega>. Z (min v (\<tau> \<omega>)) \<omega>) \<in> borel_measurable (F v)"
-    if v: "0 \<le> v" for v
-    by (rule stopped_adapted_of_cont[OF adp tnn' tstop cont0 v])
-  show mgs: "martingale Q F 0 (\<lambda>v \<omega>. Z (min v (\<tau> \<omega>)) \<omega>)"
-  proof (rule optional_stopping[where D = "\<lambda>_. HM.Dsup"])
-    show "martingale Q F 0 Z" by (rule mgZ)
-    show "\<And>\<omega>. \<omega> \<in> space Q \<Longrightarrow> 0 \<le> \<tau> \<omega>" by (rule tnn')
-    show "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space Q. \<tau> \<omega> \<le> s} \<in> sets (F s)" by (rule tstop)
-    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q. continuous_on {0..u} (\<lambda>s. Z s \<omega>)"
-      by (intro AE_I2 contu)
-    show "\<And>u. 0 < u \<Longrightarrow> AE \<omega> in Q.
-        \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> HM.Dsup \<omega>" by (rule domA)
-    show "\<And>u. 0 < u \<Longrightarrow> integrable Q HM.Dsup" by (rule HM.Dsup_integrable)
-    show "\<And>v. 0 \<le> v \<Longrightarrow> (\<lambda>\<omega>. Z (min v (\<tau> \<omega>)) \<omega>) \<in> borel_measurable (F v)"
-      by (rule stad)
-  qed
-  show "integrable Q (\<lambda>\<omega>. (Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
-  proof -
-    have m: "(\<lambda>\<omega>. Z (min s (\<tau> \<omega>)) \<omega>) \<in> borel_measurable Q"
-      by (rule measurable_from_subalg[OF HM.subalgebras[OF s] stad[OF s]])
-    then have m2: "(\<lambda>\<omega>. (Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2) \<in> borel_measurable Q" by simp
-    have ae: "AE \<omega> in Q. norm ((Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2) \<le> norm ((HM.Dsup \<omega>)\<^sup>2)"
-      using domA[of s]
-    proof (rule eventually_mono)
-      fix \<omega> :: 'a
-      assume h: "\<forall>v. 0 \<le> v \<longrightarrow> v \<le> s \<longrightarrow> \<bar>Z v \<omega>\<bar> \<le> HM.Dsup \<omega>"
-      have a: "0 \<le> min s (\<tau> \<omega>)" using s tnn[of \<omega>] by simp
-      have b: "min s (\<tau> \<omega>) \<le> s" by simp
-      have le: "\<bar>Z (min s (\<tau> \<omega>)) \<omega>\<bar> \<le> HM.Dsup \<omega>" using h a b by blast
-      have "(Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2 = \<bar>Z (min s (\<tau> \<omega>)) \<omega>\<bar>\<^sup>2" by simp
-      also have "\<dots> \<le> (HM.Dsup \<omega>)\<^sup>2" by (rule power_mono[OF le abs_ge_zero])
-      finally show "norm ((Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2) \<le> norm ((HM.Dsup \<omega>)\<^sup>2)"
-        by simp
-    qed
-    show ?thesis
-      by (rule Bochner_Integration.integrable_bound
-          [OF HM.Dsup_sq_integrable m2 ae])
-  qed
+  show "martingale Q F 0 (\<lambda>v \<omega>. Z (min v (\<tau> \<omega>)) \<omega>)"
+    by (rule stopped_martingale_L2[OF HM.prob_space_M mgZ HM.Y_sq_integrable cont0 _ tstop])
+       (use tnn in auto)
+  show "integrable Q (\<lambda>\<omega>. (Z (min s (\<tau> \<omega>)) \<omega>)\<^sup>2)" if "0 \<le> s" for s
+    by (rule stopped_L2_sq_integrable[OF HM.prob_space_M mgZ HM.Y_sq_integrable cont0 _
+          tstop that]) (use tnn in auto)
 qed
 
 text \<open>\<open>martingale_cong_ge\<close> lives in
@@ -2761,7 +2657,7 @@ qed
 
 section \<open>The compensated clause of Lemma 2.3\<close>
 
-text \<open>\<open>prod_minus_sq_bound\<close>, \<open>fourth_power_sum_bound\<close>, \<open>zero_le_fourth\<close> live in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
+text \<open>\<open>prod_minus_sq_bound\<close>, \<open>fourth_power_sum_bound\<close> and \<open>pow4_nonneg\<close> live in @{theory Continuous_Time_Martingales.Power_Inequalities}.\<close>
 
 
 subsection \<open>The compensated functional\<close>

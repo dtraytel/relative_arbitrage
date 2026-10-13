@@ -279,7 +279,7 @@ Comparison_Localisation.supconv_uniform_upper    # FIX_THEN_KEEP
 Path_Tightness.path_law_holder_ball_bound_vec    # FIX_THEN_KEEP
 Path_Tightness.tight_on_set_path_laws_vec    # FIX_THEN_KEEP
 Path_Tightness.marginal_map_measurable    # KEEP_API
-Path_Tightness.dyadic_pair_modulus    # FIX_THEN_KEEP
+Modulus_Tails.dyadic_pair_modulus    # FIX_THEN_KEEP (moved from Path_Tightness in phase 4)
 Path_Tightness.metric_measure_mono_bounded_cts    # KEEP_ROOT
 Stopped_Localization.rate_continuous_on    # FIX_THEN_KEEP
 Stopped_Localization.stopped_covariation    # FIX_THEN_KEEP
@@ -586,7 +586,6 @@ Comparison_Principle.viscosity_uniqueness_compact    # COROLLARY
 Adapted_Quadratic_Variation.qvps_mono_lip    # COROLLARY
 Adapted_Quadratic_Variation.qvps_continuous    # COROLLARY
 Pathwise_Quadratic_Variation.bounded_matrix_martingale_compensator.qvmat_eq_A_sym    # COROLLARY
-Stopped_Localization.fourth_moment_L2_integrable    # COROLLARY
 Stopped_Localization.fourth_moment_L2_bochner    # COROLLARY
 Optional_Sampling.nat_stopped_martingale.stopped_expectation    # COROLLARY
 Sampled_Quadratic_Variation.expectation_sq_sampled    # COROLLARY

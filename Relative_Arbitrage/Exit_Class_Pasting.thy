@@ -11,10 +11,16 @@ begin
 section \<open>The class is closed under shortening the horizon\<close>
 
 
-lemma exit_class_diffquot_of_pairs:
+text \<open>Clause (iii) from the pairwise bounds, at rational pairs only: an
+  almost-sure argument cannot supply the bound at all real pairs, since only
+  countably many conditions survive the passage from ``for each, almost
+  surely'' to ``almost surely, for all''; path continuity and closedness of
+  the constraint set do the rest (\<open>diffquot_all_of_rational\<close>).\<close>
+
+lemma exit_class_diffquot_of_rational_pairs:
   fixes Q :: "('n::finite pairpath) measure"
   assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and one: "\<And>p q :: real. p \<in> {0..T} \<Longrightarrow> q \<in> {0..T} \<Longrightarrow> p < q \<Longrightarrow>
+    and one: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> p \<in> {0..T} \<Longrightarrow> q \<in> {0..T} \<Longrightarrow> p < q \<Longrightarrow>
       AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
   shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
@@ -24,32 +30,12 @@ proof -
   have rat: "AE \<omega> in Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
       0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
       (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-  proof (rule AE_ball_countable'[OF _ countable_rat])
-    fix p :: real assume "p \<in> \<rat>"
-    show "AE \<omega> in Q. \<forall>q\<in>(\<rat>::real set). 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-    proof (rule AE_ball_countable'[OF _ countable_rat])
-      fix q :: real assume "q \<in> \<rat>"
-      show "AE \<omega> in Q. 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      proof (cases "0 \<le> p \<and> p < q \<and> q \<le> T")
-        case True
-        then have "p \<in> {0..T}" "q \<in> {0..T}" "p < q" by auto
-        from one[OF this] show ?thesis by (rule eventually_mono) simp
-      next
-        case False
-        then show ?thesis by auto
-      qed
-    qed
-  qed
+    by (intro AE_ball_countable'[OF _ countable_rat] AE_impI one) auto
   from rat AE_space show ?thesis
   proof eventually_elim
     case (elim \<omega>)
-    then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
-        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      and W: "\<omega> \<in> space Q" by blast+
     have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      using W spQ by simp
+      using elim(2) spQ by simp
     have cont: "continuous_on {0..T} (\<lambda>u. snd (\<omega> u))"
       using mspace_path_metricD[OF mw] by (intro continuous_intros)
     show ?case
@@ -57,11 +43,20 @@ proof -
       fix u v :: real
       assume uv: "0 \<le> u" "u < v" "v \<le> T"
       show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
-        by (rule diffquot_all_of_rational
-            [OF closed_sconstraint cont _ uv(1) uv(2) uv(3)]) (rule R)
+        by (rule diffquot_all_of_rational[OF closed_sconstraint cont _ uv])
+           (use elim(1) in blast)
     qed
   qed
 qed
+
+lemma exit_class_diffquot_of_pairs:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and one: "\<And>p q :: real. p \<in> {0..T} \<Longrightarrow> q \<in> {0..T} \<Longrightarrow> p < q \<Longrightarrow>
+      AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+  by (rule exit_class_diffquot_of_rational_pairs[OF setsQ one])
 
 text \<open>A member of the class at horizon \<open>T\<close>, cut back to \<open>[0,S]\<close>, is a
   member at horizon \<open>S\<close>: the \<open>AE\<close> clauses of (1.7) survive because \<open>pcut\<close>

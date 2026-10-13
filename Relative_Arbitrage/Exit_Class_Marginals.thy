@@ -331,6 +331,61 @@ proof (rule qvmata_eq_compensator_AE[where X = "\<lambda>t \<omega>. fst (\<omeg
     using iexit_class_start[OF P] iexit_class_diffquot[OF P] by eventually_elim blast
 qed
 
+subsection \<open>The two pushforwards are measurable\<close>
+
+text \<open>Both inclusions, and the identification of the value functions, push a
+  law forward along one of two maps: the \<open>X\<close>-marginal of a pair path, and
+  the lift of a path by its adapted quadratic-variation functional.\<close>
+
+lemma iexit_class_fstify_measurable:
+  fixes P :: "('n::finite pairpath) measure"
+  assumes P: "P \<in> iexit_class k L x"
+  shows "(\<lambda>\<omega> :: 'n pairpath. restrict (\<lambda>t. fst (\<omega> t)) {0..})
+      \<in> P \<rightarrow>\<^sub>M (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
+proof (rule ipathify_measurable)
+  show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable P" if "0 \<le> t" for t
+  proof -
+    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> borel_measurable P"
+      unfolding measurable_cong_sets[OF iexit_class_sets[OF P] refl]
+      by (rule ipath_eval_measurable[OF that])
+    then show ?thesis by (rule measurable_compose[OF _ pair_fst_borel])
+  qed
+next
+  fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space P"
+  then have "\<omega> \<in> ipath"
+    using iexit_class_sets[OF P] by (simp add: sets_eq_imp_space_eq)
+  then have c: "continuous_on {0..} \<omega>" by (rule ipath_continuous_on) simp
+  have g: "continuous_on UNIV (fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)"
+    by (intro continuous_intros)
+  show "continuous_on {0..} (\<lambda>t. fst (\<omega> t))"
+    by (rule continuous_on_compose2[OF g c]) auto
+qed
+
+lemma xclass_liftify_measurable:
+  fixes Q :: "((real \<Rightarrow> real^'n::finite) measure)"
+  assumes Q: "Q \<in> xclass k L x" and C: "0 \<le> C"
+  shows "(\<lambda>w :: real \<Rightarrow> real^'n. restrict (\<lambda>t. (w t, qvmata C w t)) {0..})
+      \<in> Q \<rightarrow>\<^sub>M (ipath_space :: (('n pairpath) measure))"
+proof (rule ipathify_measurable)
+  have projB: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel" for i
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  have evQ: "(\<lambda>w :: real \<Rightarrow> real^'n. w v) \<in> borel_measurable Q" if "0 \<le> v" for v
+    by (rule ipath_eval_measurable_sets[OF xclass_sets[OF Q] that])
+  show "(\<lambda>w :: real \<Rightarrow> real^'n. (w t, qvmata C w t)) \<in> borel_measurable Q"
+    if t: "0 \<le> t" for t
+  proof (rule borel_measurable_Pair[OF evQ[OF t]])
+    show "(\<lambda>w :: real \<Rightarrow> real^'n. qvmata C w t) \<in> borel_measurable Q"
+      by (rule qvmata_measurable[OF _ C])
+         (use evQ measurable_compose[OF _ projB] in blast)
+  qed
+next
+  fix w :: "real \<Rightarrow> real^'n" assume "w \<in> space Q"
+  then have "w \<in> ipath" using xclass_sets[OF Q] by (simp add: sets_eq_imp_space_eq)
+  then have c: "continuous_on {0..} w" by (rule ipath_continuous_on) simp
+  show "continuous_on {0..} (\<lambda>t. (w t, qvmata C w t))"
+    by (intro continuous_on_Pair c qvmata_continuous[OF C])
+qed
+
 subsection \<open>First inclusion: the \<open>X\<close>-marginal of a pair law is a \<open>P\<^sub>x\<close>-law\<close>
 
 text \<open>
@@ -363,22 +418,13 @@ proof -
   let ?F = "natural_filtration P 0 (\<lambda>t \<omega> :: 'n pairpath. \<omega> t)"
   let ?G = "natural_filtration ?Q 0 (\<lambda>t w :: real \<Rightarrow> real^'n. w t)"
 
-  have spP: "space P = (ipath :: ('n pairpath) set)"
-    using iexit_class_sets[OF P] by (simp add: sets_eq_imp_space_eq)
   have evP: "(\<lambda>\<omega> :: 'n pairpath. \<omega> v) \<in> borel_measurable P" if v: "0 \<le> v" for v
     unfolding measurable_cong_sets[OF iexit_class_sets[OF P] refl]
     by (rule ipath_eval_measurable[OF v])
   have XmP: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> v)) \<in> borel_measurable P" if v: "0 \<le> v" for v
     by (rule measurable_compose[OF evP[OF v] pair_fst_borel])
-  have contP: "continuous_on {0..} (\<lambda>t. fst (\<omega> t))" if w: "\<omega> \<in> space P" for \<omega>
-  proof -
-    have "\<omega> \<in> ipath" using w spP by simp
-    then have c: "continuous_on {0..} \<omega>" by (rule ipath_continuous_on) simp
-    show ?thesis by (rule continuous_on_compose2[OF _ c]) (auto intro: pair_fst_borel
-        continuous_on_fst continuous_on_id)
-  qed
   have phim: "?\<phi> \<in> P \<rightarrow>\<^sub>M (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
-    by (rule ipathify_measurable[OF XmP contP])
+    by (rule iexit_class_fstify_measurable[OF P])
   have into: "?\<phi> \<omega> \<in> ipath" if "\<omega> \<in> space P" for \<omega>
     using measurable_space[OF phim that] by simp
 
@@ -569,85 +615,20 @@ proof -
     continuous for EVERY path, so the condition over all real pairs is the
     condition over the rational ones, which is countable, hence measurable ---
     and that is what lets it be transferred along the pushforward.\<close>
-  have equiv: "(\<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L)
-      \<longleftrightarrow> (\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p)) \<in> sconstraint k L)"
-    for w :: "real \<Rightarrow> real^'n"
-  proof
-    assume A: "\<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L"
-    show "\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p)) \<in> sconstraint k L"
-    proof (intro allI impI)
-      fix p q :: rat assume pq: "0 \<le> p" "p < q"
-      then have "(0 :: real) \<le> real_of_rat p" and "real_of_rat p < real_of_rat q"
-        by (simp_all add: of_rat_less)
-      with A show "(1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p)) \<in> sconstraint k L"
-        by blast
-    qed
-  next
-    assume R: "\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p)) \<in> sconstraint k L"
-    show "\<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L"
-    proof (intro allI impI)
-      fix s t :: real assume st: "0 \<le> s" "s < t"
-      show "(1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L"
-      proof (rule diffquot_all_of_rational[OF closed_sconstraint _ _ st order_refl])
-        show "continuous_on {0..t} (qvmata C w)"
-          by (rule continuous_on_subset[OF qvmata_continuous[OF C0]]) auto
-        fix p q :: real
-        assume pQ: "p \<in> \<rat>" and qQ: "q \<in> \<rat>" and p0: "0 \<le> p" and pq: "p < q"
-          and qt: "q \<le> t"
-        obtain p' :: rat where p': "p = real_of_rat p'" using pQ by (auto simp: Rats_def)
-        obtain q' :: rat where q': "q = real_of_rat q'" using qQ by (auto simp: Rats_def)
-        have "real_of_rat 0 \<le> real_of_rat p'" using p0 p' by simp
-        then have "0 \<le> p'" by (simp add: of_rat_less_eq)
-        moreover have "p' < q'" using pq p' q' by (simp add: of_rat_less)
-        ultimately show "(1 / (q - p)) *\<^sub>R (qvmata C w q - qvmata C w p)
-            \<in> sconstraint k L" using R p' q' by blast
-      qed
-    qed
-  qed
   have predD: "Measurable.pred (ipath_space :: ((real \<Rightarrow> real^'n) measure))
       (\<lambda>w. \<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (qvmata C w t - qvmata C w s) \<in> sconstraint k L)"
-  proof (subst equiv, intro pred_intros_countable)
-    fix p q :: rat
-    show "Measurable.pred (ipath_space :: ((real \<Rightarrow> real^'n) measure))
-        (\<lambda>w. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-          (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-            (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p))
-              \<in> sconstraint k L)"
-    proof (cases "0 \<le> p \<and> p < q")
-      case False
-      then show ?thesis by simp
-    next
-      case True
-      have qm: "(\<lambda>w :: real \<Rightarrow> real^'n. qvmata C w r)
-          \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> real^'n) measure))" for r
-      proof (rule qvmata_measurable[OF _ C0])
-        fix s :: real and i assume s: "0 \<le> s"
-        show "(\<lambda>w :: real \<Rightarrow> real^'n. w s $ i)
-            \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
-          by (rule measurable_compose[OF ipath_eval_measurable[OF s] projB])
-      qed
-      let ?g = "\<lambda>w :: real \<Rightarrow> real^'n. (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (qvmata C w (real_of_rat q) - qvmata C w (real_of_rat p))"
-      have gm: "?g \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
-        using qm by simp
-      have "{w \<in> space (ipath_space :: ((real \<Rightarrow> real^'n) measure)). ?g w \<in> sconstraint k L}
-          = ?g -` (sconstraint k L) \<inter> space ipath_space" by auto
-      also have "\<dots> \<in> sets (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
-        by (rule measurable_sets[OF gm]) (simp add: borel_closed closed_sconstraint)
-      finally have "Measurable.pred (ipath_space :: ((real \<Rightarrow> real^'n) measure))
-          (\<lambda>w. ?g w \<in> sconstraint k L)" unfolding pred_def by simp
-      then show ?thesis using True by simp
+  proof (rule diffquot_all_pred[OF closed_sconstraint])
+    show "continuous_on {0..} (qvmata C w)" for w :: "real \<Rightarrow> real^'n"
+      by (rule qvmata_continuous[OF C0])
+    fix r :: real
+    show "(\<lambda>w :: real \<Rightarrow> real^'n. qvmata C w r)
+        \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
+    proof (rule qvmata_measurable[OF _ C0])
+      fix s :: real and i assume s: "0 \<le> s"
+      show "(\<lambda>w :: real \<Rightarrow> real^'n. w s $ i)
+          \<in> borel_measurable (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
+        by (rule measurable_compose[OF ipath_eval_measurable[OF s] projB])
     qed
   qed
   have dqP: "AE \<omega> in P. \<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
@@ -731,106 +712,19 @@ lemma pairpath_diffquot_sets:
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L}
     \<in> sets ipath_space"
 proof -
-  have ev: "(\<lambda>\<omega> :: 'n pairpath. snd (\<omega> v)) \<in> borel_measurable ipath_space"
-    if v: "0 \<le> v" for v
-    by (rule measurable_compose[OF ipath_eval_measurable[OF v] pair_snd_borel])
-  have cont: "continuous_on {0..} (\<lambda>t. snd (\<omega> t))"
-    if w: "\<omega> \<in> (ipath :: (('n pairpath) set))" for \<omega>
-  proof -
-    have c: "continuous_on {0..} \<omega>" by (rule ipath_continuous_on[OF w]) simp
-    have g: "continuous_on UNIV (snd :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n^'n)"
-      by (intro continuous_intros)
-    show ?thesis by (rule continuous_on_compose2[OF g c]) auto
-  qed
-  have equiv: "(\<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L)
-      \<longleftrightarrow> (\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (snd (\<omega> (real_of_rat q)) - snd (\<omega> (real_of_rat p))) \<in> sconstraint k L)"
-    if w: "\<omega> \<in> (ipath :: (('n pairpath) set))" for \<omega>
-  proof
-    assume A: "\<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    show "\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (snd (\<omega> (real_of_rat q)) - snd (\<omega> (real_of_rat p))) \<in> sconstraint k L"
-    proof (intro allI impI)
-      fix p q :: rat assume pq: "0 \<le> p" "p < q"
-      then have "(0 :: real) \<le> real_of_rat p" and "real_of_rat p < real_of_rat q"
-        by (simp_all add: of_rat_less)
-      with A show "(1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (snd (\<omega> (real_of_rat q)) - snd (\<omega> (real_of_rat p))) \<in> sconstraint k L"
-        by blast
-    qed
-  next
-    assume R: "\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (snd (\<omega> (real_of_rat q)) - snd (\<omega> (real_of_rat p))) \<in> sconstraint k L"
-    show "\<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    proof (intro allI impI)
-      fix s t :: real assume st: "0 \<le> s" "s < t"
-      show "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-      proof (rule diffquot_all_of_rational[OF closed_sconstraint _ _ st order_refl])
-        show "continuous_on {0..t} (\<lambda>u. snd (\<omega> u))"
-          by (rule continuous_on_subset[OF cont[OF w]]) auto
-        fix p q :: real
-        assume pQ: "p \<in> \<rat>" and qQ: "q \<in> \<rat>" and p0: "0 \<le> p" and pq: "p < q"
-          and qt: "q \<le> t"
-        obtain p' :: rat where p': "p = real_of_rat p'" using pQ by (auto simp: Rats_def)
-        obtain q' :: rat where q': "q = real_of_rat q'" using qQ by (auto simp: Rats_def)
-        have "real_of_rat 0 \<le> real_of_rat p'" using p0 p' by simp
-        then have "0 \<le> p'" by (simp add: of_rat_less_eq)
-        moreover have "p' < q'" using pq p' q' by (simp add: of_rat_less)
-        ultimately show "(1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-          using R p' q' by blast
-      qed
-    qed
-  qed
   have "Measurable.pred (ipath_space :: (('n pairpath) measure))
-      (\<lambda>\<omega>. \<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (snd (\<omega> (real_of_rat q)) - snd (\<omega> (real_of_rat p))) \<in> sconstraint k L)"
-  proof (intro pred_intros_countable)
-    fix p q :: rat
-    show "Measurable.pred (ipath_space :: (('n pairpath) measure))
-        (\<lambda>\<omega>. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-          (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-            (snd (\<omega> (real_of_rat q)) - snd (\<omega> (real_of_rat p))) \<in> sconstraint k L)"
-    proof (cases "0 \<le> p \<and> p < q")
-      case False
-      then show ?thesis by simp
-    next
-      case True
-      then have p0: "(0 :: real) \<le> real_of_rat p" and q0: "(0 :: real) \<le> real_of_rat q"
-        by (auto simp: of_rat_less)
-      let ?g = "\<lambda>\<omega> :: 'n pairpath. (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (snd (\<omega> (real_of_rat q)) - snd (\<omega> (real_of_rat p)))"
-      have gm: "?g \<in> borel_measurable (ipath_space :: (('n pairpath) measure))"
-        using ev[OF p0] ev[OF q0] by simp
-      have "{\<omega> \<in> space (ipath_space :: (('n pairpath) measure)). ?g \<omega> \<in> sconstraint k L}
-          = ?g -` (sconstraint k L) \<inter> space ipath_space" by auto
-      also have "\<dots> \<in> sets (ipath_space :: (('n pairpath) measure))"
-        by (rule measurable_sets[OF gm]) (simp add: borel_closed closed_sconstraint)
-      finally have "Measurable.pred (ipath_space :: (('n pairpath) measure))
-          (\<lambda>\<omega>. ?g \<omega> \<in> sconstraint k L)" unfolding pred_def by simp
-      then show ?thesis using True by simp
-    qed
+      (\<lambda>\<omega>. \<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L)"
+  proof (rule diffquot_all_pred[OF closed_sconstraint])
+    fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space ipath_space"
+    then have "continuous_on {0..} \<omega>" by (intro ipath_continuous_on) simp_all
+    then show "continuous_on {0..} (\<lambda>t. snd (\<omega> t))" by (intro continuous_intros)
+  next
+    fix t :: real assume "0 \<le> t"
+    then show "(\<lambda>\<omega> :: 'n pairpath. snd (\<omega> t)) \<in> borel_measurable ipath_space"
+      by (rule measurable_compose[OF ipath_eval_measurable pair_snd_borel])
   qed
-  then have "{\<omega> \<in> space (ipath_space :: (('n pairpath) measure)).
-      \<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (snd (\<omega> (real_of_rat q)) - snd (\<omega> (real_of_rat p))) \<in> sconstraint k L}
-      \<in> sets ipath_space" unfolding pred_def by simp
-  moreover have "{\<omega> \<in> space (ipath_space :: (('n pairpath) measure)).
-      \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L}
-      = {\<omega> \<in> space (ipath_space :: (('n pairpath) measure)).
-      \<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
-        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
-          (snd (\<omega> (real_of_rat q)) - snd (\<omega> (real_of_rat p))) \<in> sconstraint k L}"
-    using equiv by auto
-  ultimately show ?thesis by simp
+  then show ?thesis unfolding pred_def .
 qed
 
 theorem xclass_lift_in_iexit_class:
@@ -854,8 +748,6 @@ proof -
   have keyq: "AE w in Q. \<forall>t. 0 \<le> t \<longrightarrow> qvmata C w t = A t w"
     unfolding C_def by (rule xclass_qvmata[OF Q L A0 mgA dqA])
 
-  have spQ: "space Q = (ipath :: ((real \<Rightarrow> real^'n) set))"
-    using xclass_sets[OF Q] by (simp add: sets_eq_imp_space_eq)
   have mgX: "martingale Q ?F 0 (\<lambda>t w :: real \<Rightarrow> real^'n. w t)"
     by (rule xclass_martingale[OF Q])
   have evQ: "(\<lambda>w :: real \<Rightarrow> real^'n. w v) \<in> borel_measurable Q" if v: "0 \<le> v" for v
@@ -866,18 +758,8 @@ proof -
     if v: "0 \<le> v" for v
     by (rule qvmata_measurable[OF _ C0])
        (use evQ measurable_compose[OF _ projB] in blast)
-  have Xm: "(\<lambda>w :: real \<Rightarrow> real^'n. (w v, qvmata C w v)) \<in> borel_measurable Q"
-    if v: "0 \<le> v" for v
-    by (rule borel_measurable_Pair[OF evQ[OF v] qmQ[OF v]])
-  have contQ: "continuous_on {0..} (\<lambda>t. (w t, qvmata C w t))" if w: "w \<in> space Q" for w
-  proof -
-    have "w \<in> ipath" using w spQ by simp
-    then have c: "continuous_on {0..} w" by (rule ipath_continuous_on) simp
-    show ?thesis
-      by (intro continuous_on_Pair c qvmata_continuous[OF C0])
-  qed
   have psim: "?\<psi> \<in> Q \<rightarrow>\<^sub>M (ipath_space :: (('n pairpath) measure))"
-    by (rule ipathify_measurable[OF Xm contQ])
+    by (rule xclass_liftify_measurable[OF Q C0])
   have into: "?\<psi> w \<in> (ipath :: (('n pairpath) set))" if "w \<in> space Q" for w
     using measurable_space[OF psim that] by simp
   have probP: "prob_space ?P" by (rule PQ.prob_space_distr[OF psim])
@@ -1046,63 +928,6 @@ text \<open>
   and hence every clause of Theorem 1.1 with a statement about the paper's own
   value function (1.6).
 \<close>
-
-
-
-
-
-
-
-
-
-lemma iexit_class_fstify_measurable:
-  fixes P :: "('n::finite pairpath) measure"
-  assumes P: "P \<in> iexit_class k L x"
-  shows "(\<lambda>\<omega> :: 'n pairpath. restrict (\<lambda>t. fst (\<omega> t)) {0..})
-      \<in> P \<rightarrow>\<^sub>M (ipath_space :: ((real \<Rightarrow> real^'n) measure))"
-proof (rule ipathify_measurable)
-  show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable P" if "0 \<le> t" for t
-  proof -
-    have "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> borel_measurable P"
-      unfolding measurable_cong_sets[OF iexit_class_sets[OF P] refl]
-      by (rule ipath_eval_measurable[OF that])
-    then show ?thesis by (rule measurable_compose[OF _ pair_fst_borel])
-  qed
-next
-  fix \<omega> :: "'n pairpath" assume "\<omega> \<in> space P"
-  then have "\<omega> \<in> ipath"
-    using iexit_class_sets[OF P] by (simp add: sets_eq_imp_space_eq)
-  then have c: "continuous_on {0..} \<omega>" by (rule ipath_continuous_on) simp
-  have g: "continuous_on UNIV (fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)"
-    by (intro continuous_intros)
-  show "continuous_on {0..} (\<lambda>t. fst (\<omega> t))"
-    by (rule continuous_on_compose2[OF g c]) auto
-qed
-
-lemma xclass_liftify_measurable:
-  fixes Q :: "((real \<Rightarrow> real^'n::finite) measure)"
-  assumes Q: "Q \<in> xclass k L x" and C: "0 \<le> C"
-  shows "(\<lambda>w :: real \<Rightarrow> real^'n. restrict (\<lambda>t. (w t, qvmata C w t)) {0..})
-      \<in> Q \<rightarrow>\<^sub>M (ipath_space :: (('n pairpath) measure))"
-proof (rule ipathify_measurable)
-  have projB: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel" for i
-    by (intro borel_measurable_continuous_onI continuous_intros)
-  have evQ: "(\<lambda>w :: real \<Rightarrow> real^'n. w v) \<in> borel_measurable Q" if "0 \<le> v" for v
-    by (rule ipath_eval_measurable_sets[OF xclass_sets[OF Q] that])
-  show "(\<lambda>w :: real \<Rightarrow> real^'n. (w t, qvmata C w t)) \<in> borel_measurable Q"
-    if t: "0 \<le> t" for t
-  proof (rule borel_measurable_Pair[OF evQ[OF t]])
-    show "(\<lambda>w :: real \<Rightarrow> real^'n. qvmata C w t) \<in> borel_measurable Q"
-      by (rule qvmata_measurable[OF _ C])
-         (use evQ measurable_compose[OF _ projB] in blast)
-  qed
-next
-  fix w :: "real \<Rightarrow> real^'n" assume "w \<in> space Q"
-  then have "w \<in> ipath" using xclass_sets[OF Q] by (simp add: sets_eq_imp_space_eq)
-  then have c: "continuous_on {0..} w" by (rule ipath_continuous_on) simp
-  show "continuous_on {0..} (\<lambda>t. (w t, qvmata C w t))"
-    by (intro continuous_on_Pair c qvmata_continuous[OF C])
-qed
 
 text \<open>The essential infimum of the exit time is the same on a pair law and on
   its \<open>X\<close>-marginal, and on a \<open>P\<^sub>x\<close>-law and on its lift.\<close>

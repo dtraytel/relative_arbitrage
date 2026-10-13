@@ -22,7 +22,91 @@ text \<open>
   convergence + path continuity). This theory packages that discharge:
   stopping an \<open>L\<^sup>2\<close> martingale with continuous paths at any stopping time
   yields a martingale, unconditionally.
+
+  First the two ingredients: \<open>optional_stopping\<close> for a process with
+  continuous paths on \<open>{0..}\<close> and some integrable envelope per horizon, and
+  the envelope of an \<open>L\<^sup>2\<close> martingale, square-integrable as well.
 \<close>
+
+lemma optional_stopping_cont:
+  fixes Z :: "real \<Rightarrow> 'a \<Rightarrow> real" and tau :: "'a \<Rightarrow> real"
+  assumes mg: "martingale M F 0 Z"
+    and tau_nonneg: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
+    and tau_stop: "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
+    and cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. Z s \<omega>)"
+    and dom: "\<And>u. 0 < u \<Longrightarrow> \<exists>D. (AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> D \<omega>)
+                \<and> integrable M D"
+  shows "martingale M F 0 (\<lambda>v \<omega>. Z (min v (tau \<omega>)) \<omega>)"
+proof -
+  have "\<exists>D. \<forall>u. 0 < u \<longrightarrow> (AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> D u \<omega>)
+      \<and> integrable M (D u)"
+    using dom by (intro choice) blast
+  then obtain D where D: "\<And>u. 0 < u \<Longrightarrow> (AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> D u \<omega>)
+      \<and> integrable M (D u)"
+    by blast
+  show ?thesis
+  proof (rule optional_stopping[OF mg tau_nonneg tau_stop _ conjunct1[OF D] conjunct2[OF D]])
+    show "AE \<omega> in M. continuous_on {0..u} (\<lambda>s. Z s \<omega>)" for u
+      by (intro AE_I2 continuous_on_subset[OF cont]) auto
+    show "(\<lambda>\<omega>. Z (min v (tau \<omega>)) \<omega>) \<in> borel_measurable (F v)" if "0 \<le> v" for v
+      by (rule stopped_adapted_of_cont[OF martingale.axioms(2)[OF mg]
+            tau_nonneg tau_stop cont that])
+  qed
+qed
+
+lemma L2_martingale_envelope:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes P: "prob_space M"
+    and mg: "martingale M F (0::real) X"
+    and sq: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
+    and cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
+    and u: "0 < u"
+  shows "\<exists>D. (AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>X s \<omega>\<bar> \<le> D \<omega>)
+      \<and> integrable M D \<and> integrable M (\<lambda>\<omega>. (D \<omega>)\<^sup>2)"
+proof -
+  interpret H: horizon_sq_int_martingale M F X u
+    by (intro horizon_sq_int_martingale.intro[OF mg]
+        horizon_sq_int_martingale_axioms.intro u P sq)
+  have "AE \<omega> in M. continuous_on {0..u} (\<lambda>s. X s \<omega>)"
+    by (intro AE_I2 continuous_on_subset[OF cont]) auto
+  then show ?thesis
+    by (intro exI[of _ H.Dsup] conjI H.Dsup_dominates H.Dsup_integrable
+        H.Dsup_sq_integrable)
+qed
+
+text \<open>The stopped process stays square-integrable: on \<open>[0,s]\<close> it is
+  dominated by the envelope at horizon \<open>s + 1\<close>.\<close>
+
+lemma stopped_L2_sq_integrable:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and tau :: "'a \<Rightarrow> real"
+  assumes P: "prob_space M"
+    and mg: "martingale M F (0::real) X"
+    and sq: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
+    and cont: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
+    and tau_nonneg: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
+    and tau_stop: "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
+    and s: "0 \<le> s"
+  shows "integrable M (\<lambda>\<omega>. (X (min s (tau \<omega>)) \<omega>)\<^sup>2)"
+proof -
+  interpret MX: martingale M F "0::real" X by (rule mg)
+  obtain D where D: "AE \<omega> in M. \<forall>v. 0 \<le> v \<longrightarrow> v \<le> s + 1 \<longrightarrow> \<bar>X v \<omega>\<bar> \<le> D \<omega>"
+    and D2: "integrable M (\<lambda>\<omega>. (D \<omega>)\<^sup>2)"
+    using L2_martingale_envelope[OF P mg sq cont, of "s + 1"] s by auto
+  have "(\<lambda>\<omega>. X (min s (tau \<omega>)) \<omega>) \<in> borel_measurable M"
+    by (rule measurable_from_subalg[OF MX.subalgebras[OF s]
+          stopped_adapted_of_cont[OF martingale.axioms(2)[OF mg] tau_nonneg tau_stop cont s]])
+  moreover have "AE \<omega> in M. norm ((X (min s (tau \<omega>)) \<omega>)\<^sup>2) \<le> norm ((D \<omega>)\<^sup>2)"
+    using D AE_space
+  proof eventually_elim
+    case (elim \<omega>)
+    then have "\<bar>X (min s (tau \<omega>)) \<omega>\<bar> \<le> D \<omega>" using s tau_nonneg by simp
+    then have "\<bar>X (min s (tau \<omega>)) \<omega>\<bar>\<^sup>2 \<le> (D \<omega>)\<^sup>2" by (intro power_mono) auto
+    then show ?case by simp
+  qed
+  ultimately show ?thesis
+    by (intro Bochner_Integration.integrable_bound[OF D2]) measurable
+qed
+
 theorem stopped_martingale_L2:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real" and tau :: "'a \<Rightarrow> real"
   assumes P: "prob_space M"
@@ -32,167 +116,22 @@ theorem stopped_martingale_L2:
     and tau_nonneg: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
     and tau_stop: "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
   shows "martingale M F 0 (\<lambda>v \<omega>. X (min v (tau \<omega>)) \<omega>)"
-proof -
-  interpret MX: martingale M F "0::real" X by (rule mg)
-  have contu: "AE \<omega> in M. continuous_on {0..u} (\<lambda>s. X s \<omega>)" if "0 < u" for u
-  proof (intro AE_I2)
-    fix \<omega> assume "\<omega> \<in> space M"
-    from cont[OF this] show "continuous_on {0..u} (\<lambda>s. X s \<omega>)"
-      by (rule continuous_on_subset) auto
-  qed
-  have hsim: "horizon_sq_int_martingale M F X u" if "0 < u" for u
-    by (intro horizon_sq_int_martingale.intro[OF mg]
-        horizon_sq_int_martingale_axioms.intro that P sq)
-  have Dex: "\<exists>D. (AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>X s \<omega>\<bar> \<le> D \<omega>)
-              \<and> integrable M D" if u: "0 < u" for u
-  proof -
-    interpret H: horizon_sq_int_martingale M F X u by (rule hsim[OF u])
-    show ?thesis
-      by (intro exI[of _ H.Dsup] conjI H.Dsup_dominates[OF contu[OF u]]
-          H.Dsup_integrable)
-  qed
-  define D where "D = (\<lambda>u. SOME Dv.
-      (AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>X s \<omega>\<bar> \<le> Dv \<omega>) \<and> integrable M Dv)"
-  have DP: "(AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>X s \<omega>\<bar> \<le> D u \<omega>)
-              \<and> integrable M (D u)" if u: "0 < u" for u
-    unfolding D_def by (rule someI_ex[OF Dex[OF u]])
-  show ?thesis
-  proof (rule optional_stopping[OF mg tau_nonneg tau_stop])
-    show "AE \<omega> in M. continuous_on {0..u} (\<lambda>s. X s \<omega>)" if "0 < u" for u
-      by (rule contu[OF that])
-    show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>X s \<omega>\<bar> \<le> D u \<omega>" if "0 < u" for u
-      using DP[OF that] by blast
-    show "integrable M (D u)" if "0 < u" for u
-      using DP[OF that] by blast
-    show "(\<lambda>\<omega>. X (min v (tau \<omega>)) \<omega>) \<in> borel_measurable (F v)" if "0 \<le> v" for v
-      by (rule stopped_adapted_of_cont[OF martingale.axioms(2)[OF mg]
-            tau_nonneg tau_stop cont that])
-  qed
+proof (rule optional_stopping_cont[OF mg tau_nonneg tau_stop cont])
+  fix u :: real assume u: "0 < u"
+  then obtain D where "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>X s \<omega>\<bar> \<le> D \<omega>"
+    and "integrable M D"
+    using L2_martingale_envelope[OF P mg sq cont u] by blast
+  then show "\<exists>D. (AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>X s \<omega>\<bar> \<le> D \<omega>)
+      \<and> integrable M D" by blast
 qed
 
 section \<open>Stopping the compensated square\<close>
 
 text \<open>
-  The compensated square \<open>Z = X\<^sup>2 - A\<close> of an \<open>L\<^sup>2\<close> martingale with a
-  Lipschitz-rate compensator is generally not \<open>L\<^sup>2\<close>, so
-  @{thm [source] stopped_martingale_L2} does not apply to it directly. But it
-  is dominated on \<open>[0,u]\<close>: \<open>\<bar>Z s\<bar> \<le> Dsup\<^sup>2 + C u\<close> where \<open>Dsup\<close> is the
-  running-maximum bound for \<open>X\<close>, and \<open>Dsup\<^sup>2\<close> is integrable by Doob's \<open>L\<^sup>2\<close>
-  inequality (\<open>Dsup_sq_integrable\<close>). So the domination hypothesis of
-  \<open>optional_stopping\<close> is again dischargeable. Stopping \<open>Z\<close> is what transfers
-  the covariation package to the stopped process: the martingale property of
-  \<open>Z\<^sup>\<tau>\<close> is the statement that \<open>A(\<cdot> \<and> \<tau>)\<close> compensates \<open>(X\<^sup>\<tau>)\<^sup>2\<close>.
+  A compensator with a rate \<open>0 \<le> A v - A u \<le> C (v - u)\<close> is \<open>C\<close>-Lipschitz,
+  hence continuous; stopped, it is bounded by \<open>C s\<close> at time \<open>s\<close>, hence
+  integrable.
 \<close>
-
-theorem stopped_compensated_square:
-  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and tau :: "'a \<Rightarrow> real" and C :: real
-  assumes P: "prob_space M"
-    and mgX: "martingale M F (0::real) X"
-    and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
-    and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
-    and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
-    and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
-    and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
-                    0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
-    and C0: "0 \<le> C"
-    and tau_nonneg: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
-    and tau_stop: "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
-  shows "martingale M F 0
-      (\<lambda>v \<omega>. (X (min v (tau \<omega>)) \<omega>)\<^sup>2 - A (min v (tau \<omega>)) \<omega>)"
-proof -
-  interpret P: prob_space M by (rule P)
-  let ?Z = "\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>"
-  have Abnd: "0 \<le> A s \<omega> \<and> A s \<omega> \<le> C * s"
-    if w: "\<omega> \<in> space M" and s: "0 \<le> s" for s \<omega>
-    using A_rate[OF w, rule_format, of 0 s] s A0[OF w] by simp
-  have contA: "continuous_on {0..} (\<lambda>s. A s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
-  proof -
-    have "C-lipschitz_on {0..} (\<lambda>s. A s \<omega>)"
-    proof (rule lipschitz_onI)
-      show "0 \<le> C" by (rule C0)
-      fix x y :: real assume x: "x \<in> {0..}" and y: "y \<in> {0..}"
-      show "dist (A x \<omega>) (A y \<omega>) \<le> C * dist x y"
-      proof (cases "x \<le> y")
-        case True
-        with A_rate[OF w, rule_format, of x y] x show ?thesis
-          by (simp add: dist_real_def abs_diff_le_iff) linarith?
-      next
-        case False
-        with A_rate[OF w, rule_format, of y x] y show ?thesis
-          by (simp add: dist_real_def abs_diff_le_iff) linarith?
-      qed
-    qed
-    thus ?thesis by (rule lipschitz_on_continuous_on)
-  qed
-  have contZ: "continuous_on {0..} (\<lambda>s. ?Z s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
-    by (intro continuous_on_diff continuous_on_power contX[OF w] contA[OF w])
-  have contZu: "AE \<omega> in M. continuous_on {0..u} (\<lambda>s. ?Z s \<omega>)" if "0 < u" for u
-  proof (intro AE_I2)
-    fix \<omega> assume "\<omega> \<in> space M"
-    from contZ[OF this] show "continuous_on {0..u} (\<lambda>s. ?Z s \<omega>)"
-      by (rule continuous_on_subset) auto
-  qed
-  have contXu: "AE \<omega> in M. continuous_on {0..u} (\<lambda>s. X s \<omega>)" if "0 < u" for u
-  proof (intro AE_I2)
-    fix \<omega> assume "\<omega> \<in> space M"
-    from contX[OF this] show "continuous_on {0..u} (\<lambda>s. X s \<omega>)"
-      by (rule continuous_on_subset) auto
-  qed
-  have Dex: "\<exists>D. (AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>?Z s \<omega>\<bar> \<le> D \<omega>)
-              \<and> integrable M D" if u: "0 < u" for u
-  proof -
-    interpret H: horizon_sq_int_martingale M F X u
-      by (intro horizon_sq_int_martingale.intro[OF mgX]
-          horizon_sq_int_martingale_axioms.intro u P sqX)
-    have dom: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
-        \<bar>?Z s \<omega>\<bar> \<le> (H.Dsup \<omega>)\<^sup>2 + C * u"
-      using H.Dsup_dominates[OF contXu[OF u]] AE_space
-    proof eventually_elim
-      case (elim \<omega>)
-      show ?case
-      proof (intro allI impI)
-        fix s :: real assume s: "0 \<le> s" and su: "s \<le> u"
-        have xb: "\<bar>X s \<omega>\<bar> \<le> H.Dsup \<omega>" using elim s su by blast
-        have "(X s \<omega>)\<^sup>2 = \<bar>X s \<omega>\<bar>\<^sup>2" by simp
-        also have "\<dots> \<le> (H.Dsup \<omega>)\<^sup>2"
-          by (rule power_mono[OF xb abs_ge_zero])
-        finally have x2: "(X s \<omega>)\<^sup>2 \<le> (H.Dsup \<omega>)\<^sup>2" .
-        have "0 \<le> A s \<omega> \<and> A s \<omega> \<le> C * s"
-          using Abnd elim s by blast
-        moreover have "C * s \<le> C * u"
-          using su C0 by (intro mult_left_mono)
-        moreover have "0 \<le> (X s \<omega>)\<^sup>2" by simp
-        ultimately show "\<bar>?Z s \<omega>\<bar> \<le> (H.Dsup \<omega>)\<^sup>2 + C * u"
-          using x2 zero_le_power2[of "X s \<omega>"] zero_le_power2[of "H.Dsup \<omega>"]
-          unfolding abs_diff_le_iff by (intro conjI) linarith+
-      qed
-    qed
-    have int: "integrable M (\<lambda>\<omega>. (H.Dsup \<omega>)\<^sup>2 + C * u)"
-      by (intro Bochner_Integration.integrable_add H.Dsup_sq_integrable
-          P.integrable_const)
-    show ?thesis
-      by (intro exI[of _ "\<lambda>\<omega>. (H.Dsup \<omega>)\<^sup>2 + C * u"] conjI dom int)
-  qed
-  define D where "D = (\<lambda>u. SOME Dv.
-      (AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>?Z s \<omega>\<bar> \<le> Dv \<omega>) \<and> integrable M Dv)"
-  have DP: "(AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>?Z s \<omega>\<bar> \<le> D u \<omega>)
-              \<and> integrable M (D u)" if u: "0 < u" for u
-    unfolding D_def by (rule someI_ex[OF Dex[OF u]])
-  show ?thesis
-  proof (rule optional_stopping[OF mgZ tau_nonneg tau_stop])
-    show "AE \<omega> in M. continuous_on {0..u} (\<lambda>s. ?Z s \<omega>)" if "0 < u" for u
-      by (rule contZu[OF that])
-    show "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>?Z s \<omega>\<bar> \<le> D u \<omega>" if "0 < u" for u
-      using DP[OF that] by blast
-    show "integrable M (D u)" if "0 < u" for u
-      using DP[OF that] by blast
-    show "(\<lambda>\<omega>. ?Z (min v (tau \<omega>)) \<omega>) \<in> borel_measurable (F v)" if "0 \<le> v" for v
-      by (rule stopped_adapted_of_cont[OF martingale.axioms(2)[OF mgZ]
-            tau_nonneg tau_stop contZ that])
-  qed
-qed
-
-section \<open>The covariation package transfers to the stopped process\<close>
 
 lemma rate_continuous_on:
   fixes f :: "real \<Rightarrow> real"
@@ -218,13 +157,104 @@ proof -
   thus ?thesis by (rule lipschitz_on_continuous_on)
 qed
 
+lemma stopped_compensator_integrable:
+  fixes A :: "real \<Rightarrow> 'a \<Rightarrow> real" and tau :: "'a \<Rightarrow> real" and C :: real
+  assumes P: "prob_space M"
+    and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
+    and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+                    0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
+    and C0: "0 \<le> C"
+    and tau_nonneg: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
+    and meas: "(\<lambda>\<omega>. A (min s (tau \<omega>)) \<omega>) \<in> borel_measurable M"
+    and s: "0 \<le> s"
+  shows "integrable M (\<lambda>\<omega>. A (min s (tau \<omega>)) \<omega>)"
+proof (rule Bochner_Integration.integrable_bound
+    [OF finite_measure.integrable_const[OF prob_space.finite_measure[OF P], of "C * s"]
+      meas AE_I2])
+  fix \<omega> assume w: "\<omega> \<in> space M"
+  have "0 \<le> A (min s (tau \<omega>)) \<omega> \<and> A (min s (tau \<omega>)) \<omega> \<le> C * min s (tau \<omega>)"
+    using A_rate[OF w, rule_format, of 0 "min s (tau \<omega>)"] s tau_nonneg[OF w] A0[OF w]
+    by simp
+  moreover have "C * min s (tau \<omega>) \<le> C * s"
+    using C0 s by (intro mult_left_mono) simp_all
+  ultimately show "norm (A (min s (tau \<omega>)) \<omega>) \<le> norm (C * s)"
+    using C0 s by simp
+qed
+
+text \<open>
+  The compensated square \<open>Z = X\<^sup>2 - A\<close> of an \<open>L\<^sup>2\<close> martingale with a
+  Lipschitz-rate compensator is generally not \<open>L\<^sup>2\<close>, so
+  @{thm [source] stopped_martingale_L2} does not apply to it directly. But it
+  is dominated on \<open>[0,u]\<close>: \<open>\<bar>Z s\<bar> \<le> D\<^sup>2 + C u\<close> where \<open>D\<close> is the
+  envelope of @{thm [source] L2_martingale_envelope}, whose square is
+  integrable by Doob's \<open>L\<^sup>2\<close> inequality. So the domination hypothesis of
+  \<open>optional_stopping\<close> is again dischargeable. Stopping \<open>Z\<close> is what transfers
+  the covariation package to the stopped process: the martingale property of
+  \<open>Z\<^sup>\<tau>\<close> is the statement that \<open>A(\<cdot> \<and> \<tau>)\<close> compensates \<open>(X\<^sup>\<tau>)\<^sup>2\<close>.
+\<close>
+
+theorem stopped_compensated_square:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and tau :: "'a \<Rightarrow> real" and C :: real
+  assumes P: "prob_space M"
+    and mgX: "martingale M F (0::real) X"
+    and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
+    and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
+    and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
+    and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
+    and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+                    0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
+    and C0: "0 \<le> C"
+    and tau_nonneg: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> 0 \<le> tau \<omega>"
+    and tau_stop: "\<And>s. 0 \<le> s \<Longrightarrow> {\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)"
+  shows "martingale M F 0
+      (\<lambda>v \<omega>. (X (min v (tau \<omega>)) \<omega>)\<^sup>2 - A (min v (tau \<omega>)) \<omega>)"
+proof (rule optional_stopping_cont[OF mgZ tau_nonneg tau_stop])
+  show "continuous_on {0..} (\<lambda>s. (X s \<omega>)\<^sup>2 - A s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
+    by (intro continuous_on_diff continuous_on_power contX[OF w]
+        rate_continuous_on[OF C0 A_rate[OF w]])
+  fix u :: real assume u: "0 < u"
+  obtain D where D: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>X s \<omega>\<bar> \<le> D \<omega>"
+    and D2: "integrable M (\<lambda>\<omega>. (D \<omega>)\<^sup>2)"
+    using L2_martingale_envelope[OF P mgX sqX contX u] by blast
+  have "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>(X s \<omega>)\<^sup>2 - A s \<omega>\<bar> \<le> (D \<omega>)\<^sup>2 + C * u"
+    using D AE_space
+  proof eventually_elim
+    case (elim \<omega>)
+    show ?case
+    proof (intro allI impI)
+      fix s :: real assume s: "0 \<le> s" and su: "s \<le> u"
+      have "\<bar>X s \<omega>\<bar>\<^sup>2 \<le> (D \<omega>)\<^sup>2" using elim s su by (intro power_mono) auto
+      then have x2: "(X s \<omega>)\<^sup>2 \<le> (D \<omega>)\<^sup>2" by simp
+      have a: "0 \<le> A s \<omega>" "A s \<omega> \<le> C * s"
+        using A_rate[OF elim(2), rule_format, of 0 s] s A0[OF elim(2)] by simp_all
+      have cu: "C * s \<le> C * u" using su C0 by (intro mult_left_mono)
+      have x0: "0 \<le> (X s \<omega>)\<^sup>2" by simp
+      show "\<bar>(X s \<omega>)\<^sup>2 - A s \<omega>\<bar> \<le> (D \<omega>)\<^sup>2 + C * u"
+      proof (rule abs_leI)
+        show "(X s \<omega>)\<^sup>2 - A s \<omega> \<le> (D \<omega>)\<^sup>2 + C * u" using x2 a cu by linarith
+        show "- ((X s \<omega>)\<^sup>2 - A s \<omega>) \<le> (D \<omega>)\<^sup>2 + C * u" using x2 a cu x0 by linarith
+      qed
+    qed
+  qed
+  moreover have "integrable M (\<lambda>\<omega>. (D \<omega>)\<^sup>2 + C * u)"
+    by (rule Bochner_Integration.integrable_add[OF D2
+          finite_measure.integrable_const[OF prob_space.finite_measure[OF P]]])
+  ultimately show "\<exists>D. (AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>(X s \<omega>)\<^sup>2 - A s \<omega>\<bar> \<le> D \<omega>)
+      \<and> integrable M D"
+    by (intro exI[of _ "\<lambda>\<omega>. (D \<omega>)\<^sup>2 + C * u"] conjI)
+qed
+
+section \<open>The covariation package transfers to the stopped process\<close>
+
 text \<open>
   The martingale property of the stopped compensated square, rewritten as the
   conditional covariation identity for the stopped process: this is what feeds
-  \<open>fourth_moment_bound_bounded\<close> at compensator \<open>A(\<cdot> \<and> \<tau>)\<close>. The conditional
-  variance identity \<open>cond_exp_increment_sq\<close> converts squared increments into
-  differences of squares, and adaptedness of the stopped compensator collapses
-  its conditional expectation.
+  \<open>fourth_moment_bound_bounded\<close> at compensator \<open>A(\<cdot> \<and> \<tau>)\<close>.  It is
+  \<open>compensator_cond_increment\<close> for the stopped pair, whose two martingale
+  properties are @{thm [source] stopped_martingale_L2} and
+  @{thm [source] stopped_compensated_square}; the stopped compensator is adapted
+  because it is a compensator (\<open>compensator_adapted\<close>), so no adaptedness of
+  \<open>A\<close> is assumed.
 \<close>
 
 theorem stopped_covariation:
@@ -234,7 +264,6 @@ theorem stopped_covariation:
     and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
     and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
     and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
-    and Aad: "adapted_process M F (0::real) A"
     and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
     and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
                     0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
@@ -246,91 +275,21 @@ theorem stopped_covariation:
       cond_exp M (F u) (\<lambda>\<omega>. (X (min v (tau \<omega>)) \<omega> - X (min u (tau \<omega>)) \<omega>)\<^sup>2) \<omega>
     = cond_exp M (F u) (\<lambda>\<omega>. A (min v (tau \<omega>)) \<omega> - A (min u (tau \<omega>)) \<omega>) \<omega>"
 proof -
-  interpret P: prob_space M by (rule P)
   interpret MX: martingale M F "0::real" X by (rule mgX)
   let ?XS = "\<lambda>t \<omega>. X (min t (tau \<omega>)) \<omega>"
   let ?AS = "\<lambda>t \<omega>. A (min t (tau \<omega>)) \<omega>"
-  have v0: "0 \<le> v" using uv by linarith
-  have contA: "continuous_on {0..} (\<lambda>s. A s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
-    by (rule rate_continuous_on[OF C0 A_rate[OF w]])
-  have contXu: "AE \<omega> in M. continuous_on {0..w} (\<lambda>s. X s \<omega>)" if "0 < w" for w
-  proof (intro AE_I2)
-    fix \<omega> assume "\<omega> \<in> space M"
-    from contX[OF this] show "continuous_on {0..w} (\<lambda>s. X s \<omega>)"
-      by (rule continuous_on_subset) auto
-  qed
   have mgXS: "martingale M F 0 ?XS"
     by (rule stopped_martingale_L2[OF P mgX sqX contX tau_nonneg tau_stop])
-  have XSad: "?XS s \<in> borel_measurable (F s)" if "0 \<le> s" for s
-    by (rule stopped_adapted_of_cont[OF martingale.axioms(2)[OF mgX]
-          tau_nonneg tau_stop contX that])
-  have XSm: "?XS s \<in> borel_measurable M" if "0 \<le> s" for s
-    by (rule measurable_from_subalg[OF MX.subalgebras[OF that] XSad[OF that]])
-  have ASad: "?AS s \<in> borel_measurable (F s)" if "0 \<le> s" for s
-    by (rule stopped_adapted_of_cont[OF Aad tau_nonneg tau_stop contA that])
-  have ASm: "?AS s \<in> borel_measurable M" if "0 \<le> s" for s
-    by (rule measurable_from_subalg[OF MX.subalgebras[OF that] ASad[OF that]])
-  have sqXS: "integrable M (\<lambda>\<omega>. (?XS s \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
-  proof -
-    have s1: "0 < s + 1" using s by simp
-    interpret H: horizon_sq_int_martingale M F X "s + 1"
-      by (intro horizon_sq_int_martingale.intro[OF mgX]
-          horizon_sq_int_martingale_axioms.intro s1 P sqX)
-    have bnd: "AE \<omega> in M. norm ((?XS s \<omega>)\<^sup>2) \<le> norm ((H.Dsup \<omega>)\<^sup>2)"
-      using H.Dsup_dominates[OF contXu[OF s1]] AE_space
-    proof eventually_elim
-      case (elim \<omega>)
-      have m0: "0 \<le> min s (tau \<omega>)" using s tau_nonneg elim by simp
-      have m1: "min s (tau \<omega>) \<le> s + 1" using s by simp
-      have xb: "\<bar>?XS s \<omega>\<bar> \<le> H.Dsup \<omega>" using elim m0 m1 by blast
-      have "(?XS s \<omega>)\<^sup>2 = \<bar>?XS s \<omega>\<bar>\<^sup>2" by simp
-      also have "\<dots> \<le> (H.Dsup \<omega>)\<^sup>2" by (rule power_mono[OF xb abs_ge_zero])
-      finally show ?case by simp
-    qed
-    show ?thesis
-      by (rule Bochner_Integration.integrable_bound
-            [OF H.Dsup_sq_integrable _ bnd]) (use XSm[OF s] in measurable)
-  qed
-  have iAS: "integrable M (?AS s)" if s: "0 \<le> s" for s
-  proof (rule Bochner_Integration.integrable_bound[OF P.integrable_const[of "C * s"]])
-    show "?AS s \<in> borel_measurable M" by (rule ASm[OF s])
-    show "AE \<omega> in M. norm (?AS s \<omega>) \<le> norm (C * s)"
-    proof (intro AE_I2)
-      fix \<omega> assume w: "\<omega> \<in> space M"
-      have m0: "0 \<le> min s (tau \<omega>)" using s tau_nonneg w by simp
-      have "0 \<le> ?AS s \<omega> \<and> ?AS s \<omega> \<le> C * min s (tau \<omega>)"
-        using A_rate[OF w, rule_format, of 0 "min s (tau \<omega>)"] m0 A0[OF w] by simp
-      moreover have "C * min s (tau \<omega>) \<le> C * s"
-        using C0 s by (intro mult_left_mono) simp_all
-      moreover have "0 \<le> C * s" using C0 s by simp
-      ultimately show "norm (?AS s \<omega>) \<le> norm (C * s)" by simp
-    qed
-  qed
   have mgZS: "martingale M F 0 (\<lambda>t \<omega>. (?XS t \<omega>)\<^sup>2 - ?AS t \<omega>)"
     by (rule stopped_compensated_square[OF P mgX sqX contX mgZ A0 A_rate C0
           tau_nonneg tau_stop])
-  have sfs: "sigma_finite_subalgebra M (F u)"
-    using uv(1) by (rule MX.sigma_finite_subalgebra_F)
-  have inc: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. (?XS v \<omega> - ?XS u \<omega>)\<^sup>2) \<omega>
-      = cond_exp M (F u) (\<lambda>\<omega>. (?XS v \<omega>)\<^sup>2) \<omega> - (?XS u \<omega>)\<^sup>2"
-    by (rule cond_exp_increment_sq[OF mgXS sqXS uv])
-  have zmp: "AE \<omega> in M. (?XS u \<omega>)\<^sup>2 - ?AS u \<omega>
-      = cond_exp M (F u) (\<lambda>\<omega>. (?XS v \<omega>)\<^sup>2 - ?AS v \<omega>) \<omega>"
-    by (rule martingale.martingale_property[OF mgZS uv(1) uv(2)])
-  have d1: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. (?XS v \<omega>)\<^sup>2 - ?AS v \<omega>) \<omega>
-      = cond_exp M (F u) (\<lambda>\<omega>. (?XS v \<omega>)\<^sup>2) \<omega> - cond_exp M (F u) (?AS v) \<omega>"
-    by (rule sigma_finite_subalgebra.cond_exp_diff[OF sfs sqXS[OF v0] iAS[OF v0]])
-  have d2: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. ?AS v \<omega> - ?AS u \<omega>) \<omega>
-      = cond_exp M (F u) (?AS v) \<omega> - cond_exp M (F u) (?AS u) \<omega>"
-    by (rule sigma_finite_subalgebra.cond_exp_diff[OF sfs iAS[OF v0] iAS[OF uv(1)]])
-  have fm: "AE \<omega> in M. cond_exp M (F u) (?AS u) \<omega> = ?AS u \<omega>"
-    by (rule sigma_finite_subalgebra.cond_exp_F_meas[OF sfs iAS[OF uv(1)]
-          ASad[OF uv(1)]])
-  from inc zmp d1 d2 fm show ?thesis
-  proof eventually_elim
-    case (elim \<omega>)
-    from elim show ?case by linarith
-  qed
+  have iAS: "integrable M (?AS s)" if s: "0 \<le> s" for s
+    by (rule stopped_compensator_integrable[OF P A0 A_rate C0 tau_nonneg
+          measurable_from_subalg[OF MX.subalgebras[OF s]
+            adapted_process.adapted[OF compensator_adapted[OF mgXS mgZS] s]] s])
+  show ?thesis
+    by (rule compensator_cond_increment[OF mgXS mgZS
+          stopped_L2_sq_integrable[OF P mgX sqX contX tau_nonneg tau_stop] iAS uv])
 qed
 
 section \<open>Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> for unbounded \<open>L\<^sup>2\<close> martingales, by localization and Fatou\<close>
@@ -345,9 +304,10 @@ qed
 
 text \<open>
   The paper's Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> with constant \<open>8 C\<^sup>2\<close> for an unbounded \<open>L\<^sup>2\<close>
-  martingale with deterministic start and a Lipschitz-rate compensator for
-  its square. Localize at the exit times of the balls of radius
-  \<open>\<bar>x\<^sub>0\<bar> + n + 1\<close>, apply the bounded estimate to each stopped process --- its
+  martingale with an almost surely bounded start, \<open>\<bar>X\<^sub>0\<bar> \<le> B\<close>, and a
+  Lipschitz-rate compensator for its square (adapted, being a compensator:
+  \<open>compensator_adapted\<close>). Localize at the exit times of the balls of radius
+  \<open>\<bar>B\<bar> + n + 1\<close>, apply the bounded estimate to each stopped process --- its
   martingale property, covariation package and boundedness come from the
   three theorems above and the exit-time theory --- and pass to the limit by
   Fatou: continuous paths are bounded on compact intervals, so for every
@@ -355,14 +315,13 @@ text \<open>
 \<close>
 
 theorem fourth_moment_L2:
-  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C x0 :: real
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C B :: real
   assumes P: "prob_space M"
     and mgX: "martingale M F (0::real) X"
     and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
     and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
-    and start: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> X 0 \<omega> = x0"
+    and start: "AE \<omega> in M. \<bar>X 0 \<omega>\<bar> \<le> B"
     and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
-    and Aad: "adapted_process M F (0::real) A"
     and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
     and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
                     0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
@@ -372,9 +331,10 @@ theorem fourth_moment_L2:
 proof -
   interpret P: prob_space M by (rule P)
   interpret MX: martingale M F "0::real" X by (rule mgX)
+  have Aad: "adapted_process M F (0::real) A" by (rule compensator_adapted[OF mgX mgZ])
   have v0: "0 \<le> v" using uv by linarith
-  define r where "r = (\<lambda>n::nat. \<bar>x0\<bar> + real n + 1)"
-  have r_gt: "\<bar>x0\<bar> < r n" for n unfolding r_def by simp
+  define r where "r = (\<lambda>n::nat. \<bar>B\<bar> + real n + 1)"
+  have r_gt: "\<bar>B\<bar> < r n" for n unfolding r_def by simp
   have r_pos: "0 < r n" for n unfolding r_def by simp
   define tau where "tau = (\<lambda>n \<omega>. etime v {y::real. r n \<le> norm y} X \<omega>)"
   have closedA: "closed {y::real. r n \<le> norm y}" for n
@@ -401,15 +361,17 @@ proof -
   let ?XS = "\<lambda>n t \<omega>. X (min t (tau n \<omega>)) \<omega>"
   let ?AS = "\<lambda>n t \<omega>. A (min t (tau n \<omega>)) \<omega>"
   have bndS: "AE \<omega> in M. \<bar>?XS n s \<omega>\<bar> \<le> r n" if s: "0 \<le> s" for n s
-  proof (intro AE_I2)
-    fix \<omega> assume w: "\<omega> \<in> space M"
+    using start AE_space
+  proof eventually_elim
+    case (elim \<omega>)
+    then have w: "\<omega> \<in> space M" by simp
     have m0: "0 \<le> min s (tau n \<omega>)" using s tau_nn by simp
-    have st: "norm (X 0 \<omega>) < r n" using start[OF w] r_gt by simp
+    have st: "norm (X 0 \<omega>) < r n" using elim(1) r_gt[of n] by simp
     have sle: "min s (tau n \<omega>) \<le> etime v {y. r n \<le> norm y} X \<omega>"
       unfolding tau_def by simp
     have "X (min s (tau n \<omega>)) \<omega> \<in> cball 0 (r n)"
       by (rule etime_stays_in_cball[OF v0 r_pos st contXv[OF w] m0 sle])
-    thus "\<bar>?XS n s \<omega>\<bar> \<le> r n" by simp
+    thus ?case by simp
   qed
   have contA: "continuous_on {0..} (\<lambda>s. A s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
     by (rule rate_continuous_on[OF C0 A_rate[OF w]])
@@ -423,20 +385,7 @@ proof -
   have XSm: "?XS n s \<in> borel_measurable M" if "0 \<le> s" for n s
     by (rule measurable_from_subalg[OF MX.subalgebras[OF that] XSad[OF that]])
   have A_intS: "integrable M (?AS n s)" if s: "0 \<le> s" for n s
-  proof (rule Bochner_Integration.integrable_bound[OF P.integrable_const[of "C * s"]])
-    show "?AS n s \<in> borel_measurable M" by (rule ASm[OF s])
-    show "AE \<omega> in M. norm (?AS n s \<omega>) \<le> norm (C * s)"
-    proof (intro AE_I2)
-      fix \<omega> assume w: "\<omega> \<in> space M"
-      have m0: "0 \<le> min s (tau n \<omega>)" using s tau_nn by simp
-      have "0 \<le> ?AS n s \<omega> \<and> ?AS n s \<omega> \<le> C * min s (tau n \<omega>)"
-        using A_rate[OF w, rule_format, of 0 "min s (tau n \<omega>)"] m0 A0[OF w] by simp
-      moreover have "C * min s (tau n \<omega>) \<le> C * s"
-        using C0 s by (intro mult_left_mono) simp_all
-      moreover have "0 \<le> C * s" by (rule mult_nonneg_nonneg[OF C0 s])
-      ultimately show "norm (?AS n s \<omega>) \<le> norm (C * s)" by simp
-    qed
-  qed
+    by (rule stopped_compensator_integrable[OF P A0 A_rate C0 tau_nn' ASm[OF s] s])
   have A_rateS: "AE \<omega> in M. \<forall>u' v'. 0 \<le> u' \<longrightarrow> u' \<le> v' \<longrightarrow>
       0 \<le> ?AS n v' \<omega> - ?AS n u' \<omega> \<and> ?AS n v' \<omega> - ?AS n u' \<omega> \<le> C * (v' - u')"
     for n
@@ -474,7 +423,7 @@ proof -
   have covAS: "AE \<omega> in M. cond_exp M (F u') (\<lambda>\<omega>. (?XS n v' \<omega> - ?XS n u' \<omega>)\<^sup>2) \<omega>
       = cond_exp M (F u') (\<lambda>\<omega>. ?AS n v' \<omega> - ?AS n u' \<omega>) \<omega>"
     if "0 \<le> u'" "u' \<le> v'" for n u' v'
-    by (rule stopped_covariation[OF P mgX sqX contX mgZ Aad A0 A_rate C0
+    by (rule stopped_covariation[OF P mgX sqX contX mgZ A0 A_rate C0
           tau_nn' tau_stop that])
   have bound_n: "(\<integral>\<omega>. (?XS n v \<omega> - ?XS n u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2" for n
     by (rule fourth_moment_bound_bounded[OF P mgXS uv A_intS A_rateS covAS C0
@@ -566,63 +515,42 @@ qed
 text \<open>The Bochner forms: integrability of the fourth power and the bound
   itself, ready for \<open>dyadic_bad_event_tail_mom\<close>.\<close>
 
-corollary fourth_moment_L2_integrable:
-  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C x0 :: real
+corollary fourth_moment_L2_bochner:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C B :: real
   assumes P: "prob_space M"
     and mgX: "martingale M F (0::real) X"
     and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
     and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
-    and start: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> X 0 \<omega> = x0"
+    and start: "AE \<omega> in M. \<bar>X 0 \<omega>\<bar> \<le> B"
     and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
-    and Aad: "adapted_process M F (0::real) A"
     and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
     and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
                     0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
     and C0: "0 \<le> C"
     and uv: "0 \<le> u" "u \<le> v"
   shows "integrable M (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4)"
-proof (rule integrableI_nonneg)
+    and "(\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+proof -
   interpret MX: martingale M F "0::real" X by (rule mgX)
   have v0: "0 \<le> v" using uv by linarith
-  show "(\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4) \<in> borel_measurable M"
-    using borel_measurable_integrable[OF MX.integrable[OF v0]]
-      borel_measurable_integrable[OF MX.integrable[OF uv(1)]] by measurable
-  show "AE \<omega> in M. 0 \<le> (X v \<omega> - X u \<omega>)^4"
-    by (intro AE_I2 pow4_nonneg)
-  have "(\<integral>\<^sup>+\<omega>. ennreal ((X v \<omega> - X u \<omega>)^4) \<partial>M) \<le> ennreal (8*C\<^sup>2*(v - u)\<^sup>2)"
-    by (rule fourth_moment_L2[OF P mgX sqX contX start mgZ Aad A0 A_rate C0 uv])
-  also have "\<dots> < \<infinity>" by simp
-  finally show "(\<integral>\<^sup>+\<omega>. ennreal ((X v \<omega> - X u \<omega>)^4) \<partial>M) < \<infinity>" .
-qed
-
-corollary fourth_moment_L2_bochner:
-  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C x0 :: real
-  assumes P: "prob_space M"
-    and mgX: "martingale M F (0::real) X"
-    and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
-    and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
-    and start: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> X 0 \<omega> = x0"
-    and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
-    and Aad: "adapted_process M F (0::real) A"
-    and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
-    and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
-                    0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
-    and C0: "0 \<le> C"
-    and uv: "0 \<le> u" "u \<le> v"
-  shows "(\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
-proof -
-  have int: "integrable M (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4)"
-    by (rule fourth_moment_L2_integrable[OF P mgX sqX contX start mgZ Aad A0
-          A_rate C0 uv])
-  have B0: "0 \<le> 8*C\<^sup>2*(v - u)\<^sup>2" by simp
+  have nn: "(\<integral>\<^sup>+\<omega>. ennreal ((X v \<omega> - X u \<omega>)^4) \<partial>M) \<le> ennreal (8*C\<^sup>2*(v - u)\<^sup>2)"
+    by (rule fourth_moment_L2[OF P mgX sqX contX start mgZ A0 A_rate C0 uv])
+  show int: "integrable M (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4)"
+  proof (rule integrableI_nonneg)
+    show "(\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4) \<in> borel_measurable M"
+      using borel_measurable_integrable[OF MX.integrable[OF v0]]
+        borel_measurable_integrable[OF MX.integrable[OF uv(1)]] by measurable
+    show "AE \<omega> in M. 0 \<le> (X v \<omega> - X u \<omega>)^4"
+      by (intro AE_I2 pow4_nonneg)
+    show "(\<integral>\<^sup>+\<omega>. ennreal ((X v \<omega> - X u \<omega>)^4) \<partial>M) < \<infinity>"
+      using nn by (rule order.strict_trans1) simp
+  qed
   have "ennreal (\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M)
       = (\<integral>\<^sup>+\<omega>. ennreal ((X v \<omega> - X u \<omega>)^4) \<partial>M)"
-    by (rule nn_integral_eq_integral[symmetric, OF int])
-       (intro AE_I2 pow4_nonneg)
-  also have "\<dots> \<le> ennreal (8*C\<^sup>2*(v - u)\<^sup>2)"
-    by (rule fourth_moment_L2[OF P mgX sqX contX start mgZ Aad A0 A_rate C0 uv])
-  finally show ?thesis
-    using B0 by simp
+    by (rule nn_integral_eq_integral[symmetric, OF int]) (intro AE_I2 pow4_nonneg)
+  also note nn
+  finally show "(\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+    using zero_le_power2[of C] zero_le_power2[of "v - u"] by simp
 qed
 
 text \<open>Restricting a filtered probability space to a full-measure event turns

@@ -43,7 +43,7 @@ corollary path_laws_convergent_subsequence_market:
         0 \<le> AA i l v \<omega> - AA i l u \<omega> \<and> AA i l v \<omega> - AA i l u \<omega> \<le> C * (v - u)"
   shows "\<exists>a N. strict_mono a \<and> finite_measure N
       \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
-      \<and> N (space N) \<le> ennreal 1
+      \<and> prob_space N
       \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
           (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
 proof (rule path_laws_convergent_subsequence_vec[where C = C and x = x, OF T0 g0 g2])
@@ -53,30 +53,25 @@ proof (rule path_laws_convergent_subsequence_vec[where C = C and x = x, OF T0 g0
     if w: "\<omega> \<in> space (MM i)" for i \<omega>
     by (rule continuous_on_subset[OF contX[OF w]]) auto
   show "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x" by (rule start)
+  have bochner: "integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4)
+      \<and> (\<integral>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+    if u0: "0 \<le> u" and uv: "u \<le> v" for i l u v
+  proof -
+    have contl: "continuous_on {0..} (\<lambda>s. XX i s \<omega> $ l)"
+      if w: "\<omega> \<in> space (MM i)" for \<omega>
+      by (rule continuous_on_component[OF contX[OF w]])
+    have startl: "AE \<omega> in MM i. \<bar>XX i 0 \<omega> $ l\<bar> \<le> \<bar>x $ l\<bar>"
+      by (intro AE_I2) (simp add: start)
+    show ?thesis
+      using fourth_moment_L2_bochner[OF P mgX sqX contl startl mgZ A0 A_rate C0 u0 uv]
+      by blast
+  qed
   show "integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4)"
-    if u0: "0 \<le> u" and uv: "u \<le> v" and vT: "v \<le> T" for i l u v
-  proof -
-    have contl: "continuous_on {0..} (\<lambda>s. XX i s \<omega> $ l)"
-      if w: "\<omega> \<in> space (MM i)" for \<omega>
-      by (rule continuous_on_component[OF contX[OF w]])
-    have startl: "XX i 0 \<omega> $ l = x $ l" if w: "\<omega> \<in> space (MM i)" for \<omega>
-      using start[OF w] by simp
-    show ?thesis
-      by (rule fourth_moment_L2_integrable[OF P mgX sqX contl startl mgZ Aad A0
-            A_rate C0 u0 uv])
-  qed
+    if "0 \<le> u" and "u \<le> v" and "v \<le> T" for i l u v
+    using bochner[OF that(1,2)] by blast
   show "(\<integral>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
-    if u0: "0 \<le> u" and uv: "u \<le> v" and vT: "v \<le> T" for i l u v
-  proof -
-    have contl: "continuous_on {0..} (\<lambda>s. XX i s \<omega> $ l)"
-      if w: "\<omega> \<in> space (MM i)" for \<omega>
-      by (rule continuous_on_component[OF contX[OF w]])
-    have startl: "XX i 0 \<omega> $ l = x $ l" if w: "\<omega> \<in> space (MM i)" for \<omega>
-      using start[OF w] by simp
-    show ?thesis
-      by (rule fourth_moment_L2_bochner[OF P mgX sqX contl startl mgZ Aad A0
-            A_rate C0 u0 uv])
-  qed
+    if "0 \<le> u" and "u \<le> v" and "v \<le> T" for i l u v
+    using bochner[OF that(1,2)] by blast
 qed
 
 section \<open>The exit time is upper semicontinuous\<close>
@@ -954,125 +949,16 @@ proof -
     define Y where "Y = (\<lambda>v \<omega>. X v \<omega> $ i + c * (X v \<omega> $ j))"
     define G where "G = (\<lambda>v \<omega>. A v \<omega> $ i $ i
         + c * (A v \<omega> $ i $ j + A v \<omega> $ j $ i) + c\<^sup>2 * (A v \<omega> $ j $ j))"
-    have c2: "c\<^sup>2 \<le> 1" using sq_mono_abs[OF c] by simp
-
     have mgY: "martingale M F 0 Y"
-    proof -
-      have "martingale M F 0 (\<lambda>v \<omega>. X v \<omega> $ i + c *\<^sub>R (X v \<omega> $ j))"
-        by (intro martingale.add[OF Xcomp] martingale.scaleR_const[OF Xcomp])
-      then show ?thesis unfolding Y_def by simp
-    qed
+      unfolding Y_def by (rule polarised_martingale(1)[OF Xcomp XAcomp])
     have mgZ: "martingale M F 0 (\<lambda>v \<omega>. (Y v \<omega>)\<^sup>2 - G v \<omega>)"
-    proof -
-      have eq: "(\<lambda>v \<omega>. (Y v \<omega>)\<^sup>2 - G v \<omega>)
-          = (\<lambda>v \<omega>. ((X v \<omega> $ i * X v \<omega> $ i - A v \<omega> $ i $ i)
-                      + c *\<^sub>R (X v \<omega> $ i * X v \<omega> $ j - A v \<omega> $ i $ j))
-                   + (c *\<^sub>R (X v \<omega> $ j * X v \<omega> $ i - A v \<omega> $ j $ i)
-                      + c\<^sup>2 *\<^sub>R (X v \<omega> $ j * X v \<omega> $ j - A v \<omega> $ j $ j)))"
-        unfolding Y_def G_def
-        by (rule ext)+ (simp add: power2_eq_square algebra_simps)
-      have m1: "martingale M F 0 (\<lambda>v \<omega>. X v \<omega> $ i * X v \<omega> $ i - A v \<omega> $ i $ i)"
-        by (rule XAcomp)
-      have m2: "martingale M F 0 (\<lambda>v \<omega>. c *\<^sub>R (X v \<omega> $ i * X v \<omega> $ j - A v \<omega> $ i $ j))"
-        by (rule martingale.scaleR_const[OF XAcomp])
-      have m3: "martingale M F 0 (\<lambda>v \<omega>. c *\<^sub>R (X v \<omega> $ j * X v \<omega> $ i - A v \<omega> $ j $ i))"
-        by (rule martingale.scaleR_const[OF XAcomp])
-      have m4: "martingale M F 0 (\<lambda>v \<omega>. c\<^sup>2 *\<^sub>R (X v \<omega> $ j * X v \<omega> $ j - A v \<omega> $ j $ j))"
-        by (rule martingale.scaleR_const[OF XAcomp])
-      show ?thesis unfolding eq
-        by (rule martingale.add[OF martingale.add[OF m1 m2] martingale.add[OF m3 m4]])
-    qed
-
-    text \<open>The polarised compensator inherits monotonicity from positive
-      semidefiniteness and the upper bound from the entrywise rate.\<close>
+      unfolding Y_def G_def by (rule polarised_martingale(2)[OF Xcomp XAcomp])
     have Grate: "\<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
         0 \<le> G v \<omega> - G u \<omega> \<and> G v \<omega> - G u \<omega> \<le> (4 * C) * (v - u)"
       if w: "\<omega> \<in> space M" for \<omega>
-    proof (intro allI impI)
-      fix u v :: real assume uv: "0 \<le> u" "u \<le> v"
-      have diff: "G v \<omega> - G u \<omega>
-          = (axis i 1 + c *\<^sub>R axis j 1) \<bullet> ((A v \<omega> - A u \<omega>) *v (axis i 1 + c *\<^sub>R axis j 1))"
-      proof -
-        have "(axis i 1 + c *\<^sub>R axis j 1)
-                \<bullet> ((A v \<omega> - A u \<omega>) *v (axis i 1 + c *\<^sub>R axis j 1))
-            = (A v \<omega> - A u \<omega>) $ i $ i
-              + c * ((A v \<omega> - A u \<omega>) $ i $ j + (A v \<omega> - A u \<omega>) $ j $ i)
-              + c\<^sup>2 * ((A v \<omega> - A u \<omega>) $ j $ j)"
-          by (rule inner_mv_axis)
-        then show ?thesis unfolding G_def by (simp add: algebra_simps)
-      qed
-      have nn: "0 \<le> G v \<omega> - G u \<omega>"
-        unfolding diff using Apsd[OF w] uv by blast
-      have e: "\<And>a b. \<bar>A v \<omega> $ a $ b - A u \<omega> $ a $ b\<bar> \<le> C * (v - u)"
-        using Arate[OF w] uv by blast
-      have "G v \<omega> - G u \<omega>
-          = (A v \<omega> $ i $ i - A u \<omega> $ i $ i)
-            + c * ((A v \<omega> $ i $ j - A u \<omega> $ i $ j) + (A v \<omega> $ j $ i - A u \<omega> $ j $ i))
-            + c\<^sup>2 * (A v \<omega> $ j $ j - A u \<omega> $ j $ j)"
-        unfolding G_def by (simp add: algebra_simps)
-      also have "\<dots> \<le> C * (v - u) + 1 * (C * (v - u) + C * (v - u)) + 1 * (C * (v - u))"
-      proof (intro add_mono)
-        show "A v \<omega> $ i $ i - A u \<omega> $ i $ i \<le> C * (v - u)"
-          using e by (simp add: abs_le_iff)
-        have "c * ((A v \<omega> $ i $ j - A u \<omega> $ i $ j) + (A v \<omega> $ j $ i - A u \<omega> $ j $ i))
-            \<le> \<bar>c\<bar> * \<bar>(A v \<omega> $ i $ j - A u \<omega> $ i $ j) + (A v \<omega> $ j $ i - A u \<omega> $ j $ i)\<bar>"
-          by (simp add: abs_mult flip: abs_mult)
-        also have "\<dots> \<le> 1 * (C * (v - u) + C * (v - u))"
-          using c e[of i j] e[of j i] C0 uv
-          by (intro mult_mono) (auto intro: order_trans[OF abs_triangle_ineq] add_mono)
-        finally show "c * ((A v \<omega> $ i $ j - A u \<omega> $ i $ j)
-                             + (A v \<omega> $ j $ i - A u \<omega> $ j $ i))
-            \<le> 1 * (C * (v - u) + C * (v - u))" .
-        have "0 \<le> A v \<omega> $ j $ j - A u \<omega> $ j $ j"
-        proof -
-          have ax: "axis j (1::real) \<bullet> ((A v \<omega> - A u \<omega>) *v axis j 1)
-              = (A v \<omega> - A u \<omega>) $ j $ j"
-            using inner_mv_axis[of j 0 j "A v \<omega> - A u \<omega>"] by simp
-          have "0 \<le> axis j (1::real) \<bullet> ((A v \<omega> - A u \<omega>) *v axis j 1)"
-            using Apsd[OF w] uv by blast
-          then show ?thesis using ax by simp
-        qed
-        moreover have "A v \<omega> $ j $ j - A u \<omega> $ j $ j \<le> C * (v - u)"
-          using e by (simp add: abs_le_iff)
-        ultimately show "c\<^sup>2 * (A v \<omega> $ j $ j - A u \<omega> $ j $ j) \<le> 1 * (C * (v - u))"
-          using c2 C0 uv by (intro mult_mono) auto
-      qed
-      also have "\<dots> = (4 * C) * (v - u)" by simp
-      finally show "0 \<le> G v \<omega> - G u \<omega> \<and> G v \<omega> - G u \<omega> \<le> (4 * C) * (v - u)"
-        using nn by simp
-    qed
-
-    text \<open>Square integrability, from the compensated square and the bound on
-      \<open>G\<close> --- there is no uniform bound on \<open>Y\<close> to appeal to.\<close>
+      unfolding G_def by (rule polarised_rate[OF c C0 Apsd[OF w] Arate[OF w]])
     have G0: "G 0 \<omega> = 0" if w: "\<omega> \<in> space M" for \<omega>
       unfolding G_def using A0[OF w] by simp
-    have Gbnd: "\<bar>G s \<omega>\<bar> \<le> (4 * C) * s" if w: "\<omega> \<in> space M" and s: "0 \<le> s" for s \<omega>
-      using Grate[OF w] s G0[OF w] by (metis order_refl abs_of_nonneg diff_zero)
-    have Ymeas: "Y s \<in> borel_measurable M" if s: "0 \<le> s" for s
-      by (rule borel_measurable_integrable[OF martingale.integrable[OF mgY s]])
-    have Gmeas: "G s \<in> borel_measurable M" if s: "0 \<le> s" for s
-    proof -
-      have m: "(\<lambda>\<omega>. (Y s \<omega>)\<^sup>2 - G s \<omega>) \<in> borel_measurable M"
-        by (rule borel_measurable_integrable[OF martingale.integrable[OF mgZ s]])
-      have f1: "(\<lambda>\<omega>. (Y s \<omega>)\<^sup>2) \<in> borel_measurable M" using Ymeas[OF s] by simp
-      have "(\<lambda>\<omega>. (Y s \<omega>)\<^sup>2 - ((Y s \<omega>)\<^sup>2 - G s \<omega>)) \<in> borel_measurable M"
-        by (rule borel_measurable_diff[OF f1 m])
-      moreover have "(\<lambda>\<omega>. (Y s \<omega>)\<^sup>2 - ((Y s \<omega>)\<^sup>2 - G s \<omega>)) = G s" by (rule ext) simp
-      ultimately show ?thesis by simp
-    qed
-    have Gint: "integrable M (G s)" if s: "0 \<le> s" for s
-    proof (rule P.integrable_const_bound[of _ "(4 * C) * s"])
-      show "AE \<omega> in M. norm (G s \<omega>) \<le> (4 * C) * s"
-        using Gbnd[OF _ s] by (intro AE_I2) simp
-      show "G s \<in> borel_measurable M" by (rule Gmeas[OF s])
-    qed
-    have sqY: "integrable M (\<lambda>\<omega>. (Y s \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
-    proof -
-      have "integrable M (\<lambda>\<omega>. ((Y s \<omega>)\<^sup>2 - G s \<omega>) + G s \<omega>)"
-        by (intro Bochner_Integration.integrable_add
-            martingale.integrable[OF mgZ s] Gint[OF s])
-      then show ?thesis by simp
-    qed
     have contY: "continuous_on {0..} (\<lambda>s. Y s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
       unfolding Y_def
       by (intro continuous_on_add continuous_on_mult_left contX[OF w])
@@ -1087,8 +973,9 @@ proof -
     qed
     have "AE \<omega> in M. qvp_good (4 * C) (\<lambda>s. Y s \<omega>)
         \<and> (\<forall>t. 0 \<le> t \<longrightarrow> qvps (\<lambda>s. Y s \<omega>) t = G t \<omega>)"
-      by (rule qvps_eq_A_localised
-            [OF P mgY sqY contY mgZ G0 Grate _ _ Y0]) (use C0 B0 in auto)
+      by (rule qvps_eq_A_localised[OF P mgY
+            compensator_sq_integrable(2)[OF P mgY mgZ G0 Grate] contY mgZ G0 Grate _ _ Y0])
+         (use C0 B0 in auto)
     then show ?thesis unfolding Y_def G_def .
   qed
   have c1: "\<bar>(1::real)\<bar> \<le> 1" by simp
@@ -1151,7 +1038,7 @@ section \<open>The constraint passes to weak limits, without Skorokhod\<close>
 
 text \<open>The paper passes the covariation constraint to the limit law via
   Skorokhod's representation theorem; this instead uses the closed-set half
-  of the portmanteau theorem (\<open>weak_conv_closed_full_mass\<close>). For fixed
+  of the portmanteau theorem (\<open>weak_conv_closed_full_measure\<close>). For fixed
   times \<open>s < t\<close> the difference quotient is a continuous function of the
   path and the constraint set is closed, so
   \<open>{\<omega>. (Y t \<omega> - Y s \<omega>)/(t - s) \<in> S}\<close> is closed and has full mass under

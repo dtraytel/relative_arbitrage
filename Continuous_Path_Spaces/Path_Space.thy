@@ -114,13 +114,7 @@ lemma mspace_path_metricD:
   fixes f :: "real \<Rightarrow> 'b::polish_space"
   assumes f: "f \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
   shows "continuous_on {0..T} f"
-proof -
-  have "continuous_map (top_of_set {0..T})
-      (mtopology_of (euclidean_metric :: 'b metric)) f"
-    using f unfolding path_metric_def mspace_cfunspace by simp
-  hence "continuous_map (top_of_set {0..T}) euclidean f" by simp
-  thus ?thesis by simp
-qed
+  using f unfolding path_metric_def mspace_cfunspace by auto
 
 theorem compactin_path_holder_ball:
   fixes x :: "'b::{polish_space, real_normed_vector, heine_borel}"
@@ -286,12 +280,6 @@ proof -
     by (rule continuous_le_on_closure[OF contc Icc_rats_dense[OF T t] le])
 qed
 
-lemma mspace_path_metric_continuous:
-  fixes g :: "real \<Rightarrow> 'b::polish_space"
-  assumes "g \<in> mspace (path_metric T)"
-  shows "continuous_on {0..T} g"
-  using assms unfolding path_metric_def mspace_cfunspace by auto
-
 lemma path_mdist_le_iff:
   fixes g h :: "real \<Rightarrow> 'b::polish_space"
   assumes T: "0 \<le> T"
@@ -317,8 +305,8 @@ proof -
   next
     assume r: "\<forall>t\<in>{0..T} \<inter> \<rat>. dist (g t) (h t) \<le> q"
     have cd: "continuous_on {0..T} (\<lambda>t. dist (g t) (h t))"
-      by (intro continuous_on_dist mspace_path_metric_continuous[OF g]
-          mspace_path_metric_continuous[OF h])
+      by (intro continuous_on_dist mspace_path_metricD[OF g]
+          mspace_path_metricD[OF h])
     have "dist (g t) (h t) \<le> q" if "t \<in> {0..T}" for t
       by (rule le_on_Icc_of_rats[OF T cd _ that]) (use r in blast)
     thus "mdist (path_metric T) g h \<le> q" unfolding iff1 by blast
@@ -510,13 +498,38 @@ proof -
     by (subst cfunspace_mdist_le[OF gc hc ne]) simp
 qed
 
+lemma path_dist_le_mdist:
+  fixes f g :: "real \<Rightarrow> 'b::polish_space"
+  assumes f: "f \<in> mspace (path_metric T)" and g: "g \<in> mspace (path_metric T)"
+    and t: "t \<in> {0..T}"
+  shows "dist (f t) (g t) \<le> mdist (path_metric T) f g"
+  using path_mdist_le_iff_all[OF _ f g, of "mdist (path_metric T) f g"] t by auto
+
+text \<open>A map into a path space is Lipschitz as soon as it is so pointwise in
+  time, uniformly: the path metric is the supremum distance.\<close>
+
+lemma Lipschitz_path_mapI:
+  fixes F :: "'x \<Rightarrow> real \<Rightarrow> 'c::polish_space" and m :: "'x metric"
+  assumes S: "0 \<le> S"
+    and F: "\<And>f. f \<in> mspace m \<Longrightarrow> F f \<in> mspace (path_metric S)"
+    and pw: "\<And>f g s. f \<in> mspace m \<Longrightarrow> g \<in> mspace m \<Longrightarrow> s \<in> {0..S} \<Longrightarrow>
+      dist (F f s) (F g s) \<le> B * mdist m f g"
+  shows "Lipschitz_continuous_map m (path_metric S) F"
+  unfolding Lipschitz_continuous_map_def
+proof (intro conjI exI[of _ B] ballI)
+  show "F \<in> mspace m \<rightarrow> mspace (path_metric S)" by (intro funcsetI F)
+  fix f g assume f: "f \<in> mspace m" and g: "g \<in> mspace m"
+  show "mdist (path_metric S) (F f) (F g) \<le> B * mdist m f g"
+    using path_mdist_le_iff_all[OF S F[OF f] F[OF g]] pw[OF f g] by blast
+qed
+
 lemma restrict_mspace_path_metric:
   fixes f :: "real \<Rightarrow> 'b::polish_space"
   assumes m0: "0 \<le> m" and mm: "m \<le> m'"
     and f: "f \<in> mspace (path_metric m')"
   shows "restrict f {0..m} \<in> mspace (path_metric m)"
 proof -
-  have "continuous_on {0..m'} f" by (rule mspace_path_metric_continuous[OF f])
+  have "continuous_on {0..m'} f" by (rule mspace_path_metricD[OF f])
   hence "continuous_on {0..m} f"
     by (rule continuous_on_subset) (use mm in auto)
   thus ?thesis by (rule mspace_path_metricI)
@@ -528,41 +541,14 @@ lemma Lipschitz_restrict_path_metric:
   shows "Lipschitz_continuous_map
       (path_metric m' :: (real \<Rightarrow> 'b::polish_space) metric)
       (path_metric m) (\<lambda>f. restrict f {0..m})"
-  unfolding Lipschitz_continuous_map_def
-proof (intro conjI)
-  show "(\<lambda>f. restrict f {0..m})
-      \<in> mspace (path_metric m' :: (real \<Rightarrow> 'b) metric)
-        \<rightarrow> mspace (path_metric m :: (real \<Rightarrow> 'b) metric)"
-    by (intro funcsetI restrict_mspace_path_metric[OF m0 mm])
-  have m'0: "0 \<le> m'" using m0 mm by linarith
-  have key: "mdist (path_metric m) (restrict f {0..m}) (restrict g {0..m})
+proof (rule Lipschitz_path_mapI[OF m0 restrict_mspace_path_metric[OF m0 mm], where B = 1])
+  fix f g :: "real \<Rightarrow> 'b" and t :: real
+  assume f: "f \<in> mspace (path_metric m')" and g: "g \<in> mspace (path_metric m')"
+    and t: "t \<in> {0..m}"
+  have "t \<in> {0..m'}" using t mm by auto
+  then show "dist (restrict f {0..m} t) (restrict g {0..m} t)
       \<le> 1 * mdist (path_metric m') f g"
-    if f: "f \<in> mspace (path_metric m' :: (real \<Rightarrow> 'b) metric)"
-      and g: "g \<in> mspace (path_metric m')" for f g
-  proof -
-    have rf: "restrict f {0..m} \<in> mspace (path_metric m :: (real \<Rightarrow> 'b) metric)"
-      by (rule restrict_mspace_path_metric[OF m0 mm f])
-    have rg: "restrict g {0..m} \<in> mspace (path_metric m :: (real \<Rightarrow> 'b) metric)"
-      by (rule restrict_mspace_path_metric[OF m0 mm g])
-    have le: "mdist (path_metric m') f g \<le> mdist (path_metric m') f g" by simp
-    have pw: "\<forall>t\<in>{0..m'}. dist (f t) (g t) \<le> mdist (path_metric m') f g"
-      using le path_mdist_le_iff_all[OF m'0 f g] by blast
-    have pwr: "dist (restrict f {0..m} t) (restrict g {0..m} t)
-        \<le> mdist (path_metric m') f g" if t: "t \<in> {0..m}" for t
-    proof -
-      have t': "t \<in> {0..m'}" using t mm by auto
-      show ?thesis using bspec[OF pw t'] t by simp
-    qed
-    have "mdist (path_metric m) (restrict f {0..m}) (restrict g {0..m})
-        \<le> mdist (path_metric m') f g"
-      using path_mdist_le_iff_all[OF m0 rf rg] pwr by blast
-    thus ?thesis by simp
-  qed
-  show "\<exists>B. \<forall>f\<in>mspace (path_metric m' :: (real \<Rightarrow> 'b) metric).
-      \<forall>g\<in>mspace (path_metric m').
-        mdist (path_metric m) (restrict f {0..m}) (restrict g {0..m})
-          \<le> B * mdist (path_metric m') f g"
-    by (intro exI[of _ 1] ballI key)
+    using path_dist_le_mdist[OF f g] t by simp
 qed
 
 lemma restrict_measurable_path_borel:
@@ -687,6 +673,120 @@ proof -
     show "((\<lambda>i. \<integral>x. f x \<partial>(distr (Ni i) (borel_of Y) r))
         \<longlongrightarrow> (\<integral>x. f x \<partial>(distr N (borel_of Y) r))) F"
       unfolding eqN using tendsto_cong[OF ev2] lim by blast
+  qed
+qed
+
+text \<open>
+  The extended form: the maps may move along the sequence, as long as they
+  converge uniformly on the space to a continuous limit map.  Test
+  functions are uniformly continuous (\<open>mweak_conv_eq1\<close>), so the moving
+  maps change the integrals by a uniformly small amount, and the limit map
+  is handled by the weak convergence of the laws.
+\<close>
+
+lemma weak_conv_on_pushforward_uniform:
+  fixes m :: "'b metric" and m' :: "'c metric" and Rm :: "nat \<Rightarrow> 'b measure"
+    and \<phi> :: "'b \<Rightarrow> 'c" and \<phi>m :: "nat \<Rightarrow> 'b \<Rightarrow> 'c"
+  assumes wc: "weak_conv_on Rm R sequentially (mtopology_of m)"
+    and prR: "\<And>k. prob_space (Rm k)"
+    and setsR: "\<And>k. sets (Rm k) = sets (borel_of (mtopology_of m))"
+    and phi: "continuous_map (mtopology_of m) (mtopology_of m') \<phi>"
+    and phim: "\<And>k. \<phi>m k \<in> borel_of (mtopology_of m) \<rightarrow>\<^sub>M borel_of (mtopology_of m')"
+    and into: "\<And>k x. x \<in> mspace m \<Longrightarrow> \<phi>m k x \<in> mspace m'"
+    and unif: "\<And>e. 0 < e \<Longrightarrow>
+      \<forall>\<^sub>F k in sequentially. \<forall>x\<in>mspace m. mdist m' (\<phi>m k x) (\<phi> x) < e"
+  shows "weak_conv_on (\<lambda>k. distr (Rm k) (borel_of (mtopology_of m')) (\<phi>m k))
+      (distr R (borel_of (mtopology_of m')) \<phi>) sequentially (mtopology_of m')"
+proof -
+  let ?Y = "borel_of (Metric_space.mtopology (mspace m') (mdist m'))"
+  let ?N = "\<lambda>k. distr (Rm k) ?Y (\<phi>m k)"
+  have top: "mtopology_of m' = Metric_space.mtopology (mspace m') (mdist m')"
+    by (simp add: mtopology_of_def)
+  have sR: "sets R = sets (borel_of (mtopology_of m))" and fR: "finite_measure R"
+    and int: "\<And>g. continuous_map (mtopology_of m) euclideanreal g \<Longrightarrow>
+        \<exists>B. \<forall>x\<in>topspace (mtopology_of m). \<bar>g x\<bar> \<le> B \<Longrightarrow>
+        (\<lambda>k. \<integral>x. g x \<partial>Rm k) \<longlonglongrightarrow> (\<integral>x. g x \<partial>R)"
+    using wc unfolding weak_conv_on_def by blast+
+  have spR: "space (Rm k) = mspace m" for k
+    using sets_eq_imp_space_eq[OF setsR[of k]] by (simp add: space_borel_of)
+  have mk: "\<phi>m k \<in> Rm k \<rightarrow>\<^sub>M ?Y" for k
+    using phim[unfolded top] measurable_cong_sets[OF setsR refl] by blast
+  have mR: "\<phi> \<in> R \<rightarrow>\<^sub>M ?Y"
+    using continuous_map_measurable[OF phi, unfolded top] measurable_cong_sets[OF sR refl]
+    by blast
+  have mk0: "\<phi> \<in> Rm k \<rightarrow>\<^sub>M ?Y" for k
+    using continuous_map_measurable[OF phi, unfolded top] measurable_cong_sets[OF setsR refl]
+    by blast
+  interpret MW: mweak_conv_fin "mspace m'" "mdist m'" ?N "distr R ?Y \<phi>" sequentially
+    unfolding mweak_conv_fin_def mweak_conv_fin_axioms_def
+    using finite_measure.finite_measure_distr[OF prob_space.finite_measure[OF prR] mk]
+      finite_measure.finite_measure_distr[OF fR mR]
+    by (simp add: mtopology_of_def)
+  show ?thesis
+    unfolding top
+  proof (rule MW.mweak_conv_eq1[THEN iffD2], intro allI impI)
+    fix f :: "'c \<Rightarrow> real"
+    assume uc: "uniformly_continuous_map MW.Self euclidean_metric f"
+      and "\<exists>B. \<forall>x \<in> mspace m'. \<bar>f x\<bar> \<le> B"
+    then obtain B where B: "\<And>x. x \<in> mspace m' \<Longrightarrow> \<bar>f x\<bar> \<le> B" by blast
+    have cf: "continuous_map (mtopology_of m') euclideanreal f"
+      using uniformly_continuous_imp_continuous_map[OF uc] by (simp add: mtopology_of_def)
+    have fm: "f \<in> borel_measurable ?Y"
+      using continuous_map_measurable[OF cf, unfolded top] by (simp add: borel_of_euclidean)
+    have phiS: "\<phi> x \<in> mspace m'" if "x \<in> mspace m" for x
+      using continuous_map_image_subset_topspace[OF phi] that by auto
+    have ig: "integrable (Rm k) (\<lambda>x. f (g x))"
+      if g: "g \<in> Rm k \<rightarrow>\<^sub>M ?Y" and gS: "\<And>x. x \<in> mspace m \<Longrightarrow> g x \<in> mspace m'" for g k
+    proof (rule finite_measure.integrable_const_bound[OF prob_space.finite_measure[OF prR],
+          where B = B])
+      show "AE x in Rm k. norm (f (g x)) \<le> B" by (intro AE_I2) (simp add: spR B gS)
+      show "(\<lambda>x. f (g x)) \<in> borel_measurable (Rm k)"
+        using measurable_compose[OF g fm] by simp
+    qed
+    have lim2: "(\<lambda>k. \<integral>x. f (\<phi> x) \<partial>Rm k) \<longlonglongrightarrow> (\<integral>x. f (\<phi> x) \<partial>R)"
+      using continuous_map_compose[OF phi cf] B phiS
+      by (intro int) (auto simp: comp_def intro!: exI[of _ B])
+    have ucd: "\<forall>ep>0. \<exists>dl>0. \<forall>u\<in>mspace m'. \<forall>v\<in>mspace m'.
+        mdist m' v u < dl \<longrightarrow> \<bar>f v - f u\<bar> < ep"
+      using uc unfolding uniformly_continuous_map_def by (simp add: dist_real_def)
+    have lim1: "(\<lambda>k. (\<integral>x. f (\<phi>m k x) \<partial>Rm k) - (\<integral>x. f (\<phi> x) \<partial>Rm k)) \<longlonglongrightarrow> 0"
+    proof (rule tendstoI)
+      fix e :: real assume e: "0 < e"
+      then have "0 < e/2" by simp
+      with ucd obtain d where d: "0 < d" and dd: "\<forall>u\<in>mspace m'. \<forall>v\<in>mspace m'.
+          mdist m' v u < d \<longrightarrow> \<bar>f v - f u\<bar> < e/2"
+        by blast
+      show "\<forall>\<^sub>F k in sequentially.
+          dist ((\<integral>x. f (\<phi>m k x) \<partial>Rm k) - (\<integral>x. f (\<phi> x) \<partial>Rm k)) 0 < e"
+        using unif[OF d]
+      proof eventually_elim
+        case (elim k)
+        interpret P: prob_space "Rm k" by (rule prR)
+        have i1: "integrable (Rm k) (\<lambda>x. f (\<phi>m k x))" by (rule ig[OF mk into])
+        have i2: "integrable (Rm k) (\<lambda>x. f (\<phi> x))" by (rule ig[OF mk0 phiS])
+        have "\<bar>(\<integral>x. f (\<phi>m k x) \<partial>Rm k) - (\<integral>x. f (\<phi> x) \<partial>Rm k)\<bar>
+            = \<bar>\<integral>x. f (\<phi>m k x) - f (\<phi> x) \<partial>Rm k\<bar>"
+          by (simp add: Bochner_Integration.integral_diff[OF i1 i2])
+        also have "\<dots> \<le> (\<integral>x. \<bar>f (\<phi>m k x) - f (\<phi> x)\<bar> \<partial>Rm k)"
+          by (rule integral_abs_bound)
+        also have "\<dots> \<le> (\<integral>x. e/2 \<partial>Rm k)"
+        proof (rule integral_mono)
+          show "integrable (Rm k) (\<lambda>x. \<bar>f (\<phi>m k x) - f (\<phi> x)\<bar>)"
+            by (intro integrable_abs Bochner_Integration.integrable_diff i1 i2)
+          show "integrable (Rm k) (\<lambda>x. e/2)" by simp
+          fix x assume "x \<in> space (Rm k)"
+          then have xm: "x \<in> mspace m" by (simp add: spR)
+          show "\<bar>f (\<phi>m k x) - f (\<phi> x)\<bar> \<le> e/2"
+            using dd into[OF xm] phiS[OF xm] bspec[OF elim xm] by (auto intro: less_imp_le)
+        qed
+        also have "\<dots> < e" using e by (simp add: P.prob_space)
+        finally show ?case by (simp add: dist_real_def)
+      qed
+    qed
+    have "(\<lambda>k. \<integral>x. f (\<phi>m k x) \<partial>Rm k) \<longlonglongrightarrow> 0 + (\<integral>x. f (\<phi> x) \<partial>R)"
+      using tendsto_add[OF lim1 lim2] by simp
+    then show "(\<lambda>k. \<integral>x. f x \<partial>?N k) \<longlonglongrightarrow> (\<integral>x. f x \<partial>distr R ?Y \<phi>)"
+      by (simp add: integral_distr[OF mk fm] integral_distr[OF mR fm])
   qed
 qed
 
@@ -913,17 +1013,37 @@ proof -
        (simp add: finite_measure.emeasure_eq_measure[OF fN])
 qed
 
-subsection \<open>Portmanteau: a closed set of full measure survives the weak limit\<close>
+subsection \<open>Portmanteau\<close>
 
-text \<open>The closed-set half of the Portmanteau theorem, in the shape needed
-  here.  The AFP proves the general statement as \<open>mweak_conv2\<close>, inside the
-  \<open>mweak_conv_fin\<close> locale, whose parameters \<open>weak_conv_on_def\<close> supplies.
+text \<open>The two halves of the Portmanteau theorem for weak convergence over
+  a metric space, read off the AFP's characterisations
+  \<open>weak_conv_on_eq1\<close> and \<open>weak_conv_on_eq2\<close>: closed sets can only lose
+  mass in the limit, open sets can only gain it.\<close>
 
-  Only the \<open>measure = 1\<close> instance is needed: for the usc argument for
-  \<open>P \<mapsto> P-essinf \<tau>\<^sub>K\<close>, the superlevel set \<open>{\<tau>\<^sub>K \<ge> c}\<close> is closed since
-  \<open>\<tau>\<^sub>K\<close> is upper semicontinuous, and \<open>c \<le> P-essinf \<tau>\<^sub>K\<close> is by definition
-  \<open>P {\<tau>\<^sub>K \<ge> c} = 1\<close> -- \<open>Value_Function_Market.ess_inf_time_ge_iff_measure\<close> states
-  this with \<open>measure\<close> rather than \<open>AE\<close> for precisely this junction.\<close>
+lemma
+  fixes m :: "'a metric"
+  assumes wc: "weak_conv_on Ni N F (mtopology_of m)"
+  shows weak_conv_closedin_limsup: "closedin (mtopology_of m) A \<Longrightarrow>
+      Limsup F (\<lambda>i. ereal (measure (Ni i) A)) \<le> ereal (measure N A)"
+    and weak_conv_openin_liminf: "openin (mtopology_of m) U \<Longrightarrow>
+      ereal (measure N U) \<le> Liminf F (\<lambda>i. ereal (measure (Ni i) U))"
+proof -
+  have X: "metrizable_space (mtopology_of m)"
+    unfolding mtopology_of_def
+    by (rule Metric_space.metrizable_space_mtopology[OF Metric_space_mspace_mdist])
+  have h: "\<forall>\<^sub>F i in F. sets (Ni i) = sets (borel_of (mtopology_of m))"
+    "\<forall>\<^sub>F i in F. finite_measure (Ni i)"
+    "sets N = sets (borel_of (mtopology_of m))" "finite_measure N"
+    using wc unfolding weak_conv_on_def by (auto elim: eventually_mono)
+  show "closedin (mtopology_of m) A \<Longrightarrow>
+      Limsup F (\<lambda>i. ereal (measure (Ni i) A)) \<le> ereal (measure N A)"
+    by (rule weak_conv_on_eq1[OF X h, THEN iffD1, OF wc, THEN conjunct2, rule_format])
+  show "openin (mtopology_of m) U \<Longrightarrow>
+      ereal (measure N U) \<le> Liminf F (\<lambda>i. ereal (measure (Ni i) U))"
+    by (rule weak_conv_on_eq2[OF X h, THEN iffD1, OF wc, THEN conjunct2, rule_format])
+qed
+
+text \<open>A closed set of full measure keeps full measure in the limit.\<close>
 
 lemma weak_conv_closed_full_measure:
   fixes m :: "'a metric" and Ni :: "nat \<Rightarrow> 'a measure"
@@ -933,65 +1053,15 @@ lemma weak_conv_closed_full_measure:
     and pN: "prob_space N"
   shows "measure N A = 1"
 proof -
-  interpret PM: Metric_space "mspace m" "mdist m"
-    by (rule Metric_space_mspace_mdist)
-  interpret PN: prob_space N by (rule pN)
-  have top: "PM.mtopology = mtopology_of m"
-    by (simp add: mtopology_of_def)
-  have sN: "sets N = sets (borel_of (mtopology_of m))"
-    and ev: "\<forall>\<^sub>F i in sequentially.
-        sets (Ni i) = sets (borel_of (mtopology_of m)) \<and> finite_measure (Ni i)"
-    using wc[unfolded weak_conv_on_def] by blast+
-  have int: "((\<lambda>i. \<integral>x. g x \<partial>(Ni i))
-        \<longlongrightarrow> (\<integral>x. g x \<partial>N)) sequentially"
-    if "continuous_map (mtopology_of m) euclideanreal g"
-       "\<exists>B. \<forall>x \<in> topspace (mtopology_of m). \<bar>g x\<bar> \<le> B" for g
-    using wc[unfolded weak_conv_on_def] that by blast
-  interpret MW: mweak_conv_fin "mspace m" "mdist m" Ni N sequentially
-  proof
-    show "\<forall>\<^sub>F i in sequentially.
-        sets (Ni i) = sets (borel_of PM.mtopology)"
-      using ev unfolding top by (simp add: eventually_mono)
-    show "sets N = sets (borel_of PM.mtopology)" using sN unfolding top by simp
-    show "\<forall>\<^sub>F i in sequentially. finite_measure (Ni i)"
-      using ev by (simp add: eventually_mono)
-  qed
-  have key: "Limsup sequentially (\<lambda>x. ereal (measure (Ni x) A))
-      \<le> ereal (measure N A)"
-  proof (rule MW.mweak_conv2)
-    fix g :: "'a \<Rightarrow> real"
-    assume u: "uniformly_continuous_map PM.Self euclidean_metric g"
-      and b: "\<exists>B. \<forall>x \<in> mspace m. \<bar>g x\<bar> \<le> B"
-    have cg: "continuous_map (mtopology_of m) euclideanreal g"
-      using uniformly_continuous_imp_continuous_map[OF u]
-      by (simp add: mtopology_of_def)
-    show "((\<lambda>i. \<integral>x. g x \<partial>(Ni i))
-        \<longlongrightarrow> (\<integral>x. g x \<partial>N)) sequentially"
-      by (rule int[OF cg]) (use b in simp)
-  next
-    show "closedin PM.mtopology A" using clA unfolding top by simp
-  qed
-  have "Limsup sequentially (\<lambda>x. ereal (measure (Ni x) A)) = ereal 1"
-    by (simp add: one Limsup_const)
-  hence "(1::real) \<le> measure N A" using key by simp
-  moreover have "measure N A \<le> 1" by (rule PN.prob_le_1)
-  ultimately show ?thesis by linarith
+  have "ereal 1 \<le> ereal (measure N A)"
+    using weak_conv_closedin_limsup[OF wc clA] by (simp add: one Limsup_const)
+  then have "1 \<le> measure N A" by simp
+  then show ?thesis using prob_space.prob_le_1[OF pN, of A] by linarith
 qed
 
-subsection \<open>Portmanteau, open sets: positive mass survives a weak perturbation\<close>
-
-text \<open>The mirror of \<open>weak_conv_closed_full_measure\<close>, for open sets: here the
-  limit measure is known to charge \<open>G\<close>, and the nearby measures inherit it
-  -- exactly what Berge's \<open>box\<close> hypothesis wants, a neighbourhood of \<open>P\<close>
-  on which the strict inequality persists, needing the open-set half of
-  Portmanteau rather than the closed-set half.
-
-  The AFP's \<open>mweak_conv3\<close> asks for the closed-set half plus convergence of
-  the total mass. The first comes from \<open>mweak_conv2\<close> in the same locale;
-  the second is trivial since every measure in sight is a probability
-  measure. The \<open>sets\<close> equation is assumed at every index rather than
-  eventually, since the total-mass step needs \<open>space (Ni i) = mspace m\<close>
-  with no exceptions.\<close>
+text \<open>Dually, positive mass on an open set persists along the sequence ---
+  what Berge's \<open>box\<close> hypothesis wants, a neighbourhood of the limit
+  law on which the strict inequality persists.\<close>
 
 lemma weak_conv_open_positive_eventually:
   fixes m :: "'a metric" and Ni :: "nat \<Rightarrow> 'a measure"
@@ -1002,58 +1072,8 @@ lemma weak_conv_open_positive_eventually:
     and pi: "\<And>i. prob_space (Ni i)" and pN: "prob_space N"
   shows "eventually (\<lambda>i. 0 < measure (Ni i) G) sequentially"
 proof -
-  interpret PM: Metric_space "mspace m" "mdist m"
-    by (rule Metric_space_mspace_mdist)
-  interpret PN: prob_space N by (rule pN)
-  have top: "PM.mtopology = mtopology_of m"
-    by (simp add: mtopology_of_def)
-  have sN: "sets N = sets (borel_of (mtopology_of m))"
-    using wc[unfolded weak_conv_on_def] by blast
-  have int: "((\<lambda>i. \<integral>x. g x \<partial>(Ni i))
-        \<longlongrightarrow> (\<integral>x. g x \<partial>N)) sequentially"
-    if "continuous_map (mtopology_of m) euclideanreal g"
-       "\<exists>B. \<forall>x \<in> topspace (mtopology_of m). \<bar>g x\<bar> \<le> B" for g
-    using wc[unfolded weak_conv_on_def] that by blast
-  interpret MW: mweak_conv_fin "mspace m" "mdist m" Ni N sequentially
-  proof
-    show "\<forall>\<^sub>F i in sequentially.
-        sets (Ni i) = sets (borel_of PM.mtopology)"
-      using si unfolding top by simp
-    show "sets N = sets (borel_of PM.mtopology)" using sN unfolding top by simp
-    show "\<forall>\<^sub>F i in sequentially. finite_measure (Ni i)"
-      using pi by (simp add: prob_space.finite_measure)
-  qed
-  have closed_half: "Limsup sequentially (\<lambda>n. ereal (measure (Ni n) A))
-      \<le> ereal (measure N A)" if clA: "closedin PM.mtopology A" for A
-  proof (rule MW.mweak_conv2)
-    fix g :: "'a \<Rightarrow> real"
-    assume u: "uniformly_continuous_map PM.Self euclidean_metric g"
-      and b: "\<exists>B. \<forall>x \<in> mspace m. \<bar>g x\<bar> \<le> B"
-    have cg: "continuous_map (mtopology_of m) euclideanreal g"
-      using uniformly_continuous_imp_continuous_map[OF u]
-      by (simp add: mtopology_of_def)
-    show "((\<lambda>i. \<integral>x. g x \<partial>(Ni i))
-        \<longlongrightarrow> (\<integral>x. g x \<partial>N)) sequentially"
-      by (rule int[OF cg]) (use b in simp)
-  next
-    show "closedin PM.mtopology A" by (rule clA)
-  qed
-  have spi: "space (Ni i) = mspace m" for i
-    using sets_eq_imp_space_eq[OF si[of i]] by (simp add: space_borel_of)
-  have massi: "measure (Ni i) (mspace m) = 1" for i
-    using prob_space.prob_space[OF pi[of i]] unfolding spi[of i] .
-  have massN: "measure N (mspace m) = 1"
-    using PN.prob_space
-      sets_eq_imp_space_eq[OF sN] by (simp add: space_borel_of)
-  have mass: "((\<lambda>n. measure (Ni n) (mspace m))
-      \<longlongrightarrow> measure N (mspace m)) sequentially"
-    unfolding massN by (simp add: massi)
-  have lim_ge: "ereal (measure N G)
-      \<le> Liminf sequentially (\<lambda>n. ereal (measure (Ni n) G))"
-    using MW.mweak_conv3[OF closed_half mass] G unfolding top by simp
-  have posE: "ereal 0 < ereal (measure N G)" using pos by simp
-  have "ereal 0 < Liminf sequentially (\<lambda>n. ereal (measure (Ni n) G))"
-    using posE lim_ge by (rule order_less_le_trans)
+  have "ereal 0 < Liminf sequentially (\<lambda>i. ereal (measure (Ni i) G))"
+    using pos by (intro order_less_le_trans[OF _ weak_conv_openin_liminf[OF wc G]]) simp
   from less_LiminfD[OF this] show ?thesis by simp
 qed
 
@@ -1176,10 +1196,9 @@ qed
 text \<open>The transfer principle.  Sequential compactness of the class
   extracts a convergent subsequence; membership clause (2) of
   \<open>exit_class_compact_metric_space\<close> identifies the
-  limit as weak convergence, and the AFP portmanteau
-  (\<open>mweak_conv_fin.mweak_conv_eq2\<close>,
-  \<open>mweak_conv_fin.mweak_conv_eq3\<close>) turns it into the
-  open/closed set bounds.  Convergence along the full sequence pins the
+  limit as weak convergence, and the portmanteau bounds
+  (\<open>weak_conv_openin_liminf\<close>, \<open>weak_conv_closedin_limsup\<close>) turn it
+  into the open/closed set bounds.  Convergence along the full sequence pins the
   Liminf and Limsup along any subsequence, so the subsequence never
   appears in the statement.\<close>
 
