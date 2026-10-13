@@ -356,16 +356,7 @@ lemma quad_pen_jet:
   fixes d :: "real^'n::finite" and \<alpha> :: real
   shows "((\<lambda>h. ((\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) (d + h) - (\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) d
       - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> ((\<alpha> *\<^sub>R mat 1) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-proof -
-  have "(\<alpha>/2) * (norm (d + h))\<^sup>2 - (\<alpha>/2) * (norm d)\<^sup>2
-      - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> ((\<alpha> *\<^sub>R mat 1) *v h))/2 = 0" for h
-    using penalty_difference_identity[of \<alpha> d h 0]
-    by (simp add: scaleR_matrix_vector_assoc[symmetric] power2_norm_eq_inner)
-  then have "(\<lambda>h. ((\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) (d + h) - (\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) d
-      - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> ((\<alpha> *\<^sub>R mat 1) *v h))/2) / (norm h)\<^sup>2) = (\<lambda>h. 0)"
-    by (intro ext) simp
-  then show ?thesis by simp
-qed
+  using quad_penalty_jet[of \<alpha> d] by (simp add: scaleR_matrix_vector_assoc[symmetric])
 
 section \<open>The theorem on sums at one regularisation stage\<close>
 

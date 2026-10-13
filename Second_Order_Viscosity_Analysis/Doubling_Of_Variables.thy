@@ -1036,37 +1036,6 @@ proof -
         power2_norm_eq_inner algebra_simps)
 qed
 
-theorem doubled_jet_slice_fst:
-  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
-    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
-  assumes expPsi: "((\<lambda>hk. ((a (fst (zh + hk)) + b (snd (zh + hk))
-          - (\<alpha>/2) * (norm (fst (zh + hk) - snd (zh + hk)))\<^sup>2)
-        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
-        - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-  shows "((\<lambda>h. (a (fst zh + h) - a (fst zh)
-        - (fst q + \<alpha> *\<^sub>R (fst zh - snd zh)) \<bullet> h
-        - (h \<bullet> (fst (W (h, 0)) + \<alpha> *\<^sub>R h))/2) / (norm h)\<^sup>2)
-      \<longlongrightarrow> 0) (at 0)"
-proof -
-  have comp: "((\<lambda>h. ((a (fst (zh + (h, 0))) + b (snd (zh + (h, 0)))
-          - (\<alpha>/2) * (norm (fst (zh + (h, 0)) - snd (zh + (h, 0))))\<^sup>2)
-        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
-        - q \<bullet> (h, 0) - ((h, 0) \<bullet> W (h, 0))/2) / (norm ((h, 0)))\<^sup>2)
-      \<longlongrightarrow> 0) (at 0)"
-    using filterlim_compose[OF expPsi filterlim_slice_fst]
-    by (simp add: o_def)
-  have eq: "((a (fst (zh + (h, 0))) + b (snd (zh + (h, 0)))
-          - (\<alpha>/2) * (norm (fst (zh + (h, 0)) - snd (zh + (h, 0))))\<^sup>2)
-        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
-        - q \<bullet> (h, 0) - ((h, 0) \<bullet> W (h, 0))/2) / (norm ((h, 0)))\<^sup>2
-      = (a (fst zh + h) - a (fst zh)
-        - (fst q + \<alpha> *\<^sub>R (fst zh - snd zh)) \<bullet> h
-        - (h \<bullet> (fst (W (h, 0)) + \<alpha> *\<^sub>R h))/2) / (norm h)\<^sup>2" for h
-    unfolding doubled_slice_numerator_fst
-    by (simp add: norm_Pair)
-  from comp[unfolded eq] show ?thesis .
-qed
-
 text \<open>The same restriction for an arbitrary penalty \<open>P\<close> given by its jet: a
   general \<open>P\<close> has a remainder rather than an exact identity, so the two
   limits are added via \<open>tendsto_add\<close>, since \<open>P(d+h) - P(d)\<close> cancels
@@ -1075,18 +1044,18 @@ text \<open>The same restriction for an arbitrary penalty \<open>P\<close> given
   statement with \<open>\<alpha>(x' - y')\<close> replaced by \<open>G\<close> and \<open>\<alpha> h\<close> by \<open>Z h\<close>.\<close>
 
 theorem doubled_jet_slice_fst_gen:
-  fixes a b :: "real^'n::finite \<Rightarrow> real" and P :: "real^'n \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
-    and Z :: "real^'n^'n" and G :: "real^'n"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real" and P :: "'a \<Rightarrow> real"
+    and W :: "'a \<times> 'a \<Rightarrow> 'a \<times> 'a"
+    and Z :: "'a \<Rightarrow> 'a" and G :: 'a
   assumes expPsi: "((\<lambda>hk. ((a (fst (zh + hk)) + b (snd (zh + hk))
           - P (fst (zh + hk) - snd (zh + hk)))
         - (a (fst zh) + b (snd zh) - P (fst zh - snd zh))
         - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
     and Pjet: "((\<lambda>h. (P ((fst zh - snd zh) + h) - P (fst zh - snd zh)
-        - G \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+        - G \<bullet> h - (h \<bullet> (Z h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
   shows "((\<lambda>h. (a (fst zh + h) - a (fst zh)
         - (fst q + G) \<bullet> h
-        - (h \<bullet> (fst (W (h, 0)) + Z *v h))/2) / (norm h)\<^sup>2)
+        - (h \<bullet> (fst (W (h, 0)) + Z h))/2) / (norm h)\<^sup>2)
       \<longlongrightarrow> 0) (at 0)"
 proof -
   have comp: "((\<lambda>h. ((a (fst (zh + (h, 0))) + b (snd (zh + (h, 0)))
@@ -1101,29 +1070,29 @@ proof -
         - (a (fst zh) + b (snd zh) - P (fst zh - snd zh))
         - q \<bullet> (h, 0) - ((h, 0) \<bullet> W (h, 0))/2) / (norm ((h, 0)))\<^sup>2)
       + ((P ((fst zh - snd zh) + h) - P (fst zh - snd zh)
-        - G \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2)) \<longlongrightarrow> 0) (at 0)"
+        - G \<bullet> h - (h \<bullet> (Z h))/2) / (norm h)\<^sup>2)) \<longlongrightarrow> 0) (at 0)"
     using tendsto_add[OF comp Pjet] by simp
   have eq: "(((a (fst (zh + (h, 0))) + b (snd (zh + (h, 0)))
           - P (fst (zh + (h, 0)) - snd (zh + (h, 0))))
         - (a (fst zh) + b (snd zh) - P (fst zh - snd zh))
         - q \<bullet> (h, 0) - ((h, 0) \<bullet> W (h, 0))/2) / (norm ((h, 0)))\<^sup>2)
       + ((P ((fst zh - snd zh) + h) - P (fst zh - snd zh)
-        - G \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2)
+        - G \<bullet> h - (h \<bullet> (Z h))/2) / (norm h)\<^sup>2)
     = (a (fst zh + h) - a (fst zh)
         - (fst q + G) \<bullet> h
-        - (h \<bullet> (fst (W (h, 0)) + Z *v h))/2) / (norm h)\<^sup>2" for h
+        - (h \<bullet> (fst (W (h, 0)) + Z h))/2) / (norm h)\<^sup>2" for h
   proof -
-    have np: "norm ((h, 0) :: (real^'n) \<times> (real^'n)) = norm h"
+    have np: "norm ((h, 0) :: 'a \<times> 'a) = norm h"
       by (simp add: norm_Pair)
     have num: "((a (fst (zh + (h, 0))) + b (snd (zh + (h, 0)))
             - P (fst (zh + (h, 0)) - snd (zh + (h, 0))))
           - (a (fst zh) + b (snd zh) - P (fst zh - snd zh))
           - q \<bullet> (h, 0) - ((h, 0) \<bullet> W (h, 0))/2)
         + (P ((fst zh - snd zh) + h) - P (fst zh - snd zh)
-            - G \<bullet> h - (h \<bullet> (Z *v h))/2)
+            - G \<bullet> h - (h \<bullet> (Z h))/2)
       = a (fst zh + h) - a (fst zh)
           - (fst q + G) \<bullet> h
-          - (h \<bullet> (fst (W (h, 0)) + Z *v h))/2"
+          - (h \<bullet> (fst (W (h, 0)) + Z h))/2"
       by (simp add: inner_prod_def
           algebra_simps)
     show ?thesis
@@ -1132,6 +1101,37 @@ proof -
   qed
   from sum0[unfolded eq] show ?thesis .
 qed
+
+text \<open>The quadratic penalty \<open>(\<alpha>/2)\<parallel>e\<parallel>\<^sup>2\<close> has the exact jet \<open>(\<alpha> d, \<alpha> I)\<close> at every
+  \<open>d\<close>, so the quadratic slices are instances of the general ones.\<close>
+
+lemma quad_penalty_jet:
+  fixes d :: "'a::euclidean_space" and \<alpha> :: real
+  shows "((\<lambda>h. ((\<alpha>/2) * (norm (d + h))\<^sup>2 - (\<alpha>/2) * (norm d)\<^sup>2
+      - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> (\<alpha> *\<^sub>R h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+proof -
+  have "(\<alpha>/2) * (norm (d + h))\<^sup>2 - (\<alpha>/2) * (norm d)\<^sup>2
+      - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> (\<alpha> *\<^sub>R h))/2 = 0" for h
+    using penalty_difference_identity[of \<alpha> d h 0] by (simp add: power2_norm_eq_inner)
+  then have "(\<lambda>h. ((\<alpha>/2) * (norm (d + h))\<^sup>2 - (\<alpha>/2) * (norm d)\<^sup>2
+      - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> (\<alpha> *\<^sub>R h))/2) / (norm h)\<^sup>2) = (\<lambda>h. 0)"
+    by (intro ext) simp
+  then show ?thesis by simp
+qed
+
+theorem doubled_jet_slice_fst:
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
+  assumes expPsi: "((\<lambda>hk. ((a (fst (zh + hk)) + b (snd (zh + hk))
+          - (\<alpha>/2) * (norm (fst (zh + hk) - snd (zh + hk)))\<^sup>2)
+        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
+        - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+  shows "((\<lambda>h. (a (fst zh + h) - a (fst zh)
+        - (fst q + \<alpha> *\<^sub>R (fst zh - snd zh)) \<bullet> h
+        - (h \<bullet> (fst (W (h, 0)) + \<alpha> *\<^sub>R h))/2) / (norm h)\<^sup>2)
+      \<longlongrightarrow> 0) (at 0)"
+  using doubled_jet_slice_fst_gen[where P = "\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2"
+      and Z = "\<lambda>h. \<alpha> *\<^sub>R h", OF expPsi quad_penalty_jet] by simp
 
 text \<open>The mirror image on the second slice: the penalty now moves the
   second argument, so its linear contribution changes sign, giving the
@@ -1182,37 +1182,6 @@ proof -
         power2_norm_eq_inner algebra_simps)
 qed
 
-theorem doubled_jet_slice_snd:
-  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
-    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
-  assumes expPsi: "((\<lambda>hk. ((a (fst (zh + hk)) + b (snd (zh + hk))
-          - (\<alpha>/2) * (norm (fst (zh + hk) - snd (zh + hk)))\<^sup>2)
-        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
-        - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-  shows "((\<lambda>h. (b (snd zh + h) - b (snd zh)
-        - (snd q - \<alpha> *\<^sub>R (fst zh - snd zh)) \<bullet> h
-        - (h \<bullet> (snd (W (0, h)) + \<alpha> *\<^sub>R h))/2) / (norm h)\<^sup>2)
-      \<longlongrightarrow> 0) (at 0)"
-proof -
-  have comp: "((\<lambda>h. ((a (fst (zh + (0, h))) + b (snd (zh + (0, h)))
-          - (\<alpha>/2) * (norm (fst (zh + (0, h)) - snd (zh + (0, h))))\<^sup>2)
-        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
-        - q \<bullet> (0, h) - ((0, h) \<bullet> W (0, h))/2) / (norm ((0, h)))\<^sup>2)
-      \<longlongrightarrow> 0) (at 0)"
-    using filterlim_compose[OF expPsi filterlim_slice_snd]
-    by (simp add: o_def)
-  have eq: "((a (fst (zh + (0, h))) + b (snd (zh + (0, h)))
-          - (\<alpha>/2) * (norm (fst (zh + (0, h)) - snd (zh + (0, h))))\<^sup>2)
-        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
-        - q \<bullet> (0, h) - ((0, h) \<bullet> W (0, h))/2) / (norm ((0, h)))\<^sup>2
-      = (b (snd zh + h) - b (snd zh)
-        - (snd q - \<alpha> *\<^sub>R (fst zh - snd zh)) \<bullet> h
-        - (h \<bullet> (snd (W (0, h)) + \<alpha> *\<^sub>R h))/2) / (norm h)\<^sup>2" for h
-    unfolding doubled_slice_numerator_snd
-    by (simp add: norm_Pair)
-  from comp[unfolded eq] show ?thesis .
-qed
-
 text \<open>The mirror slice for a general penalty: the second slice moves \<open>y\<close>,
   so the penalty is evaluated at \<open>d - h\<close>, and the jet hypothesis is
   transported along \<open>h \<mapsto> -h\<close>, a filter isomorphism of \<open>at 0\<close>
@@ -1221,40 +1190,41 @@ text \<open>The mirror slice for a general penalty: the second slice moves \<ope
   exactly why the two slice gradients come out as negatives.\<close>
 
 theorem doubled_jet_slice_snd_gen:
-  fixes a b :: "real^'n::finite \<Rightarrow> real" and P :: "real^'n \<Rightarrow> real"
-    and W :: "(real^'n) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
-    and Z :: "real^'n^'n" and G :: "real^'n"
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real" and P :: "'a \<Rightarrow> real"
+    and W :: "'a \<times> 'a \<Rightarrow> 'a \<times> 'a"
+    and Z :: "'a \<Rightarrow> 'a" and G :: 'a
   assumes expPsi: "((\<lambda>hk. ((a (fst (zh + hk)) + b (snd (zh + hk))
           - P (fst (zh + hk) - snd (zh + hk)))
         - (a (fst zh) + b (snd zh) - P (fst zh - snd zh))
         - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
     and Pjet: "((\<lambda>h. (P ((fst zh - snd zh) + h) - P (fst zh - snd zh)
-        - G \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+        - G \<bullet> h - (h \<bullet> (Z h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and linZ: "linear Z"
   shows "((\<lambda>h. (b (snd zh + h) - b (snd zh)
         - (snd q - G) \<bullet> h
-        - (h \<bullet> (snd (W (0, h)) + Z *v h))/2) / (norm h)\<^sup>2)
+        - (h \<bullet> (snd (W (0, h)) + Z h))/2) / (norm h)\<^sup>2)
       \<longlongrightarrow> 0) (at 0)"
 proof -
-  have mv: "Z *v (- h) = - (Z *v h)" for h :: "real^'n"
-    by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
-  have negfilt: "filterlim (\<lambda>h::real^'n. - h) (at 0) (at 0)"
+  have mv: "Z (- h) = - (Z h)" for h :: 'a
+    by (rule linear_neg[OF linZ])
+  have negfilt: "filterlim (\<lambda>h::'a. - h) (at 0) (at 0)"
   proof (rule filterlim_atI)
-    have "((\<lambda>h::real^'n. - h) \<longlongrightarrow> - 0) (at 0)"
+    have "((\<lambda>h::'a. - h) \<longlongrightarrow> - 0) (at 0)"
       by (intro tendsto_intros)
-    then show "((\<lambda>h::real^'n. - h) \<longlongrightarrow> 0) (at 0)" by simp
-    show "\<forall>\<^sub>F h in at (0::real^'n). - h \<noteq> 0"
+    then show "((\<lambda>h::'a. - h) \<longlongrightarrow> 0) (at 0)" by simp
+    show "\<forall>\<^sub>F h in at (0::'a). - h \<noteq> 0"
       by (simp add: eventually_at_filter)
   qed
   have Pneg0: "((\<lambda>h. (P ((fst zh - snd zh) + - h) - P (fst zh - snd zh)
-      - G \<bullet> (- h) - ((- h) \<bullet> (Z *v (- h)))/2) / (norm (- h))\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+      - G \<bullet> (- h) - ((- h) \<bullet> (Z (- h)))/2) / (norm (- h))\<^sup>2) \<longlongrightarrow> 0) (at 0)"
     using filterlim_compose[OF Pjet negfilt] by (simp add: o_def)
   have Pneg: "((\<lambda>h. (P (fst zh - (snd zh + h)) - P (fst zh - snd zh)
-      + G \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+      + G \<bullet> h - (h \<bullet> (Z h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
   proof -
     have e: "(P ((fst zh - snd zh) + - h) - P (fst zh - snd zh)
-          - G \<bullet> (- h) - ((- h) \<bullet> (Z *v (- h)))/2) / (norm (- h))\<^sup>2
+          - G \<bullet> (- h) - ((- h) \<bullet> (Z (- h)))/2) / (norm (- h))\<^sup>2
         = (P (fst zh - (snd zh + h)) - P (fst zh - snd zh)
-          + G \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2" for h
+          + G \<bullet> h - (h \<bullet> (Z h))/2) / (norm h)\<^sup>2" for h
       by (simp add: mv algebra_simps)
     show ?thesis using Pneg0 unfolding e .
   qed
@@ -1270,29 +1240,29 @@ proof -
         - (a (fst zh) + b (snd zh) - P (fst zh - snd zh))
         - q \<bullet> (0, h) - ((0, h) \<bullet> W (0, h))/2) / (norm ((0, h)))\<^sup>2)
       + ((P (fst zh - (snd zh + h)) - P (fst zh - snd zh)
-        + G \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2)) \<longlongrightarrow> 0) (at 0)"
+        + G \<bullet> h - (h \<bullet> (Z h))/2) / (norm h)\<^sup>2)) \<longlongrightarrow> 0) (at 0)"
     using tendsto_add[OF comp Pneg] by simp
   have eq: "(((a (fst (zh + (0, h))) + b (snd (zh + (0, h)))
           - P (fst (zh + (0, h)) - snd (zh + (0, h))))
         - (a (fst zh) + b (snd zh) - P (fst zh - snd zh))
         - q \<bullet> (0, h) - ((0, h) \<bullet> W (0, h))/2) / (norm ((0, h)))\<^sup>2)
       + ((P (fst zh - (snd zh + h)) - P (fst zh - snd zh)
-        + G \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2)
+        + G \<bullet> h - (h \<bullet> (Z h))/2) / (norm h)\<^sup>2)
     = (b (snd zh + h) - b (snd zh)
         - (snd q - G) \<bullet> h
-        - (h \<bullet> (snd (W (0, h)) + Z *v h))/2) / (norm h)\<^sup>2" for h
+        - (h \<bullet> (snd (W (0, h)) + Z h))/2) / (norm h)\<^sup>2" for h
   proof -
-    have np: "norm ((0, h) :: (real^'n) \<times> (real^'n)) = norm h"
+    have np: "norm ((0, h) :: 'a \<times> 'a) = norm h"
       by (simp add: norm_Pair)
     have num: "((a (fst (zh + (0, h))) + b (snd (zh + (0, h)))
             - P (fst (zh + (0, h)) - snd (zh + (0, h))))
           - (a (fst zh) + b (snd zh) - P (fst zh - snd zh))
           - q \<bullet> (0, h) - ((0, h) \<bullet> W (0, h))/2)
         + (P (fst zh - (snd zh + h)) - P (fst zh - snd zh)
-            + G \<bullet> h - (h \<bullet> (Z *v h))/2)
+            + G \<bullet> h - (h \<bullet> (Z h))/2)
       = b (snd zh + h) - b (snd zh)
           - (snd q - G) \<bullet> h
-          - (h \<bullet> (snd (W (0, h)) + Z *v h))/2"
+          - (h \<bullet> (snd (W (0, h)) + Z h))/2"
       by (simp add: inner_prod_def
           algebra_simps)
     show ?thesis
@@ -1301,6 +1271,20 @@ proof -
   qed
   from sum0[unfolded eq] show ?thesis .
 qed
+
+theorem doubled_jet_slice_snd:
+  fixes a b :: "'a::euclidean_space \<Rightarrow> real"
+    and W :: "('a) \<times> ('a) \<Rightarrow> ('a) \<times> ('a)"
+  assumes expPsi: "((\<lambda>hk. ((a (fst (zh + hk)) + b (snd (zh + hk))
+          - (\<alpha>/2) * (norm (fst (zh + hk) - snd (zh + hk)))\<^sup>2)
+        - (a (fst zh) + b (snd zh) - (\<alpha>/2) * (norm (fst zh - snd zh))\<^sup>2)
+        - q \<bullet> hk - (hk \<bullet> W hk)/2) / (norm hk)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+  shows "((\<lambda>h. (b (snd zh + h) - b (snd zh)
+        - (snd q - \<alpha> *\<^sub>R (fst zh - snd zh)) \<bullet> h
+        - (h \<bullet> (snd (W (0, h)) + \<alpha> *\<^sub>R h))/2) / (norm h)\<^sup>2)
+      \<longlongrightarrow> 0) (at 0)"
+  using doubled_jet_slice_snd_gen[where P = "\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2"
+      and Z = "\<lambda>h. \<alpha> *\<^sub>R h", OF expPsi quad_penalty_jet linear_scaleR] by simp
 
 text \<open>With \<open>q = 0\<close> at the doubled maximum
   (\<open>gradient_vanishes_at_interior_max\<close>) the two gradients become
@@ -2125,7 +2109,7 @@ proof -
         - (snd q - G) \<bullet> h
         - (h \<bullet> (snd (W (0, h)) + Z *v h))/2) / (norm h)\<^sup>2)
       \<longlongrightarrow> 0) (at 0)"
-    by (rule doubled_jet_slice_snd_gen[OF expPsi Pjet])
+    by (rule doubled_jet_slice_snd_gen[OF expPsi Pjet matrix_vector_mul_linear])
   have eqf: "(- fst pt + G) = fst q + G"
     using qm by simp
   have eqs: "(- (snd pt + G)) = snd q - G"
