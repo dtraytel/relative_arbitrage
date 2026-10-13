@@ -422,8 +422,6 @@ proof -
     by (rule Stochastic_Process.stochastic_process.filtered_measure_natural_filtration[OF SP])
   have projB: "(\<lambda>v :: real^'n. v $ i) \<in> borel_measurable borel" for i
     by (intro borel_measurable_continuous_onI continuous_intros)
-  have entB: "(\<lambda>Z :: real^'n^'n. Z $ i $ j) \<in> borel_measurable borel" for i j
-    by (intro borel_measurable_continuous_onI continuous_intros)
   have evF: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> v) $ i) \<in> borel_measurable (?F u)"
     if v: "0 \<le> v" and vu: "v \<le> u" for u v i
   proof -
@@ -474,10 +472,6 @@ proof -
     because \<^const>\<open>qvmata\<close> is.\<close>
   have mgXA: "martingale P ?F 0 (\<lambda>t \<omega>. outerp (fst (\<omega> t) :: real^'n) - snd (\<omega> t))"
     by (rule iexit_class_comp_martingale[OF P])
-  have qmP: "(\<lambda>\<omega> :: 'n pairpath. qvmata C (\<lambda>s. fst (\<omega> s)) u) \<in> borel_measurable P"
-    if u: "0 \<le> u" for u
-    by (rule qvmata_measurable[OF _ C0])
-       (use XmP measurable_compose[OF _ projB] in blast)
   have qmF: "(\<lambda>\<omega> :: 'n pairpath. qvmata C (\<lambda>s. fst (\<omega> s)) u) \<in> borel_measurable (?F u)"
     if u: "0 \<le> u" for u
     by (rule qvmata_measurable[OF _ C0]) (use evF in auto)
@@ -486,64 +480,27 @@ proof -
   proof -
     have tgt: "martingale P ?F 0
         (\<lambda>u \<omega> :: 'n pairpath. outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u)"
-    proof (rule martingale_matI)
-      fix i j :: 'n
-      show "martingale P ?F 0 (\<lambda>u \<omega> :: 'n pairpath.
-          (outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) $ i $ j)"
-      proof (rule martingale_of_modification_gen
-               [where X = "\<lambda>t \<omega> :: 'n pairpath. \<omega> t" and X' = "\<lambda>t \<omega> :: 'n pairpath. \<omega> t"
-                and Y = "\<lambda>u \<omega> :: 'n pairpath. (outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j"])
-        show "prob_space P" by (rule PP.prob_space_axioms)
-        show "martingale P ?F 0
-            (\<lambda>u \<omega> :: 'n pairpath. (outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)"
-          by (rule martingale_mat_nth[OF mgXA])
-        show "\<And>u. 0 \<le> u \<Longrightarrow> (\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> borel_measurable P"
-          by (rule evP)
-        show "\<And>u. 0 \<le> u \<Longrightarrow> (\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> borel_measurable P"
-          by (rule evP)
-        show "AE \<omega> in P. \<omega> u = \<omega> u" for u by simp
-        show "(\<lambda>\<omega> :: 'n pairpath.
-            (outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) $ i $ j)
-            \<in> borel_measurable P" if u: "0 \<le> u" for u
-        proof -
-          have "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u)) :: real^'n^'n)
-              \<in> borel_measurable P"
-            by (rule measurable_compose[OF XmP[OF u] outerp_borel])
-          then have "(\<lambda>\<omega> :: 'n pairpath.
-              outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) \<in> borel_measurable P"
-            using qmP[OF u] by simp
-          then show ?thesis by (rule measurable_compose[OF _ entB])
-        qed
-        show "AE \<omega> in P.
-            (outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) $ i $ j
-              = (outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j" if u: "0 \<le> u" for u
-          using keyq by eventually_elim (use u in simp)
-        show "adapted_process P ?F 0 (\<lambda>u \<omega> :: 'n pairpath.
-            (outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) $ i $ j)"
-        proof -
-          have ad: "(\<lambda>\<omega> :: 'n pairpath.
-              (outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u) $ i $ j)
-              \<in> borel_measurable (?F u)" if u: "0 \<le> u" for u
-          proof -
-            have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u) :: real^'n) \<in> borel_measurable (?F u)"
-            proof -
-              have "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> borel_measurable (?F u)"
-                by (rule natural_filtration_eval[OF u order_refl])
-              then show ?thesis by (rule measurable_compose[OF _ pair_fst_borel])
-            qed
-            then have "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u)) :: real^'n^'n)
-                \<in> borel_measurable (?F u)"
-              by (rule measurable_compose[OF _ outerp_borel])
-            then have "(\<lambda>\<omega> :: 'n pairpath.
-                outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u)
-                \<in> borel_measurable (?F u)" using qmF[OF u] by simp
-            then show ?thesis by (rule measurable_compose[OF _ entB])
-          qed
-          show ?thesis
-            unfolding adapted_process_def adapted_process_axioms_def
-            using FM ad by blast
-        qed
+    proof (rule martingale_cong_AE[OF mgXA])
+      have ad: "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u)
+          \<in> borel_measurable (?F u)" if u: "0 \<le> u" for u
+      proof -
+        have "(\<lambda>\<omega> :: 'n pairpath. \<omega> u) \<in> borel_measurable (?F u)"
+          by (rule natural_filtration_eval[OF u order_refl])
+        then have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u) :: real^'n) \<in> borel_measurable (?F u)"
+          by (rule measurable_compose[OF _ pair_fst_borel])
+        then have "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> u)) :: real^'n^'n)
+            \<in> borel_measurable (?F u)"
+          by (rule measurable_compose[OF _ outerp_borel])
+        then show ?thesis using qmF[OF u] by simp
       qed
+      show "adapted_process P ?F 0 (\<lambda>u \<omega> :: 'n pairpath.
+          outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u)"
+        unfolding adapted_process_def adapted_process_axioms_def using FM ad by blast
+    next
+      fix u :: real assume u: "0 \<le> u"
+      show "AE \<omega> in P. outerp (fst (\<omega> u)) - snd (\<omega> u)
+          = outerp (fst (\<omega> u)) - qvmata C (\<lambda>s. fst (\<omega> s)) u"
+        using keyq by eventually_elim (use u in simp)
     qed
     show ?thesis by (rule martingale_cong_ge[OF tgt]) (simp add: phicong)
   qed
@@ -1086,8 +1043,6 @@ proof -
 
   text \<open>Clause (iv): the compensated process is a martingale, again a
     modification of the one the paper's class supplies.\<close>
-  have entB: "(\<lambda>Z :: real^'n^'n. Z $ i $ j) \<in> borel_measurable borel" for i j
-    by (intro borel_measurable_continuous_onI continuous_intros)
   have SQ: "Stochastic_Process.stochastic_process Q (0::real)
       (\<lambda>t w :: real \<Rightarrow> real^'n. w t)"
     by (unfold_locales) (rule evQ)
@@ -1098,54 +1053,18 @@ proof -
   proof -
     have tgt: "martingale Q ?F 0
         (\<lambda>u w :: real \<Rightarrow> real^'n. outerp (w u) - qvmata C w u)"
-    proof (rule martingale_matI)
-      fix i j :: 'n
-      show "martingale Q ?F 0
-          (\<lambda>u w :: real \<Rightarrow> real^'n. (outerp (w u) - qvmata C w u) $ i $ j)"
-      proof (rule martingale_of_modification_gen
-               [where X = "\<lambda>t w :: real \<Rightarrow> real^'n. w t"
-                and X' = "\<lambda>t w :: real \<Rightarrow> real^'n. w t"
-                and Y = "\<lambda>u w :: real \<Rightarrow> real^'n. (outerp (w u) - A u w) $ i $ j"])
-        show "prob_space Q" by (rule PQ.prob_space_axioms)
-        show "martingale Q ?F 0
-            (\<lambda>u w :: real \<Rightarrow> real^'n. (outerp (w u) - A u w) $ i $ j)"
-          by (rule martingale_mat_nth[OF mgA])
-        show "\<And>u. 0 \<le> u \<Longrightarrow> (\<lambda>w :: real \<Rightarrow> real^'n. w u) \<in> borel_measurable Q"
-          by (rule evQ)
-        show "\<And>u. 0 \<le> u \<Longrightarrow> (\<lambda>w :: real \<Rightarrow> real^'n. w u) \<in> borel_measurable Q"
-          by (rule evQ)
-        show "AE w in Q. w u = w u" for u by simp
-        show "(\<lambda>w :: real \<Rightarrow> real^'n. (outerp (w u) - qvmata C w u) $ i $ j)
-            \<in> borel_measurable Q" if u: "0 \<le> u" for u
-        proof -
-          have "(\<lambda>w :: real \<Rightarrow> real^'n. outerp (w u) :: real^'n^'n)
-              \<in> borel_measurable Q"
-            by (rule measurable_compose[OF evQ[OF u] outerp_borel])
-          then have "(\<lambda>w :: real \<Rightarrow> real^'n. outerp (w u) - qvmata C w u)
-              \<in> borel_measurable Q" using qmQ[OF u] by simp
-          then show ?thesis by (rule measurable_compose[OF _ entB])
-        qed
-        show "AE w in Q. (outerp (w u) - qvmata C w u) $ i $ j
-            = (outerp (w u) - A u w) $ i $ j" if u: "0 \<le> u" for u
-          using keyq by eventually_elim (use u in simp)
-        show "adapted_process Q ?F 0
-            (\<lambda>u w :: real \<Rightarrow> real^'n. (outerp (w u) - qvmata C w u) $ i $ j)"
-        proof -
-          have ad: "(\<lambda>w :: real \<Rightarrow> real^'n. (outerp (w u) - qvmata C w u) $ i $ j)
-              \<in> borel_measurable (?F u)" if u: "0 \<le> u" for u
-          proof -
-            have "(\<lambda>w :: real \<Rightarrow> real^'n. outerp (w u) :: real^'n^'n)
-                \<in> borel_measurable (?F u)"
-              by (rule measurable_compose[OF evF[OF u order_refl] outerp_borel])
-            then have "(\<lambda>w :: real \<Rightarrow> real^'n. outerp (w u) - qvmata C w u)
-                \<in> borel_measurable (?F u)" using qmF[OF u order_refl] by simp
-            then show ?thesis by (rule measurable_compose[OF _ entB])
-          qed
-          show ?thesis
-            unfolding adapted_process_def adapted_process_axioms_def
-            using FM ad by blast
-        qed
-      qed
+    proof (rule martingale_cong_AE[OF mgA])
+      have ad: "(\<lambda>w :: real \<Rightarrow> real^'n. outerp (w u) - qvmata C w u)
+          \<in> borel_measurable (?F u)" if u: "0 \<le> u" for u
+        using measurable_compose[OF evF[OF u order_refl] outerp_borel] qmF[OF u order_refl]
+        by simp
+      show "adapted_process Q ?F 0
+          (\<lambda>u w :: real \<Rightarrow> real^'n. outerp (w u) - qvmata C w u)"
+        unfolding adapted_process_def adapted_process_axioms_def using FM ad by blast
+    next
+      fix u :: real assume u: "0 \<le> u"
+      show "AE w in Q. outerp (w u) - A u w = outerp (w u) - qvmata C w u"
+        using keyq by eventually_elim (use u in simp)
     qed
     show ?thesis by (rule martingale_cong_ge[OF tgt]) simp
   qed

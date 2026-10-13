@@ -555,8 +555,6 @@ lemma exit_val_ge_of_AE_pshift:
 proof -
   have setsR: "sets R = sets (path_borel S :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF R])
-  have mem: "pshift_law S y R \<in> exit_class k L S y"
-    using exit_class_pshift[OF S R] by simp
   have "AE w in R. ennreal b \<le> ennreal (pexit S K (\<lambda>s. fst (pshift S y w s)))"
     using ae by (rule eventually_mono) (rule ennreal_leI)
   then have "ennreal b
@@ -565,7 +563,7 @@ proof -
   also have "\<dots> = ess_inf_time (pshift_law S y R) (\<lambda>w. pexit S K (\<lambda>t. fst (w t)))"
     by (rule ess_inf_time_pshift_law[OF S setsR, symmetric])
   also have "\<dots> \<le> exit_val k L S K y"
-    unfolding exit_val_def by (rule SUP_upper) (rule mem)
+    by (rule exit_val_ge_ess_inf) (use exit_class_pshift[OF S R] in simp)
   finally show ?thesis .
 qed
 

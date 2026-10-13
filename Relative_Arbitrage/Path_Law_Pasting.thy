@@ -489,8 +489,7 @@ text \<open>Joint upper semicontinuity of the payoff, in sequential form.  The
   parameter and the law move together; joint continuity of the shift
   carries the pair to a weakly convergent sequence of laws, and
   @{thm [source] ess_inf_pexit_usc} --- which lives on the vector path
-  space --- is reached through @{thm [source] Lipschitz_pfst} exactly as
-  in \<open>exit_val_attained\<close>.\<close>
+  space --- is reached through @{thm [source] Lipschitz_pfst}.\<close>
 
 lemma prob_space_aglue_law:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"

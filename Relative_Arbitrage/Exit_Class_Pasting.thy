@@ -63,6 +63,38 @@ proof -
   qed
 qed
 
+lemma martingale_pcut_law:
+  fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'x::{polish_space,banach})) measure"
+    and f :: "'a \<times> 'x \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes S: "0 \<le> S" and prob: "prob_space P"
+    and phim: "pcut S \<in> P \<rightarrow>\<^sub>M (path_borel S :: ((real \<Rightarrow> 'a \<times> 'x)) measure)"
+    and f: "f \<in> borel_measurable borel"
+    and mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) 0
+        (\<lambda>u \<omega>. f (\<omega> (min u S)))"
+  shows "martingale (pair_law_of S (pcut S) P)
+      (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. f (\<omega> (min u S)))"
+proof -
+  have adap: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'x). pcut S \<omega> r)
+      \<in> borel_measurable (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u)"
+    if "0 \<le> r" "r \<le> u" for r u
+    by (rule pcut_adapted[OF S that])
+  show ?thesis
+  proof (rule martingale_pair_law[OF prob phim adap])
+    fix u :: real assume u: "0 \<le> u"
+    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'x). \<omega> (min u S)) \<in> borel_measurable
+        (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
+      by (rule natural_filtration_eval) (use u S in auto)
+    then show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'x). f (\<omega> (min u S))) \<in> borel_measurable
+        (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
+      by (rule measurable_compose[OF _ f])
+  next
+    show "martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) 0
+        (\<lambda>u \<omega>. f (pcut S \<omega> (min u S)))"
+      by (rule martingale_cong_ge[OF mg]) (use S in \<open>auto simp: pcut_def\<close>)
+  qed
+qed
+
 text \<open>A member of the class at horizon \<open>T\<close>, cut back to \<open>[0,S]\<close>, is a
   member at horizon \<open>S\<close>: the \<open>AE\<close> clauses of (1.7) survive because \<open>pcut\<close>
   is the identity on \<open>[0,S]\<close>, the martingale clauses because stopping at
@@ -76,7 +108,6 @@ theorem exit_class_pcut:
 proof -
   let ?Q = "pair_law_of S (pcut S) Q"
   let ?B = "(path_borel S :: ('n pairpath) measure)"
-  let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
@@ -84,9 +115,6 @@ proof -
   have phim: "pcut S \<in> Q \<rightarrow>\<^sub>M ?B" by (rule pcut_measurable[OF S ST setsQ])
   have prob': "prob_space ?Q"
     unfolding pair_law_of_def by (rule P.prob_space_distr[OF phim])
-  have adap: "(\<lambda>\<omega> :: 'n pairpath. pcut S \<omega> r) \<in> borel_measurable (?F u)"
-    if "0 \<le> r" "r \<le> u" for r u
-    by (rule pcut_adapted[OF S that])
   have mT: "min u S \<le> T" for u
     using min.cobounded2[of u S] ST by linarith
 
@@ -137,52 +165,17 @@ proof -
       unfolding iff .
   qed
 
-  \<comment> \<open>clause (iii): \<open>X\<close> is a martingale\<close>
+  \<comment> \<open>clauses (iii) and (iv): the martingales\<close>
   have mgX': "martingale ?Q ?G 0 (\<lambda>u \<omega>. fst (\<omega> (min u S)) :: real^'n)"
-  proof (rule martingale_pair_law[OF P.prob_space_axioms phim adap])
-    fix u :: real assume u: "0 \<le> u"
-    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u S)) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      by (rule natural_filtration_eval) (use u S in auto)
-    show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u S))) \<in> borel_measurable (?G u)"
-      by (rule measurable_compose[OF ev pair_fst_borel])
-  next
-    show "martingale Q ?F 0 (\<lambda>u \<omega>. fst (pcut S \<omega> (min u S)) :: real^'n)"
-    proof (rule martingale_cong_ge
-        [OF martingale_stopped_const[OF S exit_class_X_martingale[OF Q]]])
-      fix u :: real assume u: "0 \<le> u"
-      have mI: "min u S \<in> {0..S}" using u S by simp
-      have e1: "min (min u S) T = min u S" using mT by (rule min_absorb1)
-      show "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min (min u S) T)))
-          = (\<lambda>\<omega>. fst (pcut S \<omega> (min u S)) :: real^'n)"
-        by (rule ext) (simp add: e1 pcut_apply[OF mI])
-    qed
-  qed
-
-  \<comment> \<open>clause (iv): the compensated process is a martingale\<close>
+    by (rule martingale_pcut_law[OF S P.prob_space_axioms phim pair_fst_borel
+          martingale_cong_ge[OF martingale_stopped_const[OF S exit_class_X_martingale[OF Q]]]])
+      (simp add: min_absorb1[OF mT])
   have mgC': "martingale ?Q ?G 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u S)) :: real^'n) - snd (\<omega> (min u S)))"
-  proof (rule martingale_pair_law[OF P.prob_space_axioms phim adap])
-    fix u :: real assume u: "0 \<le> u"
-    have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u S)) \<in> ?G u \<rightarrow>\<^sub>M borel"
-      by (rule natural_filtration_eval) (use u S in auto)
-    show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min u S))) - snd (\<omega> (min u S)))
-        \<in> borel_measurable (?G u)"
-      by (rule measurable_compose[OF ev compensated_map_borel])
-  next
-    show "martingale Q ?F 0 (\<lambda>u \<omega>. outerp (fst (pcut S \<omega> (min u S)) :: real^'n)
-        - snd (pcut S \<omega> (min u S)))"
-    proof (rule martingale_cong_ge[OF martingale_stopped_const
-          [OF S exit_class_compensated_martingale[OF Q]]])
-      fix u :: real assume u: "0 \<le> u"
-      have mI: "min u S \<in> {0..S}" using u S by simp
-      have e1: "min (min u S) T = min u S" using mT by (rule min_absorb1)
-      show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min (min u S) T)))
-            - snd (\<omega> (min (min u S) T)))
-          = (\<lambda>\<omega>. outerp (fst (pcut S \<omega> (min u S)) :: real^'n)
-              - snd (pcut S \<omega> (min u S)))"
-        by (rule ext) (simp add: e1 pcut_apply[OF mI])
-    qed
-  qed
+    by (rule martingale_pcut_law[OF S P.prob_space_axioms phim compensated_map_borel
+          martingale_cong_ge[OF martingale_stopped_const
+            [OF S exit_class_compensated_martingale[OF Q]]]])
+      (simp add: min_absorb1[OF mT])
 
   show ?thesis
     unfolding exit_class_def mem_Collect_eq
@@ -1031,6 +1024,36 @@ text \<open>\<open>martingale_sub_initial\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 
+lemma exit_class_inner_mean_le:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 \<le> T" and L: "0 \<le> L"
+    and Q: "Q \<in> exit_class k L T (0 :: real^'n)" and t: "t \<in> {0..T}"
+  shows "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
+      \<le> real CARD('n) * (real CARD('n) * L * T)"
+proof -
+  have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
+      = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
+  proof -
+    have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
+        = (\<integral>\<omega>. (\<Sum>i\<in>UNIV. (fst (\<omega> t) $ i)\<^sup>2) \<partial>Q)"
+      by (rule Bochner_Integration.integral_cong)
+        (simp_all add: inner_vec_def power2_eq_square)
+    also have "\<dots> = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
+      by (rule Bochner_Integration.integral_sum)
+        (rule exit_class_sq_integrable[OF T L Q t])
+    finally show ?thesis .
+  qed
+  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). real CARD('n) * L * T)"
+  proof (rule sum_mono)
+    fix i :: 'n
+    have "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q)
+        \<le> ((0 :: real^'n) $ i)\<^sup>2 + real CARD('n) * L * T"
+      by (rule exit_class_sq_mean_le[OF T L Q t])
+    then show "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q) \<le> real CARD('n) * L * T" by simp
+  qed
+  finally show ?thesis by simp
+qed
+
 lemma exit_class_norm_mean_le:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
@@ -1069,28 +1092,9 @@ proof -
     by (rule integral_mono[OF i0 i1]) (rule le)
   also have "\<dots> = 1 + (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
     using ni by (simp add: P.prob_space)
-  also have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
-      = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
-  proof -
-    have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
-        = (\<integral>\<omega>. (\<Sum>i\<in>UNIV. (fst (\<omega> t) $ i)\<^sup>2) \<partial>Q)"
-      by (rule Bochner_Integration.integral_cong)
-        (simp_all add: inner_vec_def power2_eq_square)
-    also have "\<dots> = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
-      by (rule Bochner_Integration.integral_sum)
-        (rule exit_class_sq_integrable[OF T L Q t])
-    finally show ?thesis .
-  qed
-  also have "(\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))
-      \<le> (\<Sum>i\<in>(UNIV :: 'n set). real CARD('n) * L * T)"
-  proof (rule sum_mono)
-    fix i :: 'n
-    have "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q)
-        \<le> ((0 :: real^'n) $ i)\<^sup>2 + real CARD('n) * L * T"
-      by (rule exit_class_sq_mean_le[OF T L Q t])
-    then show "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q) \<le> real CARD('n) * L * T" by simp
-  qed
-  finally show ?thesis by simp
+  also have "\<dots> \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
+    using exit_class_inner_mean_le[OF T L Q t] by simp
+  finally show ?thesis .
 qed
 
 theorem kglue_law_X_martingale:
@@ -1524,36 +1528,6 @@ proof -
         = outerp (fst (f i (?t u)) - fst (f i 0)) - (snd (f i (?t u)) - snd (f i 0))"
       by (rule eventually_mono[OF start]) simp
   qed
-qed
-
-lemma exit_class_inner_mean_le:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T (0 :: real^'n)" and t: "t \<in> {0..T}"
-  shows "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
-      \<le> real CARD('n) * (real CARD('n) * L * T)"
-proof -
-  have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
-      = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
-  proof -
-    have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
-        = (\<integral>\<omega>. (\<Sum>i\<in>UNIV. (fst (\<omega> t) $ i)\<^sup>2) \<partial>Q)"
-      by (rule Bochner_Integration.integral_cong)
-        (simp_all add: inner_vec_def power2_eq_square)
-    also have "\<dots> = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
-      by (rule Bochner_Integration.integral_sum)
-        (rule exit_class_sq_integrable[OF T L Q t])
-    finally show ?thesis .
-  qed
-  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). real CARD('n) * L * T)"
-  proof (rule sum_mono)
-    fix i :: 'n
-    have "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q)
-        \<le> ((0 :: real^'n) $ i)\<^sup>2 + real CARD('n) * L * T"
-      by (rule exit_class_sq_mean_le[OF T L Q t])
-    then show "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q) \<le> real CARD('n) * L * T" by simp
-  qed
-  finally show ?thesis by simp
 qed
 
 lemma exit_class_comp_norm_mean_le:

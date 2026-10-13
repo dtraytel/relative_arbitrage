@@ -109,10 +109,9 @@ The constant is `4L`, not `L`: polarisation at `e_i +- e_j` turns an
    space every point is a continuous path anyway.  `diffquot_all_of_rational`
    and `closed_sconstraint` do the reduction.
 2. The compensated martingale clause is, in both directions, a MODIFICATION of
-   the one the source class supplies.  `martingale_of_modification_gen` is
-   real-valued, so it is applied entrywise and reassembled by
-   `martingale_matI`; adaptedness of the modification is where `qvmata` earns
-   its keep a second time.
+   the one the source class supplies, so `martingale_cong_AE` carries it over
+   directly, matrix-valued; adaptedness of the modification is where `qvmata`
+   earns its keep a second time.
 
 ### Placement
 

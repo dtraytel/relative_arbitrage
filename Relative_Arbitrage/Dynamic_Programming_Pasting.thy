@@ -50,28 +50,15 @@ proof -
   have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
       \<in> borel_measurable ?BT"
     by (rule pexit_path_measurable[OF T0' K refl])
-  have mset: "{\<omega> \<in> space ?BT.
-      ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?BT"
+  have mset: "{\<omega> \<in> space ?BT. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))} \<in> sets ?BT"
     using tauT by measurable
   have pm: "(\<lambda>p. pglue r T (fst p) (snd p)) \<in> ?S \<rightarrow>\<^sub>M ?BT"
     by (rule kglue_law'_measurable[OF r rT' setsQ Kp ne])
-  have iff: "(AE \<omega> in kglue_law' r T Kr Q.
-        ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))
-      = (AE p in ?S. ennreal c
-          \<le> ennreal (pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))))"
+  have iff: "(AE \<omega> in kglue_law' r T Kr Q. c \<le> pexit T K (\<lambda>t. fst (\<omega> t)))
+      = (AE p in ?S. c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t)))"
     unfolding kglue_law'_def pair_law_of_def by (rule AE_distr_iff[OF pm mset])
-  have "AE p in ?S. ennreal c
-      \<le> ennreal (pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t)))"
-    using stay by (auto intro: ennreal_leI elim: eventually_mono)
-  then have ae: "AE \<omega> in kglue_law' r T Kr Q.
-      ennreal c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))"
-    unfolding iff .
-  have "ennreal c
-      \<le> ess_inf_time (kglue_law' r T Kr Q) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
-    unfolding ess_inf_time_def using ae by (intro Sup_upper) simp
-  also have "\<dots> \<le> exit_val k L T K x"
-    unfolding exit_val_def using G by (intro Sup_upper imageI)
-  finally show ?thesis .
+  show ?thesis
+    by (rule exit_val_ge_of_AE[OF G]) (use stay iff in simp)
 qed
 
 subsection \<open>The pathwise form of the dynamic programming bound\<close>
