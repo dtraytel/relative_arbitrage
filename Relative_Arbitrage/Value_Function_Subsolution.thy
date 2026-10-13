@@ -342,7 +342,7 @@ text \<open>So @{thm [source] exit_val_dpp_sup_ge_time} applies at the exit time
 
 section \<open>Scalar multiples through the Bochner integral\<close>
 
-text \<open>\<open>integrable_cmult\<close>, \<open>integral_cmult\<close>, \<open>integral_pos_of_AE_pos\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+text \<open>\<open>integral_pos_of_AE_pos\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 
 section \<open>Measurability of the ball exit time\<close>
@@ -601,6 +601,54 @@ text \<open>The optional-sampling content follows from the DPP:
   transporting along \<open>pair_law_of\<close> (a \<open>distr\<close>) yields the sampled means.\<close>
 
 
+lemma exit_class_entry_stopped:
+  fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
+    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  assumes T: "0 < T" and P: "P \<in> exit_class k L T x"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+    and Fm: "F \<in> borel_measurable borel"
+    and H: "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
+      (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v))
+      (\<lambda>u p'. F (p' (min u T))) T"
+  shows "integrable P (\<lambda>\<omega>. F (\<omega> (\<theta> \<omega>)))"
+    and "(\<integral>\<omega>. F (\<omega> (\<theta> \<omega>)) \<partial>P) = F (x, 0)"
+proof -
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  have T0: "0 \<le> T" using T by simp
+  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
+  have P0: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    using P unfolding exit_class_def by blast
+  interpret H: horizon_sq_int_martingale ?Q
+      "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)" "\<lambda>u p'. F (p' (min u T))" T
+    by (rule H)
+  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
+    unfolding measurable_cong_sets[OF setsP refl]
+    by (rule pstopped_measurable[OF T0 thM path_stopping_time_nonneg[OF st]
+          path_stopping_time_le[OF st]])
+  have fm: "(\<lambda>p' :: 'n pairpath. F (p' T)) \<in> borel_measurable ?B"
+    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] Fm])
+  have iT: "integrable ?Q (\<lambda>p'. F (p' T))"
+    using H.integrable[OF T0] by simp
+  have i0: "integrable ?Q (\<lambda>p'. F (p' 0))"
+    using H.integrable[OF order.refl] T0 by simp
+  have "AE p' in ?Q. F (p' 0) = F (x, 0)"
+    using pstopped_law_start[OF T0 setsP st thM P0] by eventually_elim (metis prod.collapse)
+  then have "(\<integral>p'. F (p' 0) \<partial>?Q) = (\<integral>p'. F (x, 0) \<partial>?Q)"
+    by (rule integral_cong_AE[OF borel_measurable_integrable[OF i0] borel_measurable_const])
+  also have "\<dots> = F (x, 0)"
+    by (simp add: H.P.prob_space)
+  finally have start: "(\<integral>p'. F (p' T) \<partial>?Q) = F (x, 0)"
+    using martingale_mean_const[OF H.martingale_axioms T0] T0 by simp
+  have peq: "(\<lambda>\<omega> :: 'n pairpath. F (pstopped T \<theta> \<omega> T)) = (\<lambda>\<omega>. F (\<omega> (\<theta> \<omega>)))"
+    using path_stopping_time_le[OF st] T0 by (simp add: pstopped_apply min_absorb2 fun_eq_iff)
+  show "integrable P (\<lambda>\<omega>. F (\<omega> (\<theta> \<omega>)))"
+    using iT unfolding pair_law_of_def integrable_distr_eq[OF m1 fm] peq .
+  show "(\<integral>\<omega>. F (\<omega> (\<theta> \<omega>)) \<partial>P) = F (x, 0)"
+    using start unfolding pair_law_of_def integral_distr[OF m1 fm] peq .
+qed
+
 lemma exit_class_X_entry_stopped:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes T: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
@@ -608,87 +656,10 @@ lemma exit_class_X_entry_stopped:
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
   shows "integrable P (\<lambda>\<omega>. fst (\<omega> (\<theta> \<omega>)) $ c)"
     and "(\<integral>\<omega>. fst (\<omega> (\<theta> \<omega>)) $ c \<partial>P) = x $ c"
-proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
-  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  have T0: "0 \<le> T" using T by simp
-  have PS: "prob_space P" by (rule exit_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
-  have P0: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using P unfolding exit_class_def by blast
-  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_nonneg[OF st])
-  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_le[OF st])
-  interpret H: horizon_sq_int_martingale ?Q ?G
-      "\<lambda>u p'. fst (p' (min u T)) $ c" T
-    by (rule pstopped_law_horizon_component[OF T L0 P st thM])
-  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsP refl]
-    by (rule pstopped_measurable[OF T0 thM th0 thT])
-  have fm: "(\<lambda>p' :: 'n pairpath. fst (p' T) $ c) \<in> borel_measurable ?B"
-    by (rule X_eval_entry_measurable)
-  have iT: "integrable ?Q (\<lambda>p'. fst (p' (min T T)) $ c)"
-    by (intro H.integrable) (rule T0)
-  then have iT': "integrable ?Q (\<lambda>p'. fst (p' T) $ c)" by simp
-  have i0: "integrable ?Q (\<lambda>p'. fst (p' (min 0 T)) $ c)"
-    by (intro H.integrable) simp
-  then have i0': "integrable ?Q (\<lambda>p'. fst (p' 0) $ c)" using T0 by simp
-  have top: "space ?Q \<in> sets (?G 0)"
-    using sets.top[of "?G 0"] by simp
-  have const': "(\<integral>p'. fst (p' 0) $ c \<partial>?Q) = (\<integral>p'. fst (p' T) $ c \<partial>?Q)"
-  proof -
-    have s: "(\<integral>p'\<in>space ?Q. fst (p' (min 0 T)) $ c \<partial>?Q)
-        = (\<integral>p'\<in>space ?Q. fst (p' (min T T)) $ c \<partial>?Q)"
-      by (rule H.set_integral_eq[OF top order.refl T0])
-    have e0: "(\<integral>p'\<in>space ?Q. fst (p' (min 0 T)) $ c \<partial>?Q)
-        = (\<integral>p'. fst (p' (min 0 T)) $ c \<partial>?Q)"
-      by (rule set_integral_space[OF i0])
-    have eT: "(\<integral>p'\<in>space ?Q. fst (p' (min T T)) $ c \<partial>?Q)
-        = (\<integral>p'. fst (p' (min T T)) $ c \<partial>?Q)"
-      by (rule set_integral_space[OF iT])
-    from s e0 eT show ?thesis using T0 by simp
-  qed
-  have Qst: "AE p' in ?Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
-    by (rule pstopped_law_start[OF T0 setsP st thM P0])
-  have PQ1: "measure ?Q (space ?Q) = 1"
-    using prob_space.prob_space[OF pstopped_law_prob[OF T0 PS setsP st thM]]
-    by simp
-  have start: "(\<integral>p'. fst (p' 0) $ c \<partial>?Q) = x $ c"
-  proof -
-    have "(\<integral>p'. fst (p' 0) $ c \<partial>?Q) = (\<integral>p'. x $ c \<partial>?Q)"
-      by (rule integral_cong_AE[OF borel_measurable_integrable[OF i0'] _])
-        (use Qst in \<open>auto elim: eventually_mono\<close>)
-    also have "\<dots> = measure ?Q (space ?Q) *\<^sub>R (x $ c)"
-      by (rule lebesgue_integral_const)
-    finally show ?thesis by (simp add: PQ1)
-  qed
-  have peq: "(\<lambda>\<omega> :: 'n pairpath. fst (pstopped T \<theta> \<omega> T) $ c)
-      = (\<lambda>\<omega>. fst (\<omega> (\<theta> \<omega>)) $ c)"
-  proof (rule ext)
-    fix \<omega> :: "'n pairpath"
-    have "pstopped T \<theta> \<omega> T = \<omega> (min T (\<theta> \<omega>))"
-      by (rule pstopped_apply) (use T0 in simp)
-    also have "min T (\<theta> \<omega>) = \<theta> \<omega>" using thT[of \<omega>] by simp
-    finally show "fst (pstopped T \<theta> \<omega> T) $ c = fst (\<omega> (\<theta> \<omega>)) $ c" by simp
-  qed
-  have QT: "(\<integral>p'. fst (p' T) $ c \<partial>?Q) = (\<integral>\<omega>. fst (\<omega> (\<theta> \<omega>)) $ c \<partial>P)"
-  proof -
-    have "(\<integral>p'. fst (p' T) $ c \<partial>?Q)
-        = (\<integral>\<omega>. fst (pstopped T \<theta> \<omega> T) $ c \<partial>P)"
-      unfolding pair_law_of_def by (rule integral_distr[OF m1 fm])
-    then show ?thesis unfolding peq .
-  qed
-  show "integrable P (\<lambda>\<omega>. fst (\<omega> (\<theta> \<omega>)) $ c)"
-  proof -
-    have "integrable P (\<lambda>\<omega>. fst (pstopped T \<theta> \<omega> T) $ c)"
-      using iT' unfolding pair_law_of_def integrable_distr_eq[OF m1 fm] .
-    then show ?thesis unfolding peq .
-  qed
-  show "(\<integral>\<omega>. fst (\<omega> (\<theta> \<omega>)) $ c \<partial>P) = x $ c"
-    using const' start QT by simp
-qed
+  using exit_class_entry_stopped[where F = "\<lambda>z. fst z $ c", OF T P st thM
+      measurable_compose[OF pair_fst_borel borel_measurable_nth]
+      pstopped_law_horizon_component[OF T L0 P st thM]]
+  by simp_all
 
 lemma exit_class_comp_entry_stopped:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -698,104 +669,10 @@ lemma exit_class_comp_entry_stopped:
   shows "integrable P (\<lambda>\<omega>. (outerp (fst (\<omega> (\<theta> \<omega>))) - snd (\<omega> (\<theta> \<omega>))) $ cc $ dd)"
     and "(\<integral>\<omega>. (outerp (fst (\<omega> (\<theta> \<omega>))) - snd (\<omega> (\<theta> \<omega>))) $ cc $ dd \<partial>P)
         = outerp x $ cc $ dd"
-proof -
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
-  let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
-  have T0: "0 \<le> T" using T by simp
-  have PS: "prob_space P" by (rule exit_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
-  have P0: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using P unfolding exit_class_def by blast
-  have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_nonneg[OF st])
-  have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
-    by (rule path_stopping_time_le[OF st])
-  interpret H: horizon_sq_int_martingale ?Q ?G
-      "\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ cc $ dd" T
-    by (rule pstopped_law_horizon_compensated[OF T L0 P st thM])
-  have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
-    unfolding measurable_cong_sets[OF setsP refl]
-    by (rule pstopped_measurable[OF T0 thM th0 thT])
-  have fm: "(\<lambda>p' :: 'n pairpath. (outerp (fst (p' T)) - snd (p' T)) $ cc $ dd)
-      \<in> borel_measurable ?B"
-    by (rule comp_eval_entry_measurable)
-  have iT: "integrable ?Q
-      (\<lambda>p'. (outerp (fst (p' (min T T))) - snd (p' (min T T))) $ cc $ dd)"
-    by (intro H.integrable) (rule T0)
-  then have iT': "integrable ?Q
-      (\<lambda>p'. (outerp (fst (p' T)) - snd (p' T)) $ cc $ dd)" by simp
-  have i0: "integrable ?Q
-      (\<lambda>p'. (outerp (fst (p' (min 0 T))) - snd (p' (min 0 T))) $ cc $ dd)"
-    by (intro H.integrable) simp
-  then have i0': "integrable ?Q
-      (\<lambda>p'. (outerp (fst (p' 0)) - snd (p' 0)) $ cc $ dd)" using T0 by simp
-  have top: "space ?Q \<in> sets (?G 0)"
-    using sets.top[of "?G 0"] by simp
-  have const': "(\<integral>p'. (outerp (fst (p' 0)) - snd (p' 0)) $ cc $ dd \<partial>?Q)
-      = (\<integral>p'. (outerp (fst (p' T)) - snd (p' T)) $ cc $ dd \<partial>?Q)"
-  proof -
-    have s: "(\<integral>p'\<in>space ?Q.
-          (outerp (fst (p' (min 0 T))) - snd (p' (min 0 T))) $ cc $ dd \<partial>?Q)
-        = (\<integral>p'\<in>space ?Q.
-          (outerp (fst (p' (min T T))) - snd (p' (min T T))) $ cc $ dd \<partial>?Q)"
-      by (rule H.set_integral_eq[OF top order.refl T0])
-    have e0: "(\<integral>p'\<in>space ?Q.
-          (outerp (fst (p' (min 0 T))) - snd (p' (min 0 T))) $ cc $ dd \<partial>?Q)
-        = (\<integral>p'. (outerp (fst (p' (min 0 T))) - snd (p' (min 0 T))) $ cc $ dd \<partial>?Q)"
-      by (rule set_integral_space[OF i0])
-    have eT: "(\<integral>p'\<in>space ?Q.
-          (outerp (fst (p' (min T T))) - snd (p' (min T T))) $ cc $ dd \<partial>?Q)
-        = (\<integral>p'. (outerp (fst (p' (min T T))) - snd (p' (min T T))) $ cc $ dd \<partial>?Q)"
-      by (rule set_integral_space[OF iT])
-    from s e0 eT show ?thesis using T0 by simp
-  qed
-  have Qst: "AE p' in ?Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
-    by (rule pstopped_law_start[OF T0 setsP st thM P0])
-  have PQ1: "measure ?Q (space ?Q) = 1"
-    using prob_space.prob_space[OF pstopped_law_prob[OF T0 PS setsP st thM]]
-    by simp
-  have start: "(\<integral>p'. (outerp (fst (p' 0)) - snd (p' 0)) $ cc $ dd \<partial>?Q)
-      = outerp x $ cc $ dd"
-  proof -
-    have "(\<integral>p'. (outerp (fst (p' 0)) - snd (p' 0)) $ cc $ dd \<partial>?Q)
-        = (\<integral>p'. outerp x $ cc $ dd \<partial>?Q)"
-      by (rule integral_cong_AE[OF borel_measurable_integrable[OF i0'] _])
-        (use Qst in \<open>auto elim: eventually_mono\<close>)
-    also have "\<dots> = measure ?Q (space ?Q) *\<^sub>R (outerp x $ cc $ dd)"
-      by (rule lebesgue_integral_const)
-    finally show ?thesis by (simp add: PQ1)
-  qed
-  have peq: "(\<lambda>\<omega> :: 'n pairpath.
-        (outerp (fst (pstopped T \<theta> \<omega> T)) - snd (pstopped T \<theta> \<omega> T)) $ cc $ dd)
-      = (\<lambda>\<omega>. (outerp (fst (\<omega> (\<theta> \<omega>))) - snd (\<omega> (\<theta> \<omega>))) $ cc $ dd)"
-  proof (rule ext)
-    fix \<omega> :: "'n pairpath"
-    have "pstopped T \<theta> \<omega> T = \<omega> (min T (\<theta> \<omega>))"
-      by (rule pstopped_apply) (use T0 in simp)
-    also have "min T (\<theta> \<omega>) = \<theta> \<omega>" using thT[of \<omega>] by simp
-    finally show "(outerp (fst (pstopped T \<theta> \<omega> T)) - snd (pstopped T \<theta> \<omega> T)) $ cc $ dd
-        = (outerp (fst (\<omega> (\<theta> \<omega>))) - snd (\<omega> (\<theta> \<omega>))) $ cc $ dd" by simp
-  qed
-  have QT: "(\<integral>p'. (outerp (fst (p' T)) - snd (p' T)) $ cc $ dd \<partial>?Q)
-      = (\<integral>\<omega>. (outerp (fst (\<omega> (\<theta> \<omega>))) - snd (\<omega> (\<theta> \<omega>))) $ cc $ dd \<partial>P)"
-  proof -
-    have "(\<integral>p'. (outerp (fst (p' T)) - snd (p' T)) $ cc $ dd \<partial>?Q)
-        = (\<integral>\<omega>. (outerp (fst (pstopped T \<theta> \<omega> T)) - snd (pstopped T \<theta> \<omega> T)) $ cc $ dd \<partial>P)"
-      unfolding pair_law_of_def by (rule integral_distr[OF m1 fm])
-    then show ?thesis unfolding peq .
-  qed
-  show "integrable P (\<lambda>\<omega>. (outerp (fst (\<omega> (\<theta> \<omega>))) - snd (\<omega> (\<theta> \<omega>))) $ cc $ dd)"
-  proof -
-    have "integrable P (\<lambda>\<omega>.
-        (outerp (fst (pstopped T \<theta> \<omega> T)) - snd (pstopped T \<theta> \<omega> T)) $ cc $ dd)"
-      using iT' unfolding pair_law_of_def integrable_distr_eq[OF m1 fm] .
-    then show ?thesis unfolding peq .
-  qed
-  show "(\<integral>\<omega>. (outerp (fst (\<omega> (\<theta> \<omega>))) - snd (\<omega> (\<theta> \<omega>))) $ cc $ dd \<partial>P)
-      = outerp x $ cc $ dd"
-    using const' start QT by simp
-qed
+  using exit_class_entry_stopped[where F = "\<lambda>z. (outerp (fst z) - snd z) $ cc $ dd",
+      OF T P st thM compensated_entry_borel
+      pstopped_law_horizon_compensated[OF T L0 P st thM]]
+  by simp_all
 
 lemma exit_class_Y_stopped_integrable:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -1237,18 +1114,18 @@ proof -
   \<comment> \<open>the quadratic term, through the compensated entries\<close>
   have icomp: "integrable P (\<lambda>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)))"
     unfolding trace_mult_sum
-    by (intro Bochner_Integration.integrable_sum integrable_cmult iCc)
+    by (intro Bochner_Integration.integrable_sum integrable_mult_right iCc)
   have Ecomp: "(\<integral>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)) \<partial>P)
       = trace (M ** outerp x)"
   proof -
     have "(\<integral>\<omega>. (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i) \<partial>P)
         = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (\<Sum>j\<in>UNIV. M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i) \<partial>P))"
       by (rule Bochner_Integration.integral_sum)
-        (intro Bochner_Integration.integrable_sum integrable_cmult iCc)
+        (intro Bochner_Integration.integrable_sum integrable_mult_right iCc)
     also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV.
         (\<integral>\<omega>. M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i \<partial>P))"
       by (intro sum.cong refl Bochner_Integration.integral_sum
-          integrable_cmult iCc)
+          integrable_mult_right iCc)
     also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j * outerp x $ j $ i)"
     proof -
       have iCc': "integrable P (\<lambda>\<omega>. outerp (?Xf \<omega>) $ cc $ dd - ?Yf \<omega> $ cc $ dd)"
@@ -1267,7 +1144,7 @@ proof -
       qed
       show ?thesis
         by (intro sum.cong refl)
-          (simp add: integral_cmult[OF iCc'] ECc')
+          (simp add: integral_mult_right_zero ECc')
     qed    finally show ?thesis unfolding trace_mult_sum .
   qed
   have itrY: "integrable P (\<lambda>\<omega>. trace (M ** ?Yf \<omega>))"
@@ -1777,7 +1654,7 @@ proof -
     by simp
   have icomp: "integrable P (\<lambda>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)))"
     unfolding trace_mult_sum
-    by (intro Bochner_Integration.integrable_sum integrable_cmult iCc)
+    by (intro Bochner_Integration.integrable_sum integrable_mult_right iCc)
   have Ecomp: "(\<integral>\<omega>. trace (M ** (outerp (?Xf \<omega>) - ?Yf \<omega>)) \<partial>P)
       = trace (M ** outerp x)"
   proof -
@@ -1786,11 +1663,11 @@ proof -
         = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (\<Sum>j\<in>UNIV.
             M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i) \<partial>P))"
       by (rule Bochner_Integration.integral_sum)
-        (intro Bochner_Integration.integrable_sum integrable_cmult iCc)
+        (intro Bochner_Integration.integrable_sum integrable_mult_right iCc)
     also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV.
         (\<integral>\<omega>. M $ i $ j * (outerp (?Xf \<omega>) - ?Yf \<omega>) $ j $ i \<partial>P))"
       by (intro sum.cong refl Bochner_Integration.integral_sum
-          integrable_cmult iCc)
+          integrable_mult_right iCc)
     also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j * outerp x $ j $ i)"
     proof -
       have iCc': "integrable P
@@ -1809,7 +1686,7 @@ proof -
       qed
       show ?thesis
         by (intro sum.cong refl)
-          (simp add: integral_cmult[OF iCc'] ECc')
+          (simp add: integral_mult_right_zero ECc')
     qed
     finally show ?thesis unfolding trace_mult_sum .
   qed
@@ -2294,9 +2171,9 @@ next
       by (rule eventually_mono) (auto intro: mult_right_mono simp: indicator_def)
     have "(\<integral>\<omega>. (W \<omega>)\<^sup>2 * indicat_real A \<omega> \<partial>P)
         \<le> (\<integral>\<omega>. (nq * \<epsilon>)\<^sup>2 * indicat_real A \<omega> \<partial>P)"
-      by (rule integral_mono_AE[OF W2A_int integrable_cmult[OF indA_int] ptw])
+      by (rule integral_mono_AE[OF W2A_int integrable_mult_right[OF indA_int] ptw])
     also have "\<dots> = (nq * \<epsilon>)\<^sup>2 * PP.prob A"
-      using integral_cmult[OF indA_int] indA_E by simp
+      using integral_mult_right_zero indA_E by simp
     finally show ?thesis .
   qed
   have probA: "s / 2 \<le> (nq * \<epsilon>)\<^sup>2 * PP.prob A"
@@ -2311,9 +2188,9 @@ next
     qed
     have "sqrt (s / 2) * PP.prob A
         = (\<integral>\<omega>. sqrt (s / 2) * indicat_real A \<omega> \<partial>P)"
-      using integral_cmult[OF indA_int] indA_E by simp
+      using integral_mult_right_zero indA_E by simp
     also have "\<dots> \<le> (\<integral>\<omega>. \<bar>W \<omega>\<bar> \<partial>P)"
-      by (rule integral_mono_AE[OF integrable_cmult[OF indA_int] iabs ptw])
+      by (rule integral_mono_AE[OF integrable_mult_right[OF indA_int] iabs ptw])
     finally show ?thesis .
   qed
   \<comment> \<open>the contradiction\<close>
@@ -2367,9 +2244,9 @@ next
         by (rule integral_bounded_linear[OF bounded_linear_trace iY,
               symmetric])
       also have "\<dots> \<le> (\<integral>\<omega>. n' * n' * L * \<theta>' \<omega> \<partial>P)"
-        by (rule integral_mono_AE[OF itrY integrable_cmult[OF ith] trYbnd])
+        by (rule integral_mono_AE[OF itrY integrable_mult_right[OF ith] trYbnd])
       also have "\<dots> = n' * n' * L * et"
-        using integral_cmult[OF ith] by (simp add: et_def)
+        using integral_mult_right_zero by (simp add: et_def)
       finally show ?thesis .
     qed
     have normsqE: "(\<integral>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>) \<partial>P) = trace EY"
@@ -2424,9 +2301,9 @@ next
         by (rule integrable_real_indicator[OF Evm])
           (simp add: PP.emeasure_eq_measure)
       have "\<epsilon>\<^sup>2 * PP.prob Ev = (\<integral>\<omega>. \<epsilon>\<^sup>2 * indicat_real Ev \<omega> \<partial>P)"
-        using integral_cmult[OF indEv_int] Evm by simp
+        using integral_mult_right_zero Evm by simp
       also have "\<dots> \<le> (\<integral>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>) \<partial>P)"
-        by (rule integral_mono_AE[OF integrable_cmult[OF indEv_int]
+        by (rule integral_mono_AE[OF integrable_mult_right[OF indEv_int]
               inormsq ptw])
       finally show ?thesis using normsqE by simp
     qed
@@ -2466,10 +2343,10 @@ next
           (auto simp: PP.emeasure_eq_measure sets.compl_sets Evm)
       have "t * PP.prob (space P - Ev)
           = (\<integral>\<omega>. t * indicat_real (space P - Ev) \<omega> \<partial>P)"
-        using integral_cmult[OF indC_int] sets.compl_sets[OF Evm] by simp
+        using integral_mult_right_zero sets.compl_sets[OF Evm] by simp
       also have "\<dots> \<le> et"
         unfolding et_def
-        by (rule integral_mono_AE[OF integrable_cmult[OF indC_int] ith ptw])
+        by (rule integral_mono_AE[OF integrable_mult_right[OF indC_int] ith ptw])
       finally have h: "t * PP.prob (space P - Ev) \<le> et" .
       have "PP.prob (space P - Ev) = 1 - PP.prob Ev"
         by (rule PP.prob_compl[OF Evm])

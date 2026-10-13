@@ -152,7 +152,7 @@ proof (rule Bochner_Integration.integrable_bound[of _ "\<lambda>\<omega>. 8*(f \
   show "AE \<omega> in M. norm ((f \<omega> - g \<omega>)^4) \<le> norm (8*(f \<omega>)^4 + 8*(g \<omega>)^4)"
   proof (intro always_eventually allI)
     fix \<omega>
-    have le: "(f \<omega> - g \<omega>)^4 \<le> 8*(f \<omega>)^4 + 8*(g \<omega>)^4" by (rule pow4_diff_le)
+    have le: "(f \<omega> - g \<omega>)^4 \<le> 8*(f \<omega>)^4 + 8*(g \<omega>)^4" using fourth_power_sum_bound[of "f \<omega>" "- g \<omega>"] by simp
     have nn: "0 \<le> (f \<omega> - g \<omega>)^4" by (rule pow4_nonneg)
     have nn2: "0 \<le> 8*(f \<omega>)^4 + 8*(g \<omega>)^4"
       using pow4_nonneg[of "f \<omega>"] pow4_nonneg[of "g \<omega>"] by linarith

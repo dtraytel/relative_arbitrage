@@ -70,6 +70,25 @@ next
       (\<lambda>f. restrict f J)) X = emeasure (bm_fdd J) X" .
 qed
 
+text \<open>A functional of the marginal at a finite set \<open>J\<close> of times has the law
+  of the same functional of the cumulative sums of the independent increment
+  product: the projective limit is transported along the marginal map and
+  then along \<open>csum J\<close>.\<close>
+
+lemma wiener_pre_distr_restrict:
+  assumes fin: "finite J" and J0: "J \<subseteq> {0..}"
+    and g: "g \<in> Pi\<^sub>M J (\<lambda>_. borel) \<rightarrow>\<^sub>M N"
+  shows "distr wiener_pre N (g \<circ> (\<lambda>f. restrict f J)) = distr (inc_prod 0 J) N (g \<circ> csum J)"
+proof -
+  have "distr wiener_pre N (g \<circ> (\<lambda>f. restrict f J))
+      = distr (distr wiener_pre (Pi\<^sub>M J (\<lambda>_. borel)) (\<lambda>f. restrict f J)) N g"
+    by (rule distr_distr[symmetric, OF g measurable_restrict_wiener_pre[OF J0]])
+  also have "\<dots> = distr (inc_prod 0 J) N (g \<circ> csum J)"
+    unfolding wiener_pre_marginal[OF fin J0] bm_fdd_def
+    by (rule distr_distr[OF g measurable_csum_inc_prod])
+  finally show ?thesis .
+qed
+
 subsection \<open>Increment distribution and starting point\<close>
 
 lemma wiener_pre_increment:
@@ -95,16 +114,9 @@ next
   have "distr wiener_pre borel (\<lambda>\<omega>. \<omega> t - \<omega> s)
       = distr wiener_pre borel ((\<lambda>g. g t - g s) \<circ> (\<lambda>f. restrict f {s, t}))"
     by (intro distr_cong refl) (simp add: comp_def)
-  also have "\<dots> = distr (distr wiener_pre (Pi\<^sub>M {s, t} (\<lambda>_. borel))
-      (\<lambda>f. restrict f {s, t})) borel (\<lambda>g. g t - g s)"
-    by (rule distr_distr[symmetric, OF Dmeas
-        measurable_restrict_wiener_pre[OF stJ]])
-  also have "\<dots> = distr (bm_fdd {s, t}) borel (\<lambda>g. g t - g s)"
-    by (simp add: wiener_pre_marginal[OF _ stJ])
   also have "\<dots> = distr (inc_prod 0 {s, t}) borel
       ((\<lambda>g. g t - g s) \<circ> csum {s, t})"
-    unfolding bm_fdd_def
-    by (rule distr_distr[OF Dmeas measurable_csum_inc_prod])
+    by (rule wiener_pre_distr_restrict[OF _ stJ Dmeas]) simp
   also have "\<dots> = distr (inc_prod 0 {s, t}) borel (\<lambda>w. w t)"
   proof (intro distr_cong refl)
     fix w :: "real \<Rightarrow> real"
@@ -131,8 +143,6 @@ next
     have lt: "{u \<in> {s, t}. u < t} = {s}" using st' by auto
     have pt: "prevt 0 {s, t} t = s"
       unfolding prevt_def lt using s by (simp add: max_absorb2)
-    have "distr wiener_pre borel (\<lambda>\<omega>. \<omega> t - \<omega> s)
-        = distr wiener_pre borel (\<lambda>\<omega>. \<omega> t - \<omega> s)" by simp
     have "distr (inc_prod 0 {s, t}) borel (\<lambda>w. w t)
         = distr (Pi\<^sub>M {s, t} (\<lambda>u. gauss_measure (u - prevt 0 {s, t} u)))
           (gauss_measure (t - prevt 0 {s, t} t)) (\<lambda>w. w t)"
@@ -144,53 +154,40 @@ next
   finally show ?thesis .
 qed
 
-lemma wiener_pre_coord_zero:
-  "distr wiener_pre borel (\<lambda>\<omega>. \<omega> 0) = gauss_measure 0"
+text \<open>The same computation for a single coordinate: the projective limit
+  marginal at \<open>{u}\<close> is the increment measure of \<open>u\<close> from \<open>0\<close>.\<close>
+
+lemma wiener_pre_coord:
+  assumes u: "0 \<le> u"
+  shows "distr wiener_pre borel (\<lambda>\<omega>. \<omega> u) = gauss_measure u"
 proof -
-  have zJ: "{0 :: real} \<subseteq> {0..}" by auto
-  have Dmeas: "(\<lambda>g. g 0) \<in> Pi\<^sub>M {0 :: real} (\<lambda>_. borel)
-      \<rightarrow>\<^sub>M (borel :: real measure)"
+  have uJ: "{u} \<subseteq> {0..}" using u by auto
+  have Dmeas: "(\<lambda>g. g u) \<in> Pi\<^sub>M {u} (\<lambda>_. borel) \<rightarrow>\<^sub>M (borel :: real measure)"
     by measurable
-  have "distr wiener_pre borel (\<lambda>\<omega>. \<omega> 0)
-      = distr wiener_pre borel ((\<lambda>g. g 0) \<circ> (\<lambda>f. restrict f {0}))"
-    by (intro distr_cong refl) (simp add: comp_def)
-  also have "\<dots> = distr (distr wiener_pre (Pi\<^sub>M {0} (\<lambda>_. borel))
-      (\<lambda>f. restrict f {0})) borel (\<lambda>g. g 0)"
-    by (rule distr_distr[symmetric, OF Dmeas
-        measurable_restrict_wiener_pre[OF zJ]])
-  also have "\<dots> = distr (bm_fdd {0}) borel (\<lambda>g. g 0)"
-    by (simp add: wiener_pre_marginal[OF _ zJ])
-  also have "\<dots> = distr (inc_prod 0 {0}) borel ((\<lambda>g. g 0) \<circ> csum {0})"
-    unfolding bm_fdd_def
-    by (rule distr_distr[OF Dmeas measurable_csum_inc_prod])
-  also have "\<dots> = distr (inc_prod 0 {0}) borel (\<lambda>w. w 0)"
-  proof (intro distr_cong refl)
-    fix w :: "real \<Rightarrow> real"
-    have "{u \<in> {0 :: real}. u \<le> 0} = {0}" by auto
-    then show "((\<lambda>g. g 0) \<circ> csum {0}) w = w 0"
-      by (simp add: csum_def comp_def)
-  qed
-  also have "\<dots> = gauss_measure 0"
+  interpret PPS: product_prob_space "\<lambda>v. gauss_measure (v - prevt 0 {u} v)" "{u}"
+    by (intro product_prob_space.intro product_sigma_finite.intro
+        product_prob_space_axioms.intro sigma_finite_gauss_measure
+        prob_space_gauss_measure)
+  have p0: "prevt 0 {u} u = 0"
   proof -
-    interpret PPS: product_prob_space
-      "\<lambda>u. gauss_measure (u - prevt 0 {0 :: real} u)" "{0 :: real}"
-      by (intro product_prob_space.intro product_sigma_finite.intro
-          product_prob_space_axioms.intro sigma_finite_gauss_measure
-          prob_space_gauss_measure)
-    have p0: "prevt 0 {0 :: real} 0 = 0"
-    proof -
-      have e: "{u \<in> {0 :: real}. u < 0} = {}" by auto
-      show ?thesis unfolding prevt_def e by simp
-    qed
-    have "distr (inc_prod 0 {0}) borel (\<lambda>w. w 0)
-        = distr (Pi\<^sub>M {0 :: real} (\<lambda>u. gauss_measure (u - prevt 0 {0} u)))
-          (gauss_measure (0 - prevt 0 {0} 0)) (\<lambda>w. w 0)"
-      by (intro distr_cong refl) (simp_all add: inc_prod_def)
-    also have "\<dots> = gauss_measure (0 - prevt 0 {0 :: real} 0)"
-      by (rule PPS.PiM_component) simp
-    finally show ?thesis by (simp add: p0)
+    have e: "{v \<in> {u}. v < u} = {}" by auto
+    show ?thesis unfolding prevt_def e by simp
   qed
-  finally show ?thesis .
+  have "distr wiener_pre borel (\<lambda>\<omega>. \<omega> u)
+      = distr wiener_pre borel ((\<lambda>g. g u) \<circ> (\<lambda>f. restrict f {u}))"
+    by (intro distr_cong refl) (simp add: comp_def)
+  also have "\<dots> = distr (inc_prod 0 {u}) borel ((\<lambda>g. g u) \<circ> csum {u})"
+    by (rule wiener_pre_distr_restrict[OF _ uJ Dmeas]) simp
+  also have "\<dots> = distr (Pi\<^sub>M {u} (\<lambda>v. gauss_measure (v - prevt 0 {u} v)))
+      (gauss_measure (u - prevt 0 {u} u)) (\<lambda>w. w u)"
+  proof (intro distr_cong)
+    have "{v. v = u \<and> v \<le> u} = {u}" by auto
+    then show "((\<lambda>g. g u) \<circ> csum {u}) w = w u" for w
+      by (simp add: csum_def)
+  qed (simp_all add: inc_prod_def)
+  also have "\<dots> = gauss_measure (u - prevt 0 {u} u)"
+    by (rule PPS.PiM_component) simp
+  finally show ?thesis by (simp add: p0)
 qed
 
 lemma wiener_pre_start: "AE \<omega> in wiener_pre. \<omega> 0 = 0"
@@ -204,7 +201,7 @@ proof -
   also have "\<dots> = emeasure (distr wiener_pre borel (\<lambda>\<omega>. \<omega> 0)) (UNIV - {0})"
     by (rule emeasure_distr[symmetric, OF cm]) auto
   also have "\<dots> = emeasure (return borel (0::real)) (UNIV - {0})"
-    by (simp add: wiener_pre_coord_zero gauss_measure_zero)
+    by (simp add: wiener_pre_coord gauss_measure_zero)
   also have "\<dots> = 0"
     by simp
   finally have null: "emeasure wiener_pre
@@ -312,8 +309,8 @@ proof -
   have Vmeas: "?V \<in> Pi\<^sub>M J (\<lambda>_. borel) \<rightarrow>\<^sub>M Pi\<^sub>M K (\<lambda>_. (borel :: real measure))"
     by (intro measurable_restrict borel_measurable_diff
         measurable_component_singleton lkJ lk1J)
-  have step1: "distr wiener_pre (Pi\<^sub>M K (\<lambda>_. borel)) ?U
-      = distr (bm_fdd J) (Pi\<^sub>M K (\<lambda>_. borel)) ?V"
+  have step12: "distr wiener_pre (Pi\<^sub>M K (\<lambda>_. borel)) ?U
+      = distr (inc_prod 0 J) (Pi\<^sub>M K (\<lambda>_. borel)) (?V \<circ> csum J)"
   proof -
     have restr_comp: "(\<lambda>k\<in>K. x (l ! k) - x (l ! (k - 1)))
         = (\<lambda>k\<in>K. restrict x J (l ! k) - restrict x J (l ! (k - 1)))"
@@ -331,18 +328,10 @@ proof -
       show "?U x = (?V \<circ> (\<lambda>f. restrict f J)) x"
         unfolding comp_def by (rule restr_comp)
     qed
-    also have "\<dots> = distr (distr wiener_pre (Pi\<^sub>M J (\<lambda>_. borel))
-        (\<lambda>f. restrict f J)) (Pi\<^sub>M K (\<lambda>_. borel)) ?V"
-      by (rule distr_distr[symmetric, OF Vmeas
-          measurable_restrict_wiener_pre[OF J0]])
-    also have "\<dots> = distr (bm_fdd J) (Pi\<^sub>M K (\<lambda>_. borel)) ?V"
-      by (simp add: wiener_pre_marginal[OF finJ J0])
+    also have "\<dots> = distr (inc_prod 0 J) (Pi\<^sub>M K (\<lambda>_. borel)) (?V \<circ> csum J)"
+      by (rule wiener_pre_distr_restrict[OF finJ J0 Vmeas])
     finally show ?thesis .
   qed
-  have step2: "distr (bm_fdd J) (Pi\<^sub>M K (\<lambda>_. borel)) ?V
-      = distr (inc_prod 0 J) (Pi\<^sub>M K (\<lambda>_. borel)) (?V \<circ> csum J)"
-    unfolding bm_fdd_def
-    by (rule distr_distr[OF Vmeas measurable_csum_inc_prod])
   have tele: "csum J w (l ! k) - csum J w (l ! (k - 1)) = w (l ! k)"
     if k: "k \<in> K" for k and w :: "real \<Rightarrow> real"
   proof -
@@ -422,7 +411,7 @@ proof -
   proof (subst W.indep_vars_iff_distr_eq_PiM'[OF Kne rv])
     have "distr wiener_pre (Pi\<^sub>M K (\<lambda>_. borel)) ?U
         = Pi\<^sub>M K (\<lambda>k. gauss_measure (l ! k - l ! (k - 1)))"
-      unfolding step1 step2 step3 step4 by (rule refl)
+      unfolding step12 step3 step4 by (rule refl)
     also have "\<dots> = Pi\<^sub>M K (\<lambda>k. distr wiener_pre borel
         (\<lambda>\<omega>. \<omega> (l ! k) - \<omega> (l ! (k - 1))))"
     proof (rule PiM_cong[OF refl])

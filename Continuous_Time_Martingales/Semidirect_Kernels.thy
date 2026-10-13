@@ -174,7 +174,9 @@ lemma measurable_integral_kernel:
       integral_measurable_subprob_algebra[OF hm]])
 
 text \<open>The general case: the inner integral is measurable in the base point
-  even when the integrand \<open>g \<omega>\<close> itself depends on \<open>\<omega>\<close>.\<close>
+  even when the integrand \<open>g \<omega>\<close> itself depends on \<open>\<omega>\<close>; this is the curried
+  form of @{thm [source] integral_ksemi_measurable}, and the integrability
+  hypothesis is not needed.\<close>
 
 lemma integral_kernel_measurable:
   fixes g :: "'a \<Rightarrow> 'b \<Rightarrow> real"
@@ -182,31 +184,7 @@ lemma integral_kernel_measurable:
     and gm: "(\<lambda>p. g (fst p) (snd p)) \<in> borel_measurable (M \<Otimes>\<^sub>M N)"
     and gi: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> integrable (Kr \<omega>) (g \<omega>)"
   shows "(\<lambda>\<omega>. \<integral>\<omega>'. g \<omega> \<omega>' \<partial>(Kr \<omega>)) \<in> borel_measurable M"
-proof -
-  define A where "A \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (g \<omega> \<omega>') \<partial>(Kr \<omega>))" for \<omega>
-  define B where "B \<omega> = (\<integral>\<^sup>+\<omega>'. ennreal (- g \<omega> \<omega>') \<partial>(Kr \<omega>))" for \<omega>
-  have Ksub: "Kr \<in> M \<rightarrow>\<^sub>M subprob_algebra N"
-    by (rule measurable_prob_algebraD[OF K])
-  have mA: "A \<in> borel_measurable M"
-    unfolding A_def
-    by (rule nn_integral_measurable_subprob_algebra2[OF _ Ksub])
-       (use gm in \<open>simp add: case_prod_unfold\<close>)
-  have mB: "B \<in> borel_measurable M"
-    unfolding B_def
-    by (rule nn_integral_measurable_subprob_algebra2[OF _ Ksub])
-       (use gm in \<open>simp add: case_prod_unfold\<close>)
-  have mAB: "(\<lambda>\<omega>. enn2real (A \<omega>) - enn2real (B \<omega>)) \<in> borel_measurable M"
-    using mA mB by measurable
-  show ?thesis
-  proof (subst measurable_cong)
-    fix \<omega> assume w: "\<omega> \<in> space M"
-    show "(\<integral>\<omega>'. g \<omega> \<omega>' \<partial>(Kr \<omega>)) = enn2real (A \<omega>) - enn2real (B \<omega>)"
-      unfolding A_def B_def by (rule real_lebesgue_integral_def[OF gi[OF w]])
-  next
-    show "(\<lambda>\<omega>. enn2real (A \<omega>) - enn2real (B \<omega>)) \<in> borel_measurable M"
-      by (rule mAB)
-  qed
-qed
+  using integral_ksemi_measurable[OF K gm] by simp
 
 text \<open>Integrability from an integrable bound on the inner integral, itself
   possibly a function of the base point.\<close>

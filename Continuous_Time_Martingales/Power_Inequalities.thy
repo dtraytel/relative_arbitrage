@@ -45,35 +45,11 @@ lemma square_add_le_two:
 
 subsection \<open>A bounded function has a bounded second moment\<close>
 
-lemma abs_prod_le_sq:
-  fixes a b :: real
-  shows "\<bar>a * b\<bar> \<le> a\<^sup>2 + b\<^sup>2"
-proof (rule abs_leI)
-  have "2 * a * b \<le> a\<^sup>2 + b\<^sup>2"
-    by (rule sum_squares_bound)
-  moreover have "0 \<le> a\<^sup>2" and "0 \<le> b\<^sup>2"
-    by simp_all
-  ultimately show "a * b \<le> a\<^sup>2 + b\<^sup>2" by linarith
-next
-  have "2 * a * (- b) \<le> a\<^sup>2 + (- b)\<^sup>2"
-    by (rule sum_squares_bound)
-  then have "- (2 * (a * b)) \<le> a\<^sup>2 + b\<^sup>2" by simp
-  moreover have "0 \<le> a\<^sup>2" and "0 \<le> b\<^sup>2"
-    by simp_all
-  ultimately show "- (a * b) \<le> a\<^sup>2 + b\<^sup>2" by linarith
-qed
-
 lemma sq_mono_abs:
   fixes x b :: real
   assumes "\<bar>x\<bar> \<le> b"
   shows "x\<^sup>2 \<le> b\<^sup>2"
   using power_mono[OF assms abs_ge_zero, of 2] by simp
-
-lemma sq_abs_mono:
-  fixes x b :: real
-  assumes "\<bar>x\<bar> \<le> b"
-  shows "\<bar>x\<^sup>2\<bar> \<le> b\<^sup>2"
-  using sq_mono_abs[OF assms] by simp
 
 lemma sq_diff_le_fourth:
   fixes x a :: real
@@ -106,6 +82,10 @@ proof -
   thus ?thesis by linarith
 qed
 
+lemma abs_prod_le_sq: "\<bar>a * b\<bar> \<le> a\<^sup>2 + b\<^sup>2" for a b :: real
+  using abs_prod_le_half_squares[of a b] zero_le_power2[of a] zero_le_power2[of b]
+  by linarith
+
 lemma sq_le_half_add_half_pow4: "x\<^sup>2 \<le> 1/2 + x^4/2" for x :: real
 proof -
   have "0 \<le> (x\<^sup>2 - 1)\<^sup>2" by simp
@@ -124,18 +104,6 @@ lemma pow4_nonneg: "0 \<le> (x::real)^4"
 proof -
   have "(x::real)^4 = (x\<^sup>2)\<^sup>2" by algebra
   then show ?thesis by simp
-qed
-
-lemma pow4_diff_le: "(a - b)^4 \<le> 8*a^4 + 8*b^4" for a b :: real
-proof -
-  have 1: "(a - b)\<^sup>2 \<le> 2*a\<^sup>2 + 2*b\<^sup>2"
-    using square_add_le_two[of a "-b"] by simp
-  have 2: "((a - b)\<^sup>2)\<^sup>2 \<le> (2*a\<^sup>2 + 2*b\<^sup>2)\<^sup>2"
-    by (rule power_mono[OF 1 zero_le_power2])
-  have 3: "((a - b)\<^sup>2)\<^sup>2 = (a - b)^4" by algebra
-  have 4: "(2*a\<^sup>2 + 2*b\<^sup>2)\<^sup>2 = 4*a^4 + 8*(a\<^sup>2*b\<^sup>2) + 4*b^4" by algebra
-  have 5: "a\<^sup>2*b\<^sup>2 \<le> a^4/2 + b^4/2" by (rule prod_sq_le_half_pow4)
-  from 2 3 4 5 show ?thesis by linarith
 qed
 
 lemma abs_cube_prod_le_pow4: "\<bar>a^3 * b\<bar> \<le> 3/4*a^4 + 1/4*b^4" for a b :: real
@@ -182,17 +150,7 @@ lemma fourth_mono_abs:
   fixes x b :: real
   assumes "\<bar>x\<bar> \<le> b"
   shows "x^4 \<le> b^4"
-proof -
-  have "(x\<^sup>2)\<^sup>2 \<le> (b\<^sup>2)\<^sup>2" by (rule power_mono[OF sq_mono_abs[OF assms]]) simp
-  moreover have "(x\<^sup>2)\<^sup>2 = x^4" and "(b\<^sup>2)\<^sup>2 = b^4" by algebra+
-  ultimately show ?thesis by simp
-qed
-
-lemma fourth_abs_mono:
-  fixes x b :: real
-  assumes "\<bar>x\<bar> \<le> b"
-  shows "\<bar>x^4\<bar> \<le> b^4"
-  using power_mono[OF assms abs_ge_zero, of 4] by (simp add: power_abs)
+  using power_mono[OF assms abs_ge_zero, of 4] by simp
 
 lemma prod_minus_sq_bound:
   fixes a b c :: real
@@ -202,10 +160,8 @@ proof -
     by (simp add: power2_diff power2_sum)
   have s1: "(a*b - c)\<^sup>2 \<le> 2 * (a*b)\<^sup>2 + 2 * c\<^sup>2"
     using e1 zero_le_power2[of "a*b + c"] by linarith
-  have e2: "a^4 + b^4 - 2 * (a*b)\<^sup>2 = (a\<^sup>2 - b\<^sup>2)\<^sup>2"
-    by (simp add: power2_diff power2_eq_square power4_eq_xxxx algebra_simps)
   have s2: "2 * (a*b)\<^sup>2 \<le> a^4 + b^4"
-    using e2 zero_le_power2[of "a\<^sup>2 - b\<^sup>2"] by linarith
+    using prod_sq_le_half_pow4[of a b] by (simp add: power_mult_distrib)
   from s1 s2 show ?thesis by linarith
 qed
 
@@ -213,30 +169,12 @@ lemma fourth_power_sum_bound:
   fixes a b :: real
   shows "(a + b)^4 \<le> 8 * (a^4 + b^4)"
 proof -
-  have e1: "2 * (a\<^sup>2 + b\<^sup>2) - (a + b)\<^sup>2 = (a - b)\<^sup>2"
-    by (simp add: power2_diff power2_sum)
-  have s1: "(a + b)\<^sup>2 \<le> 2 * (a\<^sup>2 + b\<^sup>2)"
-    using e1 zero_le_power2[of "a - b"] by linarith
-  have nn: "0 \<le> (a + b)\<^sup>2" by simp
-  have s2: "((a + b)\<^sup>2)\<^sup>2 \<le> (2 * (a\<^sup>2 + b\<^sup>2))\<^sup>2"
-    by (rule power_mono[OF s1 nn])
-  have e2: "a^4 + b^4 - 2 * (a\<^sup>2 * b\<^sup>2) = (a\<^sup>2 - b\<^sup>2)\<^sup>2"
-    by (simp add: power2_diff power2_eq_square power4_eq_xxxx algebra_simps)
-  have s3: "(a\<^sup>2 + b\<^sup>2)\<^sup>2 \<le> 2 * (a^4 + b^4)"
-  proof -
-    have s0: "2 * (a\<^sup>2 * b\<^sup>2) \<le> a^4 + b^4"
-      using e2 zero_le_power2[of "a\<^sup>2 - b\<^sup>2"] by linarith
-    have "(a\<^sup>2 + b\<^sup>2)\<^sup>2 = a^4 + 2 * (a\<^sup>2 * b\<^sup>2) + b^4"
-      by (simp add: power2_sum power2_eq_square power4_eq_xxxx algebra_simps)
-    \<comment> \<open>\<open>linarith\<close> balks here although the problem is linear in the atoms
-        \<open>(a²+b²)²\<close>, \<open>a⁴\<close>, \<open>b⁴\<close>, \<open>a²b²\<close>; \<open>argo\<close> is the documented fix.\<close>
-    then show ?thesis using s0 by argo
-  qed
-  have e3: "((a + b)\<^sup>2)\<^sup>2 = (a + b)^4"
-    by (simp add: power2_eq_square power4_eq_xxxx algebra_simps)
-  have e4: "(2 * (a\<^sup>2 + b\<^sup>2))\<^sup>2 = 4 * (a\<^sup>2 + b\<^sup>2)\<^sup>2"
-    by (simp add: power2_eq_square algebra_simps)
-  from s2 s3 show ?thesis unfolding e3 e4 by linarith
+  have "((a + b)\<^sup>2)\<^sup>2 \<le> (2*a\<^sup>2 + 2*b\<^sup>2)\<^sup>2"
+    by (rule power_mono[OF square_add_le_two zero_le_power2])
+  moreover have "((a + b)\<^sup>2)\<^sup>2 = (a + b)^4" by algebra
+  moreover have "(2*a\<^sup>2 + 2*b\<^sup>2)\<^sup>2 = 4*a^4 + 8*(a\<^sup>2*b\<^sup>2) + 4*b^4" by algebra
+  ultimately have "(a + b)^4 \<le> 8*a^4 + 8*b^4" using prod_sq_le_half_pow4[of a b] by linarith
+  then show ?thesis by (simp add: distrib_left)
 qed
 
 lemma sum_pow4_le_max_times_sum:

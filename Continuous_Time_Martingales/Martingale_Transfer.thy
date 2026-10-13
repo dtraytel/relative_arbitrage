@@ -26,16 +26,6 @@ text \<open>The pasting theorem needs three transfer results: a first-factor
   conditional expectation on the product and no \<open>\<pi>\<close>-\<open>\<lambda>\<close> argument is
   needed.\<close>
 
-lemma prob_space_pair_measure:
-  assumes M: "prob_space M" and N: "prob_space N"
-  shows "prob_space (M \<Otimes>\<^sub>M N)"
-proof -
-  interpret M: prob_space M by (rule M)
-  interpret N: prob_space N by (rule N)
-  interpret PP: pair_prob_space M N by unfold_locales
-  show ?thesis by (rule PP.P.prob_space_axioms)
-qed
-
 lemma sets_pair_measure_mono:
   assumes A: "sets A \<subseteq> sets M" "space A = space M"
     and B: "sets B \<subseteq> sets N" "space B = space N"
@@ -90,7 +80,7 @@ proof -
   interpret PM: prob_space M by (rule M)
   interpret PN: prob_space N by (rule N)
   interpret MG: martingale M F "0::real" X by (rule mg)
-  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair_measure[OF M N])
+  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair[OF M N])
   interpret PS: pair_sigma_finite M N by unfold_locales
   have FMF: "filtered_measure M F (0::real)" by unfold_locales
   interpret FP: finite_filtered_measure "M \<Otimes>\<^sub>M N" "\<lambda>u. F u \<Otimes>\<^sub>M G u" "0::real"
@@ -185,7 +175,7 @@ theorem martingale_pair_snd_param:
 proof -
   interpret PM: prob_space M by (rule M)
   interpret PN: prob_space N by (rule N)
-  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair_measure[OF M N])
+  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair[OF M N])
   interpret PS: pair_sigma_finite M N by unfold_locales
   interpret FP: finite_filtered_measure "M \<Otimes>\<^sub>M N" "\<lambda>u. F u \<Otimes>\<^sub>M G u" "0::real"
     unfolding finite_filtered_measure_def
@@ -292,7 +282,7 @@ proof -
   interpret PN: prob_space N by (rule N)
   interpret MX: martingale M F "0::real" X by (rule mgX)
   interpret MY: martingale N G "0::real" Y by (rule mgY)
-  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair_measure[OF M N])
+  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair[OF M N])
   interpret PS: pair_sigma_finite M N by unfold_locales
   have FMF: "filtered_measure M F (0::real)" by unfold_locales
   have FMG: "filtered_measure N G (0::real)" by unfold_locales
@@ -570,7 +560,7 @@ proof -
   interpret MG: martingale "R i" "G i" "0::real" Y by (rule mg)
   have ins: "insert i ?I = (UNIV :: 'i set)" by auto
   have PS: "prob_space ?S" by (rule prob_space_PiM) (rule R)
-  have PP: "prob_space ?P" by (rule prob_space_pair_measure[OF R PS])
+  have PP: "prob_space ?P" by (rule prob_space_pair[OF R PS])
   have GI: "filtered_measure ?S (\<lambda>u. Pi\<^sub>M ?I (\<lambda>j. G j u)) (0::real)"
     by (rule filtered_measure_PiM) (rule F)
   have GU: "filtered_measure (Pi\<^sub>M UNIV R) ?GG (0::real)"
@@ -663,7 +653,8 @@ qed
 section \<open>Conditioning on an event of the past keeps martingales martingales\<close>
 
 text \<open>Conditioning on an event \<open>A\<close> of the past rescales the measure by a
-  density that is measurable for the filtration at time \<open>0\<close>; a set integral
+  density that is measurable for the filtration at the initial time
+  \<open>t\<^sub>0\<close> (of any index type); a set integral
   over \<open>C \<in> \<F>\<^sub>i\<close> then becomes one over \<open>C \<inter> A \<in> \<F>\<^sub>i\<close>, and the martingale
   property applies unchanged, with no approximation or monotone-class
   step.\<close>
@@ -750,44 +741,44 @@ proof -
 qed
 
 theorem martingale_uniform_measure:
-  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
-  assumes M: "prob_space M" and mg: "martingale M F (0::real) X"
-    and A: "A \<in> sets (F 0)" and pos: "0 < measure M A"
-  shows "martingale (uniform_measure M A) F 0 X"
+  fixes X :: "'t::{second_countable_topology,order_topology,t2_space} \<Rightarrow> 'a \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes M: "prob_space M" and mg: "martingale M F t0 X"
+    and A: "A \<in> sets (F t0)" and pos: "0 < measure M A"
+  shows "martingale (uniform_measure M A) F t0 X"
 proof -
   interpret PM: prob_space M by (rule M)
-  interpret MG: martingale M F "0::real" X by (rule mg)
-  have F0M: "sets (F 0) \<subseteq> sets M" by (rule MG.sets_F_subset[OF order_refl])
+  interpret MG: martingale M F t0 X by (rule mg)
+  have F0M: "sets (F t0) \<subseteq> sets M" by (rule MG.sets_F_subset[OF order_refl])
   have AM: "A \<in> sets M" using A F0M by blast
   have ea0: "emeasure M A \<noteq> 0" using pos by (simp add: PM.emeasure_eq_measure)
   have eafin: "emeasure M A \<noteq> \<infinity>" by (simp add: PM.emeasure_eq_measure)
   interpret PU: prob_space "uniform_measure M A"
     by (rule prob_space_uniform_measure[OF ea0 eafin])
-  have FU: "filtered_measure (uniform_measure M A) F 0"
+  have FU: "filtered_measure (uniform_measure M A) F t0"
   proof (unfold_locales)
-    show "subalgebra (uniform_measure M A) (F i)" if "0 \<le> i" for i :: real
+    show "subalgebra (uniform_measure M A) (F i)" if "t0 \<le> i" for i
       using MG.subalgebras[OF that] by (simp add: subalgebra_def)
-    show "sets (F i) \<le> sets (F j)" if "0 \<le> i" "i \<le> j" for i j :: real
+    show "sets (F i) \<le> sets (F j)" if "t0 \<le> i" "i \<le> j" for i j
       by (rule MG.sets_F_mono[OF that])
   qed
-  interpret FU: finite_filtered_measure "uniform_measure M A" F "0::real"
+  interpret FU: finite_filtered_measure "uniform_measure M A" F t0
     unfolding finite_filtered_measure_def
     using FU PU.finite_measure_axioms by blast
   show ?thesis
   proof (rule FU.martingale_of_set_integral_eq)
-    show "adapted_process (uniform_measure M A) F 0 X"
+    show "adapted_process (uniform_measure M A) F t0 X"
       unfolding adapted_process_def adapted_process_axioms_def
       using FU MG.adapted by blast
-    show "integrable (uniform_measure M A) (X i)" if "0 \<le> i" for i
+    show "integrable (uniform_measure M A) (X i)" if "t0 \<le> i" for i
       by (rule integrable_uniform_measureI[OF M AM pos MG.integrable[OF that]])
-    fix C and i j :: real
-    assume ij: "0 \<le> i" "i \<le> j" and C: "C \<in> sets (F i)"
+    fix C and i j :: 't
+    assume ij: "t0 \<le> i" "i \<le> j" and C: "C \<in> sets (F i)"
     have CM: "C \<in> sets M" using C MG.sets_F_subset[OF ij(1)] by auto
     have AFi: "A \<in> sets (F i)" using A MG.sets_F_mono[OF order_refl ij(1)] by auto
     have CA: "C \<inter> A \<in> sets (F i)" using C AFi by (rule sets.Int)
     have Xm: "X i \<in> borel_measurable M"
       by (rule measurable_from_subalg[OF MG.subalgebras[OF ij(1)] MG.adapted[OF ij(1)]])
-    have j0: "0 \<le> j" using ij by simp
+    have j0: "t0 \<le> j" using ij by (rule order_trans)
     have Xmj: "X j \<in> borel_measurable M"
       by (rule measurable_from_subalg[OF MG.subalgebras[OF j0] MG.adapted[OF j0]])
     have "set_lebesgue_integral (uniform_measure M A) C (X i)
