@@ -415,7 +415,7 @@ Matrix_Algebra.diag_eq_inner_axis    # KEEP_API
 Matrix_Algebra.trace_nonneg_psd    # KEEP_API
 Orthonormal_Families.trace_ge_dim    # KEEP_API
 Poincare_Separation.quadform_le_eigval_1    # KEEP_API
-Poincare_Separation.eigenbasis_containing_eigenvector    # FIX_THEN_KEEP
+Symmetric_Spectral.eigenbasis_containing_eigenvector    # FIX_THEN_KEEP
 Poincare_Separation.exists_top_eigenvector    # FIX_THEN_KEEP
 Poincare_Separation.dim_inter_ge    # KEEP_ROOT
 Poincare_Separation.quadform_ge_on_span_threshold    # KEEP_ROOT
