@@ -16,16 +16,6 @@ text \<open>
   the bound. This continuity is used twice in the paper's proof of
   Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: to pass to the limit in Eq. (3.8), and for continuity of
   \<open>F\<close> away from \<open>p = 0\<close>.\<close>
-section \<open>The entrywise sum\<close>
-
-definition entrysum :: "real^'n::finite^'n \<Rightarrow> real" where
-  "entrysum D = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>D $ i $ j\<bar>)"
-
-lemma entrysum_nonneg: "0 \<le> entrysum D"
-  unfolding entrysum_def by (intro sum_nonneg) auto
-
-lemma entrysum_sym: "entrysum (A - B) = entrysum (B - A)"
-  unfolding entrysum_def by (intro sum.cong refl) (simp add: abs_minus_commute)
 
 section \<open>The quadratic form of a unit vector\<close>
 
@@ -33,37 +23,7 @@ lemma inner_quadform_bound:
   fixes D :: "real^'n::finite^'n"
   assumes u: "norm u = 1"
   shows "\<bar>u \<bullet> (D *v u)\<bar> \<le> entrysum D"
-proof -
-  have ub: "\<bar>u $ i\<bar> \<le> 1" for i
-    using component_le_norm_cart[of u i] u by simp
-  have expand: "u \<bullet> (D *v u) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. u $ i * (D $ i $ j * u $ j))"
-    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
-  have inner_le: "\<bar>\<Sum>j\<in>(UNIV::'n set). u $ i * (D $ i $ j * u $ j)\<bar>
-      \<le> (\<Sum>j\<in>(UNIV::'n set). \<bar>D $ i $ j\<bar>)" for i
-  proof -
-    have "\<bar>\<Sum>j\<in>(UNIV::'n set). u $ i * (D $ i $ j * u $ j)\<bar>
-        \<le> (\<Sum>j\<in>(UNIV::'n set). \<bar>u $ i * (D $ i $ j * u $ j)\<bar>)"
-      by (rule sum_abs)
-    also have "\<dots> \<le> (\<Sum>j\<in>(UNIV::'n set). \<bar>D $ i $ j\<bar>)"
-    proof (rule sum_mono)
-      fix j :: 'n
-      have "\<bar>u $ i * (D $ i $ j * u $ j)\<bar> = \<bar>u $ i\<bar> * \<bar>D $ i $ j\<bar> * \<bar>u $ j\<bar>"
-        by (simp add: abs_mult mult.assoc)
-      also have "\<dots> \<le> 1 * \<bar>D $ i $ j\<bar> * 1"
-        using ub[of i] ub[of j] by (intro mult_mono) auto
-      finally show "\<bar>u $ i * (D $ i $ j * u $ j)\<bar> \<le> \<bar>D $ i $ j\<bar>"
-        by simp
-    qed
-    finally show ?thesis .
-  qed
-  have "\<bar>u \<bullet> (D *v u)\<bar>
-      \<le> (\<Sum>i\<in>UNIV. \<bar>\<Sum>j\<in>UNIV. u $ i * (D $ i $ j * u $ j)\<bar>)"
-    unfolding expand by (rule sum_abs)
-  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set). \<bar>D $ i $ j\<bar>)"
-    by (intro sum_mono inner_le)
-  finally show ?thesis
-    unfolding entrysum_def .
-qed
+  using quadform_abs_le[of u D] u by (simp add: entrysum_def)
 
 section \<open>The trace against a projection\<close>
 

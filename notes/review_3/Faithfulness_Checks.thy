@@ -102,7 +102,7 @@ proof -
   proof -
     have sym: "transpose a = a" using that by (simp add: feasible_def psd_def)
     show ?thesis
-      by (simp add: scaleR_matrix_mult matrix_add_rdistrib trace_add trace_scaleR
+      by (simp add: scalar_matrix_assoc[symmetric] matrix_add_rdistrib trace_add trace_scaleR
             trace_transpose_mult_sym[OF sym])
   qed
   then show ?thesis unfolding ell_op_def by (intro arg_cong[where f = Inf] image_cong) auto

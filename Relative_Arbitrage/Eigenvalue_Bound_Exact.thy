@@ -99,61 +99,20 @@ lemma shift_convex_combination:
   shows "c u = (d / (e + d)) * shift c i j e u
              + (e / (e + d)) * shift c i j (- d) u"
 proof -
-  have ed: "e + d \<noteq> 0"
-    using e d by simp
-  have cancel: "(x * (e + d)) / (e + d) = x" for x
-    using ed by simp
-  have up: "(d / (e + d)) * (x + e) + (e / (e + d)) * (x - d) = x" for x
+  have key: "(d / (e + d)) * (x + t * e) + (e / (e + d)) * (x - t * d) = x" for x t
   proof -
-    have "(d / (e + d)) * (x + e) + (e / (e + d)) * (x - d)
-        = (d * (x + e) + e * (x - d)) / (e + d)"
+    have "(d / (e + d)) * (x + t * e) + (e / (e + d)) * (x - t * d)
+        = (d * (x + t * e) + e * (x - t * d)) / (e + d)"
       by (simp add: add_divide_distrib)
     also have "\<dots> = (x * (e + d)) / (e + d)"
       by (simp add: algebra_simps)
     also have "\<dots> = x"
-      by (rule cancel)
-    finally show ?thesis .
-  qed
-  have down: "(d / (e + d)) * (x - e) + (e / (e + d)) * (x + d) = x" for x
-  proof -
-    have "(d / (e + d)) * (x - e) + (e / (e + d)) * (x + d)
-        = (d * (x - e) + e * (x + d)) / (e + d)"
-      by (simp add: add_divide_distrib)
-    also have "\<dots> = (x * (e + d)) / (e + d)"
-      by (simp add: algebra_simps)
-    also have "\<dots> = x"
-      by (rule cancel)
-    finally show ?thesis .
-  qed
-  have same: "(d / (e + d)) * x + (e / (e + d)) * x = x" for x
-  proof -
-    have "(d / (e + d)) * x + (e / (e + d)) * x
-        = (d * x + e * x) / (e + d)"
-      by (simp add: add_divide_distrib)
-    also have "\<dots> = (x * (e + d)) / (e + d)"
-      by (simp add: algebra_simps)
-    also have "\<dots> = x"
-      by (rule cancel)
+      using e d by simp
     finally show ?thesis .
   qed
   show ?thesis
-  proof (cases "u = i")
-    case True
-    then show ?thesis
-      using ij up[of "c i"] by simp
-  next
-    case ni: False
-    show ?thesis
-    proof (cases "u = j")
-      case True
-      then show ?thesis
-        using ij down[of "c j"] by simp
-    next
-      case nj: False
-      show ?thesis
-        using ni nj same[of "c u"] by (simp add: shift_other)
-    qed
-  qed
+    using ij key[of "c u" 1] key[of "c u" "- 1"] key[of "c u" 0]
+    by (cases "u = i"; cases "u = j") (simp_all add: shift_other)
 qed
 
 text \<open>\<open>two_fractional\<close> lives in @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
@@ -407,9 +366,6 @@ qed
 
 section \<open>The capped trace bound\<close>
 
-text \<open>\<open>trace_mult_spectral_proj\<close> lives in
-  @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
-
 lemma Pi_constraint_capped_trace:
   fixes a :: "real^'n::finite^'n"
   assumes a: "a \<in> Pi_constraint k" and k: "k < CARD('n)"
@@ -465,7 +421,7 @@ proof -
       using onormal_proj(2)[OF onS]
       by (intro Pi_proj_le[OF psd_a onormal_proj(1)[OF onS]]) (simp add: m_def)
     also have "\<dots> = (\<Sum>u\<in>S. lam u)"
-      unfolding lam_def by (rule trace_mult_spectral_proj[OF B(1) S_sub eig])
+      unfolding lam_def by (rule trace_mult_outer_sum)
     finally have key: "real (m - k) \<le> (\<Sum>u\<in>S. lam u)" .
     have capS: "(\<Sum>u\<in>S. min (lam u) 1) = (\<Sum>u\<in>S. lam u)"
       by (rule sum.cong[OF refl]) (auto simp: S_def T_def)
@@ -570,12 +526,9 @@ proof
   have sym_a: "transpose a = a"
     using psd_a by (simp add: psd_def)
   obtain B :: "(real^'n) set" where B: "onormal B" "span B = UNIV"
+    and finB: "finite B" and cardB: "card B = CARD('n)"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym_a] by blast
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
+    using symmetric_eigendecomposition[OF sym_a] by metis
   define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (a *v u))"
   have lam_nn: "0 \<le> lam u" for u
     using psd_a by (simp add: lam_def psd_def)

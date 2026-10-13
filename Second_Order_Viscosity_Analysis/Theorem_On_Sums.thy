@@ -695,7 +695,7 @@ qed
 
 subsection \<open>From abstract forms to matrices\<close>
 
-text \<open>\<open>matrix_vec_apply\<close>, \<open>matrix_of_symmetric\<close>, \<open>matrix_symmetric_swap\<close>, \<open>has_derivative_quadratic_form\<close>, \<open>quadratic_test_derivative\<close>, \<open>quadratic_test_grad_derivative\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>matrix_of_symmetric\<close>, \<open>has_derivative_quadratic_form\<close>, \<open>quadratic_test_derivative\<close>, \<open>quadratic_test_grad_derivative\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 subsection \<open>Sign flip: superjets of \<open>- w\<close> are subjets of \<open>w\<close>\<close>

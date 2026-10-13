@@ -30,8 +30,6 @@ text \<open>The supersolution inequality is an essential-infimum statement, so i
 
 subsection \<open>A crude operator bound for matrices\<close>
 
-text \<open>\<open>sum_sq_le_sq_sum\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 text \<open>\<open>matvec_norm_le\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
@@ -743,7 +741,7 @@ proof -
           - trace (M ** (h *\<^sub>R (S ** transpose S)))"
         by (simp add: trace_mult_diff)
       also have "trace (M ** (h *\<^sub>R (S ** transpose S))) = h * b"
-        unfolding b_def by (simp add: matmul_scaleR_right trace_scaleR)
+        unfolding b_def by (simp add: matrix_scalar_ac scalar_matrix_assoc[symmetric] trace_scaleR)
       also have "trace (M ** outerp (S *v ?V \<omega>))
           = (S *v ?V \<omega>) \<bullet> (M *v (S *v ?V \<omega>))"
         by (rule trace_mult_outerp)

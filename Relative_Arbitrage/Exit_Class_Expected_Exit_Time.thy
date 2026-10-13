@@ -126,7 +126,7 @@ proof -
   have Zsum: "Z t \<omega> = (\<Sum>i\<in>UNIV. (fst (\<omega> t) $ i)\<^sup>2 - snd (\<omega> t) $ i $ i)" for t \<omega>
     by (simp add: Z_def trace_def outerp_def power2_eq_square sum_subtractf)
   have Zdot: "Z t \<omega> = fst (\<omega> t) \<bullet> fst (\<omega> t) - trace (snd (\<omega> t))" for t \<omega>
-    by (simp add: Z_def trace_diff_matrix trace_outerp)
+    by (simp add: Z_def trace_sub trace_outerp)
   have contZ: "continuous_on {0..} (\<lambda>s. Z s \<omega>)" if w: "\<omega> \<in> space P" for \<omega>
   proof -
     have "continuous_on {0..} (\<lambda>s. \<Sum>i\<in>UNIV. (fst (\<omega> s) $ i)\<^sup>2 - snd (\<omega> s) $ i $ i)"

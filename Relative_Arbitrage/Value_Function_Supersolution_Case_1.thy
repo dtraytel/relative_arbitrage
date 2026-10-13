@@ -10,7 +10,7 @@ begin
 
 subsection \<open>Bricks for the Case-1 contradiction\<close>
 
-text \<open>\<open>transpose_sub_smat\<close>, \<open>trace_msub_mat\<close>, \<open>quad_soften_split\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>trace_msub_mat\<close>, \<open>quad_soften_split\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 subsection \<open>Exact rotations: a covariance field with no eigenvalue margin\<close>
@@ -43,7 +43,7 @@ proof -
       by (intro continuous_intros cpc)
     have mv: "continuous_on UNIV (\<lambda>z :: real^'n. M *v (cp z - x))"
       by (rule continuous_on_compose2[OF
-          linear_continuous_on[OF matvec_blin] d]) auto
+          linear_continuous_on[OF matrix_vector_mul_bounded_linear] d]) auto
     show ?thesis by (intro continuous_intros mv)
   qed
   have Gin: "q + M *v (cp z - x) \<in> {w :: real^'n. 0 < norm q * norm w + q \<bullet> w}"
@@ -157,13 +157,11 @@ theorem rotSF_exists:
 proof -
   have psda: "psd a" using aF unfolding feasible_def by blast
   have syma: "transpose a = a" using psda unfolding psd_def by blast
-  obtain B where Bon: "onormal B" and sp: "span B = UNIV"
+  obtain B and f :: "'n \<Rightarrow> real^'n" where Bon: "onormal B" and sp: "span B = UNIV"
+    and finB: "finite B" and cardB: "card B = CARD('n)"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF syma] by blast
-  have finB: "finite B" by (rule onormal_finite[OF Bon])
-  have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF Bon sp])
-  obtain f :: "'n \<Rightarrow> real^'n" where bij: "bij_betw f (UNIV :: 'n set) B"
-    by (rule exists_enum_of_card[OF finB cardB])
+    and bij: "bij_betw f (UNIV :: 'n set) B"
+    using symmetric_eigendecomposition[OF syma] by metis
   define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (a *v u))"
   have lam_nn: "0 \<le> lam u" for u
     using psda unfolding lam_def psd_def by blast
@@ -175,7 +173,7 @@ proof -
   define cc where "cc = (\<lambda>j. sqrt (lam (f j)) *\<^sub>R f j)"
   \<comment> \<open>a radius on which the rotation is defined and continuous\<close>
   obtain KM where KM0: "0 < KM" and KMb: "\<And>y. norm (M *v y) \<le> norm y * KM"
-    using bounded_linear.pos_bounded[OF matvec_blin] by blast
+    using bounded_linear.pos_bounded[OF matrix_vector_mul_bounded_linear] by blast
   define d0 where "d0 = norm q / KM"
   have d00: "0 < d0" unfolding d0_def using q0 KM0 by simp
   have cone: "0 < norm q * norm (q + M *v (y - x)) + q \<bullet> (q + M *v (y - x))"
@@ -211,7 +209,7 @@ proof -
     have c2: "continuous_on (ball x d0)
         (\<lambda>y. M *v (rotm q (q + M *v (y - x)) *v cc j))"
       by (rule continuous_on_compose2[OF
-          linear_continuous_on[OF matvec_blin] c1]) auto
+          linear_continuous_on[OF matrix_vector_mul_bounded_linear] c1]) auto
     show "continuous_on (ball x d0)
         (\<lambda>y. (rotm q (q + M *v (y - x)) *v cc j)
            \<bullet> (M *v (rotm q (q + M *v (y - x)) *v cc j)))"
@@ -560,7 +558,7 @@ proof -
       by (intro continuous_intros)
     have mv: "continuous_on UNIV (\<lambda>z :: real^'n. M *v (z - x))"
       by (rule continuous_on_compose2[OF
-          linear_continuous_on[OF matvec_blin] d]) auto
+          linear_continuous_on[OF matrix_vector_mul_bounded_linear] d]) auto
     show ?thesis by (intro continuous_intros mv)
   qed
   note orth = eulerp_orth_increments_cond[OF h0 L1 SFc SFs Gc]
@@ -614,7 +612,7 @@ proof -
             - h *\<^sub>R (SF (X j) ** transpose (SF (X j)))))
             = trace (M ** outerp (X (Suc j) - X j))
               - h * trace (M ** (SF (X j) ** transpose (SF (X j))))"
-          by (simp add: trace_mult_diff matmul_scaleR_right trace_scaleR)
+          by (simp add: trace_mult_diff matrix_scalar_ac scalar_matrix_assoc[symmetric] trace_scaleR)
         then show ?thesis by (simp add: trace_mult_outerp)
       qed
       have persum: "(\<Sum>j<m. (1/2) * ((X (Suc j) - X j)

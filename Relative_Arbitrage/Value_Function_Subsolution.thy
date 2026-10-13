@@ -1108,10 +1108,9 @@ proof -
     using b unfolding sconstraint_def Pi_constraint_def by auto
   have sym_b: "transpose b = b" using psd_b by (simp add: psd_def)
   obtain B :: "(real^'n) set" where B: "onormal B" "span B = UNIV"
+    and cardB: "card B = CARD('n)" and finB: "finite B"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> b *v u = (u \<bullet> (b *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym_b] by blast
-  have cardB: "card B = CARD('n)" by (rule onormal_span_card[OF B])
-  have finB: "finite B" by (rule onormal_finite[OF B(1)])
+    using symmetric_eigendecomposition[OF sym_b] by metis
   define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (b *v u))"
   have lam_nn: "0 \<le> lam u" for u
     using psd_b by (simp add: lam_def psd_def)
@@ -1233,9 +1232,9 @@ proof -
         = z \<bullet> ((\<Sum>u\<in>S. outer_prod u u) *v z) + z \<bullet> (R *v z)"
       by (simp add: inner_add_right)
     moreover have "z \<bullet> ((\<Sum>u\<in>S. outer_prod u u) *v z) = (\<Sum>u\<in>S. (u \<bullet> z)\<^sup>2)"
-      using quadform_sum_outer[OF finS, where c = "\<lambda>_. 1" and z = z] by simp
+      using quadform_weighted_outer_sum_eq[OF finS, where g = "\<lambda>_. 1" and x = z] by simp
     moreover have "z \<bullet> (R *v z) = (\<Sum>u\<in>B. rho u * (u \<bullet> z)\<^sup>2)"
-      unfolding R_def by (rule quadform_sum_outer[OF finB])
+      unfolding R_def by (rule quadform_weighted_outer_sum_eq[OF finB])
     ultimately show ?thesis by simp
   qed
   have quad_a_nn: "0 \<le> z \<bullet> (a *v z)" for z
@@ -1308,7 +1307,7 @@ proof -
         \<le> (\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2) + (L - 1) * (\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2)"
       unfolding quad_a by (simp add: sum_distrib_left)
     also have "\<dots> = L * (\<Sum>u\<in>B. (u \<bullet> z)\<^sup>2)" by (simp add: algebra_simps)
-    also have "\<dots> = L * (z \<bullet> z)" by (simp add: onormal_parseval[OF B])
+    also have "\<dots> = L * (z \<bullet> z)" by (simp add: parseval_onormal[OF B])
     finally show "z \<bullet> (a *v z) \<le> L * (z \<bullet> z)" .
   qed
   have feas: "a \<in> feasible k L q"
@@ -1355,7 +1354,7 @@ qed
 
 section \<open>Small pointwise bounds\<close>
 
-text \<open>\<open>quadform_abs_le\<close>, \<open>axis1_inner\<close>, \<open>axis1_self\<close>, \<open>matvec_axis1\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>quadform_abs_le\<close>, \<open>axis1_self\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 section \<open>The near-orthogonal direction: the anti-concentration dichotomy\<close>
@@ -1695,7 +1694,7 @@ next
     have sEq: "s = et * (q \<bullet> (b *v q))"
     proof -
       have "EY *v q = et *\<^sub>R (b *v q)"
-        by (subst EYb) (simp add: scaleR_matrix_vector)
+        by (subst EYb) (simp add: scaleR_matrix_vector_assoc[symmetric])
       then have "q \<bullet> (EY *v q) = et * (q \<bullet> (b *v q))"
         by simp
       then show ?thesis using svar by simp
@@ -2140,7 +2139,7 @@ proof (intro ballI allI impI)
       have "(H + \<delta> *\<^sub>R mat 1) ** a = H ** a + (\<delta> *\<^sub>R mat 1) ** a"
         by (rule matrix_add_rdistrib)
       moreover have "(\<delta> *\<^sub>R mat 1) ** a = \<delta> *\<^sub>R a"
-        by (simp add: scaleR_matrix_mult)
+        by (simp add: scalar_matrix_assoc[symmetric])
       ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** a)
           = trace (H ** a + \<delta> *\<^sub>R a)" by simp
       have e2: "trace (H ** a + \<delta> *\<^sub>R a) = trace (H ** a) + trace (\<delta> *\<^sub>R a)"

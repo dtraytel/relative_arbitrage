@@ -20,11 +20,6 @@ text \<open>
 
 unbundle inner_syntax
 
-lemma trace_diff_matrix:
-  fixes A B :: "real^'n::finite^'n"
-  shows "trace (A - B) = trace A - trace B"
-  unfolding trace_def by (simp add: sum_subtractf)
-
 
 lemma kyfan_full_eq_trace:
   fixes a :: "real^'n::finite^'n"
@@ -32,16 +27,15 @@ lemma kyfan_full_eq_trace:
   shows "kyfan CARD('n) a = trace a"
 proof -
   obtain B where B: "onormal B" "span B = UNIV"
+    and cardB: "card B = CARD('n)"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym] by metis
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
+    using symmetric_eigendecomposition[OF sym] by metis
   have vac: "v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)" if "u \<in> B" "v \<in> B - B" for u v
     using that by simp
   have "kyfan CARD('n) a = (\<Sum>u\<in>B. u \<bullet> (a *v u))"
     by (rule kyfan_threshold[OF B sym eig subset_refl cardB vac])
   also have "\<dots> = trace (a ** (\<Sum>u\<in>B. outer_prod u u))"
-    by (rule trace_mult_spectral_proj[OF B(1) subset_refl eig, symmetric])
+    by (rule trace_mult_outer_sum[symmetric])
   also have "\<dots> = trace (a ** mat 1)"
     by (simp add: onormal_complete[OF B])
   also have "\<dots> = trace a"
@@ -50,19 +44,15 @@ proof -
 qed
 
 
+text \<open>A unit vector spans a one-dimensional orthonormal family, so its outer
+  product is a projection of trace one (\<open>onormal_proj\<close>), and so is the
+  complementary projection, of trace \<open>n - 1\<close>.\<close>
+
 lemma is_proj_rank1:
   fixes x :: "real^'n::finite"
   assumes x: "norm x = 1"
   shows "is_proj (outer_prod x x)" and "trace (outer_prod x x) = 1"
-proof -
-  have xx: "x \<bullet> x = 1"
-    using x by (simp add: dot_square_norm)
-  show "is_proj (outer_prod x x)"
-    unfolding is_proj_def by (simp add: outer_prod_mult xx)
-  show "trace (outer_prod x x) = 1"
-    by (simp add: xx)
-qed
-
+  using onormal_proj[of "{x}"] x by (auto simp: onormal_def)
 
 lemma is_proj_compl_rank1:
   fixes x :: "real^'n::finite"
@@ -70,38 +60,15 @@ lemma is_proj_compl_rank1:
   shows "is_proj (mat 1 - outer_prod x x :: real^'n^'n)"
     and "trace (mat 1 - outer_prod x x :: real^'n^'n) = real (CARD('n) - 1)"
 proof -
-  have xx: "x \<bullet> x = 1"
-    using x by (simp add: dot_square_norm)
-  have sq: "outer_prod x x ** outer_prod x x = (outer_prod x x :: real^'n^'n)"
-    by (simp add: outer_prod_mult xx)
-  show "is_proj (mat 1 - outer_prod x x :: real^'n^'n)"
-    unfolding is_proj_def
-  proof (intro conjI)
-    show "transpose (mat 1 - outer_prod x x :: real^'n^'n) = mat 1 - outer_prod x x"
-      by (simp add: transpose_diff_matrix)
-    have "(mat 1 - outer_prod x x) ** (mat 1 - outer_prod x x)
-        = (mat 1 - outer_prod x x) ** mat 1
-          - (mat 1 - outer_prod x x) ** outer_prod x x"
-      by (rule matrix_mul_diff_right)
-    also have "\<dots> = (mat 1 - outer_prod x x)
-                  - (mat 1 ** outer_prod x x - outer_prod x x ** outer_prod x x)"
-      by (simp add: matrix_mul_diff_left)
-    also have "\<dots> = (mat 1 - outer_prod x x :: real^'n^'n)"
-      by (simp add: sq)
-    finally show "(mat 1 - outer_prod x x :: real^'n^'n)
-        ** (mat 1 - outer_prod x x) = mat 1 - outer_prod x x" .
-  qed
-  have pos: "0 < CARD('n)"
-    by (simp add: card_gt_0_iff)
-  have "trace (mat 1 - outer_prod x x :: real^'n^'n)
-      = trace (mat 1 :: real^'n^'n) - trace (outer_prod x x)"
-    by (rule trace_diff_matrix)
-  also have "\<dots> = real CARD('n) - 1"
-    by (simp add: trace_I xx)
-  also have "\<dots> = real (CARD('n) - 1)"
-    using pos by simp
-  finally show "trace (mat 1 - outer_prod x x :: real^'n^'n)
-      = real (CARD('n) - 1)" .
+  have P: "is_proj (outer_prod x x)" "trace (outer_prod x x) = 1"
+    by (rule is_proj_rank1[OF x])+
+  then show "is_proj (mat 1 - outer_prod x x :: real^'n^'n)"
+    by (simp add: is_proj_def transpose_diff_matrix matrix_mul_diff_left
+        matrix_mul_diff_right)
+  have "0 < CARD('n)"
+    by simp
+  with P(2) show "trace (mat 1 - outer_prod x x :: real^'n^'n) = real (CARD('n) - 1)"
+    by (simp add: trace_sub trace_I of_nat_diff)
 qed
 
 text \<open>The trace of \<open>a\<close> against a rank-one projection is the Rayleigh
@@ -157,7 +124,7 @@ proof -
   proof -
     have "trace (a ** (mat 1 - outer_prod x x))
         = trace (a ** mat 1) - trace (a ** outer_prod x x)"
-      by (simp add: matrix_mul_diff_right trace_diff_matrix)
+      by (simp add: matrix_mul_diff_right trace_sub)
     also have "\<dots> = trace a - x \<bullet> (a *v x)"
       by (simp add: trace_mult_rank1)
     finally show ?thesis .
@@ -206,7 +173,7 @@ proof -
   have uu: "u \<bullet> u = 1"
     using nu by (simp add: dot_square_norm)
   have "(\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v) *v u = (\<Sum>v\<in>B. g v *\<^sub>R ((v \<bullet> u) *\<^sub>R v))"
-    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector)
+    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
   also have "\<dots> = (\<Sum>v\<in>B. if v = u then g u *\<^sub>R u else 0)"
     by (intro sum.cong refl)
       (use B u in \<open>auto dest: onormal_inner_distinct\<close>)
@@ -232,7 +199,7 @@ lemma quadform_weighted_outer_sum_eq:
   shows "x \<bullet> ((\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v) *v x) = (\<Sum>v\<in>B. g v * (v \<bullet> x)^2)"
 proof -
   have "(\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v) *v x = (\<Sum>v\<in>B. g v *\<^sub>R ((v \<bullet> x) *\<^sub>R v))"
-    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector)
+    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
   then have "x \<bullet> ((\<Sum>v\<in>B. g v *\<^sub>R outer_prod v v) *v x)
       = (\<Sum>v\<in>B. g v * ((v \<bullet> x) * (x \<bullet> v)))"
     by (simp add: inner_sum_right mult.assoc)
@@ -256,34 +223,24 @@ lemma quadform_outside_threshold_le_eigval:
     and v: "v \<in> B - T"
   shows "v \<bullet> (a *v v) \<le> eigval m a"
 proof -
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have finT: "finite T"
-    using T(1) finB by (rule finite_subset)
-  have Tne: "T \<noteq> {}"
-    using T(2) m by auto
-  obtain w where w: "w \<in> T"
-    and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using finite_arg_min_on[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)",
-        OF finT Tne] by metis
-  obtain i where mi: "m = Suc i"
-    using m by (cases m) auto
-  have cardT: "card T = Suc i"
-    using T(2) mi by simp
-  have "eigval m a = w \<bullet> (a *v w)"
-    unfolding mi
-    by (rule eigval_eq_min_of_threshold[OF B sym eig T(1) cardT thresh w wmin])
-  moreover have "v \<bullet> (a *v v) \<le> w \<bullet> (a *v w)"
-    by (rule thresh[OF w v])
-  ultimately show ?thesis
-    by simp
+  obtain w where w: "w \<in> T" and "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
+    and eigw: "eigval m a = w \<bullet> (a *v w)"
+    using eigval_threshold_min[OF B sym eig T m thresh] by blast
+  show ?thesis
+    unfolding eigw by (rule thresh[OF w v])
 qed
 
-text \<open>The dimension-counting core of the Courant-Fischer argument: two
-  subspaces whose dimensions exceed the ambient dimension must meet in a
-  nonzero vector, applied below to \<open>S\<close> of dimension \<open>\<ge> m\<close> and
+text \<open>The dimension-counting core of the Courant-Fischer argument (Grassmann's
+  formula): two subspaces whose dimensions exceed the ambient dimension must meet
+  in a nonzero vector, applied below to \<open>S\<close> of dimension \<open>\<ge> m\<close> and
   \<open>span (B - T')\<close> of dimension \<open>CARD('n) - m + 1\<close>.\<close>
 
+lemma dim_inter_ge:
+  fixes S W :: "(real^'n::finite) set"
+  assumes S: "subspace S" and W: "subspace W"
+  shows "dim S + dim W \<le> dim (S \<inter> W) + CARD('n)"
+  using dim_sums_Int[OF S W] dim_subset_UNIV_cart[of "{x + y |x y. x \<in> S \<and> y \<in> W}"]
+  by simp
 
 lemma subspace_inter_nonzero:
   fixes S W :: "(real^'n::finite) set"
@@ -291,28 +248,10 @@ lemma subspace_inter_nonzero:
     and dims: "CARD('n) < dim S + dim W"
   shows "\<exists>x. x \<in> S \<and> x \<in> W \<and> x \<noteq> 0"
 proof -
-  have key: "dim {x + y |x y. x \<in> S \<and> y \<in> W} + dim (S \<inter> W) = dim S + dim W"
-    by (rule dim_sums_Int[OF S W])
-  have le: "dim {x + y |x y. x \<in> S \<and> y \<in> W} \<le> CARD('n)"
-    using dim_subset_UNIV[of "{x + y |x y. x \<in> S \<and> y \<in> W}"] by simp
-  have pos: "0 < dim (S \<inter> W)"
-  proof (rule ccontr)
-    assume "\<not> 0 < dim (S \<inter> W)"
-    then have z: "dim (S \<inter> W) = 0"
-      by simp
-    have "dim {x + y |x y. x \<in> S \<and> y \<in> W} = dim S + dim W"
-      using key z by simp
-    with le dims show False
-      by simp
-  qed
-  have "\<not> (S \<inter> W \<subseteq> {0})"
-  proof
-    assume "S \<inter> W \<subseteq> {0}"
-    then have "dim (S \<inter> W) = 0"
-      by simp
-    with pos show False
-      by simp
-  qed
+  have "dim (S \<inter> W) \<noteq> 0"
+    using dim_inter_ge[OF S W] dims by linarith
+  then have "\<not> S \<inter> W \<subseteq> {0}"
+    by simp
   then show ?thesis
     by blast
 qed
@@ -402,17 +341,11 @@ proof -
     unfolding diff
     using le by (intro quadform_weighted_outer_sum_nonneg[OF B]) simp
   have "x \<bullet> ((N - c) *v x) = x \<bullet> (N *v x) - x \<bullet> (c *v x)"
-    by (simp add: matrix_vector_mult_diff inner_diff_right)
+    by (simp add: matrix_vector_mult_diff_rdistrib inner_diff_right)
   with nn show ?thesis
     by simp
 qed
 
-
-lemma transpose_sum_matrix:
-  fixes f :: "'a \<Rightarrow> real^'n::finite^'n"
-  assumes "finite S"
-  shows "transpose (\<Sum>u\<in>S. f u) = (\<Sum>u\<in>S. transpose (f u))"
-  using assms by (induct S) (simp_all add: transpose_add transpose_def vec_eq_iff)
 
 
 lemma transpose_weighted_outer_sum:
@@ -421,26 +354,16 @@ lemma transpose_weighted_outer_sum:
   shows "transpose (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)
        = (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)"
   using finB
-  by (simp add: transpose_sum_matrix transpose_scalar)
+  by (simp add: transpose_matrix_sum transpose_scalar)
 
 
 lemma psd_weighted_outer_sum:
   fixes c :: "real^'n::finite \<Rightarrow> real"
   assumes B: "onormal B" and c0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> c u"
   shows "psd (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)"
-proof -
-  have finB: "finite B"
-    by (rule onormal_finite[OF B])
-  show ?thesis
-    unfolding psd_def
-  proof (intro conjI allI)
-    show "transpose (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)
-        = (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)"
-      by (rule transpose_weighted_outer_sum[OF finB])
-    show "0 \<le> x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x)" for x
-      by (rule quadform_weighted_outer_sum_nonneg[OF B c0])
-  qed
-qed
+  unfolding psd_def
+  using transpose_weighted_outer_sum[OF onormal_finite[OF B]]
+    quadform_weighted_outer_sum_nonneg[OF B, of c] c0 by blast
 
 text \<open>The sum annihilates \<open>p\<close> as soon as every basis vector carrying a nonzero
   weight is orthogonal to \<open>p\<close>.\<close>
@@ -460,168 +383,12 @@ proof -
 qed
 
 
-lemma eigenbasis_containing_eigenvector:
-  fixes A :: "real^'n::finite^'n"
-  assumes sym: "transpose A = A" and q: "norm q = 1"
-    and eigq: "A *v q = (q \<bullet> (A *v q)) *\<^sub>R q"
-  shows "\<exists>B. onormal B \<and> span B = UNIV \<and> q \<in> B
-      \<and> (\<forall>u\<in>B. A *v u = (u \<bullet> (A *v u)) *\<^sub>R u)
-      \<and> (\<forall>u \<in> B - {q}. q \<bullet> u = 0)"
-proof -
-  define H where "H = {y :: real^'n. q \<bullet> y = 0}"
-  have qq: "q \<bullet> q = 1"
-    using q by (simp add: dot_square_norm)
-  have subH: "subspace H"
-    unfolding H_def by (simp add: subspace_hyperplane)
-  text \<open>Bind the eigenvalue before using \<open>eigq\<close> as a rewrite: its right hand side
-    mentions \<open>A *v q\<close> again, so unfolding it directly loops.\<close>
-  define mu where "mu = q \<bullet> (A *v q)"
-  have eigq': "A *v q = mu *\<^sub>R q"
-    unfolding mu_def by (rule eigq)
-  have invH: "\<forall>y\<in>H. A *v y \<in> H"
-  proof (intro ballI)
-    fix y assume y: "y \<in> H"
-    then have qy: "q \<bullet> y = 0"
-      unfolding H_def by simp
-    have "q \<bullet> (A *v y) = y \<bullet> (A *v q)"
-      by (rule sym_inner_swap[OF sym])
-    also have "\<dots> = mu * (y \<bullet> q)"
-      unfolding eigq' by simp
-    also have "\<dots> = 0"
-      using qy by (simp add: inner_commute)
-    finally show "A *v y \<in> H"
-      unfolding H_def by simp
-  qed
-  obtain B0 where B0: "onormal B0" "B0 \<subseteq> H" "span B0 = H"
-    and eig0: "\<forall>u\<in>B0. A *v u = (u \<bullet> (A *v u)) *\<^sub>R u"
-    using invariant_subspace_eigenbasis_ex[OF sym subH invH] by blast
-  have finB0: "finite B0"
-    by (rule onormal_finite[OF B0(1)])
-  have qperp: "q \<bullet> u = 0" if u: "u \<in> B0" for u
-    using u B0(2) unfolding H_def by blast
-  have qnotin: "q \<notin> B0"
-    using qq B0(2) unfolding H_def by auto
-  define B where "B = insert q B0"
-  have onB: "onormal B"
-    unfolding B_def onormal_def
-  proof (intro conjI)
-    show "finite (insert q B0)"
-      using finB0 by simp
-    show "pairwise orthogonal (insert q B0)"
-      using B0(1) qperp
-      by (auto simp: onormal_def pairwise_insert orthogonal_def inner_commute)
-    show "\<forall>u\<in>insert q B0. norm u = 1"
-      using q B0(1) by (auto simp: onormal_def)
-  qed
-  have spanB: "span B = UNIV"
-  proof -
-    have "x \<in> span B" for x :: "real^'n"
-    proof -
-      define z where "z = x - (q \<bullet> x) *\<^sub>R q"
-      have qz: "q \<bullet> z = 0"
-        unfolding z_def by (simp add: inner_diff_right qq)
-      then have zB0: "z \<in> span B0"
-        using B0(3) unfolding H_def by simp
-      have sub: "B0 \<subseteq> insert q B0"
-        by blast
-      have zB: "z \<in> span B"
-        unfolding B_def using zB0 span_mono[OF sub] by blast
-      have qB: "q \<in> span B"
-        unfolding B_def by (simp add: span_base)
-      have "x = (q \<bullet> x) *\<^sub>R q + z"
-        unfolding z_def by simp
-      also have "\<dots> \<in> span B"
-        using qB zB by (intro span_add span_scale)
-      finally show ?thesis .
-    qed
-    then show ?thesis by auto
-  qed
-  have eigB: "\<forall>u\<in>B. A *v u = (u \<bullet> (A *v u)) *\<^sub>R u"
-    unfolding B_def
-  proof (intro ballI)
-    fix u assume uin: "u \<in> insert q B0"
-    show "A *v u = (u \<bullet> (A *v u)) *\<^sub>R u"
-    proof (cases "u = q")
-      case True
-      show ?thesis
-        unfolding True by (rule eigq)
-    next
-      case False
-      then have "u \<in> B0"
-        using uin by simp
-      then show ?thesis
-        using eig0 by blast
-    qed
-  qed
-  have restperp: "\<forall>u \<in> B - {q}. q \<bullet> u = 0"
-    unfolding B_def using qperp by auto
-  have qBmem: "q \<in> B"
-    unfolding B_def by simp
-  show ?thesis
-    by (rule exI[of _ B]) (intro conjI onB spanB qBmem eigB restperp)
-qed
-
-
 lemma exists_top_eigenvector:
   fixes M :: "real^'n::finite^'n"
   assumes sym: "transpose M = M"
   shows "\<exists>q. norm q = 1 \<and> M *v q = (q \<bullet> (M *v q)) *\<^sub>R q
       \<and> q \<bullet> (M *v q) = eigval 1 M"
-proof -
-  obtain B where B: "onormal B" "span B = UNIV"
-    and eig: "\<And>u. u \<in> B \<Longrightarrow> M *v u = (u \<bullet> (M *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF sym] by metis
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
-  have pos: "0 < CARD('n)"
-    by (simp add: card_gt_0_iff)
-  have oneB: "1 \<le> card B"
-    using pos cardB by simp
-  obtain T where T: "T \<subseteq> B" "card T = 1"
-    and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T
-        \<Longrightarrow> v \<bullet> (M *v v) \<le> u \<bullet> (M *v u)"
-    using exists_top_subset[where f = "\<lambda>u :: real^'n. u \<bullet> (M *v u)", OF finB oneB]
-    by metis
-  obtain q where Tq: "T = {q}"
-    using T(2) by (metis card_1_singletonE)
-  have qB: "q \<in> B"
-    using T(1) Tq by blast
-  have nq: "norm q = 1"
-    using qB B(1) by (simp add: onormal_def)
-  have eigq: "M *v q = (q \<bullet> (M *v q)) *\<^sub>R q"
-    by (rule eig[OF qB])
-  have "kyfan 1 M = (\<Sum>u\<in>T. u \<bullet> (M *v u))"
-    by (rule kyfan_threshold[OF B sym eig T(1) T(2) thresh])
-  then have "kyfan 1 M = q \<bullet> (M *v q)"
-    unfolding Tq by simp
-  moreover have "eigval 1 (M :: real^'n^'n) = kyfan 1 M"
-    by (rule eigval_1)
-  ultimately have top: "q \<bullet> (M *v q) = eigval 1 M"
-    by simp
-  show ?thesis
-    by (rule exI[of _ q]) (intro conjI nq eigq top)
-qed
-
-text \<open>The Ky Fan sums of \<open>M\<^sub>q\<^sub>1\<close> are those of \<open>M\<close> shifted by one and reduced
-  by \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close>.  Since the \<open>q\<^sub>1\<close>-direction eigenvalue of \<open>M\<^sub>q\<^sub>1\<close> is minimal, a
-  top-\<open>j\<close> set can be taken inside \<open>B - {q\<^sub>1}\<close>; since \<open>q\<^sub>1\<close> attains the
-  maximum for \<open>M\<close>, a top-\<open>(j+1)\<close> set can be taken to contain it.\<close>
-
-
-lemma dim_inter_ge:
-  fixes S W :: "(real^'n::finite) set"
-  assumes S: "subspace S" and W: "subspace W"
-  shows "dim S + dim W \<le> dim (S \<inter> W) + CARD('n)"
-proof -
-  have key: "dim {x + y |x y. x \<in> S \<and> y \<in> W} + dim (S \<inter> W) = dim S + dim W"
-    by (rule dim_sums_Int[OF S W])
-  have le: "dim {x + y |x y. x \<in> S \<and> y \<in> W} \<le> CARD('n)"
-    by (rule dim_subset_UNIV_cart)
-  show ?thesis
-    using key le by simp
-qed
+  by (rule exists_eigenvector_eigval[OF sym]) (simp_all add: Suc_le_eq)
 
 text \<open>On the span of a threshold set, the Rayleigh quotient is bounded below by
   the smallest eigenvalue occurring there, namely \<open>eigval m a\<close>.\<close>
@@ -639,21 +406,10 @@ lemma quadform_ge_on_span_threshold:
 proof -
   have finB: "finite B"
     by (rule onormal_finite[OF B(1)])
-  have finT: "finite T"
-    using T(1) finB by (rule finite_subset)
-  have Tne: "T \<noteq> {}"
-    using T(2) m by auto
   obtain w where w: "w \<in> T"
     and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using finite_arg_min_on[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)",
-        OF finT Tne] by metis
-  obtain i where mi: "m = Suc i"
-    using m by (cases m) auto
-  have cardT: "card T = Suc i"
-    using T(2) mi by simp
-  have eigw: "eigval m a = w \<bullet> (a *v w)"
-    unfolding mi
-    by (rule eigval_eq_min_of_threshold[OF B sym eig T(1) cardT thresh w wmin])
+    and eigw: "eigval m a = w \<bullet> (a *v w)"
+    using eigval_threshold_min[OF B sym eig T m thresh] by blast
   define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (a *v u))"
   have adecomp: "a = (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)"
     unfolding lam_def by (rule spectral_decomposition[OF B eig])
@@ -691,56 +447,25 @@ lemma possum_lipschitz:
   shows "\<bar>possum m A - possum m B\<bar>
        \<le> real CARD('n) * entrysum (A - B)"
 proof -
-  have fin: "finite ((\<lambda>j. kyfan j A) ` {..m})"
-    by simp
-  have ne: "(\<lambda>j. kyfan j A) ` {..m} \<noteq> {}"
-    by simp
-  have step: "\<bar>kyfan j A - kyfan j B\<bar> \<le> real CARD('n) * entrysum (A - B)"
-    if j: "j \<le> m" for j
-  proof -
-    have jn: "j \<le> CARD('n)"
-      using j m by simp
-    have "\<bar>kyfan j A - kyfan j B\<bar> \<le> real j * entrysum (A - B)"
-      by (rule kyfan_lipschitz[OF symA symB jn])
-    also have "\<dots> \<le> real CARD('n) * entrysum (A - B)"
-      using jn entrysum_nonneg[of "A - B"] by (simp add: mult_right_mono)
-    finally show ?thesis .
-  qed
-  have "possum m A \<le> possum m B + real CARD('n) * entrysum (A - B)"
-    unfolding possum_def[of m A]
-  proof (rule Max.boundedI[OF fin ne])
-    fix y assume "y \<in> (\<lambda>j. kyfan j A) ` {..m}"
-    then obtain j where j: "j \<le> m" and y: "y = kyfan j A"
+  text \<open>Each Ky Fan sum moves by at most the bound, so the maximum does too;
+    the bound is symmetric in \<open>A\<close> and \<open>B\<close>, so one half suffices.\<close>
+  have half: "possum m X \<le> possum m Y + real CARD('n) * entrysum (X - Y)"
+    if symX: "transpose X = X" and symY: "transpose Y = Y" for X Y :: "real^'n^'n"
+    unfolding possum_def[of m X]
+  proof (rule Max.boundedI)
+    fix y assume "y \<in> (\<lambda>j. kyfan j X) ` {..m}"
+    then obtain j where j: "j \<le> m" and y: "y = kyfan j X"
       by auto
-    have a: "kyfan j A \<le> kyfan j B + real CARD('n) * entrysum (A - B)"
-      using step[OF j] by simp
-    have b: "kyfan j B \<le> possum m B"
-      by (rule possum_ge_kyfan[OF j])
-    show "y \<le> possum m B + real CARD('n) * entrysum (A - B)"
-      unfolding y using a b by simp
-  qed
-  moreover have "possum m B \<le> possum m A + real CARD('n) * entrysum (A - B)"
-  proof -
-    have finB: "finite ((\<lambda>j. kyfan j B) ` {..m})"
-      by simp
-    have neB: "(\<lambda>j. kyfan j B) ` {..m} \<noteq> {}"
-      by simp
-    show ?thesis
-      unfolding possum_def[of m B]
-    proof (rule Max.boundedI[OF finB neB])
-      fix y assume "y \<in> (\<lambda>j. kyfan j B) ` {..m}"
-      then obtain j where j: "j \<le> m" and y: "y = kyfan j B"
-        by auto
-      have a: "kyfan j B \<le> kyfan j A + real CARD('n) * entrysum (A - B)"
-        using step[OF j] by simp
-      have b: "kyfan j A \<le> possum m A"
-        by (rule possum_ge_kyfan[OF j])
-      show "y \<le> possum m A + real CARD('n) * entrysum (A - B)"
-        unfolding y using a b by simp
-    qed
-  qed
-  ultimately show ?thesis
-    by simp
+    have "kyfan j X - kyfan j Y \<le> real j * entrysum (X - Y)"
+      using abs_le_D1[OF kyfan_lipschitz[OF symX symY order_trans[OF j m]]] .
+    also have "\<dots> \<le> real CARD('n) * entrysum (X - Y)"
+      using order_trans[OF j m] entrysum_nonneg[of "X - Y"] by (simp add: mult_right_mono)
+    finally show "y \<le> possum m Y + real CARD('n) * entrysum (X - Y)"
+      using possum_ge_kyfan[OF j, of Y] y by linarith
+  qed simp_all
+  show ?thesis
+    unfolding abs_le_iff
+    using half[OF symA symB] half[OF symB symA, unfolded entrysum_sym[of B A]] by linarith
 qed
 
 
@@ -1064,34 +789,7 @@ text \<open>Assembling: \<open>M\<^sub>p\<close> is Lipschitz in \<open>p\<close
   correction coefficient \<open>c = min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> is \<open>p\<close>-independent, so it
   contributes only \<open>\<bar>c\<bar> * norm D\<close>.\<close>
 
-
-lemma entry_abs_le_norm:
-  fixes D :: "real^'n::finite^'n"
-  shows "\<bar>D $ i $ j\<bar> \<le> norm D"
-proof -
-  have "\<bar>D $ i $ j\<bar> \<le> norm (D $ i)"
-    by (rule component_le_norm_cart)
-  also have "\<dots> \<le> norm D"
-    by (rule Finite_Cartesian_Product.norm_nth_le)
-  finally show ?thesis .
-qed
-
-
-lemma entrysum_le_norm:
-  fixes D :: "real^'n::finite^'n"
-  shows "entrysum D \<le> real (CARD('n) * CARD('n)) * norm D"
-proof -
-  have "entrysum D = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>D $ i $ j\<bar>)"
-    unfolding entrysum_def by (rule refl)
-  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). norm D)"
-    by (intro sum_mono entry_abs_le_norm)
-  also have "\<dots> = real (CARD('n) * CARD('n)) * norm D"
-    by simp
-  finally show ?thesis .
-qed
-
 text \<open>Hence the bracket is Lipschitz in the norm as well.\<close>
-
 
 corollary bracket_lipschitz_norm:
   fixes A B :: "real^'n::finite^'n"
@@ -1113,48 +811,6 @@ proof -
     by (simp add: algebra_simps)
   finally show ?thesis .
 qed
-
-
-text \<open>\<open>continuous_on_matrix_entry\<close> lives in
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-lemma continuous_on_quadform:
-  fixes x :: "real^'n::finite"
-  shows "continuous_on UNIV (\<lambda>a :: real^'n^'n. x \<bullet> (a *v x))"
-proof -
-  have eq: "x \<bullet> (a *v x) = (\<Sum>i\<in>UNIV. x $ i * (\<Sum>j\<in>UNIV. a $ i $ j * x $ j))"
-    for a :: "real^'n^'n"
-    unfolding inner_vec_def matrix_vector_mult_def by simp
-  show ?thesis
-    unfolding eq
-    by (intro continuous_intros continuous_on_matrix_entry continuous_on_id)
-qed
-
-
-lemma closed_symmetric_matrices:
-  "closed {a :: real^'n::finite^'n. transpose a = a}"
-proof -
-  have eq: "{a :: real^'n^'n. transpose a = a}
-      = (\<Inter>i. \<Inter>j. {a. a $ j $ i = a $ i $ j})"
-    unfolding transpose_def vec_eq_iff by auto
-  have "closed {a :: real^'n^'n. a $ j $ i = a $ i $ j}" for i j
-    by (intro closed_Collect_eq continuous_on_matrix_entry continuous_on_id)
-  thus ?thesis unfolding eq by (intro closed_INT) auto
-qed
-
-
-lemma closed_psd: "closed {a :: real^'n::finite^'n. psd a}"
-proof -
-  have eq: "{a :: real^'n^'n. psd a}
-      = {a. transpose a = a} \<inter> (\<Inter>x. {a. 0 \<le> x \<bullet> (a *v x)})"
-    unfolding psd_def by auto
-  have "closed {a :: real^'n^'n. 0 \<le> x \<bullet> (a *v x)}" for x
-    by (intro closed_Collect_le continuous_on_quadform continuous_on_const)
-  thus ?thesis
-    unfolding eq
-    by (intro closed_Int closed_symmetric_matrices closed_INT) auto
-qed
-
 
 
 (*<*)

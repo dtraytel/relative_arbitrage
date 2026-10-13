@@ -57,18 +57,8 @@ proof -
     by (simp add: vec_eq_iff)
 qed
 
-lemma scaleR_matrix_mult:
-  fixes A :: "real^'m^'n" and B :: "real^'p^'m"
-  shows "(r *\<^sub>R A) ** B = r *\<^sub>R (A ** B)"
-  by (simp add: matrix_matrix_mult_def vec_eq_iff sum_distrib_left ac_simps)
-
 lemma trace_scaleR: "trace (r *\<^sub>R A) = r * trace A"
   by (simp add: trace_def sum_distrib_left)
-
-lemma scaleR_matrix_vector:
-  fixes A :: "real^'m^'n"
-  shows "(r *\<^sub>R A) *v x = r *\<^sub>R (A *v x)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left ac_simps)
 
 lemma neg_matrix_vector:
   fixes A :: "real^'m^'n"
@@ -85,31 +75,6 @@ lemma matrix_mul_diff_left:
   shows "(A - B) ** C = A ** C - B ** C"
   by (simp add: matrix_matrix_mult_def vec_eq_iff algebra_simps sum_subtractf)
 
-lemma matvec_add_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (x + y) = A *v x + A *v y"
-  by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum.distrib)
-
-lemma matrix_vector_mult_diff:
-  fixes A B :: "real^'n::finite^'n"
-  shows "(A - B) *v x = A *v x - B *v x"
-proof -
-  have "((A - B) *v x) $ i = (A *v x) $ i - (B *v x) $ i" for i
-  proof -
-    have "((A - B) *v x) $ i = (\<Sum>j\<in>UNIV. (A $ i $ j - B $ i $ j) * x $ j)"
-      by (simp add: matrix_vector_mult_def)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j - B $ i $ j * x $ j)"
-      by (intro sum.cong refl) (simp add: left_diff_distrib)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j) - (\<Sum>j\<in>UNIV. B $ i $ j * x $ j)"
-      by (rule sum_subtractf)
-    also have "\<dots> = (A *v x) $ i - (B *v x) $ i"
-      by (simp add: matrix_vector_mult_def)
-    finally show ?thesis .
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
-
 lemma transpose_diff_matrix: "transpose (A - B) = transpose A - transpose B"
   by (simp add: transpose_def vec_eq_iff)
 
@@ -118,19 +83,7 @@ lemma matrix_add_rdistrib: "(A + B) ** C = A ** C + B ** C"
       algebra_simps)
 
 lemma matrix_vector_mult_vsum: "A *v (\<Sum>x\<in>S. f x) = (\<Sum>x\<in>S. A *v f x)"
-proof -
-  have "(A *v (\<Sum>x\<in>S. f x)) $ i = (\<Sum>x\<in>S. A *v f x) $ i" for i
-  proof -
-    have "(A *v (\<Sum>x\<in>S. f x)) $ i = (\<Sum>j\<in>UNIV. \<Sum>x\<in>S. A $ i $ j * f x $ j)"
-      by (simp add: matrix_vector_mult_def sum_distrib_left)
-    also have "\<dots> = (\<Sum>x\<in>S. \<Sum>j\<in>UNIV. A $ i $ j * f x $ j)"
-      by (rule sum.swap)
-    finally show ?thesis
-      by (simp add: matrix_vector_mult_def)
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
+  by (induct S rule: infinite_finite_induct) (simp_all add: matrix_vector_right_distrib)
 
 lemma matrix_mult_sum_left: "(\<Sum>x\<in>S. f x) ** A = (\<Sum>x\<in>S. f x ** A)"
 proof -
@@ -192,16 +145,13 @@ section \<open>Sums, transpose, matrix-vector multiplication\<close>
 lemma inner_transpose_matrix:
   fixes A :: "real^'m^'n" and x :: "real^'n" and y :: "real^'m"
   shows "x \<bullet> (A *v y) = (transpose A *v x) \<bullet> y"
-proof -
-  have "x \<bullet> (A *v y) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. x $ i * (A $ i $ j * y $ j))"
-    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. x $ i * (A $ i $ j * y $ j))"
-    by (rule sum.swap)
-  also have "\<dots> = (transpose A *v x) \<bullet> y"
-    by (simp add: inner_vec_def matrix_vector_mult_def transpose_def
-        sum_distrib_left sum_distrib_right ac_simps)
-  finally show ?thesis .
-qed
+  by (simp add: dot_lmul_matrix)
+
+lemma sym_inner_swap:
+  fixes a :: "real^'n^'n"
+  assumes "transpose a = a"
+  shows "x \<bullet> (a *v y) = y \<bullet> (a *v x)"
+  by (metis assms inner_transpose_matrix inner_commute)
 
 subsection \<open>Shifts by a multiple of the identity, and bounds from a basis\<close>
 
@@ -223,11 +173,6 @@ proof -
     by (simp add: dot_square_norm)
 qed
 
-lemma matrix_vector_neg_left:
-  fixes B :: "real^'n::finite^'n"
-  shows "(- B) *v x = - (B *v x)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
-
 lemma quad_form_shift_identity_neg:
   fixes A :: "real^'n::finite^'n" and k :: "real^'n"
   shows "k \<bullet> ((A - \<delta> *\<^sub>R mat 1) *v k) = k \<bullet> (A *v k) - \<delta> * (norm k)\<^sup>2"
@@ -241,46 +186,11 @@ proof -
     by (simp add: dot_square_norm)
 qed
 
-lemma matrix_vector_mult_diff_gen:
-  fixes Z :: "real^'n::finite^'n"
-  shows "Z *v (u - v) = Z *v u - Z *v v"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_subtractf algebra_simps)
-
-lemma inner_matrix_sym:
-  fixes Z :: "real^'n::finite^'n"
-  assumes s: "transpose Z = Z"
-  shows "v \<bullet> (Z *v z) = z \<bullet> (Z *v v)"
-proof -
-  have zij: "Z $ i $ j = Z $ j $ i" for i j
-  proof -
-    have "Z $ i $ j = (transpose Z) $ i $ j" using s by simp
-    also have "\<dots> = Z $ j $ i" by (simp add: transpose_def)
-    finally show ?thesis .
-  qed
-  have "v \<bullet> (Z *v z) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. v $ i * (Z $ i $ j * z $ j))"
-    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. v $ i * (Z $ i $ j * z $ j))"
-    by (rule sum.swap)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. \<Sum>i\<in>UNIV. z $ j * (Z $ j $ i * v $ i))"
-    by (simp add: zij mult.commute mult.left_commute)
-  also have "\<dots> = z \<bullet> (Z *v v)"
-    by (simp add: inner_vec_def matrix_vector_mult_def sum_distrib_left)
-  finally show ?thesis .
-qed
-
 lemma norm_le_card_Basis_bound:
   fixes M :: "'a::euclidean_space"
   assumes b: "\<And>e. e \<in> Basis \<Longrightarrow> \<bar>M \<bullet> e\<bar> \<le> c"
   shows "norm M \<le> real (card (Basis :: 'a set)) * c"
-proof -
-  have "norm M \<le> (\<Sum>e\<in>(Basis :: 'a set). \<bar>M \<bullet> e\<bar>)"
-    by (rule norm_le_l1)
-  also have "\<dots> \<le> (\<Sum>e\<in>(Basis :: 'a set). c)"
-    by (rule sum_mono) (rule b)
-  also have "\<dots> = real (card (Basis :: 'a set)) * c"
-    by simp
-  finally show ?thesis .
-qed
+  using order_trans[OF norm_le_l1 sum_mono[OF b]] by simp
 
 lemma matrix_Basis_cases:
   fixes e :: "real^'n::finite^'n"
@@ -311,241 +221,12 @@ proof -
   finally show ?thesis .
 qed
 
-lemma sum_sq_le_sq_sum:
-  fixes f :: "'b \<Rightarrow> real"
-  assumes nn: "\<And>i. i \<in> F \<Longrightarrow> 0 \<le> f i"
-  shows "(\<Sum>i\<in>F. (f i)\<^sup>2) \<le> (\<Sum>i\<in>F. f i)\<^sup>2"
-proof (cases "finite F")
-  case True
-  then show ?thesis using nn
-  proof (induction F)
-    case empty
-    show ?case by simp
-  next
-    case (insert a F)
-    have fa: "0 \<le> f a" using insert.prems by simp
-    have sn: "0 \<le> (\<Sum>i\<in>F. f i)"
-      using insert.prems by (intro sum_nonneg) simp
-    have "(\<Sum>i\<in>insert a F. (f i)\<^sup>2) = (f a)\<^sup>2 + (\<Sum>i\<in>F. (f i)\<^sup>2)"
-      using insert.hyps by simp
-    also have "\<dots> \<le> (f a)\<^sup>2 + (\<Sum>i\<in>F. f i)\<^sup>2"
-      using insert by simp
-    also have "\<dots> \<le> (f a)\<^sup>2 + 2 * f a * (\<Sum>i\<in>F. f i) + (\<Sum>i\<in>F. f i)\<^sup>2"
-      using fa sn by simp
-    also have "\<dots> = (f a + (\<Sum>i\<in>F. f i))\<^sup>2"
-      by (simp add: power2_eq_square algebra_simps)
-    finally show ?case using insert.hyps by simp
-  qed
-next
-  case False
-  then show ?thesis by simp
-qed
-
 subsection \<open>The calculus the doubling and comparison arguments consume\<close>
 
 text \<open>Trace, transpose, matrix-vector and matrix-matrix identities, the
   bounded-linear and continuity facts that go with them, and the affine and
   quadratic-form bookkeeping around them.  All of it was written as steps of
   a viscosity-comparison proof and none of it is about one.\<close>
-
-text \<open>
-  For the ball \<open>K = cball 0 r\<close> the candidate value function is
-  \<open>v x = max (r\<^sup>2 - \<bar>x\<bar>\<^sup>2) 0 / (n - k)\<close>, whose gradient at \<open>x\<close> is
-  \<open>- (2/(n-k)) *\<^sub>R x\<close> and whose Hessian is the constant matrix
-  \<open>- (2/(n-k)) *\<^sub>R mat 1\<close>.  Then \<open>F(\<nabla>v x, \<nabla>\<^sup>2 v x) = 1\<close> for all
-  interior points \<open>x \<noteq> 0\<close>.
-\<close>
-
-lemma local_min_gradient_zero:
-  fixes \<psi> :: "real^'n \<Rightarrow> real"
-  assumes deriv: "(\<psi> has_derivative (\<lambda>h. g \<bullet> h)) (at x)"
-    and min: "eventually (\<lambda>y. \<psi> x \<le> \<psi> y) (at x)"
-  shows "g = 0"
-proof -
-  have "(\<lambda>h. g \<bullet> h) = (\<lambda>h. 0)"
-    by (rule has_derivative_local_min[OF deriv min])
-  then have "g \<bullet> g = 0"
-    using fun_cong[of "(\<lambda>h. g \<bullet> h)" "(\<lambda>h. 0)" g] by simp
-  then show ?thesis
-    by simp
-qed
-
-lemma local_min_hessian_psd:
-  fixes \<psi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
-    and H :: "real^'n^'n"
-  assumes e_pos: "0 < e"
-    and deriv: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<psi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-    and hess: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
-    and min: "\<And>y. y \<in> ball x e \<Longrightarrow> \<psi> x \<le> \<psi> y"
-  shows "0 \<le> h \<bullet> (H *v h)"
-proof (cases "h = 0")
-  case True
-  then show ?thesis
-    by simp
-next
-  case False
-  have x_mem: "x \<in> ball x e"
-    using e_pos by simp
-  have ev_min: "eventually (\<lambda>y. \<psi> x \<le> \<psi> y) (at x)"
-    using min e_pos
-    by (auto simp: eventually_at dist_commute intro!: exI[of _ e])
-  have gx0: "g x = 0"
-    by (rule local_min_gradient_zero[OF deriv[OF x_mem] ev_min])
-  define A where "A = h \<bullet> (H *v h)"
-  define nh where "nh = norm h"
-  have nh_pos: "0 < nh"
-    using False by (simp add: nh_def)
-  define d where "d = e / nh"
-  have d_pos: "0 < d"
-    using e_pos nh_pos by (simp add: d_def)
-  have mem: "x + t *\<^sub>R h \<in> ball x e" if "\<bar>t\<bar> < d" for t
-  proof -
-    have "dist x (x + t *\<^sub>R h) = \<bar>t\<bar> * nh"
-      by (simp add: dist_norm nh_def)
-    also have "\<dots> < d * nh"
-      using that nh_pos by (simp add: mult_strict_right_mono)
-    also have "\<dots> = e"
-      using nh_pos by (simp add: d_def)
-    finally show ?thesis
-      by simp
-  qed
-  have f_deriv: "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_real_derivative
-      (g (x + t *\<^sub>R h) \<bullet> h)) (at t)"
-    if t: "\<bar>t\<bar> < d" for t
-  proof -
-    have 1: "((\<lambda>s. x + s *\<^sub>R h) has_derivative (\<lambda>s. s *\<^sub>R h)) (at t)"
-      by (auto intro!: derivative_eq_intros)
-    have 2: "(\<psi> has_derivative (\<lambda>h'. g (x + t *\<^sub>R h) \<bullet> h')) (at (x + t *\<^sub>R h))"
-      by (rule deriv[OF mem[OF t]])
-    have "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative
-        (\<lambda>s. g (x + t *\<^sub>R h) \<bullet> (s *\<^sub>R h))) (at t)"
-      using diff_chain_at[OF 1 2] by (simp add: o_def)
-    then have "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative
-        (\<lambda>s. s * (g (x + t *\<^sub>R h) \<bullet> h))) (at t)"
-      by (simp add: mult_ac)
-    then show ?thesis
-      unfolding has_field_derivative_def
-      by (rule has_derivative_eq_rhs) (simp add: fun_eq_iff mult_ac)
-  qed
-  show ?thesis
-  proof (rule ccontr)
-    assume "\<not> 0 \<le> h \<bullet> (H *v h)"
-    then have A_neg: "A < 0"
-      by (simp add: A_def)
-    have flim: "filterlim (\<lambda>t :: real. x + t *\<^sub>R h) (at x) (at 0)"
-    proof -
-      have "((\<lambda>t :: real. x + t *\<^sub>R h) \<longlongrightarrow> x) (at 0)"
-        by (auto intro!: tendsto_eq_intros)
-      moreover have "eventually (\<lambda>t :: real. x + t *\<^sub>R h \<noteq> x) (at 0)"
-        using False by (auto simp: eventually_at_filter)
-      ultimately show ?thesis
-        by (simp add: filterlim_at)
-    qed
-    have hd: "((\<lambda>y. (1 / norm (y - x)) *\<^sub>R (g y - (g x + H *v (y - x)))) \<longlongrightarrow> 0) (at x)"
-      using hess unfolding has_derivative_at2 by blast
-    have comp: "((\<lambda>t. (1 / norm ((x + t *\<^sub>R h) - x)) *\<^sub>R
-        (g (x + t *\<^sub>R h) - (g x + H *v ((x + t *\<^sub>R h) - x)))) \<longlongrightarrow> 0) (at 0)"
-      by (rule filterlim_compose[OF hd flim])
-    then have comp2: "((\<lambda>t. (1 / (\<bar>t\<bar> * nh)) *\<^sub>R
-        (g (x + t *\<^sub>R h) - t *\<^sub>R (H *v h))) \<longlongrightarrow> 0) (at 0)"
-      by (simp add: gx0 matrix_vector_mult_scaleR nh_def)
-    have inner_lim: "((\<lambda>t. ((1 / (\<bar>t\<bar> * nh)) *\<^sub>R
-        (g (x + t *\<^sub>R h) - t *\<^sub>R (H *v h))) \<bullet> h) \<longlongrightarrow> 0) (at 0)"
-      using tendsto_inner[OF comp2 tendsto_const] by simp
-    define E where
-      "E = (\<lambda>t. ((1 / (\<bar>t\<bar> * nh)) *\<^sub>R (g (x + t *\<^sub>R h) - t *\<^sub>R (H *v h))) \<bullet> h)"
-    have E_lim: "(E \<longlongrightarrow> 0) (at 0)"
-      using inner_lim unfolding E_def .
-    have E_val: "g (x + t *\<^sub>R h) \<bullet> h = t * A + (\<bar>t\<bar> * nh) * E t"
-      if "t \<noteq> 0" for t
-    proof -
-      have nz: "\<bar>t\<bar> * nh \<noteq> 0"
-        using that nh_pos by simp
-      have "E t = (g (x + t *\<^sub>R h) \<bullet> h - t * A) / (\<bar>t\<bar> * nh)"
-        by (simp add: E_def A_def inner_diff_left inner_diff_right
-            inner_commute)
-      with nz show ?thesis
-        by (simp add: field_simps)
-    qed
-    define eps where "eps = - A / (2 * nh)"
-    have eps_pos: "0 < eps"
-      using A_neg nh_pos by (simp add: eps_def divide_neg_pos)
-    have "eventually (\<lambda>t. \<bar>E t\<bar> < eps) (at 0)"
-      using tendstoD[OF E_lim eps_pos] by (simp add: dist_real_def)
-    then obtain dd where dd_pos: "0 < dd"
-      and dd: "\<And>t. t \<noteq> 0 \<Longrightarrow> \<bar>t\<bar> < dd \<Longrightarrow> \<bar>E t\<bar> < eps"
-      by (auto simp: eventually_at dist_real_def)
-    define t0 where "t0 = min d dd / 2"
-    have t0_pos: "0 < t0"
-      using d_pos dd_pos by (simp add: t0_def)
-    have t0d: "t0 < d" and t0dd: "t0 < dd"
-      using d_pos dd_pos by (auto simp: t0_def)
-    have fneg: "g (x + s *\<^sub>R h) \<bullet> h < 0" if s: "0 < s" "s \<le> t0" for s
-    proof -
-      have s_ne: "s \<noteq> 0" and s_dd: "\<bar>s\<bar> < dd"
-        using s t0dd by auto
-      have Es: "\<bar>E s\<bar> < eps"
-        by (rule dd[OF s_ne s_dd])
-      have gsh: "g (x + s *\<^sub>R h) \<bullet> h = s * A + (s * nh) * E s"
-        using E_val[OF s_ne] s(1) by (simp add: abs_of_pos)
-      have snh_pos: "0 < s * nh"
-        using s(1) nh_pos by simp
-      have "(s * nh) * E s < (s * nh) * eps"
-        using Es snh_pos by (intro mult_strict_left_mono) auto
-      moreover have "(s * nh) * eps = s * (- A / 2)"
-        using nh_pos by (simp add: eps_def)
-      ultimately have "g (x + s *\<^sub>R h) \<bullet> h < s * A + s * (- A / 2)"
-        unfolding gsh by linarith
-      also have "\<dots> = s * (A / 2)"
-        by (simp add: algebra_simps)
-      also have "\<dots> < 0"
-        using s(1) A_neg by (intro mult_pos_neg) auto
-      finally show ?thesis .
-    qed
-    have cont: "continuous_on {0..t0} (\<lambda>s. \<psi> (x + s *\<^sub>R h))"
-    proof -
-      have "isCont (\<lambda>s. \<psi> (x + s *\<^sub>R h)) s" if "s \<in> {0..t0}" for s
-      proof -
-        have "\<bar>s\<bar> < d"
-          using that t0d by auto
-        from f_deriv[OF this] show ?thesis
-          by (rule DERIV_isCont)
-      qed
-      then show ?thesis
-        by (auto intro: continuous_at_imp_continuous_on)
-    qed
-    obtain \<xi> where xi: "0 < \<xi>" "\<xi> < t0"
-      and mvt_eq: "\<psi> (x + t0 *\<^sub>R h) - \<psi> (x + 0 *\<^sub>R h)
-        = (g (x + \<xi> *\<^sub>R h) \<bullet> h) * (t0 - 0)"
-    proof -
-      have derf: "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative
-          (\<lambda>y. y * (g (x + s *\<^sub>R h) \<bullet> h))) (at s)"
-        if "0 < s" "s < t0" for s
-      proof -
-        have "\<bar>s\<bar> < d"
-          using that t0d by auto
-        from f_deriv[OF this, unfolded has_field_derivative_def]
-        show ?thesis
-          by (rule has_derivative_eq_rhs) (simp add: fun_eq_iff mult_ac)
-      qed
-      from mvt[OF t0_pos cont derf] obtain \<xi>
-        where "0 < \<xi>" "\<xi> < t0"
-          "\<psi> (x + t0 *\<^sub>R h) - \<psi> (x + 0 *\<^sub>R h)
-            = (t0 - 0) * (g (x + \<xi> *\<^sub>R h) \<bullet> h)"
-        by blast
-      then show thesis
-        by (intro that[of \<xi>]) (auto simp: algebra_simps)
-    qed
-    have "\<psi> (x + 0 *\<^sub>R h) \<le> \<psi> (x + t0 *\<^sub>R h)"
-      using min[OF mem[of t0]] t0d t0_pos by simp
-    with mvt_eq have "0 \<le> (g (x + \<xi> *\<^sub>R h) \<bullet> h) * t0"
-      by simp
-    with t0_pos have "0 \<le> g (x + \<xi> *\<^sub>R h) \<bullet> h"
-      by (simp add: zero_le_mult_iff)
-    with fneg[of \<xi>] xi show False
-      by simp
-  qed
-qed
 
 text \<open>Conjugation preserves each defining condition of the feasible set.
   Orthogonality is HOL-Analysis's own \<open>orthogonal_matrix\<close>.\<close>
@@ -570,25 +251,6 @@ text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> of the paper 
   \<open>0\<close> and \<open>eigen_ub a L\<close> bounds it above by \<open>L\<close>, testing the quadratic form
   at the coordinate vectors.\<close>
 
-lemma inner_axis_one:
-  fixes y :: "real^'n::finite"
-  shows "axis i (1 :: real) \<bullet> y = y $ i"
-  by (simp add: inner_axis')
-
-lemma matrix_vector_axis_one:
-  fixes a :: "real^'n::finite^'n"
-  shows "(a *v axis i (1 :: real)) $ l = a $ l $ i"
-proof -
-  have "(a *v axis i (1 :: real)) $ l
-      = (\<Sum>j\<in>UNIV. a $ l $ j * (if j = i then 1 else 0))"
-    unfolding matrix_vector_mult_def axis_def by simp
-  also have "\<dots> = (\<Sum>j\<in>UNIV. if j = i then a $ l $ j else 0)"
-    by (intro sum.cong refl) simp
-  also have "\<dots> = a $ l $ i"
-    by simp
-  finally show ?thesis .
-qed
-
 text \<open>The off-diagonal entries are bounded too.  Testing the psd quadratic form
   at \<open>axis i 1 \<plusminus> axis j 1\<close> gives \<open>a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j \<plusminus> 2 a\<^sub>i\<^sub>j \<ge> 0\<close>, i.e.
   \<open>2 \<bar>a\<^sub>i\<^sub>j\<bar> \<le> a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j \<le> 2 L\<close>.  (For \<open>i = j\<close> the same bound is the diagonal
@@ -608,23 +270,13 @@ proof -
   have "(axis i (1::real) + axis j 1) \<bullet> (a *v (axis i (1::real) + axis j 1))
       = (a *v axis i (1::real)) $ i + (a *v axis j (1::real)) $ i
         + ((a *v axis i (1::real)) $ j + (a *v axis j (1::real)) $ j)"
-    unfolding mv by (simp add: inner_add_left inner_axis_one)
+    unfolding mv by (simp add: inner_add_left inner_axis')
   also have "\<dots> = a $ i $ i + a $ i $ j + (a $ j $ i + a $ j $ j)"
-    by (simp add: matrix_vector_axis_one)
+    by (simp add: matrix_vector_mult_basis column_def)
   also have "\<dots> = a $ i $ i + a $ j $ j + 2 * a $ i $ j"
     unfolding aji by simp
   finally show ?thesis .
 qed
-
-lemma matvec_diff_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (x - y) = A *v x - A *v y"
-  by (simp add: matrix_vector_mult_def vec_eq_iff algebra_simps sum_subtractf)
-
-lemma matvec_scaleR_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (r *\<^sub>R x) = r *\<^sub>R (A *v x)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left mult.left_commute)
 
 lemma quadform_axis_pair_minus:
   fixes a :: "real^'n::finite^'n"
@@ -636,13 +288,13 @@ proof -
     by (metis sym transpose_def vec_lambda_beta)
   have mv: "(a *v (axis i (1::real) - axis j 1))
       = (a *v axis i (1::real)) - (a *v axis j 1)"
-    by (rule matvec_diff_right)
+    by (rule matrix_vector_mult_diff_distrib)
   have "(axis i (1::real) - axis j 1) \<bullet> (a *v (axis i (1::real) - axis j 1))
       = (a *v axis i (1::real)) $ i - (a *v axis j (1::real)) $ i
         - ((a *v axis i (1::real)) $ j - (a *v axis j (1::real)) $ j)"
-    unfolding mv by (simp add: inner_diff_left inner_axis_one)
+    unfolding mv by (simp add: inner_diff_left inner_axis')
   also have "\<dots> = a $ i $ i - a $ i $ j - (a $ j $ i - a $ j $ j)"
-    by (simp add: matrix_vector_axis_one)
+    by (simp add: matrix_vector_mult_basis column_def)
   also have "\<dots> = a $ i $ i + a $ j $ j - 2 * a $ i $ j"
     unfolding aji by simp
   finally show ?thesis .
@@ -653,26 +305,6 @@ text \<open>\<open>p\<close> itself is an eigenvector of \<open>M\<^sub>p\<close
   scales it.  This is the first half of the "sorts to the bottom of the
   spectrum" claim after Eq. (3.4) of \<^cite>\<open>LaiShkolnikovSoner\<close>; the second half is the Poincare bound
   \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close>, which is what still remains for Eq. (3.5).\<close>
-
-lemma matrix_vector_mult_add:
-  fixes A B :: "real^'n::finite^'n"
-  shows "(A + B) *v x = A *v x + B *v x"
-proof -
-  have "((A + B) *v x) $ i = (A *v x) $ i + (B *v x) $ i" for i
-  proof -
-    have "((A + B) *v x) $ i = (\<Sum>j\<in>UNIV. (A $ i $ j + B $ i $ j) * x $ j)"
-      by (simp add: matrix_vector_mult_def)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j + B $ i $ j * x $ j)"
-      by (intro sum.cong refl) (simp add: distrib_right)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. A $ i $ j * x $ j) + (\<Sum>j\<in>UNIV. B $ i $ j * x $ j)"
-      by (rule sum.distrib)
-    also have "\<dots> = (A *v x) $ i + (B *v x) $ i"
-      by (simp add: matrix_vector_mult_def)
-    finally show ?thesis .
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
 
 text \<open>An orthogonal \<open>R\<close> carries the feasible set of \<open>p\<close> onto that of \<open>Rp\<close>:
   each clause is the change of variables \<open>x \<mapsto> R\<^sup>T x\<close>, using that \<open>R\<close> is
@@ -685,19 +317,7 @@ lemma orth_preserves_inner:
   fixes R :: "real^'n::finite^'n"
   assumes orth: "transpose R ** R = mat 1"
   shows "(R *v x) \<bullet> (R *v y) = x \<bullet> y"
-proof -
-  have e: "transpose R *v (R *v x) = x"
-  proof -
-    have "transpose R *v (R *v x) = (transpose R ** R) *v x"
-      by (metis matrix_vector_mul_assoc)
-    also have "\<dots> = mat 1 *v x" unfolding orth by (rule refl)
-    also have "\<dots> = x" by (rule matrix_vector_mul_lid)
-    finally show ?thesis .
-  qed
-  have "(R *v x) \<bullet> (R *v y) = (transpose R *v (R *v x)) \<bullet> y"
-    by (rule inner_transpose_matrix)
-  then show ?thesis unfolding e .
-qed
+  by (metis orth inner_transpose_matrix matrix_vector_mul_assoc matrix_vector_mul_lid)
 
 lemma inner_scaleR_diff_eq:
   fixes q v h :: "real^'n::finite" and c :: real
@@ -711,34 +331,13 @@ lemma transpose_shift_add:
   fixes A :: "real^'n::finite^'n"
   assumes s: "transpose A = A"
   shows "transpose (A + \<delta> *\<^sub>R mat 1) = A + \<delta> *\<^sub>R mat 1"
-proof -
-  have "transpose (A + \<delta> *\<^sub>R mat 1) $ i $ j = (A + \<delta> *\<^sub>R mat 1) $ i $ j"
-    for i j
-  proof -
-    have "transpose (A + \<delta> *\<^sub>R mat 1) $ i $ j
-        = A $ j $ i + \<delta> * (if j = i then 1 else 0)"
-      by (simp add: transpose_def mat_def)
-    also have "A $ j $ i = transpose A $ i $ j"
-      by (simp add: transpose_def)
-    also have "transpose A $ i $ j = A $ i $ j"
-      using s by simp
-    finally show ?thesis
-      by (simp add: mat_def)
-  qed
-  then show ?thesis
-    by (simp add: vec_eq_iff)
-qed
+  using s by (simp add: transpose_add transpose_scalar)
 
 lemma transpose_shift_diff:
   fixes A :: "real^'n::finite^'n"
   assumes s: "transpose A = A"
   shows "transpose (A - \<delta> *\<^sub>R mat 1) = A - \<delta> *\<^sub>R mat 1"
-proof -
-  have "A - \<delta> *\<^sub>R mat 1 = A + (- \<delta>) *\<^sub>R mat 1"
-    by simp
-  then show ?thesis
-    using transpose_shift_add[OF s, of "- \<delta>"] by simp
-qed
+  using s by (simp add: transpose_diff_matrix transpose_scalar)
 
 text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
   from \<open>Symmetric_Spectral\<close>, general at
@@ -773,16 +372,8 @@ lemma norm_orthogonal_matrix_vector:
   fixes R :: "real^'n::finite^'n" and v :: "real^'n"
   assumes orth: "orthogonal_matrix R"
   shows "norm (R *v v) = norm v"
-proof -
-  have o1: "transpose R ** R = mat 1" using orth unfolding orthogonal_matrix_def by blast
-  have "(R *v v) \<bullet> (R *v v) = (transpose R *v (R *v v)) \<bullet> v"
-    by (rule inner_transpose_matrix)
-  also have "transpose R *v (R *v v) = (transpose R ** R) *v v"
-    by (metis matrix_vector_mul_assoc)
-  also have "\<dots> = v" unfolding o1 by (rule matrix_vector_mul_lid)
-  finally have "(R *v v) \<bullet> (R *v v) = v \<bullet> v" .
-  then show ?thesis by (metis norm_eq_sqrt_inner)
-qed
+  using orth orthogonal_transformation_matrix[of "(*v) R"]
+  by (simp add: orthogonal_transformation)
 
 lemma norm_matrix_sq_trace:
   fixes M :: "real^'n::finite^'n"
@@ -911,129 +502,25 @@ proof -
   qed
 qed
 
-lemma open_orth_image:
-  fixes R :: "real^'n::finite^'n"
-  assumes orth: "orthogonal_matrix R" and op: "open S"
-  shows "open ((\<lambda>z. R *v z) ` S)"
-proof (rule openI)
-  fix w assume "w \<in> (\<lambda>z. R *v z) ` S"
-  then obtain z0 where z0: "z0 \<in> S" and wz: "w = R *v z0" by auto
-  obtain e where e0: "0 < e" and eb: "ball z0 e \<subseteq> S"
-    using op z0 unfolding open_contains_ball by blast
-  have "ball w e \<subseteq> (\<lambda>z. R *v z) ` S"
-  proof
-    fix y assume yb: "y \<in> ball w e"
-    define z where "z = transpose R *v y"
-    have Rz: "R *v z = y" unfolding z_def by (rule matvec_orth_inv[OF orth])
-    have rd: "R *v (z0 - z) = w - y"
-    proof -
-      have "R *v (z0 - z) = R *v z0 - R *v z" by (rule matvec_diff_right)
-      then show ?thesis unfolding wz Rz .
-    qed
-    have "dist z0 z = norm (z0 - z)" by (simp add: dist_norm)
-    also have "\<dots> = norm (R *v (z0 - z))"
-      by (rule norm_orthogonal_matrix_vector[OF orth, symmetric])
-    also have "\<dots> = norm (w - y)" unfolding rd by (rule refl)
-    finally have "dist z0 z = dist w y" by (simp add: dist_norm)
-    then have "z \<in> ball z0 e" using yb by simp
-    then show "y \<in> (\<lambda>z. R *v z) ` S" using eb Rz by force
-  qed
-  then show "\<exists>e>0. ball w e \<subseteq> (\<lambda>z. R *v z) ` S" using e0 by blast
-qed
-
-lemma open_affine_image:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "c \<noteq> 0" and op: "open S"
-  shows "open ((\<lambda>z. c *\<^sub>R (R *v z) + b) ` S)"
-proof -
-  have eq: "(\<lambda>z. c *\<^sub>R (R *v z) + b) ` S
-      = (\<lambda>y. b + y) ` ((\<lambda>y. c *\<^sub>R y) ` ((\<lambda>z. R *v z) ` S))"
-    unfolding image_image by (rule image_cong[OF refl]) (simp add: add.commute)
-  show ?thesis
-    unfolding eq
-    by (rule open_translation, rule open_scaling[OF c0 open_orth_image[OF orth op]])
-qed
-
-lemma affine_interior_sub:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "c \<noteq> 0"
-  shows "(\<lambda>z. c *\<^sub>R (R *v z) + b) ` interior S
-       \<subseteq> interior ((\<lambda>z. c *\<^sub>R (R *v z) + b) ` S)"
-  by (rule interior_maximal[OF image_mono[OF interior_subset]
-        open_affine_image[OF orth c0 open_interior]])
-
-text \<open>The inverse of \<open>z \<mapsto> c \<cdot> R z + b\<close> has the same shape, which upgrades the
-  inclusion above to an equality.\<close>
-
-lemma affine_inv_shape:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
-  shows "(\<lambda>y. (1/c) *\<^sub>R (transpose R *v (y - b)))
-       = (\<lambda>y. (1/c) *\<^sub>R (transpose R *v y) + (- ((1/c) *\<^sub>R (transpose R *v b))))"
-  by (rule ext) (simp add: matvec_diff_right scaleR_right_diff_distrib)
-
-lemma affine_inv_left:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
-  shows "(1/c) *\<^sub>R (transpose R *v ((c *\<^sub>R (R *v z) + b) - b)) = z"
-proof -
-  have "(c *\<^sub>R (R *v z) + b) - b = c *\<^sub>R (R *v z)" by simp
-  then have "transpose R *v ((c *\<^sub>R (R *v z) + b) - b)
-      = c *\<^sub>R (transpose R *v (R *v z))" by (simp add: matvec_scaleR_right)
-  also have "transpose R *v (R *v z) = z"
-    using orth unfolding orthogonal_matrix_def
-    by (metis matrix_vector_mul_assoc matrix_vector_mul_lid)
-  finally show ?thesis using c0 by simp
-qed
-
-lemma affine_inv_right:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  assumes orth: "orthogonal_matrix R" and c0: "0 < c"
-  shows "c *\<^sub>R (R *v ((1/c) *\<^sub>R (transpose R *v (y - b)))) + b = y"
-proof -
-  have "R *v ((1/c) *\<^sub>R (transpose R *v (y - b)))
-      = (1/c) *\<^sub>R (R *v (transpose R *v (y - b)))"
-    by (rule matvec_scaleR_right)
-  also have "R *v (transpose R *v (y - b)) = y - b"
-    by (rule matvec_orth_inv[OF orth])
-  finally have "c *\<^sub>R (R *v ((1/c) *\<^sub>R (transpose R *v (y - b)))) = y - b"
-    using c0 by simp
-  then show ?thesis by simp
-qed
-
 lemma affine_interior_image:
   fixes R :: "real^'n::finite^'n" and b :: "real^'n"
   assumes orth: "orthogonal_matrix R" and c0: "0 < c"
   shows "interior ((\<lambda>z. c *\<^sub>R (R *v z) + b) ` S)
        = (\<lambda>z. c *\<^sub>R (R *v z) + b) ` interior S"
-proof
-  define T where "T = (\<lambda>z :: real^'n. c *\<^sub>R (R *v z) + b)"
-  define S' where "S' = (\<lambda>y :: real^'n. (1/c) *\<^sub>R (transpose R *v (y - b)))"
-  have cne: "c \<noteq> 0" using c0 by simp
-  have orthT: "orthogonal_matrix (transpose R)"
-    using orth unfolding orthogonal_matrix_def by auto
-  have c1ne: "1 / c \<noteq> 0" using c0 by simp
-  have ST: "S' (T z) = z" for z unfolding S'_def T_def by (rule affine_inv_left[OF orth c0])
-  have TS: "T (S' y) = y" for y unfolding S'_def T_def by (rule affine_inv_right[OF orth c0])
-  have Seq: "S' = (\<lambda>y. (1/c) *\<^sub>R (transpose R *v y)
-      + (- ((1/c) *\<^sub>R (transpose R *v b))))"
-    unfolding S'_def by (rule affine_inv_shape[OF orth c0])
-  have opS': "open (S' ` A)" if "open A" for A
-    unfolding Seq by (rule open_affine_image[OF orthT c1ne that])
-  have STS: "S' ` (T ` S) = S" unfolding image_image ST by simp
-  show "interior (T ` S) \<subseteq> T ` interior S"
-  proof
-    fix y assume yi: "y \<in> interior (T ` S)"
-    have sub1: "S' ` interior (T ` S) \<subseteq> interior (S' ` (T ` S))"
-      by (rule interior_maximal[OF image_mono[OF interior_subset]])
-        (rule opS'[OF open_interior])
-    have "S' y \<in> S' ` interior (T ` S)" using yi by (rule imageI)
-    then have "S' y \<in> interior (S' ` (T ` S))" using sub1 by blast
-    then have "S' y \<in> interior S" unfolding STS .
-    then show "y \<in> T ` interior S" using TS[of y] by (metis imageI)
+proof -
+  have "(\<lambda>z. c *\<^sub>R (R *v z) + b) ` A = (+) b ` (\<lambda>z. c *\<^sub>R (R *v z)) ` A" for A
+    by (auto simp: image_image add.commute)
+  moreover have "interior ((\<lambda>z. c *\<^sub>R (R *v z)) ` A) = (\<lambda>z. c *\<^sub>R (R *v z)) ` interior A" for A
+  proof (rule interior_injective_linear_image)
+    show "linear (\<lambda>z. c *\<^sub>R (R *v z))"
+      unfolding linear_iff
+      by (simp add: matrix_vector_right_distrib matrix_vector_mult_scaleR algebra_simps)
+    show "inj (\<lambda>z. c *\<^sub>R (R *v z))"
+      using c0 orth norm_orthogonal_matrix_vector[OF orth]
+      by (intro injI) (metis eq_iff_diff_eq_0 matrix_vector_mult_diff_distrib norm_eq_zero
+          scaleR_cancel_left less_irrefl)
   qed
-  show "T ` interior S \<subseteq> interior (T ` S)"
-    unfolding T_def by (rule affine_interior_sub[OF orth cne])
+  ultimately show ?thesis by (simp add: interior_translation)
 qed
 
 
@@ -1052,24 +539,7 @@ lemma trace_nonneg_psd:
   fixes a :: "real^'n^'n"
   assumes "\<And>x. 0 \<le> x \<bullet> (a *v x)"
   shows "0 \<le> trace a"
-proof -
-  have "0 \<le> a $ i $ i" for i
-    unfolding diag_eq_inner_axis by (rule assms)
-  then show ?thesis
-    unfolding trace_def by (intro sum_nonneg) simp
-qed
-
-lemma diag_entry_quadform:
-  fixes a :: "real^'m::finite^'m"
-  shows "axis l 1 \<bullet> (a *v axis l 1) = a $ l $ l"
-proof -
-  have col: "(a *v axis l 1) $ l = a $ l $ l"
-    by (simp add: matrix_vector_mult_def axis_def if_distrib
-        cong: if_cong)
-  have "axis l 1 \<bullet> (a *v axis l 1) = (a *v axis l 1) $ l"
-    by (metis cart_eq_inner_axis inner_commute)
-  with col show ?thesis by simp
-qed
+  unfolding trace_def diag_eq_inner_axis by (intro sum_nonneg assms)
 
 text \<open>The constraint set is convex, closed and bounded, hence compact.
   Convexity comes from convexity of the constraint set and the an eigenvalue upper bound
@@ -1082,24 +552,6 @@ lemma quadform_convex_comb:
       = s * (x \<bullet> (a *v x)) + t * (x \<bullet> (b *v x))"
   by (simp add: matrix_vector_mult_add_rdistrib
       scaleR_matrix_vector_assoc[symmetric] inner_add_right)
-
-lemma continuous_on_trace_mult_right:
-  fixes P :: "real^'n::finite^'n"
-  shows "continuous_on UNIV (\<lambda>a :: real^'n^'n. trace (a ** P))"
-proof -
-  have eq: "(\<lambda>a :: real^'n^'n. trace (a ** P))
-      = (\<lambda>a. \<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). a $ i $ j * P $ j $ i)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  show ?thesis
-    unfolding eq
-    by (intro continuous_on_sum continuous_on_mult continuous_on_const
-        continuous_on_matrix_entry continuous_on_id)
-qed
-
-lemma closed_trace_proj_halfspace:
-  fixes P :: "real^'n::finite^'n"
-  shows "closed {a :: real^'n^'n. c \<le> trace (a ** P)}"
-  by (intro closed_Collect_le continuous_on_const continuous_on_trace_mult_right)
 
 lemma bounded_linear_cross:
   fixes x :: "real^'n::finite"
@@ -1121,11 +573,8 @@ lemma bounded_linear_cross_pair:
   fixes c :: "real^'n::finite"
   shows "bounded_linear
       (\<lambda>v :: real^'n. (\<chi> i j. c $ i * v $ j) + (\<chi> i j. v $ i * c $ j))"
-proof -
-  have "linear (\<lambda>v :: real^'n. (\<chi> i j. c $ i * v $ j) + (\<chi> i j. v $ i * c $ j))"
-    by (rule linearI) (auto simp: vec_eq_iff algebra_simps)
-  then show ?thesis by (simp add: linear_conv_bounded_linear)
-qed
+  unfolding linear_conv_bounded_linear[symmetric]
+  by (intro linearI) (simp_all add: vec_eq_iff algebra_simps)
 
 lemma trace_mult_sum:
   fixes M a :: "real^'n::finite^'n"
@@ -1176,6 +625,16 @@ next
         algebra_simps)
 qed
 
+lemma continuous_on_trace_mult_right:
+  fixes P :: "real^'n::finite^'n"
+  shows "continuous_on UNIV (\<lambda>a :: real^'n^'n. trace (a ** P))"
+  by (rule linear_continuous_on[OF bounded_linear_trace_mult_right])
+
+lemma closed_trace_proj_halfspace:
+  fixes P :: "real^'n::finite^'n"
+  shows "closed {a :: real^'n^'n. c \<le> trace (a ** P)}"
+  by (intro closed_Collect_le continuous_on_const continuous_on_trace_mult_right)
+
 lemma trace_mult_diff:
   fixes M A B :: "real^'n::finite^'n"
   shows "trace (M ** (A - B)) = trace (M ** A) - trace (M ** B)"
@@ -1222,83 +681,45 @@ proof -
   finally show ?thesis .
 qed
 
-lemma axis1_inner:
-  fixes w :: "real^'n::finite"
-  shows "axis i 1 \<bullet> w = w $ i"
+subsection \<open>The entrywise sum\<close>
+
+text \<open>The sum of the absolute values of the entries bounds the quadratic form
+  above and is itself bounded by a multiple of the norm.\<close>
+
+definition entrysum :: "real^'n::finite^'n \<Rightarrow> real" where
+  "entrysum D = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>D $ i $ j\<bar>)"
+
+lemma entrysum_nonneg: "0 \<le> entrysum D"
+  unfolding entrysum_def by (intro sum_nonneg) auto
+
+lemma entrysum_sym: "entrysum (A - B) = entrysum (B - A)"
+  unfolding entrysum_def by (intro sum.cong refl) (simp add: abs_minus_commute)
+
+lemma entry_abs_le_norm:
+  fixes D :: "real^'n::finite^'n"
+  shows "\<bar>D $ i $ j\<bar> \<le> norm D"
+  by (metis component_le_norm_cart Finite_Cartesian_Product.norm_nth_le order_trans)
+
+lemma entrysum_le_norm:
+  fixes D :: "real^'n::finite^'n"
+  shows "entrysum D \<le> real (CARD('n) * CARD('n)) * norm D"
 proof -
-  have "axis i 1 \<bullet> w = (\<Sum>l\<in>UNIV. axis i 1 $ l * w $ l)"
-    by (simp add: inner_vec_def)
-  also have "\<dots> = (\<Sum>l\<in>UNIV. if l = i then w $ l else 0)"
-    by (rule sum.cong[OF refl]) (simp add: axis_def)
-  also have "\<dots> = w $ i" by simp
-  finally show ?thesis .
+  have "entrysum D \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). norm D)"
+    unfolding entrysum_def by (intro sum_mono entry_abs_le_norm)
+  then show ?thesis by simp
 qed
 
 lemma axis1_self:
   fixes i :: "'n::finite"
   shows "axis i 1 \<bullet> (axis i 1 :: real^'n) = (1::real)"
-proof -
-  have "axis i 1 \<bullet> (axis i 1 :: real^'n) = axis i 1 $ i"
-    by (rule axis1_inner)
-  also have "\<dots> = 1" by (simp add: axis_def)
-  finally show ?thesis .
-qed
-
-lemma matvec_axis1:
-  fixes a :: "real^'n::finite^'n"
-  shows "(a *v axis i 1) $ l = a $ l $ i"
-proof -
-  have "(a *v axis i 1) $ l = (\<Sum>j\<in>UNIV. a $ l $ j * axis i 1 $ j)"
-    by (simp add: matrix_vector_mult_def)
-  also have "\<dots> = (\<Sum>j\<in>UNIV. if j = i then a $ l $ j else 0)"
-    by (rule sum.cong[OF refl]) (simp add: axis_def)
-  also have "\<dots> = a $ l $ i" by simp
-  finally show ?thesis .
-qed
+  by (simp add: inner_axis')
 
 lemma matvec_norm_le:
   fixes M :: "real^'n::finite^'n"
   shows "norm (M *v w) \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w"
-proof -
-  let ?C = "\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>"
-  have comp: "\<bar>(M *v w) $ i\<bar> \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w" for i
-  proof -
-    have "\<bar>(M *v w) $ i\<bar> = \<bar>\<Sum>j\<in>UNIV. M $ i $ j * w $ j\<bar>"
-      by (simp add: matrix_vector_mult_def)
-    also have "\<dots> \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j * w $ j\<bar>)"
-      by (rule sum_abs)
-    also have "\<dots> \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar> * norm w)"
-      by (intro sum_mono)
-        (simp add: abs_mult mult_left_mono component_le_norm_cart)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w"
-      by (simp add: sum_distrib_right)
-    finally show ?thesis .
-  qed
-  have rownn: "0 \<le> (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w" for i
-    by (intro mult_nonneg_nonneg sum_nonneg) simp_all
-  have "(norm (M *v w))\<^sup>2 = (M *v w) \<bullet> (M *v w)"
-    by (simp add: power2_norm_eq_inner)
-  also have "\<dots> = (\<Sum>i\<in>UNIV. ((M *v w) $ i)\<^sup>2)"
-    by (simp add: inner_vec_def power2_eq_square)
-  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. ((\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2)"
-  proof (rule sum_mono)
-    fix i :: 'n
-    have "((M *v w) $ i)\<^sup>2 = \<bar>(M *v w) $ i\<bar>\<^sup>2" by simp
-    also have "\<dots> \<le> ((\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2"
-      using comp[of i] rownn[of i] by (intro power_mono) simp_all
-    finally show "((M *v w) $ i)\<^sup>2
-        \<le> ((\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2" .
-  qed
-  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. (\<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * norm w)\<^sup>2"
-    by (rule sum_sq_le_sq_sum) (rule rownn)
-  also have "\<dots> = (?C * norm w)\<^sup>2"
-    by (simp add: sum_distrib_right)
-  finally have h: "(norm (M *v w))\<^sup>2 \<le> (?C * norm w)\<^sup>2" .
-  have Cnn: "0 \<le> ?C * norm w"
-    by (intro mult_nonneg_nonneg sum_nonneg) simp_all
-  show ?thesis
-    using h Cnn by (simp add: power2_le_iff_abs_le)
-qed
+  using onorm[OF matrix_vector_mul_bounded_linear, of M w]
+    onorm_le_matrix_component_sum[of M]
+  by (meson mult_right_mono norm_ge_zero order_trans)
 
 text \<open>The covariance field is \<open>\<Sum>\<^sub>u outerp (w u)\<close> for columns \<open>w u\<close>, and the
   Euler machinery reads it only through its trace against the Hessian.  That
@@ -1307,9 +728,6 @@ text \<open>The covariance field is \<open>\<Sum>\<^sub>u outerp (w u)\<close> f
 
 lemma trace_mult_zero_right: "trace (M ** (0 :: real^'n::finite^'n)) = 0"
   by (simp add: matrix_matrix_mult_def trace_def vec_eq_iff)
-
-lemma matvec_blin: "bounded_linear ((*v) (S :: real^'n::finite^'m::finite))"
-  using matrix_vector_mul_linear linear_conv_bounded_linear by blast
 
 lemma matmul_sandwich_blin:
   fixes S :: "real^'n::finite^'n"
@@ -1328,26 +746,10 @@ next
         sum_distrib_left algebra_simps)
 qed
 
-lemma matmul_scaleR_right:
-  fixes A B :: "real^'n::finite^'n"
-  shows "A ** (c *\<^sub>R B) = c *\<^sub>R (A ** B)"
-  by (simp add: matrix_matrix_mult_def vec_eq_iff
-      sum_distrib_left algebra_simps)
-
 lemma sandwich_mat1:
   fixes S :: "real^'n::finite^'n"
   shows "S ** (c *\<^sub>R mat 1) ** transpose S = c *\<^sub>R (S ** transpose S)"
-  by (simp add: matmul_scaleR_right scaleR_matrix_mult)
-
-lemma exists_enum_of_card:
-  fixes B :: "(real^'n::finite) set"
-  assumes finB: "finite B" and cardB: "card B = CARD('n)"
-  obtains f :: "'n \<Rightarrow> real^'n" where "bij_betw f (UNIV :: 'n set) B"
-proof -
-  have "\<exists>f. bij_betw f (UNIV :: 'n set) B"
-    by (rule finite_same_card_bij) (use finB cardB in simp_all)
-  then show ?thesis using that by blast
-qed
+  by (simp add: matrix_scalar_ac scalar_matrix_assoc[symmetric] scalar_matrix_assoc[symmetric])
 
 text \<open>The Euler analysis needs exactly two facts per step: the compensated
   quadratic increment has mean zero (an instance of
@@ -1417,17 +819,6 @@ text \<open>Small independent pieces the contradiction assembles: algebra for th
   nonzero touching gradient, and the exit-time identity on paths that never
   leave \<open>K\<close>.\<close>
 
-lemma transpose_sub_smat:
-  fixes H :: "real^'n::finite^'n" and s :: real
-  assumes symH: "transpose H = H"
-  shows "transpose (H - s *\<^sub>R mat 1) = H - s *\<^sub>R mat 1"
-proof -
-  have "transpose (H - s *\<^sub>R mat 1)
-      = transpose H - transpose (s *\<^sub>R mat 1)"
-    by (simp add: transpose_def vec_eq_iff)
-  then show ?thesis by (simp add: transpose_scalar symH)
-qed
-
 lemma trace_msub_mat:
   fixes H a :: "real^'n::finite^'n" and s :: real
   shows "trace ((H - s *\<^sub>R mat 1) ** a) = trace (H ** a) - s * trace a"
@@ -1436,7 +827,7 @@ proof -
     by (simp add: matrix_matrix_mult_def vec_eq_iff sum_subtractf
         left_diff_distrib)
   have e2: "(s *\<^sub>R mat 1) ** a = s *\<^sub>R a"
-    by (simp add: scaleR_matrix_mult)
+    by (simp add: scalar_matrix_assoc[symmetric])
   have e3: "trace (H ** a - s *\<^sub>R a) = trace (H ** a) - s * trace a"
     by (simp add: trace_def sum_subtractf sum_distrib_left)
   show ?thesis unfolding e1 e2 by (rule e3)
@@ -1449,11 +840,11 @@ lemma quad_soften_split:
 proof -
   have e1: "(H - \<delta> *\<^sub>R mat 1) *v v = H *v v - \<delta> *\<^sub>R v"
     by (simp add: matrix_vector_mult_diff_rdistrib
-        scaleR_matrix_vector)
+        scaleR_matrix_vector_assoc[symmetric])
   have e2: "(H - (2 * \<gamma> + \<delta>) *\<^sub>R mat 1) *v v
       = H *v v - (2 * \<gamma> + \<delta>) *\<^sub>R v"
     by (simp add: matrix_vector_mult_diff_rdistrib
-        scaleR_matrix_vector)
+        scaleR_matrix_vector_assoc[symmetric])
   show ?thesis unfolding e1 e2
     by (simp add: algebra_simps)
 qed
@@ -1938,43 +1329,8 @@ text \<open>The sweep.  With \<open>M\<close> invertible the tilt \<open>\<eta> 
   minimisers of one fixed tilt --- and that is exactly the hypothesis of
   \<open>pinch_implies_constant\<close>.\<close>
 
-lemma invertible_matrix_vector_inj:
-  fixes M :: "real^'n::finite^'n"
-  assumes inv: "invertible M" and eq: "M *v a = M *v b"
-  shows "a = b"
-proof -
-  obtain M' where M': "M' ** M = mat 1"
-    using inv invertible_left_inverse by blast
-  have "a = (M' ** M) *v a" unfolding M' by simp
-  also have "\<dots> = M' *v (M *v a)" by (simp add: matrix_vector_mul_assoc)
-  also have "\<dots> = M' *v (M *v b)" unfolding eq by (rule refl)
-  also have "\<dots> = (M' ** M) *v b" by (simp add: matrix_vector_mul_assoc)
-  also have "\<dots> = b" unfolding M' by simp
-  finally show ?thesis .
-qed
-
-text \<open>\<open>matvec_scaleR_right\<close> lives in \<open>Operator_Envelopes\<close>.\<close>
-
-lemma matvec_sum_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (\<Sum>i\<in>S. v i) = (\<Sum>i\<in>S. A *v v i)"
-proof (cases "finite S")
-  case True
-  then show ?thesis
-    by (induct S rule: finite_induct)
-      (simp_all add: matvec_add_right)
-next
-  case False
-  then show ?thesis by simp
-qed
-
 text \<open>\<open>trace_sum_matrix\<close> is \<open>trace_matrix_sum\<close> from
   \<open>Matrix_Algebra\<close>.\<close>
-
-lemma transpose_matrix_diff:
-  fixes A B :: "real^'n::finite^'n"
-  shows "transpose (A - B) = transpose A - transpose B"
-  by (simp add: transpose_def vec_eq_iff)
 
 text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
   from \<open>Symmetric_Spectral\<close>.\<close>
@@ -1983,89 +1339,27 @@ lemma unit_normalize:
   fixes v :: "real^'n::finite"
   assumes v0: "v \<noteq> 0"
   shows "(v /\<^sub>R norm v) \<bullet> (v /\<^sub>R norm v) = 1"
-proof -
-  have n0: "norm v \<noteq> 0" using v0 by simp
-  have e1: "(v /\<^sub>R norm v) \<bullet> (v /\<^sub>R norm v) = (v \<bullet> v) / (norm v * norm v)"
-    by (simp add: divide_inverse mult_ac)
-  have e2: "v \<bullet> v = norm v * norm v"
-    by (simp add: dot_square_norm power2_eq_square)
-  show ?thesis unfolding e1 e2 using n0 by simp
-qed
+  using v0 by (simp add: dot_square_norm power2_eq_square)
 
 lemma orthonormal_inj:
   fixes b :: "nat \<Rightarrow> real^'n::finite"
   assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
   shows "inj_on b {..<m}"
-proof (rule inj_onI)
-  fix i j assume i: "i \<in> {..<m}" and j: "j \<in> {..<m}" and eq: "b i = b j"
-  have im: "i < m" and jm: "j < m" using i j by auto
-  show "i = j"
-  proof (rule ccontr)
-    assume ne: "i \<noteq> j"
-    have "b i \<bullet> b j = 0" using orth[OF im jm] ne by simp
-    moreover have "b i \<bullet> b j = b i \<bullet> b i" using eq by simp
-    moreover have "b i \<bullet> b i = 1" using orth[OF im im] by simp
-    ultimately show False by simp
-  qed
-qed
+  by (rule inj_onI) (metis lessThan_iff orth zero_neq_one)
 
 lemma orthonormal_dim_span:
   fixes b :: "nat \<Rightarrow> real^'n::finite"
   assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
   shows "dim (span (b ` {..<m})) = m"
-proof (rule dim_unique[where B = "b ` {..<m}"])
-  show "b ` {..<m} \<subseteq> span (b ` {..<m})" by (rule span_superset)
-  show "span (b ` {..<m}) \<subseteq> span (b ` {..<m})" by (rule subset_refl)
-next
-  show "independent (b ` {..<m})"
-  proof (rule pairwise_orthogonal_independent)
-    show "pairwise orthogonal (b ` {..<m})"
-    proof (rule pairwiseI)
-      fix u v assume "u \<in> b ` {..<m}" and "v \<in> b ` {..<m}" and uv: "u \<noteq> v"
-      then obtain i j where i: "i < m" and j: "j < m"
-        and ui: "u = b i" and vj: "v = b j" by auto
-      have "i \<noteq> j" using uv ui vj by blast
-      then show "orthogonal u v"
-        unfolding orthogonal_def ui vj using orth[OF i j] by simp
-    qed
-    show "(0 :: real^'n) \<notin> b ` {..<m}"
-    proof (rule notI)
-      assume "(0 :: real^'n) \<in> b ` {..<m}"
-      then obtain i where i: "i < m" and z: "b i = 0" by auto
-      have "b i \<bullet> b i = 1" using orth[OF i i] by simp
-      then show False unfolding z by simp
-    qed
-  qed
-next
-  show "card (b ` {..<m}) = m"
-    using card_image[OF orthonormal_inj[OF orth]] by simp
-qed
-
-text \<open>The kill condition, and it needs no confinement to the subspace: for any
-  \<open>z\<close> with \<open>P *v z \<noteq> 0\<close>, \<open>(P *v z) \<bullet> z = \<bar>P *v z\<bar>\<^sup>2\<close> because \<open>P\<close> is a symmetric
-  idempotent, so the clamped direction already sees the whole radial part.\<close>
-
-lemma proj_inner_self:
-  fixes P :: "real^'n::finite^'n" and z :: "real^'n"
-  assumes Psym: "transpose P = P" and Pidem: "P ** P = P"
-  shows "(P *v z) \<bullet> z = (P *v z) \<bullet> (P *v z)"
 proof -
-  have "(P *v z) \<bullet> (P *v z) = (transpose P *v (P *v z)) \<bullet> z"
-    by (rule inner_transpose_matrix)
-  also have "transpose P *v (P *v z) = P *v (P *v z)" unfolding Psym by (rule refl)
-  also have "P *v (P *v z) = P *v z"
-    using Pidem by (metis matrix_vector_mul_assoc)
-  finally show ?thesis by (rule sym)
-qed
-
-lemma proj_inner_self':
-  fixes P :: "real^'n::finite^'n" and y :: "real^'n"
-  assumes Psym: "transpose P = P" and Pidem: "P ** P = P"
-  shows "y \<bullet> (P *v y) = (P *v y) \<bullet> (P *v y)"
-proof -
-  have "(P *v y) \<bullet> y = (P *v y) \<bullet> (P *v y)"
-    by (rule proj_inner_self[OF Psym Pidem])
-  then show ?thesis by (simp add: inner_commute)
+  have "pairwise orthogonal (b ` {..<m})"
+    using orth by (auto simp: pairwise_def orthogonal_def)
+  moreover have "0 \<notin> b ` {..<m}"
+    using orth by (metis imageE inner_zero_left lessThan_iff zero_neq_one)
+  ultimately have "independent (b ` {..<m})"
+    by (rule pairwise_orthogonal_independent)
+  then show ?thesis
+    using card_image[OF orthonormal_inj[OF orth]] by (simp add: dim_eq_card_independent)
 qed
 
 text \<open>The square of the field is again a field of the same shape with the
@@ -2099,99 +1393,35 @@ proof -
   then show ?thesis unfolding a_def[symmetric] e1 .
 qed
 
-lemma proj_norm_le:
-  fixes P :: "real^'n::finite^'n" and w :: "real^'n"
-  assumes Psym: "transpose P = P" and Pidem: "P ** P = P"
-  shows "norm (P *v w) \<le> norm w"
-proof -
-  have "(norm (P *v w))\<^sup>2 = (P *v w) \<bullet> (P *v w)" by (simp add: dot_square_norm)
-  also have "\<dots> = (P *v w) \<bullet> w"
-    by (rule proj_inner_self[OF Psym Pidem, symmetric])
-  also have "\<dots> \<le> norm (P *v w) * norm w" by (rule norm_cauchy_schwarz)
-  finally have key: "(norm (P *v w))\<^sup>2 \<le> norm (P *v w) * norm w" .
-  show ?thesis
-  proof (cases "norm (P *v w) = 0")
-    case True
-    then show ?thesis by simp
-  next
-    case False
-    then have pos: "0 < norm (P *v w)" using norm_ge_zero[of "P *v w"] by linarith
-    have "norm (P *v w) * norm (P *v w) \<le> norm (P *v w) * norm w"
-      using key by (simp add: power2_eq_square)
-    then show ?thesis using pos by simp
-  qed
-qed
-
 lemma orthonormal_family_containing:
   fixes x0 :: "real^'n::finite"
   assumes u: "x0 \<bullet> x0 = 1" and m: "m \<le> CARD('n)" and m0: "0 < m"
   shows "\<exists>b :: nat \<Rightarrow> real^'n. b 0 = x0
       \<and> (\<forall>i < m. \<forall>j < m. b i \<bullet> b j = (if i = j then 1 else 0))"
-  using m m0
-proof (induct m)
-  case 0
-  then show ?case by simp
-next
-  case (Suc m)
-  show ?case
-  proof (cases "m = 0")
-    case True
-    show ?thesis
-      by (rule exI[of _ "\<lambda>_. x0"]) (use True u in auto)
-  next
-    case False
-    then have m0': "0 < m" by simp
-    have mle: "m \<le> CARD('n)" using Suc.prems by simp
-    obtain b :: "nat \<Rightarrow> real^'n" where b0: "b 0 = x0"
-      and bo: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-      using Suc.hyps[OF mle m0'] by blast
-    have dimlt: "dim (b ` {..<m}) < DIM(real^'n)"
-    proof -
-      have "dim (b ` {..<m}) = dim (span (b ` {..<m}))" by simp
-      also have "\<dots> = m" by (rule orthonormal_dim_span[OF bo])
-      also have "\<dots> < CARD('n)" using Suc.prems by simp
-      finally show ?thesis by simp
-    qed
-    have ex: "\<exists>v :: real^'n. v \<noteq> 0
-        \<and> (\<forall>y \<in> span (b ` {..<m}). orthogonal v y)"
-    proof (rule orthogonal_to_subspace_exists[OF dimlt])
-      fix v :: "real^'n"
-      assume v0: "v \<noteq> 0"
-        and vo: "\<And>y. y \<in> span (b ` {..<m}) \<Longrightarrow> orthogonal v y"
-      show ?thesis using v0 vo by blast
-    qed
-    obtain v :: "real^'n" where v0: "v \<noteq> 0"
-      and vo: "\<And>y. y \<in> span (b ` {..<m}) \<Longrightarrow> orthogonal v y" using ex by blast
-    define w :: "real^'n" where "w = v /\<^sub>R norm v"
-    have ww: "w \<bullet> w = 1" unfolding w_def by (rule unit_normalize[OF v0])
-    have wo: "w \<bullet> b i = 0" if i: "i < m" for i
-    proof -
-      have "b i \<in> span (b ` {..<m})" using i by (intro span_base) auto
-      then have "orthogonal v (b i)" by (rule vo)
-      then show ?thesis unfolding w_def orthogonal_def by simp
-    qed
-    define b' :: "nat \<Rightarrow> real^'n" where "b' = (\<lambda>i. if i = m then w else b i)"
-    have b'0: "b' 0 = x0" unfolding b'_def using False b0 by simp
-    have b'o: "b' i \<bullet> b' j = (if i = j then 1 else 0)"
-      if i: "i < Suc m" and j: "j < Suc m" for i j
-    proof -
-      consider (both) "i = m" "j = m" | (im) "i = m" "j < m"
-        | (jm) "i < m" "j = m" | (nn) "i < m" "j < m"
-        using i j by fastforce
-      then show ?thesis
-      proof cases
-        case both then show ?thesis unfolding b'_def using ww by simp
-      next
-        case im then show ?thesis unfolding b'_def using wo[of j] by simp
-      next
-        case jm then show ?thesis
-          unfolding b'_def using wo[of i] by (simp add: inner_commute)
-      next
-        case nn then show ?thesis unfolding b'_def using bo by simp
-      qed
-    qed
-    show ?thesis by (rule exI[of _ b']) (use b'0 b'o in blast)
-  qed
+proof -
+  obtain S where S: "x0 \<in> S" "pairwise orthogonal S" "\<And>x. x \<in> S \<Longrightarrow> x \<bullet> x = 1"
+    and cardS: "card S = CARD('n)"
+    using vector_in_orthonormal_basis[of x0] u by (metis DIM_cart DIM_real mult.right_neutral norm_eq_1)
+  have "finite S"
+    using cardS by (intro card_ge_0_finite) simp
+  then obtain f where f: "bij_betw f {0..<card (S - {x0})} (S - {x0})"
+    using ex_bij_betw_nat_finite by blast
+  have cS: "card (S - {x0}) = CARD('n) - 1"
+    using cardS S(1) \<open>finite S\<close> by simp
+  have fS: "f k \<in> S - {x0}" if "Suc k < CARD('n)" for k
+    using that bij_betw_apply[OF f] cS by auto
+  have finj: "k = l" if "f k = f l" "Suc k < CARD('n)" "Suc l < CARD('n)" for k l
+    using that bij_betw_imp_inj_on[OF f] cS by (auto simp: inj_on_def)
+  define b where "b = case_nat x0 f"
+  have bS: "b i \<in> S" if "i < CARD('n)" for i
+    using that S(1) fS by (cases i) (auto simp: b_def)
+  have binj: "b i \<noteq> b j" if "i < CARD('n)" "j < CARD('n)" "i \<noteq> j" for i j
+    using that fS finj by (cases i; cases j) (auto simp: b_def)
+  have "b i \<bullet> b j = (if i = j then 1 else 0)" if "i < m" "j < m" for i j
+    using that m bS[of i] bS[of j] binj[of i j] S(2,3)
+    by (auto simp: pairwise_def orthogonal_def)
+  then show ?thesis
+    by (intro exI[of _ b]) (simp add: b_def)
 qed
 
 text \<open>The two envelope-form hypotheses in the shape the doubling produces:
@@ -2212,104 +1442,42 @@ proof -
   have e: "(- B) + \<delta> *\<^sub>R mat 1 = - (B - \<delta> *\<^sub>R mat 1)"
     by simp
   show ?thesis
-    unfolding e by (rule matrix_vector_neg_left)
+    unfolding e by (rule neg_matrix_vector)
 qed
 
-text \<open>Symmetry and positive semidefiniteness are closed conditions and so
-  survive the passage to a limit point, proved entrywise via
-  \<open>tendsto_vec_nth\<close>: convergence in \<open>real^'n^'n\<close> is convergence of every
-  entry.\<close>
+text \<open>Symmetry is a closed condition and so survives the passage to a limit
+  (positive semidefiniteness likewise, \<open>closed_psd\<close>).\<close>
 
-lemma tendsto_entry:
-  fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
-  assumes conv: "A \<longlonglongrightarrow> A0"
-  shows "(\<lambda>i. A i $ j $ k) \<longlonglongrightarrow> A0 $ j $ k"
-  by (rule tendsto_vec_nth[OF tendsto_vec_nth[OF conv]])
+lemma closed_symmetric_matrices:
+  "closed {a :: real^'n::finite^'n. transpose a = a}"
+proof -
+  have eq: "{a :: real^'n^'n. transpose a = a}
+      = (\<Inter>i. \<Inter>j. {a. a $ j $ i = a $ i $ j})"
+    unfolding transpose_def vec_eq_iff by auto
+  have "closed {a :: real^'n^'n. a $ j $ i = a $ i $ j}" for i j
+    by (intro closed_Collect_eq continuous_on_matrix_entry continuous_on_id)
+  thus ?thesis unfolding eq by (intro closed_INT) auto
+qed
 
 lemma transpose_limit:
   fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
   assumes conv: "A \<longlonglongrightarrow> A0" and sym: "\<And>i. transpose (A i) = A i"
   shows "transpose A0 = A0"
-proof -
-  have eq: "A0 $ j $ k = A0 $ k $ j" for j k
-  proof -
-    have f: "(\<lambda>i. A i $ j $ k) = (\<lambda>i. A i $ k $ j)"
-    proof (rule ext)
-      fix i
-      have "A i $ j $ k = (transpose (A i)) $ k $ j"
-        by (simp add: transpose_def)
-      also have "\<dots> = A i $ k $ j"
-        using sym by simp
-      finally show "A i $ j $ k = A i $ k $ j" .
-    qed
-    have "(\<lambda>i. A i $ j $ k) \<longlonglongrightarrow> A0 $ k $ j"
-      unfolding f by (rule tendsto_entry[OF conv])
-    from tendsto_entry[OF conv] this show ?thesis
-      by (rule LIMSEQ_unique)
-  qed
-  show ?thesis
-    by (simp add: vec_eq_iff transpose_def eq)
-qed
-
-lemma tendsto_quadratic_form:
-  fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
-  assumes conv: "A \<longlonglongrightarrow> A0"
-  shows "(\<lambda>i. x \<bullet> (A i *v x)) \<longlonglongrightarrow> x \<bullet> (A0 *v x)"
-proof -
-  have e: "y \<bullet> (B *v y) = (\<Sum>j\<in>UNIV. y $ j * (\<Sum>k\<in>UNIV. B $ j $ k * y $ k))"
-    for B :: "real^'n^'n" and y :: "real^'n"
-    by (simp add: inner_vec_def matrix_vector_mult_def)
-  show ?thesis
-    unfolding e
-    by (intro tendsto_sum tendsto_mult tendsto_const tendsto_entry[OF conv])
-qed
+  using closed_sequentially[OF closed_symmetric_matrices, of A A0] conv sym by blast
 
 text \<open>\<open>transpose_scalar\<close> is HOL-Analysis's; \<open>transpose_add\<close> lives
   further up in this theory.\<close>
-
-lemma transpose_shifted_block:
-  fixes M :: "real^'n::finite^'n"
-  assumes s: "transpose M = M"
-  shows "transpose (M + c *\<^sub>R mat 1) = M + c *\<^sub>R mat 1"
-proof -
-  have "transpose (M + c *\<^sub>R mat 1)
-      = transpose M + transpose (c *\<^sub>R (mat 1 :: real^'n^'n))"
-    by (rule transpose_add)
-  also have "transpose (c *\<^sub>R (mat 1 :: real^'n^'n))
-      = c *\<^sub>R transpose (mat 1 :: real^'n^'n)"
-    by (rule transpose_scalar)
-  also have "transpose (mat 1 :: real^'n^'n) = mat 1"
-    by (rule transpose_mat)
-  finally show ?thesis using s by simp
-qed
 
 text \<open>The bridge between the jets' operator-form Hessian
   \<open>\<lambda>v. f v + c *\<^sub>R v\<close> and the matrix form the family theorem wants:
   taking the matrix of the shifted operator adds \<open>cI\<close>.  Every shifted
   fact then reduces to its unshifted counterpart plus
-  \<open>transpose_shifted_block\<close>, the shifted positivity fact and \<open>norm_shifted_block\<close>.\<close>
+  \<open>transpose_shift_add\<close>, the shifted positivity fact and \<open>norm_shifted_block\<close>.\<close>
 
 lemma matrix_shift_apply:
   fixes M :: "real^'n::finite^'n"
   shows "(M + c *\<^sub>R mat 1) *v h = M *v h + c *\<^sub>R h"
-proof -
-  have "((M + c *\<^sub>R mat 1) *v h) $ i = (M *v h + c *\<^sub>R h) $ i" for i
-  proof -
-    have "((M + c *\<^sub>R mat 1) *v h) $ i
-        = (\<Sum>j\<in>UNIV. (M $ i $ j + c * (if i = j then 1 else 0)) * h $ j)"
-      by (simp add: matrix_vector_mult_def mat_def)
-    also have "\<dots> = (\<Sum>j\<in>UNIV. M $ i $ j * h $ j)
-        + (\<Sum>j\<in>UNIV. c * (if i = j then 1 else 0) * h $ j)"
-      by (simp add: algebra_simps sum.distrib)
-    also have "(\<Sum>j\<in>UNIV. c * (if i = j then 1 else 0) * h $ j)
-        = (\<Sum>j\<in>UNIV. if j = i then c * h $ j else 0)"
-      by (rule sum.cong) auto
-    also have "(\<Sum>j\<in>UNIV. if j = i then c * h $ j else 0) = c * h $ i"
-      by simp    finally show ?thesis
-      by (simp add: matrix_vector_mult_def)
-  qed
-  then show ?thesis by (simp add: vec_eq_iff)
-qed
+  by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector_assoc[symmetric])
 
 lemma norm_shifted_block:
   fixes M :: "real^'n::finite^'n"
@@ -2334,15 +1502,12 @@ lemma shift_cancel_matrix:
   shows "(Y - c *\<^sub>R mat 1) - (X + c *\<^sub>R mat 1) + (2*c) *\<^sub>R mat 1 = Y - X"
   by (simp add: vec_eq_iff mat_def axis_def algebra_simps)
 
-text \<open>\<open>matvec_scaleR_right'\<close> is \<open>matvec_scaleR_right\<close> from
-  \<open>Operator_Envelopes\<close>.\<close>
-
 lemma affine_linear:
   fixes R :: "real^'n::finite^'n"
   shows "bounded_linear (\<lambda>z :: real^'n. c *\<^sub>R (R *v z))"
 proof -
   have "linear (\<lambda>z :: real^'n. c *\<^sub>R (R *v z))"
-    by (simp add: linear_iff matvec_add_right matvec_scaleR_right
+    by (simp add: linear_iff matrix_vector_right_distrib matrix_vector_mult_scaleR
         scaleR_right_distrib)
   then show ?thesis by (simp add: linear_conv_bounded_linear)
 qed
@@ -2360,20 +1525,6 @@ proof -
   then show ?thesis by simp
 qed
 
-lemma conj_mat_continuous:
-  fixes R :: "real^'n::finite^'n"
-  assumes "continuous_on UNIV M"
-  shows "continuous_on UNIV (\<lambda>y. transpose R ** M y ** R)"
-proof -
-  have lin: "linear (\<lambda>N :: real^'n^'n. transpose R ** N ** R)"
-    unfolding linear_iff
-    by (auto simp: matrix_matrix_mult_def vec_eq_iff sum.distrib
-        sum_distrib_left sum_distrib_right algebra_simps)
-  have bl: "bounded_linear (\<lambda>N :: real^'n^'n. transpose R ** N ** R)"
-    using lin by (simp add: linear_conv_bounded_linear)
-  show ?thesis by (rule bounded_linear.continuous_on[OF bl assms])
-qed
-
 text \<open>Two small facts about the inverse of the dilation, used to transfer
   lower semicontinuity and the bound to the transformed supersolution.\<close>
 
@@ -2383,35 +1534,12 @@ lemma affine_inv_dist:
   shows "dist ((1/c) *\<^sub>R (transpose R *v (X - b)))
              ((1/c) *\<^sub>R (transpose R *v (Y - b))) = (1/c) * dist X Y"
 proof -
-  have orthT: "orthogonal_matrix (transpose R)"
-    using orth unfolding orthogonal_matrix_def by auto
-  have e1: "transpose R *v (X - b) - transpose R *v (Y - b)
-      = transpose R *v (X - Y)"
-  proof -
-    have "transpose R *v (X - b) - transpose R *v (Y - b)
-        = transpose R *v ((X - b) - (Y - b))"
-      by (rule matvec_diff_right[symmetric])
-    also have "(X - b) - (Y - b) = X - Y" by simp
-    finally show ?thesis .
-  qed
-  have d: "(1/c) *\<^sub>R (transpose R *v (X - b)) - (1/c) *\<^sub>R (transpose R *v (Y - b))
-      = (1/c) *\<^sub>R (transpose R *v (X - Y))"
-  proof -
-    have "(1/c) *\<^sub>R (transpose R *v (X - b)) - (1/c) *\<^sub>R (transpose R *v (Y - b))
-        = (1/c) *\<^sub>R (transpose R *v (X - b) - transpose R *v (Y - b))"
-      by (rule scaleR_right_diff_distrib[symmetric])
-    also have "\<dots> = (1/c) *\<^sub>R (transpose R *v (X - Y))" unfolding e1 by (rule refl)
-    finally show ?thesis .
-  qed
-  have nn: "norm (transpose R *v (X - Y)) = norm (X - Y)"
-    by (rule norm_orthogonal_matrix_vector[OF orthT])
-  have "dist ((1/c) *\<^sub>R (transpose R *v (X - b)))
-      ((1/c) *\<^sub>R (transpose R *v (Y - b)))
-      = norm ((1/c) *\<^sub>R (transpose R *v (X - Y)))"
-    unfolding dist_norm d by (rule refl)
-  also have "\<dots> = \<bar>1/c\<bar> * norm (transpose R *v (X - Y))" by (rule norm_scaleR)
-  also have "\<dots> = (1/c) * norm (X - Y)" unfolding nn using c0 by simp
-  finally show ?thesis unfolding dist_norm .
+  have "orthogonal_matrix (transpose R)"
+    using orth by (simp add: orthogonal_matrix_transpose)
+  then show ?thesis
+    using c0 norm_orthogonal_matrix_vector[of "transpose R" "X - Y"]
+    by (simp add: dist_norm matrix_vector_mult_diff_distrib[symmetric]
+        scaleR_right_diff_distrib[symmetric] del: transpose_matrix_vector)
 qed
 
 text \<open>On \<open>real^'n\<close> compactness is closedness together with a ball bound, so
@@ -2422,13 +1550,8 @@ lemma compact_cball_bound:
   fixes K :: "(real^'n::finite) set"
   assumes cK: "compact K"
   shows "\<exists>rK. 0 \<le> rK \<and> K \<subseteq> cball 0 rK"
-proof -
-  obtain a where a: "\<forall>x\<in>K. norm x \<le> a"
-    using compact_imp_bounded[OF cK] unfolding bounded_iff by blast
-  have "K \<subseteq> cball 0 (max a 0)" using a by (auto simp: dist_norm)
-  moreover have "0 \<le> max a 0" by simp
-  ultimately show ?thesis by blast
-qed
+  using bounded_pos[THEN iffD1, OF compact_imp_bounded[OF cK]]
+  by (auto simp: subset_eq intro: less_imp_le)
 
 subsection \<open>An abstract linear map read through its matrix\<close>
 
@@ -2438,12 +1561,6 @@ text \<open>Viscosity-solution notions speak of a matrix \<open>H\<close> acting
   HOL-Analysis's \<open>matrix\<close> bridges the two: it represents \<open>X\<close> faithfully,
   and the abstract symmetry is exactly matrix symmetry, since
   \<open>v \<cdot> (transpose A *v w) = w \<cdot> (A *v v)\<close>.\<close>
-
-lemma matrix_vec_apply:
-  fixes X :: "(real^'n::finite) \<Rightarrow> (real^'n)"
-  assumes lin: "linear X"
-  shows "matrix X *v h = X h"
-  by (rule matrix_works[OF linear_matrix_vector_mul_eq[THEN iffD2, OF lin]])
 
 lemma matrix_of_symmetric:
   fixes X :: "(real^'n::finite) \<Rightarrow> (real^'n)"
@@ -2458,9 +1575,9 @@ proof (subst matrix_eq, rule allI)
       by simp
     also have "\<dots> = (w v* matrix X) \<bullet> v" by (rule inner_commute)
     also have "\<dots> = w \<bullet> (matrix X *v v)" by (rule dot_lmul_matrix)
-    also have "\<dots> = w \<bullet> X v" unfolding matrix_vec_apply[OF lin] ..
+    also have "\<dots> = w \<bullet> X v" unfolding fun_cong[OF matrix_vector_mul(2)[OF lin]] ..
     also have "\<dots> = v \<bullet> X w" by (rule sym[symmetric])
-    also have "\<dots> = v \<bullet> (matrix X *v w)" unfolding matrix_vec_apply[OF lin] ..
+    also have "\<dots> = v \<bullet> (matrix X *v w)" unfolding fun_cong[OF matrix_vector_mul(2)[OF lin]] ..
     finally show ?thesis .
   qed
   have "((transpose (matrix X) *v w) - (matrix X *v w))
@@ -2473,18 +1590,6 @@ qed
 text \<open>The other half of the bridge: a symmetric matrix gives a quadratic
   test function.  Symmetry makes the two cross terms of the derivative
   equal, so the factor \<open>1/2\<close> leaves exactly \<open>h \<mapsto> h \<cdot> (H *v z)\<close>.\<close>
-
-lemma matrix_symmetric_swap:
-  fixes H :: "real^'n::finite^'n"
-  assumes symH: "transpose H = H"
-  shows "z \<bullet> (H *v h) = h \<bullet> (H *v z)"
-proof -
-  have "z \<bullet> (H *v h) = (z v* H) \<bullet> h" by (rule dot_lmul_matrix[symmetric])
-  also have "\<dots> = (transpose H *v z) \<bullet> h" by simp
-  also have "\<dots> = (H *v z) \<bullet> h" unfolding symH ..
-  also have "\<dots> = h \<bullet> (H *v z)" by (rule inner_commute)
-  finally show ?thesis .
-qed
 
 lemma has_derivative_quadratic_form:
   fixes H :: "real^'n::finite^'n"
@@ -2499,7 +1604,7 @@ proof -
     by (rule has_derivative_inner[OF has_derivative_ident dH])
   have eqd: "(\<lambda>h. z0 \<bullet> (H *v h) + h \<bullet> (H *v z0))
       = (\<lambda>h. 2 * (h \<bullet> (H *v z0)))"
-    by (rule ext) (simp add: matrix_symmetric_swap[OF symH])
+    by (rule ext) (simp add: sym_inner_swap[OF symH])
   have d2: "((\<lambda>z. z \<bullet> (H *v z)) has_derivative (\<lambda>h. 2 * (h \<bullet> (H *v z0))))
       (at z0)"
     using d1 unfolding eqd .
@@ -2541,19 +1646,11 @@ proof -
 qed
 
 lemma quadratic_test_grad_derivative:
-  fixes H :: "real^'n::finite^'n" and p x :: "real^'n"
-  shows "((\<lambda>z. p + H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at x)"
-proof -
-  have blH: "bounded_linear ((*v) H)" by (rule matrix_vector_mul_bounded_linear)
-  have shift: "((\<lambda>z::real^'n. z - x) has_derivative (\<lambda>h. h)) (at x)"
-    by (auto intro!: derivative_eq_intros)
-  have dHl: "(((*v) H) has_derivative ((*v) H)) (at (x - x))"
-    using bounded_linear.has_derivative[OF blH has_derivative_ident] by simp
-  have inner_d: "((\<lambda>z. H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at x)"
-    using diff_chain_at[OF shift dHl] by (simp add: comp_def)
-  show ?thesis
-    using has_derivative_add[OF has_derivative_const inner_d] by simp
-qed
+  fixes H :: "real^'n::finite^'n" and p x y :: "real^'n"
+  shows "((\<lambda>z. p + H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at y)"
+  using bounded_linear.has_derivative[OF matrix_vector_mul_bounded_linear[of H]
+      has_derivative_diff[OF has_derivative_ident has_derivative_const[of x]]]
+  by (auto intro!: derivative_eq_intros)
 
 subsection \<open>A difference of linear maps, read as a matrix\<close>
 
@@ -2570,7 +1667,7 @@ proof -
   have "(matrix Y - matrix X) *v v = matrix Y *v v - matrix X *v v"
     by (simp add: matrix_vector_mult_diff_rdistrib)
   thus ?thesis
-    unfolding matrix_vec_apply[OF lX] matrix_vec_apply[OF lY] .
+    unfolding fun_cong[OF matrix_vector_mul(2)[OF lX]] fun_cong[OF matrix_vector_mul(2)[OF lY]] .
 qed
 
 (*<*)

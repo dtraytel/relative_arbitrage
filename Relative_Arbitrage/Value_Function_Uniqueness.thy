@@ -39,20 +39,6 @@ text \<open>With \<open>v = enn2real \<circ> exit_val k L T K\<close>, Theorem 1
   the open two-dimensional faces of its boundary.  The pointwise identity is
   proved here only for a ball, where it holds.\<close>
 
-section \<open>The value function satisfies both clauses of Definition 3.1\<close>
-
-text \<open>Both halves of the viscosity property land in the envelope forms that
-  @{thm [source] viscosity_uniqueness_compact} consumes:
-  @{thm [source] visc_subsol_imp_env} on the subsolution side, the
-  envelope-free notion proved for \<open>exit_val\<close> being the stronger one, and
-  @{thm [source] visc_supersol_lsc_iff_env} on the supersolution side.  The
-  horizon hypothesis is discharged by @{thm [source] exit_val_cap_inert}.
-
-  The statement below assumes continuity of \<open>exit_val\<close> on \<open>K\<close>.  Theorem 1.1
-  speaks of the unique upper semicontinuous solution and needs no continuity;
-  \<open>theorem_1_1_uniqueness_faithful\<close> below is the faithful form, and
-  supersedes this one.\<close>
-
 section \<open>Theorem 1.1 assembled\<close>
 
 text \<open>\<open>exit_val\<close> as a real-valued function: nonnegative, globally bounded, and
@@ -429,7 +415,7 @@ proof (rule example_3_1_from_lower[OF kn L1 T0 r0])
     have "projmat b m *v y = projmat b m *v (norm y *\<^sub>R b 0)"
       by (rule arg_cong[where f = "\<lambda>w. projmat b m *v w", OF yb])
     also have "\<dots> = norm y *\<^sub>R (projmat b m *v b 0)"
-      by (rule matvec_scaleR_right)
+      by (rule matrix_vector_mult_scaleR)
     also have "\<dots> = norm y *\<^sub>R b 0"
       by (simp add: projmat_fix[OF orth m0])
     also have "\<dots> = y" by (rule yb[symmetric])

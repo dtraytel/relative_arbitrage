@@ -19,21 +19,7 @@ unbundle inner_syntax
 
 section \<open>Preliminaries\<close>
 
-text \<open>\<open>inner_transpose_matrix\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-lemma sym_inner_swap:
-  fixes a :: "real^'n^'n"
-  assumes "transpose a = a"
-  shows "x \<bullet> (a *v y) = y \<bullet> (a *v x)"
-proof -
-  have "x \<bullet> (a *v y) = (transpose a *v x) \<bullet> y"
-    by (rule inner_transpose_matrix)
-  also have "\<dots> = (a *v x) \<bullet> y"
-    by (simp add: assms)
-  also have "\<dots> = y \<bullet> (a *v x)"
-    by (rule inner_commute)
-  finally show ?thesis .
-qed
+text \<open>\<open>inner_transpose_matrix\<close> and \<open>sym_inner_swap\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 text \<open>A linear coefficient dominated by a quadratic must vanish:\<close>
 
@@ -229,6 +215,26 @@ qed
 
 section \<open>Orthonormal eigenbases of invariant subspaces\<close>
 
+text \<open>The orthogonal complement of a family of eigenvectors within an
+  invariant subspace is again invariant.\<close>
+
+lemma eigen_orth_complement_invariant:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a" and inv: "\<forall>x\<in>S. a *v x \<in> S"
+    and eigC: "\<forall>u\<in>C. a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+  shows "\<forall>x\<in>{y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}. a *v x \<in> {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}"
+proof (intro ballI)
+  fix x assume x: "x \<in> {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}"
+  have "c \<bullet> (a *v x) = 0" if c: "c \<in> C" for c
+  proof -
+    have "c \<bullet> (a *v x) = x \<bullet> (a *v c)" by (rule sym_inner_swap[OF sym])
+    also have "\<dots> = (c \<bullet> (a *v c)) * (c \<bullet> x)"
+      using eigC c by (metis inner_commute inner_scaleR_right)
+    finally show ?thesis using x c by simp
+  qed
+  then show "a *v x \<in> {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}" using x inv by blast
+qed
+
 lemma invariant_subspace_eigenbasis_ex:
   fixes a :: "real^'n^'n"
   assumes sym: "transpose a = a"
@@ -247,93 +253,27 @@ proof (induction "dim S" arbitrary: S rule: less_induct)
     obtain u where u: "u \<in> S" "norm u = 1"
       and umax: "\<And>v. v \<in> S \<Longrightarrow> norm v = 1 \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
       using rayleigh_maximizer[OF less.prems(1) False] by metis
-    have uu: "u \<bullet> u = 1"
-      using u(2) by (simp add: norm_eq_1)
-    have eig_u: "a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-      by (rule rayleigh_maximizer_eigenvector[OF sym less.prems(1) _ u umax])
-        (use less.prems(2) in blast)
-    define S' where "S' = {x \<in> S. u \<bullet> x = 0}"
-    have S'_eq: "S' = S \<inter> {x. u \<bullet> x = 0}"
-      by (auto simp: S'_def)
+    have eig_u: "\<forall>w\<in>{u}. a *v w = (w \<bullet> (a *v w)) *\<^sub>R w"
+      using rayleigh_maximizer_eigenvector[OF sym less.prems(1) _ u umax] less.prems(2)
+      by blast
+    define S' where "S' = {y \<in> S. \<forall>c\<in>{u}. c \<bullet> y = 0}"
     have subS': "subspace S'"
-      unfolding S'_eq
-      by (intro subspace_inter less.prems(1) subspace_hyperplane)
-    have invS': "\<forall>x\<in>S'. a *v x \<in> S'"
-    proof
-      fix x assume "x \<in> S'"
-      then have xS: "x \<in> S" and xu: "u \<bullet> x = 0"
-        by (auto simp: S'_def)
-      have "a *v x \<in> S"
-        using less.prems(2) xS by blast
-      moreover have "u \<bullet> (a *v x) = 0"
-      proof -
-        have "u \<bullet> (a *v x) = x \<bullet> (a *v u)"
-          by (rule sym_inner_swap[OF sym])
-        also have "\<dots> = (u \<bullet> (a *v u)) * (x \<bullet> u)"
-          by (subst (1) eig_u) simp
-        also have "\<dots> = 0"
-          using xu by (simp add: inner_commute)
-        finally show ?thesis .
-      qed
-      ultimately show "a *v x \<in> S'"
-        by (simp add: S'_def)
-    qed
-    have uS': "u \<notin> S'"
-      using uu by (auto simp: S'_def)
-    have dimlt: "dim S' < dim S"
-    proof -
-      have sub: "S' \<subseteq> S"
-        by (auto simp: S'_def)
-      then have le: "dim S' \<le> dim S"
-        by (rule dim_subset)
-      have "S' \<noteq> S"
-        using uS' u(1) by auto
-      then have "dim S' \<noteq> dim S"
-        using subS' less.prems(1) sub
-        by (metis subspace_dim_equal order_refl)
-      with le show ?thesis
-        by simp
-    qed
-    from less.hyps[OF dimlt subS' invS'] obtain B' where
+      unfolding S'_def using subspace_inter[OF less.prems(1) subspace_hyperplane[of u]]
+      by (simp add: Int_def conj_commute)
+    have "u \<notin> S'" using u(2) by (auto simp: S'_def norm_eq_1)
+    then have "S' \<subseteq> S" "S' \<noteq> S" using u(1) unfolding S'_def by blast+
+    then have dimlt: "dim S' < dim S"
+      using subS' less.prems(1) by (metis dim_subset order_less_le subspace_dim_equal)
+    from less.hyps[OF dimlt subS'] obtain B' where
       B': "onormal B'" "B' \<subseteq> S'" "span B' = S'"
         "\<forall>w\<in>B'. a *v w = (w \<bullet> (a *v w)) *\<^sub>R w"
-      by blast
-    define B where "B = insert u B'"
-    have BS: "B \<subseteq> S"
-      using u(1) B'(2) by (auto simp: B_def S'_def)
-    have onB: "onormal B"
-    proof -
-      have "orthogonal u b" if "b \<in> B'" for b
-        using B'(2) that by (auto simp: S'_def orthogonal_def)
-      then show ?thesis
-        using B'(1) u(2)
-        by (auto simp: onormal_def B_def pairwise_insert orthogonal_commute)
-    qed
-    have spanB: "span B = S"
-    proof -
-      have "span B \<subseteq> S"
-        using BS less.prems(1) by (simp add: span_minimal)
-      moreover have "S \<subseteq> span B"
-      proof
-        fix x assume xS: "x \<in> S"
-        have "u \<bullet> (x - (u \<bullet> x) *\<^sub>R u) = 0"
-          by (simp add: inner_diff_right uu)
-        moreover have "x - (u \<bullet> x) *\<^sub>R u \<in> S"
-          using xS u(1) less.prems(1)
-          by (simp add: subspace_diff subspace_scale)
-        ultimately have "x - (u \<bullet> x) *\<^sub>R u \<in> span B'"
-          by (simp add: B'(3) S'_def)
-        then show "x \<in> span B"
-          unfolding B_def
-          by (metis span_breakdown_eq)
-      qed
-      ultimately show ?thesis
-        by blast
-    qed
-    have eigB: "\<forall>w\<in>B. a *v w = (w \<bullet> (a *v w)) *\<^sub>R w"
-      using B'(4) eig_u by (auto simp: B_def)
+      using eigen_orth_complement_invariant[OF sym less.prems(2) eig_u]
+      unfolding S'_def by blast
+    have u1: "onormal {u}" using u(2) by (simp add: onormal_def)
     show ?thesis
-      using onB BS spanB eigB by blast
+      using onormal_union_orth_complement[OF less.prems(1) u1 _ B'(1) B'(3)[unfolded S'_def]]
+        u(1) B'(2,4) eig_u
+      by (intro exI[of _ "{u} \<union> B'"]) (auto simp: S'_def)
   qed
 qed
 
@@ -344,69 +284,114 @@ theorem symmetric_eigenbasis:
     "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
   using invariant_subspace_eigenbasis_ex[OF assms subspace_UNIV] by auto
 
+text \<open>Every orthonormal family of eigenvectors of a symmetric matrix extends
+  to an orthonormal eigenbasis of each invariant subspace containing it.\<close>
+
+lemma invariant_subspace_eigenbasis_extend:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a" and S: "subspace S" and inv: "\<forall>x\<in>S. a *v x \<in> S"
+    and C: "onormal C" "C \<subseteq> S" and eigC: "\<forall>u\<in>C. a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+  obtains B where "onormal B" "C \<subseteq> B" "B \<subseteq> S" "span B = S"
+    "\<forall>u\<in>B. a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+proof -
+  have subH: "subspace {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}"
+    using subspace_inter[OF S subspace_orthogonal_to_vectors[of C]]
+    by (simp add: Int_def orthogonal_def)
+  obtain B0 where B0: "onormal B0" "B0 \<subseteq> {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}"
+      "span B0 = {y \<in> S. \<forall>c\<in>C. c \<bullet> y = 0}" "\<forall>u\<in>B0. a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    using invariant_subspace_eigenbasis_ex[OF sym subH
+        eigen_orth_complement_invariant[OF sym inv eigC]] by blast
+  show ?thesis
+    using onormal_union_orth_complement[OF S C B0(1,3)] B0(2,4) C(2) eigC
+    by (intro that[of "C \<union> B0"]) auto
+qed
+
+text \<open>In particular a single unit eigenvector extends to an orthonormal
+  eigenbasis of the whole space.\<close>
+
+lemma eigenbasis_containing_eigenvector:
+  fixes A :: "real^'n::finite^'n"
+  assumes sym: "transpose A = A" and q: "norm q = 1"
+    and eigq: "A *v q = (q \<bullet> (A *v q)) *\<^sub>R q"
+  shows "\<exists>B. onormal B \<and> span B = UNIV \<and> q \<in> B
+      \<and> (\<forall>u\<in>B. A *v u = (u \<bullet> (A *v u)) *\<^sub>R u)
+      \<and> (\<forall>u \<in> B - {q}. q \<bullet> u = 0)"
+proof -
+  obtain B where B: "onormal B" "q \<in> B" "span B = UNIV"
+      "\<forall>u\<in>B. A *v u = (u \<bullet> (A *v u)) *\<^sub>R u"
+    using invariant_subspace_eigenbasis_extend[OF sym subspace_UNIV _, of "{q}"] q eigq
+    by (auto simp: onormal_def)
+  then show ?thesis by (blast dest: onormal_inner_distinct)
+qed
+
 section \<open>Positive semidefinite matrices\<close>
 
 definition psd :: "real^'n^'n \<Rightarrow> bool" where
   "psd a \<longleftrightarrow> transpose a = a \<and> (\<forall>x. 0 \<le> x \<bullet> (a *v x))"
+
+text \<open>The trace of \<open>a ** P\<close>, read off in an orthonormal eigenbasis of the
+  symmetric matrix \<open>a\<close>: the eigenvalues weighted by the diagonal of \<open>P\<close>.\<close>
+
+lemma trace_mult_eigen_weights:
+  fixes a :: "real^'n::finite^'n"
+  assumes B: "onormal B" "span B = UNIV"
+    and sym: "transpose a = a"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+  shows "trace (a ** P) = (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (P *v u)))"
+proof -
+  have "trace (a ** P) = (\<Sum>u\<in>B. u \<bullet> ((a ** P) *v u))"
+    by (rule trace_onormal_basis[OF B])
+  also have "\<dots> = (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (P *v u)))"
+  proof (rule sum.cong[OF refl])
+    fix u assume u: "u \<in> B"
+    text \<open>Name the eigenvalue: \<open>eig\<close> rewrites \<open>a u\<close> into a term that again
+      contains \<open>a u\<close>, so it must not be handed to the simplifier directly.\<close>
+    define c where "c = u \<bullet> (a *v u)"
+    have au: "a *v u = c *\<^sub>R u"
+      unfolding c_def by (rule eig[OF u])
+    have "u \<bullet> ((a ** P) *v u) = u \<bullet> (a *v (P *v u))"
+      by (simp add: matrix_vector_mul_assoc)
+    also have "\<dots> = (P *v u) \<bullet> (a *v u)"
+      by (rule sym_inner_swap[OF sym])
+    also have "\<dots> = (P *v u) \<bullet> (c *\<^sub>R u)"
+      by (simp add: au)
+    also have "\<dots> = c * ((P *v u) \<bullet> u)"
+      by simp
+    also have "\<dots> = (u \<bullet> (a *v u)) * (u \<bullet> (P *v u))"
+      unfolding c_def by (simp add: inner_commute)
+    finally show "u \<bullet> ((a ** P) *v u) = (u \<bullet> (a *v u)) * (u \<bullet> (P *v u))" .
+  qed
+  finally show ?thesis .
+qed
 
 lemma trace_mult_psd_nonneg:
   fixes a b :: "real^'n^'n"
   assumes a: "psd a" and b: "psd b"
   shows "0 \<le> trace (a ** b)"
 proof -
-  from a have syma: "transpose a = a" and posa: "\<And>x. 0 \<le> x \<bullet> (a *v x)"
-    by (auto simp: psd_def)
-  from b have posb: "\<And>x. 0 \<le> x \<bullet> (b *v x)"
-    by (auto simp: psd_def)
+  from a have syma: "transpose a = a"
+    by (simp add: psd_def)
   obtain B where B: "onormal B" "span B = UNIV"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
     using symmetric_eigenbasis[OF syma] by metis
-  have "trace (a ** b) = (\<Sum>u\<in>B. u \<bullet> ((a ** b) *v u))"
-    by (rule trace_onormal_basis[OF B])
-  moreover have "u \<bullet> ((a ** b) *v u)
-      = (u \<bullet> (a *v u)) * (u \<bullet> (b *v u))" if uB: "u \<in> B" for u
-  proof -
-    have "u \<bullet> ((a ** b) *v u) = u \<bullet> (a *v (b *v u))"
-      by (simp add: matrix_vector_mul_assoc)
-    also have "\<dots> = (b *v u) \<bullet> (a *v u)"
-      by (rule sym_inner_swap[OF syma])
-    also have "\<dots> = (b *v u) \<bullet> ((u \<bullet> (a *v u)) *\<^sub>R u)"
-      by (subst (1) eig[OF uB]) simp
-    also have "\<dots> = (u \<bullet> (a *v u)) * (u \<bullet> (b *v u))"
-      by (simp add: inner_commute)
-    finally show ?thesis .
-  qed
-  moreover have "0 \<le> (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (b *v u)))"
-    by (intro sum_nonneg mult_nonneg_nonneg posa posb)
-  ultimately show ?thesis
-    by simp
+  have "0 \<le> (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (b *v u)))"
+    using a b by (intro sum_nonneg mult_nonneg_nonneg) (auto simp: psd_def)
+  also have "\<dots> = trace (a ** b)"
+    by (rule trace_mult_eigen_weights[OF B syma eig, symmetric])
+  finally show ?thesis .
 qed
 
 lemma psd_convex_comb:
   assumes "psd a" "psd b" and s: "0 \<le> s" "s \<le> 1"
   shows "psd (s *\<^sub>R a + (1 - s) *\<^sub>R b)"
-proof -
-  have "transpose (s *\<^sub>R a + (1 - s) *\<^sub>R b) = s *\<^sub>R a + (1 - s) *\<^sub>R b"
-    using assms by (simp add: transpose_add transpose_scalar psd_def)
-  moreover have "0 \<le> x \<bullet> ((s *\<^sub>R a + (1 - s) *\<^sub>R b) *v x)" for x
-  proof -
-    have "x \<bullet> ((s *\<^sub>R a + (1 - s) *\<^sub>R b) *v x)
-        = s * (x \<bullet> (a *v x)) + (1 - s) * (x \<bullet> (b *v x))"
-      by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector
-          inner_add_right)
-    also have "\<dots> \<ge> 0"
-      using assms by (intro add_nonneg_nonneg mult_nonneg_nonneg)
-        (auto simp: psd_def)
-    finally show ?thesis .
-  qed
-  ultimately show ?thesis
-    by (simp add: psd_def)
-qed
+  using assms unfolding psd_def
+  by (auto simp: transpose_add transpose_scalar quadform_convex_comb
+      intro!: add_nonneg_nonneg mult_nonneg_nonneg)
 
 lemma trace_mult_convex_comb:
   "trace ((s *\<^sub>R a + (1 - s) *\<^sub>R b) ** P)
      = s * trace (a ** P) + (1 - s) * trace (b ** P)"
-  by (simp add: matrix_add_rdistrib scaleR_matrix_mult trace_add trace_scaleR)
+  by (simp add: matrix_add_rdistrib scalar_matrix_assoc[symmetric] trace_add trace_scaleR)
 
 text \<open>Every symmetric matrix is the sum, over an eigenbasis, of its
   eigenvalues weighted against the rank-one projections onto each
@@ -423,7 +408,7 @@ proof -
   proof -
     have "(\<Sum>u\<in>B. (u \<bullet> (A *v u)) *\<^sub>R outer_prod u u) *v w
         = (\<Sum>u\<in>B. (u \<bullet> (A *v u)) *\<^sub>R ((u \<bullet> w) *\<^sub>R u))"
-      by (simp add: matrix_vector_mult_sum scaleR_matrix_vector)
+      by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
     also have "\<dots> = (\<Sum>u\<in>B. if u = w then (w \<bullet> (A *v w)) *\<^sub>R w else 0)"
       by (intro sum.cong refl)
         (use B(1) w in \<open>auto dest: onormal_inner_distinct
@@ -454,6 +439,27 @@ proof -
   qed
   then show ?thesis
     unfolding matrix_eq by blast
+qed
+
+text \<open>The eigendecomposition of a symmetric matrix in the form most callers
+  consume it: an orthonormal eigenbasis, its size, the spectral sum, and an
+  enumeration of the basis by the index type.\<close>
+
+lemma symmetric_eigendecomposition:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a"
+  obtains B and f :: "'n \<Rightarrow> real^'n" where "onormal B" "span B = UNIV" "finite B"
+    "card B = CARD('n)" "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    "a = (\<Sum>u\<in>B. (u \<bullet> (a *v u)) *\<^sub>R outer_prod u u)" "bij_betw f UNIV B"
+proof -
+  obtain B where B: "onormal B" "span B = UNIV"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    using symmetric_eigenbasis[OF sym] by metis
+  moreover have "card B = CARD('n)" by (rule onormal_span_card[OF B])
+  moreover obtain f :: "'n \<Rightarrow> real^'n" where "bij_betw f UNIV B"
+    using finite_same_card_bij[of "UNIV :: 'n set" B] onormal_finite[OF B(1)] calculation(4) by auto
+  ultimately show thesis
+    using that spectral_decomposition[OF B eig] onormal_finite[OF B(1)] by blast
 qed
 
 
@@ -517,27 +523,28 @@ text \<open>A bounded family on which the operator bound holds yields the
   and pass to the limit automatically; \<open>p \<noteq> 0\<close> is not closed and needs a
   positive lower bound along the family.\<close>
 
+lemma continuous_on_quadform:
+  fixes x :: "real^'n::finite"
+  shows "continuous_on UNIV (\<lambda>a :: real^'n^'n. x \<bullet> (a *v x))"
+  by (rule linear_continuous_on[OF bounded_linear_quadform])
+
+lemma closed_psd: "closed {a :: real^'n::finite^'n. psd a}"
+proof -
+  have eq: "{a :: real^'n^'n. psd a}
+      = {a. transpose a = a} \<inter> (\<Inter>x. {a. 0 \<le> x \<bullet> (a *v x)})"
+    unfolding psd_def by auto
+  have "closed {a :: real^'n^'n. 0 \<le> x \<bullet> (a *v x)}" for x
+    by (intro closed_Collect_le continuous_on_quadform continuous_on_const)
+  thus ?thesis
+    unfolding eq
+    by (intro closed_Int closed_symmetric_matrices closed_INT) auto
+qed
+
 theorem psd_limit:
   fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
   assumes conv: "A \<longlonglongrightarrow> A0" and p: "\<And>i. psd (A i)"
   shows "psd A0"
-proof -
-  have sym: "transpose (A i) = A i" for i
-    using p[of i] unfolding psd_def by simp
-  have nn: "0 \<le> x \<bullet> (A i *v x)" for i and x :: "real^'n"
-    using p[of i] unfolding psd_def by simp
-  have s0: "transpose A0 = A0"
-    by (rule transpose_limit[OF conv sym])
-  have q0: "0 \<le> x \<bullet> (A0 *v x)" for x :: "real^'n"
-  proof -
-    have "(\<lambda>i. x \<bullet> (A i *v x)) \<longlonglongrightarrow> x \<bullet> (A0 *v x)"
-      by (rule tendsto_quadratic_form[OF conv])
-    then show ?thesis
-      by (rule LIMSEQ_le_const) (use nn in blast)
-  qed
-  show ?thesis
-    unfolding psd_def using s0 q0 by blast
-qed
+  using closed_sequentially[OF closed_psd, of A A0] conv p by blast
 
 text \<open>\<open>psd (Y-X)\<close> is preserved when both sequences converge, since subtraction
   is continuous and \<open>psd\<close> is a closed condition.\<close>

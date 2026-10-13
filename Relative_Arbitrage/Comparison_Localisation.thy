@@ -36,8 +36,6 @@ text \<open>Below \<open>sums_matrix_inequality\<close> the \<open>psd\<close> c
   \<open>R (e k)\<close>. Although \<open>e\<close> is not injective near \<open>0\<close>, the limit survives
   because \<open>e\<close> is 2-Lipschitz and kills only the diagonal, where \<open>R 0 = 0\<close>.\<close>
 
-text \<open>\<open>matrix_vector_mult_diff_gen\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 text \<open>\<open>doubled_penalty_jet\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>Semiconvexity of the doubled functional, for a general penalty\<close>
@@ -290,21 +288,12 @@ theorem ell_op_lsc_le_of_nearby:
   shows "ell_op_lsc k L p M \<le> ereal c"
   unfolding ell_op_lsc_def
 proof (rule SUP_least)
-  fix e :: real
-  assume "e \<in> {0<..}"
-  then have e0: "0 < e" by simp
-  obtain p' M' where d: "dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, M) < e"
-    and bd: "ell_op k L p' M' \<le> c"
-    using b[OF e0] by blast
-  have mem: "((p', M') :: (real^'n) \<times> (real^'n^'n)) \<in> ball (p, M) e"
-    using d by (simp add: dist_commute)
-  have "(INF v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)
-      \<le> ell_op_pair k L (p', M')"
-    by (rule INF_lower[OF mem])
-  also have "\<dots> \<le> ereal c"
-    using bd by (simp add: ell_op_pair_def)
-  finally show "(INF v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)
-      \<le> ereal c" .
+  fix e :: real assume "e \<in> {0<..}"
+  then obtain p' M' where "((p', M') :: (real^'n) \<times> (real^'n^'n)) \<in> ball (p, M) e"
+    and "ell_op k L p' M' \<le> c"
+    using b[of e] by (auto simp: dist_commute)
+  then show "(INF v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v) \<le> ereal c"
+    by (intro INF_lower2) (auto simp: ell_op_pair_def)
 qed
 
 theorem ell_op_usc_ge_of_nearby:
@@ -315,20 +304,12 @@ theorem ell_op_usc_ge_of_nearby:
   shows "ereal c \<le> ell_op_usc k L p M"
   unfolding ell_op_usc_def
 proof (rule INF_greatest)
-  fix e :: real
-  assume "e \<in> {0<..}"
-  then have e0: "0 < e" by simp
-  obtain p' M' where d: "dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, M) < e"
-    and bd: "c \<le> ell_op k L p' M'"
-    using b[OF e0] by blast
-  have mem: "((p', M') :: (real^'n) \<times> (real^'n^'n)) \<in> ball (p, M) e"
-    using d by (simp add: dist_commute)
-  have "ereal c \<le> ell_op_pair k L (p', M')"
-    using bd by (simp add: ell_op_pair_def)
-  also have "\<dots> \<le> (SUP v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)"
-    by (rule SUP_upper[OF mem])
-  finally show "ereal c
-      \<le> (SUP v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)" .
+  fix e :: real assume "e \<in> {0<..}"
+  then obtain p' M' where "((p', M') :: (real^'n) \<times> (real^'n^'n)) \<in> ball (p, M) e"
+    and "c \<le> ell_op k L p' M'"
+    using b[of e] by (auto simp: dist_commute)
+  then show "ereal c \<le> (SUP v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)"
+    by (intro SUP_upper2) (auto simp: ell_op_pair_def)
 qed
 
 text \<open>The closing contradiction in that generality. Its hypotheses do not
@@ -432,7 +413,7 @@ qed
 
 subsection \<open>Symmetry and the ordering pass to the limit\<close>subsection \<open>Symmetry and the ordering pass to the limit\<close>
 
-text \<open>\<open>tendsto_entry\<close>, \<open>transpose_limit\<close>, \<open>tendsto_quadratic_form\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>transpose_limit\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 subsection \<open>The gradient alignment along the family\<close>
@@ -591,7 +572,6 @@ lemma visc_subsol_mono_dom:
   shows "visc_subsol k L \<Omega>' u"
   using s sub unfolding visc_subsol_def by blast
 
-text \<open>\<open>usc_extend_const_below\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>Far from \<open>K\<close> the extended function's sup-convolution returns to the
   constant, since the whole competing ball misses \<open>K\<close>: this confines the

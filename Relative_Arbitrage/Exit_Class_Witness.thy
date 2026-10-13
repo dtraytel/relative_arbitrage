@@ -56,7 +56,7 @@ proof (intro continuous_on_Pair)
   have c1: "continuous_on {0..T} (\<lambda>t. cbmX (0 :: real^'n) t \<omega>)"
     by (rule continuous_on_subset[OF cbmX_cont]) auto
   show "continuous_on {0..T} (\<lambda>t. S *v cbmX (0 :: real^'n) t \<omega>)"
-    by (rule continuous_on_compose2[OF linear_continuous_on[OF matvec_blin]
+    by (rule continuous_on_compose2[OF linear_continuous_on[OF matrix_vector_mul_bounded_linear]
           c1]) auto
   show "continuous_on {0..T} (\<lambda>t. t *\<^sub>R (S ** transpose S))"
     by (rule linear_continuous_on[OF bounded_linear_scaleR_left])
@@ -77,7 +77,7 @@ proof -
         \<in> borel_measurable borel"
       by (intro borel_measurable_continuous_onI continuous_on_Pair
           continuous_on_const
-          continuous_on_compose2[OF linear_continuous_on[OF matvec_blin]
+          continuous_on_compose2[OF linear_continuous_on[OF matrix_vector_mul_bounded_linear]
             continuous_on_id])
         auto
     show "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
@@ -245,7 +245,7 @@ proof (cases "r \<in> {0..T}")
       \<in> borel_measurable borel"
     by (intro borel_measurable_continuous_onI continuous_on_Pair
         continuous_on_const
-        continuous_on_compose2[OF linear_continuous_on[OF matvec_blin]
+        continuous_on_compose2[OF linear_continuous_on[OF matrix_vector_mul_bounded_linear]
           continuous_on_id])
       auto
   have "(\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real.
@@ -281,7 +281,7 @@ proof -
   qed
   have mg: "martingale ?M ?F 0 (\<lambda>u \<omega>. fst (sbmpair S T \<omega> (min u T)))"
   proof (rule martingale_cong_ge[OF martingale_bounded_linear_image
-        [OF matvec_blin martingale_stopped_const[OF T martingale_cbmX]]])
+        [OF matrix_vector_mul_bounded_linear martingale_stopped_const[OF T martingale_cbmX]]])
     fix u :: real assume u: "0 \<le> u"
     have mI: "min u T \<in> {0..T}" using u T by simp
     show "(\<lambda>\<omega>. S *v cbmX (0 :: real^'n) (min u T) \<omega>)
@@ -535,7 +535,7 @@ proof -
           \<le> trace ((1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)))"
         by (rule sconstraint_trace_ge[OF k mem])
       also have "\<dots> = (trace (snd (\<omega> t)) - trace (snd (\<omega> s))) / (t - s)"
-        by (simp add: trace_scaleR trace_diff_matrix)
+        by (simp add: trace_scaleR trace_sub)
       finally show "real (CARD('n) - k) * (t - s)
           \<le> trace (snd (\<omega> t)) - trace (snd (\<omega> s))"
         using st by (simp add: pos_le_divide_eq)
@@ -608,7 +608,7 @@ proof -
   qed
   have ptw: "AE \<omega> in Q. trace (outerp (fst (\<omega> t)) - snd (\<omega> t))
       + real (CARD('n) - k) * t \<le> fst (\<omega> t) \<bullet> fst (\<omega> t)"
-    using rate by eventually_elim (simp add: trace_diff_matrix trace_outerp)
+    using rate by eventually_elim (simp add: trace_sub trace_outerp)
   have "(\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
       + real (CARD('n) - k) * t
       = (\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t))

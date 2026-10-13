@@ -117,7 +117,7 @@ proof -
   define M where "M = H - (2 * \<gamma> + \<delta>) *\<^sub>R mat 1"
   have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
   have symM: "transpose M = M"
-    unfolding M_def by (rule transpose_sub_smat[OF symH])
+    unfolding M_def by (rule transpose_shift_diff[OF symH])
   define \<eta> where "\<eta> = \<eta>\<^sub>0 / 2"
   have e0: "0 < \<eta>" unfolding \<eta>_def using h00 by simp
   have trM: "2 * \<eta> \<le> 1 + trace (M ** a) / 2"
@@ -563,64 +563,6 @@ proof -
   qed
 qed
 
-subsection \<open>Where the envelope is invisible\<close>
-
-text \<open>The uniqueness theorem of \<open>Value_Function_Uniqueness\<close> works with continuous
-  solutions, and at a point of continuity the lower envelope is the
-  function itself, so on that class the faithful notion
-  @{const visc_supersol_lsc} and @{const visc_supersol_env} agree and the
-  envelope costs nothing at the interface.  The interface also relies on
-  \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close>, a separate analytic fact.\<close>
-
-text \<open>\<open>lsc_env_eq_self\<close> (at a point of continuity the lower envelope is the
-  function itself) lives in
-  @{theory Semicontinuous_Analysis.Semicontinuous_Envelopes}.\<close>
-
-lemma visc_supersol_lsc_iff_env:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes B: "\<And>y. B \<le> u y" and sub: "\<Omega> \<subseteq> K"
-    and cont: "\<And>y. y \<in> K \<Longrightarrow> isCont u y"
-  shows "visc_supersol_lsc k L K \<Omega> u \<longleftrightarrow> visc_supersol_env k L K \<Omega> u"
-proof -
-  have eqK: "\<And>y. y \<in> K \<Longrightarrow> lsc_env u y = u y"
-    by (rule lsc_env_eq_self[OF B cont])
-  have eqO: "\<And>y. y \<in> \<Omega> \<Longrightarrow> lsc_env u y = u y"
-    using eqK sub by blast
-  show ?thesis
-    unfolding visc_supersol_lsc_def visc_supersol_env_def
-  proof (intro iffI ballI allI impI)
-    fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-    assume h: "\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
-        (\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y) \<longrightarrow>
-        1 \<le> ell_op_usc k L (g x) H"
-      and x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-      and tm: "\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y"
-    have "\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
-    proof
-      fix y assume y: "y \<in> K"
-      show "lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
-        unfolding eqO[OF x] eqK[OF y] using tm y by blast
-    qed
-    then show "1 \<le> ell_op_usc k L (g x) H" using h x tf by blast
-  next
-    fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-    assume h: "\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
-        (\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y) \<longrightarrow>
-        1 \<le> ell_op_usc k L (g x) H"
-      and x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-      and tm: "\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
-    have "\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y"
-    proof
-      fix y assume y: "y \<in> K"
-      have h1: "lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
-        using tm y by blast
-      show "u x - \<phi> x \<le> u y - \<phi> y"
-        using h1 unfolding eqO[OF x] eqK[OF y] .
-    qed
-    then show "1 \<le> ell_op_usc k L (g x) H" using h x tf by blast
-  qed
-qed
-
 subsection \<open>The envelope is lower semicontinuous, and attains its infimum\<close>
 
 text \<open>Case 2 tilts the test function and reads off a minimiser of
@@ -733,7 +675,7 @@ text \<open>Case 2's tilt step for the value function.  The minimiser \<open>y\<
 
 subsection \<open>Case 2, second horn: quadratic pinching forces local constancy\<close>
 
-text \<open>\<open>pinch_segment_bound\<close>, \<open>pinch_implies_constant\<close>, \<open>quad_form_bounded_below\<close>, \<open>quad_minimality_pinch\<close>, \<open>singular_matrix_avoids_range\<close>, \<open>invertible_matrix_vector_inj\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>pinch_segment_bound\<close>, \<open>pinch_implies_constant\<close>, \<open>quad_form_bounded_below\<close>, \<open>quad_minimality_pinch\<close>, \<open>singular_matrix_avoids_range\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 theorem exit_val_not_locally_constant:
@@ -896,7 +838,7 @@ lemma exit_val_case2_at_minimiser:
       (H - \<epsilon> *\<^sub>R mat 1)"
 proof -
   have symM: "transpose (H - \<epsilon> *\<^sub>R mat 1) = H - \<epsilon> *\<^sub>R mat 1"
-    by (rule transpose_sub_smat[OF symH])
+    by (rule transpose_shift_diff[OF symH])
   have rp: "0 < \<rho> - dist x y" using dxy by simp
   have yi: "y \<in> interior K"
   proof -
@@ -959,7 +901,7 @@ proof -
   let ?M = "H - \<epsilon> *\<^sub>R mat 1"
   have L1': "1 \<le> L" using L1 by linarith
   have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
-  have symM: "transpose ?M = ?M" by (rule transpose_sub_smat[OF symH])
+  have symM: "transpose ?M = ?M" by (rule transpose_shift_diff[OF symH])
   have c0: "0 < \<epsilon> / 4" using e0 by simp
   have tv0: "\<And>u. (0 :: real) \<le> enn2real (exit_val k L T K u)" by simp
   have lscW: "\<exists>d>0. \<forall>u. dist z u < d \<longrightarrow> a < ?W u"
@@ -1170,24 +1112,9 @@ theorem exit_val_case2:
     and cap: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
   shows "1 \<le> ell_op_usc k L 0 H"
 proof -
-  define es where "es = (\<lambda>j :: nat. 1 / real (Suc j))"
-  have es0: "0 < es j" for j unfolding es_def by simp
-  have eslim: "es \<longlonglongrightarrow> 0"
-    unfolding es_def using LIMSEQ_inverse_real_of_nat
-    by (simp add: divide_inverse)
-  have ge: "1 \<le> ell_op_usc k L 0 (H - es j *\<^sub>R mat 1)" for j
-    by (rule exit_val_case2_eps[OF T0 L1 k1 kn Kc xi tf gx0 rho0 tmin cap es0])
-  have lim: "(\<lambda>j. (0 :: real^'n, H - es j *\<^sub>R mat 1)) \<longlonglongrightarrow> (0, H)"
-  proof -
-    have "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0 *\<^sub>R mat 1"
-      by (rule tendsto_scaleR[OF eslim tendsto_const])
-    then have z: "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0" by simp
-    have "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H - 0"
-      by (rule tendsto_diff[OF tendsto_const z])
-    then have m: "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H" by simp
-    show ?thesis by (rule tendsto_Pair[OF tendsto_const m])
-  qed
-  show ?thesis by (rule ell_op_usc_ge_one_limit[OF ge lim])
+  show ?thesis
+    by (rule ell_op_usc_ge_one_shift, rule exit_val_case2_eps[OF T0 L1 k1 kn Kc xi tf gx0
+          rho0 tmin cap])
 qed
 
 text \<open>Definition 3.1(b) for the paper's own value function.  Case 1

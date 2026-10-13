@@ -81,6 +81,60 @@ lemma ell_op_le_ell_op_usc:
   shows "ereal (ell_op k L p M) \<le> ell_op_usc k L p M"
   using ell_op_le_usc[of k L p M] by (simp add: ell_op_pair_def)
 
+text \<open>The skeleton shared by every envelope evaluation below: a bound on the
+  ball of radius \<open>e\<close> around \<open>x\<close> that degrades at most linearly in \<open>e\<close>, for
+  all small \<open>e\<close>, passes to the envelope at \<open>x\<close>.  Stated for an arbitrary
+  ereal-valued function on a metric space, since \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> are the ball
+  envelopes of \<^const>\<open>ell_op_pair\<close>.\<close>
+
+lemma ball_env_ge_of_bound:
+  fixes F :: "'a::metric_space \<Rightarrow> ereal"
+  assumes C: "0 < C" and r: "0 < r"
+    and bnd: "\<And>e w. 0 < e \<Longrightarrow> e < r \<Longrightarrow> w \<in> ball x e \<Longrightarrow> ereal (c - C * e) \<le> F w"
+  shows "ereal c \<le> (SUP e \<in> {0<..}. INF w \<in> ball x e. F w)"
+proof (rule ereal_le_epsilon2)
+  fix d :: real assume d: "0 < d"
+  define e where "e = min (d / C) (r / 2)"
+  have e1: "e \<le> r / 2" and e2: "e \<le> d / C"
+    unfolding e_def by (rule min.cobounded2, rule min.cobounded1)
+  have e: "0 < e" "e < r" "C * e \<le> d"
+  proof -
+    show "0 < e" using C r d unfolding e_def by simp
+    show "e < r" using e1 r by linarith
+    show "C * e \<le> d" using e2 C by (simp add: field_simps)
+  qed
+  have "ereal (c - d) \<le> (INF w \<in> ball x e. F w)"
+    using e by (intro INF_greatest order_trans[OF _ bnd[OF e(1,2)]]) simp_all
+  also have "\<dots> \<le> (SUP e \<in> {0<..}. INF w \<in> ball x e. F w)"
+    using e(1) by (intro SUP_upper) simp
+  finally have "ereal (c - d) + ereal d \<le> (SUP e \<in> {0<..}. INF w \<in> ball x e. F w) + ereal d"
+    by (rule add_right_mono)
+  then show "ereal c \<le> (SUP e \<in> {0<..}. INF w \<in> ball x e. F w) + ereal d" by simp
+qed
+
+lemma ball_env_le_of_bound:
+  fixes F :: "'a::metric_space \<Rightarrow> ereal"
+  assumes C: "0 < C" and r: "0 < r"
+    and bnd: "\<And>e w. 0 < e \<Longrightarrow> e < r \<Longrightarrow> w \<in> ball x e \<Longrightarrow> F w \<le> ereal (c + C * e)"
+  shows "(INF e \<in> {0<..}. SUP w \<in> ball x e. F w) \<le> ereal c"
+proof (rule ereal_le_epsilon2)
+  fix d :: real assume d: "0 < d"
+  define e where "e = min (d / C) (r / 2)"
+  have e1: "e \<le> r / 2" and e2: "e \<le> d / C"
+    unfolding e_def by (rule min.cobounded2, rule min.cobounded1)
+  have e: "0 < e" "e < r" "C * e \<le> d"
+  proof -
+    show "0 < e" using C r d unfolding e_def by simp
+    show "e < r" using e1 r by linarith
+    show "C * e \<le> d" using e2 C by (simp add: field_simps)
+  qed
+  have "(INF e \<in> {0<..}. SUP w \<in> ball x e. F w) \<le> (SUP w \<in> ball x e. F w)"
+    using e(1) by (intro INF_lower) simp
+  also have "\<dots> \<le> ereal (c + d)"
+    using e by (intro SUP_least order_trans[OF bnd[OF e(1,2)]]) simp_all
+  finally show "(INF e \<in> {0<..}. SUP w \<in> ball x e. F w) \<le> ereal c + ereal d" by simp
+qed
+
 text \<open>\<open>F\<^sup>*\<close> is upper semicontinuous by construction, so the inequality
   \<open>\<ge> 1\<close> passes through limits in \<open>(p, M)\<close>: this moves a conclusion
   obtained at perturbed jets back to the jet of interest.\<close>
@@ -114,6 +168,26 @@ proof (rule INF_greatest)
   also have "\<dots> \<le> (SUP w \<in> ball ((p0, M0)) e. ell_op_pair k L w)"
     by (rule SUP_subset_mono[OF sub order_refl])
   finally show "1 \<le> (SUP w \<in> ball ((p0, M0)) e. ell_op_pair k L w)" .
+qed
+
+text \<open>The special case used twice: the inequality \<open>\<ge> 1\<close> at every softened
+  Hessian \<open>H - \<delta> I\<close> survives \<open>\<delta> \<rightarrow> 0\<close>.\<close>
+
+lemma ell_op_usc_ge_one_shift:
+  fixes p :: "real^'n::finite" and H :: "real^'n^'n"
+  assumes ge: "\<And>\<delta>. 0 < \<delta> \<Longrightarrow> 1 \<le> ell_op_usc k L p (H - \<delta> *\<^sub>R mat 1)"
+  shows "1 \<le> ell_op_usc k L p H"
+proof (rule ell_op_usc_ge_one_limit[where ps = "\<lambda>_. p"
+      and Ms = "\<lambda>j. H - (1 / real (Suc j)) *\<^sub>R mat 1"])
+  show "1 \<le> ell_op_usc k L p (H - (1 / real (Suc j)) *\<^sub>R mat 1)" for j
+    by (rule ge) simp
+  have "(\<lambda>j. 1 / real (Suc j)) \<longlonglongrightarrow> 0"
+    using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
+  from tendsto_diff[OF tendsto_const tendsto_scaleR[OF this tendsto_const]]
+  have "(\<lambda>j. H - (1 / real (Suc j)) *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H"
+    by simp
+  then show "(\<lambda>j. (p, H - (1 / real (Suc j)) *\<^sub>R mat 1)) \<longlonglongrightarrow> (p, H)"
+    by (rule tendsto_Pair[OF tendsto_const])
 qed
 
 section \<open>Lemma 3.1, the clause at \<open>p = 0\<close>: \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> \<bbbS>\<^sup>n\<close>\<close>
@@ -302,8 +376,33 @@ proof -
   finally show ?thesis unfolding B_def .
 qed
 
-text \<open>For a small enough shift, the upper envelope at \<open>-\<delta>I\<close> is below
-  \<open>1\<close>, whatever the gradient.\<close>
+text \<open>Where \<open>M\<close> is small, the upper envelope is below \<open>1\<close>, whatever the
+  gradient; in particular at \<open>-\<delta>I\<close> for a small enough shift.\<close>
+
+lemma ell_op_usc_lt_one_of_small:
+  fixes M :: "real^'n::finite^'n"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
+    and M: "real (CARD('n) * CARD('n)) * L * norm M < 1"
+  shows "ell_op_usc k L q M < 1"
+proof -
+  define B where "B = real (CARD('n) * CARD('n)) * L / 2"
+  have B0: "0 < B"
+    unfolding B_def using L by simp
+  have M': "2 * B * norm M < 1"
+    using M by (simp add: B_def)
+  define e where "e = (1 - 2 * B * norm M) / (4 * B)"
+  have e0: "0 < e"
+    unfolding e_def using B0 M' by simp
+  have "B * (norm M + e) = (2 * B * norm M + 1) / 4"
+    unfolding e_def using B0 by (simp add: field_simps)
+  then have lt: "B * (norm M + e) < 1"
+    using M' by simp
+  have "ell_op_usc k L q M \<le> ereal (B * (norm M + e))"
+    unfolding B_def by (rule ell_op_usc_le_scaled_norm[OF k L e0])
+  also have "\<dots> < 1"
+    using lt by simp
+  finally show ?thesis .
+qed
 
 lemma ell_op_usc_small_shift_lt_one:
   fixes k :: nat
@@ -312,48 +411,30 @@ lemma ell_op_usc_small_shift_lt_one:
     and "\<And>q :: real^'n.
       ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
 proof -
-  define B where "B = real (CARD('n) * CARD('n)) * L / 2"
-  have B0: "0 < B" unfolding B_def using L by simp
+  define A where "A = real (CARD('n) * CARD('n)) * L"
   define Nm where "Nm = norm (mat 1 :: real^'n^'n)"
-  have Nm0: "0 \<le> Nm" unfolding Nm_def by simp
-  define t where "t = 1 / (2 * B)"
-  have t0: "0 < t" unfolding t_def using B0 by simp
-  have Bt: "B * t = 1 / 2" unfolding t_def using B0 by simp
-  define \<delta> where "\<delta> = min (1 / 2) (t / (2 * (Nm + 1)))"
-  have d0: "0 < \<delta>" unfolding \<delta>_def using t0 Nm0 by simp
-  have d1: "\<delta> < 1" unfolding \<delta>_def by simp
-  have dN: "\<delta> * Nm \<le> t / 2"
-  proof -
-    have "\<delta> \<le> t / (2 * (Nm + 1))" unfolding \<delta>_def by simp
-    then have "\<delta> * Nm \<le> t / (2 * (Nm + 1)) * Nm"
-      by (rule mult_right_mono[OF _ Nm0])
-    moreover have "t / (2 * (Nm + 1)) * Nm \<le> t / 2"
-      using t0 Nm0 by (simp add: field_simps)
-    ultimately show ?thesis by linarith
-  qed
-  have key: "ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
-    for q :: "real^'n"
-  proof -
-    have e0: "0 < t / 2" using t0 by simp
-    have nrm: "norm ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) = \<delta> * Nm"
-      unfolding Nm_def using d0 by simp
-    have "ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)
-        \<le> ereal (B * (norm ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) + t / 2))"
-      unfolding B_def
-      by (rule ell_op_usc_le_scaled_norm[OF k(1) k(2) L e0])
-    also have "\<dots> = ereal (B * (\<delta> * Nm + t / 2))" unfolding nrm by (rule refl)
-    also have "\<dots> \<le> ereal (B * t)"
-    proof -
-      have "\<delta> * Nm + t / 2 \<le> t" using dN by linarith
-      then have "B * (\<delta> * Nm + t / 2) \<le> B * t"
-        by (rule mult_left_mono) (use B0 in linarith)
-      then show ?thesis by simp
-    qed
-    also have "\<dots> = ereal (1 / 2)" unfolding Bt by (rule refl)
-    also have "\<dots> < 1" by simp
-    finally show ?thesis .
-  qed
-  show ?thesis by (rule that[OF d0 d1]) (use key in blast)
+  have A0: "0 < A"
+    unfolding A_def using L by simp
+  have N1: "0 < Nm + 1"
+    unfolding Nm_def using norm_ge_zero[of "mat 1 :: real^'n^'n"] by linarith
+  define C where "C = A * (Nm + 1)"
+  have C0: "0 < C"
+    unfolding C_def using A0 N1 by simp
+  define \<delta> where "\<delta> = min (1 / 2) (1 / (2 * C))"
+  have d0: "0 < \<delta>" and d1: "\<delta> < 1"
+    unfolding \<delta>_def using C0 by auto
+  have "A * norm ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) = \<delta> * (A * Nm)"
+    using d0 unfolding Nm_def by (simp add: mult_ac)
+  also have "\<dots> \<le> \<delta> * C"
+    unfolding C_def using d0 A0 by (intro mult_left_mono) (auto simp: algebra_simps)
+  also have "\<dots> \<le> 1 / (2 * C) * C"
+    using C0 unfolding \<delta>_def by (intro mult_right_mono) auto
+  also have "\<dots> = 1 / 2"
+    using C0 by simp
+  finally have small: "A * norm ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) \<le> 1 / 2" .
+  show ?thesis
+    by (rule that[OF d0 d1], rule ell_op_usc_lt_one_of_small[OF k L])
+      (use small in \<open>simp add: A_def\<close>)
 qed
 
 theorem ell_op_lsc_at_zero:
@@ -369,11 +450,9 @@ next
   define C where "C = real (CARD('n) * CARD('n)) * L / 2"
   have C_pos: "0 < C"
     using L by (simp add: C_def)
-  have bound: "ereal (ell_op k L (0 :: real^'n) M - C * e)
-      \<le> (INF w \<in> ball ((0 :: real^'n), M) e. ell_op_pair k L w)" for e
-  proof (rule INF_greatest)
-    fix w :: "(real^'n) \<times> (real^'n^'n)"
-    assume w: "w \<in> ball ((0 :: real^'n), M) e"
+  have bound: "ereal (ell_op k L (0 :: real^'n) M - C * e) \<le> ell_op_pair k L w"
+    if w: "w \<in> ball ((0 :: real^'n), M) e" for e w
+  proof -
     have dN: "norm (M - snd w) \<le> e"
     proof -
       have "dist (snd w) (snd ((0 :: real^'n), M)) \<le> dist w ((0 :: real^'n), M)"
@@ -411,30 +490,8 @@ next
       by (simp add: ell_op_pair_def)
   qed
   show "ereal (ell_op k L (0 :: real^'n) M) \<le> ell_op_lsc k L 0 M"
-  proof (rule ereal_le_epsilon2)
-    fix d :: real assume d: "0 < d"
-    define e where "e = d / (2 * C)"
-    have e_pos: "0 < e"
-      using d C_pos by (simp add: e_def)
-    have Ce: "C * e \<le> d"
-      using C_pos d by (simp add: e_def)
-    have "ereal (ell_op k L (0 :: real^'n) M - d)
-        \<le> ereal (ell_op k L (0 :: real^'n) M - C * e)"
-      using Ce by simp
-    also have "\<dots> \<le> (INF w \<in> ball ((0 :: real^'n), M) e. ell_op_pair k L w)"
-      by (rule bound)
-    also have "\<dots> \<le> ell_op_lsc k L (0 :: real^'n) M"
-      unfolding ell_op_lsc_def using e_pos by (intro SUP_upper) simp
-    finally have le: "ereal (ell_op k L (0 :: real^'n) M - d)
-        \<le> ell_op_lsc k L (0 :: real^'n) M" .
-    have "ereal (ell_op k L (0 :: real^'n) M)
-        = ereal (ell_op k L (0 :: real^'n) M - d) + ereal d"
-      by simp
-    also have "\<dots> \<le> ell_op_lsc k L (0 :: real^'n) M + ereal d"
-      using le by (rule add_right_mono)
-    finally show "ereal (ell_op k L (0 :: real^'n) M)
-        \<le> ell_op_lsc k L 0 M + ereal d" .
-  qed
+    unfolding ell_op_lsc_def
+    by (rule ball_env_ge_of_bound[OF C_pos zero_less_one]) (use bound in blast)
 qed
 
 text \<open>At the degenerate gradient, the subsolution inequality of
@@ -769,31 +826,7 @@ text \<open>The constant test function: the touching that Definition 3.1's bound
 lemma ell_op_usc_zero_zero_lt_one:
   assumes kk: "1 \<le> k" "k < CARD('n::finite)" and LL: "1 \<le> L"
   shows "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n) < 1"
-proof -
-  have Bc0: "0 < real (CARD('n) * CARD('n)) * L / 2" using LL by simp
-  have Bcne: "real (CARD('n) * CARD('n)) * L / 2 \<noteq> 0"
-  proof
-    assume "real (CARD('n) * CARD('n)) * L / 2 = 0"
-    then show False using Bc0 by simp
-  qed
-  define ee where "ee = 1 / (2 * (real (CARD('n) * CARD('n)) * L / 2))"
-  have e0: "0 < ee" unfolding ee_def using Bc0 by simp
-  have "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n)
-      \<le> ereal (real (CARD('n) * CARD('n)) * L / 2
-          * (norm (0 :: real^'n^'n) + ee))"
-    by (rule ell_op_usc_le_scaled_norm[OF kk(1) kk(2) LL e0])
-  also have "real (CARD('n) * CARD('n)) * L / 2 * (norm (0 :: real^'n^'n) + ee)
-      = 1 / 2"
-  proof -
-    have "real (CARD('n) * CARD('n)) * L / 2 * (norm (0 :: real^'n^'n) + ee)
-        = (real (CARD('n) * CARD('n)) * L / 2) * ee" by simp
-    also have "\<dots> = 1 / 2" unfolding ee_def using Bcne by (simp add: field_simps)
-    finally show ?thesis .
-  qed
-  finally have "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n) \<le> ereal (1 / 2)" .
-  also have "ereal (1 / 2 :: real) < 1" by (simp add: one_ereal_def)
-  finally show ?thesis .
-qed
+  by (rule ell_op_usc_lt_one_of_small[OF kk LL]) simp
 
 subsection \<open>The invariances of \<open>F\<close> --- the paper's display (4.4)\<close>
 
@@ -884,8 +917,6 @@ proof -
 qed
 
 subsection \<open>Transporting the envelopes along an \<open>F\<close>-preserving homeomorphism\<close>
-
-text \<open>\<open>matvec_diff_right\<close>, \<open>matvec_scaleR_right\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 text \<open>\<open>matrix_mul_diff_right\<close> and \<open>matrix_mul_diff_left\<close> live in
@@ -1021,7 +1052,7 @@ proof -
   have isom: "dist (\<Psi> v) (\<Psi> v') = dist v v'" for v v'
   proof -
     have p1: "R *v fst v - R *v fst v' = R *v (fst v - fst v')"
-      by (rule matvec_diff_right[symmetric])
+      by (rule matrix_vector_mult_diff_distrib[symmetric])
     have p2: "R ** snd v ** transpose R - R ** snd v' ** transpose R
         = R ** (snd v - snd v') ** transpose R"
       by (simp add: matrix_mul_diff_right matrix_mul_diff_left)
@@ -1076,7 +1107,7 @@ text \<open>Monotonicity of \<open>lsc_env\<close>/\<open>usc_env\<close> and th
 
 subsection \<open>Affine maps commute with \<open>interior\<close>\<close>
 
-text \<open>\<open>open_orth_image\<close>, \<open>open_affine_image\<close>, \<open>affine_interior_sub\<close>, \<open>affine_inv_shape\<close>, \<open>affine_inv_left\<close>, \<open>affine_inv_right\<close>, \<open>affine_interior_image\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>affine_interior_image\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 section \<open>A constant is a subsolution off \<open>K\<close>\<close>

@@ -1,7 +1,7 @@
 
 (*<*)
 theory Semicontinuous_Selection
-  imports "HOL-Probability.Probability" "Standard_Borel_Spaces.Lemmas_StandardBorel"
+  imports "HOL-Probability.Probability" "Standard_Borel_Spaces.Set_Based_Metric_Space" Berge
 begin
 
 (*>*)
@@ -13,79 +13,33 @@ text \<open>A measurable selection theorem for upper semicontinuous payoffs on
   Larsson--Ruf's Proposition 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>(ii) appeals to.  The construction is a
   greedy nested bisection along a countable dense sequence.\<close>
 
-text \<open>A helper: @{typ ennreal} is densely ordered.  The instance is
-  declared for @{typ ereal} but not for @{typ ennreal}.\<close>
+text \<open>A separable metric space carries a dense sequence (it is nonempty, so
+  the countable dense set can be enumerated); a compact one is separable.\<close>
 
-lemma ennreal_strict_between:
-  fixes a b :: ennreal
-  assumes ab: "a < b"
-  shows "\<exists>c. a < c \<and> c < b"
+lemma (in Metric_space) separable_space_dense_seq:
+  assumes sep: "separable_space mtopology" and ne: "M \<noteq> {}"
+  shows "\<exists>z :: nat \<Rightarrow> 'a. (\<forall>j. z j \<in> M)
+      \<and> (\<forall>y \<in> M. \<forall>e > 0. \<exists>j. d (z j) y < e)"
 proof -
-  have "enn2ereal a < enn2ereal b" using ab by (simp add: less_ennreal.rep_eq)
-  then obtain e where e1: "enn2ereal a < e" and e2: "e < enn2ereal b"
-    using dense by blast
-  have "(0::ereal) \<le> enn2ereal a" by simp
-  then have e0: "0 \<le> e" using order.strict_implies_order[OF e1] by (rule order_trans)
-  have re: "enn2ereal (e2ennreal e) = e" by (rule enn2ereal_e2ennreal[OF e0])
+  obtain D where D: "countable D" "mdense D"
+    using sep unfolding separable_space_def2 by blast
+  with ne have "D \<noteq> {}" by (auto simp: mdense_empty_iff)
   show ?thesis
-  proof (intro exI[of _ "e2ennreal e"] conjI)
-    show "a < e2ennreal e" using e1 by (simp add: less_ennreal.rep_eq re)
-    show "e2ennreal e < b" using e2 by (simp add: less_ennreal.rep_eq re)
+  proof (intro exI[of _ "from_nat_into D"] conjI allI ballI impI)
+    show "from_nat_into D j \<in> M" for j
+      using from_nat_into[OF \<open>D \<noteq> {}\<close>] D(2) by (auto simp: mdense_def2)
+    fix y and e :: real assume "y \<in> M" "0 < e"
+    then obtain z where "z \<in> D" "d y z < e" using D(2) unfolding mdense_def2 by blast
+    then show "\<exists>j. d (from_nat_into D j) y < e"
+      using from_nat_into_to_nat_on[OF D(1)] commute by metis
   qed
 qed
-
-text \<open>A compact metric space carries a dense sequence (it is nonempty, so
-  the countable dense set can be enumerated).\<close>
 
 lemma (in Metric_space) compact_space_dense_seq:
   assumes cpt: "compact_space mtopology" and ne: "M \<noteq> {}"
   shows "\<exists>z :: nat \<Rightarrow> 'a. (\<forall>j. z j \<in> M)
       \<and> (\<forall>y \<in> M. \<forall>e > 0. \<exists>j. d (z j) y < e)"
-proof -
-  have cover: "\<exists>K. finite K \<and> K \<subseteq> M \<and> M \<subseteq> (\<Union>x\<in>K. mball x e)" if e: "0 < e" for e
-  proof -
-    have "M \<subseteq> \<Union> ((\<lambda>x. mball x e) ` M)" using e by auto
-    moreover have "openin mtopology U" if "U \<in> (\<lambda>x. mball x e) ` M" for U
-      using that by auto
-    ultimately obtain F where F: "finite F" "F \<subseteq> (\<lambda>x. mball x e) ` M"
-        "M \<subseteq> \<Union>F"
-      using cpt unfolding compact_space_alt by (metis topspace_mtopology)
-    from F(2) obtain K where K: "K \<subseteq> M" "finite K" "F = (\<lambda>x. mball x e) ` K"
-      by (meson finite_subset_image F(1))
-    show ?thesis using K F(3) by auto
-  qed
-  have "\<forall>n::nat. \<exists>K. finite K \<and> K \<subseteq> M \<and> M \<subseteq> (\<Union>x\<in>K. mball x ((1/2)^n))"
-    by (intro allI cover) simp
-  then obtain KK where KK: "\<And>n::nat. finite (KK n)" "\<And>n::nat. KK n \<subseteq> M"
-      "\<And>n::nat. M \<subseteq> (\<Union>x\<in>KK n. mball x ((1/2)^n))"
-    by metis
-  define D where "D = (\<Union>n::nat. KK n)"
-  have Dc: "countable D" unfolding D_def using KK(1) by (blast intro: countable_finite)
-  have DM: "D \<subseteq> M" unfolding D_def using KK(2) by blast
-  have Dne: "D \<noteq> {}"
-  proof -
-    from ne obtain y where y: "y \<in> M" by blast
-    then obtain x where "x \<in> KK 0" using KK(3)[of 0] by auto
-    then show ?thesis unfolding D_def by blast
-  qed
-  define z where "z = from_nat_into D"
-  have zr: "range z = D" unfolding z_def by (rule range_from_nat_into[OF Dne Dc])
-  have zM: "z j \<in> M" for j using zr DM by blast
-  have zd: "\<exists>j. d (z j) y < e" if y: "y \<in> M" and e: "0 < e" for y e
-  proof -
-    have "(\<lambda>n. (1/2::real)^n) \<longlonglongrightarrow> 0" by (rule LIMSEQ_realpow_zero) auto
-    then have "\<forall>\<^sub>F n in sequentially. (1/2::real)^n < e"
-      using e by (rule order_tendstoD(2))
-    then obtain n :: nat where n: "(1/2::real)^n < e"
-      by (auto simp: eventually_sequentially)
-    from KK(3)[of n] y obtain x where x: "x \<in> KK n" "y \<in> mball x ((1/2)^n)" by auto
-    then have "d x y < (1/2)^n" by simp
-    with n have "d x y < e" by simp
-    moreover have "x \<in> D" unfolding D_def using x(1) by blast
-    ultimately show ?thesis using zr by (metis rangeE)
-  qed
-  show ?thesis using zM zd by blast
-qed
+  by (rule separable_space_dense_seq[OF compact_space_imp_separable[OF cpt] ne])
 
 text \<open>The greedy construction: \<open>usc_sel_set Y dd z js\<close> is the set reached
   by the index sequence \<open>js\<close> (most recent first), \<open>usc_sel_good\<close> the
@@ -433,7 +387,7 @@ proof (rule antisym)
     assume "\<not> Sup (g ` M) \<le> g (usc_sel M d z g)"
     then have lt: "g (usc_sel M d z g) < Sup (g ` M)" by simp
     then obtain c where c1: "g (usc_sel M d z g) < c" and c2: "c < Sup (g ` M)"
-      using ennreal_strict_between by blast
+      using dense by blast
     have Uopen: "openin mtopology {y \<in> M. g y < c}" by (rule usc)
     have Umem: "usc_sel M d z g \<in> {y \<in> M. g y < c}"
       using usc_sel_in_M[OF cpt z dns ne] c1 by simp
@@ -668,9 +622,9 @@ qed
 
 end
 
-subsection \<open>Countably valued approximation in a compact metric space\<close>
+subsection \<open>Countably valued approximation in a separable metric space\<close>
 
-text \<open>A measurable map into a compact metric space is a uniform limit of
+text \<open>A measurable map into a separable metric space is a uniform limit of
   countably valued measurable maps: round to the nearest point of a dense
   sequence, taking the least admissible index so that the choice is
   measurable.  The rounding is measurable for a cheap reason --- the set
@@ -679,7 +633,7 @@ text \<open>A measurable map into a compact metric space is a uniform limit of
 
 lemma (in Metric_space) countably_valued_approx:
   fixes g :: "'b \<Rightarrow> 'a" and P :: "'b measure"
-  assumes cpt: "compact_space mtopology" and ne: "M \<noteq> {}"
+  assumes sep: "separable_space mtopology" and ne: "M \<noteq> {}"
     and gm: "g \<in> P \<rightarrow>\<^sub>M borel_of mtopology" and rng: "\<And>x. g x \<in> M"
   obtains z :: "nat \<Rightarrow> 'a" and Nx :: "nat \<Rightarrow> 'b \<Rightarrow> nat"
     where "\<And>j. z j \<in> M"
@@ -688,7 +642,7 @@ lemma (in Metric_space) countably_valued_approx:
 proof -
   obtain z :: "nat \<Rightarrow> 'a" where z0: "\<forall>j. z j \<in> M"
     and zd0: "\<forall>y \<in> M. \<forall>e > 0. \<exists>j. d (z j) y < e"
-    using compact_space_dense_seq[OF cpt ne] by blast
+    using separable_space_dense_seq[OF sep ne] by blast
   have zM: "z j \<in> M" for j using z0 by blast
   have ex: "\<exists>j. d (z j) (g x) < (1/2::real)^m" for m x
     using zd0 rng[of x] by simp
@@ -730,18 +684,8 @@ lemma (in Metric_space) limitin_of_dist_half:
   assumes zz: "\<And>m. zz m \<in> M" and y: "y \<in> M"
     and lt: "\<And>m. d (zz m) y < (1/2::real)^m"
   shows "limitin mtopology zz y sequentially"
-  unfolding limitin_metric
-proof (intro conjI y allI impI)
-  fix e :: real assume e: "0 < e"
-  have "(\<lambda>m. (1/2::real)^m) \<longlonglongrightarrow> 0" by (rule LIMSEQ_realpow_zero) auto
-  then have "\<forall>\<^sub>F m in sequentially. (1/2::real)^m < e"
-    using e by (rule order_tendstoD(2))
-  then show "\<forall>\<^sub>F m in sequentially. zz m \<in> M \<and> d (zz m) y < e"
-  proof (rule eventually_mono)
-    fix m assume "(1/2::real)^m < e"
-    with lt[of m] zz[of m] show "zz m \<in> M \<and> d (zz m) y < e" by simp
-  qed
-qed
+  by (rule limitin_of_dist_bound[OF zz y less_imp_le[OF lt]])
+    (rule LIMSEQ_realpow_zero; simp)
 
 (*<*)
 end

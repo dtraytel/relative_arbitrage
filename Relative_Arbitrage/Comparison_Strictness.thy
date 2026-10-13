@@ -25,8 +25,7 @@ text \<open>Definition 3.1 takes the envelopes of \<open>F\<close> over \<open>\
 
 text \<open>\<open>trace_mul_comm\<close> is HOL-Analysis's \<open>trace_mul_sym\<close>.\<close>
 
-text \<open>\<open>matrix_mult_scaleR_left\<close> is \<open>scaleR_matrix_mult\<close> from
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>matrix_mult_scaleR_left\<close> is HOL-Analysis's \<open>scalar_matrix_assoc\<close>, reversed.\<close>
 
 lemma visc_subsol_env2_cong:
   fixes f1 f2 :: "real^'n::finite \<Rightarrow> real"
@@ -206,24 +205,8 @@ proof (intro ballI allI impI)
       by (rule visc_supersol_env2_local[OF sup x tfp wlo Bp r0' lm'])
     then show ?thesis unfolding ggx .
   qed
-  define es where "es = (\<lambda>j :: nat. 1 / real (Suc j))"
-  have es0: "0 < es j" for j unfolding es_def by simp
-  have ge: "1 \<le> ell_op_usc k L (g x) (H - es j *\<^sub>R mat 1)" for j
-    by (rule step[OF es0])
-  have lim: "(\<lambda>j. (g x, H - es j *\<^sub>R mat 1)) \<longlonglongrightarrow> (g x, H)"
-  proof -
-    have "es \<longlonglongrightarrow> 0" unfolding es_def
-      using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
-    then have "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0 *\<^sub>R mat 1"
-      by (rule tendsto_scaleR[OF _ tendsto_const])
-    then have z: "(\<lambda>j. es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> 0" by simp
-    have "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H - 0"
-      by (rule tendsto_diff[OF tendsto_const z])
-    then have m: "(\<lambda>j. H - es j *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H" by simp
-    show ?thesis by (rule tendsto_Pair[OF tendsto_const m])
-  qed
   show "1 \<le> ell_op_usc k L (g x) H"
-    by (rule ell_op_usc_ge_one_limit[OF ge lim])
+    by (rule ell_op_usc_ge_one_shift[OF step])
 qed
 
 text \<open>\<open>quad_bdd_below_on_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
@@ -382,7 +365,7 @@ proof -
     for a :: "real^'n^'n"
   proof -
     have "(\<theta> *\<^sub>R M) ** a = \<theta> *\<^sub>R (M ** a)"
-      by (rule scaleR_matrix_mult)
+      by (rule scalar_matrix_assoc[symmetric])
     thus ?thesis by (simp add: trace_scaleR)
   qed
   have img: "(\<lambda>a. - trace ((\<theta> *\<^sub>R M) ** a) / 2) ` feasible k L p
@@ -576,7 +559,7 @@ text \<open>\<open>visc_subsol_scaled_uniform\<close> and \<open>supersol_jet\<c
 
 text \<open>\<open>quad_form_shift_identity\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>matrix_vector_neg_left\<close>, \<open>quad_form_shift_identity_neg\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>quad_form_shift_identity_neg\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 text \<open>The mirror image for the supersolution side: a subjet of \<open>v\<close> at \<open>yh\<close>
   gives the local-min statement, with correction \<open>- \<delta> I\<close>, following from

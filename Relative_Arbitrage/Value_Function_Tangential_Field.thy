@@ -22,13 +22,7 @@ text \<open>The tangential projector field around a centre \<open>y\<^sub>0\<clo
 
 subsection \<open>Small matrix, trace and inner-product facts\<close>
 
-text \<open>\<open>matvec_add_right\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-text \<open>\<open>matvec_sum_right\<close>, \<open>transpose_matrix_diff\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>\<open>trace_matrix_diff\<close> is \<open>trace_diff_matrix\<close> from
-  @{theory Relative_Arbitrage.Operator_Formula}.\<close>
+text \<open>\<open>trace_matrix_diff\<close> is HOL-Analysis's \<open>trace_sub\<close>.\<close>
 
 text \<open>\<open>unit_normalize\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
@@ -81,9 +75,9 @@ proof -
         = projmat b m *v (\<Sum>l < m. (b l \<bullet> z) *\<^sub>R b l)"
       by (simp only: projmat_mv)
     also have "\<dots> = (\<Sum>l < m. projmat b m *v ((b l \<bullet> z) *\<^sub>R b l))"
-      by (rule matvec_sum_right)
+      by (rule matrix_vector_mult_vsum)
     also have "\<dots> = (\<Sum>l < m. (b l \<bullet> z) *\<^sub>R (projmat b m *v b l))"
-      by (rule sum.cong[OF refl]) (simp add: matvec_scaleR_right)
+      by (rule sum.cong[OF refl]) (simp add: matrix_vector_mult_scaleR)
     also have "\<dots> = (\<Sum>l < m. (b l \<bullet> z) *\<^sub>R b l)"
       by (rule sum.cong[OF refl]) (simp add: projmat_fix[OF orth])
     also have "\<dots> = projmat b m *v z" by (rule projmat_mv[symmetric])
@@ -101,7 +95,7 @@ lemma projmat_span_fix:
 proof -
   have sub: "subspace {y :: real^'n. projmat b m *v y = y}"
     unfolding subspace_def
-    by (auto simp: matvec_add_right matvec_scaleR_right)
+    by (auto simp: matrix_vector_right_distrib matrix_vector_mult_scaleR)
   have "b ` {..<m} \<subseteq> {y :: real^'n. projmat b m *v y = y}"
     using projmat_fix[OF orth] by auto
   then have "span (b ` {..<m}) \<subseteq> {y :: real^'n. projmat b m *v y = y}"
@@ -142,7 +136,7 @@ lemma tanpU_sym:
   fixes P :: "real^'n::finite^'n" and u :: "real^'n"
   assumes P: "transpose P = P"
   shows "transpose (tanpU P u) = tanpU P u"
-  unfolding tanpU_def by (simp add: transpose_matrix_diff P)
+  unfolding tanpU_def by (simp add: transpose_diff_matrix P)
 
 lemma tanpU_mv:
   fixes P :: "real^'n::finite^'n" and u y :: "real^'n"
@@ -152,7 +146,7 @@ lemma tanpU_mv:
 lemma tanpU_trace:
   fixes P :: "real^'n::finite^'n" and u :: "real^'n"
   shows "trace (tanpU P u) = trace P - u \<bullet> u"
-  unfolding tanpU_def by (simp add: trace_diff_matrix)
+  unfolding tanpU_def by (simp add: trace_sub)
 
 lemma uvecV_norm_le:
   fixes P :: "real^'n::finite^'n" and z :: "real^'n"
@@ -174,7 +168,7 @@ proof -
   have PP: "P *v (P *v z) = P *v z"
     using Pidem by (metis matrix_vector_mul_assoc)
   show ?thesis unfolding uvecV_def
-    by (simp add: matvec_scaleR_right PP)
+    by (simp add: matrix_vector_mult_scaleR PP)
 qed
 
 lemma uvecV_unit:
@@ -196,9 +190,6 @@ proof -
   have n0: "norm (P *v z) \<noteq> 0" using rho0 far by linarith
   show ?thesis unfolding uvecV_def mx using n0 by simp
 qed
-
-text \<open>\<open>proj_inner_self\<close>, \<open>proj_inner_self'\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 lemma tanpU_kill:
   fixes P :: "real^'n::finite^'n" and z :: "real^'n"
@@ -257,7 +248,7 @@ next
   also have "\<dots> \<le> (P *v y) \<bullet> (P *v y)"
     using uu inner_ge_zero[of "P *v y"] by (simp add: mult_left_le)
   also have "\<dots> = y \<bullet> (P *v y)"
-    by (rule proj_inner_self'[OF Psym Pidem, symmetric])
+    by (rule proj_quadform_self[unfolded is_proj_def, OF conjI[OF Psym Pidem], symmetric])
   finally have le: "(u \<bullet> y)\<^sup>2 \<le> y \<bullet> (P *v y)" .
   have "y \<bullet> (tanpU P u *v y) = y \<bullet> (P *v y) - (u \<bullet> y) * (y \<bullet> u)"
     unfolding tanpU_mv by (simp add: inner_diff_right)
@@ -274,7 +265,7 @@ lemma tanpU_eigen_ub:
 proof
   fix y :: "real^'n"
   have pq: "y \<bullet> (P *v y) = (P *v y) \<bullet> (P *v y)"
-    by (rule proj_inner_self'[OF Psym Pidem])
+    by (rule proj_quadform_self[unfolded is_proj_def, OF conjI[OF Psym Pidem]])
   have shrink: "y \<bullet> (P *v y) \<le> y \<bullet> y"
   proof -
     have "(y - P *v y) \<bullet> (y - P *v y)
@@ -452,7 +443,7 @@ proof -
         = tanpU P u *v (P *v y - (u \<bullet> y) *\<^sub>R u)"
       by (simp only: tanpU_mv)
     also have "\<dots> = tanpU P u *v (P *v y) - (u \<bullet> y) *\<^sub>R (tanpU P u *v u)"
-      by (simp add: matvec_diff_right matvec_scaleR_right)
+      by (simp add: matrix_vector_mult_diff_distrib matrix_vector_mult_scaleR)
     also have "\<dots> = (P *v y - (u \<bullet> y) *\<^sub>R u)
         - ((u \<bullet> y) * (1 - a)) *\<^sub>R u"
       unfolding onP onu scaleR_scaleR by (rule refl)
@@ -486,14 +477,11 @@ proof -
     unfolding tsym by (rule tanpU_sq[OF Psym Pidem ufix u1])
   have n1: "norm (sqrt (2 - u \<bullet> u) *\<^sub>R u) \<le> 1" by (rule tanpU_sq_norm_le[OF u1])
   have f1: "projmat b m *v (sqrt (2 - u \<bullet> u) *\<^sub>R u) = sqrt (2 - u \<bullet> u) *\<^sub>R u"
-    by (simp add: matvec_scaleR_right ufix)
+    by (simp add: matrix_vector_mult_scaleR ufix)
   have "tanpU (projmat b m) (sqrt (2 - u \<bullet> u) *\<^sub>R u) \<in> feasible k L 0"
     by (rule tanpU_feasible[OF orth n1 f1 mk L1])
   then show ?thesis unfolding sq using feasible_subset_sconstraint by blast
 qed
-
-text \<open>\<open>proj_norm_le\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 lemma tanpU_absorb:
   fixes P :: "real^'n::finite^'n" and u :: "real^'n"
@@ -507,7 +495,7 @@ proof -
     have "P *v (tanpU P u *v y) = P *v (P *v y - (u \<bullet> y) *\<^sub>R u)"
       by (simp only: tanpU_mv)
     also have "\<dots> = P *v (P *v y) - (u \<bullet> y) *\<^sub>R (P *v u)"
-      by (simp add: matvec_diff_right matvec_scaleR_right)
+      by (simp add: matrix_vector_mult_diff_distrib matrix_vector_mult_scaleR)
     also have "\<dots> = P *v y - (u \<bullet> y) *\<^sub>R u" unfolding PP ufix by (rule refl)
     also have "\<dots> = tanpU P u *v y" by (simp only: tanpU_mv)
     finally show ?thesis .
@@ -619,13 +607,13 @@ proof -
   proof -
     have zx: "z - x = (z - y\<^sub>0) - (x - y\<^sub>0)" by simp
     have Pzx: "projmat b m *v (z - x) = projmat b m *v (z - y\<^sub>0) - (x - y\<^sub>0)"
-      unfolding zx matvec_diff_right[of _ "z - y\<^sub>0" "x - y\<^sub>0"] xfix ..
+      unfolding zx matrix_vector_mult_diff_distrib[of _ "z - y\<^sub>0" "x - y\<^sub>0"] xfix ..
     have arg: "2 *\<^sub>R (x - y\<^sub>0) + ((2::real) *\<^sub>R projmat b m) *v (z - x)
         = 2 *\<^sub>R (projmat b m *v (z - y\<^sub>0))"
-      unfolding scaleR_matrix_vector Pzx scaleR_add_right[symmetric] by simp
+      unfolding scaleR_matrix_vector_assoc[symmetric] Pzx scaleR_add_right[symmetric] by simp
     have k0: "SF z *v (projmat b m *v (z - y\<^sub>0)) = 0"
       unfolding SF_def by (rule tanpU_kill_proj[OF rho0 farRO[OF z] Pidem])
-    show ?thesis unfolding arg tsym by (simp add: matvec_scaleR_right k0)
+    show ?thesis unfolding arg tsym by (simp add: matrix_vector_mult_scaleR k0)
   qed
   \<comment> \<open>slot 2: the quadratic \<open>-|z - y\<^sub>0|\<^sup>2\<close>, whose kill is \<open>tanpU_kill\<close>\<close>
   have kill2: "transpose (SF z) *v ((-2) *\<^sub>R (x - y\<^sub>0)
@@ -633,10 +621,10 @@ proof -
   proof -
     have arg: "(-2) *\<^sub>R (x - y\<^sub>0) + ((-2::real) *\<^sub>R mat 1) *v (z - x)
         = (-2) *\<^sub>R (z - y\<^sub>0)"
-      unfolding scaleR_matrix_vector by (simp add: algebra_simps)
+      unfolding scaleR_matrix_vector_assoc[symmetric] by (simp add: algebra_simps)
     have k0: "SF z *v (z - y\<^sub>0) = 0"
       unfolding SF_def by (rule tanpU_kill[OF Psym Pidem rho0 farRO[OF z]])
-    show ?thesis unfolding arg tsym matvec_scaleR_right k0 by simp
+    show ?thesis unfolding arg tsym matrix_vector_mult_scaleR k0 by simp
   qed
   have sqRO: "SF z ** transpose (SF z)
       = tanpU (projmat b m) (uvecV (projmat b m) \<rho> (z - y\<^sub>0))"
@@ -668,7 +656,7 @@ proof -
   have trRO: "trace ((c' *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))
       = c' * (real m - 1)"
     if z: "z \<in> RO" for z c'
-    by (simp add: scaleR_matrix_mult trace_scaleR trSF[OF z])
+    by (simp add: scalar_matrix_assoc[symmetric] trace_scaleR trSF[OF z])
   have trP: "trace (((2::real) *\<^sub>R projmat b m) ** (SF z ** transpose (SF z)))
       = 2 * (real m - 1)" if z: "z \<in> RO" for z
   proof -
@@ -677,7 +665,7 @@ proof -
       unfolding sqRO[OF z]
       by (rule tanpU_absorb[OF Pidem uvecV_fix[OF Pidem]])
     show ?thesis
-      by (simp add: scaleR_matrix_mult ab trace_scaleR trSF[OF z])
+      by (simp add: scalar_matrix_assoc[symmetric] ab trace_scaleR trSF[OF z])
   qed
   have sym1: "transpose ((2::real) *\<^sub>R projmat b m)
       = (2::real) *\<^sub>R projmat b m"
@@ -731,11 +719,11 @@ proof -
             \<le> ((-2) *\<^sub>R a) \<bullet> d + (1/2) * (d \<bullet> (((-2::real) *\<^sub>R mat 1) *v d))"
           using elim t0 tT inb' unfolding a_def d_def by blast+
         have e3: "d \<bullet> (((2::real) *\<^sub>R projmat b m) *v d) = 2 * (d \<bullet> (projmat b m *v d))"
-          by (simp add: scaleR_matrix_vector)
+          by (simp add: scaleR_matrix_vector_assoc[symmetric])
         have negmv: "\<And>A :: real^'n^'n. (- A) *v d = - (A *v d)"
           by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
         have e4: "d \<bullet> (((-2::real) *\<^sub>R mat 1) *v d) = - 2 * (d \<bullet> d)"
-          by (simp add: negmv scaleR_matrix_vector)
+          by (simp add: negmv scaleR_matrix_vector_assoc[symmetric])
         have id1: "t * (2 * (real m - 1)) / 2 = t * (real m - 1)" by simp
         have id2: "t * (- 2 * (real m - 1)) / 2 = - (t * (real m - 1))"
           by (simp add: field_simps)
@@ -748,18 +736,18 @@ proof -
           using inner_transpose_matrix[of a "projmat b m" d] unfolding Psym Pa .
         have dPd: "(projmat b m *v d) \<bullet> (projmat b m *v d)
             = d \<bullet> (projmat b m *v d)"
-          by (rule proj_inner_self'[OF Psym Pidem, symmetric])
+          by (rule proj_quadform_self[unfolded is_proj_def, OF conjI[OF Psym Pidem], symmetric])
         have ft: "fst (\<omega> t) - y\<^sub>0 = a + d" unfolding a_def d_def by simp
         have projsplit: "(norm (projmat b m *v (fst (\<omega> t) - y\<^sub>0)))\<^sup>2
             = (norm a)\<^sup>2 + (2 * (a \<bullet> d) + d \<bullet> (projmat b m *v d))"
-          unfolding ft matvec_add_right Pa power2_norm_eq_inner
+          unfolding ft matrix_vector_right_distrib Pa power2_norm_eq_inner
           using aPd dPd by (simp add: inner_add_left inner_add_right inner_commute)
         have split: "(norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2 = (norm a)\<^sup>2 + (2 * (a \<bullet> d) + d \<bullet> d)"
           unfolding ft power2_norm_eq_inner
           by (simp add: inner_add_left inner_add_right inner_commute)
         have ple: "(norm (projmat b m *v (fst (\<omega> t) - y\<^sub>0)))\<^sup>2
             \<le> (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2"
-          by (intro power_mono proj_norm_le[OF Psym Pidem]) simp
+          by (intro power_mono is_proj_norm_le[unfolded is_proj_def, OF conjI[OF Psym Pidem]]) simp
         show "(norm (projmat b m *v (fst (\<omega> t) - y\<^sub>0)))\<^sup>2
               = (norm (x - y\<^sub>0))\<^sup>2 + t * (real m - 1)
             \<and> (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + t * (real m - 1)"

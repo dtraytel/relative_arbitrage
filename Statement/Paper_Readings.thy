@@ -96,6 +96,55 @@ proof -
 qed
 
 
+subsection \<open>On semicontinuous functions the envelopes are invisible\<close>
+
+text \<open>Definition 3.1 asks the subsolution property of the upper envelope of \<open>u\<close>
+  and the supersolution property of its lower envelope, both taken within \<open>K\<close>.
+  The statement of Theorem 1.1 asks the former of \<open>v\<close> itself: \<open>v\<close> is upper
+  semicontinuous, and for such a function the upper envelope within \<open>K\<close>,
+  \<open>- lsc_envK K (- u)\<close>, is the function on \<open>K\<close>, so the two readings of the
+  subsolution clause agree.  The same holds for the supersolution clause and
+  a function lower semicontinuous on \<open>K\<close>.  Neither clause loses anything by
+  being stated as in the paper.\<close>
+
+theorem supersol_envelope_invisible:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. y \<in> K \<Longrightarrow> Bl \<le> u y" and sub: "\<Omega> \<subseteq> K"
+    and lsc: "\<And>x c. x \<in> K \<Longrightarrow> c < u x \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist x y < e \<longrightarrow> c < u y"
+  shows "visc_supersol_env2 k L K \<Omega> (lsc_envK K u) \<longleftrightarrow> visc_supersol_env2 k L K \<Omega> u"
+proof -
+  have eq: "lsc_envK K u y = u y" if "y \<in> K" for y
+    by (rule lsc_envK_eq_self[OF B that lsc[OF that]])
+  show ?thesis
+    unfolding visc_supersol_env2_def
+    by (simp add: eq subsetD[OF sub] cong: ball_cong)
+qed
+
+theorem subsol_envelope_invisible:
+  fixes u :: "real^'n::finite \<Rightarrow> real"
+  assumes B: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu" and sub: "\<Omega> \<subseteq> K"
+    and usc: "\<And>x c. x \<in> K \<Longrightarrow> u x < c \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist x y < e \<longrightarrow> u y < c"
+  shows "visc_subsol_env2 k L K \<Omega> (\<lambda>x. - lsc_envK K (\<lambda>y. - u y) x)
+     \<longleftrightarrow> visc_subsol_env2 k L K \<Omega> u"
+proof -
+  have eq: "- lsc_envK K (\<lambda>y. - u y) x = u x" if x: "x \<in> K" for x
+  proof -
+    have "lsc_envK K (\<lambda>y. - u y) x = - u x"
+    proof (rule lsc_envK_eq_self[OF _ x])
+      show "- Bu \<le> - u y" if "y \<in> K" for y
+        using B[OF that] by simp
+      show "\<exists>e>0. \<forall>y\<in>K. dist x y < e \<longrightarrow> c < - u y" if "c < - u x" for c
+        using usc[OF x, of "- c"] that by force
+    qed
+    then show ?thesis
+      by simp
+  qed
+  show ?thesis
+    unfolding visc_subsol_env2_def
+    by (simp add: eq subsetD[OF sub] cong: ball_cong)
+qed
+
+
 section \<open>The expandability hypothesis: the paper's indexed family\<close>
 
 text \<open>Theorem 1.1 asks for maps \<open>T\<^sub>\<iota>\<close>, \<open>\<iota> \<in> (1,2]\<close>, each a composition of a
@@ -637,7 +686,7 @@ proof (cases "\<exists>i j. i \<noteq> j \<and> a $ i $ j \<noteq> 0")
     show "axis i 1 \<bullet> axis j (1::real) = 0"
       using ij by (simp add: inner_axis_axis)
     show "axis i 1 \<bullet> (a *v axis j 1) \<noteq> 0"
-      using ij by (simp add: inner_axis_one matrix_vector_axis_one)
+      using ij by (simp add: inner_axis' matrix_vector_mult_basis column_def)
     show "\<forall>k. k \<noteq> i \<longrightarrow> k \<noteq> j \<longrightarrow>
         axis j 1 $ k = 0 \<and> axis j 1 $ k = 0 \<and> axis i (1::real) $ k = 0"
       by (simp add: axis_def)
@@ -667,8 +716,8 @@ next
       using \<open>i \<noteq> j\<close> by (simp add: inner_add_right inner_diff_left inner_axis_axis)
     show "(axis i 1 - axis j 1) \<bullet> (a *v (axis i 1 + axis j (1::real))) \<noteq> 0"
       using ij off[OF \<open>i \<noteq> j\<close>] off[of j i] \<open>i \<noteq> j\<close>
-      by (simp add: matrix_vector_right_distrib inner_diff_left inner_axis_one
-          matrix_vector_axis_one)
+      by (simp add: matrix_vector_right_distrib inner_diff_left inner_axis'
+          matrix_vector_mult_basis column_def)
     show "\<forall>k. k \<noteq> i \<longrightarrow> k \<noteq> j \<longrightarrow> (axis i 1 + axis j (1::real)) $ k = 0 \<and>
         axis i (1::real) $ k = 0 \<and> (axis i 1 - axis j (1::real)) $ k = 0"
       by (simp add: axis_def)

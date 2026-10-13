@@ -100,8 +100,6 @@ text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, at the marke
 
 section \<open>Diagonal entries under the eigenvalue constraints\<close>
 
-text \<open>\<open>diag_entry_quadform\<close> lives in \<open>Matrix_Algebra\<close>.\<close>
-
 
 text \<open>Approaching a time from below.  An inequality between two
   functions continuous on \<open>[0, c]\<close> that holds on a set \<open>S \<subseteq> (0, t)\<close>
@@ -396,7 +394,7 @@ lemma psd_diag_nonneg:
   fixes a :: "real^'m::finite^'m"
   assumes "psd a"
   shows "0 \<le> a $ l $ l"
-  using assms diag_entry_quadform[where a = a and l = l]
+  using assms diag_eq_inner_axis[where a = a and i = l, symmetric]
   by (auto simp: psd_def dest: spec[of _ "axis l 1"])
 
 theorem etime_shift_box_half:
@@ -648,7 +646,7 @@ proof -
       by (intro continuous_intros)
     have mv: "continuous_on A (\<lambda>y :: real^'n. M *v (y - x))"
       by (rule continuous_on_compose2[OF
-          linear_continuous_on[OF matvec_blin] d]) auto
+          linear_continuous_on[OF matrix_vector_mul_bounded_linear] d]) auto
     show ?thesis by (intro continuous_intros mv)
   qed
   show ?thesis
@@ -708,7 +706,7 @@ proof -
   ultimately show ?thesis by (simp add: vec_eq_iff)
 qed
 
-text \<open>\<open>matmul_scaleR_right\<close>, \<open>sandwich_mat1\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>sandwich_mat1\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 lemma outerp_scale_self:
   fixes u :: "real^'n::finite"
@@ -744,21 +742,7 @@ lemma trace_mult_outerp_sum:
   fixes M :: "real^'n::finite^'n" and w :: "'b \<Rightarrow> real^'n" and F :: "'b set"
   assumes finF: "finite F"
   shows "trace (M ** (\<Sum>u\<in>F. outerp (w u))) = (\<Sum>u\<in>F. w u \<bullet> (M *v w u))"
-  using finF
-proof (induction F)
-  case empty
-  show ?case by (simp add: trace_mult_zero_right trace_def)
-next
-  case (insert u F)
-  have "trace (M ** (\<Sum>v\<in>insert u F. outerp (w v)))
-      = trace (M ** (outerp (w u) + (\<Sum>v\<in>F. outerp (w v))))"
-    using insert.hyps by simp
-  also have "\<dots> = trace (M ** outerp (w u))
-      + trace (M ** (\<Sum>v\<in>F. outerp (w v)))"
-    by (rule trace_mult_add)
-  finally show ?case
-    using insert by (simp add: trace_mult_outerp)
-qed
+  by (simp add: matrix_mult_sum_right trace_matrix_sum trace_mult_outerp)
 
 subsection \<open>The constant-volatility Gaussian member\<close>
 
@@ -1182,7 +1166,7 @@ proof (rule order.antisym)
         < min (ess_inf_time M g) (ennreal c)" by (rule not_le_imp_less)
     then obtain b where b1: "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) < b"
       and b2: "b < min (ess_inf_time M g) (ennreal c)"
-      using ennreal_strict_between by blast
+      using dense by blast
     from b2 have bg: "b < ess_inf_time M g"
       by (rule order.strict_trans2[OF _ min.cobounded1])
     from b2 have bc: "b < ennreal c"

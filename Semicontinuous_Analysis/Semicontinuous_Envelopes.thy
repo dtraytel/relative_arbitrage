@@ -232,10 +232,10 @@ proof -
   then show ?thesis unfolding usc_env_def by linarith
 qed
 
-lemma usc_env_eq_self:
+lemma usc_env_eq_at:
   fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. u y \<le> B"
-    and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+    and usc: "\<And>c. u x < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist x y < e \<longrightarrow> u y < c"
   shows "usc_env u x = u x"
 proof (rule antisym)
   show "usc_env u x \<le> u x"
@@ -260,6 +260,12 @@ proof (rule antisym)
   show "u x \<le> usc_env u x" by (rule usc_env_ge_self[OF B])
 qed
 
+lemma usc_env_eq_self:
+  fixes u :: "'a::metric_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B"
+    and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+  shows "usc_env u x = u x"
+  by (rule usc_env_eq_at[OF B usc])
 
 text \<open>The property the envelope exists for: arbitrarily near \<open>x\<close> there
   are points where \<open>u\<close> is arbitrarily close to \<open>u\<^sub>*(x)\<close> from above.  This
@@ -289,39 +295,44 @@ proof -
   qed
 qed
 
-text \<open>At a point of continuity the lower envelope is the function itself.\<close>
+text \<open>At a point of lower semicontinuity the lower envelope is the function
+  itself: the mirror image of \<open>usc_env_eq_at\<close>, since
+  \<open>usc_env (- u) = - lsc_env u\<close> by definition.  Continuity is the special case
+  used downstream.\<close>
+
+lemma lsc_env_eq_at:
+  fixes u :: "'a::metric_space \<Rightarrow> real"
+  assumes B: "\<And>y. B \<le> u y"
+    and lsc: "\<And>c. c < u x \<Longrightarrow> \<exists>e>0. \<forall>y. dist x y < e \<longrightarrow> c < u y"
+  shows "lsc_env u x = u x"
+proof -
+  have "usc_env (\<lambda>y. - u y) x = - u x"
+  proof (rule usc_env_eq_at)
+    show "- u y \<le> - B" for y using B[of y] by simp
+    show "\<exists>e>0. \<forall>y. dist x y < e \<longrightarrow> - u y < c" if "- u x < c" for c
+    proof -
+      have "- c < u x" using that by linarith
+      then obtain e where e: "0 < e" "\<And>y. dist x y < e \<Longrightarrow> - c < u y"
+        using lsc by blast
+      have "- u y < c" if "dist x y < e" for y using e(2)[OF that] by linarith
+      with e(1) show ?thesis by blast
+    qed
+  qed
+  then show ?thesis unfolding usc_env_def by simp
+qed
 
 lemma lsc_env_eq_self:
   fixes u :: "'a::metric_space \<Rightarrow> real"
   assumes B: "\<And>y. B \<le> u y" and c: "isCont u x"
   shows "lsc_env u x = u x"
-proof (rule antisym)
-  show "lsc_env u x \<le> u x" by (rule lsc_env_le_self[OF B])
-next
-  show "u x \<le> lsc_env u x"
-  proof (rule field_le_epsilon)
-    fix e :: real assume e0: "0 < e"
-    obtain d where d0: "0 < d"
-      and dd: "\<And>z. dist z x < d \<Longrightarrow> dist (u z) (u x) < e"
-      using c[unfolded continuous_at_eps_delta] e0 by blast
-    have bdd: "bdd_below (u ` ball x d)"
-      by (rule bdd_belowI[of _ B]) (use B in auto)
-    have "u x - e \<le> (INF y \<in> ball x d. u y)"
-    proof (rule cInf_greatest)
-      show "u ` ball x d \<noteq> {}" using d0 by auto
-    next
-      fix z assume "z \<in> u ` ball x d"
-      then obtain y where y: "y \<in> ball x d" and zy: "z = u y" by auto
-      have "dist y x < d" using y by (simp add: dist_commute)
-      then have "dist (u y) (u x) < e" by (rule dd)
-      then show "u x - e \<le> z" unfolding zy by (simp add: dist_real_def)
-    qed
-    also have "\<dots> \<le> lsc_env u x"
-      unfolding lsc_env_def
-      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF B]]) (use d0 in auto)
-    finally show "u x \<le> lsc_env u x + e" by linarith
-  qed
+proof (rule lsc_env_eq_at[OF B])
+  fix c assume "c < u x"
+  with c have "eventually (\<lambda>y. c < u y) (nhds x)"
+    unfolding isCont_def tendsto_at_iff_tendsto_nhds by (rule order_tendstoD(1))
+  then show "\<exists>e>0. \<forall>y. dist x y < e \<longrightarrow> c < u y"
+    unfolding eventually_nhds_metric by (auto simp: dist_commute)
 qed
+
 subsection \<open>The envelope taken within \<open>K\<close>\<close>
 
 text \<open>Definition 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> of the paper reads its lower envelope \<open>u\<^sub>*\<close> inside \<open>K\<close>:
@@ -371,6 +382,43 @@ proof -
     qed
   qed
   finally show ?thesis .
+qed
+
+text \<open>At a point of \<open>K\<close> where \<open>u\<close> is lower semicontinuous relative to \<open>K\<close>, the
+  envelope within \<open>K\<close> is the function itself; only values on \<open>K\<close> enter.\<close>
+
+lemma lsc_envK_eq_self:
+  fixes K :: "('a::metric_space) set" and u :: "'a \<Rightarrow> real"
+  assumes B: "\<And>y. y \<in> K \<Longrightarrow> Bl \<le> u y" and x: "x \<in> K"
+    and lsc: "\<And>c. c < u x \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist x y < e \<longrightarrow> c < u y"
+  shows "lsc_envK K u x = u x"
+proof -
+  have bddb: "bdd_below (u ` (ball x e \<inter> K))" for e
+    by (rule bdd_belowI[of _ Bl]) (use B in auto)
+  have le: "(INF y \<in> ball x e \<inter> K. u y) \<le> u x" if "0 < e" for e
+    by (rule cINF_lower[OF bddb]) (use that x in simp)
+  have bddA: "bdd_above ((\<lambda>e. INF y \<in> ball x e \<inter> K. u y) ` {0<..})"
+    by (rule bdd_aboveI[of _ "u x"]) (use le in auto)
+  show ?thesis
+  proof (rule antisym)
+    show "lsc_envK K u x \<le> u x"
+      unfolding lsc_envK_def by (rule cSUP_least) (use le in auto)
+    show "u x \<le> lsc_envK K u x"
+    proof (rule dense_le)
+      fix c assume "c < u x"
+      then obtain e where e: "0 < e" "\<forall>y\<in>K. dist x y < e \<longrightarrow> c < u y"
+        using lsc by blast
+      have xin: "x \<in> ball x e \<inter> K"
+        using e(1) x by simp
+      then have "ball x e \<inter> K \<noteq> {}"
+        by blast
+      then have "c \<le> (INF y \<in> ball x e \<inter> K. u y)"
+        by (rule cINF_greatest) (use e(2) in \<open>auto simp: less_imp_le\<close>)
+      also have "\<dots> \<le> lsc_envK K u x"
+        unfolding lsc_envK_def by (rule cSUP_upper[OF _ bddA]) (use e in simp)
+      finally show "c \<le> lsc_envK K u x" .
+    qed
+  qed
 qed
 
 lemma lsc_env_eq_on_interior:
@@ -454,34 +502,6 @@ proof -
     then have "- c < lsc_env (\<lambda>w. - u w) y" using ey by blast
     then show "usc_env u y < c" unfolding usc_env_def by simp
   qed
-qed
-
-lemma usc_env_eq_at:
-  fixes u :: "'a::metric_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> B"
-    and usc: "\<And>c. u x < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist x y < e \<longrightarrow> u y < c"
-  shows "usc_env u x = u x"
-proof (rule antisym)
-  show "usc_env u x \<le> u x"
-  proof (rule ccontr)
-    assume "\<not> usc_env u x \<le> u x"
-    then have lt: "u x < usc_env u x" by simp
-    define cc where "cc = (u x + usc_env u x) / 2"
-    have cc2: "2 * cc = u x + usc_env u x" unfolding cc_def by simp
-    have c1: "u x < cc" and c2: "cc < usc_env u x" using lt cc2 by linarith+
-    obtain e where e0: "0 < e" and ey: "\<forall>y. dist x y < e \<longrightarrow> u y < cc"
-      using usc[OF c1] by blast
-    have mB: "\<And>y. - B \<le> - u y" using B by simp
-    have "- cc \<le> (INF y \<in> ball x e. - u y)"
-      by (rule cInf_greatest) (use e0 ey in auto)
-    also have "\<dots> \<le> lsc_env (\<lambda>y. - u y) x"
-      unfolding lsc_env_def
-      by (rule cSup_upper[OF _ lsc_env_bdd_above[OF mB]]) (use e0 in auto)
-    finally have "- cc \<le> lsc_env (\<lambda>y. - u y) x" .
-    then have "usc_env u x \<le> cc" unfolding usc_env_def by linarith
-    then show False using c2 by linarith
-  qed
-  show "u x \<le> usc_env u x" by (rule usc_env_ge_self[OF B])
 qed
 
 definition Kext ::

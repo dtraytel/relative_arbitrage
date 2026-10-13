@@ -207,43 +207,7 @@ lemma onormal_sum_suff_volatile:
   fixes T :: "(real^'n) set"
   assumes T: "onormal T" and cardT: "card T = CARD('n) - k"
   shows "(\<Sum>u\<in>T. outer_prod u u) \<in> suff_volatile k"
-proof -
-  define b where "b = (\<Sum>u\<in>T. outer_prod u u)"
-  have bmv: "b *v x = (\<Sum>u\<in>T. (u \<bullet> x) *\<^sub>R u)" for x
-    by (simp add: b_def matrix_vector_mult_sum)
-  have quad: "x \<bullet> (b *v x) = (\<Sum>u\<in>T. (u \<bullet> x)\<^sup>2)" for x
-    by (simp add: bmv inner_sum_right power2_eq_square inner_commute)
-  have psd_b: "psd b"
-    unfolding psd_def
-  proof (intro conjI allI)
-    show "transpose b = b"
-      by (simp add: b_def transpose_matrix_sum)
-  next
-    show "0 \<le> x \<bullet> (b *v x)" for x
-      by (simp add: quad sum_nonneg)
-  qed
-  have lb_b: "eigen_lb b (CARD('n) - k)"
-    unfolding eigen_lb_def
-  proof (intro exI[of _ "span T"] conjI ballI)
-    show "subspace (span T)"
-      by (rule subspace_span)
-    have "independent T"
-      by (rule onormal_independent[OF T])
-    then have "dim (span T) = card T"
-      by (simp add: dim_eq_card_independent)
-    then show "CARD('n) - k \<le> dim (span T)"
-      by (simp add: cardT)
-    fix x assume x: "x \<in> span T"
-    have "x \<bullet> x = (\<Sum>u\<in>T. (u \<bullet> x) *\<^sub>R u) \<bullet> (\<Sum>u\<in>T. (u \<bullet> x) *\<^sub>R u)"
-      by (simp add: onormal_expand[OF T x])
-    also have "\<dots> = (\<Sum>u\<in>T. (u \<bullet> x)\<^sup>2)"
-      by (simp add: onormal_inner_sums[OF T] power2_eq_square)
-    finally show "x \<bullet> x \<le> x \<bullet> (b *v x)"
-      by (simp add: quad)
-  qed
-  show ?thesis
-    using psd_b lb_b by (simp add: b_def[symmetric] suff_volatile_def)
-qed
+  using onormal_outer_sum_props(1,2)[OF T] cardT by (simp add: suff_volatile_def)
 
 lemma suff_volatile_augment:
   fixes b :: "real^'n^'n"
@@ -254,7 +218,7 @@ proof -
     using b by (auto simp: suff_volatile_def)
   have quad_add: "x \<bullet> ((b + t *\<^sub>R outer_prod u u) *v x)
       = x \<bullet> (b *v x) + t * (u \<bullet> x)\<^sup>2" for x
-    by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector
+    by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector_assoc[symmetric]
         inner_add_right power2_eq_square
         inner_commute mult_ac)
   have psd': "psd (b + t *\<^sub>R outer_prod u u)"

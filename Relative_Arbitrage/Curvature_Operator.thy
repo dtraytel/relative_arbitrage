@@ -69,7 +69,7 @@ proof -
   proof -
     have sym: "transpose a = a" using that by (simp add: feasible_def psd_def)
     show ?thesis
-      by (simp add: scaleR_matrix_mult matrix_add_rdistrib trace_add trace_scaleR
+      by (simp add: scalar_matrix_assoc[symmetric] matrix_add_rdistrib trace_add trace_scaleR
             trace_transpose_mult_sym[OF sym])
   qed
   then show ?thesis unfolding ell_op_def by (intro arg_cong[where f = Inf] image_cong) auto
@@ -85,7 +85,7 @@ proof -
   have ax: "axis l 1 \<bullet> (axis l 1 :: real^'m) = 1"
     by (simp add: inner_vec_def axis_def if_distrib cong: if_cong)
   show ?thesis
-    using assms diag_entry_quadform[where a = a and l = l] ax
+    using assms diag_eq_inner_axis[where a = a and i = l, symmetric] ax
     by (auto simp: eigen_ub_def dest: spec[of _ "axis l 1"])
 qed
 
@@ -126,6 +126,32 @@ qed
 
 subsection \<open>Feasibility: projections onto \<open>(n-k)\<close>-dimensional subspaces of \<open>p\<^sup>\<bottom>\<close>\<close>
 
+text \<open>The outer-product sum of an orthonormal family \<open>T\<close> is the orthogonal
+  projection onto \<open>span T\<close>: positive semidefinite, with \<open>card T\<close> eigenvalues
+  at least \<open>1\<close>, all eigenvalues at most \<open>1\<close>, and trace \<open>card T\<close>.\<close>
+
+lemma onormal_outer_sum_props:
+  fixes T :: "(real^'n) set"
+  assumes T: "onormal T"
+  shows "psd (\<Sum>u\<in>T. outer_prod u u)"
+    and "eigen_lb (\<Sum>u\<in>T. outer_prod u u) (card T)"
+    and "eigen_ub (\<Sum>u\<in>T. outer_prod u u) 1"
+    and "trace (\<Sum>u\<in>T. outer_prod u u) = card T"
+proof -
+  have quad: "x \<bullet> ((\<Sum>u\<in>T. outer_prod u u) *v x) = (\<Sum>u\<in>T. (u \<bullet> x)\<^sup>2)" for x
+    by (simp add: matrix_vector_mult_sum inner_sum_right power2_eq_square inner_commute)
+  show "psd (\<Sum>u\<in>T. outer_prod u u)"
+    unfolding psd_def by (simp add: quad transpose_matrix_sum sum_nonneg)
+  show "eigen_lb (\<Sum>u\<in>T. outer_prod u u) (card T)"
+    unfolding eigen_lb_def
+    by (intro exI[of _ "span T"])
+      (simp add: quad onormal_span_parseval[OF T] onormal_card_dim_span[OF T])
+  show "eigen_ub (\<Sum>u\<in>T. outer_prod u u) 1"
+    unfolding eigen_ub_def by (simp add: quad onormal_bessel[OF T])
+  show "trace (\<Sum>u\<in>T. outer_prod u u) = card T"
+    using T by (simp add: trace_matrix_sum)
+qed
+
 lemma feasible_witness:
   fixes p :: "real^'n"
   assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
@@ -137,89 +163,32 @@ proof -
   text \<open>For \<open>p = 0\<close> the \<open>hyperplane\<close> is all of \<open>\<real>\<^sup>n\<close>, so the dimension bound
     holds without the nondegeneracy assumption; only the inequality is used.\<close>
   have dimH: "CARD('n) - 1 \<le> dim H"
-  proof (cases "p = 0")
-    case True
-    then have "H = UNIV"
-      by (simp add: H_def)
-    then show ?thesis
-      by simp
-  next
-    case False
-    then show ?thesis
-      by (simp add: H_def dim_hyperplane)
-  qed
+    by (cases "p = 0") (simp_all add: H_def dim_hyperplane)
   obtain B where B: "B \<subseteq> H" "pairwise orthogonal B" "\<And>x. x \<in> B \<Longrightarrow> norm x = 1"
     "independent B" "card B = dim H" "span B = H"
     using orthonormal_basis_subspace[OF subH] by metis
   have "CARD('n) - k \<le> card B"
-  proof -
-    have "CARD('n) - k \<le> CARD('n) - 1"
-      using k(1) by (rule diff_le_mono2)
-    also have "CARD('n) - 1 \<le> dim H"
-      by (rule dimH)
-    also have "dim H = card B"
-      by (rule B(5)[symmetric])
-    finally show ?thesis .
-  qed
+    using k(1) dimH B(5) by linarith
   then obtain T where T: "T \<subseteq> B" "card T = CARD('n) - k" "finite T"
     by (rule obtain_subset_with_card_n)
   have onT: "onormal T"
     using T B by (auto simp: onormal_def elim: pairwise_subset)
-  define a where "a = (\<Sum>u\<in>T. outer_prod u u)"
-  have amv: "a *v x = (\<Sum>u\<in>T. (u \<bullet> x) *\<^sub>R u)" for x
-    by (simp add: a_def matrix_vector_mult_sum)
-  have quad: "x \<bullet> (a *v x) = (\<Sum>u\<in>T. (u \<bullet> x)\<^sup>2)" for x
-    by (simp add: amv inner_sum_right power2_eq_square inner_commute)
-  have psd_a: "psd a"
-    unfolding psd_def
-  proof (intro conjI allI)
-    show "transpose a = a"
-      by (simp add: a_def transpose_matrix_sum)
-  next
-    show "0 \<le> x \<bullet> (a *v x)" for x
-      by (simp add: quad sum_nonneg)
-  qed
-  have ap: "a *v p = 0"
-  proof -
-    have "u \<bullet> p = 0" if "u \<in> T" for u
-      using that T(1) B(1) by (auto simp: H_def inner_commute)
-    then show ?thesis
-      by (simp add: amv)
-  qed
-  have lb_a: "eigen_lb a (CARD('n) - k)"
-    unfolding eigen_lb_def
-  proof (intro exI[of _ "span T"] conjI ballI)
-    show "subspace (span T)" by (rule subspace_span)
-    have "independent T"
-      using onT by (intro pairwise_orthogonal_independent) (auto simp: onormal_def)
-    then have "dim (span T) = card T"
-      by (simp add: dim_eq_card_independent)
-    then show "CARD('n) - k \<le> dim (span T)"
-      by (simp add: T(2))
-    fix x assume x: "x \<in> span T"
-    have "x \<bullet> x = (\<Sum>u\<in>T. (u \<bullet> x) *\<^sub>R u) \<bullet> (\<Sum>u\<in>T. (u \<bullet> x) *\<^sub>R u)"
-      by (simp add: onormal_expand[OF onT x])
-    also have "\<dots> = (\<Sum>u\<in>T. (u \<bullet> x)\<^sup>2)"
-      by (simp add: onormal_inner_sums[OF onT] power2_eq_square)
-    finally show "x \<bullet> x \<le> x \<bullet> (a *v x)"
-      by (simp add: quad)
-  qed
-  have ub_a: "eigen_ub a L"
+  have "(\<Sum>u\<in>T. outer_prod u u) *v p = 0"
+    using T(1) B(1)
+    by (auto simp: H_def matrix_vector_mult_sum inner_commute intro!: sum.neutral)
+  moreover have "eigen_ub (\<Sum>u\<in>T. outer_prod u u) L"
     unfolding eigen_ub_def
-  proof (intro allI)
+  proof
     fix x :: "real^'n"
-    have "x \<bullet> (a *v x) \<le> x \<bullet> x"
-      by (simp add: quad onormal_bessel[OF onT])
+    have "x \<bullet> ((\<Sum>u\<in>T. outer_prod u u) *v x) \<le> x \<bullet> x"
+      using onormal_outer_sum_props(3)[OF onT] by (simp add: eigen_ub_def)
     also have "\<dots> \<le> L * (x \<bullet> x)"
-      using L by (simp add: mult_right_mono
-          [of 1 L "x \<bullet> x", simplified])
-    finally show "x \<bullet> (a *v x) \<le> L * (x \<bullet> x)" .
+      using L by (simp add: mult_right_mono[of 1 L "x \<bullet> x", simplified])
+    finally show "x \<bullet> ((\<Sum>u\<in>T. outer_prod u u) *v x) \<le> L * (x \<bullet> x)" .
   qed
-  have tr_a: "trace a = real (CARD('n) - k)"
-    using onT by (simp add: a_def trace_matrix_sum T(2))
-  show thesis
-    by (rule that[of a])
-      (use psd_a ap lb_a ub_a tr_a in \<open>auto simp: feasible_def\<close>)
+  ultimately show thesis
+    using onormal_outer_sum_props[OF onT] T(2)
+    by (intro that[of "\<Sum>u\<in>T. outer_prod u u"]) (auto simp: feasible_def)
 qed
 
 subsection \<open>The candidate value function and its derivatives\<close>
@@ -333,7 +302,7 @@ text \<open>\<open>test_fun_at\<close>, \<open>visc_subsol\<close>, \<open>visc_
 
 subsection \<open>First- and second-order conditions at interior minima\<close>
 
-text \<open>\<open>local_min_gradient_zero\<close>, \<open>local_min_hessian_psd\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>local_min_gradient_zero\<close>, \<open>local_min_hessian_psd\<close> live in \<open>Sup_Convolution\<close>.\<close>
 
 
 (*<*)

@@ -1664,7 +1664,7 @@ proof -
     have "(\<lambda>i. As (r i) *v v) \<longlonglongrightarrow> A *v v"
       by (rule vec_tendstoI) (rule comp)
     moreover have "As n *v v = Fs n v" for n
-      unfolding As_def by (rule matrix_vec_apply[OF lin])
+      unfolding As_def by (rule fun_cong[OF matrix_vector_mul(2)[OF lin]])
     ultimately show ?thesis unfolding F_def by simp
   qed
   have symF: "a \<bullet> F b = b \<bullet> F a" for a b

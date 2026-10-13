@@ -81,7 +81,7 @@ proof (intro ballI allI impI)
   proof -
     have "T z - b = c *\<^sub>R (R *v z)" unfolding T_def by simp
     then have "transpose R *v (T z - b) = c *\<^sub>R (transpose R *v (R *v z))"
-      by (simp add: matvec_scaleR_right)
+      by (simp add: matrix_vector_mult_scaleR)
     also have "transpose R *v (R *v z) = z"
       using orth unfolding orthogonal_matrix_def
       by (metis matrix_vector_mul_assoc matrix_vector_mul_lid)
@@ -316,9 +316,11 @@ proof (rule ccontr)
   have uscut: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> ut y < c" if lt: "ut z < c" for c z
   proof -
     have lt': "(if z \<in> K then u z else C) < c" using lt unfolding ut_def .
+    have uK: "\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
+      if "u z < c" for z c using uscu[OF that] by blast
+    have CK: "C \<le> u y" if "y \<in> K" for y using loK[OF that] CleB by linarith
     have "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> (if y \<in> K then u y else C) < c"
-      by (rule usc_extend_const_below
-          [OF compact_imp_closed[OF cK] uscu loK CleB lt'])
+      by (rule usc_extend_rel[OF compact_imp_closed[OF cK] uK CK lt'])
     then show ?thesis unfolding ut_def .
   qed
   have uut: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> \<theta> * ut y < c"
@@ -583,8 +585,9 @@ proof -
     define w' where "w' = (\<lambda>Y. c\<^sup>2 * w (S Y))"
     have c0: "0 < c" using c1 by linarith
     have c2: "0 < c\<^sup>2" using c0 by simp
-    have ST: "S (T z) = z" for z unfolding S_def T_def by (rule affine_inv_left[OF orth c0])
-    have TS: "T (S Y) = Y" for Y unfolding S_def T_def by (rule affine_inv_right[OF orth c0])
+    have ST: "S (T z) = z" for z
+      using c0 orth unfolding S_def T_def orthogonal_matrix_def
+      by (simp add: matrix_vector_mult_scaleR matrix_vector_mul_assoc del: transpose_matrix_vector)
 
     text \<open>\<open>T ` K\<close> is compact and contains \<open>K\<close> in its interior.\<close>
     have contT: "continuous_on UNIV T"

@@ -82,21 +82,6 @@ proof -
   show ?thesis by (intro that[of "- B"]) (use B abs_le_D2 in fastforce)
 qed
 
-text \<open>The affine gradient field of a quadratic has the same derivative at every
-  point, not just at the base point, which is what a Hessian \<^emph>\<open>field\<close> needs.\<close>
-
-lemma quadratic_grad_derivative_at:
-  fixes H :: "real^'n::finite^'n" and p x y :: "real^'n"
-  shows "((\<lambda>z. p + H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at y)"
-proof -
-  have blH: "bounded_linear ((*v) H)" by (rule matrix_vector_mul_bounded_linear)
-  have shift: "((\<lambda>z::real^'n. z - x) has_derivative (\<lambda>h. h)) (at y)"
-    by (auto intro!: derivative_eq_intros)
-  have "((\<lambda>z. H *v (z - x)) has_derivative (\<lambda>h. H *v h)) (at y)"
-    using bounded_linear.has_derivative[OF blH shift] by simp
-  then show ?thesis by (auto intro!: derivative_eq_intros)
-qed
-
 text \<open>Freezing one variable at the joint maximiser gives the two conditions
   the doubling argument needs: freezing \<open>y = yh\<close> makes \<open>xh\<close> a maximiser of
   \<open>u\<close> against \<open>x \<mapsto> (\<alpha>/2) \<parallel>x - yh\<parallel>\<^sup>2\<close>, and freezing \<open>x = xh\<close> makes \<open>yh\<close> a
@@ -285,7 +270,7 @@ proof -
     have yz: "yh + (z - yh) = z" by simp
     have negq: "(z - yh) \<bullet> ((- A) *v (z - yh))
         = - ((z - yh) \<bullet> (A *v (z - yh)))"
-      by (simp add: matrix_vector_neg_left)
+      by (simp add: neg_matrix_vector)
     from b[OF nk] have h:
       "- v z - (- (p \<bullet> (z - yh))
           + ((z - yh) \<bullet> ((- A) *v (z - yh)))/2
@@ -327,7 +312,7 @@ proof -
     = R (fst k - snd k)" for k
   proof -
     have mvd: "Z *v (snd k - fst k) = - (Z *v (fst k - snd k))"
-      by (simp add: matrix_vector_mult_diff_gen)
+      by (simp add: matrix_vector_mult_diff_distrib)
     have e: "fst (zh + k) - snd (zh + k)
         = (fst zh - snd zh) + (fst k - snd k)"
       by simp
@@ -621,7 +606,7 @@ proof -
   define g0 where "g0 = ((G, - G) :: (real^'n) \<times> (real^'n))"
   have scPop: "Pop (s *\<^sub>R u) = s *\<^sub>R Pop u" for s :: real and u
     unfolding Pop_def
-    by (simp add: scaleR_diff_right[symmetric] matvec_scaleR_right)
+    by (simp add: scaleR_diff_right[symmetric] matrix_vector_mult_scaleR)
   have scWP: "WP (s *\<^sub>R u) = s *\<^sub>R WP u" for s :: real and u
     unfolding WP_def scW scPop by (simp add: scaleR_add_right)
   have penlim: "((\<lambda>k. (Pn (fst (zh + k) - snd (zh + k))
@@ -824,7 +809,7 @@ proof -
   have wsym: "v \<bullet> fst (W (z, 0)) = z \<bullet> fst (W (v, 0))"
     unfolding w1 w2 by (rule symW)
   have zsym: "v \<bullet> (Z *v z) = z \<bullet> (Z *v v)"
-    by (rule inner_matrix_sym[OF symZ])
+    by (rule sym_inner_swap[OF symZ])
   show ?thesis
     using wsym zsym by (simp add: inner_add_right)
 qed
@@ -844,7 +829,7 @@ proof -
   have wsym: "v \<bullet> snd (W (0, z)) = z \<bullet> snd (W (0, v))"
     unfolding w1 w2 by (rule symW)
   have zsym: "v \<bullet> (Z *v z) = z \<bullet> (Z *v v)"
-    by (rule inner_matrix_sym[OF symZ])
+    by (rule sym_inner_swap[OF symZ])
   have l: "v \<bullet> (- (snd (W (0, z)) + Z *v z))
       = - (v \<bullet> snd (W (0, z))) - (v \<bullet> (Z *v z))"
     by (simp add: inner_add_right inner_diff_right)
@@ -1330,8 +1315,7 @@ proof -
     using doubled_jet_slice_snd[OF expPsi] unfolding q0 by simp
 qed
 
-text \<open>\<open>matrix_apply_eq\<close> is \<open>matrix_vec_apply\<close> from
-  @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}.\<close>
+text \<open>\<open>matrix_apply_eq\<close> is HOL-Analysis's \<open>matrix_vector_mul\<close>.\<close>
 
 text \<open>A second way to absorb Jensen's tilt, which removes the limit rather than
   controlling it: at an interior maximum of the tilted functional, the
@@ -1606,45 +1590,6 @@ proof -
     by (rule tendsto_mult[OF t0 tendsto_const])
   then show "(\<lambda>i. D\<^sub>0/(2 + real i) * \<rho>\<^sup>2 / (4*r)) \<longlonglongrightarrow> 0"
     by simp
-qed
-
-text \<open>Extending an usc \<open>u\<close> off a closed \<open>K\<close> by a constant at or below its
-  minimum on \<open>K\<close> keeps it usc; \<open>usc_extension_bounded\<close> in the
-  \<open>Semicontinuous_Analysis\<close> session does the \<open>-B\<close> case, needed as negative
-  as required so the doubled functional cannot be maximised off \<open>K\<close>.\<close>
-
-lemma usc_extend_const_below:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real" and K :: "('a) set"
-  assumes cl: "closed K"
-    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
-    and lo: "\<And>y. y \<in> K \<Longrightarrow> Bl \<le> u y" and CB: "C \<le> Bl"
-    and lt: "(if z \<in> K then u z else C) < c"
-  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> (if y \<in> K then u y else C) < c"
-proof (cases "z \<in> K")
-  case True
-  then have uz: "u z < c" using lt by simp
-  have Cc: "C < c" using CB lo[OF True] uz by linarith
-  obtain e where e0: "0 < e" and h: "\<And>y. dist z y < e \<Longrightarrow> u y < c"
-    using uscu[OF uz] by blast
-  show ?thesis
-  proof (rule exI[of _ e], intro conjI allI impI e0)
-    fix y assume "dist z y < e"
-    then show "(if y \<in> K then u y else C) < c" using h Cc by simp
-  qed
-next
-  case False
-  then have Cc: "C < c" using lt by simp
-  have opn: "open (- K)" using cl by (rule open_Compl)
-  have zin: "z \<in> - K" using False by simp
-  obtain e where e0: "0 < e" and bl: "ball z e \<subseteq> - K"
-    using opn zin unfolding open_contains_ball by blast
-  show ?thesis
-  proof (rule exI[of _ e], intro conjI allI impI e0)
-    fix y assume dy: "dist z y < e"
-    then have "y \<in> ball z e" by (simp add: dist_commute)
-    then have "y \<notin> K" using bl by blast
-    then show "(if y \<in> K then u y else C) < c" using Cc by simp
-  qed
 qed
 
 text \<open>The two-domain localised maximiser drops the \<open>x\<close>-side boundary
@@ -2249,7 +2194,7 @@ lemma block_fst_matrix_apply_gen:
   assumes blW: "bounded_linear W"
   shows "matrix (\<lambda>v. fst (W (v, 0)) + Z *v v) *v h
        = fst (W (h, 0)) + Z *v h"
-  by (rule matrix_vec_apply[OF linear_block_fst_gen[OF blW]])
+  by (rule fun_cong[OF matrix_vector_mul(2)[OF linear_block_fst_gen[OF blW]]])
 
 lemma block_snd_matrix_apply_gen:
   fixes W :: "(real^'n::finite) \<times> (real^'n) \<Rightarrow> (real^'n) \<times> (real^'n)"
@@ -2262,9 +2207,9 @@ proof -
     by (rule linear_block_snd_gen[OF blW])
   have "(- matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v))) *v h
       = - (matrix (\<lambda>v. - (snd (W (0, v)) + Z *v v)) *v h)"
-    by (rule matrix_vector_neg_left)
+    by (rule neg_matrix_vector)
   also have "\<dots> = - (- (snd (W (0, h)) + Z *v h))"
-    using matrix_vec_apply[OF l] by simp
+    using fun_cong[OF matrix_vector_mul(2)[OF l]] by simp
   finally show ?thesis by simp
 qed
 
@@ -2769,16 +2714,12 @@ text \<open>The matrix inequality for a general penalty adds the penalty's jet t
   diagonal rely only on \<open>P(x - y)\<close> being constant along \<open>(v,v)\<close>, true
   for any \<open>P\<close>.\<close>
 
-text \<open>\<open>matvec_scaleR_right\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 text \<open>\<open>sums_matrix_inequality_gen\<close>, \<open>sums_gives_ordering_gen\<close>, \<open>sums_ordering_at_interior_max_gen\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
 
 text \<open>Block linearity and symmetry with \<open>Z *v v\<close> in place of
   \<open>\<alpha> *\<^sub>R v\<close>; symmetry needs \<open>Z\<close> symmetric,
   which holds for the quartic penalty's Hessian
   \<open>\<beta>((d \<bullet> d) I + 2 d d\<^sup>T)\<close>.\<close>
-
-text \<open>\<open>inner_matrix_sym\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 text \<open>\<open>linear_block_fst_gen\<close>, \<open>linear_block_snd_gen\<close>, \<open>sym_block_fst_gen\<close>, \<open>sym_block_snd_gen\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
 
@@ -3366,8 +3307,6 @@ text \<open>The \<open>\<delta>\<close>-perturbation shifts both Hessians by the
   ordering is untouched (the shifts cancel), symmetry
   is preserved since \<open>\<delta>I\<close> is symmetric, and the norm bound degrades by
   \<open>\<bar>2\<delta>\<bar>\<parallel>I\<parallel>\<close>, a constant vanishing with \<open>\<delta>\<^sub>i\<close>.\<close>
-
-text \<open>\<open>transpose_shifted_block\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 subsection \<open>The per-index data from one Jensen application\<close>
 

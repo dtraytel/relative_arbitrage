@@ -26,11 +26,10 @@ section \<open>Elementary matrix algebra not already in the development\<close>
 text \<open>\<open>trace_conjugate\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-text \<open>\<open>matrix_vector_mult_diff\<close> and \<open>transpose_diff_matrix\<close> live in
+text \<open>\<open>transpose_diff_matrix\<close> lives in
   @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
-text \<open>\<open>scaleR_matrix_matrix_left\<close> is \<open>scaleR_matrix_mult\<close> from
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>scaleR_matrix_matrix_left\<close> is HOL-Analysis's \<open>scalar_matrix_assoc\<close>, reversed.\<close>
 
 text \<open>\<open>trace_scaleR_matrix\<close> is \<open>trace_scaleR\<close> from
   @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
@@ -69,7 +68,7 @@ proof -
         = (mat 1 - rank1proj p) *v (a *v x)"
       by (simp add: matrix_vector_mul_assoc)
     also have "\<dots> = a *v x - rank1proj p *v (a *v x)"
-      by (simp add: matrix_vector_mult_diff)
+      by (simp add: matrix_vector_mult_diff_rdistrib)
     also have "\<dots> = a *v x"
       by (simp add: rank1proj_annihilates[OF sym ap])
     finally show ?thesis .
@@ -114,7 +113,7 @@ proof -
     by (simp add: ap)
   finally have z: "trace (outer_prod p p ** a) = 0" .
   show ?thesis
-    by (simp add: rank1proj_def scaleR_matrix_mult trace_scaleR z)
+    by (simp add: rank1proj_def scalar_matrix_assoc[symmetric] trace_scaleR z)
 qed
 
 section \<open>The matrix \<open>M\<^sub>p\<close> of Eq. (3.4)\<close>
@@ -127,8 +126,6 @@ definition Mp :: "real^'n::finite \<Rightarrow> real^'n^'n \<Rightarrow> real^'n
 
 lemma Mp_zero [simp]: "Mp 0 M = M"
   by (simp add: Mp_def)
-
-text \<open>\<open>matrix_vector_mult_add\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 lemma rank1proj_apply_self:
@@ -160,7 +157,7 @@ proof -
   define c where "c = min (eigval CARD('n) M) 0"
   have Qp: "Q *v p = 0"
     unfolding Q_def
-    by (simp add: matrix_vector_mult_diff rank1proj_apply_self[OF p])
+    by (simp add: matrix_vector_mult_diff_rdistrib rank1proj_apply_self[OF p])
   have conj: "(Q ** M ** Q) *v p = 0"
   proof -
     have "(Q ** M ** Q) *v p = Q *v (M *v (Q *v p))"
@@ -175,7 +172,7 @@ proof -
   have MpQ: "Mp p M = Q ** M ** Q + c *\<^sub>R rank1proj p"
     unfolding Mp_def Q_def c_def using p by simp
   have "Mp p M *v p = (Q ** M ** Q) *v p + (c *\<^sub>R rank1proj p) *v p"
-    unfolding MpQ by (rule matrix_vector_mult_add)
+    unfolding MpQ by (rule matrix_vector_mult_add_rdistrib)
   also have "\<dots> = c *\<^sub>R p"
     using conj corr by simp
   finally show ?thesis
@@ -246,7 +243,7 @@ next
       by (simp add: QaQ)
   qed
   have corr: "trace ((c *\<^sub>R rank1proj p) ** a) = 0"
-    by (simp add: scaleR_matrix_mult trace_scaleR
+    by (simp add: scalar_matrix_assoc[symmetric] trace_scaleR
         trace_rank1proj_mult[OF ap])
   have "trace (Mp p M ** a)
       = trace ((Q ** M ** Q) ** a) + trace ((c *\<^sub>R rank1proj p) ** a)"

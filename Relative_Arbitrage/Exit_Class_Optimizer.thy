@@ -390,7 +390,7 @@ proof -
     and Nmeas: "\<And>m. Nm m \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r
         \<rightarrow>\<^sub>M count_space UNIV"
     and zclose: "\<And>m \<omega>. ?dd (z (Nm m \<omega>)) (Kr \<omega>) < (1/2)^m"
-    by (rule MC.countably_valued_approx[OF Ccpt Cne Kb Kc]) blast
+    by (rule MC.countably_valued_approx[OF MC.compact_space_imp_separable[OF Ccpt] Cne Kb Kc]) blast
   have NmQ: "Nm m \<in> Q \<rightarrow>\<^sub>M count_space UNIV" for m
   proof -
     interpret MQ0: martingale Q "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"

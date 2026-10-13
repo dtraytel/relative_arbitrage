@@ -404,13 +404,13 @@ Ky_Fan.possum_eq_sum_pos    # KEEP_API
 Ky_Fan.kyfan_minus_possum    # KEEP_API
 Ky_Fan.bracket_eq_sum    # KEEP_EVIDENCE
 Matrix_Algebra.neg_matrix_vector    # KEEP_API
-Matrix_Algebra.local_min_gradient_zero    # FIX_THEN_KEEP
-Matrix_Algebra.local_min_hessian_psd    # FIX_THEN_KEEP
+Sup_Convolution.local_min_gradient_zero    # FIX_THEN_KEEP (moved from Matrix_Algebra, phase 4)
+Sup_Convolution.local_min_hessian_psd    # FIX_THEN_KEEP (moved from Matrix_Algebra, phase 4)
 Matrix_Algebra.diag_eq_inner_axis    # KEEP_API
 Matrix_Algebra.trace_nonneg_psd    # KEEP_API
 Orthonormal_Families.trace_ge_dim    # KEEP_API
 Poincare_Separation.quadform_le_eigval_1    # KEEP_API
-Poincare_Separation.eigenbasis_containing_eigenvector    # FIX_THEN_KEEP
+Symmetric_Spectral.eigenbasis_containing_eigenvector    # FIX_THEN_KEEP
 Poincare_Separation.exists_top_eigenvector    # FIX_THEN_KEEP
 Poincare_Separation.dim_inter_ge    # KEEP_ROOT
 Poincare_Separation.quadform_ge_on_span_threshold    # KEEP_ROOT
@@ -534,7 +534,6 @@ Value_Function_Subsolution.stopped_X_mean    # KEEP_API
 Product_Brownian_Motion.bm_coordinate_pow4    # FIX_THEN_KEEP
 Product_Brownian_Motion.bm_R2_moment    # FIX_THEN_KEEP
 Value_Function_Euler_Construction.sbm_xi_mean0    # KEEP_API
-Value_Function_Supersolution_Case_2.visc_supersol_lsc_iff_env    # FIX_THEN_KEEP
 # wm_cps_small
 wr.elims    # KEEP_API
 wr.induct    # KEEP_API

@@ -121,7 +121,7 @@ proof (rule order.antisym)
       by (rule not_le_imp_less)
     then obtain b where b1: "exit_val k L S K x < b"
       and b2: "b < min (exit_val k L T K x) (ennreal S)"
-      using ennreal_strict_between by blast
+      using dense by blast
     from b2 have bT: "b < exit_val k L T K x"
       by (rule order.strict_trans2[OF _ min.cobounded1])
     from b2 have bS: "b < ennreal S"

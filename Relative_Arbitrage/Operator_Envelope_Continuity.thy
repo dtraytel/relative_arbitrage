@@ -134,11 +134,9 @@ proof -
   define C where "C = real (CARD('n) * CARD('n)) * L / 2"
   have C_pos: "0 < C"
     using L by (simp add: C_def)
-  have bound: "(SUP w \<in> ball ((0 :: real^'n), M) e. ell_op_pair k L w)
-      \<le> ereal (eq36_rhs k L M + C * e)" for e
-  proof (rule SUP_least)
-    fix w :: "(real^'n) \<times> (real^'n^'n)"
-    assume w: "w \<in> ball ((0 :: real^'n), M) e"
+  have bound: "ell_op_pair k L w \<le> ereal (eq36_rhs k L M + C * e)"
+    if w: "w \<in> ball ((0 :: real^'n), M) e" for e w
+  proof -
     have dN: "norm (snd w - M) \<le> e"
     proof -
       have "dist (snd w) (snd ((0 :: real^'n), M)) \<le> dist w ((0 :: real^'n), M)"
@@ -174,23 +172,8 @@ proof -
       by (simp add: ell_op_pair_def)
   qed
   show ?thesis
-  proof (rule ereal_le_epsilon2)
-    fix d :: real assume d: "0 < d"
-    define e where "e = d / (2 * C)"
-    have e_pos: "0 < e"
-      using d C_pos by (simp add: e_def)
-    have Ce: "C * e \<le> d"
-      using C_pos d by (simp add: e_def)
-    have "ell_op_usc k L (0 :: real^'n) M
-        \<le> (SUP w \<in> ball ((0 :: real^'n), M) e. ell_op_pair k L w)"
-      unfolding ell_op_usc_def using e_pos by (intro INF_lower) simp
-    also have "\<dots> \<le> ereal (eq36_rhs k L M + C * e)"
-      by (rule bound)
-    also have "\<dots> \<le> ereal (eq36_rhs k L M) + ereal d"
-      using Ce by simp
-    finally show "ell_op_usc k L (0 :: real^'n) M
-        \<le> ereal (eq36_rhs k L M) + ereal d" .
-  qed
+    unfolding ell_op_usc_def
+    by (rule ball_env_le_of_bound[OF C_pos zero_less_one]) (use bound in blast)
 qed
 
 text \<open>Eq. (3.6) of the paper:
@@ -353,51 +336,11 @@ next
   have np: "0 < norm p"
     using p by simp
   show "ereal (ell_op k L p M) \<le> ell_op_lsc k L p M"
-  proof (rule ereal_le_epsilon2)
-    fix d :: real assume d: "0 < d"
-    define e where "e = min (d / (2 * C)) (norm p / 2)"
-    have e0: "0 < e"
-      unfolding e_def using d C0 np by simp
-    have enp: "e < norm p"
-    proof -
-      have "e \<le> norm p / 2"
-        unfolding e_def by simp
-      also have "\<dots> < norm p"
-        using np by linarith
-      finally show ?thesis .
-    qed
-    have Ce: "C * e \<le> d"
-    proof -
-      have le1: "e \<le> d / (2 * C)"
-        unfolding e_def by simp
-      have "C * e \<le> C * (d / (2 * C))"
-        by (rule mult_left_mono[OF le1]) (use C0 in simp)
-      also have "\<dots> = d / 2"
-        using C0 by simp
-      also have "\<dots> \<le> d"
-        using d by simp
-      finally show ?thesis .
-    qed
-    have "ereal (ell_op k L p M - d)
-        \<le> (INF w \<in> ball ((p :: real^'n), M) e. ell_op_pair k L w)"
-    proof (rule INF_greatest)
-      fix w :: "(real^'n) \<times> (real^'n^'n)"
-      assume w: "w \<in> ball ((p :: real^'n), M) e"
-      have "\<bar>ell_op k L (fst w) (snd w) - ell_op k L p M\<bar> \<le> C * e"
-        by (rule bnd[OF e0 enp w])
-      then have "ell_op k L p M - d \<le> ell_op k L (fst w) (snd w)"
-        using Ce by simp
-      then show "ereal (ell_op k L p M - d) \<le> ell_op_pair k L w"
-        by (simp add: ell_op_pair_def)
-    qed
-    also have "\<dots> \<le> ell_op_lsc k L p M"
-      unfolding ell_op_lsc_def using e0 by (intro SUP_upper) simp
-    finally have le: "ereal (ell_op k L p M - d) \<le> ell_op_lsc k L p M" .
-    have "ereal (ell_op k L p M) = ereal (ell_op k L p M - d) + ereal d"
-      by simp
-    also have "\<dots> \<le> ell_op_lsc k L p M + ereal d"
-      using le by (rule add_right_mono)
-    finally show "ereal (ell_op k L p M) \<le> ell_op_lsc k L p M + ereal d" .
+    unfolding ell_op_lsc_def
+  proof (rule ball_env_ge_of_bound[OF C0 np])
+    fix e w assume "0 < e" "e < norm p" "w \<in> ball (p, M) e"
+    from bnd[OF this] show "ereal (ell_op k L p M - C * e) \<le> ell_op_pair k L w"
+      by (simp add: ell_op_pair_def abs_le_iff)
   qed
 qed
 
@@ -415,48 +358,11 @@ proof (rule antisym)
   have np: "0 < norm p"
     using p by simp
   show "ell_op_usc k L p M \<le> ereal (ell_op k L p M)"
-  proof (rule ereal_le_epsilon2)
-    fix d :: real assume d: "0 < d"
-    define e where "e = min (d / (2 * C)) (norm p / 2)"
-    have e0: "0 < e"
-      unfolding e_def using d C0 np by simp
-    have enp: "e < norm p"
-    proof -
-      have "e \<le> norm p / 2"
-        unfolding e_def by simp
-      also have "\<dots> < norm p"
-        using np by linarith
-      finally show ?thesis .
-    qed
-    have Ce: "C * e \<le> d"
-    proof -
-      have le1: "e \<le> d / (2 * C)"
-        unfolding e_def by simp
-      have "C * e \<le> C * (d / (2 * C))"
-        by (rule mult_left_mono[OF le1]) (use C0 in simp)
-      also have "\<dots> = d / 2"
-        using C0 by simp
-      also have "\<dots> \<le> d"
-        using d by simp
-      finally show ?thesis .
-    qed
-    have "ell_op_usc k L p M
-        \<le> (SUP w \<in> ball ((p :: real^'n), M) e. ell_op_pair k L w)"
-      unfolding ell_op_usc_def using e0 by (intro INF_lower) simp
-    also have "\<dots> \<le> ereal (ell_op k L p M + C * e)"
-    proof (rule SUP_least)
-      fix w :: "(real^'n) \<times> (real^'n^'n)"
-      assume w: "w \<in> ball ((p :: real^'n), M) e"
-      have "\<bar>ell_op k L (fst w) (snd w) - ell_op k L p M\<bar> \<le> C * e"
-        by (rule bnd[OF e0 enp w])
-      then have "ell_op k L (fst w) (snd w) \<le> ell_op k L p M + C * e"
-        by simp
-      then show "ell_op_pair k L w \<le> ereal (ell_op k L p M + C * e)"
-        by (simp add: ell_op_pair_def)
-    qed
-    also have "\<dots> \<le> ereal (ell_op k L p M) + ereal d"
-      using Ce by simp
-    finally show "ell_op_usc k L p M \<le> ereal (ell_op k L p M) + ereal d" .
+    unfolding ell_op_usc_def
+  proof (rule ball_env_le_of_bound[OF C0 np])
+    fix e w assume "0 < e" "e < norm p" "w \<in> ball (p, M) e"
+    from bnd[OF this] show "ell_op_pair k L w \<le> ereal (ell_op k L p M + C * e)"
+      by (simp add: ell_op_pair_def abs_le_iff)
   qed
 next
   show "ereal (ell_op k L p M) \<le> ell_op_usc k L p M"
