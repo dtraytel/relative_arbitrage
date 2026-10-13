@@ -3124,7 +3124,7 @@ subsection \<open>The sup-convolution converges to its function, with a rate\<cl
 
 text \<open>Locating the doubling maximiser needs \<open>supconv u \<epsilon>\<close> close to \<open>u\<close>, not
   merely above it: \<open>supconv_ge\<close> gives \<open>u \<le> supconv u \<epsilon>\<close>, and
-  \<open>supconv_attained_ball_rad\<close> bounds the attainment radius.  With a
+  \<open>supconv_attain_radius\<close> bounds the attainment radius.  With a
   global two-sided bound \<open>B\<^sub>l \<le> u \<le> B\<^sub>u\<close> that radius is \<open>O(\<surd>\<epsilon>)\<close>
   uniformly in \<open>x\<close>, so with a modulus of continuity for \<open>u\<close>,
   \<open>supconv u \<epsilon> \<le> u + \<sigma>\<close> for every sufficiently small \<open>\<epsilon>\<close>, with no
@@ -3134,8 +3134,7 @@ text \<open>\<open>supconv_uniform_upper\<close> is false for merely usc data; w
   gives instead, matching the classical Crandall--Ishii argument, is a
   local upper bound with no continuity and no attainment: if \<open>u \<le> M\<close> on
   \<open>cball x R\<close> and the penalty already beats the global range outside it,
-  then \<open>supconv u \<epsilon> x \<le> M\<close>.  \<open>supconv_le_of_local_bound\<close> gets the same
-  conclusion via attainment, needing \<open>continuous_on UNIV u\<close>.\<close>
+  then \<open>supconv u \<epsilon> x \<le> M\<close>.\<close>
 
 lemma supconv_le_of_local_bound_usc:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"

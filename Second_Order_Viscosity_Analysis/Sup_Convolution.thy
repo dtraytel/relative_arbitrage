@@ -52,6 +52,113 @@ proof (rule cSUP_least)
   thus "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> B" using B[of y] by linarith
 qed
 
+subsection \<open>Attainment for upper semicontinuous data\<close>
+
+text \<open>The session sits on plain HOL-Analysis, so the two attainment facts
+  below are proved here rather than imported from the
+  \<open>Semicontinuous_Analysis\<close> session; they are deliberately minimal.
+  Upper semicontinuity is stated in its \<open>\<epsilon>\<close>-form.\<close>
+
+lemma usc_open_lt:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+  shows "open {y. f y < c}"
+  unfolding open_dist
+proof (intro ballI)
+  fix z assume "z \<in> {y. f y < c}"
+  then have "f z < c" by simp
+  from usc[OF this] obtain e where e: "0 < e"
+    and b: "\<And>y. dist z y < e \<Longrightarrow> f y < c" by blast
+  show "\<exists>e>0. \<forall>y. dist y z < e \<longrightarrow> y \<in> {y. f y < c}"
+    by (intro exI[of _ e] conjI e allI impI)
+      (use b in \<open>simp add: dist_commute\<close>)
+qed
+
+lemma usc_attains_sup_compact:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+    and cS: "compact S" and neS: "S \<noteq> {}"
+  shows "\<exists>z\<in>S. \<forall>y\<in>S. f y \<le> f z"
+proof (rule ccontr)
+  assume "\<not> (\<exists>z\<in>S. \<forall>y\<in>S. f y \<le> f z)"
+  then have H: "\<And>z. z \<in> S \<Longrightarrow> \<exists>z'\<in>S. f z < f z'" by force
+  have cov: "S \<subseteq> (\<Union>z'\<in>S. {y. f y < f z'})"
+    using H by blast
+  have opn: "\<And>z'. z' \<in> S \<Longrightarrow> open {y. f y < f z'}"
+    by (rule usc_open_lt[OF usc])
+  obtain T where TS: "T \<subseteq> S" and fT: "finite T"
+    and covT: "S \<subseteq> (\<Union>z'\<in>T. {y. f y < f z'})"
+    using compactE_image[OF cS opn cov] by blast
+  obtain s where sS: "s \<in> S" using neS by blast
+  have neT: "T \<noteq> {}" using covT sS by blast
+  have "Max (f ` T) \<in> f ` T"
+    by (rule Max_in) (use fT neT in auto)
+  then obtain zm where zmT: "zm \<in> T" and zmM: "Max (f ` T) = f zm"
+    by (rule imageE)
+  have zmS: "zm \<in> S" using TS zmT by blast
+  have "zm \<in> (\<Union>z'\<in>T. {y. f y < f z'})" by (rule subsetD[OF covT zmS])
+  then obtain z'' where z'': "z'' \<in> T" and lt: "f zm < f z''" by auto
+  have "f z'' \<le> Max (f ` T)" by (rule Max_ge) (use fT z'' in auto)
+  then show False using lt zmM by linarith
+qed
+
+text \<open>For bounded usc \<open>u\<close> the supremum defining \<open>supconv u \<epsilon> x\<close> is attained:
+  the competitor \<open>y \<mapsto> u y - dist\<^sup>2/(2\<epsilon>)\<close> is usc, and outside the ball of
+  radius \<open>\<surd>(max 0 (2\<epsilon>(B - u x))) + 1\<close> it is already below its value at \<open>x\<close>,
+  so its maximum over that compact ball is global.\<close>
+
+lemma supconv_attained_usc:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
+    and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> u y < c"
+  shows "\<exists>ys. supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+proof -
+  define g where "g = (\<lambda>y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
+  have gusc: "\<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> g y < c" if lt: "g z < c" for c z
+  proof -
+    define \<eta> where "\<eta> = (c - g z)/2"
+    have \<eta>: "0 < \<eta>" using lt by (simp add: \<eta>_def)
+    obtain d1 where d1: "0 < d1" "\<And>y. dist z y < d1 \<Longrightarrow> u y < u z + \<eta>"
+      using usc[of z "u z + \<eta>"] \<eta> by auto
+    have "continuous (at z) (\<lambda>y. (dist x y)\<^sup>2 / (2*\<epsilon>))"
+      by (intro continuous_intros) (use e in simp)
+    then obtain d2 where d2: "0 < d2"
+      "\<And>y. dist y z < d2 \<Longrightarrow> \<bar>(dist x y)\<^sup>2 / (2*\<epsilon>) - (dist x z)\<^sup>2 / (2*\<epsilon>)\<bar> < \<eta>"
+      using \<eta> unfolding continuous_at_eps_delta dist_real_def by blast
+    have "g y < c" if "dist z y < min d1 d2" for y
+    proof -
+      have "u y < u z + \<eta>" using d1(2)[of y] that by simp
+      moreover have "(dist x z)\<^sup>2 / (2*\<epsilon>) - \<eta> < (dist x y)\<^sup>2 / (2*\<epsilon>)"
+        using d2(2)[of y] that by (simp add: dist_commute abs_less_iff)
+      ultimately show ?thesis using \<eta>_def unfolding g_def by argo
+    qed
+    then show ?thesis using d1(1) d2(1) by (intro exI[of _ "min d1 d2"]) auto
+  qed
+  define R where "R = sqrt (max 0 (2*\<epsilon>*(B - u x))) + 1"
+  have R0: "0 < R" unfolding R_def by (simp add: add_nonneg_pos)
+  obtain ys where ysc: "ys \<in> cball x R" and mxb: "\<And>y. y \<in> cball x R \<Longrightarrow> g y \<le> g ys"
+    using usc_attains_sup_compact[OF gusc compact_cball, of x R] R0 by force
+  have glob: "g y \<le> g ys" for y
+  proof (cases "dist x y \<le> R")
+    case False
+    then have "(sqrt (max 0 (2*\<epsilon>*(B - u x))))\<^sup>2 < (dist x y)\<^sup>2"
+      unfolding R_def by (intro power_strict_mono) auto
+    then have "B - u x < (dist x y)\<^sup>2 / (2*\<epsilon>)"
+      using e by (simp add: pos_less_divide_eq mult.commute)
+    then have "g y < g x" using B[of y] unfolding g_def by simp
+    then show ?thesis using mxb[of x] R0 by simp
+  qed (simp add: mxb)
+  have "supconv u \<epsilon> x = g ys"
+    unfolding supconv_def
+  proof (rule antisym)
+    show "(SUP y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>)) \<le> g ys"
+      by (rule cSUP_least) (use glob in \<open>auto simp: g_def\<close>)
+    show "g ys \<le> (SUP y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
+      unfolding g_def by (intro cSUP_upper supconv_bdd_above[OF B e]) auto
+  qed
+  then show ?thesis unfolding g_def by blast
+qed
+
 text \<open>The sup-convolution inherits \<open>u\<close>'s Lipschitz constant exactly, for
   every \<open>\<epsilon>\<close>.\<close>
 
