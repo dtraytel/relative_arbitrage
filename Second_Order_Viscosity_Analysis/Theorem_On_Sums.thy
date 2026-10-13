@@ -33,16 +33,6 @@ text \<open>The doubled function lives on \<open>'a \<times> 'b\<close>, itself 
   to each slice, letting the single product Hessian be read as two
   separate matrices.\<close>
 
-lemma norm_Pair_right_zero:
-  fixes h :: "'a::euclidean_space"
-  shows "norm ((h, 0) :: 'a \<times> 'b::euclidean_space) = norm h"
-  by (simp add: norm_prod_def)
-
-lemma norm_Pair_left_zero:
-  fixes h :: "'b::euclidean_space"
-  shows "norm ((0, h) :: 'a::euclidean_space \<times> 'b) = norm h"
-  by (simp add: norm_prod_def)
-
 lemma expansion_restrict_fst:
   fixes \<Psi> :: "'a::euclidean_space \<times> 'b::euclidean_space \<Rightarrow> real"
   assumes exp: "((\<lambda>k. (\<Psi> (z + k) - \<Psi> z - q \<bullet> k - (k \<bullet> Z k)/2) / (norm k)\<^sup>2)
@@ -74,7 +64,7 @@ proof -
     have inn2: "(h, 0::'b) \<bullet> Z (h, 0::'b) = h \<bullet> fst (Z (h, 0::'b))"
       by (cases "Z (h, 0::'b)") simp
     show ?thesis
-      unfolding zsum inn1 inn2 norm_Pair_right_zero ..
+      unfolding zsum inn1 inn2 norm_Pair2 ..
   qed
   show ?thesis using c unfolding eq .
 qed
@@ -110,7 +100,7 @@ proof -
     have inn2: "(0::'a, h) \<bullet> Z (0::'a, h) = h \<bullet> snd (Z (0::'a, h))"
       by (cases "Z (0::'a, h)") simp
     show ?thesis
-      unfolding zsum inn1 inn2 norm_Pair_left_zero ..
+      unfolding zsum inn1 inn2 norm_Pair1 ..
   qed
   show ?thesis using c unfolding eq .
 qed
@@ -119,10 +109,10 @@ subsection \<open>Semiconvexity calculus for the doubled functional\<close>
 
 text \<open>The doubled functional
   \<open>(x,y) \<mapsto> u x - w y - (\<alpha>/2) * norm (x - y)\<^sup>2\<close> must first be known
-  semiconvex on the product.  Three closure properties suffice:
-  semiconvexity adds (with the constants), it survives composition with
-  \<open>fst\<close> and \<open>snd\<close>, and the concave penalty is itself semiconvex with
-  constant \<open>2*\<alpha>\<close>.\<close>
+  semiconvex on the product.  Two closure properties are proved here:
+  semiconvexity adds (with the constants), and it survives composition with
+  \<open>fst\<close> and \<open>snd\<close>; the penalty's own semiconvexity is
+  \<open>semiconvex_penalty_gen\<close> in \<open>Doubling_Of_Variables\<close>.\<close>
 
 lemma convex_on_norm_sq:
   fixes S :: "'a::real_inner set"
@@ -204,21 +194,6 @@ proof (rule convex_onI)
       \<le> (1 - t) * h (snd z1) + t * h (snd z2)" by simp
 qed simp
 
-lemma convex_on_scaleR_nonneg:
-  fixes h :: "'a::real_vector \<Rightarrow> real"
-  assumes h: "convex_on UNIV h" and c: "0 \<le> c"
-  shows "convex_on UNIV (\<lambda>x. c * h x)"
-proof (rule convex_onI)
-  fix t :: real and x y :: 'a
-  assume t: "0 < t" "t < 1"
-  have "h ((1 - t) *\<^sub>R x + t *\<^sub>R y) \<le> (1 - t) * h x + t * h y"
-    using t by (intro convex_onD[OF h]) auto
-  hence "c * h ((1 - t) *\<^sub>R x + t *\<^sub>R y) \<le> c * ((1 - t) * h x + t * h y)"
-    using c by (rule mult_left_mono)
-  thus "c * h ((1 - t) *\<^sub>R x + t *\<^sub>R y) \<le> (1 - t) * (c * h x) + t * (c * h y)"
-    by (simp add: algebra_simps)
-qed simp
-
 lemma convex_on_proj_sum:
   fixes h :: "'a::euclidean_space \<Rightarrow> real"
   assumes h: "convex_on UNIV h"
@@ -243,40 +218,6 @@ lemma norm_prod_sq:
   shows "(norm z)\<^sup>2 = (norm (fst z))\<^sup>2 + (norm (snd z))\<^sup>2"
   by (simp add: norm_prod_def)
 
-text \<open>The concave penalty is semiconvex with constant \<open>2*\<alpha>\<close>.  Adding
-  \<open>\<alpha> * (norm x\<^sup>2 + norm y\<^sup>2)\<close> to \<open>-(\<alpha>/2) * norm (x-y)\<^sup>2\<close> gives exactly
-  \<open>(\<alpha>/2) * norm (x+y)\<^sup>2\<close>, a convex function outright.\<close>
-
-lemma semiconvex_penalty:
-  fixes \<alpha> :: real
-  assumes a: "0 \<le> \<alpha>"
-  shows "convex_on UNIV (\<lambda>z::'a::euclidean_space \<times> 'a.
-      - ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2) + ((2*\<alpha>)/2) * (norm z)\<^sup>2)"
-proof -
-  have eq: "(\<lambda>z::'a \<times> 'a. - ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-        + ((2*\<alpha>)/2) * (norm z)\<^sup>2)
-      = (\<lambda>z::'a \<times> 'a. (\<alpha>/2) * (norm (fst z + snd z))\<^sup>2)"
-  proof (rule ext)
-    fix z :: "'a \<times> 'a"
-    have d: "(norm (fst z - snd z))\<^sup>2
-        = (norm (fst z))\<^sup>2 - 2*(fst z \<bullet> snd z) + (norm (snd z))\<^sup>2"
-      by (simp add: power2_norm_eq_inner inner_diff_left inner_diff_right
-          inner_commute)
-    have s: "(norm (fst z + snd z))\<^sup>2
-        = (norm (fst z))\<^sup>2 + 2*(fst z \<bullet> snd z) + (norm (snd z))\<^sup>2"
-      by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
-          inner_commute)
-    show "- ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2) + ((2*\<alpha>)/2) * (norm z)\<^sup>2
-        = (\<alpha>/2) * (norm (fst z + snd z))\<^sup>2"
-      unfolding norm_prod_sq d s by (simp add: algebra_simps)
-  qed
-  have cn: "convex_on UNIV (\<lambda>x::'a. (norm x)\<^sup>2)"
-    by (rule convex_on_norm_sq[OF convex_UNIV])
-  have "convex_on UNIV (\<lambda>z::'a \<times> 'a. (\<alpha>/2) * (norm (fst z + snd z))\<^sup>2)"
-    using a by (intro convex_on_scaleR_nonneg convex_on_proj_sum[OF cn]) simp
-  thus ?thesis unfolding eq .
-qed
-
 lemma semiconvex_of_fst:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
   assumes f: "convex_on UNIV (\<lambda>x. f x + (c/2) * (norm x)\<^sup>2)" and c: "0 \<le> c"
@@ -289,7 +230,7 @@ proof -
   have cn: "convex_on UNIV (\<lambda>x::'b. (norm x)\<^sup>2)"
     by (rule convex_on_norm_sq[OF convex_UNIV])
   have p2: "convex_on UNIV (\<lambda>z::'a \<times> 'b. (c/2) * (norm (snd z))\<^sup>2)"
-    using c by (intro convex_on_scaleR_nonneg convex_on_snd[OF cn]) simp
+    using c by (intro convex_on_cmul convex_on_snd[OF cn]) simp
   have "convex_on UNIV (\<lambda>z::'a \<times> 'b.
       (f (fst z) + (c/2) * (norm (fst z))\<^sup>2) + (c/2) * (norm (snd z))\<^sup>2)"
     by (rule convex_on_add[OF p1 p2])
@@ -312,7 +253,7 @@ proof -
   have cn: "convex_on UNIV (\<lambda>x::'a. (norm x)\<^sup>2)"
     by (rule convex_on_norm_sq[OF convex_UNIV])
   have p2: "convex_on UNIV (\<lambda>z::'a \<times> 'b. (c/2) * (norm (fst z))\<^sup>2)"
-    using c by (intro convex_on_scaleR_nonneg convex_on_fst[OF cn]) simp
+    using c by (intro convex_on_cmul convex_on_fst[OF cn]) simp
   have "convex_on UNIV (\<lambda>z::'a \<times> 'b.
       (f (snd z) + (c/2) * (norm (snd z))\<^sup>2) + (c/2) * (norm (fst z))\<^sup>2)"
     by (rule convex_on_add[OF p1 p2])
@@ -321,108 +262,6 @@ proof -
       = (\<lambda>z::'a \<times> 'b. f (snd z) + (c/2) * (norm z)\<^sup>2)"
     by (rule ext) (simp add: norm_prod_sq algebra_simps)
   ultimately show ?thesis by simp
-qed
-
-text \<open>The doubled functional is semiconvex, with constant
-  \<open>1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>\<close> --- the hypothesis Rademacher, Alexandrov and
-  Jensen need before being pointed at the doubling of variables, and
-  what opens the theorem on sums.\<close>
-
-theorem doubled_functional_semiconvex:
-  fixes u v :: "'a::euclidean_space \<Rightarrow> real"
-  assumes Bu: "\<And>y. u y \<le> Bu" and Bv: "\<And>y. v y \<le> Bv"
-    and e: "0 < \<epsilon>" and a: "0 \<le> \<alpha>"
-  shows "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-        - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)"
-proof -
-  have ce: "0 \<le> 1/\<epsilon>" using e by simp
-  have A: "convex_on UNIV
-      (\<lambda>z::'a \<times> 'a. supconv u \<epsilon> (fst z) + ((1/\<epsilon>)/2) * (norm z)\<^sup>2)"
-    by (rule semiconvex_of_fst[OF supconv_semiconvex'[OF Bu e] ce])
-  have B: "convex_on UNIV
-      (\<lambda>z::'a \<times> 'a. supconv v \<epsilon> (snd z) + ((1/\<epsilon>)/2) * (norm z)\<^sup>2)"
-    by (rule semiconvex_of_snd[OF supconv_semiconvex'[OF Bv e] ce])
-  have AB: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z))
-      + ((1/\<epsilon> + 1/\<epsilon>)/2) * (norm z)\<^sup>2)"
-    by (rule semiconvex_add[OF A B])
-  have C: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      - ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2) + ((2*\<alpha>)/2) * (norm z)\<^sup>2)"
-    by (rule semiconvex_penalty[OF a])
-  have ABC: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z))
-        + - ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2))
-      + (((1/\<epsilon> + 1/\<epsilon>) + 2*\<alpha>)/2) * (norm z)\<^sup>2)"
-    by (rule semiconvex_add[OF AB C])
-  have eq: "(\<lambda>z::'a \<times> 'a.
-        ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z))
-          + - ((\<alpha>/2) * (norm (fst z - snd z))\<^sup>2))
-        + (((1/\<epsilon> + 1/\<epsilon>) + 2*\<alpha>)/2) * (norm z)\<^sup>2)
-      = (\<lambda>z::'a \<times> 'a.
-        (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-          - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-        + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)"
-    by (rule ext) simp
-  show ?thesis using ABC unfolding eq .
-qed
-
-text \<open>The doubled functional perturbed by \<open>-\<delta>\<parallel>z - \<xi>\<parallel>\<^sup>2\<close> is still
-  semiconvex, with the constant raised by \<open>2\<delta>\<close>, turning a plain
-  maximizer into a strict one, as Jensen's lemma needs.
-
-  The perturbation splits across the two blocks,
-  \<open>\<parallel>z - \<xi>\<parallel>\<^sup>2 = \<parallel>fst z - fst \<xi>\<parallel>\<^sup>2 + \<parallel>snd z - snd \<xi>\<parallel>\<^sup>2\<close>, so the perturbed
-  functional keeps the doubled form downstream lemmas expect, and the
-  cost is affine, since \<open>\<parallel>z\<parallel>\<^sup>2 - \<parallel>z - \<xi>\<parallel>\<^sup>2 = 2 z \<bullet> \<xi> - \<parallel>\<xi>\<parallel>\<^sup>2\<close>.\<close>
-
-theorem doubled_functional_semiconvex_shifted:
-  fixes u v :: "'a::euclidean_space \<Rightarrow> real"
-  assumes Bu: "\<And>y. u y \<le> Bu" and Bv: "\<And>y. v y \<le> Bv"
-    and e: "0 < \<epsilon>" and a: "0 \<le> \<alpha>"
-  shows "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-          - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-        - \<delta> * (norm (z - \<xi>))\<^sup>2)
-      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2)"
-proof -
-  have cvx: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
-      (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-        - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-      + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)"
-    by (rule doubled_functional_semiconvex[OF Bu Bv e a])
-  have aff: "convex_on UNIV
-      (\<lambda>z::'a \<times> 'a. (- (\<delta> * (norm \<xi>)\<^sup>2)) + inner z ((2*\<delta>) *\<^sub>R \<xi>))"
-    by (rule convex_on_affine_inner)
-  have eq: "(\<lambda>z::'a \<times> 'a.
-        ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-          - \<delta> * (norm (z - \<xi>))\<^sup>2)
-        + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2)
-      = (\<lambda>z::'a \<times> 'a.
-        ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-          + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)
-        + ((- (\<delta> * (norm \<xi>)\<^sup>2)) + inner z ((2*\<delta>) *\<^sub>R \<xi>)))"
-  proof (rule ext)
-    fix z :: "'a \<times> 'a"
-    have sh': "(norm (z - \<xi>))\<^sup>2 = (norm z)\<^sup>2 - 2 * (z \<bullet> \<xi>) + (norm \<xi>)\<^sup>2"
-      by (rule norm_sq_diff_expand)
-    have iz: "inner z ((2*\<delta>) *\<^sub>R \<xi>) = 2 * \<delta> * (z \<bullet> \<xi>)"
-      by simp
-    show "((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-          - \<delta> * (norm (z - \<xi>))\<^sup>2)
-        + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha> + 2*\<delta>)/2) * (norm z)\<^sup>2
-      = ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)
-            - (\<alpha>/2) * (norm (fst z - snd z))\<^sup>2)
-          + ((1/\<epsilon> + 1/\<epsilon> + 2*\<alpha>)/2) * (norm z)\<^sup>2)
-        + ((- (\<delta> * (norm \<xi>)\<^sup>2)) + inner z ((2*\<delta>) *\<^sub>R \<xi>))"
-      unfolding iz sh' by (simp add: algebra_simps)
-  qed
-  show ?thesis
-    unfolding eq by (rule convex_on_add[OF cvx aff])
 qed
 
 subsection \<open>The engine in general form\<close>
@@ -484,85 +323,6 @@ qed
 
 subsection \<open>Uniqueness of the second-order form, and block diagonality\<close>
 
-text \<open>The quadratic form in a second-order expansion is unique: restricting
-  to a ray \<open>t \<mapsto> t *\<^sub>R v\<close> makes the difference quotient constant in
-  \<open>t\<close>, and a constant that tends to \<open>0\<close> is \<open>0\<close>.
-
-  This avoids the textbook's \<open>A + \<epsilon> A\<^sup>2\<close> matrix argument: for
-  \<open>a (fst z) + b (snd z)\<close> the two slice expansions reassemble into a
-  block-diagonal quadratic form, and by uniqueness the product form
-  equals it, so the off-diagonal blocks vanish exactly, not merely after
-  an \<open>\<epsilon>\<close>-perturbation.\<close>
-
-lemma second_order_form_unique:
-  fixes g :: "'a::euclidean_space \<Rightarrow> real"
-  assumes l1: "((\<lambda>k. (g k - (k \<bullet> Q1 k)/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and l2: "((\<lambda>k. (g k - (k \<bullet> Q2 k)/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    and b1: "bounded_linear Q1" and b2: "bounded_linear Q2"
-  shows "v \<bullet> Q1 v = v \<bullet> Q2 v"
-proof (cases "v = 0")
-  case True
-  have "Q1 0 = 0" using b1 by (simp add: linear_simps)
-  moreover have "Q2 0 = 0" using b2 by (simp add: linear_simps)
-  ultimately show ?thesis unfolding True by simp
-next
-  case False
-  have nv: "0 < (norm v)\<^sup>2" using False by simp
-  have q1: "(t *\<^sub>R v) \<bullet> Q1 (t *\<^sub>R v) = t\<^sup>2 * (v \<bullet> Q1 v)" for t :: real
-    using b1 by (simp add: linear_simps power2_eq_square)
-  have q2: "(t *\<^sub>R v) \<bullet> Q2 (t *\<^sub>R v) = t\<^sup>2 * (v \<bullet> Q2 v)" for t :: real
-    using b2 by (simp add: linear_simps power2_eq_square)
-  have flt: "filterlim (\<lambda>t::real. t *\<^sub>R v) (at 0) (at_right 0)"
-  proof (rule filterlim_atI)
-    have "((\<lambda>t::real. t *\<^sub>R v) \<longlongrightarrow> 0 *\<^sub>R v) (at_right 0)"
-      by (intro tendsto_intros)
-    thus "((\<lambda>t::real. t *\<^sub>R v) \<longlongrightarrow> 0) (at_right 0)" by simp
-    show "\<forall>\<^sub>F t in at_right (0::real). t *\<^sub>R v \<noteq> 0"
-      using eventually_at_right_less by (rule eventually_mono) (use False in simp)
-  qed
-  have dd: "(g k - (k \<bullet> Q1 k)/2)/(norm k)\<^sup>2 - (g k - (k \<bullet> Q2 k)/2)/(norm k)\<^sup>2
-      = ((k \<bullet> Q2 k)/2 - (k \<bullet> Q1 k)/2) / (norm k)\<^sup>2" for k
-    by (simp add: diff_divide_distrib[symmetric])
-  have d0: "((\<lambda>k. ((k \<bullet> Q2 k)/2 - (k \<bullet> Q1 k)/2) / (norm k)\<^sup>2)
-      \<longlongrightarrow> 0) (at 0)"
-    using tendsto_diff[OF l1 l2] unfolding dd by simp
-  have dr: "((\<lambda>t. (((t *\<^sub>R v) \<bullet> Q2 (t *\<^sub>R v))/2 - ((t *\<^sub>R v) \<bullet> Q1 (t *\<^sub>R v))/2)
-      / (norm (t *\<^sub>R v))\<^sup>2) \<longlongrightarrow> 0) (at_right 0)"
-    by (rule filterlim_compose[OF d0 flt])
-  have const: "(((t *\<^sub>R v) \<bullet> Q2 (t *\<^sub>R v))/2 - ((t *\<^sub>R v) \<bullet> Q1 (t *\<^sub>R v))/2)
-      / (norm (t *\<^sub>R v))\<^sup>2
-      = ((v \<bullet> Q2 v)/2 - (v \<bullet> Q1 v)/2) / (norm v)\<^sup>2" if t: "t \<noteq> 0" for t :: real
-  proof -
-    have nn: "(norm (t *\<^sub>R v))\<^sup>2 = t\<^sup>2 * (norm v)\<^sup>2"
-      by (simp add: power_mult_distrib)
-    have tt: "t\<^sup>2 \<noteq> 0" using t by simp
-    show ?thesis unfolding q1 q2 nn using tt nv by (simp add: field_simps)
-  qed
-  have ev: "\<forall>\<^sub>F t in at_right (0::real).
-      (((t *\<^sub>R v) \<bullet> Q2 (t *\<^sub>R v))/2 - ((t *\<^sub>R v) \<bullet> Q1 (t *\<^sub>R v))/2)
-        / (norm (t *\<^sub>R v))\<^sup>2
-      = ((v \<bullet> Q2 v)/2 - (v \<bullet> Q1 v)/2) / (norm v)\<^sup>2"
-  proof (rule eventually_mono[OF eventually_at_right_less])
-    fix t :: real assume "0 < t"
-    hence "t \<noteq> 0" by simp
-    thus "(((t *\<^sub>R v) \<bullet> Q2 (t *\<^sub>R v))/2 - ((t *\<^sub>R v) \<bullet> Q1 (t *\<^sub>R v))/2)
-        / (norm (t *\<^sub>R v))\<^sup>2
-        = ((v \<bullet> Q2 v)/2 - (v \<bullet> Q1 v)/2) / (norm v)\<^sup>2"
-      by (rule const)
-  qed
-  have "((\<lambda>t::real. ((v \<bullet> Q2 v)/2 - (v \<bullet> Q1 v)/2) / (norm v)\<^sup>2)
-      \<longlongrightarrow> 0) (at_right 0)"
-    using dr unfolding tendsto_cong[OF ev] .
-  moreover have "((\<lambda>t::real. ((v \<bullet> Q2 v)/2 - (v \<bullet> Q1 v)/2) / (norm v)\<^sup>2)
-      \<longlongrightarrow> ((v \<bullet> Q2 v)/2 - (v \<bullet> Q1 v)/2) / (norm v)\<^sup>2) (at_right 0)"
-    by (rule tendsto_const)
-  moreover have "at_right (0::real) \<noteq> bot"
-    using trivial_limit_at_right_real unfolding trivial_limit_def by blast
-  ultimately have "((v \<bullet> Q2 v)/2 - (v \<bullet> Q1 v)/2) / (norm v)\<^sup>2 = 0"
-    by (blast dest: tendsto_unique)
-  thus ?thesis using nv by (simp add: field_simps)
-qed
-
 text \<open>The reusable ray step: along a fixed direction, \<open>F (t *\<^sub>R w) / t\<^sup>2\<close>
   converges to half the quadratic form at \<open>w\<close>.  Applying this to the
   product expansion and to the two slice expansions, and adding the
@@ -620,6 +380,35 @@ proof -
       \<longlongrightarrow> 0 + (w \<bullet> Q w)/2) (at_right 0)"
     by (rule tendsto_add[OF c4 tendsto_const])
   thus ?thesis by simp
+qed
+
+text \<open>The quadratic form in a second-order expansion is unique: by
+  \<open>expansion_ray_limit\<close>, along a ray \<open>t \<mapsto> t *\<^sub>R v\<close> both forms are the
+  limit of \<open>g (t *\<^sub>R v) / t\<^sup>2\<close>.
+
+  This avoids the textbook's \<open>A + \<epsilon> A\<^sup>2\<close> matrix argument: for
+  \<open>a (fst z) + b (snd z)\<close> the two slice expansions reassemble into a
+  block-diagonal quadratic form, and by uniqueness the product form
+  equals it, so the off-diagonal blocks vanish exactly, not merely after
+  an \<open>\<epsilon>\<close>-perturbation.\<close>
+
+lemma second_order_form_unique:
+  fixes g :: "'a::euclidean_space \<Rightarrow> real"
+  assumes l1: "((\<lambda>k. (g k - (k \<bullet> Q1 k)/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and l2: "((\<lambda>k. (g k - (k \<bullet> Q2 k)/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    and b1: "bounded_linear Q1" and b2: "bounded_linear Q2"
+  shows "v \<bullet> Q1 v = v \<bullet> Q2 v"
+proof (cases "v = 0")
+  case True
+  then show ?thesis using b1 b2 by (simp add: linear_simps)
+next
+  case False
+  have "((\<lambda>t. g (t *\<^sub>R v) / t\<^sup>2) \<longlongrightarrow> (v \<bullet> Q1 v)/2) (at_right 0)"
+    by (rule expansion_ray_limit[OF l1 _ False]) (use b1 in \<open>simp add: linear_simps\<close>)
+  moreover have "((\<lambda>t. g (t *\<^sub>R v) / t\<^sup>2) \<longlongrightarrow> (v \<bullet> Q2 v)/2) (at_right 0)"
+    by (rule expansion_ray_limit[OF l2 _ False]) (use b2 in \<open>simp add: linear_simps\<close>)
+  ultimately show ?thesis
+    using tendsto_unique[OF trivial_limit_at_right_real] by fastforce
 qed
 
 text \<open>Block diagonality: for \<open>a (fst z) + b (snd z)\<close> the product quadratic
@@ -920,133 +709,6 @@ text \<open>The doubling regularises \<open>u\<close> and \<open>- w\<close> by 
 
 text \<open>Hence the transferred jet, in the form the supersolution needs.\<close>
 
-text \<open>Reading the theorem on sums as an ordering hypothesis for a
-  comparison argument.  \<open>sums_matrix_inequality\<close> concludes
-  \<open>v \<cdot> X v + v \<cdot> Yb v \<le> 0\<close> where \<open>Yb\<close> is the slice matrix of the second
-  factor; since that factor carries \<open>- w\<close>, the matrix a supersolution
-  needs is \<open>Y = - Yb\<close>, and the inequality becomes
-  \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close>.\<close>
-
-text \<open>Linearity of the two slice maps, the remaining hypotheses of the
-  comparison argument besides the ordering.\<close>
-
-lemma linear_slice_fst:
-  fixes W :: "'a::euclidean_space \<times> 'a \<Rightarrow> 'a \<times> 'a"
-  assumes lW: "linear W"
-  shows "linear (\<lambda>z. fst (W (z, 0) + \<alpha> *\<^sub>R (z - 0, 0 - z)))"
-proof (rule linearI)
-  fix z1 z2 :: 'a
-  have wa: "W (z1 + z2, 0) = W (z1, 0) + W (z2, 0)"
-  proof -
-    from lW have add: "\<forall>x y. W (x + y) = W x + W y"
-      unfolding linear_iff by blast
-    have "W ((z1, (0::'a)) + (z2, (0::'a))) = W (z1, 0) + W (z2, 0)"
-      using add by blast
-    thus ?thesis by simp
-  qed
-  show "fst (W (z1 + z2, 0) + \<alpha> *\<^sub>R ((z1 + z2) - 0, 0 - (z1 + z2)))
-      = fst (W (z1, 0) + \<alpha> *\<^sub>R (z1 - 0, 0 - z1))
-      + fst (W (z2, 0) + \<alpha> *\<^sub>R (z2 - 0, 0 - z2))"
-    unfolding wa by (simp add: algebra_simps)
-next
-  fix c :: real and z :: 'a
-  have ws: "W (c *\<^sub>R z, 0) = c *\<^sub>R W (z, 0)"
-  proof -
-    from lW have sc: "\<forall>r x. W (r *\<^sub>R x) = r *\<^sub>R W x"
-      unfolding linear_iff by blast
-    have "W (c *\<^sub>R (z, (0::'a))) = c *\<^sub>R W (z, 0)" using sc by blast
-    thus ?thesis by simp
-  qed
-  show "fst (W (c *\<^sub>R z, 0) + \<alpha> *\<^sub>R ((c *\<^sub>R z) - 0, 0 - c *\<^sub>R z))
-      = c *\<^sub>R fst (W (z, 0) + \<alpha> *\<^sub>R (z - 0, 0 - z))"
-    unfolding ws by (simp add: algebra_simps)
-qed
-
-lemma linear_slice_snd:
-  fixes W :: "'a::euclidean_space \<times> 'a \<Rightarrow> 'a \<times> 'a"
-  assumes lW: "linear W"
-  shows "linear (\<lambda>z. - snd (W (0, z) + \<alpha> *\<^sub>R (0 - z, z - 0)))"
-proof (rule linearI)
-  fix z1 z2 :: 'a
-  have wa: "W (0, z1 + z2) = W (0, z1) + W (0, z2)"
-  proof -
-    from lW have add: "\<forall>x y. W (x + y) = W x + W y"
-      unfolding linear_iff by blast
-    have "W (((0::'a), z1) + ((0::'a), z2)) = W (0, z1) + W (0, z2)"
-      using add by blast
-    thus ?thesis by simp
-  qed
-  show "- snd (W (0, z1 + z2) + \<alpha> *\<^sub>R (0 - (z1 + z2), (z1 + z2) - 0))
-      = - snd (W (0, z1) + \<alpha> *\<^sub>R (0 - z1, z1 - 0))
-      + - snd (W (0, z2) + \<alpha> *\<^sub>R (0 - z2, z2 - 0))"
-    unfolding wa by (simp add: algebra_simps)
-next
-  fix c :: real and z :: 'a
-  have ws: "W (0, c *\<^sub>R z) = c *\<^sub>R W (0, z)"
-  proof -
-    from lW have sc: "\<forall>r x. W (r *\<^sub>R x) = r *\<^sub>R W x"
-      unfolding linear_iff by blast
-    have "W (c *\<^sub>R ((0::'a), z)) = c *\<^sub>R W (0, z)" using sc by blast
-    thus ?thesis by simp
-  qed
-  show "- snd (W (0, c *\<^sub>R z) + \<alpha> *\<^sub>R (0 - c *\<^sub>R z, (c *\<^sub>R z) - 0))
-      = c *\<^sub>R (- snd (W (0, z) + \<alpha> *\<^sub>R (0 - z, z - 0)))"
-    unfolding ws by (simp add: algebra_simps)
-qed
-
-text \<open>The two symmetry hypotheses: pairing against \<open>(u, 0)\<close> turns
-  \<open>u \<cdot> fst P\<close> into an inner product on the product space, so the
-  symmetry of \<open>W\<close> transfers to each slice; the penalty contributes
-  \<open>\<alpha> * (v \<cdot> w)\<close>, symmetric on its own.\<close>
-
-lemma inner_fst_pair:
-  fixes u :: "'a::euclidean_space" and P :: "'a \<times> 'a"
-  shows "u \<bullet> fst P = (u, (0::'a)) \<bullet> P"
-  by (cases P) simp
-
-lemma inner_snd_pair:
-  fixes u :: "'a::euclidean_space" and P :: "'a \<times> 'a"
-  shows "u \<bullet> snd P = ((0::'a), u) \<bullet> P"
-  by (cases P) simp
-
-lemma sym_slice_fst:
-  fixes W :: "'a::euclidean_space \<times> 'a \<Rightarrow> 'a \<times> 'a"
-  assumes symW: "\<And>u u'. u \<bullet> W u' = u' \<bullet> W u"
-  shows "v \<bullet> (\<lambda>z. fst (W (z, 0) + \<alpha> *\<^sub>R (z - 0, 0 - z))) w
-      = w \<bullet> (\<lambda>z. fst (W (z, 0) + \<alpha> *\<^sub>R (z - 0, 0 - z))) v"
-proof -
-  have L: "v \<bullet> fst (W (w, 0) + \<alpha> *\<^sub>R (w - 0, 0 - w))
-      = (v, (0::'a)) \<bullet> W (w, 0) + \<alpha> * (v \<bullet> w)"
-    unfolding inner_fst_pair by (simp add: inner_add_right)
-  have R: "w \<bullet> fst (W (v, 0) + \<alpha> *\<^sub>R (v - 0, 0 - v))
-      = (w, (0::'a)) \<bullet> W (v, 0) + \<alpha> * (w \<bullet> v)"
-    unfolding inner_fst_pair by (simp add: inner_add_right)
-  have S: "(v, (0::'a)) \<bullet> W (w, 0) = (w, (0::'a)) \<bullet> W (v, 0)"
-    by (rule symW)
-  have C: "v \<bullet> w = w \<bullet> v" by (rule inner_commute)
-  show ?thesis unfolding L R S C ..
-qed
-
-lemma sym_slice_snd:
-  fixes W :: "'a::euclidean_space \<times> 'a \<Rightarrow> 'a \<times> 'a"
-  assumes symW: "\<And>u u'. u \<bullet> W u' = u' \<bullet> W u"
-  shows "v \<bullet> (\<lambda>z. - snd (W (0, z) + \<alpha> *\<^sub>R (0 - z, z - 0))) w
-      = w \<bullet> (\<lambda>z. - snd (W (0, z) + \<alpha> *\<^sub>R (0 - z, z - 0))) v"
-proof -
-  have L: "v \<bullet> (- snd (W (0, w) + \<alpha> *\<^sub>R (0 - w, w - 0)))
-      = - (((0::'a), v) \<bullet> W (0, w) + \<alpha> * (v \<bullet> w))"
-    unfolding inner_minus_right inner_snd_pair
-    by (simp add: inner_add_right)
-  have R: "w \<bullet> (- snd (W (0, v) + \<alpha> *\<^sub>R (0 - v, v - 0)))
-      = - (((0::'a), w) \<bullet> W (0, v) + \<alpha> * (w \<bullet> v))"
-    unfolding inner_minus_right inner_snd_pair
-    by (simp add: inner_add_right)
-  have S: "((0::'a), v) \<bullet> W (0, w) = ((0::'a), w) \<bullet> W (0, v)"
-    by (rule symW)
-  have C: "v \<bullet> w = w \<bullet> v" by (rule inner_commute)
-  show ?thesis unfolding L R S C ..
-qed
-
 subsection \<open>From a superjet to a genuine local maximum\<close>
 
 text \<open>A second-order superjet does not by itself make \<open>u - \<phi>\<close> have a
@@ -1058,6 +720,44 @@ text \<open>A second-order superjet does not by itself make \<open>u - \<phi>\<c
   second-order jets, since removing \<open>\<delta>\<close> at the end needs lower
   semicontinuity of the operator.\<close>
 
+text \<open>Only one side of the expansion is used, and a doubling argument that
+  reaches the diagonal typically supplies only an upper bound on the
+  increment of \<open>B = supconv (-w) \<epsilon>\<close>; so the step is stated with a
+  one-sided hypothesis, and the two-sided form follows.  The quantifier over
+  the threshold \<open>c\<close> is necessary, because a caller produces that bound
+  inside its own proof, after the hypothesis is fixed.\<close>
+
+lemma superjet_local_max_onesided:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F kk in at 0.
+      (u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2) / (norm kk)\<^sup>2 < c"
+    and d: "0 < \<delta>"
+  shows "\<exists>e>0. \<forall>kk. norm kk < e \<longrightarrow>
+      u (xh + kk) - (p \<bullet> kk + (kk \<bullet> X kk)/2 + (\<delta>/2) * (norm kk)\<^sup>2) \<le> u xh"
+proof -
+  have d2: "0 < \<delta>/2" using d by simp
+  from ub[OF d2] obtain e where e: "0 < e"
+    and b: "\<And>kk. kk \<noteq> 0 \<Longrightarrow> dist kk 0 < e
+      \<Longrightarrow> (u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2) / (norm kk)\<^sup>2 < \<delta>/2"
+    unfolding eventually_at by blast
+  have main: "u (xh + kk) - (p \<bullet> kk + (kk \<bullet> X kk)/2 + (\<delta>/2) * (norm kk)\<^sup>2)
+      \<le> u xh" if nk: "norm kk < e" for kk
+  proof (cases "kk = 0")
+    case True
+    show ?thesis unfolding True by simp
+  next
+    case False
+    have nn: "0 < (norm kk)\<^sup>2" using False by simp
+    have dk: "dist kk 0 < e" using nk by (simp add: dist_norm)
+    have "(u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2) / (norm kk)\<^sup>2 < \<delta>/2"
+      by (rule b[OF False dk])
+    hence "u (xh + kk) - u xh - p \<bullet> kk - (kk \<bullet> X kk)/2 < (\<delta>/2) * (norm kk)\<^sup>2"
+      using nn by (simp add: field_simps)
+    thus ?thesis by simp
+  qed
+  show ?thesis using e main by blast
+qed
+
 lemma superjet_local_max:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
   assumes lim: "((\<lambda>k. (u (xh + k) - u xh - p \<bullet> k - (k \<bullet> X k)/2)
@@ -1065,34 +765,7 @@ lemma superjet_local_max:
     and d: "0 < \<delta>"
   shows "\<exists>e>0. \<forall>k. norm k < e \<longrightarrow>
       u (xh + k) - (p \<bullet> k + (k \<bullet> X k)/2 + (\<delta>/2) * (norm k)\<^sup>2) \<le> u xh"
-proof -
-  have d2: "0 < \<delta>/2" using d by simp
-  from tendstoD[OF lim d2] obtain e where e: "0 < e"
-    and b: "\<And>k. k \<noteq> 0 \<Longrightarrow> dist k 0 < e
-      \<Longrightarrow> dist ((u (xh + k) - u xh - p \<bullet> k - (k \<bullet> X k)/2) / (norm k)\<^sup>2) 0
-        < \<delta>/2"
-    unfolding eventually_at by blast
-  have main: "u (xh + k) - (p \<bullet> k + (k \<bullet> X k)/2 + (\<delta>/2) * (norm k)\<^sup>2) \<le> u xh"
-    if nk: "norm k < e" for k
-  proof (cases "k = 0")
-    case True
-    have "X 0 = 0 \<or> X 0 \<noteq> 0" by simp
-    show ?thesis unfolding True by simp
-  next
-    case False
-    have nn: "0 < (norm k)\<^sup>2" using False by simp
-    have dk: "dist k 0 < e" using nk by (simp add: dist_norm)
-    have babs: "\<bar>(u (xh + k) - u xh - p \<bullet> k - (k \<bullet> X k)/2)
-        / (norm k)\<^sup>2\<bar> < \<delta>/2"
-      using b[OF False dk] by (simp add: dist_real_def)
-    have "(u (xh + k) - u xh - p \<bullet> k - (k \<bullet> X k)/2) / (norm k)\<^sup>2 < \<delta>/2"
-      using babs by linarith
-    hence "u (xh + k) - u xh - p \<bullet> k - (k \<bullet> X k)/2 < (\<delta>/2) * (norm k)\<^sup>2"
-      using nn by (simp add: field_simps)
-    thus ?thesis by simp
-  qed
-  show ?thesis using e main by blast
-qed
+  by (rule superjet_local_max_onesided[OF order_tendstoD(2)[OF lim] d])
 
 
 (*<*)

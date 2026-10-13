@@ -100,146 +100,6 @@ lemma subjet_subset_cl: "subjet w x \<subseteq> subjet_cl w x"
   by (auto intro!: exI[of _ "\<lambda>_. x"] exI[of _ "\<lambda>_. _"]
       simp: subjet_def)
 
-section \<open>Upper semicontinuity toolbox\<close>
-
-text \<open>The session sits on plain HOL-Analysis, so the two attainment facts
-  below are proved here rather than imported from the
-  \<open>Semicontinuous_Analysis\<close> session; they are deliberately minimal.\<close>
-
-lemma usc_open_lt:
-  fixes f :: "'a::metric_space \<Rightarrow> real"
-  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
-  shows "open {y. f y < c}"
-  unfolding open_dist
-proof (intro ballI)
-  fix z assume "z \<in> {y. f y < c}"
-  then have "f z < c" by simp
-  from usc[OF this] obtain e where e: "0 < e"
-    and b: "\<And>y. dist z y < e \<Longrightarrow> f y < c" by blast
-  show "\<exists>e>0. \<forall>y. dist y z < e \<longrightarrow> y \<in> {y. f y < c}"
-    by (intro exI[of _ e] conjI e allI impI)
-      (use b in \<open>simp add: dist_commute\<close>)
-qed
-
-lemma usc_attains_sup_compact:
-  fixes f :: "'a::metric_space \<Rightarrow> real"
-  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
-    and cS: "compact S" and neS: "S \<noteq> {}"
-  shows "\<exists>z\<in>S. \<forall>y\<in>S. f y \<le> f z"
-proof (rule ccontr)
-  assume "\<not> (\<exists>z\<in>S. \<forall>y\<in>S. f y \<le> f z)"
-  then have H: "\<And>z. z \<in> S \<Longrightarrow> \<exists>z'\<in>S. f z < f z'" by force
-  have cov: "S \<subseteq> (\<Union>z'\<in>S. {y. f y < f z'})"
-    using H by blast
-  have opn: "\<And>z'. z' \<in> S \<Longrightarrow> open {y. f y < f z'}"
-    by (rule usc_open_lt[OF usc])
-  obtain T where TS: "T \<subseteq> S" and fT: "finite T"
-    and covT: "S \<subseteq> (\<Union>z'\<in>T. {y. f y < f z'})"
-    using compactE_image[OF cS opn cov] by blast
-  obtain s where sS: "s \<in> S" using neS by blast
-  have neT: "T \<noteq> {}" using covT sS by blast
-  have "Max (f ` T) \<in> f ` T"
-    by (rule Max_in) (use fT neT in auto)
-  then obtain zm where zmT: "zm \<in> T" and zmM: "Max (f ` T) = f zm"
-    by (rule imageE)
-  have zmS: "zm \<in> S" using TS zmT by blast
-  have "zm \<in> (\<Union>z'\<in>T. {y. f y < f z'})" by (rule subsetD[OF covT zmS])
-  then obtain z'' where z'': "z'' \<in> T" and lt: "f zm < f z''" by auto
-  have "f z'' \<le> Max (f ` T)" by (rule Max_ge) (use fT z'' in auto)
-  then show False using lt zmM by linarith
-qed
-
-lemma supconv_attained_usc:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
-    and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> u y < c"
-  shows "\<exists>ys. supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-proof -
-  define g where "g = (\<lambda>y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
-  have ene: "2*\<epsilon> \<noteq> 0" using e by simp
-  have gusc: "\<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> g y < c" if lt: "g z < c" for c z
-  proof -
-    define \<eta> where "\<eta> = (c - g z)/2"
-    have \<eta>: "0 < \<eta>" using lt by (simp add: \<eta>_def)
-    obtain d1 where d1: "0 < d1"
-      and h1: "\<And>y. dist z y < d1 \<Longrightarrow> u y < u z + \<eta>"
-      using usc[of z "u z + \<eta>"] \<eta> by auto
-    have pc: "isCont (\<lambda>y. (dist x y)\<^sup>2 / (2*\<epsilon>)) z"
-      by (intro continuous_intros) (use ene in simp_all)
-    have "((\<lambda>y. (dist x y)\<^sup>2 / (2*\<epsilon>)) \<longlongrightarrow> (dist x z)\<^sup>2 / (2*\<epsilon>)) (at z)"
-      using pc by (simp add: isCont_def)
-    from tendstoD[OF this \<eta>] obtain d2 where d2: "0 < d2"
-      and h2: "\<And>y. y \<noteq> z \<Longrightarrow> dist y z < d2 \<Longrightarrow>
-        \<bar>(dist x y)\<^sup>2 / (2*\<epsilon>) - (dist x z)\<^sup>2 / (2*\<epsilon>)\<bar> < \<eta>"
-    unfolding eventually_at by (auto simp: dist_real_def)
-    have main: "g y < c" if dy: "dist z y < min d1 d2" for y
-    proof (cases "y = z")
-      case True then show ?thesis using lt by simp
-    next
-      case False
-      have "u y < u z + \<eta>" using h1 dy by simp
-      moreover have "(dist x z)\<^sup>2 / (2*\<epsilon>) - \<eta> < (dist x y)\<^sup>2 / (2*\<epsilon>)"
-        using h2[OF False] dy by (simp add: dist_commute abs_diff_less_iff)
-      ultimately have "g y < g z + 2*\<eta>" unfolding g_def by linarith
-      moreover have "g z + 2*\<eta> = c" unfolding \<eta>_def by argo
-      ultimately show ?thesis by linarith
-    qed
-    show ?thesis
-      by (intro exI[of _ "min d1 d2"] conjI allI impI)
-        (use d1 d2 main in auto)
-  qed
-  define R where "R = sqrt (2*\<epsilon>*(B - u x)) + 1"
-  have Bx: "0 \<le> B - u x" using B[of x] by simp
-  have arg0: "0 \<le> 2*\<epsilon>*(B - u x)"
-    using e Bx by (intro mult_nonneg_nonneg) auto
-  have R1: "1 \<le> R" unfolding R_def
-    using real_sqrt_ge_zero[OF arg0] by simp
-  have R0: "0 < R" using R1 by linarith
-  have Rsq: "2*\<epsilon>*(B - u x) < R\<^sup>2"
-  proof -
-    have s0: "0 \<le> sqrt (2*\<epsilon>*(B - u x))"
-      by (rule real_sqrt_ge_zero[OF arg0])
-    have "R\<^sup>2 = (sqrt (2*\<epsilon>*(B - u x)))\<^sup>2
-        + 2 * sqrt (2*\<epsilon>*(B - u x)) + 1"
-      unfolding R_def power2_sum by (simp add: power2_eq_square)
-    also have "(sqrt (2*\<epsilon>*(B - u x)))\<^sup>2 = 2*\<epsilon>*(B - u x)"
-      by (rule real_sqrt_pow2[OF arg0])
-    finally show ?thesis using s0 by linarith
-  qed
-  have outside: "g y < g x" if dy: "\<not> dist x y \<le> R" for y
-  proof -
-    have "R\<^sup>2 < (dist x y)\<^sup>2"
-      using dy R0 by (intro power2_strict_mono) auto
-    then have "2*\<epsilon>*(B - u x) < (dist x y)\<^sup>2" using Rsq by linarith
-    then have "B - u x < (dist x y)\<^sup>2 / (2*\<epsilon>)"
-      using e by (simp add: field_simps)
-    then have "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) < u x" using B[of y] by linarith
-    then show ?thesis unfolding g_def by simp
-  qed
-  obtain ys where ysc: "ys \<in> cball x R"
-    and mxb: "\<And>y. y \<in> cball x R \<Longrightarrow> g y \<le> g ys"
-    using usc_attains_sup_compact[OF gusc compact_cball, of x R]
-      R0 by force
-  have xc: "x \<in> cball x R" using R0 by simp
-  have glob: "g y \<le> g ys" for y
-  proof (cases "dist x y \<le> R")
-    case True then show ?thesis by (intro mxb) simp
-  next
-    case False
-    have "g y < g x" by (rule outside[OF False])
-    also have "g x \<le> g ys" by (rule mxb[OF xc])
-    finally show ?thesis by linarith
-  qed
-  have le: "supconv u \<epsilon> x \<le> g ys"
-    unfolding supconv_def
-    by (intro cSUP_least) (use glob in \<open>auto simp: g_def\<close>)
-  have ge: "g ys \<le> supconv u \<epsilon> x"
-    unfolding supconv_def g_def
-    by (intro cSUP_upper supconv_bdd_above[OF B e]) auto
-  have "supconv u \<epsilon> x = g ys" using le ge by linarith
-  then show ?thesis unfolding g_def by blast
-qed
-
 section \<open>Quantitative estimates for the doubled sup-convolution\<close>
 
 lemma quad_root_bound:
@@ -434,45 +294,6 @@ qed
 
 section \<open>From exact expansions to semijets\<close>
 
-text \<open>Adding an exactly expanded quadratic to an exact second-order
-  expansion shifts the gradient and the form and changes nothing else:
-  the remainders are literally equal.\<close>
-
-lemma expansion_add_centered_sq:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real" and x c :: 'a and \<delta> :: real
-  assumes exp: "((\<lambda>k. (f (x + k) - f x - p \<bullet> k - (k \<bullet> F k)/2)
-      / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-  shows "((\<lambda>k. ((f (x + k) + \<delta> * (norm (x + k - c))\<^sup>2)
-      - (f x + \<delta> * (norm (x - c))\<^sup>2)
-      - (p + (2 * \<delta>) *\<^sub>R (x - c)) \<bullet> k
-      - (k \<bullet> (F k + (2 * \<delta>) *\<^sub>R k))/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-proof -
-  have ident: "(f (x + k) + \<delta> * (norm (x + k - c))\<^sup>2)
-      - (f x + \<delta> * (norm (x - c))\<^sup>2)
-      - (p + (2 * \<delta>) *\<^sub>R (x - c)) \<bullet> k
-      - (k \<bullet> (F k + (2 * \<delta>) *\<^sub>R k))/2
-      = f (x + k) - f x - p \<bullet> k - (k \<bullet> F k)/2" for k
-  proof -
-    have e1: "(norm (x + k - c))\<^sup>2
-        = (norm (x - c))\<^sup>2 + 2 * ((x - c) \<bullet> k) + (norm k)\<^sup>2"
-      using norm_sq_add_expand[of "x - c" k]
-      by (simp add: algebra_simps)
-    have e2: "(p + (2 * \<delta>) *\<^sub>R (x - c)) \<bullet> k
-        = p \<bullet> k + 2 * \<delta> * ((x - c) \<bullet> k)"
-      by (simp add: inner_add_left)
-    have e3: "k \<bullet> (F k + (2 * \<delta>) *\<^sub>R k) = k \<bullet> F k + 2 * \<delta> * (norm k)\<^sup>2"
-      by (simp add: inner_add_right power2_norm_eq_inner)
-    show ?thesis unfolding e1 e2 e3 by (simp add: algebra_simps)
-  qed
-  have "(\<lambda>k. ((f (x + k) + \<delta> * (norm (x + k - c))\<^sup>2)
-      - (f x + \<delta> * (norm (x - c))\<^sup>2)
-      - (p + (2 * \<delta>) *\<^sub>R (x - c)) \<bullet> k
-      - (k \<bullet> (F k + (2 * \<delta>) *\<^sub>R k))/2) / (norm k)\<^sup>2)
-      = (\<lambda>k. (f (x + k) - f x - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2)"
-    by (rule ext) (simp only: ident)
-  then show ?thesis using exp by simp
-qed
-
 text \<open>A one-sided remainder comparison against an exactly expanded majorant
   is exactly membership in the superjet.\<close>
 
@@ -485,38 +306,13 @@ lemma superjet_of_transfer:
     and lin: "linear F" and sym: "\<And>a b. a \<bullet> F b = b \<bullet> F a"
   shows "(p, F) \<in> superjet u ys"
 proof -
-  have h: "\<exists>d>0. \<forall>k. norm k < d \<longrightarrow>
-      u (ys + k) \<le> u ys + p \<bullet> k + (k \<bullet> F k)/2 + e * (norm k)\<^sup>2"
-    if e: "0 < e" for e
-  proof -
-    from tendstoD[OF exp e] obtain d where d: "0 < d"
-      and b: "\<And>k. k \<noteq> 0 \<Longrightarrow> dist k 0 < d \<Longrightarrow>
-        \<bar>(g (xx + k) - g xx - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2\<bar> < e"
-      unfolding eventually_at by (auto simp: dist_real_def)
-    have main: "u (ys + k) \<le> u ys + p \<bullet> k + (k \<bullet> F k)/2 + e * (norm k)\<^sup>2"
-      if kd: "norm k < d" for k
-    proof (cases "k = 0")
-      case True
-      then show ?thesis by simp
-    next
-      case False
-      have nk: "0 < (norm k)\<^sup>2" using False by simp
-      have b': "\<bar>(g (xx + k) - g xx - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2\<bar> < e"
-        using b[OF False] kd by (simp add: dist_norm)
-      have "(u (ys + k) - u ys - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2
-          \<le> (g (xx + k) - g xx - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2"
-        by (rule trans)
-      also have "\<dots> \<le> \<bar>(g (xx + k) - g xx - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2\<bar>"
-        by (rule abs_ge_self)
-      also have "\<dots> < e" by (rule b')
-      finally have "(u (ys + k) - u ys - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2 < e" .
-      then have "u (ys + k) - u ys - p \<bullet> k - (k \<bullet> F k)/2 < e * (norm k)\<^sup>2"
-        using nk by (simp add: pos_divide_less_eq)
-      then show ?thesis by linarith
-    qed
-    show ?thesis using d main by blast
-  qed
-  show ?thesis unfolding superjet_def using lin sym h by auto
+  have ub: "\<forall>\<^sub>F k in at 0. (u (ys + k) - u ys - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2 < c"
+    if "0 < c" for c
+    using order_tendstoD(2)[OF exp that] by eventually_elim (use trans in \<open>rule le_less_trans\<close>)
+  have "\<exists>d>0. \<forall>k. norm k < d \<longrightarrow>
+      u (ys + k) \<le> u ys + p \<bullet> k + (k \<bullet> F k)/2 + e * (norm k)\<^sup>2" if "0 < e" for e
+    using superjet_local_max_onesided[OF ub, of "2 * e"] that by (auto simp: algebra_simps)
+  then show ?thesis unfolding superjet_def using lin sym by auto
 qed
 
 lemma supconv_superjet_at_optimizer:
@@ -546,29 +342,21 @@ lemma tendsto_of_dist_bound:
 
 section \<open>Small algebraic helpers\<close>
 
-lemma linear_add_scaleR:
-  fixes F :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes lF: "linear F"
-  shows "linear (\<lambda>k. F k + c *\<^sub>R k)"
-  by (intro linear_compose_add lF linear_scaleR)
-
 lemma sym_add_scaleR:
   fixes F :: "'a::euclidean_space \<Rightarrow> 'a"
   assumes sF: "\<And>a b. a \<bullet> F b = b \<bullet> F a"
   shows "a \<bullet> (F b + c *\<^sub>R b) = b \<bullet> (F a + c *\<^sub>R a)"
   using sF[of a b] by (simp add: inner_add_right inner_commute)
 
-lemma add_sq_le_double:
-  fixes x y :: real
-  shows "(x + y)\<^sup>2 \<le> 2 * (x\<^sup>2 + y\<^sup>2)"
-proof -
-  have "0 \<le> (x - y)\<^sup>2" by simp
-  moreover have "(x - y)\<^sup>2 = x\<^sup>2 - 2 * x * y + y\<^sup>2"
-    by (simp add: power2_diff)
-  moreover have "(x + y)\<^sup>2 = x\<^sup>2 + 2 * x * y + y\<^sup>2"
-    by (simp add: power2_sum)
-  ultimately show ?thesis by argo
-qed
+text \<open>The quadratic penalty's second-order expansion is exact, with
+  gradient \<open>\<alpha> d\<close> and Hessian \<open>\<alpha> I\<close>: the penalty jet the \<open>_gen\<close> lemmas of
+  @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables} take.\<close>
+
+lemma quad_pen_jet:
+  fixes d :: "real^'n::finite" and \<alpha> :: real
+  shows "((\<lambda>h. ((\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) (d + h) - (\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) d
+      - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> ((\<alpha> *\<^sub>R mat 1) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+  using quad_penalty_jet[of \<alpha> d] by (simp add: scaleR_matrix_vector_assoc[symmetric])
 
 section \<open>The theorem on sums at one regularisation stage\<close>
 
@@ -647,7 +435,7 @@ proof -
     have pen1: "\<delta> * (norm (fst y - fst ((xh, yh) :: (real^'n) \<times> (real^'n))))\<^sup>2
         + \<delta> * (norm (snd y - snd ((xh, yh))))\<^sup>2
         = \<delta> * (norm (y - ((xh, yh) :: (real^'n) \<times> (real^'n))))\<^sup>2"
-      unfolding norm_sq_prod_split[of y "(xh, yh)"]
+      unfolding norm_prod_sq[of "y - (xh, yh)"]
       by (simp add: algebra_simps)
     have pen2: "\<rho>\<^sup>2 \<le> (norm (y - ((xh, yh) :: (real^'n) \<times> (real^'n))))\<^sup>2"
     proof -
@@ -727,9 +515,16 @@ proof -
     using expraw unfolding af_def bf_def by simp
   have dz1: "dist zh ((xh, yh) :: (real^'n) \<times> (real^'n)) < 1"
     using dzr rho1 by linarith
-  note slices = tilted_doubled_jet_slices[where a = af and b = bf
-      and \<alpha> = \<alpha> and W = WW and zh = zh and \<xi> = "(xh, yh)" and r = 1
-      and pt = pt and q = qq, OF blW dz1 mxA expA]
+  define Z where "Z = (\<alpha> *\<^sub>R mat 1 :: real^'n^'n)"
+  have symZ: "transpose Z = Z" unfolding Z_def by (simp add: transpose_scalar)
+  have pj: "((\<lambda>h. ((\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) ((fst zh - snd zh) + h)
+      - (\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2) (fst zh - snd zh)
+      - (\<alpha> *\<^sub>R (fst zh - snd zh)) \<bullet> h - (h \<bullet> (Z *v h))/2) / (norm h)\<^sup>2)
+      \<longlongrightarrow> 0) (at 0)"
+    unfolding Z_def by (rule quad_pen_jet)
+  note slices = tilted_doubled_jet_slices_gen[where P = "\<lambda>e. (\<alpha>/2) * (norm e)\<^sup>2"
+      and a = af and b = bf and W = WW and zh = zh and \<xi> = "(xh, yh)" and r = 1
+      and pt = pt and q = qq, OF blW dz1 mxA expA pj]
   have hiW: "\<And>v. v \<bullet> WW v \<le> 0"
     by (rule tilted_doubled_hessian_nonpositive[where a = af and b = bf
         and \<alpha> = \<alpha> and W = WW and zh = zh and \<xi> = "(xh, yh)" and r = 1
@@ -737,9 +532,9 @@ proof -
   have scW: "\<And>s uu. WW (s *\<^sub>R uu) = s *\<^sub>R WW uu"
     using blW by (simp add: linear_simps)
   have symW': "\<And>v z. v \<bullet> WW z = z \<bullet> WW v" using symW by blast
-  have ord: "\<And>v. v \<bullet> (fst (WW (v, 0)) + \<alpha> *\<^sub>R v)
-      \<le> v \<bullet> (- (snd (WW (0, v)) + \<alpha> *\<^sub>R v))"
-    by (rule sums_gives_ordering[OF expA scW hiW])
+  have ord: "\<And>v. v \<bullet> (fst (WW (v, 0)) + Z *v v)
+      \<le> v \<bullet> (- (snd (WW (0, v)) + Z *v v))"
+    by (rule sums_gives_ordering_gen[OF expA pj scW hiW])
   obtain ysu where optu: "supconv u \<epsilon> (fst zh)
       = u ysu - (dist (fst zh) ysu)\<^sup>2 / (2*\<epsilon>)"
     using supconv_attained_usc[OF Bu e0 uscu] by blast
@@ -748,57 +543,36 @@ proof -
     using supconv_attained_usc[OF Bb e0 uscb] by blast
   define pu where "pu = (- fst pt + \<alpha> *\<^sub>R (fst zh - snd zh))
       + (2 * \<delta>) *\<^sub>R (fst zh - xh)"
-  define XU where "XU = (\<lambda>k :: real^'n. (fst (WW (k, 0)) + \<alpha> *\<^sub>R k)
+  define XU where "XU = (\<lambda>k :: real^'n. (fst (WW (k, 0)) + Z *v k)
       + (2 * \<delta>) *\<^sub>R k)"
   define pw where "pw = (- (snd pt + \<alpha> *\<^sub>R (fst zh - snd zh)))
       + (2 * \<delta>) *\<^sub>R (snd zh - yh)"
-  define YU where "YU = (\<lambda>k :: real^'n. (snd (WW (0, k)) + \<alpha> *\<^sub>R k)
+  define YU where "YU = (\<lambda>k :: real^'n. (snd (WW (0, k)) + Z *v k)
       + (2 * \<delta>) *\<^sub>R k)"
-  have collu: "\<And>x. af x + \<delta> * (norm (x - xh))\<^sup>2 = supconv u \<epsilon> x"
-    unfolding af_def by simp
-  have collb: "\<And>y. bf y + \<delta> * (norm (y - yh))\<^sup>2 = supconv b \<epsilon> y"
-    unfolding bf_def by simp
   have expu: "((\<lambda>k. (supconv u \<epsilon> (fst zh + k) - supconv u \<epsilon> (fst zh)
       - pu \<bullet> k - (k \<bullet> XU k)/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    using expansion_add_centered_sq[where \<delta> = \<delta> and c = xh, OF slices(2)]
-    unfolding collu pu_def XU_def .
+    using jet_transfer_quadratic[OF slices(2)[unfolded af_def]]
+    unfolding pu_def XU_def .
   have expb: "((\<lambda>k. (supconv b \<epsilon> (snd zh + k) - supconv b \<epsilon> (snd zh)
       - pw \<bullet> k - (k \<bullet> YU k)/2) / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    using expansion_add_centered_sq[where \<delta> = \<delta> and c = yh, OF slices(3)]
-    unfolding collb pw_def YU_def .
+    using jet_transfer_quadratic[OF slices(3)[unfolded bf_def]]
+    unfolding pw_def YU_def .
   have linXU: "linear XU"
     unfolding XU_def
-    by (rule linear_add_scaleR[OF linear_block_fst[OF blW]])
+    by (intro linear_compose_add linear_block_fst_gen[OF blW] linear_scaleR)
   have symXU: "\<And>a b. a \<bullet> XU b = b \<bullet> XU a"
     unfolding XU_def
-    by (rule sym_add_scaleR[OF sym_block_fst[OF symW']])
+    by (rule sym_add_scaleR[OF sym_block_fst_gen[OF symW' symZ]])
+  have linsnd: "linear (\<lambda>v. snd (WW (0, v)) + Z *v v)"
+    using linear_block_snd_gen[OF blW, of Z]
+      linear_neg_iff[of "\<lambda>v. snd (WW (0, v)) + Z *v v"] by simp
   have linYU: "linear YU"
-  proof -
-    have "linear (\<lambda>v. - (snd (WW (0, v)) + \<alpha> *\<^sub>R v))"
-      by (rule linear_block_snd[OF blW])
-    then have "linear (\<lambda>v. snd (WW (0, v)) + \<alpha> *\<^sub>R v)"
-      using linear_neg_iff by fastforce
-    then show ?thesis unfolding YU_def by (rule linear_add_scaleR)
-  qed
+    unfolding YU_def by (rule linear_compose_add[OF linsnd linear_scaleR])
   have symYU: "\<And>a b. a \<bullet> YU b = b \<bullet> YU a"
   proof -
-    have s: "\<And>a b. a \<bullet> (snd (WW (0, b)) + \<alpha> *\<^sub>R b)
-        = b \<bullet> (snd (WW (0, a)) + \<alpha> *\<^sub>R a)"
-    proof -
-      fix a b :: "real^'n"
-      have n1: "a \<bullet> (- (snd (WW (0, b)) + \<alpha> *\<^sub>R b))
-          = b \<bullet> (- (snd (WW (0, a)) + \<alpha> *\<^sub>R a))"
-        by (rule sym_block_snd[OF symW'])
-      have l: "a \<bullet> (- (snd (WW (0, b)) + \<alpha> *\<^sub>R b))
-          = - (a \<bullet> (snd (WW (0, b)) + \<alpha> *\<^sub>R b))"
-        by (rule inner_minus_right)
-      have r: "b \<bullet> (- (snd (WW (0, a)) + \<alpha> *\<^sub>R a))
-          = - (b \<bullet> (snd (WW (0, a)) + \<alpha> *\<^sub>R a))"
-        by (rule inner_minus_right)
-      show "a \<bullet> (snd (WW (0, b)) + \<alpha> *\<^sub>R b)
-          = b \<bullet> (snd (WW (0, a)) + \<alpha> *\<^sub>R a)"
-        using n1 unfolding l r by linarith
-    qed
+    have s: "\<And>a b. a \<bullet> (snd (WW (0, b)) + Z *v b) = b \<bullet> (snd (WW (0, a)) + Z *v a)"
+      using sym_block_snd_gen[OF symW' symZ, unfolded inner_minus_right]
+      by (metis neg_equal_iff_equal)
     show "\<And>a b. a \<bullet> YU b = b \<bullet> YU a"
       unfolding YU_def by (rule sym_add_scaleR[OF s])
   qed
@@ -808,17 +582,17 @@ proof -
     by (rule supconv_superjet_at_optimizer[OF Bb e0 optb expb linYU symYU])
   have o3: "v \<bullet> XU v + v \<bullet> YU v \<le> 4 * \<delta> * (norm v)\<^sup>2" for v
   proof -
-    have neg: "v \<bullet> (- (snd (WW (0, v)) + \<alpha> *\<^sub>R v))
-        = - (v \<bullet> (snd (WW (0, v)) + \<alpha> *\<^sub>R v))"
+    have neg: "v \<bullet> (- (snd (WW (0, v)) + Z *v v))
+        = - (v \<bullet> (snd (WW (0, v)) + Z *v v))"
       by (rule inner_minus_right)
-    have base: "v \<bullet> (fst (WW (v, 0)) + \<alpha> *\<^sub>R v)
-        + v \<bullet> (snd (WW (0, v)) + \<alpha> *\<^sub>R v) \<le> 0"
+    have base: "v \<bullet> (fst (WW (v, 0)) + Z *v v)
+        + v \<bullet> (snd (WW (0, v)) + Z *v v) \<le> 0"
       using ord[of v] unfolding neg by linarith
-    have x1: "v \<bullet> XU v = v \<bullet> (fst (WW (v, 0)) + \<alpha> *\<^sub>R v)
+    have x1: "v \<bullet> XU v = v \<bullet> (fst (WW (v, 0)) + Z *v v)
         + 2 * \<delta> * (norm v)\<^sup>2"
       unfolding XU_def
       by (simp add: inner_add_right power2_norm_eq_inner)
-    have y1: "v \<bullet> YU v = v \<bullet> (snd (WW (0, v)) + \<alpha> *\<^sub>R v)
+    have y1: "v \<bullet> YU v = v \<bullet> (snd (WW (0, v)) + Z *v v)
         + 2 * \<delta> * (norm v)\<^sup>2"
       unfolding YU_def
       by (simp add: inner_add_right power2_norm_eq_inner)
@@ -916,7 +690,7 @@ proof -
     have pen: "tt\<^sup>2 / (4*\<epsilon>) \<le> du\<^sup>2 / (2*\<epsilon>) + db\<^sup>2 / (2*\<epsilon>)"
     proof -
       have "tt\<^sup>2 \<le> 2 * (du\<^sup>2 + db\<^sup>2)" unfolding tt_def
-        by (rule add_sq_le_double)
+        using sum_squares_bound[of du db] by (simp add: power2_sum)
       then show ?thesis using e0 by (simp add: field_simps)
     qed
     have half: "(\<alpha>/2) * tt\<^sup>2 \<le> tt\<^sup>2 / (8*\<epsilon>)"
@@ -1123,18 +897,8 @@ theorem theorem_on_sums_quadratic:
 proof -
   define b where "b = (\<lambda>y. - w y)"
   have Bb: "\<And>y. b y \<le> - Bw'" unfolding b_def using Bw by simp
-  have uscb: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> b y < c" if lt: "b z < c" for c z
-  proof -
-    have "- c < w z" using lt unfolding b_def by simp
-    from lsc[OF this] obtain e where e: "0 < e"
-      and h: "\<forall>y. dist z y < e \<longrightarrow> - c < w y" by blast
-    show ?thesis
-    proof (intro exI[of _ e] conjI e allI impI)
-      fix y assume "dist z y < e"
-      then have "- c < w y" using h by blast
-      then show "b y < c" unfolding b_def by linarith
-    qed
-  qed
+  have uscb: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> b y < c" if "b z < c" for c z
+    using lsc[of "- c" z] that unfolding b_def by (simp add: minus_less_iff)
   define M where "M = u xh + b yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
   have mxb: "\<And>x y. u x + b y - (\<alpha>/2) * (norm (x - y))\<^sup>2 \<le> M"
     unfolding M_def b_def using mx by simp
@@ -1464,7 +1228,7 @@ proof -
     then have "(norm r)\<^sup>2 \<le> (norm s + norm t)\<^sup>2"
       by (intro power_mono) auto
     also have "\<dots> \<le> 2 * ((norm s)\<^sup>2 + (norm t)\<^sup>2)"
-      by (rule add_sq_le_double)
+      using sum_squares_bound[of "norm s" "norm t"] by (simp add: power2_sum)
     finally show ?thesis .
   qed
   have pens: "(dist x' x)\<^sup>2 + (dist y' y)\<^sup>2 = (norm s)\<^sup>2 + (norm t)\<^sup>2"
@@ -1486,6 +1250,43 @@ proof -
       = ((norm s)\<^sup>2 + (norm t)\<^sup>2) / (2*lam)"
     using pens by simp
   ultimately show ?thesis using p1 by linarith
+qed
+
+text \<open>The shift algebra of the deconvolution: moving \<open>xh\<close> and \<open>yh\<close> towards each
+  other by \<open>\<lambda>g\<close>, \<open>g = \<alpha>(xh - yh)\<close>, shrinks the difference by \<open>1 - 2\<lambda>\<alpha>\<close>, which
+  the inflated penalty \<open>al\<close> undoes.\<close>
+
+lemma deconv_shift:
+  fixes xh yh g :: "'a::real_normed_vector" and \<alpha> lam al :: real
+  assumes la1: "2 * lam * \<alpha> < 1" and al: "al = \<alpha> / (1 - 2 * lam * \<alpha>)"
+    and gd: "g = \<alpha> *\<^sub>R (xh - yh)"
+  shows "(xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g) = (1 - 2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
+    and "al *\<^sub>R ((xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g)) = g"
+    and "(al/2) * (norm ((xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g)))\<^sup>2
+      = (\<alpha>/2) * (norm (xh - yh))\<^sup>2 - lam * (norm g)\<^sup>2"
+proof -
+  have ne: "1 - 2 * lam * \<alpha> \<noteq> 0" using la1 by linarith
+  have "(1 - 2 * lam * \<alpha>) *\<^sub>R (xh - yh)
+      = (xh - yh) - (lam * \<alpha>) *\<^sub>R (xh - yh) - (lam * \<alpha>) *\<^sub>R (xh - yh)"
+    by (simp add: algebra_simps flip: scaleR_add_left)
+  then show sh: "(xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g) = (1 - 2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
+    unfolding gd by (simp add: algebra_simps)
+  show "al *\<^sub>R ((xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g)) = g"
+    unfolding sh unfolding al gd using ne by simp
+  have alid: "al * (1 - 2 * lam * \<alpha>) = \<alpha>" unfolding al using ne by simp
+  have penn: "(norm ((xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g)))\<^sup>2
+      = (1 - 2 * lam * \<alpha>)\<^sup>2 * (norm (xh - yh))\<^sup>2"
+    unfolding sh by (simp add: power_mult_distrib power2_eq_square abs_mult)
+  have gsq: "(norm g)\<^sup>2 = \<alpha>\<^sup>2 * (norm (xh - yh))\<^sup>2"
+    unfolding gd by (simp add: power_mult_distrib)
+  have "(al/2) * ((1 - 2 * lam * \<alpha>)\<^sup>2 * (norm (xh - yh))\<^sup>2)
+      = (al * (1 - 2 * lam * \<alpha>)) * ((1 - 2 * lam * \<alpha>) * (norm (xh - yh))\<^sup>2) / 2"
+    by (simp add: power2_eq_square algebra_simps)
+  also have "\<dots> = \<alpha> * ((1 - 2 * lam * \<alpha>) * (norm (xh - yh))\<^sup>2) / 2"
+    unfolding alid ..
+  finally show "(al/2) * (norm ((xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g)))\<^sup>2
+      = (\<alpha>/2) * (norm (xh - yh))\<^sup>2 - lam * (norm g)\<^sup>2"
+    unfolding penn gsq by (simp add: field_simps power2_eq_square)
 qed
 
 text \<open>The doubled functional of the \<open>lam\<close>-sup-convolutions with the inflated
@@ -1545,8 +1346,6 @@ lemma deconv_doubled_attains:
   shows "supconv u lam (xh - lam *\<^sub>R g) + supconv b lam (yh + lam *\<^sub>R g)
       - (al/2) * (norm ((xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g)))\<^sup>2 = M"
 proof -
-  have ne: "1 - 2 * lam * \<alpha> \<noteq> 0" using la1 by linarith
-  have alid: "al * (1 - 2 * lam * \<alpha>) = \<alpha>" unfolding al using ne by simp
   have u1: "u xh - (dist (xh - lam *\<^sub>R g) xh)\<^sup>2 / (2*lam)
       \<le> supconv u lam (xh - lam *\<^sub>R g)"
     unfolding supconv_def
@@ -1561,49 +1360,11 @@ proof -
   have db: "(dist (yh + lam *\<^sub>R g) yh)\<^sup>2 = lam\<^sup>2 * (norm g)\<^sup>2"
     using l0 by (simp add: dist_norm
         power_mult_distrib power2_eq_square abs_mult)
-  have pend: "(xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g)
-      = (1 - 2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
-  proof -
-    have e1: "lam *\<^sub>R g = (lam * \<alpha>) *\<^sub>R (xh - yh)"
-      unfolding gd by simp
-    have e2: "(1 - 2 * lam * \<alpha>) *\<^sub>R (xh - yh)
-        = (xh - yh) - (2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
-      by (simp add: scaleR_diff_left)
-    have e3: "(lam * \<alpha>) *\<^sub>R (xh - yh) + (lam * \<alpha>) *\<^sub>R (xh - yh)
-        = (2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
-      by (simp add: scaleR_add_left[symmetric])
-    show ?thesis unfolding e1 e2 e3[symmetric] by (simp add: algebra_simps)
-  qed
-  have penn: "(norm ((xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g)))\<^sup>2
-      = (1 - 2 * lam * \<alpha>)\<^sup>2 * (norm (xh - yh))\<^sup>2"
-    unfolding pend
-    by (simp add: power_mult_distrib power2_eq_square abs_mult)
-  have gsq: "(norm g)\<^sup>2 = \<alpha>\<^sup>2 * (norm (xh - yh))\<^sup>2"
-    unfolding gd using a0
-    by (simp add: power_mult_distrib power2_eq_square abs_mult)
   have divu: "lam\<^sup>2 * (norm g)\<^sup>2 / (2*lam) = lam * (norm g)\<^sup>2 / 2"
     using l0 by (simp add: power2_eq_square)
-  have penc: "(al/2) * ((1 - 2 * lam * \<alpha>)\<^sup>2 * (norm (xh - yh))\<^sup>2)
-      = (\<alpha>/2) * (norm (xh - yh))\<^sup>2 - lam * \<alpha>\<^sup>2 * (norm (xh - yh))\<^sup>2"
-  proof -
-    have "(al/2) * ((1 - 2 * lam * \<alpha>)\<^sup>2 * (norm (xh - yh))\<^sup>2)
-        = (al * (1 - 2 * lam * \<alpha>)) * ((1 - 2 * lam * \<alpha>)
-            * (norm (xh - yh))\<^sup>2) / 2"
-      by (simp add: power2_eq_square algebra_simps)
-    also have "\<dots> = \<alpha> * ((1 - 2 * lam * \<alpha>) * (norm (xh - yh))\<^sup>2) / 2"
-      unfolding alid by (rule refl)
-    finally show ?thesis by (simp add: field_simps power2_eq_square)
-  qed
   have low: "M \<le> supconv u lam (xh - lam *\<^sub>R g) + supconv b lam (yh + lam *\<^sub>R g)
       - (al/2) * (norm ((xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g)))\<^sup>2"
-  proof -
-    have "M = u xh + b yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2" by (rule Mval)
-    moreover have "lam * (norm g)\<^sup>2 / 2 + lam * (norm g)\<^sup>2 / 2
-        = lam * \<alpha>\<^sup>2 * (norm (xh - yh))\<^sup>2"
-      unfolding gsq by simp
-    ultimately show ?thesis
-      using u1 b1 unfolding du db divu penn penc by linarith
-  qed
+    using Mval u1 b1 deconv_shift(3)[OF la1 al gd] unfolding du db divu by linarith
   have high: "supconv u lam (xh - lam *\<^sub>R g) + supconv b lam (yh + lam *\<^sub>R g)
       - (al/2) * (norm ((xh - lam *\<^sub>R g) - (yh + lam *\<^sub>R g)))\<^sup>2 \<le> M"
     by (rule deconv_doubled_le[OF Bu Bb l0 a0 la1 al mxb])
@@ -1856,39 +1617,19 @@ lemma superjet_supconv_transfer:
     and jet: "(p, F) \<in> superjet (supconv u lam) x"
   shows "(p, F) \<in> superjet u ys"
 proof -
-  have linF: "linear F" and symF: "\<And>a b. a \<bullet> F b = b \<bullet> F a"
-    using jet unfolding superjet_def by blast+
-  have tr: "\<And>k. (u (ys + k) - u ys - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2
-      \<le> (supconv u lam (x + k) - supconv u lam x
-          - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2"
-    by (rule supconv_jet_transfer[OF B l0 opt])
-  have h: "\<exists>d>0. \<forall>k. norm k < d \<longrightarrow>
-      u (ys + k) \<le> u ys + p \<bullet> k + (k \<bullet> F k)/2 + e * (norm k)\<^sup>2"
-    if e: "0 < e" for e
+  have dom: "u (ys + k) - u ys \<le> supconv u lam (x + k) - supconv u lam x" for k
+    by (rule supconv_dominates_shift[OF B l0 opt])
+  have "\<exists>d>0. \<forall>k. norm k < d \<longrightarrow>
+      u (ys + k) \<le> u ys + p \<bullet> k + (k \<bullet> F k)/2 + e * (norm k)\<^sup>2" if e: "0 < e" for e
   proof -
     obtain d where d: "0 < d" and sj: "\<And>k. norm k < d \<Longrightarrow>
-        supconv u lam (x + k) \<le> supconv u lam x + p \<bullet> k
-          + (k \<bullet> F k)/2 + e * (norm k)\<^sup>2"
+        supconv u lam (x + k) \<le> supconv u lam x + p \<bullet> k + (k \<bullet> F k)/2 + e * (norm k)\<^sup>2"
       using jet e unfolding superjet_def by blast
-    have main: "u (ys + k) \<le> u ys + p \<bullet> k + (k \<bullet> F k)/2 + e * (norm k)\<^sup>2"
-      if kd: "norm k < d" for k
-    proof (cases "k = 0")
-      case True then show ?thesis by simp
-    next
-      case False
-      have nk: "0 < (norm k)\<^sup>2" using False by simp
-      have "(supconv u lam (x + k) - supconv u lam x
-          - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2 \<le> e"
-        using sj[OF kd] nk by (simp add: pos_divide_le_eq)
-      then have "(u (ys + k) - u ys - p \<bullet> k - (k \<bullet> F k)/2) / (norm k)\<^sup>2 \<le> e"
-        using tr[of k] by linarith
-      then have "u (ys + k) - u ys - p \<bullet> k - (k \<bullet> F k)/2 \<le> e * (norm k)\<^sup>2"
-        using nk by (simp add: pos_divide_le_eq)
-      then show ?thesis by linarith
-    qed
-    show ?thesis using d main by blast
+    have "u (ys + k) \<le> u ys + p \<bullet> k + (k \<bullet> F k)/2 + e * (norm k)\<^sup>2" if "norm k < d" for k
+      using sj[OF that] dom[of k] by linarith
+    then show ?thesis using d by blast
   qed
-  show ?thesis unfolding superjet_def using linF symF h by auto
+  then show ?thesis using jet unfolding superjet_def by auto
 qed
 
 section \<open>Compactness for uniformly bounded symmetric forms\<close>
@@ -1956,6 +1697,12 @@ text \<open>The route to the closed jets fixes the sup-convolution scale \<open>
 
 section \<open>The Crandall--Ishii theorem on sums, closed-jet form\<close>
 
+text \<open>The closed-jet form is the staged form applied to the \<open>lam\<close>-sup-convolutions
+  of \<open>u\<close> and \<open>-w\<close> with the inflated penalty \<open>al = \<alpha>/(1 - 2lam\<alpha>)\<close>, whose
+  doubled maximum sits at the shifted point of \<open>deconv_doubled_attains\<close>; the
+  jets are transferred back to the attainment points and a subsequence of the
+  uniformly bounded forms converges.\<close>
+
 theorem theorem_on_sums_quadratic_closed:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and \<alpha> lam :: real
     and xh yh :: "real^'n"
@@ -1973,26 +1720,14 @@ theorem theorem_on_sums_quadratic_closed:
 proof -
   define b where "b = (\<lambda>y. - w y)"
   have Bb: "\<And>y. b y \<le> - Bw'" unfolding b_def using Bw by simp
-  have uscb: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> b y < c" if lt: "b z < c" for c z
-  proof -
-    have "- c < w z" using lt unfolding b_def by simp
-    from lsc[OF this] obtain e where e: "0 < e"
-      and h: "\<forall>y. dist z y < e \<longrightarrow> - c < w y" by blast
-    show ?thesis
-    proof (intro exI[of _ e] conjI e allI impI)
-      fix y assume "dist z y < e"
-      then have "- c < w y" using h by blast
-      then show "b y < c" unfolding b_def by linarith
-    qed
-  qed
+  have uscb: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> b y < c" if "b z < c" for c z
+    using lsc[of "- c" z] that unfolding b_def by (simp add: minus_less_iff)
   define M where "M = u xh + b yh - (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
   have mxb: "\<And>x y. u x + b y - (\<alpha>/2) * (norm (x - y))\<^sup>2 \<le> M"
     unfolding M_def b_def using mx by simp
   define al where "al = \<alpha> / (1 - 2 * lam * \<alpha>)"
-  have ne: "1 - 2 * lam * \<alpha> \<noteq> 0" using la1 by linarith
   have al0: "0 < al" unfolding al_def using a0 la1
     by (simp add: field_simps)
-  have alid: "al * (1 - 2 * lam * \<alpha>) = \<alpha>" unfolding al_def using ne by simp
   define g where "g = \<alpha> *\<^sub>R (xh - yh)"
   define x0 where "x0 = xh - lam *\<^sub>R g"
   define y0 where "y0 = yh + lam *\<^sub>R g"
@@ -2019,234 +1754,55 @@ proof -
         M_def g_def])
   have MvalL: "M = uL x0 + bL y0 - (al/2) * (norm (x0 - y0))\<^sup>2"
     using att by (rule sym)
-  define A where "A = norm (x0 - y0) + 2"
-  have Aval: "A = norm (x0 - y0) + 2" unfolding A_def by (rule refl)
-  have Ann: "0 \<le> A" unfolding A_def
-    using norm_ge_zero[of "x0 - y0"] by linarith
-  define C where "C = 2 * al\<^sup>2 * A\<^sup>2"
-  have C0: "0 \<le> C" unfolding C_def
-    by (intro mult_nonneg_nonneg) auto
+  define wL where "wL = (\<lambda>y. - bL y)"
+  have lscwL: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < wL y" if "c < wL z" for c z
+    using uscbL[of z "- c"] that unfolding wL_def by (simp add: less_minus_iff)
+  have BwL: "\<And>y. Bw' \<le> wL y" using BbL unfolding wL_def by (simp add: le_minus_iff)
+  have mxwL: "\<And>x y. uL x - wL y - (al/2) * (norm (x - y))\<^sup>2
+      \<le> uL x0 - wL y0 - (al/2) * (norm (x0 - y0))\<^sup>2"
+    using mxL MvalL unfolding wL_def by simp
+  obtain xs ys ps qs' HH Ys where jetuL': "\<And>n. (ps n, HH n) \<in> superjet uL (xs n)"
+    and jetwL: "\<And>n. (qs' n, Ys n) \<in> subjet wL (ys n)"
+    and ordw: "\<And>n v. v \<bullet> HH n v \<le> v \<bullet> Ys n v + 4 / (real n + 2) * (norm v)\<^sup>2"
+    and xst: "xs \<longlonglongrightarrow> x0" and yst: "ys \<longlonglongrightarrow> y0"
+    and pst': "ps \<longlonglongrightarrow> al *\<^sub>R (x0 - y0)" and qst': "qs' \<longlonglongrightarrow> al *\<^sub>R (x0 - y0)"
+    using theorem_on_sums_quadratic[OF uscuL lscwL BuL BwL al0 mxwL] by blast
+  define qs where "qs = (\<lambda>n. - qs' n)"
+  define II where "II = (\<lambda>n h. - Ys n h)"
   define dl where "dl = (\<lambda>n :: nat. 1 / (real n + 2))"
-  define q3 where "q3 = (\<lambda>n. dl n * (dl n)\<^sup>2)"
-  define ee where "ee = (\<lambda>n. min (1 / (4 * al + 4)) (q3 n / (2 * C + 2)))"
-  define ddn where "ddn = (\<lambda>n. q3 n / 8)"
-  have dl0: "0 < dl n" for n unfolding dl_def by simp
-  have dl1: "dl n < 1" for n unfolding dl_def by simp
   have dlhalf: "dl n \<le> 1/2" for n unfolding dl_def
     by (simp add: field_simps)
-  have q30: "0 < q3 n" for n unfolding q3_def
-    using dl0[of n] by (intro mult_pos_pos) auto
-  have ee0: "0 < ee n" for n
-  proof -
-    have "0 < 1 / (4 * al + 4)" using al0 by simp
-    moreover have "0 < q3 n / (2 * C + 2)"
-      using q30[of n] C0 by (intro divide_pos_pos) auto
-    ultimately show ?thesis unfolding ee_def by simp
-  qed
-  have ee4: "4 * al * ee n \<le> 1" for n
-  proof -
-    have h1: "ee n \<le> 1 / (4 * al + 4)"
-      unfolding ee_def by (rule min.cobounded1)
-    have "4 * al * ee n \<le> 4 * al * (1 / (4 * al + 4))"
-      using h1 al0 by (intro mult_left_mono) auto
-    also have "\<dots> \<le> 1" using al0 by (simp add: field_simps)
-    finally show ?thesis .
-  qed
-  have dd0n: "0 < ddn n" for n
-    unfolding ddn_def using q30[of n] by simp
-  have gapn: "2 * al\<^sup>2 * A\<^sup>2 * ee n \<le> dl n * (dl n)\<^sup>2 / 2" for n
-  proof -
-    have le1: "ee n \<le> q3 n / (2 * C + 2)"
-      unfolding ee_def by (rule min.cobounded2)
-    have le2: "C * ee n \<le> C * (q3 n / (2 * C + 2))"
-      by (rule mult_left_mono[OF le1 C0])
-    have le3: "C * (q3 n / (2 * C + 2)) \<le> q3 n / 2"
-    proof -
-      have e1: "C * (q3 n / (2 * C + 2)) = (C / (2 * C + 2)) * q3 n"
-        by simp
-      have e2: "C / (2 * C + 2) \<le> 1 / 2"
-        using C0 by (simp add: field_simps)
-      have "(C / (2 * C + 2)) * q3 n \<le> (1 / 2) * q3 n"
-        using e2 q30[of n] by (intro mult_right_mono) auto
-      then show ?thesis unfolding e1 by simp
-    qed
-    have "C * ee n \<le> q3 n / 2" using le2 le3 by linarith
-    then show ?thesis unfolding C_def q3_def by linarith
-  qed
-  have ddsmalln: "2 * ddn n < dl n * (dl n)\<^sup>2 / 2" for n
-  proof -
-    have "2 * ddn n = q3 n / 4" unfolding ddn_def by simp
-    also have "q3 n / 4 < q3 n / 2" using q30[of n] by argo
-    finally show ?thesis unfolding q3_def by simp
-  qed
-  define SP where "SP = (\<lambda>n (xy :: (real^'n) \<times> (real^'n))
-      (pq :: (real^'n) \<times> (real^'n)) (XU :: real^'n \<Rightarrow> real^'n)
-      (YU :: real^'n \<Rightarrow> real^'n).
-    (fst pq, XU) \<in> superjet uL (fst xy) \<and>
-    (snd pq, YU) \<in> superjet bL (snd xy) \<and>
-    (\<forall>v. v \<bullet> XU v + v \<bullet> YU v \<le> 4 * dl n * (norm v)\<^sup>2) \<and>
-    dist (fst xy) x0 \<le> dl n + 8 * ee n * al * A + sqrt (8 * ee n * ddn n) \<and>
-    dist (snd xy) y0 \<le> dl n + 8 * ee n * al * A + sqrt (8 * ee n * ddn n) \<and>
-    norm (fst pq - al *\<^sub>R (x0 - y0))
-      \<le> ddn n + 2 * al * dl n + 2 * dl n * dl n \<and>
-    norm (snd pq + al *\<^sub>R (x0 - y0))
-      \<le> ddn n + 2 * al * dl n + 2 * dl n * dl n \<and>
-    M - ddn n - 2 * al * A * dl n + (al/2) * (norm (x0 - y0))\<^sup>2
-      \<le> uL (fst xy) + bL (snd xy))"
-  have EX: "\<exists>xy pq XU YU. SP n xy pq XU YU" for n
-    unfolding SP_def
-    by (rule theorem_on_sums_stage[OF BuL BbL uscuL uscbL al0 mxL MvalL Aval
-        ee0 ee4 dl0 dl0 dl1 gapn dd0n ddsmalln])
-  obtain FF GG HH II where ALL: "\<forall>n. SP n (FF n) (GG n) (HH n) (II n)"
-    using choice4[of SP, OF EX] by blast
-  define xs where "xs = (\<lambda>n. fst (FF n))"
-  define ys where "ys = (\<lambda>n. snd (FF n))"
-  define ps where "ps = (\<lambda>n. fst (GG n))"
-  define qs where "qs = (\<lambda>n. snd (GG n))"
-  have sp: "SP n (FF n) (GG n) (HH n) (II n)" for n using ALL by blast
-  have jetuL: "(ps n, HH n) \<in> superjet (supconv u lam) (xs n)" for n
-    using sp[of n] unfolding SP_def xs_def ps_def uL_def by blast
-  have jetbL: "(qs n, II n) \<in> superjet (supconv b lam) (ys n)" for n
-    using sp[of n] unfolding SP_def ys_def qs_def bL_def by blast
-  have ordn: "v \<bullet> HH n v + v \<bullet> II n v \<le> 4 * dl n * (norm v)\<^sup>2" for n v
-    using sp[of n] unfolding SP_def by blast
-  have o4n: "dist (xs n) x0
-      \<le> dl n + 8 * ee n * al * A + sqrt (8 * ee n * ddn n)" for n
-    using sp[of n] unfolding SP_def xs_def by blast
-  have o5n: "dist (ys n) y0
-      \<le> dl n + 8 * ee n * al * A + sqrt (8 * ee n * ddn n)" for n
-    using sp[of n] unfolding SP_def ys_def by blast
-  have o6n: "norm (ps n - al *\<^sub>R (x0 - y0))
-      \<le> ddn n + 2 * al * dl n + 2 * dl n * dl n" for n
-    using sp[of n] unfolding SP_def ps_def by blast
-  have o7n: "norm (qs n + al *\<^sub>R (x0 - y0))
-      \<le> ddn n + 2 * al * dl n + 2 * dl n * dl n" for n
-    using sp[of n] unfolding SP_def qs_def by blast
   have dlt: "dl \<longlonglongrightarrow> 0"
-  proof (rule tendsto_sandwich[of "\<lambda>_. 0" _ _
-      "\<lambda>n. inverse (real (Suc n))"])
-    show "\<forall>\<^sub>F n in sequentially. 0 \<le> dl n"
-      using dl0 by (intro always_eventually allI) (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. dl n \<le> inverse (real (Suc n))"
-      unfolding dl_def
-      by (intro always_eventually allI) (simp add: field_simps)
-    show "(\<lambda>_ :: nat. (0::real)) \<longlonglongrightarrow> 0" by (rule tendsto_const)
-    show "(\<lambda>n. inverse (real (Suc n))) \<longlonglongrightarrow> 0"
-      by (rule LIMSEQ_inverse_real_of_nat)
-  qed
-  have q3t: "q3 \<longlonglongrightarrow> 0"
-  proof -
-    have "(\<lambda>n. dl n * (dl n)\<^sup>2) \<longlonglongrightarrow> 0 * (0::real)\<^sup>2"
-      by (intro tendsto_mult tendsto_power dlt)
-    then show ?thesis unfolding q3_def by simp
-  qed
-  have eet: "ee \<longlonglongrightarrow> 0"
-  proof (rule tendsto_sandwich[of "\<lambda>_. 0" _ _ "\<lambda>n. q3 n / (2 * C + 2)"])
-    show "\<forall>\<^sub>F n in sequentially. 0 \<le> ee n"
-      using ee0 by (intro always_eventually allI) (simp add: less_imp_le)
-    show "\<forall>\<^sub>F n in sequentially. ee n \<le> q3 n / (2 * C + 2)"
-      unfolding ee_def by (intro always_eventually allI min.cobounded2)
-    have "(\<lambda>n. q3 n / (2 * C + 2)) \<longlonglongrightarrow> 0 / (2 * C + 2)"
-      using C0 by (intro tendsto_divide q3t tendsto_const) auto
-    then show "(\<lambda>n. q3 n / (2 * C + 2)) \<longlonglongrightarrow> 0" by simp
-  qed simp
-  have ddt: "ddn \<longlonglongrightarrow> 0"
-  proof -
-    have "(\<lambda>n. q3 n / 8) \<longlonglongrightarrow> 0 / 8"
-      by (intro tendsto_divide q3t tendsto_const) auto
-    then show ?thesis unfolding ddn_def by simp
-  qed
-  have bndt: "(\<lambda>n. dl n + 8 * ee n * al * A + sqrt (8 * ee n * ddn n))
-      \<longlonglongrightarrow> 0"
-  proof -
-    have t2: "(\<lambda>n. 8 * ee n * ddn n) \<longlonglongrightarrow> 8 * 0 * 0"
-      by (intro tendsto_mult tendsto_const eet ddt)
-    have t3: "(\<lambda>n. sqrt (8 * ee n * ddn n)) \<longlonglongrightarrow> sqrt (8 * 0 * 0)"
-      by (rule tendsto_real_sqrt[OF t2])
-    have "(\<lambda>n. dl n + 8 * ee n * al * A + sqrt (8 * ee n * ddn n))
-        \<longlonglongrightarrow> 0 + 8 * 0 * al * A + sqrt (8 * 0 * 0)"
-      by (intro tendsto_add tendsto_mult tendsto_const dlt eet t3)
-    then show ?thesis by simp
-  qed
-  have xst: "xs \<longlonglongrightarrow> x0"
-    by (rule tendsto_of_dist_bound[OF o4n bndt])
-  have yst: "ys \<longlonglongrightarrow> y0"
-    by (rule tendsto_of_dist_bound[OF o5n bndt])
-  have gbt: "(\<lambda>n. ddn n + 2 * al * dl n + 2 * dl n * dl n) \<longlonglongrightarrow> 0"
-  proof -
-    have "(\<lambda>n. ddn n + 2 * al * dl n + 2 * dl n * dl n)
-        \<longlonglongrightarrow> 0 + 2 * al * 0 + 2 * 0 * 0"
-      by (intro tendsto_add tendsto_mult tendsto_const ddt dlt)
-    then show ?thesis by simp
-  qed
+    unfolding dl_def using LIMSEQ_Suc[OF LIMSEQ_Suc[OF lim_inverse_n']]
+    by (simp add: add.commute)
+  have jetuL: "(ps n, HH n) \<in> superjet (supconv u lam) (xs n)" for n
+    using jetuL'[of n] unfolding uL_def .
+  have jetbL: "(qs n, II n) \<in> superjet (supconv b lam) (ys n)" for n
+    using jetwL[of n] unfolding subjet_neg_superjet qs_def II_def wL_def bL_def by simp
+  have ordn: "v \<bullet> HH n v + v \<bullet> II n v \<le> 4 * dl n * (norm v)\<^sup>2" for n v
+    using ordw[of v n] unfolding II_def dl_def by simp
   have galx: "al *\<^sub>R (x0 - y0) = g"
-  proof -
-    have e1: "lam *\<^sub>R g = (lam * \<alpha>) *\<^sub>R (xh - yh)"
-      unfolding g_def by simp
-    have e2: "(1 - 2 * lam * \<alpha>) *\<^sub>R (xh - yh)
-        = (xh - yh) - (2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
-      by (simp add: scaleR_diff_left)
-    have e3: "(lam * \<alpha>) *\<^sub>R (xh - yh) + (lam * \<alpha>) *\<^sub>R (xh - yh)
-        = (2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
-      by (simp add: scaleR_add_left[symmetric])
-    have pend: "x0 - y0 = (1 - 2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
-      unfolding x0_def y0_def e1 e2 e3[symmetric]
-      by (simp add: algebra_simps)
-    have "al *\<^sub>R (x0 - y0) = (al * (1 - 2 * lam * \<alpha>)) *\<^sub>R (xh - yh)"
-      unfolding pend by simp
-    then show ?thesis unfolding alid g_def by simp
-  qed
-  have pst: "ps \<longlonglongrightarrow> g"
-  proof (rule tendsto_of_dist_bound[OF _ gbt])
-    fix n
-    show "dist (ps n) g \<le> ddn n + 2 * al * dl n + 2 * dl n * dl n"
-      using o6n[of n] unfolding galx[symmetric] by (simp add: dist_norm)
-  qed
-  have qst: "qs \<longlonglongrightarrow> - g"
-  proof (rule tendsto_of_dist_bound[OF _ gbt])
-    fix n
-    have "qs n - (- g) = qs n + al *\<^sub>R (x0 - y0)"
-      unfolding galx by simp
-    then show "dist (qs n) (- g) \<le> ddn n + 2 * al * dl n + 2 * dl n * dl n"
-      using o7n[of n] by (simp add: dist_norm)
-  qed
+    unfolding x0_def y0_def by (rule deconv_shift(2)[OF la1 al_def g_def])
+  have pst: "ps \<longlonglongrightarrow> g" using pst' unfolding galx .
+  have qst: "qs \<longlonglongrightarrow> - g" unfolding qs_def using tendsto_minus[OF qst'] unfolding galx .
   have lowH: "- ((norm v)\<^sup>2 / lam) \<le> v \<bullet> HH n v" for n v
     using superjet_supconv_form_lower[OF supconv_semiconvex'[OF Bu l0] jetuL, of v] by simp
   have lowII: "- ((norm v)\<^sup>2 / lam) \<le> v \<bullet> II n v" for n v
     using superjet_supconv_form_lower[OF supconv_semiconvex'[OF Bb l0] jetbL, of v] by simp
-  have cbH: "\<bar>v \<bullet> HH n v\<bar> \<le> (1/lam + 2) * (norm v)\<^sup>2" for n v
+  have cbH: "\<bar>v \<bullet> HH n v\<bar> \<le> (1/lam + 2) * (norm v)\<^sup>2"
+    and cbII: "\<bar>v \<bullet> II n v\<bar> \<le> (1/lam + 2) * (norm v)\<^sup>2" for n v
   proof -
-    have d1: "(norm v)\<^sup>2 / lam = (1/lam) * (norm v)\<^sup>2" by simp
-    have up: "v \<bullet> HH n v \<le> 4 * dl n * (norm v)\<^sup>2 + (1/lam) * (norm v)\<^sup>2"
-      using ordn[of v n] lowII[of v n] unfolding d1 by linarith
-    have "4 * dl n * (norm v)\<^sup>2 \<le> 2 * (norm v)\<^sup>2"
+    have a: "4 * dl n * (norm v)\<^sup>2 \<le> 2 * (norm v)\<^sup>2"
       using dlhalf[of n] by (intro mult_right_mono) auto
-    then have up2: "v \<bullet> HH n v \<le> (1/lam + 2) * (norm v)\<^sup>2"
-      using up by (simp add: algebra_simps)
-    have lo: "- ((1/lam + 2) * (norm v)\<^sup>2) \<le> v \<bullet> HH n v"
-    proof -
-      have "- ((1/lam + 2) * (norm v)\<^sup>2) \<le> - ((1/lam) * (norm v)\<^sup>2)"
-        by (simp add: algebra_simps)
-      then show ?thesis using lowH[of v n] unfolding d1 by linarith
-    qed
-    show ?thesis using up2 lo by linarith
-  qed
-  have cbII: "\<bar>v \<bullet> II n v\<bar> \<le> (1/lam + 2) * (norm v)\<^sup>2" for n v
-  proof -
-    have d1: "(norm v)\<^sup>2 / lam = (1/lam) * (norm v)\<^sup>2" by simp
-    have up: "v \<bullet> II n v \<le> 4 * dl n * (norm v)\<^sup>2 + (1/lam) * (norm v)\<^sup>2"
-      using ordn[of v n] lowH[of v n] unfolding d1 by linarith
-    have "4 * dl n * (norm v)\<^sup>2 \<le> 2 * (norm v)\<^sup>2"
-      using dlhalf[of n] by (intro mult_right_mono) auto
-    then have up2: "v \<bullet> II n v \<le> (1/lam + 2) * (norm v)\<^sup>2"
-      using up by (simp add: algebra_simps)
-    have lo: "- ((1/lam + 2) * (norm v)\<^sup>2) \<le> v \<bullet> II n v"
-    proof -
-      have "- ((1/lam + 2) * (norm v)\<^sup>2) \<le> - ((1/lam) * (norm v)\<^sup>2)"
-        by (simp add: algebra_simps)
-      then show ?thesis using lowII[of v n] unfolding d1 by linarith
-    qed
-    show ?thesis using up2 lo by linarith
+    have b: "(1/lam + 2) * (norm v)\<^sup>2 = (norm v)\<^sup>2 / lam + 2 * (norm v)\<^sup>2"
+      by (simp add: algebra_simps)
+    have "v \<bullet> HH n v \<le> (1/lam + 2) * (norm v)\<^sup>2"
+      "- (v \<bullet> HH n v) \<le> (1/lam + 2) * (norm v)\<^sup>2"
+      "v \<bullet> II n v \<le> (1/lam + 2) * (norm v)\<^sup>2"
+      "- (v \<bullet> II n v) \<le> (1/lam + 2) * (norm v)\<^sup>2"
+      by (use a b ordn[of v n] lowH[of v n] lowII[of v n] zero_le_power2[of "norm v"] in linarith)+
+    then show "\<bar>v \<bullet> HH n v\<bar> \<le> (1/lam + 2) * (norm v)\<^sup>2"
+      and "\<bar>v \<bullet> II n v\<bar> \<le> (1/lam + 2) * (norm v)\<^sup>2" by (simp_all add: abs_le_iff)
   qed
   have linHH: "linear (HH n)" for n
     using jetuL[of n] unfolding superjet_def by blast
@@ -2389,48 +1945,9 @@ proof -
   qed
   have sumL: "Lu + Lb = u xh + b yh"
   proof -
-    have pend: "x0 - y0 = (1 - 2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
-    proof -
-      have e1: "lam *\<^sub>R g = (lam * \<alpha>) *\<^sub>R (xh - yh)"
-        unfolding g_def by simp
-      have e2: "(1 - 2 * lam * \<alpha>) *\<^sub>R (xh - yh)
-          = (xh - yh) - (2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
-        by (simp add: scaleR_diff_left)
-      have e3: "(lam * \<alpha>) *\<^sub>R (xh - yh) + (lam * \<alpha>) *\<^sub>R (xh - yh)
-          = (2 * lam * \<alpha>) *\<^sub>R (xh - yh)"
-        by (simp add: scaleR_add_left[symmetric])
-      show ?thesis unfolding x0_def y0_def e1 e2 e3[symmetric]
-        by (simp add: algebra_simps)
-    qed
-    have penn: "(norm (x0 - y0))\<^sup>2
-        = (1 - 2 * lam * \<alpha>)\<^sup>2 * (norm (xh - yh))\<^sup>2"
-      unfolding pend
-      by (simp add: power_mult_distrib power2_eq_square abs_mult)
-    have gsq: "(norm g)\<^sup>2 = \<alpha>\<^sup>2 * (norm (xh - yh))\<^sup>2"
-      unfolding g_def using a0
-      by (simp add: power_mult_distrib power2_eq_square abs_mult)
-    have penc: "(al/2) * ((1 - 2 * lam * \<alpha>)\<^sup>2 * (norm (xh - yh))\<^sup>2)
-        = (\<alpha>/2) * (norm (xh - yh))\<^sup>2 - lam * \<alpha>\<^sup>2 * (norm (xh - yh))\<^sup>2"
-    proof -
-      have "(al/2) * ((1 - 2 * lam * \<alpha>)\<^sup>2 * (norm (xh - yh))\<^sup>2)
-          = (al * (1 - 2 * lam * \<alpha>)) * ((1 - 2 * lam * \<alpha>)
-              * (norm (xh - yh))\<^sup>2) / 2"
-        by (simp add: power2_eq_square algebra_simps)
-      also have "\<dots> = \<alpha> * ((1 - 2 * lam * \<alpha>) * (norm (xh - yh))\<^sup>2) / 2"
-        unfolding alid by (rule refl)
-      finally show ?thesis by (simp add: field_simps power2_eq_square)
-    qed
-    have "Lu + Lb = (uL x0 + bL y0) + lam * (norm g)\<^sup>2"
-      unfolding Lu_def Lb_def by simp
-    also have "uL x0 + bL y0 = M + (al/2) * (norm (x0 - y0))\<^sup>2"
-      using MvalL by linarith
-    finally have "Lu + Lb = M + (al/2) * ((1 - 2 * lam * \<alpha>)\<^sup>2
-        * (norm (xh - yh))\<^sup>2) + lam * (\<alpha>\<^sup>2 * (norm (xh - yh))\<^sup>2)"
-      unfolding penn gsq by simp
-    also have "\<dots> = M + (\<alpha>/2) * (norm (xh - yh))\<^sup>2"
-      unfolding penc by (simp add: algebra_simps)
-    also have "\<dots> = u xh + b yh" unfolding M_def by simp
-    finally show ?thesis .
+    have "(al/2) * (norm (x0 - y0))\<^sup>2 = (\<alpha>/2) * (norm (xh - yh))\<^sup>2 - lam * (norm g)\<^sup>2"
+      unfolding x0_def y0_def by (rule deconv_shift(3)[OF la1 al_def g_def])
+    then show ?thesis using MvalL unfolding Lu_def Lb_def M_def by linarith
   qed
   have LuLe: "Lu \<le> u xh"
   proof (rule ccontr)

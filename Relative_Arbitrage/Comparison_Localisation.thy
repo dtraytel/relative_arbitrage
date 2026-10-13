@@ -85,7 +85,7 @@ qed
 
 subsection \<open>Wiring the theorem on sums to the ordering hypothesis\<close>
 
-text \<open>\<open>sums_gives_ordering\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+text \<open>\<open>sums_gives_ordering_gen\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>With linearity and symmetry of the two blocks, supplied by the
   Alexandrov jet's bounded linear and symmetric Hessian, the ordering
@@ -581,98 +581,10 @@ subsection \<open>The sup-convolution is attained\<close>
 
 text \<open>\<open>comparison_supconv_sequence_complete\<close> takes attainment of each
   sup-convolution as a hypothesis - the points \<open>y\<^sub>s\<close> where
-  \<open>supconv u \<epsilon> x = u y\<^sub>s - dist(x,y\<^sub>s)\<^sup>2/(2\<epsilon>)\<close>.  For continuous \<open>u\<close>
-  bounded above they exist by coercivity: beyond an explicit radius
-  \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))+1\<close> the penalty already beats the value at \<open>x\<close>,
-  so the supremum over the whole space equals the supremum over one
-  compact ball, attained by continuity.\<close>
-
-subsection \<open>The attainment radius as a parameter\<close>
-
-text \<open>The \<open>+1\<close> margin is not needed: any radius \<open>R\<close> exceeding
-  \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))\<close> serves. With the margin,
-  \<open>cball x R \<subseteq> \<Omega>\<close> would ask \<open>\<Omega>\<close> for a ball of radius one, which no
-  bounded \<open>\<Omega>\<close> of small diameter has; with \<open>R\<close> free, the hypothesis
-  separates into a geometric condition on \<open>R\<close> and a smallness condition
-  on \<open>\<epsilon>\<close>, discharged separately at the top level.\<close>
-
-theorem supconv_attained_ball_rad:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
-    and cu: "continuous_on UNIV u"
-    and R: "sqrt (max 0 (2*\<epsilon>*(Bu - u x))) < R"
-  shows "\<exists>ys. dist x ys \<le> R
-      \<and> supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-proof -
-  define M where "M = max 0 (2*\<epsilon>*(Bu - u x))"
-  have M0: "0 \<le> M" unfolding M_def by simp
-  have s0: "0 \<le> sqrt M" using M0 by simp
-  have sR: "sqrt M < R" using R unfolding M_def .
-  have R0: "0 < R" using s0 sR by linarith
-  have Rsq: "2*\<epsilon>*(Bu - u x) < R\<^sup>2"
-  proof -
-    have sq: "(sqrt M)\<^sup>2 = M" using M0 by simp
-    have "(sqrt M)\<^sup>2 < R\<^sup>2"
-      by (rule power_strict_mono[OF sR s0]) simp
-    then have "M < R\<^sup>2" unfolding sq .
-    moreover have "2*\<epsilon>*(Bu - u x) \<le> M" unfolding M_def by simp
-    ultimately show ?thesis by linarith
-  qed
-  have cpt: "compact (cball x R)" by (rule compact_cball)
-  have ne: "cball x R \<noteq> {}" using R0 by auto
-  have cont: "continuous_on (cball x R) (\<lambda>y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
-    by (intro continuous_intros continuous_on_subset[OF cu subset_UNIV])
-       (use e in auto)
-  obtain ys where ysin: "ys \<in> cball x R"
-    and ysmax: "\<forall>y \<in> cball x R.
-        u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-    using continuous_attains_sup[OF cpt ne cont] by blast
-  have xin: "x \<in> cball x R" using R0 by simp
-  have key: "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)" for y
-  proof (cases "dist x y \<le> R")
-    case True
-    then have "y \<in> cball x R" by (simp add: dist_commute)
-    with ysmax show ?thesis by blast
-  next
-    case False
-    then have gt: "R < dist x y" by simp
-    have lt: "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) < u x"
-    proof -
-      have "R\<^sup>2 < (dist x y)\<^sup>2"
-        by (rule power_strict_mono[OF gt less_imp_le[OF R0]]) simp
-      then have big: "2*\<epsilon>*(Bu - u x) < (dist x y)\<^sup>2"
-        using Rsq by linarith
-      have c0: "0 < 2*\<epsilon>" using e by simp
-      have "(Bu - u x) * (2*\<epsilon>) < (dist x y)\<^sup>2"
-        using big by (simp add: algebra_simps)
-      then have "Bu - u x < (dist x y)\<^sup>2 / (2*\<epsilon>)"
-        using c0 by (simp add: pos_less_divide_eq)
-      then show ?thesis using B[of y] by linarith
-    qed
-    have xval: "u x = u x - (dist x x)\<^sup>2 / (2*\<epsilon>)" by simp
-    have "u x - (dist x x)\<^sup>2 / (2*\<epsilon>) \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-      using ysmax xin by blast
-    with lt xval show ?thesis by linarith
-  qed
-  have "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-  proof (rule antisym)
-    show "supconv u \<epsilon> x \<le> u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-      unfolding supconv_def by (rule cSUP_least) (auto simp: key)
-    show "u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>) \<le> supconv u \<epsilon> x"
-      unfolding supconv_def
-      by (intro cSUP_upper supconv_bdd_above[OF B e]) simp
-  qed
-  moreover have "dist x ys \<le> R"
-    using ysin by (simp add: dist_commute)
-  ultimately show ?thesis by blast
-qed
-
-text \<open>Every attainment point, not just the one \<open>supconv_attained_ball_rad\<close>
-  produces, lies inside that radius: if \<open>z\<close> attains then
-  \<open>u z - dist\<^sup>2/(2\<epsilon>) \<ge> u x\<close> gives \<open>dist\<^sup>2 \<le> 2\<epsilon>(B\<^sub>u-u x)\<close>.  The universal
-  form is needed where membership of the attainment point in \<open>\<Omega>\<close> comes
-  from a gate on \<open>u\<close> rather than from a ball.\<close>
-
+  \<open>supconv u \<epsilon> x = u y\<^sub>s - dist(x,y\<^sub>s)\<^sup>2/(2\<epsilon>)\<close>.  For usc \<open>u\<close> bounded above
+  they exist by @{thm [source] supconv_attained_usc}, and every one of them
+  lies within \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))\<close> of \<open>x\<close>
+  (@{thm [source] supconv_attain_radius}).\<close>
 
 lemma visc_subsol_mono_dom:
   assumes s: "visc_subsol k L \<Omega> u" and sub: "\<Omega>' \<subseteq> \<Omega>"
@@ -722,79 +634,19 @@ lemma supconv_attained_usc_ball:
   obtains ys where "dist x ys \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x))) + 1"
     and "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
 proof -
-  define R where "R = sqrt (max 0 (2*\<epsilon>*(Bu - u x))) + 1"
-  have R1: "1 \<le> R" unfolding R_def by simp
-  have R0: "0 < R" using R1 by linarith
-  define g where "g = (\<lambda>y :: real^'n. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
-  have ene: "2*\<epsilon> \<noteq> 0" using e by simp
-  have pc: "isCont (\<lambda>y :: real^'n. - ((dist x y)\<^sup>2 / (2*\<epsilon>))) z" for z
-    by (intro continuous_intros) (use ene in simp_all)
-  have p2: "\<exists>d>0. \<forall>y. dist zz y < d \<longrightarrow> - ((dist x y)\<^sup>2 / (2*\<epsilon>)) < cc"
-    if "- ((dist x zz)\<^sup>2 / (2*\<epsilon>)) < cc" for cc and zz :: "real^'n"
-    by (rule usc_eps_of_continuous[OF pc that])
-  have gusc: "\<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> g y < c" if lt: "g z < c"
-    for c and z :: "real^'n"
-  proof -
-    have lt': "u z + (- ((dist x z)\<^sup>2 / (2*\<epsilon>))) < c"
-      using lt unfolding g_def by simp
-    from usc_eps_add[OF uscu p2 lt'] obtain d where d0: "0 < d"
-      and h: "\<forall>y. dist z y < d \<longrightarrow> u y + (- ((dist x y)\<^sup>2 / (2*\<epsilon>))) < c"
-      by blast
-    show ?thesis
-    proof (rule exI[of _ d], intro conjI allI impI d0)
-      fix y assume "dist z y < d"
-      then show "g y < c" using h unfolding g_def by simp
-    qed
-  qed
-  have gB: "g y \<le> Bu" for y
-  proof -
-    have "0 \<le> (dist x y)\<^sup>2 / (2*\<epsilon>)" using e by simp
-    then show ?thesis unfolding g_def using B[of y] by linarith
-  qed
-  have neS: "cball x R \<noteq> {}" using R0 by auto
-  obtain ys where ysS: "ys \<in> cball x R"
-    and mxb: "\<And>y. y \<in> cball x R \<Longrightarrow> g y \<le> g ys"
-    using usc_attains_sup_gen[OF gusc _ compact_cball neS, of Bu] gB by blast
-  have xS: "x \<in> cball x R" using R0 by simp
-  have glob: "g y \<le> g ys" for y
-  proof (cases "dist x y \<le> R")
-    case True
-    then have "y \<in> cball x R" by (simp add: dist_commute)
-    then show ?thesis by (rule mxb)
-  next
-    case False
-    then have dR: "R < dist x y" by linarith
-    have s0: "0 \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x)))" by simp
-    have "sqrt (max 0 (2*\<epsilon>*(Bu - u x))) < dist x y"
-      using dR unfolding R_def by linarith
-    then have "(sqrt (max 0 (2*\<epsilon>*(Bu - u x))))\<^sup>2 < (dist x y)\<^sup>2"
-      using s0 by (intro power_strict_mono) simp_all
-    then have Rsq: "max 0 (2*\<epsilon>*(Bu - u x)) < (dist x y)\<^sup>2" by simp
-    then have "2*\<epsilon>*(Bu - u x) < (dist x y)\<^sup>2" by simp
-    then have "Bu - u x < (dist x y)\<^sup>2 / (2*\<epsilon>)"
-      using e by (simp add: pos_less_divide_eq mult.commute)
-    then have "g y < u x" unfolding g_def using B[of y] by linarith
-    moreover have "u x = g x" unfolding g_def by simp
-    moreover have "g x \<le> g ys" by (rule mxb[OF xS])
-    ultimately show ?thesis by linarith
-  qed
-  have bdd: "bdd_above (range (\<lambda>y :: real^'n. u y - (dist x y)\<^sup>2 / (2*\<epsilon>)))"
-    by (rule supconv_bdd_above[OF B e])
-  have le: "supconv u \<epsilon> x \<le> g ys"
-    unfolding supconv_def
-  proof (rule cSUP_least)
-    show "(UNIV :: (real^'n) set) \<noteq> {}" by simp
-    fix y :: "real^'n"
-    show "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> g ys"
-      using glob[of y] unfolding g_def by simp
-  qed
-  have ge: "g ys \<le> supconv u \<epsilon> x"
-    unfolding supconv_def g_def by (rule cSUP_upper[OF UNIV_I bdd])
-  have eq: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-    using le ge unfolding g_def by linarith
-  have dR: "dist x ys \<le> R" using ysS by (simp add: dist_commute)
-  show ?thesis by (rule that[of ys]) (use dR eq in \<open>simp_all add: R_def\<close>)
+  obtain ys where v: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+    using supconv_attained_usc[OF B e uscu] by blast
+  have "dist x ys \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x)))"
+    by (rule supconv_attain_radius[OF B e v])
+  then show ?thesis by (intro that[OF _ v]) linarith
 qed
+
+text \<open>The \<open>+1\<close> margin is not needed: any radius \<open>R\<close> exceeding
+  \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))\<close> serves. With the margin,
+  \<open>cball x R \<subseteq> \<Omega>\<close> would ask \<open>\<Omega>\<close> for a ball of radius one, which no
+  bounded \<open>\<Omega>\<close> of small diameter has; with \<open>R\<close> free, the hypothesis
+  separates into a geometric condition on \<open>R\<close> and a smallness condition
+  on \<open>\<epsilon>\<close>, discharged separately at the top level.\<close>
 
 lemma supconv_attained_usc_ball_rad:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -805,7 +657,7 @@ lemma supconv_attained_usc_ball_rad:
       \<and> supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
 proof -
   obtain ys where v: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_usc_ball[OF B e uscu] by blast
+    using supconv_attained_usc[OF B e uscu] by blast
   have "dist x ys \<le> sqrt (max 0 (2*\<epsilon>*(Bu - u x)))"
     by (rule supconv_attain_radius[OF B e v])
   then have "dist x ys \<le> R" using R by linarith
@@ -843,23 +695,6 @@ qed
 text \<open>\<open>doubled_maximiser_over_UNIV_snd\<close>, \<open>mxK_of_UNIV_snd\<close>, \<open>cont_pos_near\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 
-lemma supconv_le_of_local_bound:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
-    and cu: "continuous_on UNIV u"
-    and R: "sqrt (max 0 (2*\<epsilon>*(Bu - u x))) < R"
-    and loc: "\<And>y. dist x y \<le> R \<Longrightarrow> u y \<le> M"
-  shows "supconv u \<epsilon> x \<le> M"
-proof -
-  obtain ys where d: "dist x ys \<le> R"
-    and v: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
-    using supconv_attained_ball_rad[OF B e cu R] by blast
-  have nn: "0 \<le> (dist x ys)\<^sup>2 / (2*\<epsilon>)" using e by simp
-  have "supconv u \<epsilon> x \<le> u ys" unfolding v using nn by linarith
-  also have "u ys \<le> M" by (rule loc[OF d])
-  finally show ?thesis .
-qed
-
 text \<open>\<open>supconv_radius_uniform\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 theorem supconv_sandwich:
@@ -873,9 +708,12 @@ theorem supconv_sandwich:
 proof -
   show "u x \<le> supconv u \<epsilon> x" by (rule supconv_ge[OF B e])
   show "supconv u \<epsilon> x \<le> u x + \<sigma>"
-    by (rule supconv_le_of_local_bound
-        [where Bu = Bu and R = \<eta> and M = "u x + \<sigma>",
-         OF B e cu supconv_radius_uniform[OF lo e h small] loc])
+  proof (rule supconv_le_of_local_bound_usc[OF B e _ _ loc])
+    have "0 \<le> \<sigma>" using loc[of x] h by simp
+    then have "2*\<epsilon>*(Bu - (u x + \<sigma>)) \<le> 2*\<epsilon>*(Bu - Bl)"
+      using lo[of x] e by (intro mult_left_mono) linarith+
+    then show "2*\<epsilon>*(Bu - (u x + \<sigma>)) < \<eta>\<^sup>2" using small by linarith
+  qed (use h in simp)
 qed
 
 subsection \<open>Locating the doubling maximiser away from the boundary\<close>

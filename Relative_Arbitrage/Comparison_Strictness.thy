@@ -83,10 +83,11 @@ lemma visc_supersol_env_imp_env2:
   unfolding visc_supersol_env_def visc_supersol_env2_def by blast
 
 text \<open>The two places where the paper-facing hypothesis is actually consumed:
-  a local touching is deepened by a quartic into a global one over \<open>K\<close>.  The
-  \<open>C\<^sup>2\<close> versions are the originals with @{thm [source] test_fun_C2_quartic_shift}
-  in place of @{thm [source] test_fun_at_quartic_shift}; the quartic shift of a
-  \<open>C\<^sup>2\<close> function is again \<open>C\<^sup>2\<close>, so nothing else moves.\<close>
+  a local touching is deepened by a quartic into a global one over \<open>K\<close>
+  (@{thm [source] local_max_quartic_deepen}).  The \<open>C\<^sup>2\<close> versions use
+  @{thm [source] test_fun_C2_quartic_shift} where @{thm [source] visc_subsol_env_local}
+  uses @{thm [source] test_fun_at_quartic_shift}: the quartic shift of a
+  \<open>C\<^sup>2\<close> function is again \<open>C\<^sup>2\<close>, with the same two-jet at \<open>x\<close>.\<close>
 
 theorem visc_supersol_env2_local:
   fixes K :: "(real^'n::finite) set" and w \<phi> :: "real^'n \<Rightarrow> real"
@@ -100,54 +101,20 @@ theorem visc_supersol_env2_local:
     and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> w x - \<phi> x \<le> w y - \<phi> y"
   shows "1 \<le> ell_op_usc k L (g x) H"
 proof -
-  have r40: "0 < r ^ 4" using r0 by simp
-  define C where "C = max 0 ((w x - \<phi> x - Bw + B\<phi>) / r ^ 4)"
-  have C0: "0 \<le> C" unfolding C_def by simp
-  have Cbig: "w x - \<phi> x - Bw + B\<phi> \<le> C * r ^ 4"
-  proof -
-    have "(w x - \<phi> x - Bw + B\<phi>) / r ^ 4 \<le> C" unfolding C_def by simp
-    then have "(w x - \<phi> x - Bw + B\<phi>) / r ^ 4 * r ^ 4 \<le> C * r ^ 4"
-      by (rule mult_right_mono) (use r40 in linarith)
-    then show ?thesis using r40 by simp
+  have "\<exists>C. \<forall>y\<in>K. - w y - (- \<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> - w x - - \<phi> x"
+  proof (rule local_max_quartic_deepen[where Bu = "- Bw" and B\<phi> = "- B\<phi>", OF _ _ r0])
+    show "- w y \<le> - Bw" if "y \<in> K" for y using wlo[OF that] by linarith
+    show "- B\<phi> \<le> - \<phi> y" if "y \<in> K" for y using phi[OF that] by linarith
+    show "- w y - - \<phi> y \<le> - w x - - \<phi> x" if "y \<in> ball x r" for y
+      using lm[OF that] by linarith
   qed
-  define \<psi> where "\<psi> = (\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2)"
-  define gg where
-    "gg = (\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))"
-  have tf': "test_fun_C2 \<psi> gg H x"
-    unfolding \<psi>_def gg_def by (rule test_fun_C2_quartic_shift[OF tf])
-  have ggx: "gg x = g x" unfolding gg_def by simp
-  have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
-  have glob: "w x - \<psi> x \<le> w y - \<psi> y" if yK: "y \<in> K" for y
-  proof (cases "y \<in> ball x r")
-    case True
-    have nn: "0 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
-      by (rule mult_nonneg_nonneg[OF C0]) simp
-    show ?thesis using lm[OF True] nn unfolding \<psi>_def psix[unfolded \<psi>_def]
-      by simp
-  next
-    case False
-    then have dxy: "r \<le> dist x y" by simp
-    have sq: "r\<^sup>2 \<le> (y - x) \<bullet> (y - x)"
-    proof -
-      have "r \<le> norm (y - x)"
-        using dxy by (simp add: dist_norm norm_minus_commute)
-      then have "r\<^sup>2 \<le> (norm (y - x))\<^sup>2" using r0 by (intro power_mono) auto
-      then show ?thesis by (simp add: dot_square_norm)
-    qed
-    have q4: "r ^ 4 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
-    proof -
-      have "(r\<^sup>2)\<^sup>2 \<le> ((y - x) \<bullet> (y - x))\<^sup>2" using sq by (intro power_mono) auto
-      then show ?thesis by (simp add: power_even_eq)
-    qed
-    have cq: "C * r ^ 4 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
-      by (rule mult_left_mono[OF q4 C0])
-    have lo: "Bw \<le> w y" by (rule wlo[OF yK])
-    have hi: "\<phi> y \<le> B\<phi>" by (rule phi[OF yK])
-    show ?thesis unfolding \<psi>_def using Cbig cq lo hi by simp
-  qed
-  have "1 \<le> ell_op_usc k L (gg x) H"
-    using sup[unfolded visc_supersol_env2_def] x\<Omega> tf' glob by blast
-  then show ?thesis unfolding ggx .
+  then obtain C where glob: "\<And>y. y \<in> K \<Longrightarrow>
+      - w y - (- \<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> - w x - - \<phi> x" by blast
+  have "1 \<le> ell_op_usc k L (g x - (4 * C * ((x - x) \<bullet> (x - x))) *\<^sub>R (x - x)) H"
+    by (rule sup[unfolded visc_supersol_env2_def, rule_format,
+          OF x\<Omega> test_fun_C2_quartic_shift[OF tf]])
+      (drule glob; simp; linarith)
+  then show ?thesis by simp
 qed
 
 theorem visc_subsol_env2_local:
@@ -162,54 +129,14 @@ theorem visc_subsol_env2_local:
     and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
   shows "ell_op_lsc k L (g x) H \<le> 1"
 proof -
-  have r40: "0 < r ^ 4" using r0 by simp
-  define C where "C = max 0 ((Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4)"
-  have C0: "0 \<le> C" unfolding C_def by simp
-  have Cbig: "Bu - B\<phi> - (u x - \<phi> x) \<le> C * r ^ 4"
-  proof -
-    have "(Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4 \<le> C" unfolding C_def by simp
-    then have "(Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4 * r ^ 4 \<le> C * r ^ 4"
-      by (rule mult_right_mono) (use r40 in linarith)
-    then show ?thesis using r40 by simp
-  qed
-  define \<psi> where "\<psi> = (\<lambda>z. \<phi> z - (- C) * ((z - x) \<bullet> (z - x))\<^sup>2)"
-  define gg where
-    "gg = (\<lambda>z. g z - (4 * (- C) * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))"
-  have tf': "test_fun_C2 \<psi> gg H x"
-    unfolding \<psi>_def gg_def by (rule test_fun_C2_quartic_shift[OF tf])
-  have ggx: "gg x = g x" unfolding gg_def by simp
-  have psix: "\<psi> x = \<phi> x" unfolding \<psi>_def by simp
-  have glob: "u y - \<psi> y \<le> u x - \<psi> x" if yK: "y \<in> K" for y
-  proof (cases "y \<in> ball x r")
-    case True
-    have nn: "0 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
-      by (rule mult_nonneg_nonneg[OF C0]) simp
-    show ?thesis using lm[OF True] nn unfolding \<psi>_def psix[unfolded \<psi>_def]
-      by simp
-  next
-    case False
-    then have dxy: "r \<le> dist x y" by simp
-    have sq: "r\<^sup>2 \<le> (y - x) \<bullet> (y - x)"
-    proof -
-      have "r \<le> norm (y - x)"
-        using dxy by (simp add: dist_norm norm_minus_commute)
-      then have "r\<^sup>2 \<le> (norm (y - x))\<^sup>2" using r0 by (intro power_mono) auto
-      then show ?thesis by (simp add: dot_square_norm)
-    qed
-    have q4: "r ^ 4 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
-    proof -
-      have "(r\<^sup>2)\<^sup>2 \<le> ((y - x) \<bullet> (y - x))\<^sup>2" using sq by (intro power_mono) auto
-      then show ?thesis by (simp add: power_even_eq)
-    qed
-    have cq: "C * r ^ 4 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
-      by (rule mult_left_mono[OF q4 C0])
-    have hi: "u y \<le> Bu" by (rule uhi[OF yK])
-    have lo: "B\<phi> \<le> \<phi> y" by (rule phi[OF yK])
-    show ?thesis unfolding \<psi>_def using Cbig cq hi lo by simp
-  qed
-  have "ell_op_lsc k L (gg x) H \<le> 1"
-    using sub[unfolded visc_subsol_env2_def] x\<Omega> tf' glob by blast
-  then show ?thesis unfolding ggx .
+  obtain C where glob: "\<And>y. y \<in> K \<Longrightarrow>
+      u y - (\<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> u x - \<phi> x"
+    using local_max_quartic_deepen[where u = u and \<phi> = \<phi>, OF uhi phi r0 lm] by blast
+  have "ell_op_lsc k L (g x - (4 * (- C) * ((x - x) \<bullet> (x - x))) *\<^sub>R (x - x)) H \<le> 1"
+    by (rule sub[unfolded visc_subsol_env2_def, rule_format,
+          OF x\<Omega> test_fun_C2_quartic_shift[OF tf]])
+      (drule glob; simp; linarith)
+  then show ?thesis by simp
 qed
 
 text \<open>\<open>supersol_jet\<close> lives in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
@@ -595,7 +522,7 @@ text \<open>In the doubling, the shared gradient at the maximising pair
 
 subsection \<open>The penalty estimate\<close>
 
-text \<open>\<open>doubling_penalty_bound\<close> and \<open>doubling_dist_bound\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+text \<open>\<open>doubling_dist_bound\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 subsection \<open>The dichotomy for a general penalty\<close>
 
@@ -669,9 +596,9 @@ text \<open>The mirror image for the supersolution side: a subjet of \<open>v\<c
 
 subsection \<open>The jet hypothesis only ever needs one side\<close>
 
-text \<open>\<open>superjet_local_max_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+text \<open>\<open>superjet_local_max_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}.\<close>
 
-text \<open>\<open>onesided_of_tendsto_gen\<close>, \<open>onesided_of_dominated\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+text \<open>\<open>onesided_of_dominated\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 
 text \<open>\<open>jet_imp_local_min_test_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>

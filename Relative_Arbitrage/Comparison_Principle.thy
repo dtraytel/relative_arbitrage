@@ -1787,7 +1787,7 @@ text \<open>This theory is long enough that the order of the argument is not
   4. Removing corrections, and compactness:
   \<open>ell_op_lsc_le_of_nearby\<close> passes a bound at nearby points to the
   envelope, subsuming both the \<open>\<delta> I\<close> shift and Jensen's tilt;
-  \<open>symmetric_form_bound\<close> and \<open>bounded_seq_limit_point\<close> turn
+  \<open>symmetric_form_bound\<close> and \<open>bounded_seq_limit_point_triple\<close> turn
   quadratic-form bounds into a limiting matrix pair without the spectral
   theorem.
 

@@ -206,6 +206,105 @@ qed
 
 text \<open>\<open>conj_mat_continuous\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
+subsection \<open>Test functions compose with affine maps\<close>
+
+text \<open>Precomposing with an affine map \<open>z \<mapsto> M z + b\<close> transposes the gradient
+  field and conjugates the Hessian: \<open>\<nabla>(\<phi> \<circ> A)(z) = M\<^sup>T g(A z)\<close> and the Hessian
+  becomes \<open>M\<^sup>T H M\<close>.  No invertibility of \<open>M\<close> is needed.  The two identities
+  below are the chain rule and the conjugation step shared by both classes.\<close>
+
+lemma inner_matvec_transpose_fun:
+  "(\<lambda>h. p \<bullet> (M *v h)) = (\<lambda>h :: real^'n::finite. (transpose M *v p) \<bullet> h)"
+  by (rule ext) (rule inner_transpose_matrix)
+
+lemma matvec_conj:
+  "transpose M *v (H *v (M *v h)) = (transpose M ** H ** M) *v (h :: real^'n::finite)"
+  by (simp add: matrix_vector_mul_assoc matrix_mul_assoc)
+
+lemma transpose_conj:
+  "transpose (transpose M ** H ** (M :: real^'n::finite^'n)) = transpose M ** transpose H ** M"
+  by (simp add: matrix_transpose_mul matrix_mul_assoc)
+
+lemma matvec_affine_has_derivative:
+  "((\<lambda>z. M *v z + b) has_derivative (\<lambda>h. M *v h)) (at (y :: real^'n::finite))"
+  by (auto intro!: derivative_eq_intros
+      bounded_linear.has_derivative[OF matrix_vector_mul_bounded_linear])
+
+lemma test_fun_at_affine_map:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and M H :: "real^'n^'n"
+  assumes tf: "test_fun_at \<phi> g H (M *v x + b)"
+  shows "test_fun_at (\<lambda>z. \<phi> (M *v z + b)) (\<lambda>z. transpose M *v g (M *v z + b))
+      (transpose M ** H ** M) x"
+proof -
+  obtain e where e0: "0 < e" and symH: "transpose H = H"
+    and d: "\<And>y. y \<in> ball (M *v x + b) e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    and dg: "(g has_derivative (\<lambda>h. H *v h)) (at (M *v x + b))"
+    using tf unfolding test_fun_at_def by blast
+  obtain r where r: "0 < r" "(\<lambda>z. M *v z + b) ` ball x r \<subseteq> ball (M *v x + b) e"
+    using e0 continuous_at_ball[THEN iffD1, of x "\<lambda>z. M *v z + b"]
+    by (metis has_derivative_continuous matvec_affine_has_derivative)
+  show ?thesis
+    unfolding test_fun_at_def transpose_conj symH
+  proof (intro conjI exI[of _ r] ballI)
+    fix y assume "y \<in> ball x r"
+    then have "M *v y + b \<in> ball (M *v x + b) e" using r by blast
+    from has_derivative_compose[OF matvec_affine_has_derivative[of M b] d[OF this]]
+    show "((\<lambda>z. \<phi> (M *v z + b)) has_derivative
+        (\<lambda>h. (transpose M *v g (M *v y + b)) \<bullet> h)) (at y)"
+      unfolding inner_matvec_transpose_fun .
+  next
+    show "((\<lambda>z. transpose M *v g (M *v z + b)) has_derivative
+        (\<lambda>h. (transpose M ** H ** M) *v h)) (at x)"
+      using bounded_linear.has_derivative[OF matrix_vector_mul_bounded_linear[of "transpose M"]
+          has_derivative_compose[OF matvec_affine_has_derivative[of M b] dg]]
+      unfolding matvec_conj .
+  qed (use r in auto)
+qed
+
+lemma test_fun_C2_affine_map:
+  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and M H :: "real^'n^'n"
+  assumes tf: "test_fun_C2 \<phi> g H (M *v x + b)"
+  shows "test_fun_C2 (\<lambda>z. \<phi> (M *v z + b)) (\<lambda>z. transpose M *v g (M *v z + b))
+      (transpose M ** H ** M) x"
+proof -
+  obtain G where G: "\<And>y. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    "\<And>y. (g has_derivative (\<lambda>h. G y *v h)) (at y)"
+    "\<And>y. transpose (G y) = G y" "continuous_on UNIV G" "G (M *v x + b) = H"
+    using tf unfolding test_fun_C2_def by blast
+  have GA: "continuous_on UNIV (\<lambda>y. G (M *v y + b))"
+    by (rule continuous_on_compose2[OF G(4)]) (auto intro!: continuous_intros
+        bounded_linear.continuous_on[OF matrix_vector_mul_bounded_linear])
+  show ?thesis
+    unfolding test_fun_C2_def
+  proof (intro exI[of _ "\<lambda>y. transpose M ** G (M *v y + b) ** M"] conjI allI)
+    fix y
+    show "((\<lambda>z. \<phi> (M *v z + b)) has_derivative
+        (\<lambda>h. (transpose M *v g (M *v y + b)) \<bullet> h)) (at y)"
+      using has_derivative_compose[OF matvec_affine_has_derivative[of M b] G(1)]
+      unfolding inner_matvec_transpose_fun .
+    show "((\<lambda>z. transpose M *v g (M *v z + b)) has_derivative
+        (\<lambda>h. (transpose M ** G (M *v y + b) ** M) *v h)) (at y)"
+      using bounded_linear.has_derivative[OF matrix_vector_mul_bounded_linear[of "transpose M"]
+          has_derivative_compose[OF matvec_affine_has_derivative[of M b] G(2)]]
+      unfolding matvec_conj .
+    show "transpose (transpose M ** G (M *v y + b) ** M) = transpose M ** G (M *v y + b) ** M"
+      by (simp add: transpose_conj G(3))
+  qed (use conj_mat_continuous[OF GA] G(5) in auto)
+qed
+
+text \<open>The rotation-dilation form \<open>z \<mapsto> c \<cdot> Rz + b\<close> of Theorem 1.1's
+  expandability hypothesis is the instance \<open>M = c R\<close>: the gradient picks up
+  \<open>c R\<^sup>T\<close> and the Hessian \<open>c\<^sup>2 R\<^sup>T H R\<close>.  (Neither the orthogonality of \<open>R\<close> nor
+  \<open>c > 0\<close> is used.)\<close>
+
+lemma affine_as_matrix:
+  fixes R :: "real^'n::finite^'n"
+  shows "c *\<^sub>R (R *v z) + b = (c *\<^sub>R R) *v z + b"
+    and "c *\<^sub>R (transpose R *v p) = transpose (c *\<^sub>R R) *v p"
+    and "(c\<^sup>2) *\<^sub>R (transpose R ** H ** R) = transpose (c *\<^sub>R R) ** H ** (c *\<^sub>R R)"
+  by (simp_all only: scaleR_matrix_vector_assoc transpose_scalar power2_eq_square
+      matrix_scalar_ac scalar_matrix_assoc scaleR_scaleR)
+
 theorem test_fun_at_affine:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n" and R :: "real^'n^'n" and b x :: "real^'n"
@@ -214,129 +313,7 @@ theorem test_fun_at_affine:
   shows "test_fun_at (\<lambda>z. \<phi> (c *\<^sub>R (R *v z) + b))
       (\<lambda>z. c *\<^sub>R (transpose R *v g (c *\<^sub>R (R *v z) + b)))
       ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) x"
-proof -
-  define A :: "real^'n \<Rightarrow> real^'n" where "A = (\<lambda>z. c *\<^sub>R (R *v z) + b)"
-  have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
-  have dA: "(A has_derivative (\<lambda>h. c *\<^sub>R (R *v h))) (at y)" for y
-    unfolding A_def by (rule affine_has_derivative)
-  have distA: "dist (A x) (A y) = c * dist x y" for y
-  proof -
-    have "A x - A y = c *\<^sub>R (R *v (x - y))"
-      unfolding A_def by (simp add: matvec_diff_right scaleR_right_diff_distrib)
-    then show ?thesis
-      unfolding dist_norm using c0
-      by (simp add: norm_orthogonal_matrix_vector[OF orth])
-  qed
-  obtain e where e0: "0 < e"
-    and d: "\<And>y. y \<in> ball (A x) e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-    using tf unfolding test_fun_at_def A_def by blast
-  have dg: "(g has_derivative (\<lambda>h. H *v h)) (at (A x))"
-    using tf unfolding test_fun_at_def A_def by blast
-
-  show ?thesis
-    unfolding test_fun_at_def
-  proof (intro conjI)
-    show "transpose ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R))
-        = (c\<^sup>2) *\<^sub>R (transpose R ** H ** R)"
-    proof -
-      have "transpose (transpose R ** H ** R)
-          = transpose R ** transpose H ** transpose (transpose R)"
-        by (simp add: matrix_transpose_mul matrix_mul_assoc)
-      also have "\<dots> = transpose R ** H ** R" unfolding symH by simp
-      finally show ?thesis by (simp add: transpose_scalar)
-    qed
-  next
-    have main: "((\<lambda>z. \<phi> (A z)) has_derivative
-        (\<lambda>h. (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h)) (at y)"
-      if yb: "dist x y < e / c" for y
-    proof -
-      have "dist (A x) (A y) = c * dist x y" by (rule distA)
-      also have "\<dots> < c * (e / c)" by (rule mult_strict_left_mono[OF yb c0])
-      also have "\<dots> = e" using c0 by simp
-      finally have Ay: "A y \<in> ball (A x) e" by simp
-      have chain: "((\<lambda>z. \<phi> (A z)) has_derivative
-          (\<lambda>h. g (A y) \<bullet> (c *\<^sub>R (R *v h)))) (at y)"
-        by (rule has_derivative_compose[OF dA d[OF Ay]])
-      have req: "(\<lambda>h. g (A y) \<bullet> (c *\<^sub>R (R *v h)))
-          = (\<lambda>h :: real^'n. (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h)"
-      proof (rule ext)
-        fix h :: "real^'n"
-        have "g (A y) \<bullet> (c *\<^sub>R (R *v h)) = c * (g (A y) \<bullet> (R *v h))"
-          by (rule inner_scaleR_right)
-        also have "g (A y) \<bullet> (R *v h) = (transpose R *v g (A y)) \<bullet> h"
-          by (rule inner_transpose_matrix)
-        also have "c * ((transpose R *v g (A y)) \<bullet> h)
-            = (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h"
-          by (rule inner_scaleR_left[symmetric])
-        finally show "g (A y) \<bullet> (c *\<^sub>R (R *v h))
-            = (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h" .
-      qed
-      show ?thesis using chain unfolding req .
-    qed
-    show "\<exists>e>0. \<forall>y \<in> ball x e.
-        ((\<lambda>z. \<phi> (c *\<^sub>R (R *v z) + b)) has_derivative
-          (\<lambda>h. (c *\<^sub>R (transpose R *v g (c *\<^sub>R (R *v y) + b))) \<bullet> h)) (at y)"
-    proof (intro exI[of _ "e / c"] conjI ballI)
-      show "0 < e / c" using e0 c0 by simp
-    next
-      fix y assume "y \<in> ball x (e / c)"
-      then have dy: "dist x y < e / c" by simp
-      show "((\<lambda>z. \<phi> (c *\<^sub>R (R *v z) + b)) has_derivative
-          (\<lambda>h. (c *\<^sub>R (transpose R *v g (c *\<^sub>R (R *v y) + b))) \<bullet> h)) (at y)"
-        using main[OF dy] unfolding A_def .
-    qed
-  next
-    have chain: "((\<lambda>z. g (A z)) has_derivative
-        (\<lambda>h. H *v (c *\<^sub>R (R *v h)))) (at x)"
-      by (rule has_derivative_compose[OF dA dg])
-    have blinT: "bounded_linear (\<lambda>q :: real^'n. c *\<^sub>R (transpose R *v q))"
-      by (rule affine_linear)
-    have D: "((\<lambda>z. c *\<^sub>R (transpose R *v g (A z))) has_derivative
-        (\<lambda>h. c *\<^sub>R (transpose R *v (H *v (c *\<^sub>R (R *v h)))))) (at x)"
-      by (rule bounded_linear.has_derivative[OF blinT chain])
-    have step: "c *\<^sub>R (transpose R *v (H *v (c *\<^sub>R (R *v h))))
-        = ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) *v h" for h :: "real^'n"
-    proof -
-      have e1: "H *v (c *\<^sub>R (R *v h)) = c *\<^sub>R (H *v (R *v h))"
-        by (rule matvec_scaleR_right)
-      have e2: "transpose R *v (c *\<^sub>R (H *v (R *v h)))
-          = c *\<^sub>R (transpose R *v (H *v (R *v h)))"
-        by (rule matvec_scaleR_right)
-      have e3: "transpose R *v (H *v (R *v h)) = (transpose R ** H ** R) *v h"
-        by (metis matrix_vector_mul_assoc)
-      have e4: "((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) *v h
-          = (c\<^sup>2) *\<^sub>R ((transpose R ** H ** R) *v h)"
-        by (simp add: matrix_vector_mult_def vec_eq_iff sum_distrib_left
-            mult.assoc)
-      have "c *\<^sub>R (transpose R *v (H *v (c *\<^sub>R (R *v h))))
-          = c *\<^sub>R (c *\<^sub>R ((transpose R ** H ** R) *v h))"
-        by (simp only: e1 e2 e3)
-      also have "\<dots> = (c\<^sup>2) *\<^sub>R ((transpose R ** H ** R) *v h)"
-        by (simp add: power2_eq_square)
-      finally show ?thesis by (simp only: e4)
-    qed
-    have req: "(\<lambda>h :: real^'n. c *\<^sub>R (transpose R *v (H *v (c *\<^sub>R (R *v h)))))
-        = (\<lambda>h. ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) *v h)"
-      by (rule ext) (rule step)
-    show "((\<lambda>z. c *\<^sub>R (transpose R *v g (c *\<^sub>R (R *v z) + b))) has_derivative
-        (\<lambda>h. ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) *v h)) (at x)"
-      using D unfolding req A_def .
-  qed
-qed
-
-subsection \<open>The transformed supersolution --- Theorem 4.3's engine\<close>
-
-text \<open>The paper's display (4.4) run backwards: the factors
-  \<open>test_fun_at_affine\<close> introduces are exactly what \<open>ell_op_usc_scale\<close>
-  and \<open>ell_op_usc_conj_rot\<close> remove.  The Hessian factor \<open>c^2\<close> cancels
-  against the \<open>c^2\<close> in \<open>w'\<close> before the operator is applied, so no
-  scaling invariance is needed for the Hessian argument.\<close>
-
-text \<open>The \<open>C\<^sup>2\<close> counterparts of @{thm [source] test_fun_at_scaleR} and
-  @{thm [source] test_fun_at_affine}.  Precomposing with \<open>z \<mapsto> c\<cdot>(R z) + b\<close>
-  conjugates the Hessian field, \<open>G \<mapsto> c\<^sup>2 \<cdot> R\<^sup>T G(A \<cdot>) R\<close>, which stays symmetric
-  and stays continuous --- the latter because conjugation is a linear map of
-  matrices, hence bounded in finite dimension.\<close>
+  using test_fun_at_affine_map[of \<phi> g H "c *\<^sub>R R"] tf unfolding affine_as_matrix by blast
 
 theorem test_fun_C2_affine:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
@@ -346,94 +323,7 @@ theorem test_fun_C2_affine:
   shows "test_fun_C2 (\<lambda>z. \<phi> (c *\<^sub>R (R *v z) + b))
       (\<lambda>z. c *\<^sub>R (transpose R *v g (c *\<^sub>R (R *v z) + b)))
       ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) x"
-proof -
-  define A :: "real^'n \<Rightarrow> real^'n" where "A = (\<lambda>z. c *\<^sub>R (R *v z) + b)"
-  obtain G where G: "\<And>y. (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-    "\<And>y. (g has_derivative (\<lambda>h. G y *v h)) (at y)"
-    "\<And>y. transpose (G y) = G y" "continuous_on UNIV G" "G (A x) = H"
-    using tf unfolding test_fun_C2_def A_def by blast
-  have dA: "(A has_derivative (\<lambda>h. c *\<^sub>R (R *v h))) (at y)" for y
-    unfolding A_def by (rule affine_has_derivative)
-  have Acont: "continuous_on UNIV A"
-    unfolding A_def by (intro continuous_intros)
-  have GA: "continuous_on UNIV (\<lambda>y. G (A y))"
-    by (rule continuous_on_compose2[OF G(4) Acont]) simp
-  have main: "test_fun_C2 (\<lambda>z. \<phi> (A z))
-      (\<lambda>z. c *\<^sub>R (transpose R *v g (A z)))
-      ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) x"
-    unfolding test_fun_C2_def
-  proof (intro exI[of _ "\<lambda>y. (c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)"] conjI allI)
-    fix y :: "real^'n"
-    have comp: "((\<lambda>z. \<phi> (A z)) has_derivative
-        (\<lambda>h. g (A y) \<bullet> (c *\<^sub>R (R *v h)))) (at y)"
-      by (rule has_derivative_compose[OF dA G(1)])
-    have eq: "(\<lambda>h. g (A y) \<bullet> (c *\<^sub>R (R *v h)))
-        = (\<lambda>h :: real^'n. (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h)"
-    proof (rule ext)
-      fix h :: "real^'n"
-      have "g (A y) \<bullet> (c *\<^sub>R (R *v h)) = c * (g (A y) \<bullet> (R *v h))"
-        by (rule inner_scaleR_right)
-      also have "g (A y) \<bullet> (R *v h) = (transpose R *v g (A y)) \<bullet> h"
-        by (rule inner_transpose_matrix)
-      also have "c * ((transpose R *v g (A y)) \<bullet> h)
-          = (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h"
-        by (rule inner_scaleR_left[symmetric])
-      finally show "g (A y) \<bullet> (c *\<^sub>R (R *v h))
-          = (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h" .
-    qed
-    show "((\<lambda>z. \<phi> (A z)) has_derivative
-        (\<lambda>h. (c *\<^sub>R (transpose R *v g (A y))) \<bullet> h)) (at y)"
-      using comp unfolding eq .
-  next
-    fix y :: "real^'n"
-    have dgA: "((\<lambda>z. g (A z)) has_derivative
-        (\<lambda>h. G (A y) *v (c *\<^sub>R (R *v h)))) (at y)"
-      by (rule has_derivative_compose[OF dA G(2)])
-    have blT: "bounded_linear ((*v) (transpose R :: real^'n^'n))"
-      by (rule matrix_vector_mul_bounded_linear)
-    have d1: "((\<lambda>z. transpose R *v g (A z)) has_derivative
-        (\<lambda>h. transpose R *v (G (A y) *v (c *\<^sub>R (R *v h))))) (at y)"
-      by (rule bounded_linear.has_derivative[OF blT dgA])
-    have d2: "((\<lambda>z. c *\<^sub>R (transpose R *v g (A z))) has_derivative
-        (\<lambda>h. c *\<^sub>R (transpose R *v (G (A y) *v (c *\<^sub>R (R *v h)))))) (at y)"
-      using d1 by (auto intro!: derivative_eq_intros)
-    have eq2: "(\<lambda>h. c *\<^sub>R (transpose R *v (G (A y) *v (c *\<^sub>R (R *v h)))))
-        = (\<lambda>h. ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)) *v h)"
-    proof (rule ext)
-      fix h :: "real^'n"
-      have "c *\<^sub>R (transpose R *v (G (A y) *v (c *\<^sub>R (R *v h))))
-          = c *\<^sub>R (transpose R *v (c *\<^sub>R (G (A y) *v (R *v h))))"
-        by (simp add: matvec_scaleR_right)
-      also have "\<dots> = (c * c) *\<^sub>R (transpose R *v (G (A y) *v (R *v h)))"
-        by (simp add: matvec_scaleR_right)
-      also have "\<dots> = (c * c) *\<^sub>R ((transpose R ** G (A y) ** R) *v h)"
-        by (simp add: matrix_vector_mul_assoc matrix_mul_assoc)
-      also have "\<dots> = ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)) *v h"
-        by (simp add: power2_eq_square scaleR_matrix_vector_assoc)
-      finally show "c *\<^sub>R (transpose R *v (G (A y) *v (c *\<^sub>R (R *v h))))
-          = ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)) *v h" .
-    qed
-    show "((\<lambda>z. c *\<^sub>R (transpose R *v g (A z))) has_derivative
-        (\<lambda>h. ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)) *v h)) (at y)"
-      using d2 unfolding eq2 .
-  next
-    fix y :: "real^'n"
-    have "transpose (transpose R ** G (A y) ** R)
-        = transpose R ** transpose (G (A y)) ** transpose (transpose R)"
-      by (simp add: matrix_transpose_mul matrix_mul_assoc)
-    also have "\<dots> = transpose R ** G (A y) ** R" using G(3) by simp
-    finally show "transpose ((c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R))
-        = (c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R)"
-      by (simp add: transpose_scalar)
-  next
-    show "continuous_on UNIV (\<lambda>y. (c\<^sup>2) *\<^sub>R (transpose R ** G (A y) ** R))"
-      using conj_mat_continuous[OF GA] by (intro continuous_intros)
-  next
-    show "(c\<^sup>2) *\<^sub>R (transpose R ** G (A x) ** R)
-        = (c\<^sup>2) *\<^sub>R (transpose R ** H ** R)" by (simp add: G(5))
-  qed
-  show ?thesis using main unfolding A_def .
-qed
+  using test_fun_C2_affine_map[of \<phi> g H "c *\<^sub>R R"] tf unfolding affine_as_matrix by blast
 
 text \<open>For a symmetric \<open>H\<close> the quadratic
   \<open>\<phi> z = p \<cdot> (z - x) + ((z - x) \<cdot> (H *v (z - x)))/2\<close>
@@ -623,6 +513,48 @@ next
     by (rule has_derivative_diff[OF dg dq])
   then show "((\<lambda>z. g z - (4 * C * ((z - x) \<bullet> (z - x))) *\<^sub>R (z - x))
       has_derivative (\<lambda>h. H *v h)) (at x)" by simp
+qed
+
+text \<open>A local touching becomes a global one over \<open>K\<close> by a quartic: if
+  \<open>u - \<phi>\<close> has a maximum at \<open>x\<close> on \<open>ball x r\<close>, \<open>u\<close> is bounded above and
+  \<open>\<phi>\<close> below on \<open>K\<close>, then \<open>u - (\<phi> + C\<bar>\<cdot> - x\<bar>\<^sup>4)\<close> has a maximum at \<open>x\<close> on
+  \<open>K\<close> for some \<open>C \<ge> 0\<close>.  The quartic does not change the two-jet at \<open>x\<close>
+  (\<open>test_fun_at_quartic_shift\<close>, \<open>test_fun_C2_quartic_shift\<close>).\<close>
+
+lemma local_max_quartic_deepen:
+  fixes u \<phi> :: "real^'n::finite \<Rightarrow> real"
+  assumes uhi: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
+    and phi: "\<And>y. y \<in> K \<Longrightarrow> B\<phi> \<le> \<phi> y"
+    and r0: "0 < r"
+    and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
+  shows "\<exists>C. \<forall>y\<in>K. u y - (\<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> u x - \<phi> x"
+proof -
+  have r40: "0 < r ^ 4" using r0 by simp
+  define C where "C = max 0 ((Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4)"
+  have C0: "0 \<le> C" unfolding C_def by simp
+  have "(Bu - B\<phi> - (u x - \<phi> x)) / r ^ 4 \<le> C" unfolding C_def by simp
+  then have Cbig: "Bu - B\<phi> - (u x - \<phi> x) \<le> C * r ^ 4"
+    using r40 by (simp add: pos_divide_le_eq)
+  have "u y - (\<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> u x - \<phi> x"
+    if yK: "y \<in> K" for y
+  proof (cases "y \<in> ball x r")
+    case True
+    have "0 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_nonneg_nonneg[OF C0]) simp
+    then show ?thesis using lm[OF True] by linarith
+  next
+    case False
+    then have "r \<le> norm (y - x)"
+      by (simp add: dist_norm norm_minus_commute)
+    then have "(r\<^sup>2)\<^sup>2 \<le> ((norm (y - x))\<^sup>2)\<^sup>2"
+      using r0 by (intro power_mono) auto
+    then have "r ^ 4 \<le> ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (simp add: dot_square_norm flip: power_mult)
+    then have "C * r ^ 4 \<le> C * ((y - x) \<bullet> (y - x))\<^sup>2"
+      by (rule mult_left_mono[OF _ C0])
+    then show ?thesis using Cbig uhi[OF yK] phi[OF yK] by linarith
+  qed
+  then show ?thesis by blast
 qed
 
 lemma test_fun_at_quadratic:
@@ -865,6 +797,28 @@ text \<open>\<open>quartic_coeff_assoc\<close> lives in @{theory Second_Order_Vi
 
 text \<open>\<open>transpose_shift_add\<close>, \<open>transpose_shift_diff\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
+text \<open>Negation turns a test function at \<open>x\<close> into one, with the gradient
+  field and the Hessian negated.\<close>
+
+lemma test_fun_at_uminus:
+  assumes "test_fun_at \<phi> g H x"
+  shows "test_fun_at (\<lambda>z. - \<phi> z) (\<lambda>z. - g z) (- H) x"
+proof -
+  have m: "(- H) *v h = - (H *v h)" "transpose (- H) = - transpose H" for h
+    by (simp_all add: neg_matrix_vector transpose_def vec_eq_iff)
+  obtain e where e: "0 < e" "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    and s: "transpose H = H" and dg: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
+    using assms unfolding test_fun_at_def by blast
+  have "\<forall>y \<in> ball x e. ((\<lambda>z. - \<phi> z) has_derivative (\<lambda>h. (- g y) \<bullet> h)) (at y)"
+    using has_derivative_minus[OF e(2)] by simp
+  moreover have "((\<lambda>z. - g z) has_derivative (\<lambda>h. (- H) *v h)) (at x)"
+    using has_derivative_minus[OF dg] by (simp add: m)
+  ultimately show ?thesis using e(1) unfolding test_fun_at_def m(2) s by blast
+qed
+
+text \<open>The mirror image of @{thm [source] test_fun_quadratic_minorates}, applied
+  to \<open>-\<phi>\<close>.\<close>
+
 lemma test_fun_quadratic_dominates:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n" and x :: "real^'n" and \<delta> :: real
@@ -873,110 +827,17 @@ lemma test_fun_quadratic_dominates:
     and "\<And>z. z \<in> ball x r \<Longrightarrow>
       \<phi> z \<le> \<phi> x + g x \<bullet> (z - x) + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
 proof -
-  have symH: "transpose H = H"
-    and dg: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
-    using tf unfolding test_fun_at_def by blast+
-  obtain e where e0: "0 < e"
-    and dphi: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-    using tf unfolding test_fun_at_def by blast
-  have "\<forall>e>0. \<exists>d>0. \<forall>y. norm (y - x) < d \<longrightarrow>
-      norm (g y - g x - (H *v (y - x))) \<le> e * norm (y - x)"
-    using dg unfolding has_derivative_at_alt by blast
-  moreover have "0 < \<delta> / 2" using d0 by simp
-  ultimately obtain d where dd: "0 < d"
-    and bnd: "\<And>y. norm (y - x) < d \<Longrightarrow>
-        norm (g y - g x - (H *v (y - x))) \<le> (\<delta> / 2) * norm (y - x)"
-    by blast
-  define r where "r = min e d"
-  have r0: "0 < r" using e0 dd by (simp add: r_def)
-  have main: "\<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
-      + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
-    if z: "z \<in> ball x r" for z
-  proof -
-    define v where "v = z - x"
-    have nv: "norm v < r"
-      using z by (simp add: v_def dist_norm norm_minus_commute)
-    define A where "A = g x \<bullet> v"
-    define B where "B = v \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v v)"
-    define f where "f t = \<phi> (x + t *\<^sub>R v) - (\<phi> x + t * A + t\<^sup>2 * B / 2)" for t
-    have f0: "f 0 = 0" by (simp add: f_def)
-    have deriv: "\<exists>y. (f has_field_derivative y) (at t) \<and> y \<le> 0"
-      if t: "0 \<le> t" "t \<le> 1" for t
-    proof -
-      have ntv: "norm (t *\<^sub>R v) \<le> norm v"
-        using t by (simp add: mult_left_le_one_le)
-      have mem: "x + t *\<^sub>R v \<in> ball x e"
-        using ntv nv by (simp add: dist_norm r_def)
-      have d1: "((\<lambda>t. \<phi> (x + t *\<^sub>R v)) has_field_derivative
-          g (x + t *\<^sub>R v) \<bullet> v) (at t)"
-      proof -
-        have i1: "((\<lambda>t :: real. x + t *\<^sub>R v) has_derivative (\<lambda>h. h *\<^sub>R v)) (at t)"
-          by (auto intro!: derivative_eq_intros)
-        have i2: "(\<phi> has_derivative (\<lambda>h. g (x + t *\<^sub>R v) \<bullet> h)) (at (x + t *\<^sub>R v))"
-          by (rule dphi[OF mem])
-        have "((\<lambda>t. \<phi> (x + t *\<^sub>R v)) has_derivative
-            (\<lambda>h. g (x + t *\<^sub>R v) \<bullet> (h *\<^sub>R v))) (at t)"
-          using diff_chain_at[OF i1 i2] by (simp add: o_def)
-        then show ?thesis
-          by (rule has_derivative_imp_has_field_derivative)
-            (simp add: ac_simps)
-      qed
-      have d2: "((\<lambda>t. \<phi> x + t * A + t\<^sup>2 * B / 2) has_field_derivative
-          A + t * B) (at t)"
-        by (auto intro!: derivative_eq_intros)
-      have df: "(f has_field_derivative
-          (g (x + t *\<^sub>R v) \<bullet> v - (A + t * B))) (at t)"
-        unfolding f_def by (rule DERIV_diff[OF d1 d2])
-      have expand: "g (x + t *\<^sub>R v) \<bullet> v - (A + t * B)
-          = (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v - t * (\<delta> * (v \<bullet> v))"
-      proof -
-        have m1: "(H + \<delta> *\<^sub>R mat 1) *v v = H *v v + \<delta> *\<^sub>R v"
-          by (simp add: matrix_vector_mult_add_rdistrib scaleR_matrix_vector
-              )
-        have m2: "H *v (t *\<^sub>R v) = t *\<^sub>R (H *v v)"
-          by (simp add: matrix_vector_mult_scaleR)
-        show ?thesis
-          unfolding A_def B_def m1 m2
-          by (simp add: inner_commute
-              algebra_simps)
-      qed
-      have small: "(g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v
-          \<le> (\<delta> / 2) * (t * norm v) * norm v"
-      proof -
-        have "norm (t *\<^sub>R v) < d"
-          using ntv nv by (simp add: r_def)
-        moreover have "(x + t *\<^sub>R v) - x = t *\<^sub>R v" by simp
-        ultimately have nb: "norm (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v)))
-            \<le> (\<delta> / 2) * norm (t *\<^sub>R v)"
-          using bnd[of "x + t *\<^sub>R v"] by simp
-        have "(g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) \<bullet> v
-            \<le> norm (g (x + t *\<^sub>R v) - g x - (H *v (t *\<^sub>R v))) * norm v"
-          by (rule norm_cauchy_schwarz)
-        also have "\<dots> \<le> ((\<delta> / 2) * norm (t *\<^sub>R v)) * norm v"
-          by (rule mult_right_mono[OF nb norm_ge_zero])
-        also have "\<dots> = (\<delta> / 2) * (t * norm v) * norm v"
-          using t by simp
-        finally show ?thesis .
-      qed
-      have vv: "v \<bullet> v = norm v * norm v"
-        by (simp add: dot_square_norm power2_eq_square)
-      have "g (x + t *\<^sub>R v) \<bullet> v - (A + t * B)
-          \<le> (\<delta> / 2) * (t * norm v) * norm v - t * (\<delta> * (norm v * norm v))"
-        unfolding expand vv by (rule diff_right_mono[OF small])
-      also have "\<dots> = - (\<delta> / 2) * t * (norm v * norm v)"
-        by (simp add: field_simps)
-      also have "\<dots> \<le> 0"
-        using d0 t by simp
-      finally show ?thesis using df by blast
-    qed
-    have "f 1 \<le> f 0"
-      by (rule DERIV_nonpos_imp_nonincreasing[of 0 1 f])
-        (use deriv in auto)
-    then have "\<phi> (x + 1 *\<^sub>R v) \<le> \<phi> x + 1 * A + 1\<^sup>2 * B / 2"
-      using f0 by (simp add: f_def)
-    then show ?thesis by (simp add: v_def A_def B_def)
+  obtain r where r: "0 < r" and m: "\<And>z. z \<in> ball x r \<Longrightarrow>
+      - \<phi> x + (- g x) \<bullet> (z - x) + ((z - x) \<bullet> ((- H - \<delta> *\<^sub>R mat 1) *v (z - x))) / 2 \<le> - \<phi> z"
+    using test_fun_quadratic_minorates[OF test_fun_at_uminus[OF tf] d0] by blast
+  have e: "- H - \<delta> *\<^sub>R mat 1 = - (H + \<delta> *\<^sub>R mat 1)" by simp
+  show ?thesis
+  proof (rule that[OF r])
+    fix z assume "z \<in> ball x r"
+    from m[OF this] show "\<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
+        + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
+      unfolding e neg_matrix_vector inner_minus_left inner_minus_right by linarith
   qed
-  show ?thesis by (rule that[OF r0 main])
 qed
 
 text \<open>The mirror for subsolutions: adding a quartic deepens a local
@@ -1266,19 +1127,6 @@ proof (intro allI impI)
         rule exI[of _ c])
       (use c1 ce sub inv orthogonal_matrix_id T_def in auto)
 qed
-
-subsection \<open>Test functions compose with invertible affine maps\<close>
-
-text \<open>\<open>matvec_add_right'\<close> is \<open>matvec_add_right\<close> from
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-text \<open>\<open>affine_linear\<close>, \<open>affine_has_derivative\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>The chain rule through \<open>A z = c \<cdot> Rz + b\<close>: the gradient picks up a
-  factor \<open>c\<close> and a transpose, the Hessian a factor \<open>c^2\<close> and a
-  conjugation - precisely what the invariances of \<open>F\<close> (display (4.4))
-  undo.\<close>
 
 (*<*)
 end

@@ -248,25 +248,10 @@ proof -
 qed
 
 text \<open>Routine set-up for Jensen's lemma: a semiconvex function is
-  continuous (subtract the quadratic from the continuous convex \<open>\<psi>\<close>),
+  continuous (\<open>semiconvex_continuous\<close>),
   so the perturbed function attains its maximum on the compact ball; a
   ball of positive radius is not negligible, which is the contradiction
   the argument runs into.\<close>
-
-lemma semiconvex_continuous:
-  fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
-  assumes cvx: "convex_on UNIV (\<lambda>z. \<phi> z + (c/2) * (norm z)\<^sup>2)"
-  shows "continuous_on S \<phi>"
-proof -
-  have c1: "continuous_on UNIV (\<lambda>z. \<phi> z + (c/2) * (norm z)\<^sup>2)"
-    by (rule convex_on_continuous[OF open_UNIV cvx])
-  have c2: "continuous_on UNIV (\<lambda>z::'a. (c/2) * (norm z)\<^sup>2)"
-    by (intro continuous_intros)
-  have "continuous_on UNIV (\<lambda>z. (\<phi> z + (c/2) * (norm z)\<^sup>2) - (c/2) * (norm z)\<^sup>2)"
-    by (rule continuous_on_diff[OF c1 c2])
-  hence "continuous_on UNIV \<phi>" by simp
-  thus ?thesis by (rule continuous_on_subset) simp
-qed
 
 lemma semiconvex_max_exists:
   fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"

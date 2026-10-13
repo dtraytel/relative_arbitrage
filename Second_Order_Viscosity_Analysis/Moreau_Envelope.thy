@@ -34,75 +34,9 @@ text \<open>The resolvent is a globally defined, surjective, 1-Lipschitz map
 subsection \<open>Firm nonexpansiveness and the derivative of the resolvent\<close>
 
 text \<open>The resolvent is firmly nonexpansive (\<open>prox_firm_nonexpansive\<close>);
-  differentiating along a line makes its derivative positive semidefinite
-  with norm at most one.\<close>
-
-lemma has_derivative_dir_limit:
-  fixes F :: "'a::euclidean_space \<Rightarrow> 'b::real_normed_vector"
-  assumes D: "(F has_derivative D) (at x)"
-  shows "((\<lambda>t. (F (x + t *\<^sub>R h) - F x) /\<^sub>R t) \<longlongrightarrow> D h) (at (0::real))"
-proof (cases "h = 0")
-  case True
-  have lin: "bounded_linear D" by (rule has_derivative_bounded_linear[OF D])
-  have "D 0 = 0" using lin by (simp add: linear_simps(3))
-  thus ?thesis unfolding True by simp
-next
-  case False
-  have lin: "bounded_linear D" by (rule has_derivative_bounded_linear[OF D])
-  have Dlin: "linear D" using lin unfolding bounded_linear_def by simp
-  have Dsc: "D (t *\<^sub>R h) = t *\<^sub>R D h" for t
-    using Dlin unfolding linear_iff by simp
-  have lim0: "((\<lambda>u. norm (F (x + u) - F x - D u) / norm u) \<longlongrightarrow> 0) (at 0)"
-    using D unfolding has_derivative_at by blast
-  have flim: "filterlim (\<lambda>t::real. t *\<^sub>R h) (at 0) (at 0)"
-    unfolding filterlim_at
-  proof (intro conjI)
-    have "((\<lambda>t::real. t *\<^sub>R h) \<longlongrightarrow> 0 *\<^sub>R h) (at 0)" by (intro tendsto_intros)
-    thus "((\<lambda>t::real. t *\<^sub>R h) \<longlongrightarrow> 0) (at 0)" by simp
-    have "eventually (\<lambda>t::real. t \<noteq> 0) (at 0)"
-      unfolding eventually_at by (intro exI[of _ 1]) auto
-    thus "eventually (\<lambda>t::real. t *\<^sub>R h \<in> UNIV \<and> t *\<^sub>R h \<noteq> 0) (at 0)"
-      by (rule eventually_mono) (use False in simp)
-  qed
-  have comp: "((\<lambda>t. norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h))
-      / norm (t *\<^sub>R h)) \<longlongrightarrow> 0) (at (0::real))"
-    by (rule filterlim_compose[OF lim0 flim])
-  have scaled: "((\<lambda>t. (norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h))
-      / norm (t *\<^sub>R h)) * norm h) \<longlongrightarrow> 0 * norm h) (at (0::real))"
-    by (intro tendsto_mult comp tendsto_const)
-  have ev: "eventually (\<lambda>t. norm ((F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h)
-      = (norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h)) / norm (t *\<^sub>R h)) * norm h)
-      (at (0::real))"
-  proof -
-    have "eventually (\<lambda>t::real. t \<noteq> 0) (at 0)"
-      unfolding eventually_at by (intro exI[of _ 1]) auto
-    thus ?thesis
-    proof (eventually_elim)
-      case (elim t)
-      hence t: "t \<noteq> 0" .
-      have "(F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h
-          = (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h)) /\<^sub>R t"
-        using t by (simp add: Dsc scaleR_diff_right)
-      hence "norm ((F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h)
-          = norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h)) / \<bar>t\<bar>"
-        by (simp add: divide_inverse mult.commute)
-      also have "\<dots> = (norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h))
-          / norm (t *\<^sub>R h)) * norm h"
-        using t False by (simp add: field_simps)
-      finally show ?case .
-    qed
-  qed
-  have ev': "eventually (\<lambda>t. (norm (F (x + t *\<^sub>R h) - F x - D (t *\<^sub>R h))
-      / norm (t *\<^sub>R h)) * norm h
-      = norm ((F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h)) (at (0::real))"
-    using ev by (rule eventually_mono) simp
-  have "((\<lambda>t. norm ((F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h))
-      \<longlongrightarrow> 0) (at (0::real))"
-    using scaled ev' by (simp add: Lim_transform_eventually)
-  hence "((\<lambda>t. (F (x + t *\<^sub>R h) - F x) /\<^sub>R t - D h) \<longlongrightarrow> 0) (at 0)"
-    by (simp add: tendsto_norm_zero_iff)
-  thus ?thesis by (simp add: Lim_null[symmetric])
-qed
+  differentiating along a line (\<open>has_derivative_dir_limit\<close>, in
+  @{theory Second_Order_Viscosity_Analysis.Rademacher}) makes its derivative
+  positive semidefinite with norm at most one.\<close>
 
 text \<open>Wherever the resolvent is differentiable, its derivative \<open>DR\<close>
   satisfies \<open>|DR h|\<^sup>2 \<le> h \<cdot> DR h\<close>, so \<open>DR\<close> is positive semidefinite with
@@ -313,36 +247,6 @@ lemma moreau_grad_has_derivative:
   shows "((\<lambda>y. y - prox f y) has_derivative (\<lambda>h. h - D h)) (at x)"
   by (intro has_derivative_diff has_derivative_ident D)
 
-theorem moreau_twice_differentiable_AE:
-  fixes f :: "'a::euclidean_space \<Rightarrow> real"
-  assumes cvx: "convex_on UNIV f"
-  shows "AE x in lborel. \<exists>A. bounded_linear A
-      \<and> (\<forall>y. (moreau f has_derivative (\<lambda>h. h \<bullet> (y - prox f y))) (at y))
-      \<and> ((\<lambda>y. y - prox f y) has_derivative A) (at x)
-      \<and> (\<forall>h. 0 \<le> h \<bullet> A h)"
-proof -
-  have grad: "\<forall>y. (moreau f has_derivative (\<lambda>h. h \<bullet> (y - prox f y))) (at y)"
-    using moreau_has_derivative[OF cvx] by blast
-  show ?thesis
-  proof (rule eventually_mono[OF prox_differentiable_AE[OF cvx]])
-    fix x :: 'a assume "(prox f) differentiable (at x)"
-    then obtain D where D: "(prox f has_derivative D) (at x)"
-      unfolding differentiable_def by blast
-    have blD: "bounded_linear D" by (rule has_derivative_bounded_linear[OF D])
-    have blA: "bounded_linear (\<lambda>h. h - D h)"
-      using blD by (intro bounded_linear_sub bounded_linear_ident)
-    have hess: "((\<lambda>y. y - prox f y) has_derivative (\<lambda>h. h - D h)) (at x)"
-      by (rule moreau_grad_has_derivative[OF D])
-    have psd: "0 \<le> h \<bullet> (h - D h)" for h
-      by (rule moreau_hessian_psd[OF cvx D])
-    show "\<exists>A. bounded_linear A
-        \<and> (\<forall>y. (moreau f has_derivative (\<lambda>h. h \<bullet> (y - prox f y))) (at y))
-        \<and> ((\<lambda>y. y - prox f y) has_derivative A) (at x)
-        \<and> (\<forall>h. 0 \<le> h \<bullet> A h)"
-      using blA grad hess psd by blast
-  qed
-qed
-
 subsection \<open>Integral representation of the envelope's increments\<close>
 
 text \<open>The bridge to a genuine second-order Taylor expansion: since the
@@ -539,29 +443,46 @@ text \<open>Alexandrov's theorem for the \<open>C\<^sup>1\<^sup>,\<^sup>1\<close
   quadratic form.  Transporting the expansion to \<open>f\<close> itself along the
   resolvent remains.\<close>
 
+theorem moreau_second_order_AE:
+  fixes f :: "'a::euclidean_space \<Rightarrow> real"
+  assumes cvx: "convex_on UNIV f"
+  shows "AE x in lborel. \<exists>A. bounded_linear A \<and> (\<forall>h. 0 \<le> h \<bullet> A h)
+      \<and> ((\<lambda>y. y - prox f y) has_derivative A) (at x)
+      \<and> ((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
+          - (h \<bullet> A h) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+  using prox_differentiable_AE[OF cvx]
+proof eventually_elim
+  case (elim x)
+  then obtain D where D: "(prox f has_derivative D) (at x)"
+    unfolding differentiable_def by blast
+  have "bounded_linear (\<lambda>h. h - D h)"
+    using has_derivative_bounded_linear[OF D]
+    by (intro bounded_linear_sub bounded_linear_ident)
+  then show ?case
+    using moreau_hessian_psd[OF cvx D] moreau_grad_has_derivative[OF D]
+      moreau_second_order_taylor[OF cvx D] by blast
+qed
+
+text \<open>The two packagings used downstream: with the (everywhere valid)
+  gradient formula, and with the expansion alone.\<close>
+
+theorem moreau_twice_differentiable_AE:
+  fixes f :: "'a::euclidean_space \<Rightarrow> real"
+  assumes cvx: "convex_on UNIV f"
+  shows "AE x in lborel. \<exists>A. bounded_linear A
+      \<and> (\<forall>y. (moreau f has_derivative (\<lambda>h. h \<bullet> (y - prox f y))) (at y))
+      \<and> ((\<lambda>y. y - prox f y) has_derivative A) (at x)
+      \<and> (\<forall>h. 0 \<le> h \<bullet> A h)"
+  using moreau_second_order_AE[OF cvx]
+  by eventually_elim (use moreau_has_derivative[OF cvx] in blast)
+
 theorem moreau_alexandrov_AE:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
   assumes cvx: "convex_on UNIV f"
   shows "AE x in lborel. \<exists>A. bounded_linear A \<and> (\<forall>h. 0 \<le> h \<bullet> A h)
       \<and> ((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
           - (h \<bullet> A h) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-proof (rule eventually_mono[OF prox_differentiable_AE[OF cvx]])
-  fix x :: 'a assume "(prox f) differentiable (at x)"
-  then obtain D where D: "(prox f has_derivative D) (at x)"
-    unfolding differentiable_def by blast
-  have blD: "bounded_linear D" by (rule has_derivative_bounded_linear[OF D])
-  have blA: "bounded_linear (\<lambda>h. h - D h)"
-    using blD by (intro bounded_linear_sub bounded_linear_ident)
-  have psd: "0 \<le> h \<bullet> (h - D h)" for h
-    by (rule moreau_hessian_psd[OF cvx D])
-  have tay: "((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
-      - (h \<bullet> (h - D h)) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    by (rule moreau_second_order_taylor[OF cvx D])
-  show "\<exists>A. bounded_linear A \<and> (\<forall>h. 0 \<le> h \<bullet> A h)
-      \<and> ((\<lambda>h. (moreau f (x + h) - moreau f x - h \<bullet> (x - prox f x)
-          - (h \<bullet> A h) / 2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
-    using blA psd tay by blast
-qed
+  using moreau_second_order_AE[OF cvx] by eventually_elim blast
 
 
 (*<*)

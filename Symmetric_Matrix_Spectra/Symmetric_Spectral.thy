@@ -508,7 +508,7 @@ text \<open>\<open>polarization_symmetric\<close>, \<open>symmetric_form_bound\<
 
 subsection \<open>Boundedness to a limit point, and limit point to nearby points\<close>
 
-text \<open>\<open>bounded_seq_limit_point\<close> lives in \<open>Doubling_Of_Variables\<close>.\<close>
+text \<open>Boundedness gives a limit point by HOL's \<open>bounded_imp_convergent_subsequence\<close>.\<close>
 
 text \<open>A bounded family on which the operator bound holds yields the
   nearby-point hypothesis at a produced limit point.  The closing argument

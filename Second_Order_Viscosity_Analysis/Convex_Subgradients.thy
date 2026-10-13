@@ -62,6 +62,24 @@ proof -
     by (cases "a = 0") (auto simp: power2_eq_square mult_le_cancel_right)
 qed
 
+text \<open>A semiconvex function is continuous: subtract the quadratic from the
+  continuous convex function.\<close>
+
+lemma semiconvex_continuous:
+  fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
+  assumes cvx: "convex_on UNIV (\<lambda>z. \<phi> z + (c/2) * (norm z)\<^sup>2)"
+  shows "continuous_on S \<phi>"
+proof -
+  have c1: "continuous_on UNIV (\<lambda>z. \<phi> z + (c/2) * (norm z)\<^sup>2)"
+    by (rule convex_on_continuous[OF open_UNIV cvx])
+  have c2: "continuous_on UNIV (\<lambda>z::'a. (c/2) * (norm z)\<^sup>2)"
+    by (intro continuous_intros)
+  have "continuous_on UNIV (\<lambda>z. (\<phi> z + (c/2) * (norm z)\<^sup>2) - (c/2) * (norm z)\<^sup>2)"
+    by (rule continuous_on_diff[OF c1 c2])
+  hence "continuous_on UNIV \<phi>" by simp
+  thus ?thesis by (rule continuous_on_subset) simp
+qed
+
 text \<open>The epigraph of a finite convex function is closed and convex; the
   supporting hyperplane at its frontier point \<open>(x, f x)\<close> is non-vertical
   and normalizes to a subgradient.\<close>

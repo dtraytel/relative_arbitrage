@@ -52,6 +52,113 @@ proof (rule cSUP_least)
   thus "u y - (dist x y)\<^sup>2 / (2*\<epsilon>) \<le> B" using B[of y] by linarith
 qed
 
+subsection \<open>Attainment for upper semicontinuous data\<close>
+
+text \<open>The session sits on plain HOL-Analysis, so the two attainment facts
+  below are proved here rather than imported from the
+  \<open>Semicontinuous_Analysis\<close> session; they are deliberately minimal.
+  Upper semicontinuity is stated in its \<open>\<epsilon>\<close>-form.\<close>
+
+lemma usc_open_lt:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+  shows "open {y. f y < c}"
+  unfolding open_dist
+proof (intro ballI)
+  fix z assume "z \<in> {y. f y < c}"
+  then have "f z < c" by simp
+  from usc[OF this] obtain e where e: "0 < e"
+    and b: "\<And>y. dist z y < e \<Longrightarrow> f y < c" by blast
+  show "\<exists>e>0. \<forall>y. dist y z < e \<longrightarrow> y \<in> {y. f y < c}"
+    by (intro exI[of _ e] conjI e allI impI)
+      (use b in \<open>simp add: dist_commute\<close>)
+qed
+
+lemma usc_attains_sup_compact:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+    and cS: "compact S" and neS: "S \<noteq> {}"
+  shows "\<exists>z\<in>S. \<forall>y\<in>S. f y \<le> f z"
+proof (rule ccontr)
+  assume "\<not> (\<exists>z\<in>S. \<forall>y\<in>S. f y \<le> f z)"
+  then have H: "\<And>z. z \<in> S \<Longrightarrow> \<exists>z'\<in>S. f z < f z'" by force
+  have cov: "S \<subseteq> (\<Union>z'\<in>S. {y. f y < f z'})"
+    using H by blast
+  have opn: "\<And>z'. z' \<in> S \<Longrightarrow> open {y. f y < f z'}"
+    by (rule usc_open_lt[OF usc])
+  obtain T where TS: "T \<subseteq> S" and fT: "finite T"
+    and covT: "S \<subseteq> (\<Union>z'\<in>T. {y. f y < f z'})"
+    using compactE_image[OF cS opn cov] by blast
+  obtain s where sS: "s \<in> S" using neS by blast
+  have neT: "T \<noteq> {}" using covT sS by blast
+  have "Max (f ` T) \<in> f ` T"
+    by (rule Max_in) (use fT neT in auto)
+  then obtain zm where zmT: "zm \<in> T" and zmM: "Max (f ` T) = f zm"
+    by (rule imageE)
+  have zmS: "zm \<in> S" using TS zmT by blast
+  have "zm \<in> (\<Union>z'\<in>T. {y. f y < f z'})" by (rule subsetD[OF covT zmS])
+  then obtain z'' where z'': "z'' \<in> T" and lt: "f zm < f z''" by auto
+  have "f z'' \<le> Max (f ` T)" by (rule Max_ge) (use fT z'' in auto)
+  then show False using lt zmM by linarith
+qed
+
+text \<open>For bounded usc \<open>u\<close> the supremum defining \<open>supconv u \<epsilon> x\<close> is attained:
+  the competitor \<open>y \<mapsto> u y - dist\<^sup>2/(2\<epsilon>)\<close> is usc, and outside the ball of
+  radius \<open>\<surd>(max 0 (2\<epsilon>(B - u x))) + 1\<close> it is already below its value at \<open>x\<close>,
+  so its maximum over that compact ball is global.\<close>
+
+lemma supconv_attained_usc:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
+    and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> u y < c"
+  shows "\<exists>ys. supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
+proof -
+  define g where "g = (\<lambda>y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
+  have gusc: "\<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> g y < c" if lt: "g z < c" for c z
+  proof -
+    define \<eta> where "\<eta> = (c - g z)/2"
+    have \<eta>: "0 < \<eta>" using lt by (simp add: \<eta>_def)
+    obtain d1 where d1: "0 < d1" "\<And>y. dist z y < d1 \<Longrightarrow> u y < u z + \<eta>"
+      using usc[of z "u z + \<eta>"] \<eta> by auto
+    have "continuous (at z) (\<lambda>y. (dist x y)\<^sup>2 / (2*\<epsilon>))"
+      by (intro continuous_intros) (use e in simp)
+    then obtain d2 where d2: "0 < d2"
+      "\<And>y. dist y z < d2 \<Longrightarrow> \<bar>(dist x y)\<^sup>2 / (2*\<epsilon>) - (dist x z)\<^sup>2 / (2*\<epsilon>)\<bar> < \<eta>"
+      using \<eta> unfolding continuous_at_eps_delta dist_real_def by blast
+    have "g y < c" if "dist z y < min d1 d2" for y
+    proof -
+      have "u y < u z + \<eta>" using d1(2)[of y] that by simp
+      moreover have "(dist x z)\<^sup>2 / (2*\<epsilon>) - \<eta> < (dist x y)\<^sup>2 / (2*\<epsilon>)"
+        using d2(2)[of y] that by (simp add: dist_commute abs_less_iff)
+      ultimately show ?thesis using \<eta>_def unfolding g_def by argo
+    qed
+    then show ?thesis using d1(1) d2(1) by (intro exI[of _ "min d1 d2"]) auto
+  qed
+  define R where "R = sqrt (max 0 (2*\<epsilon>*(B - u x))) + 1"
+  have R0: "0 < R" unfolding R_def by (simp add: add_nonneg_pos)
+  obtain ys where ysc: "ys \<in> cball x R" and mxb: "\<And>y. y \<in> cball x R \<Longrightarrow> g y \<le> g ys"
+    using usc_attains_sup_compact[OF gusc compact_cball, of x R] R0 by force
+  have glob: "g y \<le> g ys" for y
+  proof (cases "dist x y \<le> R")
+    case False
+    then have "(sqrt (max 0 (2*\<epsilon>*(B - u x))))\<^sup>2 < (dist x y)\<^sup>2"
+      unfolding R_def by (intro power_strict_mono) auto
+    then have "B - u x < (dist x y)\<^sup>2 / (2*\<epsilon>)"
+      using e by (simp add: pos_less_divide_eq mult.commute)
+    then have "g y < g x" using B[of y] unfolding g_def by simp
+    then show ?thesis using mxb[of x] R0 by simp
+  qed (simp add: mxb)
+  have "supconv u \<epsilon> x = g ys"
+    unfolding supconv_def
+  proof (rule antisym)
+    show "(SUP y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>)) \<le> g ys"
+      by (rule cSUP_least) (use glob in \<open>auto simp: g_def\<close>)
+    show "g ys \<le> (SUP y. u y - (dist x y)\<^sup>2 / (2*\<epsilon>))"
+      unfolding g_def by (intro cSUP_upper supconv_bdd_above[OF B e]) auto
+  qed
+  then show ?thesis unfolding g_def by blast
+qed
+
 text \<open>The sup-convolution inherits \<open>u\<close>'s Lipschitz constant exactly, for
   every \<open>\<epsilon>\<close>.\<close>
 
@@ -214,25 +321,6 @@ proof -
     by (intro convex_on_cSUP convex_on_affine_inner bddx)
 qed
 
-text \<open>The sup-convolution is continuous: it is a finite convex function
-  (continuous by \<open>convex_on_continuous\<close>) minus the smooth \<open>|x|\<^sup>2/(2\<epsilon>)\<close>.\<close>
-
-theorem supconv_continuous:
-  fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
-  shows "continuous_on UNIV (supconv u \<epsilon>)"
-proof -
-  have g: "continuous_on UNIV (\<lambda>x. supconv u \<epsilon> x + (norm x)\<^sup>2 / (2*\<epsilon>))"
-    by (rule convex_on_continuous[OF open_UNIV supconv_semiconvex[OF B e]])
-  have h: "continuous_on UNIV (\<lambda>x :: 'a. (norm x)\<^sup>2 / (2*\<epsilon>))"
-    using e by (intro continuous_intros) simp
-  have eq: "supconv u \<epsilon> = (\<lambda>x. (supconv u \<epsilon> x + (norm x)\<^sup>2 / (2*\<epsilon>))
-      - (norm x)\<^sup>2 / (2*\<epsilon>))"
-    by (rule ext) simp
-  show ?thesis
-    by (subst eq) (intro continuous_on_diff g h)
-qed
-
 text \<open>Near-optimizers of the sup-convolution lie within an explicit
   \<open>\<epsilon>\<close>-dependent radius controlled by the oscillation of \<open>u\<close>.\<close>
 
@@ -261,33 +349,22 @@ proof -
   show thesis by (rule that[OF h1 h2])
 qed
 
-text \<open>At a point of continuity, the sup-convolution converges to \<open>u\<close> as
-  \<open>\<epsilon> \<rightarrow> 0\<^sup>+\<close>, the near-optimizer localizing in a ball of radius
-  \<open>O(\<surd>\<epsilon>)\<close>.\<close>
+text \<open>At a point of upper semicontinuity, the sup-convolution converges to
+  \<open>u\<close> as \<open>\<epsilon> \<rightarrow> 0\<^sup>+\<close>, the near-optimizer localizing in a ball of radius
+  \<open>O(\<surd>\<epsilon>)\<close>; the lower bound is \<open>supconv_ge\<close>.\<close>
 
 lemma supconv_tendsto:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"
-  assumes B: "\<And>y. u y \<le> B" and cont: "continuous (at x) u"
+  assumes B: "\<And>y. u y \<le> B"
+    and usc: "\<And>c. u x < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist x y < e \<longrightarrow> u y < c"
   shows "((\<lambda>\<epsilon>. supconv u \<epsilon> x) \<longlongrightarrow> u x) (at_right 0)"
 proof (rule tendstoI)
   fix \<eta> :: real assume \<eta>: "0 < \<eta>"
   define \<delta> where "\<delta> = min (\<eta>/2) 1"
   have \<delta>pos: "0 < \<delta>" and \<delta>le: "\<delta> \<le> \<eta>/2" and \<delta>1: "\<delta> \<le> 1"
     using \<eta> by (auto simp: \<delta>_def)
-  have "eventually (\<lambda>y. dist (u y) (u x) < \<eta>/2) (at x)"
-    by (rule tendstoD[OF cont[unfolded continuous_at]]) (use \<eta> in simp)
-  then obtain r where r: "0 < r"
-    and rb: "\<And>y. y \<noteq> x \<Longrightarrow> dist y x < r \<Longrightarrow> dist (u y) (u x) < \<eta>/2"
-    unfolding eventually_at by blast
-  have rb': "u y < u x + \<eta>/2" if "dist x y < r" for y
-  proof (cases "y = x")
-    case True thus ?thesis using \<eta> by simp
-  next
-    case False
-    hence "dist (u y) (u x) < \<eta>/2"
-      using rb[OF False] that by (metis dist_commute)
-    thus ?thesis unfolding dist_real_def abs_diff_less_iff by linarith
-  qed
+  obtain r where r: "0 < r" and rb': "\<And>y. dist x y < r \<Longrightarrow> u y < u x + \<eta>/2"
+    using usc[of "u x + \<eta>/2"] \<eta> by auto
   define C where "C = B - u x + 1"
   have C: "0 < C" using B[of x] by (simp add: C_def)
   define \<epsilon>\<^sub>0 where "\<epsilon>\<^sub>0 = r\<^sup>2 / (2*C)"
@@ -349,6 +426,14 @@ proof -
   qed
   show ?thesis unfolding eq by (rule supconv_semiconvex[OF B e])
 qed
+
+text \<open>The sup-convolution is continuous, being semiconvex.\<close>
+
+theorem supconv_continuous:
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
+  assumes B: "\<And>y. u y \<le> B" and e: "0 < \<epsilon>"
+  shows "continuous_on UNIV (supconv u \<epsilon>)"
+  by (rule semiconvex_continuous[OF supconv_semiconvex'[OF B e]])
 
 text \<open>The sup-convolution of any bounded-above function is twice
   differentiable almost everywhere: the fact that supplies genuine

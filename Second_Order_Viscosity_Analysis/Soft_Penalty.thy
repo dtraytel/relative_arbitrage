@@ -147,20 +147,8 @@ lemma soft_pen_rem_aux:
   using R by (simp add: field_simps)
 
 text \<open>One input to the remainder limit: \<open>(d \<bullet> h)\<^sup>2/\<parallel>h\<parallel>\<^sup>2\<close> is bounded,
-  uniformly in \<open>h\<close>, by \<open>\<parallel>d\<parallel>\<^sup>2\<close> (Cauchy-Schwarz squared), enabling
-  \<open>Lim_null_comparison\<close>.\<close>
-
-lemma inner_sq_over_norm_sq_le:
-  fixes d h :: "real^'n::finite"
-  shows "(d \<bullet> h)\<^sup>2 \<le> (norm d)\<^sup>2 * (norm h)\<^sup>2"
-proof -
-  have cs: "\<bar>d \<bullet> h\<bar> \<le> norm d * norm h"
-    by (rule Cauchy_Schwarz_ineq2)
-  have "(\<bar>d \<bullet> h\<bar>)\<^sup>2 \<le> (norm d * norm h)\<^sup>2"
-    by (rule power_mono[OF cs]) simp
-  then show ?thesis
-    by (simp add: power_mult_distrib)
-qed
+  uniformly in \<open>h\<close>, by \<open>\<parallel>d\<parallel>\<^sup>2\<close> (Cauchy-Schwarz squared, HOL's
+  \<open>Cauchy_Schwarz_ineq\<close>), enabling \<open>Lim_null_comparison\<close>.\<close>
 
 corollary inner_sq_quotient_bounded:
   fixes d h :: "real^'n::finite"
@@ -169,7 +157,7 @@ corollary inner_sq_quotient_bounded:
 proof -
   have b: "0 < (norm h)\<^sup>2" using h by simp
   show ?thesis
-    using inner_sq_over_norm_sq_le[of d h] b
+    using Cauchy_Schwarz_ineq[of d h, folded power2_norm_eq_inner] b
     by (simp add: pos_divide_le_eq)
 qed
 
@@ -319,12 +307,7 @@ definition soft_grad :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'
 lemma sqrt_norm_sq_add_one_ge_one:
   fixes d :: "real^'n::finite"
   shows "1 \<le> sqrt ((norm d)\<^sup>2 + 1)"
-proof -
-  have "(1::real) = sqrt 1" by simp
-  also have "sqrt (1::real) \<le> sqrt ((norm d)\<^sup>2 + 1)"
-    by (rule real_sqrt_le_mono) simp
-  finally show ?thesis .
-qed
+  by simp
 
 text \<open>The gradient field of \<open>soft_pen \<kappa>\<close> is Lipschitz at an elementary,
   non-sharp constant, obtained algebraically without the mean value
@@ -333,25 +316,6 @@ text \<open>The gradient field of \<open>soft_pen \<kappa>\<close> is Lipschitz 
   \<open>(R x - R y)(R x + R y) = \<parallel>x\<parallel>\<^sup>2 - \<parallel>y\<parallel>\<^sup>2\<close> together with
   \<open>|\<parallel>x\<parallel> - \<parallel>y\<parallel>| \<le> \<parallel>x-y\<parallel>\<close> gives the bound after cancelling the positive
   factor \<open>Rx+Ry\<close>.\<close>
-
-lemma norm_le_soft_R:
-  fixes x :: "real^'n::finite"
-  shows "norm x \<le> sqrt ((norm x)\<^sup>2 + 1)"
-proof -
-  have "norm x = sqrt ((norm x)\<^sup>2)" by simp
-  also have "\<dots> \<le> sqrt ((norm x)\<^sup>2 + 1)" by (rule real_sqrt_le_mono) simp
-  finally show ?thesis .
-qed
-
-lemma abs_norm_diff_le:
-  fixes x y :: "'a::real_normed_vector"
-  shows "\<bar>norm x - norm y\<bar> \<le> norm (x - y)"
-proof -
-  have a: "norm x - norm y \<le> norm (x - y)" by (rule norm_triangle_ineq2)
-  have b: "norm y - norm x \<le> norm (y - x)" by (rule norm_triangle_ineq2)
-  have c: "norm (y - x) = norm (x - y)" by (rule norm_minus_commute)
-  show ?thesis using a b unfolding c by linarith
-qed
 
 lemma soft_R_lipschitz:
   fixes x y :: "real^'n::finite"
@@ -390,9 +354,10 @@ proof -
     finally show ?thesis .
   qed
   \<comment> \<open>and now the two elementary bounds\<close>
-  have b1: "\<bar>norm x - norm y\<bar> \<le> norm (x - y)" by (rule abs_norm_diff_le)
+  have b1: "\<bar>norm x - norm y\<bar> \<le> norm (x - y)" by (rule norm_triangle_ineq3)
   have b2: "norm x + norm y \<le> ?s + ?t"
-    using norm_le_soft_R[of x] norm_le_soft_R[of y] by linarith
+    using real_sqrt_sum_squares_ge1[of "norm x" 1] real_sqrt_sum_squares_ge1[of "norm y" 1]
+    by (simp add: add_mono)
   have chain: "\<bar>?s - ?t\<bar> * (?s + ?t) \<le> norm (x - y) * (?s + ?t)"
   proof -
     have "\<bar>norm x - norm y\<bar> * (norm x + norm y)
@@ -426,24 +391,26 @@ lemma soft_R_gt_one:
   assumes d: "d \<noteq> 0"
   shows "1 < sqrt ((norm d)\<^sup>2 + 1)"
 proof -
-  have "0 < norm d" using d by simp
-  then have "0 < (norm d)\<^sup>2" by simp
-  then have "(1::real) < (norm d)\<^sup>2 + 1" by linarith
-  then have "sqrt (1::real) < sqrt ((norm d)\<^sup>2 + 1)" by (rule real_sqrt_less_mono)
-  then show ?thesis by simp
+  have "(1::real) < (norm d)\<^sup>2 + 1" using d by simp
+  then show ?thesis using real_sqrt_less_mono[of 1] by simp
+qed
+
+lemma soft_R_coeff_pos:
+  fixes d :: "real^'n::finite"
+  assumes d: "d \<noteq> 0"
+  shows "0 < 1 - 1 / sqrt ((norm d)\<^sup>2 + 1)"
+proof -
+  have R: "1 < sqrt ((norm d)\<^sup>2 + 1)" by (rule soft_R_gt_one[OF d])
+  then have Rp: "0 < sqrt ((norm d)\<^sup>2 + 1)" by linarith
+  have "1 / sqrt ((norm d)\<^sup>2 + 1) < 1" using R Rp by (simp add: divide_less_eq)
+  then show ?thesis by linarith
 qed
 
 lemma soft_grad_coeff_pos:
   fixes d :: "real^'n::finite"
   assumes d: "d \<noteq> 0" and k: "0 < \<kappa>"
   shows "0 < \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))"
-proof -
-  have R: "1 < sqrt ((norm d)\<^sup>2 + 1)" by (rule soft_R_gt_one[OF d])
-  then have Rp: "0 < sqrt ((norm d)\<^sup>2 + 1)" by linarith
-  have "1 / sqrt ((norm d)\<^sup>2 + 1) < 1" using R Rp by (simp add: divide_less_eq)
-  then have pos: "0 < 1 - 1 / sqrt ((norm d)\<^sup>2 + 1)" by linarith
-  show ?thesis by (rule mult_pos_pos[OF k pos])
-qed
+  by (rule mult_pos_pos[OF k soft_R_coeff_pos[OF d]])
 
 lemma soft_grad_nonzero:
   fixes d :: "real^'n::finite"
@@ -489,14 +456,7 @@ lemma soft_gap_pos:
   fixes d :: "real^'n::finite"
   assumes d: "d \<noteq> 0"
   shows "0 < (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * norm d"
-proof -
-  have R: "1 < sqrt ((norm d)\<^sup>2 + 1)" by (rule soft_R_gt_one[OF d])
-  then have Rp: "0 < sqrt ((norm d)\<^sup>2 + 1)" by linarith
-  have "1 / sqrt ((norm d)\<^sup>2 + 1) < 1" using R Rp by (simp add: divide_less_eq)
-  then have cpos: "0 < 1 - 1 / sqrt ((norm d)\<^sup>2 + 1)" by linarith
-  have dpos: "0 < norm d" using d by simp
-  show ?thesis by (rule mult_pos_pos[OF cpos dpos])
-qed
+  by (rule mult_pos_pos[OF soft_R_coeff_pos[OF d]]) (use d in simp)
 
 lemma soft_rho_exists:
   fixes d :: "real^'n::finite"
@@ -511,18 +471,8 @@ lemma sqrt_shift_diff_bound:
   shows "2 * (sqrt (t + 1) - sqrt (s + 1)) \<le> t - s"
 proof -
   have tnn: "0 \<le> t" using s st by linarith
-  have a1: "1 \<le> sqrt (t + 1)"
-  proof -
-    have "(1::real) = sqrt 1" by simp
-    also have "sqrt (1::real) \<le> sqrt (t + 1)" by (rule real_sqrt_le_mono) (use tnn in linarith)
-    finally show ?thesis .
-  qed
-  have b1: "1 \<le> sqrt (s + 1)"
-  proof -
-    have "(1::real) = sqrt 1" by simp
-    also have "sqrt (1::real) \<le> sqrt (s + 1)" by (rule real_sqrt_le_mono) (use s in linarith)
-    finally show ?thesis .
-  qed
+  have a1: "1 \<le> sqrt (t + 1)" using tnn by simp
+  have b1: "1 \<le> sqrt (s + 1)" using s by simp
   have ab: "sqrt (s + 1) \<le> sqrt (t + 1)" by (rule real_sqrt_le_mono) (use st in linarith)
   have sq: "sqrt (t + 1) * sqrt (t + 1) - sqrt (s + 1) * sqrt (s + 1) = t - s"
   proof -
@@ -847,7 +797,7 @@ proof -
     by (rule soft_pen_rem_aux[OF R])
 qed
 
-text \<open>\<open>inner_sq_over_norm_sq_le\<close>, \<open>inner_sq_quotient_bounded\<close>, \<open>soft_pen_T_tendsto\<close>, \<open>soft_pen_bracket_tendsto\<close>, \<open>soft_pen_second_summand_tendsto\<close>, \<open>rem_split_aux\<close> live in \<open>Soft_Penalty\<close>.\<close>
+text \<open>\<open>inner_sq_quotient_bounded\<close>, \<open>soft_pen_T_tendsto\<close>, \<open>soft_pen_bracket_tendsto\<close>, \<open>soft_pen_second_summand_tendsto\<close>, \<open>rem_split_aux\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 text \<open>The jet assembles the analysis above via \<open>soft_pen_rem\<close> and
   \<open>rem_split_aux\<close>, killing the first summand by \<open>Lim_null_comparison\<close> and
@@ -1138,7 +1088,7 @@ lemma soft_hess_bound:
 
 subsection \<open>\<open>soft_grad\<close> is Lipschitz, at a non-sharp elementary constant\<close>
 
-text \<open>\<open>norm_le_soft_R\<close>, \<open>abs_norm_diff_le\<close>, \<open>soft_R_lipschitz\<close>, \<open>soft_shrink\<close> live in \<open>Soft_Penalty\<close>.\<close>
+text \<open>\<open>soft_R_lipschitz\<close>, \<open>soft_shrink\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_grad_split:
   fixes d :: "real^'n::finite"
@@ -1190,7 +1140,7 @@ proof -
     have "\<bar>?s - ?t\<bar> \<le> norm (x - y)" by (rule soft_R_lipschitz)
     then show ?thesis by (simp add: abs_minus_commute)
   qed
-  have ny: "norm y \<le> ?t" by (rule norm_le_soft_R)
+  have ny: "norm y \<le> ?t" using real_sqrt_sum_squares_ge1[of "norm y" 1] by simp
   have prod: "\<bar>?t - ?s\<bar> * norm y \<le> ?t * norm (x - y)"
   proof -
     have "\<bar>?t - ?s\<bar> * norm y \<le> norm (x - y) * norm y"
@@ -1289,10 +1239,9 @@ text \<open>\<open>exists_small_rho_aux\<close>, \<open>soft_gap_pos\<close>, \<
 
 subsection \<open>Jensen's semiconvexity input, for a general penalty\<close>
 
-text \<open>\<open>doubled_functional_semiconvex\<close> transcribed for a general penalty
-  \<open>Pn\<close>, replacing the quadratic-specific semiconvexity step by the
-  hypothesis \<open>sc\<close>; the doubled constant becomes \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>,
-  matching the quadratic case at \<open>\<kappa> = \<alpha>\<close>.\<close>
+text \<open>\<open>doubled_functional_semiconvex_gen\<close> takes the semiconvexity of
+  the penalty \<open>Pn\<close> as the hypothesis \<open>sc\<close>; the doubled constant is
+  \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>.\<close>
 
 lemma soft_pen_zero: "soft_pen \<kappa> (0 :: real^'n::finite) = 0"
   unfolding soft_pen_def by simp
@@ -1433,34 +1382,6 @@ theorem doubling_maximiser_exists_soft:
         \<le> u xh - w yh - soft_pen \<kappa> (xh - yh)"
   by (rule doubling_maximiser_exists_gen[OF cK neK cu cw soft_pen_continuous])
 
-text \<open>The sup-convolution form matches the \<open>mxKK\<close> hypothesis of
-  \<open>comparison_from_localised_maximiser_soft\<close>, with continuity of the two
-  sup-convolutions free from \<open>supconv_continuous\<close>.\<close>
-
-corollary doubling_maximiser_supconv_soft:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes cK: "compact K" and neK: "K \<noteq> {}"
-    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
-    and e: "0 < \<epsilon>"
-  shows "\<exists>xh\<in>K. \<exists>yh\<in>K. \<forall>x\<in>K. \<forall>y\<in>K.
-      supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa> (x - y)
-      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
-        - soft_pen \<kappa> (xh - yh)"
-proof -
-  have cA: "continuous_on K (supconv (\<lambda>y. \<theta> * u y) \<epsilon>)"
-    by (rule continuous_on_subset[OF supconv_continuous[OF Bu e] subset_UNIV])
-  have cB0: "continuous_on K (supconv (- w) \<epsilon>)"
-    by (rule continuous_on_subset[OF supconv_continuous[OF Bw e] subset_UNIV])
-  have cB: "continuous_on K (\<lambda>y. - supconv (- w) \<epsilon> y)"
-    by (intro continuous_intros cB0)
-  have "\<exists>xh\<in>K. \<exists>yh\<in>K. \<forall>x\<in>K. \<forall>y\<in>K.
-      supconv (\<lambda>y. \<theta> * u y) \<epsilon> x - (- supconv (- w) \<epsilon> y) - soft_pen \<kappa> (x - y)
-      \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh - (- supconv (- w) \<epsilon> yh)
-        - soft_pen \<kappa> (xh - yh)"
-    by (rule doubling_maximiser_exists_soft[OF cK neK cA cB])
-  then show ?thesis by simp
-qed
-
 subsection \<open>The \<open>\<kappa> \<rightarrow> \<infinity>\<close> step for \<open>soft_pen\<close>: the maximiser closes up\<close>
 
 text \<open>The \<open>soft_pen\<close> analogue of \<open>doubling_dist_bound\<close>: the penalty at radius
@@ -1482,7 +1403,7 @@ lemma doubling_near_soft:
   shows "dist xh yh < \<beta>"
 proof -
   have pb: "soft_pen \<kappa> (xh - yh) \<le> C - (u z - w z)"
-    by (rule doubling_penalty_bound_gen[OF mx soft_pen_zero xh yh z bnd])
+    by (rule doubling_penalty_bound_gen[OF mx soft_pen_zero IntI[OF z z] bnd])
   have coer: "C - (u z - w z) < soft_pen \<kappa> x" if "\<beta> \<le> norm x"
     for x :: "real^'n"
     by (rule soft_pen_coercive_outside[OF k bnn big that])
@@ -1527,44 +1448,42 @@ proof -
 qed
 
 text \<open>The \<open>\<kappa> \<rightarrow> \<infinity>\<close> step in the sup-convolution shape the assembly consumes,
-  with the same sign flip as \<open>doubling_maximiser_supconv_soft\<close>:
-  instantiate at \<open>u := supconv(\<theta>u)\<epsilon>\<close> and \<open>w := \<lambda>y. -supconv(-w)\<epsilon> y\<close>.\<close>
+  with continuity of the two sup-convolutions free from
+  \<open>supconv_continuous\<close>: instantiate at \<open>u := supconv u \<epsilon>\<close> and
+  \<open>w := \<lambda>y. -supconv(-w)\<epsilon> y\<close>.  The assembly takes \<open>u := \<theta> ut\<close>.\<close>
 
 theorem doubling_close_maximiser_supconv_soft:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
-    and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
+    and Bu: "\<And>y. u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
     and e: "0 < \<epsilon>"
     and z: "z \<in> K"
     and bnd: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
-        supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y \<le> C"
+        supconv u \<epsilon> x + supconv (- w) \<epsilon> y \<le> C"
     and bpos: "0 < \<beta>"
   shows "\<exists>\<kappa>. 0 < \<kappa> \<and> (\<exists>xh\<in>K. \<exists>yh\<in>K.
       (\<forall>x\<in>K. \<forall>y\<in>K.
-         supconv (\<lambda>y. \<theta> * u y) \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa> (x - y)
-         \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh + supconv (- w) \<epsilon> yh
-           - soft_pen \<kappa> (xh - yh))
+         supconv u \<epsilon> x + supconv (- w) \<epsilon> y - soft_pen \<kappa> (x - y)
+         \<le> supconv u \<epsilon> xh + supconv (- w) \<epsilon> yh - soft_pen \<kappa> (xh - yh))
       \<and> dist xh yh < \<beta>)"
 proof -
-  have cA: "continuous_on K (supconv (\<lambda>y. \<theta> * u y) \<epsilon>)"
+  have cA: "continuous_on K (supconv u \<epsilon>)"
     by (rule continuous_on_subset[OF supconv_continuous[OF Bu e] subset_UNIV])
   have cB0: "continuous_on K (supconv (- w) \<epsilon>)"
     by (rule continuous_on_subset[OF supconv_continuous[OF Bw e] subset_UNIV])
   have cB: "continuous_on K (\<lambda>y. - supconv (- w) \<epsilon> y)"
     by (intro continuous_intros cB0)
-  have bnd': "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x - (- supconv (- w) \<epsilon> y) \<le> C"
+  have bnd': "supconv u \<epsilon> x - (- supconv (- w) \<epsilon> y) \<le> C"
     if "x \<in> K" "y \<in> K" for x y
     using bnd[OF that] by simp
   have "\<exists>\<kappa>. 0 < \<kappa> \<and> (\<exists>xh\<in>K. \<exists>yh\<in>K.
       (\<forall>x\<in>K. \<forall>y\<in>K.
-         supconv (\<lambda>y. \<theta> * u y) \<epsilon> x - (- supconv (- w) \<epsilon> y) - soft_pen \<kappa> (x - y)
-         \<le> supconv (\<lambda>y. \<theta> * u y) \<epsilon> xh - (- supconv (- w) \<epsilon> yh)
-           - soft_pen \<kappa> (xh - yh))
+         supconv u \<epsilon> x - (- supconv (- w) \<epsilon> y) - soft_pen \<kappa> (x - y)
+         \<le> supconv u \<epsilon> xh - (- supconv (- w) \<epsilon> yh) - soft_pen \<kappa> (xh - yh))
       \<and> dist xh yh < \<beta>)"
     by (rule doubling_close_maximiser_soft
-        [where u = "supconv (\<lambda>y. \<theta> * u y) \<epsilon>"
-           and w = "\<lambda>y. - supconv (- w) \<epsilon> y" and K = K and z = z and C = C
-           and \<beta> = \<beta>,
+        [where u = "supconv u \<epsilon>" and w = "\<lambda>y. - supconv (- w) \<epsilon> y"
+           and K = K and z = z and C = C and \<beta> = \<beta>,
          OF cK neK cA cB z bnd' bpos])
   then show ?thesis by simp
 qed

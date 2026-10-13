@@ -455,9 +455,9 @@ Crandall_Ishii_Sums.subjet_neg_superjet    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.superjet_mono    # KEEP_API
 Crandall_Ishii_Sums.superjet_subset_cl    # KEEP_API
 Crandall_Ishii_Sums.subjet_subset_cl    # KEEP_API
-Crandall_Ishii_Sums.usc_open_lt    # FIX_THEN_KEEP
-Crandall_Ishii_Sums.usc_attains_sup_compact    # FIX_THEN_KEEP
-Crandall_Ishii_Sums.supconv_attained_usc    # FIX_THEN_KEEP
+Sup_Convolution.usc_open_lt    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
+Sup_Convolution.usc_attains_sup_compact    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
+Sup_Convolution.supconv_attained_usc    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
 Crandall_Ishii_Sums.quad_root_bound    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.doubled_supconv_pointwise_bound    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.usc_eventually_lt    # FIX_THEN_KEEP
@@ -481,7 +481,6 @@ Theorem_On_Sums.supconv_jet_transfer    # FIX_THEN_KEEP
 Soft_Penalty.soft_grad_coeff_pos    # KEEP_API
 Soft_Penalty.soft_grad_nonzero    # KEEP_API
 Soft_Penalty.doubling_maximiser_exists_soft    # FIX_THEN_KEEP
-Soft_Penalty.doubling_maximiser_supconv_soft    # FIX_THEN_KEEP
 Soft_Penalty.doubling_near_soft    # FIX_THEN_KEEP
 Soft_Penalty.doubling_close_maximiser_soft    # FIX_THEN_KEEP
 Soft_Penalty.doubling_close_maximiser_supconv_soft    # FIX_THEN_KEEP
