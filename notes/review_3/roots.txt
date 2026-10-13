@@ -270,7 +270,7 @@ Path_Exit_Times.pexit_sublevel_open
 # --- kept for independent interest (notes/review_3/data/independent_interest.md):
 # KEEP_ROOT, KEEP_EVIDENCE, FIX_THEN_KEEP and KEEP_API items of the review.
 # class_dp
-Exit_Class_Witness.bm_increment_cross    # KEEP_API
+Vector_Brownian_Martingales.bm_increment_cross    # KEEP_API
 # comparison
 Comparison_Principle.max_principle_boundary_holds    # FIX_THEN_KEEP
 Comparison_Principle.comparison_soft_complete    # FIX_THEN_KEEP
@@ -535,8 +535,8 @@ Path_Law_Pasting.path_rcd_ksemi    # KEEP_API
 # value_function
 Value_Function_Subsolution.stopped_X_int    # KEEP_API
 Value_Function_Subsolution.stopped_X_mean    # KEEP_API
-Value_Function_Euler_Construction.bm_coordinate_pow4    # FIX_THEN_KEEP
-Value_Function_Euler_Construction.bm_R2_moment    # FIX_THEN_KEEP
+Product_Brownian_Motion.bm_coordinate_pow4    # FIX_THEN_KEEP
+Product_Brownian_Motion.bm_R2_moment    # FIX_THEN_KEEP
 Value_Function_Euler_Construction.sbm_xi_mean0    # KEEP_API
 Value_Function_Supersolution_Case_2.visc_supersol_lsc_iff_env    # FIX_THEN_KEEP
 # wm_cps_small
