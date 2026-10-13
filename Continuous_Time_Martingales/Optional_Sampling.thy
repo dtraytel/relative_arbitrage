@@ -400,30 +400,7 @@ locale sampled_cont_martingale = martingale M F "0 :: real" Z + time_grid t
 
 sublocale sampled_cont_martingale
   \<subseteq> D: martingale M "\<lambda>n. F (t n)" "0 :: nat" "\<lambda>n. Z (t n)"
-proof -
-  have fm: "filtered_measure M (\<lambda>n. F (t n)) (0 :: nat)"
-  proof (intro filtered_measure.intro)
-    show "\<And>i :: nat. 0 \<le> i \<Longrightarrow> subalgebra M (F (t i))"
-      by (intro subalgebras t_ge_0)
-    show "\<And>i j :: nat. 0 \<le> i \<Longrightarrow> i \<le> j \<Longrightarrow> sets (F (t i)) \<le> sets (F (t j))"
-      by (intro sets_F_mono t_ge_0 lift_Suc_mono_le[of t, OF t_step])
-  qed
-  have sff: "sigma_finite_filtered_measure M (\<lambda>n. F (t n)) (0 :: nat)"
-    by (intro sigma_finite_filtered_measure.intro[OF fm]
-        sigma_finite_filtered_measure_axioms.intro)
-      (intro sigma_finite_subalgebra_F t_ge_0)
-  have ap: "adapted_process M (\<lambda>n. F (t n)) 0 (\<lambda>n. Z (t n))"
-    by (intro adapted_process.intro[OF fm] adapted_process_axioms.intro)
-      (intro adapted t_ge_0)
-  show "martingale M (\<lambda>n. F (t n)) (0 :: nat) (\<lambda>n. Z (t n))"
-  proof (intro martingale.intro[OF sff ap] martingale_axioms.intro)
-    show "\<And>i :: nat. 0 \<le> i \<Longrightarrow> integrable M (Z (t i))"
-      by (intro integrable t_ge_0)
-    show "\<And>i j :: nat. 0 \<le> i \<Longrightarrow> i \<le> j \<Longrightarrow>
-        AE \<xi> in M. Z (t i) \<xi> = cond_exp M (F (t i)) (Z (t j)) \<xi>"
-      by (intro martingale_property t_ge_0 lift_Suc_mono_le[of t, OF t_step])
-  qed
-qed
+  by (intro martingale_sampled t_ge_0 mono_t) unfold_locales
 
 section \<open>Optional sampling at a simple stopping time\<close>
 
@@ -621,16 +598,17 @@ proof -
     unfolding dgrid_def by blast
 qed
 
-lemma Least_dgrid_le_iff: "(LEAST k. tau \<omega> \<le> dgrid n k) \<le> j \<longleftrightarrow> tau \<omega> \<le> dgrid n j"
+lemma Least_dgrid_le_iff:
+  "(LEAST k. x \<le> dgrid n k) \<le> j \<longleftrightarrow> x \<le> dgrid n j"
 proof
-  assume "(LEAST k. tau \<omega> \<le> dgrid n k) \<le> j"
-  moreover have "tau \<omega> \<le> dgrid n (LEAST k. tau \<omega> \<le> dgrid n k)"
+  assume "(LEAST k. x \<le> dgrid n k) \<le> j"
+  moreover have "x \<le> dgrid n (LEAST k. x \<le> dgrid n k)"
     using dgrid_unbounded by (auto intro: LeastI_ex)
-  ultimately show "tau \<omega> \<le> dgrid n j"
-    using dgrid_mono[of "LEAST k. tau \<omega> \<le> dgrid n k" j n] by simp
+  ultimately show "x \<le> dgrid n j"
+    using dgrid_mono[of "LEAST k. x \<le> dgrid n k" j n] by simp
 next
-  assume "tau \<omega> \<le> dgrid n j"
-  then show "(LEAST k. tau \<omega> \<le> dgrid n k) \<le> j"
+  assume "x \<le> dgrid n j"
+  then show "(LEAST k. x \<le> dgrid n k) \<le> j"
     by (rule Least_le)
 qed
 
@@ -646,86 +624,12 @@ lemma dtime_le_iff: "dtime n \<omega> \<le> dgrid n j \<longleftrightarrow> 2 ^ 
   unfolding dtime_def didx_def
   by (simp add: dgrid_le_iff Least_dgrid_le_iff min_le_iff_disj)
 
-lemma dtime_ge:
-  assumes w: "\<omega> \<in> space M"
-  shows "min u (tau \<omega>) \<le> dtime n \<omega>"
-proof (cases "(LEAST k. tau \<omega> \<le> dgrid n k) \<le> 2 ^ n")
-  case True
-  then have "dtime n \<omega> = dgrid n (LEAST k. tau \<omega> \<le> dgrid n k)"
-    unfolding dtime_def didx_def by simp
-  moreover have "tau \<omega> \<le> dgrid n (LEAST k. tau \<omega> \<le> dgrid n k)"
-    using dgrid_unbounded by (auto intro: LeastI_ex)
-  ultimately show ?thesis by simp
-next
-  case False
-  then have "dtime n \<omega> = u"
-    unfolding dtime_def didx_def by simp
-  then show ?thesis by simp
-qed
-
-lemma dtime_le:
-  assumes w: "\<omega> \<in> space M"
-  shows "dtime n \<omega> \<le> min u (tau \<omega>) + u / 2 ^ n"
-proof (cases "(LEAST k. tau \<omega> \<le> dgrid n k) \<le> 2 ^ n")
-  case True
-  define L where "L = (LEAST k. tau \<omega> \<le> dgrid n k)"
-  from True have dt: "dtime n \<omega> = dgrid n L"
-    unfolding dtime_def didx_def L_def by simp
-  have tau_le_u: "tau \<omega> \<le> u"
-    using True Least_dgrid_le_iff[of \<omega> n "2 ^ n"] by simp
-  then have mn: "min u (tau \<omega>) = tau \<omega>" by simp
-  have "dgrid n L \<le> tau \<omega> + u / 2 ^ n"
-  proof (cases L)
-    case 0
-    have "0 \<le> tau \<omega>"
-      by (rule tau_nonneg[OF w])
-    moreover have "0 < u / 2 ^ n"
-      using u_pos by simp
-    ultimately show ?thesis
-      unfolding 0 by simp
-  next
-    case (Suc m)
-    have "\<not> tau \<omega> \<le> dgrid n m"
-      using Suc unfolding L_def by (metis lessI not_less_Least)
-    then have "dgrid n m \<le> tau \<omega>" by simp
-    then show ?thesis
-      unfolding Suc by (simp add: dgrid_Suc)
-  qed
-  with dt mn show ?thesis by simp
-next
-  case False
-  then have dt: "dtime n \<omega> = u"
-    unfolding dtime_def didx_def by simp
-  from False have "\<not> tau \<omega> \<le> u"
-    using Least_dgrid_le_iff[of \<omega> n "2 ^ n"] by simp
-  then have "min u (tau \<omega>) = u" by simp
-  with dt show ?thesis
-    using u_pos by simp
-qed
-
-lemma dtime_tendsto:
-  assumes w: "\<omega> \<in> space M"
-  shows "(\<lambda>n. dtime n \<omega>) \<longlonglongrightarrow> min u (tau \<omega>)"
-proof (rule tendsto_sandwich
-    [of "\<lambda>n. min u (tau \<omega>)" "\<lambda>n. dtime n \<omega>" sequentially
-        "\<lambda>n. min u (tau \<omega>) + u / 2 ^ n"])
-  show "\<forall>\<^sub>F n in sequentially. min u (tau \<omega>) \<le> dtime n \<omega>"
-    using dtime_ge[OF w] by simp
-  show "\<forall>\<^sub>F n in sequentially. dtime n \<omega> \<le> min u (tau \<omega>) + u / 2 ^ n"
-    using dtime_le[OF w] by simp
-  show "(\<lambda>n. min u (tau \<omega>)) \<longlonglongrightarrow> min u (tau \<omega>)" by simp
-  have "(\<lambda>n. u / 2 ^ n) \<longlonglongrightarrow> 0"
-    by (rule LIMSEQ_divide_realpow_zero) simp
-  then have "(\<lambda>n. min u (tau \<omega>) + u / 2 ^ n) \<longlonglongrightarrow> min u (tau \<omega>) + 0"
-    by (intro tendsto_add tendsto_const)
-  then show "(\<lambda>n. min u (tau \<omega>) + u / 2 ^ n) \<longlonglongrightarrow> min u (tau \<omega>)" by simp
-qed
-
 subsection \<open>Dyadic ceilings of a deterministic time\<close>
 
 text \<open>The same ceiling construction applied to a constant: it produces the
   grid point just above a given time, which is what localises the sampling
-  identity to an event of the past.\<close>
+  identity to an event of the past.  Its convergence gives that of
+  \<open>dtime\<close> too, through \<open>dtime_eq_dceil\<close>.\<close>
 
 definition dcidx :: "nat \<Rightarrow> real \<Rightarrow> nat" where
   "dcidx n x = min (2 ^ n) (LEAST k. x \<le> dgrid n k)"
@@ -738,20 +642,6 @@ lemma dcidx_le: "dcidx n x \<le> 2 ^ n"
 
 lemma dtime_eq_dceil: "dtime n \<omega> = dceil n (tau \<omega>)"
   unfolding dtime_def dceil_def didx_def dcidx_def ..
-
-lemma Least_dgrid_le_iff2:
-  "(LEAST k. x \<le> dgrid n k) \<le> j \<longleftrightarrow> x \<le> dgrid n j"
-proof
-  assume "(LEAST k. x \<le> dgrid n k) \<le> j"
-  moreover have "x \<le> dgrid n (LEAST k. x \<le> dgrid n k)"
-    using dgrid_unbounded by (auto intro: LeastI_ex)
-  ultimately show "x \<le> dgrid n j"
-    using dgrid_mono[of "LEAST k. x \<le> dgrid n k" j n] by simp
-next
-  assume "x \<le> dgrid n j"
-  then show "(LEAST k. x \<le> dgrid n k) \<le> j"
-    by (rule Least_le)
-qed
 
 lemma dceil_nonneg: "0 \<le> dceil n x"
   unfolding dceil_def by (rule dgrid_nonneg)
@@ -788,7 +678,7 @@ proof (cases "(LEAST k. x \<le> dgrid n k) \<le> 2 ^ n")
   from True have dt: "dceil n x = dgrid n L"
     unfolding dceil_def dcidx_def L_def by simp
   have x_le_u: "x \<le> u"
-    using True Least_dgrid_le_iff2[of x n "2 ^ n"] by simp
+    using True Least_dgrid_le_iff[of x n "2 ^ n"] by simp
   then have mn: "min u x = x" by simp
   have "dgrid n L \<le> x + u / 2 ^ n"
   proof (cases L)
@@ -811,7 +701,7 @@ next
   then have dt: "dceil n x = u"
     unfolding dceil_def dcidx_def by simp
   from False have "\<not> x \<le> u"
-    using Least_dgrid_le_iff2[of x n "2 ^ n"] by simp
+    using Least_dgrid_le_iff[of x n "2 ^ n"] by simp
   then have "min u x = u" by simp
   with dt show ?thesis
     using u_pos by simp
@@ -834,6 +724,13 @@ proof (rule tendsto_sandwich
     by (intro tendsto_add tendsto_const)
   then show "(\<lambda>n. min u x + u / 2 ^ n) \<longlonglongrightarrow> min u x" by simp
 qed
+
+text \<open>The dyadic ceilings of \<open>tau\<close> are those of its values.\<close>
+
+lemma dtime_tendsto:
+  assumes w: "\<omega> \<in> space M"
+  shows "(\<lambda>n. dtime n \<omega>) \<longlonglongrightarrow> min u (tau \<omega>)"
+  unfolding dtime_eq_dceil by (rule dceil_tendsto[OF tau_nonneg[OF w]])
 
 subsection \<open>The dyadic ceilings are simple stopping times\<close>
 

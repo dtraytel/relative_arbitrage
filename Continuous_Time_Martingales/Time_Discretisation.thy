@@ -2,7 +2,7 @@
 
 (*<*)
 theory Time_Discretisation
-  imports Quadratic_Variation
+  imports Sampled_Quadratic_Variation
 begin
 
 (*>*)
@@ -38,6 +38,9 @@ begin
 lemma t_ge_0: "0 \<le> t n"
   using t_nonneg lift_Suc_mono_le[of t, OF t_step, of 0 n] by simp
 
+lemma mono_t: "mono t"
+  by (rule mono_iff_le_Suc[THEN iffD2]) (rule allI, rule t_step)
+
 end
 
 section \<open>A continuous-time martingale sampled on a grid\<close>
@@ -49,35 +52,8 @@ locale sampled_martingale = martingale M F "0 :: real" Y + time_grid t
 
 sublocale sampled_martingale
   \<subseteq> D: sq_int_martingale M "\<lambda>n. F (t n)" "\<lambda>n. Y (t n)"
-proof -
-  have fm: "filtered_measure M (\<lambda>n. F (t n)) (0 :: nat)"
-  proof (intro filtered_measure.intro)
-    show "\<And>i :: nat. 0 \<le> i \<Longrightarrow> subalgebra M (F (t i))"
-      by (intro subalgebras t_ge_0)
-    show "\<And>i j :: nat. 0 \<le> i \<Longrightarrow> i \<le> j \<Longrightarrow> sets (F (t i)) \<le> sets (F (t j))"
-      by (intro sets_F_mono t_ge_0 lift_Suc_mono_le[of t, OF t_step])
-  qed
-  have sff: "sigma_finite_filtered_measure M (\<lambda>n. F (t n)) (0 :: nat)"
-    by (intro sigma_finite_filtered_measure.intro[OF fm]
-        sigma_finite_filtered_measure_axioms.intro)
-      (intro sigma_finite_subalgebra_F t_ge_0)
-  have nsff: "nat_sigma_finite_filtered_measure M (\<lambda>n. F (t n))"
-    by (rule nat_sigma_finite_filtered_measure.intro[OF sff])
-  have ap: "adapted_process M (\<lambda>n. F (t n)) 0 (\<lambda>n. Y (t n))"
-    by (intro adapted_process.intro[OF fm] adapted_process_axioms.intro)
-      (intro adapted t_ge_0)
-  have mg: "martingale M (\<lambda>n. F (t n)) 0 (\<lambda>n. Y (t n))"
-  proof (intro martingale.intro[OF sff ap] martingale_axioms.intro)
-    show "\<And>i :: nat. 0 \<le> i \<Longrightarrow> integrable M (Y (t i))"
-      by (intro integrable t_ge_0)
-    show "\<And>i j :: nat. 0 \<le> i \<Longrightarrow> i \<le> j \<Longrightarrow>
-        AE \<xi> in M. Y (t i) \<xi> = cond_exp M (F (t i)) (Y (t j)) \<xi>"
-      by (intro martingale_property t_ge_0 lift_Suc_mono_le[of t, OF t_step])
-  qed
-  show "sq_int_martingale M (\<lambda>n. F (t n)) (\<lambda>n. Y (t n))"
-    by (intro sq_int_martingale.intro[OF nsff] sq_int_martingale_axioms.intro
-        mg) (intro Y_sq_integrable t_ge_0)
-qed
+  by (intro sq_int_martingale_sampled t_ge_0 mono_t Y_sq_integrable)
+    unfold_locales
 
 context sampled_martingale
 begin
