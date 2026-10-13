@@ -249,10 +249,12 @@ section \<open>The covariation package transfers to the stopped process\<close>
 text \<open>
   The martingale property of the stopped compensated square, rewritten as the
   conditional covariation identity for the stopped process: this is what feeds
-  \<open>fourth_moment_bound_bounded\<close> at compensator \<open>A(\<cdot> \<and> \<tau>)\<close>. The conditional
-  variance identity \<open>cond_exp_increment_sq\<close> converts squared increments into
-  differences of squares, and adaptedness of the stopped compensator collapses
-  its conditional expectation.
+  \<open>fourth_moment_bound_bounded\<close> at compensator \<open>A(\<cdot> \<and> \<tau>)\<close>.  It is
+  \<open>compensator_cond_increment\<close> for the stopped pair, whose two martingale
+  properties are @{thm [source] stopped_martingale_L2} and
+  @{thm [source] stopped_compensated_square}; the stopped compensator is adapted
+  because it is a compensator (\<open>compensator_adapted\<close>), so no adaptedness of
+  \<open>A\<close> is assumed.
 \<close>
 
 theorem stopped_covariation:
@@ -262,7 +264,6 @@ theorem stopped_covariation:
     and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
     and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
     and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
-    and Aad: "adapted_process M F (0::real) A"
     and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
     and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
                     0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
@@ -274,53 +275,21 @@ theorem stopped_covariation:
       cond_exp M (F u) (\<lambda>\<omega>. (X (min v (tau \<omega>)) \<omega> - X (min u (tau \<omega>)) \<omega>)\<^sup>2) \<omega>
     = cond_exp M (F u) (\<lambda>\<omega>. A (min v (tau \<omega>)) \<omega> - A (min u (tau \<omega>)) \<omega>) \<omega>"
 proof -
-  interpret P: prob_space M by (rule P)
   interpret MX: martingale M F "0::real" X by (rule mgX)
   let ?XS = "\<lambda>t \<omega>. X (min t (tau \<omega>)) \<omega>"
   let ?AS = "\<lambda>t \<omega>. A (min t (tau \<omega>)) \<omega>"
-  have v0: "0 \<le> v" using uv by linarith
-  have contA: "continuous_on {0..} (\<lambda>s. A s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
-    by (rule rate_continuous_on[OF C0 A_rate[OF w]])
   have mgXS: "martingale M F 0 ?XS"
     by (rule stopped_martingale_L2[OF P mgX sqX contX tau_nonneg tau_stop])
-  have XSad: "?XS s \<in> borel_measurable (F s)" if "0 \<le> s" for s
-    by (rule stopped_adapted_of_cont[OF martingale.axioms(2)[OF mgX]
-          tau_nonneg tau_stop contX that])
-  have XSm: "?XS s \<in> borel_measurable M" if "0 \<le> s" for s
-    by (rule measurable_from_subalg[OF MX.subalgebras[OF that] XSad[OF that]])
-  have ASad: "?AS s \<in> borel_measurable (F s)" if "0 \<le> s" for s
-    by (rule stopped_adapted_of_cont[OF Aad tau_nonneg tau_stop contA that])
-  have ASm: "?AS s \<in> borel_measurable M" if "0 \<le> s" for s
-    by (rule measurable_from_subalg[OF MX.subalgebras[OF that] ASad[OF that]])
-  have sqXS: "integrable M (\<lambda>\<omega>. (?XS s \<omega>)\<^sup>2)" if s: "0 \<le> s" for s
-    by (rule stopped_L2_sq_integrable[OF P mgX sqX contX tau_nonneg tau_stop s])
-  have iAS: "integrable M (?AS s)" if s: "0 \<le> s" for s
-    by (rule stopped_compensator_integrable[OF P A0 A_rate C0 tau_nonneg ASm[OF s] s])
   have mgZS: "martingale M F 0 (\<lambda>t \<omega>. (?XS t \<omega>)\<^sup>2 - ?AS t \<omega>)"
     by (rule stopped_compensated_square[OF P mgX sqX contX mgZ A0 A_rate C0
           tau_nonneg tau_stop])
-  have sfs: "sigma_finite_subalgebra M (F u)"
-    using uv(1) by (rule MX.sigma_finite_subalgebra_F)
-  have inc: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. (?XS v \<omega> - ?XS u \<omega>)\<^sup>2) \<omega>
-      = cond_exp M (F u) (\<lambda>\<omega>. (?XS v \<omega>)\<^sup>2) \<omega> - (?XS u \<omega>)\<^sup>2"
-    by (rule cond_exp_increment_sq[OF mgXS sqXS uv])
-  have zmp: "AE \<omega> in M. (?XS u \<omega>)\<^sup>2 - ?AS u \<omega>
-      = cond_exp M (F u) (\<lambda>\<omega>. (?XS v \<omega>)\<^sup>2 - ?AS v \<omega>) \<omega>"
-    by (rule martingale.martingale_property[OF mgZS uv(1) uv(2)])
-  have d1: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. (?XS v \<omega>)\<^sup>2 - ?AS v \<omega>) \<omega>
-      = cond_exp M (F u) (\<lambda>\<omega>. (?XS v \<omega>)\<^sup>2) \<omega> - cond_exp M (F u) (?AS v) \<omega>"
-    by (rule sigma_finite_subalgebra.cond_exp_diff[OF sfs sqXS[OF v0] iAS[OF v0]])
-  have d2: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. ?AS v \<omega> - ?AS u \<omega>) \<omega>
-      = cond_exp M (F u) (?AS v) \<omega> - cond_exp M (F u) (?AS u) \<omega>"
-    by (rule sigma_finite_subalgebra.cond_exp_diff[OF sfs iAS[OF v0] iAS[OF uv(1)]])
-  have fm: "AE \<omega> in M. cond_exp M (F u) (?AS u) \<omega> = ?AS u \<omega>"
-    by (rule sigma_finite_subalgebra.cond_exp_F_meas[OF sfs iAS[OF uv(1)]
-          ASad[OF uv(1)]])
-  from inc zmp d1 d2 fm show ?thesis
-  proof eventually_elim
-    case (elim \<omega>)
-    from elim show ?case by linarith
-  qed
+  have iAS: "integrable M (?AS s)" if s: "0 \<le> s" for s
+    by (rule stopped_compensator_integrable[OF P A0 A_rate C0 tau_nonneg
+          measurable_from_subalg[OF MX.subalgebras[OF s]
+            adapted_process.adapted[OF compensator_adapted[OF mgXS mgZS] s]] s])
+  show ?thesis
+    by (rule compensator_cond_increment[OF mgXS mgZS
+          stopped_L2_sq_integrable[OF P mgX sqX contX tau_nonneg tau_stop] iAS uv])
 qed
 
 section \<open>Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> for unbounded \<open>L\<^sup>2\<close> martingales, by localization and Fatou\<close>
@@ -335,9 +304,10 @@ qed
 
 text \<open>
   The paper's Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> with constant \<open>8 C\<^sup>2\<close> for an unbounded \<open>L\<^sup>2\<close>
-  martingale with deterministic start and a Lipschitz-rate compensator for
-  its square. Localize at the exit times of the balls of radius
-  \<open>\<bar>x\<^sub>0\<bar> + n + 1\<close>, apply the bounded estimate to each stopped process --- its
+  martingale with an almost surely bounded start, \<open>\<bar>X\<^sub>0\<bar> \<le> B\<close>, and a
+  Lipschitz-rate compensator for its square (adapted, being a compensator:
+  \<open>compensator_adapted\<close>). Localize at the exit times of the balls of radius
+  \<open>\<bar>B\<bar> + n + 1\<close>, apply the bounded estimate to each stopped process --- its
   martingale property, covariation package and boundedness come from the
   three theorems above and the exit-time theory --- and pass to the limit by
   Fatou: continuous paths are bounded on compact intervals, so for every
@@ -345,14 +315,13 @@ text \<open>
 \<close>
 
 theorem fourth_moment_L2:
-  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C x0 :: real
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C B :: real
   assumes P: "prob_space M"
     and mgX: "martingale M F (0::real) X"
     and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
     and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
-    and start: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> X 0 \<omega> = x0"
+    and start: "AE \<omega> in M. \<bar>X 0 \<omega>\<bar> \<le> B"
     and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
-    and Aad: "adapted_process M F (0::real) A"
     and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
     and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
                     0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
@@ -362,9 +331,10 @@ theorem fourth_moment_L2:
 proof -
   interpret P: prob_space M by (rule P)
   interpret MX: martingale M F "0::real" X by (rule mgX)
+  have Aad: "adapted_process M F (0::real) A" by (rule compensator_adapted[OF mgX mgZ])
   have v0: "0 \<le> v" using uv by linarith
-  define r where "r = (\<lambda>n::nat. \<bar>x0\<bar> + real n + 1)"
-  have r_gt: "\<bar>x0\<bar> < r n" for n unfolding r_def by simp
+  define r where "r = (\<lambda>n::nat. \<bar>B\<bar> + real n + 1)"
+  have r_gt: "\<bar>B\<bar> < r n" for n unfolding r_def by simp
   have r_pos: "0 < r n" for n unfolding r_def by simp
   define tau where "tau = (\<lambda>n \<omega>. etime v {y::real. r n \<le> norm y} X \<omega>)"
   have closedA: "closed {y::real. r n \<le> norm y}" for n
@@ -391,15 +361,17 @@ proof -
   let ?XS = "\<lambda>n t \<omega>. X (min t (tau n \<omega>)) \<omega>"
   let ?AS = "\<lambda>n t \<omega>. A (min t (tau n \<omega>)) \<omega>"
   have bndS: "AE \<omega> in M. \<bar>?XS n s \<omega>\<bar> \<le> r n" if s: "0 \<le> s" for n s
-  proof (intro AE_I2)
-    fix \<omega> assume w: "\<omega> \<in> space M"
+    using start AE_space
+  proof eventually_elim
+    case (elim \<omega>)
+    then have w: "\<omega> \<in> space M" by simp
     have m0: "0 \<le> min s (tau n \<omega>)" using s tau_nn by simp
-    have st: "norm (X 0 \<omega>) < r n" using start[OF w] r_gt by simp
+    have st: "norm (X 0 \<omega>) < r n" using elim(1) r_gt[of n] by simp
     have sle: "min s (tau n \<omega>) \<le> etime v {y. r n \<le> norm y} X \<omega>"
       unfolding tau_def by simp
     have "X (min s (tau n \<omega>)) \<omega> \<in> cball 0 (r n)"
       by (rule etime_stays_in_cball[OF v0 r_pos st contXv[OF w] m0 sle])
-    thus "\<bar>?XS n s \<omega>\<bar> \<le> r n" by simp
+    thus ?case by simp
   qed
   have contA: "continuous_on {0..} (\<lambda>s. A s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
     by (rule rate_continuous_on[OF C0 A_rate[OF w]])
@@ -451,7 +423,7 @@ proof -
   have covAS: "AE \<omega> in M. cond_exp M (F u') (\<lambda>\<omega>. (?XS n v' \<omega> - ?XS n u' \<omega>)\<^sup>2) \<omega>
       = cond_exp M (F u') (\<lambda>\<omega>. ?AS n v' \<omega> - ?AS n u' \<omega>) \<omega>"
     if "0 \<le> u'" "u' \<le> v'" for n u' v'
-    by (rule stopped_covariation[OF P mgX sqX contX mgZ Aad A0 A_rate C0
+    by (rule stopped_covariation[OF P mgX sqX contX mgZ A0 A_rate C0
           tau_nn' tau_stop that])
   have bound_n: "(\<integral>\<omega>. (?XS n v \<omega> - ?XS n u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2" for n
     by (rule fourth_moment_bound_bounded[OF P mgXS uv A_intS A_rateS covAS C0
@@ -543,63 +515,42 @@ qed
 text \<open>The Bochner forms: integrability of the fourth power and the bound
   itself, ready for \<open>dyadic_bad_event_tail_mom\<close>.\<close>
 
-corollary fourth_moment_L2_integrable:
-  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C x0 :: real
+corollary fourth_moment_L2_bochner:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C B :: real
   assumes P: "prob_space M"
     and mgX: "martingale M F (0::real) X"
     and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
     and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
-    and start: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> X 0 \<omega> = x0"
+    and start: "AE \<omega> in M. \<bar>X 0 \<omega>\<bar> \<le> B"
     and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
-    and Aad: "adapted_process M F (0::real) A"
     and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
     and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
                     0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
     and C0: "0 \<le> C"
     and uv: "0 \<le> u" "u \<le> v"
   shows "integrable M (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4)"
-proof (rule integrableI_nonneg)
+    and "(\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+proof -
   interpret MX: martingale M F "0::real" X by (rule mgX)
   have v0: "0 \<le> v" using uv by linarith
-  show "(\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4) \<in> borel_measurable M"
-    using borel_measurable_integrable[OF MX.integrable[OF v0]]
-      borel_measurable_integrable[OF MX.integrable[OF uv(1)]] by measurable
-  show "AE \<omega> in M. 0 \<le> (X v \<omega> - X u \<omega>)^4"
-    by (intro AE_I2 pow4_nonneg)
-  have "(\<integral>\<^sup>+\<omega>. ennreal ((X v \<omega> - X u \<omega>)^4) \<partial>M) \<le> ennreal (8*C\<^sup>2*(v - u)\<^sup>2)"
-    by (rule fourth_moment_L2[OF P mgX sqX contX start mgZ Aad A0 A_rate C0 uv])
-  also have "\<dots> < \<infinity>" by simp
-  finally show "(\<integral>\<^sup>+\<omega>. ennreal ((X v \<omega> - X u \<omega>)^4) \<partial>M) < \<infinity>" .
-qed
-
-corollary fourth_moment_L2_bochner:
-  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C x0 :: real
-  assumes P: "prob_space M"
-    and mgX: "martingale M F (0::real) X"
-    and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
-    and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
-    and start: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> X 0 \<omega> = x0"
-    and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
-    and Aad: "adapted_process M F (0::real) A"
-    and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
-    and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
-                    0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
-    and C0: "0 \<le> C"
-    and uv: "0 \<le> u" "u \<le> v"
-  shows "(\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
-proof -
-  have int: "integrable M (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4)"
-    by (rule fourth_moment_L2_integrable[OF P mgX sqX contX start mgZ Aad A0
-          A_rate C0 uv])
-  have B0: "0 \<le> 8*C\<^sup>2*(v - u)\<^sup>2" by simp
+  have nn: "(\<integral>\<^sup>+\<omega>. ennreal ((X v \<omega> - X u \<omega>)^4) \<partial>M) \<le> ennreal (8*C\<^sup>2*(v - u)\<^sup>2)"
+    by (rule fourth_moment_L2[OF P mgX sqX contX start mgZ A0 A_rate C0 uv])
+  show int: "integrable M (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4)"
+  proof (rule integrableI_nonneg)
+    show "(\<lambda>\<omega>. (X v \<omega> - X u \<omega>)^4) \<in> borel_measurable M"
+      using borel_measurable_integrable[OF MX.integrable[OF v0]]
+        borel_measurable_integrable[OF MX.integrable[OF uv(1)]] by measurable
+    show "AE \<omega> in M. 0 \<le> (X v \<omega> - X u \<omega>)^4"
+      by (intro AE_I2 pow4_nonneg)
+    show "(\<integral>\<^sup>+\<omega>. ennreal ((X v \<omega> - X u \<omega>)^4) \<partial>M) < \<infinity>"
+      using nn by (rule order.strict_trans1) simp
+  qed
   have "ennreal (\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M)
       = (\<integral>\<^sup>+\<omega>. ennreal ((X v \<omega> - X u \<omega>)^4) \<partial>M)"
-    by (rule nn_integral_eq_integral[symmetric, OF int])
-       (intro AE_I2 pow4_nonneg)
-  also have "\<dots> \<le> ennreal (8*C\<^sup>2*(v - u)\<^sup>2)"
-    by (rule fourth_moment_L2[OF P mgX sqX contX start mgZ Aad A0 A_rate C0 uv])
-  finally show ?thesis
-    using B0 by simp
+    by (rule nn_integral_eq_integral[symmetric, OF int]) (intro AE_I2 pow4_nonneg)
+  also note nn
+  finally show "(\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+    using zero_le_power2[of C] zero_le_power2[of "v - u"] by simp
 qed
 
 text \<open>Restricting a filtered probability space to a full-measure event turns

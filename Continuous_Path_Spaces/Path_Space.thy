@@ -280,6 +280,33 @@ proof -
     by (rule continuous_le_on_closure[OF contc Icc_rats_dense[OF T t] le])
 qed
 
+text \<open>Approaching a time from below: a condition \<open>g s \<in> C\<close> with \<open>C\<close> closed
+  that holds at the rational times \<open>0 < s < t\<close> of a continuous path holds at
+  \<open>t\<close> itself, the closure of those times containing \<open>t\<close>.\<close>
+
+lemma continuous_closed_upto_rat:
+  fixes g :: "real \<Rightarrow> 'b::topological_space"
+  assumes cont: "continuous_on {0..c} g" and C: "closed C"
+    and t0: "0 < t" and tc: "t \<le> c"
+    and below: "\<And>s. s \<in> \<rat> \<Longrightarrow> 0 < s \<Longrightarrow> s < t \<Longrightarrow> g s \<in> C"
+  shows "g t \<in> C"
+proof -
+  have cl: "closure ({0<..<t} \<inter> \<rat>) = {0..t}"
+    using closure_open_Int_superset[of "{0<..<t}" \<rat>] t0 by (simp add: Rats_closure_real)
+  have "g ` closure ({0<..<t} \<inter> \<rat>) \<subseteq> C"
+    by (intro image_closure_subset continuous_on_subset[OF cont] C)
+       (use cl tc below in auto)
+  then show ?thesis using cl t0 by auto
+qed
+
+lemma continuous_closed_upto:
+  fixes g :: "real \<Rightarrow> 'b::topological_space"
+  assumes cont: "continuous_on {0..c} g" and C: "closed C"
+    and t0: "0 < t" and tc: "t \<le> c"
+    and below: "\<And>s. 0 < s \<Longrightarrow> s < t \<Longrightarrow> g s \<in> C"
+  shows "g t \<in> C"
+  by (rule continuous_closed_upto_rat[OF cont C t0 tc]) (rule below)
+
 lemma path_mdist_le_iff:
   fixes g h :: "real \<Rightarrow> 'b::polish_space"
   assumes T: "0 \<le> T"

@@ -85,6 +85,98 @@ proof -
   with expectation_increment_sq[OF X sq s su] show ?thesis by linarith
 qed
 
+text \<open>The compensator relation, conditionally.  A compensator of \<open>X\<^sup>2\<close> is adapted
+  (it is \<open>X\<^sup>2\<close> minus an adapted process), and the conditional second moment of
+  an increment of \<open>X\<close> is the conditional increment of the compensator --- the
+  conditional form of \<open>increment_sq_compensator\<close>, which is what
+  \<open>fourth_moment_bound_bounded\<close> takes (its \<open>covA\<close> hypothesis).\<close>
+
+lemma compensator_adapted:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes X: "martingale M F (0::real) X"
+    and XA: "martingale M F (0::real) (\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>)"
+  shows "adapted_process M F (0::real) A"
+proof -
+  interpret MX: martingale M F "0::real" X by (rule X)
+  interpret MXA: martingale M F "0::real" "\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>" by (rule XA)
+  show ?thesis
+  proof (intro adapted_process.intro adapted_process_axioms.intro)
+    show "filtered_measure M F 0" by unfold_locales
+    fix u :: real assume u: "0 \<le> u"
+    have "(\<lambda>\<omega>. (X u \<omega>)\<^sup>2 - ((X u \<omega>)\<^sup>2 - A u \<omega>)) \<in> borel_measurable (F u)"
+      using MX.adapted[OF u] MXA.adapted[OF u] by measurable
+    then show "A u \<in> borel_measurable (F u)" by simp
+  qed
+qed
+
+lemma compensator_cond_increment:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes X: "martingale M F (0::real) X"
+    and XA: "martingale M F (0::real) (\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>)"
+    and sq: "\<And>v. 0 \<le> v \<Longrightarrow> integrable M (\<lambda>\<omega>. (X v \<omega>)\<^sup>2)"
+    and Aint: "\<And>v. 0 \<le> v \<Longrightarrow> integrable M (A v)"
+    and u: "0 \<le> u" and uv: "u \<le> v"
+  shows "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)\<^sup>2) \<omega>
+                      = cond_exp M (F u) (\<lambda>\<omega>. A v \<omega> - A u \<omega>) \<omega>"
+proof -
+  interpret MX: martingale M F "0::real" X by (rule X)
+  interpret MXA: martingale M F "0::real" "\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>" by (rule XA)
+  have v: "0 \<le> v" using u uv by simp
+  have sfs: "sigma_finite_subalgebra M (F u)"
+    by (rule MX.sigma_finite_subalgebra_F[OF u])
+  have e1: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega> - X u \<omega>)\<^sup>2) \<omega>
+      = cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega>)\<^sup>2) \<omega> - (X u \<omega>)\<^sup>2"
+    by (rule cond_exp_increment_sq[OF X sq u uv])
+  have e2: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>) \<omega>
+      = cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega>)\<^sup>2) \<omega> - cond_exp M (F u) (A v) \<omega>"
+    by (rule sigma_finite_subalgebra.cond_exp_diff[OF sfs sq[OF v] Aint[OF v]])
+  have e3: "AE \<omega> in M. (X u \<omega>)\<^sup>2 - A u \<omega>
+      = cond_exp M (F u) (\<lambda>\<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>) \<omega>"
+    by (rule MXA.martingale_property[OF u uv])
+  have e4: "AE \<omega> in M. cond_exp M (F u) (\<lambda>\<omega>. A v \<omega> - A u \<omega>) \<omega>
+      = cond_exp M (F u) (A v) \<omega> - cond_exp M (F u) (A u) \<omega>"
+    by (rule sigma_finite_subalgebra.cond_exp_diff[OF sfs Aint[OF v] Aint[OF u]])
+  have e5: "AE \<omega> in M. cond_exp M (F u) (A u) \<omega> = A u \<omega>"
+    by (rule sigma_finite_subalgebra.cond_exp_F_meas[OF sfs Aint[OF u]
+          adapted_process.adapted[OF compensator_adapted[OF X XA] u]])
+  from e1 e2 e3 e4 e5 show ?thesis by eventually_elim simp
+qed
+
+text \<open>A compensator with a rate, \<open>0 \<le> A v - A u \<le> C (v - u)\<close>, starting at
+  \<open>0\<close>, is integrable (it is adapted and bounded by \<open>C s\<close> at time \<open>s\<close>), and then
+  so is \<open>X\<^sup>2\<close>, the sum of the compensated square and the compensator: square
+  integrability need not be assumed separately.\<close>
+
+lemma compensator_sq_integrable:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C :: real
+  assumes P: "prob_space M"
+    and X: "martingale M F (0::real) X"
+    and XA: "martingale M F (0::real) (\<lambda>v \<omega>. (X v \<omega>)\<^sup>2 - A v \<omega>)"
+    and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
+    and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+                    0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
+    and s: "0 \<le> s"
+  shows "integrable M (A s)" and "integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
+proof -
+  interpret P: prob_space M by (rule P)
+  interpret MX: martingale M F "0::real" X by (rule X)
+  show Aint: "integrable M (A s)"
+  proof (rule P.integrable_const_bound[of _ "C * s"])
+    show "AE \<omega> in M. norm (A s \<omega>) \<le> C * s"
+    proof (rule AE_I2)
+      fix \<omega> assume w: "\<omega> \<in> space M"
+      show "norm (A s \<omega>) \<le> C * s"
+        using A_rate[OF w, rule_format, of 0 s] A0[OF w] s by simp
+    qed
+    show "A s \<in> borel_measurable M"
+      by (rule measurable_from_subalg[OF MX.subalgebras[OF s]
+            adapted_process.adapted[OF compensator_adapted[OF X XA] s]])
+  qed
+  have "integrable M (\<lambda>\<omega>. ((X s \<omega>)\<^sup>2 - A s \<omega>) + A s \<omega>)"
+    by (intro Bochner_Integration.integrable_add martingale.integrable[OF XA s] Aint)
+  then show "integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)" by simp
+qed
+
 subsection \<open>The bound\<close>
 
 theorem increment_second_moment_bound:
@@ -1910,6 +2002,60 @@ lemma diffquot_all_of_rational:
     and st: "0 \<le> s" "s < t" "t \<le> T"
   shows "(1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
   by (rule diffquot_all_of_rational_ge[where r = 0, OF S cont rat st(1) st]) auto
+
+text \<open>On continuous paths the constraint on the difference quotients over all
+  real pairs is the constraint over the rational pairs, a countable condition;
+  so it is a measurable event as soon as the evaluations are measurable.\<close>
+
+lemma diffquot_all_iff_rat:
+  fixes Y :: "real \<Rightarrow> 'b::real_normed_vector" and S :: "'b set"
+  assumes S: "closed S" and cont: "continuous_on {0..} Y"
+  shows "(\<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> (1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S)
+     \<longleftrightarrow> (\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
+          (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R (Y (real_of_rat q) - Y (real_of_rat p)) \<in> S)"
+    (is "?R \<longleftrightarrow> ?Q")
+proof
+  assume ?R then show ?Q by (auto simp: of_rat_less)
+next
+  assume Q: ?Q
+  show ?R
+  proof (intro allI impI)
+    fix s t :: real assume st: "0 \<le> s" "s < t"
+    show "(1 / (t - s)) *\<^sub>R (Y t - Y s) \<in> S"
+    proof (rule diffquot_all_of_rational[OF S continuous_on_subset[OF cont] _ st order_refl])
+      fix p q :: real assume "p \<in> \<rat>" "q \<in> \<rat>" "0 \<le> p" "p < q"
+      then show "(1 / (q - p)) *\<^sub>R (Y q - Y p) \<in> S"
+        using Q by (auto elim!: Rats_cases simp: of_rat_less)
+    qed auto
+  qed
+qed
+
+lemma diffquot_all_pred:
+  fixes Y :: "'w \<Rightarrow> real \<Rightarrow> 'b::euclidean_space" and S :: "'b set"
+  assumes S: "closed S"
+    and cont: "\<And>w. w \<in> space N \<Longrightarrow> continuous_on {0..} (Y w)"
+    and meas: "\<And>t. 0 \<le> t \<Longrightarrow> (\<lambda>w. Y w t) \<in> borel_measurable N"
+  shows "Measurable.pred N
+    (\<lambda>w. \<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> (1 / (t - s)) *\<^sub>R (Y w t - Y w s) \<in> S)"
+proof -
+  have "Measurable.pred N (\<lambda>w. \<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
+      (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R (Y w (real_of_rat q) - Y w (real_of_rat p)) \<in> S)"
+  proof (intro pred_intros_countable pred_intros_imp')
+    fix p q :: rat assume "0 \<le> p" "p < q"
+    then have "(0::real) \<le> real_of_rat p" "(0::real) \<le> real_of_rat q"
+      by (auto simp: of_rat_less)
+    then show "Measurable.pred N (\<lambda>w. (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R
+        (Y w (real_of_rat q) - Y w (real_of_rat p)) \<in> S)"
+      by (intro pred_sets2[OF borel_closed[OF S]] borel_measurable_scaleR
+          borel_measurable_const borel_measurable_diff meas)
+  qed
+  moreover have "{w \<in> space N. \<forall>s t :: real. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (Y w t - Y w s) \<in> S}
+      = {w \<in> space N. \<forall>p q :: rat. 0 \<le> p \<longrightarrow> p < q \<longrightarrow>
+        (1 / (real_of_rat q - real_of_rat p)) *\<^sub>R (Y w (real_of_rat q) - Y w (real_of_rat p)) \<in> S}"
+    using diffquot_all_iff_rat[OF S cont] by blast
+  ultimately show ?thesis unfolding pred_def by simp
+qed
 
 text \<open>Once the constraint holds for all \<open>s < t\<close>, boundedness of the
   constraint set makes \<open>Y\<close> Lipschitz, and closedness carries through to

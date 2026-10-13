@@ -552,55 +552,6 @@ lemma pglue_ge:
   "t \<in> {0..T} \<Longrightarrow> r \<le> t \<Longrightarrow> pglue r T \<omega> \<omega>' t = \<omega> r + (\<omega>' (t - r) - \<omega>' 0)"
   by (cases "t = r") (auto simp: pglue_def)
 
-lemma pexit_pglue_split':
-  fixes K :: "('a::{polish_space,banach}) set" and \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
-    and stay: "\<And>t. t \<in> {0..r} \<Longrightarrow> fst (\<omega> t) \<in> K"
-    and cont: "\<And>s. 0 \<le> s \<Longrightarrow> s < c \<Longrightarrow> fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
-  shows "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-proof -
-  have lb: "r + c \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
-        \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue r T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
-      using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      then have zI: "z \<in> {0..T}" by simp
-      show ?thesis
-      proof (rule ccontr)
-        assume "\<not> r + c \<le> z"
-        then have zc: "z < r + c" by simp
-        show False
-        proof (cases "z \<le> r")
-          case True
-          have "fst (\<omega> z) \<in> K" using hit(1) True by (intro stay) simp
-          then show False using hit(3) by (simp add: pglue_le[OF zI True])
-        next
-          case False
-          then have rz: "r \<le> z" by simp
-          have "fst (\<omega> r + (\<omega>' (z - r) - \<omega>' 0)) \<in> K"
-            using rz zc by (intro cont) simp_all
-          then show False using hit(3) by (simp add: pglue_ge[OF zI rz])
-        qed
-      qed
-    next
-      case cap
-      then show ?thesis using cT by simp
-    qed
-  qed
-  have "pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))
-      = Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "r + c \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
-      \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
-qed
-
 text \<open>The pathwise dynamic programming bound at a deterministic time \<open>r\<close>.
   The two summands are the paper's \<open>r \<and> \<tau>\<^sub>K\<close> and \<open>v(X\<^sub>r) \<sqdot> 1\<^sub>{r \<le> \<tau>\<^sub>K}\<close>: the
   first piece's exit time is a lower bound in all cases (\<open>pexit_pglue_ge\<close>), and when it has not exited by \<open>r\<close> --- exactly
@@ -1064,44 +1015,14 @@ lemma pexit_pglue_ge:
   assumes S: "0 \<le> S" and ST: "S \<le> T"
   shows "pexit S K (\<lambda>t. fst (\<omega> t)) \<le> pexit T K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))"
 proof -
-  have lb: "pexit S K (\<lambda>t. fst (\<omega> t)) \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
-        \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue S T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
-      using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      show ?thesis
-      proof (cases "z \<le> S")
-        case True
-        have zI: "z \<in> {0..T}" using hit by simp
-        have notin: "fst (\<omega> z) \<in> - K"
-          using hit True by (simp add: pglue_le[OF zI])
-        show ?thesis
-          unfolding pexit_def
-          by (rule etime_le_of_mem[OF S hit(1) True]) (use notin in simp)
-      next
-        case False
-        then show ?thesis
-          using pexit_le_T[OF S, of K "\<lambda>t. fst (\<omega> t)"] by linarith
-      qed
-    next
-      case cap
-      then show ?thesis
-        using pexit_le_T[OF S, of K "\<lambda>t. fst (\<omega> t)"] ST by linarith
-    qed
+  have "pexit S K (\<lambda>t. fst (\<omega> t)) = pexit S K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))"
+  proof (rule pexit_cong_on)
+    fix t assume "0 \<le> t" "t \<le> S"
+    then show "fst (\<omega> t) = fst (pglue S T \<omega> \<omega>' t)"
+      using order.trans[OF \<open>t \<le> S\<close> ST] by (simp add: pglue_le)
   qed
-  have "pexit T K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))
-      = Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "pexit S K (\<lambda>t. fst (\<omega> t))
-      \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue S T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
+  also have "\<dots> \<le> pexit T K (\<lambda>t. fst (pglue S T \<omega> \<omega>' t))" by (rule pexit_mono_T[OF S ST])
+  finally show ?thesis .
 qed
 
 lemma pexit_pglue_dpp:
@@ -1117,40 +1038,36 @@ proof (cases "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> 
   case True
   then have full: "pexit r K (\<lambda>t. fst (\<omega> t)) = r" and endK: "fst (\<omega> r) \<in> K"
     by simp_all
-  have cnt: "c \<le> pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s))"
-    by (rule cont[OF full endK])
-  have "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-  proof (rule pexit_pglue_split'[OF r rT c cT])
-    fix t assume t: "t \<in> {0..r}"
-    show "fst (\<omega> t) \<in> K"
-    proof (rule ccontr)
-      assume nk: "fst (\<omega> t) \<notin> K"
-      have "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> t"
-        unfolding pexit_def using r t nk by (intro etime_le_of_mem) auto
-      with full t have "t = r" by simp
-      then show False using nk endK by simp
+  let ?g = "\<lambda>t. fst (pglue r T \<omega> \<omega>' t)"
+  have fullg: "pexit r K ?g = r"
+  proof -
+    have "pexit r K ?g = pexit r K (\<lambda>t. fst (\<omega> t))"
+    proof (rule pexit_cong_on)
+      fix t assume "0 \<le> t" "t \<le> r"
+      then show "?g t = fst (\<omega> t)"
+        using order.trans[OF \<open>t \<le> r\<close> rT] by (simp add: pglue_le)
     qed
-  next
-    fix s :: real assume s: "0 \<le> s" and sc: "s < c"
-    have sTr: "s \<le> T - r" using sc c cT by simp
-    show "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
-    proof (rule ccontr)
-      assume nk: "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<notin> K"
-      have eq: "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) = fst (\<omega> r) + fst (\<omega>' s)"
-        using z0 by simp
-      have "pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s)) \<le> s"
-        unfolding pexit_def using s sTr rT nk eq by (intro etime_le_of_mem) auto
-      with cnt sc show False by simp
-    qed
+    then show ?thesis using full by simp
   qed
-  then show ?thesis using True by simp
+  have endg: "?g r \<in> K" using endK r rT by (simp add: pglue_le)
+  have rest: "pexit (T - r) K (\<lambda>s. ?g (r + s))
+      = pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s))"
+  proof (rule pexit_cong_on)
+    fix s assume "0 \<le> s" "s \<le> T - r"
+    then have "0 \<le> r + s" "r + s \<le> T" using r by linarith+
+    then show "?g (r + s) = fst (\<omega> r) + fst (\<omega>' s)"
+      using z0 \<open>0 \<le> s\<close> by (simp add: pglue_ge)
+  qed
+  have "pexit T K ?g = r + pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s))"
+    using pexit_split_at_r[OF r rT fullg endg] rest by simp
+  then show ?thesis using True cont[OF full endK] by simp
 next
   case False
-  have le: "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
+  have "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
     by (rule pexit_pglue_ge[OF r rT])
-  have "(if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K then c else 0) = 0"
+  moreover have "(if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K then c else 0) = 0"
     using False by (rule if_not_P)
-  with le show ?thesis by simp
+  ultimately show ?thesis by simp
 qed
 
 subsection \<open>The selector as a kernel into a family of laws\<close>
@@ -1349,49 +1266,19 @@ lemma pexit_delayed_rebase:
   shows "r + pexit (T - r) K (\<lambda>u. y + fst (prebase r T w u))
       \<le> pexit T K (\<lambda>s. y + fst (w s))"
 proof -
-  let ?g = "\<lambda>s. y + fst (w s)"
-  let ?h = "\<lambda>u. y + fst (prebase r T w u)"
-  have T0: "0 \<le> T" using r rT by simp
-  have Tr: "0 \<le> T - r" using rT by simp
-  have lb: "r + pexit (T - r) K ?h \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T \<and> ?g t \<in> - K} \<union> {T}" for z
+  have stays: "y + fst (w s) \<in> K" if "0 \<le> s" "s \<le> r" for s
   proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "?g z \<in> - K" | (cap) "z = T" using z by blast
-    then show ?thesis
-    proof cases
-      case cap
-      have "pexit (T - r) K ?h \<le> T - r" by (rule pexit_le_T[OF Tr])
-      then show ?thesis unfolding cap by simp
-    next
-      case hit
-      then have zm: "z \<in> {0..T}" by simp
-      have zr: "r < z"
-      proof (rule ccontr)
-        assume "\<not> r < z"
-        then have "z \<le> r" by simp
-        then have "w z = 0" by (rule frz[OF zm])
-        then have "?g z = y" by simp
-        then show False using hit(3) inK by simp
-      qed
-      have um: "z - r \<in> {0..T - r}" using zr hit(2) by simp
-      have pe: "prebase r T w (z - r) = w z"
-      proof -
-        have "prebase r T w (z - r) = w (r + (z - r))" by (rule prebase_apply[OF um])
-        then show ?thesis by simp
-      qed
-      have mem: "?h (z - r) \<in> - K" using hit(3) pe by simp
-      have "pexit (T - r) K ?h \<le> z - r"
-        unfolding pexit_def
-        by (rule etime_le_of_mem[OF Tr _ _]) (use um mem in auto)
-      then show ?thesis by simp
-    qed
+    have "w s = 0" by (rule frz) (use that order.trans[OF that(2) rT] in simp_all)
+    then show ?thesis using inK by simp
   qed
-  have "pexit T K ?g = Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?g t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "r + pexit (T - r) K ?h
-      \<le> Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?g t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
+  have surv: "pexit r K (\<lambda>s. y + fst (w s)) = r"
+    by (rule pexit_eq_of_stays[OF r]) (rule stays)
+  have "pexit T K (\<lambda>s. y + fst (w s)) = r + pexit (T - r) K (\<lambda>s. y + fst (w (r + s)))"
+    by (rule pexit_split_at_r[OF r rT surv]) (rule stays[OF r order_refl])
+  also have "pexit (T - r) K (\<lambda>s. y + fst (w (r + s)))
+      = pexit (T - r) K (\<lambda>u. y + fst (prebase r T w u))"
+    by (rule pexit_cong_on) (simp add: prebase_apply)
+  finally show ?thesis by simp
 qed
 
 section \<open>The exit bound for the glued law\<close>
@@ -1751,78 +1638,46 @@ lemma pexit_padd_dpp:
 proof -
   let ?A = "pexit r K (\<lambda>t. fst (p' t))"
   let ?f = "\<lambda>t. fst (padd T p' w t)"
-  let ?b = "?A + (if ?A = r \<and> fst (p' r) \<in> K then c else 0)"
-  have T0: "0 \<le> T" using r rT by simp
-  have Ar: "?A \<le> r" by (rule pexit_le_T[OF r])
-  have ev: "?f t = fst (p' t) + fst (w t)" if t: "t \<in> {0..T}" for t
-    unfolding padd_eval_split(1)[OF t] ..
-  have lb: "?b \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T \<and> ?f t \<in> - K} \<union> {T}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "?f z \<in> - K" | (cap) "z = T" using z by blast
-    then show ?thesis
-    proof cases
-      case cap
-      have "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) \<le> c" using c by simp
-      with Ar cT show ?thesis unfolding cap by linarith
-    next
-      case hit
-      then have zm: "z \<in> {0..T}" by simp
-      show ?thesis
-      proof (cases "?A = r \<and> fst (p' r) \<in> K")
-        case False
-        then have e0: "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) = 0"
-          by (rule if_not_P)
-        have "?A \<le> z"
-        proof (cases "z \<le> r")
-          case True
-          have fz: "?f z = fst (p' z)"
-            unfolding ev[OF zm] using frz[OF zm True] by simp
-          have mem: "fst (p' z) \<in> - K" using hit(3) fz by simp
-          show ?thesis
-            unfolding pexit_def
-            by (rule etime_le_of_mem[OF r hit(1) True]) (use mem in simp)
-        next
-          case False
-          then show ?thesis using Ar by simp
-        qed
-        then show ?thesis unfolding e0 by simp
-      next
-        case True
-        then have Aeq: "?A = r" and inK: "fst (p' r) \<in> K" by blast+
-        have e1: "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) = c"
-          using True by (rule if_P)
-        have zr: "r < z"
-        proof (rule ccontr)
-          assume "\<not> r < z"
-          then have zle: "z \<le> r" by simp
-          have fz: "?f z = fst (p' z)"
-            unfolding ev[OF zm] using frz[OF zm zle] by simp
-          have mem: "fst (p' z) \<in> - K" using hit(3) fz by simp
-          have "?A \<le> z"
-            unfolding pexit_def
-            by (rule etime_le_of_mem[OF r hit(1) zle]) (use mem in simp)
-          then have "z = r" using zle Aeq by simp
-          then show False using hit(3) fz inK by simp
-        qed
-        have fz: "?f z = fst (p' r) + fst (w z)"
-          unfolding ev[OF zm] using stop[OF zm] zr by simp
-        have "r + c \<le> pexit T K (\<lambda>s. fst (p' r) + fst (w s))"
-          by (rule cont[OF Aeq inK])
-        also have "\<dots> \<le> z"
-          unfolding pexit_def
-          by (rule etime_le_of_mem[OF T0 hit(1) hit(2)])
-             (use hit(3) fz in simp)
-        finally have "r + c \<le> z" .
-        then show ?thesis using e1 Aeq by simp
-      qed
-    qed
+  have w0: "w t = 0" if "0 \<le> t" "t \<le> r" for t
+    by (rule frz) (use that order.trans[OF that(2) rT] in simp_all)
+  have ev: "?f t = fst (p' t) + fst (w t)" if "0 \<le> t" "t \<le> T" for t
+    using that by (simp add: padd_eval_split(1))
+  have Af: "pexit r K ?f = ?A"
+  proof (rule pexit_cong_on)
+    fix t assume t: "0 \<le> t" "t \<le> r"
+    then show "?f t = fst (p' t)"
+      using ev[OF t(1) order.trans[OF t(2) rT]] w0[OF t] by simp
   qed
-  have "pexit T K ?f = Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?f t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "?b \<le> Inf ({t. 0 \<le> t \<and> t \<le> T \<and> ?f t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
+  show ?thesis
+  proof (cases "?A = r \<and> fst (p' r) \<in> K")
+    case True
+    then have Aeq: "?A = r" and inK: "fst (p' r) \<in> K" by simp_all
+    have hK: "fst (p' r) + fst (w s) \<in> K" if "0 \<le> s" "s \<le> r" for s
+      using w0[OF that] inK by simp
+    have fr: "?f r \<in> K" using ev[OF r rT] w0[OF r order_refl] inK by simp
+    have rest: "pexit (T - r) K (\<lambda>s. ?f (r + s))
+        = pexit (T - r) K (\<lambda>s. fst (p' r) + fst (w (r + s)))"
+    proof (rule pexit_cong_on)
+      fix s assume "0 \<le> s" "s \<le> T - r"
+      then have rs: "0 \<le> r + s" "r + s \<le> T" "r \<le> r + s" using r by linarith+
+      then show "?f (r + s) = fst (p' r) + fst (w (r + s))"
+        using ev[OF rs(1,2)] stop[of "r + s"] by simp
+    qed
+    have survh: "pexit r K (\<lambda>s. fst (p' r) + fst (w s)) = r"
+      by (rule pexit_eq_of_stays[OF r]) (rule hK)
+    have "pexit T K ?f = r + pexit (T - r) K (\<lambda>s. ?f (r + s))"
+      by (rule pexit_split_at_r[OF r rT]) (simp_all add: Af Aeq fr)
+    also have "\<dots> = pexit T K (\<lambda>s. fst (p' r) + fst (w s))"
+      unfolding rest
+      by (rule pexit_split_at_r[OF r rT survh, symmetric]) (rule hK[OF r order_refl])
+    finally show ?thesis using True cont[OF Aeq inK] by simp
+  next
+    case False
+    have "?A \<le> pexit T K ?f" using pexit_mono_T[OF r rT, of K ?f] Af by simp
+    moreover have "(if ?A = r \<and> fst (p' r) \<in> K then c else 0) = 0"
+      using False by (rule if_not_P)
+    ultimately show ?thesis by simp
+  qed
 qed
 
 text \<open>The bridge between the two clocks: the selector's optimality is a

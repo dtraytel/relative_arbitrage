@@ -566,85 +566,10 @@ qed
 subsection \<open>The dyadic extension operator\<close>
 
 text \<open>
-  \<open>dyadic_pair_modulus\<close> is the continuity-free chaining bound for pairs of
-  dyadics (\<open>dyadic_chaining\<close>, any metric space), and \<open>dyadic_ext\<close> takes
-  the limit along the anchor sequences \<open>danchor k t\<close>.
+  \<open>dyadic_ext\<close> takes the limit along the anchor sequences \<open>danchor k t\<close>;
+  the chaining bound for pairs of dyadics it rests on is
+  \<open>dyadic_pair_modulus\<close> (@{theory Continuous_Path_Spaces.Modulus_Tails}).
 \<close>
-
-lemma dyadic_pair_modulus:
-  fixes f :: "real \<Rightarrow> 'b::metric_space" and \<gamma> T E :: real
-  assumes good: "\<And>j k. n \<le> j \<Longrightarrow> k \<in> {1..\<lfloor>2^j * T\<rfloor>} \<Longrightarrow>
-      dist (f (real_of_int (k - 1) / 2^j)) (f (real_of_int k / 2^j))
-        \<le> E * 2 powr (-\<gamma>*real j)"
-    and g0: "0 < \<gamma>" and E0: "0 \<le> E"
-    and w: "w \<in> dyadic_interval_step m 0 T" and z: "z \<in> dyadic_interval_step m 0 T"
-    and wz: "\<bar>w - z\<bar> \<le> 1 / 2 ^ n'"
-    and nn': "n \<le> n'"
-  shows "dist (f w) (f z) \<le> 3 * E * 2 powr (-\<gamma>*real n') / (1 - 2 powr (-\<gamma>))"
-proof -
-  let ?r = "2 powr (-\<gamma>)"
-  have r0: "0 < ?r" by simp
-  have r1: "?r < 1" by (rule powr_less_one) (use g0 in simp_all)
-  have pos: "0 < 1 - ?r" using r1 by simp
-  have cj: "2 powr (-\<gamma>*real j) = ?r^j" for j
-    by (subst powr_realpow[symmetric]) (simp_all add: powr_powr)
-  define m' where "m' = max m n'"
-  have mm: "m \<le> m'" and nm: "n' \<le> m'" unfolding m'_def by simp_all
-  have w': "w \<in> dyadic_interval_step m' 0 T"
-    by (rule dyadic_interval_step_mono[OF w mm])
-  have z': "z \<in> dyadic_interval_step m' 0 T"
-    by (rule dyadic_interval_step_mono[OF z mm])
-  have H: "dist (f (real_of_int (k - 1) / 2 ^ j)) (f (real_of_int k / 2 ^ j))
-        \<le> E * 2 powr (-\<gamma>*real j)"
-    if "n' \<le> j" "j \<le> m'" "k \<in> {1..\<lfloor>2 ^ j * T\<rfloor>}" for j k
-    using good[OF order.trans[OF nn' that(1)] that(3)] .
-  have c0: "\<And>j. 0 \<le> E * 2 powr (-\<gamma>*real j)"
-    using E0 by simp
-  have S1: "(\<Sum>j\<in>{n'<..m'}. E * 2 powr (-\<gamma>*real j)) \<le> E * (?r^Suc n' / (1 - ?r))"
-  proof -
-    have "(\<Sum>j\<in>{n'<..m'}. E * 2 powr (-\<gamma>*real j)) = E * (\<Sum>j\<in>{n'<..m'}. ?r^j)"
-      unfolding cj by (rule sum_distrib_left[symmetric])
-    also have "\<dots> \<le> E * (?r^Suc n' / (1 - ?r))"
-      by (intro mult_left_mono geometric_tail_sum_le E0) (use r0 r1 in simp_all)
-    finally show ?thesis .
-  qed
-  have "dist (f w) (f z)
-      \<le> E * 2 powr (-\<gamma>*real n') + 2 * (\<Sum>j\<in>{n'<..m'}. E * 2 powr (-\<gamma>*real j))"
-    by (rule dyadic_chaining[where f=f, OF w' z' wz nm H c0])
-  also have "\<dots> \<le> E * ?r^n' + 2 * (E * (?r^Suc n' / (1 - ?r)))"
-    using S1 cj[of n'] by (simp add: mult_left_mono)
-  also have "\<dots> = E * (?r^n' + 2 * (?r^Suc n' / (1 - ?r)))"
-    by (simp add: algebra_simps)
-  also have "\<dots> \<le> E * (3 * ?r^n' / (1 - ?r))"
-  proof (rule mult_left_mono[OF _ E0])
-    have ne: "1 - ?r \<noteq> 0" using pos by linarith
-    have e1: "(?r^n' * (1 - ?r) + 2 * ?r^Suc n') / (1 - ?r)
-        = ?r^n' + 2 * (?r^Suc n' / (1 - ?r))"
-    proof -
-      have "(?r^n' * (1 - ?r) + 2 * ?r^Suc n') / (1 - ?r)
-          = ?r^n' * (1 - ?r) / (1 - ?r) + 2 * ?r^Suc n' / (1 - ?r)"
-        by (rule add_divide_distrib)
-      also have "?r^n' * (1 - ?r) / (1 - ?r) = ?r^n'"
-        by (rule nonzero_mult_div_cancel_right[OF ne])
-      finally show ?thesis by simp
-    qed
-    have e2: "?r^n' * (1 - ?r) + 2 * ?r^Suc n' = ?r^n' + ?r^Suc n'"
-      by (simp add: algebra_simps)
-    have le1: "?r^Suc n' \<le> ?r^n'"
-      by (intro power_decreasing) (use r0 r1 in simp_all)
-    have rn0: "0 \<le> ?r^n'"
-      by (rule zero_le_power[OF less_imp_le[OF r0]])
-    have e3: "?r^n' + ?r^Suc n' \<le> 3 * ?r^n'"
-      using le1 rn0 by linarith
-    have "(?r^n' + ?r^Suc n') / (1 - ?r) \<le> (3 * ?r^n') / (1 - ?r)"
-      by (rule divide_right_mono[OF e3]) (use pos in simp)
-    thus "?r^n' + 2 * (?r^Suc n' / (1 - ?r)) \<le> 3 * ?r^n' / (1 - ?r)"
-      unfolding e1[symmetric] e2 by simp
-  qed
-  also have "E * (3 * ?r^n' / (1 - ?r)) = 3 * E * 2 powr (-\<gamma>*real n') / (1 - ?r)"
-    unfolding cj[of n'] by simp
-  finally show ?thesis .
-qed
 
 definition dyadic_ext :: "(real \<Rightarrow> 'b) \<Rightarrow> real \<Rightarrow> 'b::complete_space" where
   "dyadic_ext f t = lim (\<lambda>k. f (danchor k t))"
@@ -1104,7 +1029,7 @@ text \<open>
   The adapter between the stochastic layer (\<open>Stopped_Localization\<close>) and the
   topological layer (\<open>Path_Tightness\<close>): the moment hypotheses of
   \<open>path_laws_convergent_subsequence_vec\<close> are discharged per coordinate by
-  \<open>fourth_moment_L2_integrable\<close> / \<open>fourth_moment_L2_bochner\<close>, so the
+  \<open>fourth_moment_L2_bochner\<close>, so the
   subsequence extraction of Lemma 2.2 holds for any sequence of laws carrying,
   per coordinate, an \<open>L\<^sup>2\<close> martingale with a compensated square whose adapted
   compensator grows at rate at most \<open>C\<close> --- the formal content of the paper's

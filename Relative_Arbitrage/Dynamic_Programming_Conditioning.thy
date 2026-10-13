@@ -276,58 +276,6 @@ text \<open>The only hypothesis of AFP \<^theory>\<open>Disintegration.Disintegr
   one.\<close>
 
 
-lemma exit_class_diffquot_of_rational_pairs:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and one: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> p \<in> {0..T} \<Longrightarrow> q \<in> {0..T} \<Longrightarrow> p < q \<Longrightarrow>
-      AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-proof -
-  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsQ])
-  have rat: "AE \<omega> in Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
-      0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-  proof (rule AE_ball_countable'[OF _ countable_rat])
-    fix p :: real assume p: "p \<in> \<rat>"
-    show "AE \<omega> in Q. \<forall>q\<in>(\<rat>::real set). 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-    proof (rule AE_ball_countable'[OF _ countable_rat])
-      fix q :: real assume q: "q \<in> \<rat>"
-      show "AE \<omega> in Q. 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      proof (cases "0 \<le> p \<and> p < q \<and> q \<le> T")
-        case True
-        then have pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q" by auto
-        from one[OF p q pq] show ?thesis by (rule eventually_mono) simp
-      next
-        case False
-        then show ?thesis by auto
-      qed
-    qed
-  qed
-  from rat AE_space show ?thesis
-  proof eventually_elim
-    case (elim \<omega>)
-    then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
-        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      and W: "\<omega> \<in> space Q" by blast+
-    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      using W spQ by simp
-    have cont: "continuous_on {0..T} (\<lambda>u. snd (\<omega> u))"
-      using mspace_path_metricD[OF mw] by (intro continuous_intros)
-    show ?case
-    proof (intro allI impI)
-      fix u v :: real
-      assume uv: "0 \<le> u" "u < v" "v \<le> T"
-      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
-        by (rule diffquot_all_of_rational
-            [OF closed_sconstraint cont _ uv(1) uv(2) uv(3)]) (rule R)
-    qed
-  qed
-qed
-
 text \<open>The transfer that every full-measure clause needs: an almost-sure
   property of the future under \<open>P\<close> makes the corresponding rectangle
   \<open>ksemi\<close>-null, which is the hypothesis of @{thm [source] AE_kernel_full}.\<close>
@@ -410,23 +358,7 @@ proof -
   qed
   have rat: "AE p' in ?Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
       p \<in> {0..?S} \<longrightarrow> q \<in> {0..?S} \<longrightarrow> p < q \<longrightarrow> emeasure (\<kappa> p') (C p q) = 1"
-  proof (rule AE_ball_countable'[OF _ countable_rat])
-    fix p :: real assume "p \<in> \<rat>"
-    show "AE p' in ?Q. \<forall>q\<in>(\<rat>::real set).
-        p \<in> {0..?S} \<longrightarrow> q \<in> {0..?S} \<longrightarrow> p < q \<longrightarrow> emeasure (\<kappa> p') (C p q) = 1"
-    proof (rule AE_ball_countable'[OF _ countable_rat])
-      fix q :: real assume "q \<in> \<rat>"
-      show "AE p' in ?Q. p \<in> {0..?S} \<longrightarrow> q \<in> {0..?S} \<longrightarrow> p < q
-          \<longrightarrow> emeasure (\<kappa> p') (C p q) = 1"
-      proof (cases "p \<in> {0..?S} \<and> q \<in> {0..?S} \<and> p < q")
-        case True
-        then show ?thesis using one[of p q] by auto
-      next
-        case False
-        then show ?thesis by auto
-      qed
-    qed
-  qed
+    by (intro AE_ball_countable'[OF _ countable_rat] AE_impI one)
   have "AE p' in ?Q. p' \<in> space ?Q" by (rule AE_space)
   with rat show ?thesis
   proof eventually_elim

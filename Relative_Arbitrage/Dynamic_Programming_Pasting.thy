@@ -76,13 +76,6 @@ qed
 
 subsection \<open>The pathwise form of the dynamic programming bound\<close>
 
-text \<open>In \<open>pexit_pglue_split'\<close> the continuation only has to stay in \<open>K\<close>
-  on the half-open interval \<open>{0..<c}\<close>, matching what the essential
-  infimum supplies, since \<open>c \<le> pexit\<close> says nothing about the path at
-  time \<open>c\<close>.\<close>
-
-
-
 theorem exit_val_measurable_selector_kernel':
   fixes K :: "(real^'n::finite) set"
   assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
