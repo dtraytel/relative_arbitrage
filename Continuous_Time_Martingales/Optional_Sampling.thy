@@ -122,9 +122,6 @@ proof -
   finally show ?thesis .
 qed
 
-lemma inc_zero: "(\<integral>\<omega>. inc k \<omega> \<partial>M) = 0"
-  unfolding inc_def by (rule set_incr_zero[OF Tgt_sets_F])
-
 text \<open>The stopped process is the martingale transform of \<open>Y\<close> by the
   indicators of the events \<open>{T > k}\<close>.\<close>
 

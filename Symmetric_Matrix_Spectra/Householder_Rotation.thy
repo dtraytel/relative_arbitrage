@@ -24,10 +24,6 @@ text \<open>\<open>continuous_on_matrix_entry\<close>, \<open>continuous_on_matr
 definition hrefl :: "real^'n::finite \<Rightarrow> real^'n^'n" where
   "hrefl v = mat 1 - (2 / (v \<bullet> v)) *\<^sub>R outer_prod v v"
 
-lemma hrefl_sym: "transpose (hrefl v) = hrefl v"
-  unfolding hrefl_def
-  by (simp add: transpose_def outer_prod_def mat_def vec_eq_iff mult_ac)
-
 lemma hrefl_apply: "hrefl v *v z = z - (2 * (v \<bullet> z) / (v \<bullet> v)) *\<^sub>R v"
 proof -
   have "hrefl v *v z = mat 1 *v z - ((2 / (v \<bullet> v)) *\<^sub>R outer_prod v v) *v z"
@@ -69,13 +65,6 @@ proof -
   also have "2 * c - c * c * (v \<bullet> v) = 0"
     unfolding c_def using hrefl_key[of v] by simp
   finally show ?thesis by simp
-qed
-
-lemma hrefl_sq: "hrefl v ** hrefl v = mat 1"
-proof -
-  have "\<forall>x. (hrefl v ** hrefl v) *v x = mat 1 *v x"
-    by (metis hrefl_involution matrix_vector_mul_assoc matrix_vector_mul_lid)
-  then show ?thesis using matrix_eq[of "hrefl v ** hrefl v" "mat 1"] by blast
 qed
 
 lemma hrefl_inner: "(hrefl v *v y) \<bullet> (hrefl v *v z) = y \<bullet> z"
@@ -133,11 +122,6 @@ proof -
   finally show ?thesis .
 qed
 
-lemma hrefl_scale_matrix:
-  assumes c0: "c \<noteq> 0"
-  shows "hrefl (c *\<^sub>R v) = hrefl v"
-  using matrix_eq[of "hrefl (c *\<^sub>R v)" "hrefl v"] hrefl_scale[OF c0] by blast
-
 lemma scaleR_self_diff:
   fixes q :: "'a::real_vector"
   shows "q - (c::real) *\<^sub>R q = (1 - c) *\<^sub>R q"
@@ -160,11 +144,6 @@ proof -
   also have "(- 1 :: real) *\<^sub>R q = - q" by simp
   finally show ?thesis .
 qed
-
-lemma matvec_minus_right:
-  fixes A :: "real^'n::finite^'n"
-  shows "A *v (- x) = - (A *v x)"
-  by (simp add: matrix_vector_mult_def vec_eq_iff sum_negf)
 
 lemma hrefl_bisect:
   fixes u v :: "real^'n::finite"
@@ -198,26 +177,6 @@ proof -
   finally show ?thesis by simp
 qed
 
-lemma continuous_on_hrefl:
-  fixes F :: "'a::topological_space \<Rightarrow> real^'n::finite"
-  assumes cF: "continuous_on S F" and nz: "\<And>z. z \<in> S \<Longrightarrow> F z \<noteq> 0"
-  shows "continuous_on S (\<lambda>z. hrefl (F z))"
-proof -
-  have entF: "continuous_on S (\<lambda>z. F z $ i)" for i
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF bounded_linear_vec_nth] cF]) auto
-  have cip: "continuous_on S (\<lambda>z. F z \<bullet> F z)"
-    by (rule bounded_bilinear.continuous_on[OF bounded_bilinear_inner cF cF])
-  have nz': "F z \<bullet> F z \<noteq> 0" if "z \<in> S" for z using nz[OF that] by simp
-  have eq: "(\<lambda>z. hrefl (F z)) = (\<lambda>z. \<chi> i j. (if i = j then 1 else 0)
-      - 2 / (F z \<bullet> F z) * (F z $ i * F z $ j))"
-    by (rule ext) (simp add: hrefl_def mat_def outer_prod_def vec_eq_iff)
-  show ?thesis unfolding eq
-    by (intro continuous_on_vec_lambda continuous_on_diff continuous_on_const
-        continuous_on_mult continuous_on_divide cip entF)
-      (use nz' in auto)
-qed
-
 section \<open>The two-reflection rotation\<close>
 
 text \<open>\<open>rotv u v\<close>, the product of the reflection at \<open>u\<close> and the reflection at
@@ -226,36 +185,6 @@ text \<open>\<open>rotv u v\<close>, the product of the reflection at \<open>u\<
 
 definition rotv :: "real^'n::finite \<Rightarrow> real^'n \<Rightarrow> real^'n^'n"
   where "rotv u v = hrefl (u + v) ** hrefl u"
-
-lemma rotv_orthogonal:
-  fixes u v :: "real^'n::finite"
-  shows "orthogonal_matrix (rotv u v)"
-  unfolding rotv_def by (intro orthogonal_matrix_mul hrefl_orthogonal)
-
-lemma rotv_apply:
-  fixes u v :: "real^'n::finite"
-  assumes u1: "norm u = 1" and v1: "norm v = 1" and ne: "u + v \<noteq> 0"
-  shows "rotv u v *v u = v"
-proof -
-  have u0: "u \<noteq> 0" using u1 by auto
-  have "rotv u v *v u = hrefl (u + v) *v (hrefl u *v u)"
-    unfolding rotv_def by (metis matrix_vector_mul_assoc)
-  also have "hrefl u *v u = - u" by (rule hrefl_fix[OF u0])
-  also have "hrefl (u + v) *v (- u) = - (hrefl (u + v) *v u)"
-    by (rule matvec_minus_right)
-  also have "hrefl (u + v) *v u = - v" by (rule hrefl_bisect[OF u1 v1 ne])
-  finally show ?thesis by simp
-qed
-
-lemma rotv_self:
-  fixes u :: "real^'n::finite"
-  assumes u0: "u \<noteq> 0"
-  shows "rotv u u = mat 1"
-proof -
-  have e: "u + u = (2::real) *\<^sub>R u" by (simp add: vec_eq_iff)
-  have "hrefl (u + u) = hrefl u" unfolding e by (rule hrefl_scale_matrix) simp
-  then show ?thesis unfolding rotv_def by (simp add: hrefl_sq)
-qed
 
 text \<open>The normalised rotation, \<open>rotm q w = hrefl (\<parallel>w\<parallel> q + \<parallel>q\<parallel> w) ** hrefl q\<close>:
   it carries \<open>q\<close> onto the ray through \<open>w\<close> as soon as the two are not
@@ -375,62 +304,7 @@ qed
 
 section \<open>Continuity of the transport\<close>
 
-lemma continuous_on_rotv:
-  fixes u :: "real^'n::finite" and F :: "'a::topological_space \<Rightarrow> real^'n"
-  assumes cF: "continuous_on S F" and nz: "\<And>z. z \<in> S \<Longrightarrow> u + F z \<noteq> 0"
-  shows "continuous_on S (\<lambda>z. rotv u (F z))"
-proof -
-  have c1: "continuous_on S (\<lambda>z. hrefl (u + F z))"
-  proof (rule continuous_on_hrefl)
-    show "continuous_on S (\<lambda>z. u + F z)"
-      by (intro continuous_on_add continuous_on_const cF)
-    show "\<And>z. z \<in> S \<Longrightarrow> u + F z \<noteq> 0" by (rule nz)
-  qed
-  have c2: "continuous_on S (\<lambda>z :: 'a. hrefl u)" by (rule continuous_on_const)
-  show ?thesis unfolding rotv_def
-    by (rule continuous_on_matrix_mult[OF c1 c2])
-qed
-
 text \<open>The half space, and what it rules out.\<close>
-
-lemma halfspace_not_antipodal:
-  fixes u q :: "real^'n::finite"
-  assumes u1: "norm u = 1" and hq: "0 < u \<bullet> q"
-  shows "u + q /\<^sub>R norm q \<noteq> 0"
-proof
-  assume z: "u + q /\<^sub>R norm q = 0"
-  have q0: "q \<noteq> 0" using hq by auto
-  have nq: "0 < norm q" using q0 by simp
-  have "u \<bullet> (q /\<^sub>R norm q) = (u \<bullet> q) / norm q"
-    by (simp add: divide_inverse)
-  then have pos: "0 < u \<bullet> (q /\<^sub>R norm q)" using hq nq by simp
-  have "q /\<^sub>R norm q = - u" using z by (metis add_eq_0_iff)
-  then have "u \<bullet> (q /\<^sub>R norm q) = - (u \<bullet> u)" by simp
-  also have "u \<bullet> u = 1" using u1 by (metis norm_eq_1)
-  finally have "u \<bullet> (q /\<^sub>R norm q) = - 1" by simp
-  then show False using pos by simp
-qed
-
-lemma continuous_on_rotv_dir:
-  fixes u :: "real^'n::finite"
-  assumes u1: "norm u = 1"
-  shows "continuous_on {q :: real^'n. 0 < u \<bullet> q}
-      (\<lambda>q. rotv u (q /\<^sub>R norm q))"
-proof (rule continuous_on_rotv)
-  show "continuous_on {q :: real^'n. 0 < u \<bullet> q} (\<lambda>q. q /\<^sub>R norm q)"
-  proof -
-    have nz: "norm q \<noteq> 0" if "q \<in> {q :: real^'n. 0 < u \<bullet> q}" for q
-      using that by auto
-    have "continuous_on {q :: real^'n. 0 < u \<bullet> q}
-        (\<lambda>q. (1 / norm q) *\<^sub>R q)"
-      by (intro continuous_on_scaleR continuous_on_divide continuous_on_const
-          continuous_on_norm continuous_on_id) (use nz in auto)
-    then show ?thesis by (simp add: divide_inverse)
-  qed
-next
-  show "\<And>q. q \<in> {q :: real^'n. 0 < u \<bullet> q} \<Longrightarrow> u + q /\<^sub>R norm q \<noteq> 0"
-    using halfspace_not_antipodal[OF u1] by blast
-qed
 
 lemma rotm_vec_cont:
   fixes q c :: "real^'n::finite" and A :: "(real^'n) set"
@@ -452,27 +326,6 @@ qed
 
 text \<open>The real-valued functional the assembly actually needs: the Hessian
   paired with the conjugated witness.\<close>
-
-lemma continuous_on_conj_trace:
-  fixes a :: "real^'n::finite^'n"
-    and R M :: "'b::topological_space \<Rightarrow> real^'n^'n"
-  assumes cR: "continuous_on S R" and cM: "continuous_on S M"
-  shows "continuous_on S (\<lambda>z. trace (M z ** (R z ** a ** transpose (R z))))"
-proof -
-  have c1: "continuous_on S (\<lambda>z. R z ** a)"
-    by (rule continuous_on_matrix_mult[OF cR continuous_on_const])
-  have c2: "continuous_on S (\<lambda>z. transpose (R z))"
-    by (rule continuous_on_matrix_transpose[OF cR])
-  have c3: "continuous_on S (\<lambda>z. R z ** a ** transpose (R z))"
-    by (rule continuous_on_matrix_mult[OF c1 c2])
-  have c4: "continuous_on S (\<lambda>z. M z ** (R z ** a ** transpose (R z)))"
-    by (rule continuous_on_matrix_mult[OF cM c3])
-  have tr: "(\<lambda>B :: real^'n^'n. trace B) = (\<lambda>B. \<Sum>i\<in>UNIV. B $ i $ i)"
-    by (rule ext) (simp add: trace_def)
-  show ?thesis
-    unfolding tr
-    by (intro continuous_on_sum continuous_on_matrix_entry c4)
-qed
 
 (*<*)
 end

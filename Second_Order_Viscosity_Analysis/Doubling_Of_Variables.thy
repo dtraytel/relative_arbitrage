@@ -223,19 +223,6 @@ text \<open>\<open>doubling_penalty_bound_gen\<close> and \<open>doubling_dist_b
   hypothesis \<open>u x' - w y' \<le> C\<close>; on a compact \<open>K\<close> with continuous data it
   comes from the same attainment argument as the maximiser itself.\<close>
 
-lemma doubling_upper_bound_exists:
-  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
-  assumes cK: "compact K" and neK: "K \<noteq> {}"
-    and cu: "continuous_on K u" and cw: "continuous_on K w"
-  shows "\<exists>C. \<forall>x\<in>K. \<forall>y\<in>K. u x - w y \<le> C"
-proof -
-  obtain a where "\<forall>x\<in>K. u x \<le> u a"
-    using continuous_attains_sup[OF cK neK cu] by blast
-  moreover obtain b where "\<forall>y\<in>K. w b \<le> w y"
-    using continuous_attains_inf[OF cK neK cw] by blast
-  ultimately show ?thesis by (intro exI[of _ "u a - w b"]) (auto intro: diff_mono)
-qed
-
 text \<open>The bridge itself: an Alexandrov jet of \<open>v\<close> at \<open>xh\<close> with data
   \<open>(p, A)\<close> gives, for every \<open>\<delta> > 0\<close>, the local-max statement for the jet
   test function built from \<open>(p, A + \<delta> I)\<close>, the \<open>subtest\<close> hypothesis
@@ -1736,78 +1723,6 @@ text \<open>This step makes \<open>interior K\<close>, not \<open>K\<close>, the
   \<open>\<kappa>\<close>).  Stated for abstract \<open>f\<close>, \<open>g\<close> and moduli, so the sup-convolutions
   and \<open>\<theta>\<close>-scaling stay invisible.\<close>
 
-lemma uniform_modulus_on_compact:
-  fixes v :: "'a::heine_borel \<Rightarrow> real"
-  assumes cC: "compact C" and cv: "continuous_on C v" and s: "0 < \<sigma>"
-  shows "\<exists>\<eta>>0. \<forall>p\<in>C. \<forall>q\<in>C. dist p q \<le> \<eta> \<longrightarrow> v q \<le> v p + \<sigma>"
-proof -
-  have uc: "uniformly_continuous_on C v"
-    by (rule compact_uniformly_continuous[OF cv cC])
-  obtain d where d0: "0 < d"
-    and dd: "\<And>x x'. x \<in> C \<Longrightarrow> x' \<in> C \<Longrightarrow> dist x' x < d \<Longrightarrow> dist (v x') (v x) < \<sigma>"
-    by (rule uniformly_continuous_onE[OF uc s]) blast
-  have main: "\<forall>p\<in>C. \<forall>q\<in>C. dist p q \<le> d/2 \<longrightarrow> v q \<le> v p + \<sigma>"
-  proof (intro ballI impI)
-    fix p q assume p: "p \<in> C" and q: "q \<in> C" and dpq: "dist p q \<le> d/2"
-    have "dist q p < d" using dpq d0 by (simp add: dist_commute)
-    then have "dist (v q) (v p) < \<sigma>" by (rule dd[OF p q])
-    then show "v q \<le> v p + \<sigma>" by (simp add: dist_real_def)
-  qed
-  have "0 < d/2" using d0 by simp
-  then show ?thesis using main by blast
-qed
-
-theorem doubling_maximiser_far_from_boundary:
-  fixes f g :: "'a::euclidean_space \<Rightarrow> real"
-  assumes xK: "xh \<in> K" and yK: "yh \<in> K"
-    and val: "M \<le> f z + g z"
-    and tr: "f z + g z \<le> f xh + g yh + 2*\<sigma>"
-    and near: "dist xh yh \<le> \<beta>"
-    and modg: "\<And>p q. p \<in> K \<Longrightarrow> q \<in> K \<Longrightarrow> dist p q \<le> \<beta> \<Longrightarrow> g q \<le> g p + \<tau>"
-    and bdry: "\<And>c. c \<in> K - interior K \<Longrightarrow> f c + g c \<le> m"
-    and modF: "\<And>p q. p \<in> K \<Longrightarrow> q \<in> K \<Longrightarrow> dist p q \<le> \<kappa>
-        \<Longrightarrow> f p + g p \<le> f q + g q + \<tau>'"
-    and gap: "m + 2*\<sigma> + \<tau> + \<tau>' < M"
-    and b: "b \<in> K - interior K"
-  shows "\<kappa> < dist xh b"
-proof (rule ccontr)
-  assume "\<not> \<kappa> < dist xh b"
-  then have d: "dist xh b \<le> \<kappa>" by linarith
-  have bK: "b \<in> K" using b by simp
-  have g1: "g yh \<le> g xh + \<tau>" by (rule modg[OF xK yK near])
-  have s1: "M \<le> f xh + g yh + 2*\<sigma>" using val tr by linarith
-  have s2: "M \<le> f xh + g xh + \<tau> + 2*\<sigma>" using s1 g1 by linarith
-  have s3: "f xh + g xh \<le> f b + g b + \<tau>'" by (rule modF[OF xK bK d])
-  have s4: "f b + g b \<le> m" by (rule bdry[OF b])
-  from s2 s3 s4 gap show False by linarith
-qed
-
-text \<open>Of the eleven lemmas in the localisation layer, only two mention the
-  penalty, and neither uses anything quadratic about it:
-  \<open>doubling_maximiser_value_transfer\<close> uses only \<open>Pn 0 = 0\<close>, and
-  \<open>norm_lt_of_penalty_bound\<close> uses only coercivity, phrased as "the
-  penalty exceeds \<open>C\<close> outside radius \<open>\<beta>\<close>".
-  \<open>doubling_maximiser_far_from_boundary\<close> itself is penalty-free,
-  consuming the penalty only through the abstracted \<open>tr\<close> and \<open>near\<close>.\<close>
-
-lemma doubling_maximiser_value_transfer_gen:
-  fixes A Bf f g :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
-  assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
-        A x + Bf y - Pn (x - y) \<le> A xh + Bf yh - Pn (xh - yh)"
-    and zK: "z \<in> K"
-    and P0: "Pn 0 = 0"
-    and lowA: "f z \<le> A z" and lowB: "g z \<le> Bf z"
-    and upA: "A xh \<le> f xh + \<sigma>" and upB: "Bf yh \<le> g yh + \<sigma>"
-  shows "f z + g z + Pn (xh - yh) \<le> f xh + g yh + 2*\<sigma>"
-proof -
-  have diag: "A z + Bf z - Pn (z - z) \<le> A xh + Bf yh - Pn (xh - yh)"
-    by (rule mx[OF zK zK])
-  have zz: "z - z = (0 :: 'a)" by simp
-  have "A z + Bf z \<le> A xh + Bf yh - Pn (xh - yh)"
-    using diag unfolding zz P0 by simp
-  then show ?thesis using lowA lowB upA upB by linarith
-qed
-
 lemma norm_lt_of_penalty_bound_gen:
   fixes d :: "'a::real_normed_vector" and Pn :: "'a \<Rightarrow> real" and C \<beta> :: real
   assumes p: "Pn d \<le> C"
@@ -2501,17 +2416,6 @@ proof -
   qed
 qed
 
-lemma gap_split_aux:
-  fixes G :: real
-  assumes G: "0 < G"
-  shows "\<exists>\<sigma> \<tau> \<tau>'. 0 < \<sigma> \<and> 0 < \<tau> \<and> 0 < \<tau>' \<and> 2*\<sigma> + \<tau> + \<tau>' < G"
-proof -
-  have p: "0 < G/8" using G by simp
-  have e: "G = 8*(G/8)" by simp
-  have "2*(G/8) + (G/8) + (G/8) < G" using p e by linarith
-  with p show ?thesis by blast
-qed
-
 text \<open>the sup-convolution sandwich needs a local modulus valid on a ball sticking out
   of \<open>K\<close>, but the doubling maximiser's location is unknown, so the bound
   must be uniform over \<open>K\<close>.  The fix runs \<open>uniform_modulus_on_compact\<close>
@@ -2538,22 +2442,6 @@ proof -
   have expd: "2*e*(D+1) = 2*e*D + 2*e" by (simp add: algebra_simps)
   have "2*e*D < H" using key expd epos by linarith
   with epos show ?thesis by blast
-qed
-
-lemma eps_mono_aux:
-  fixes \<epsilon> \<epsilon>\<^sub>0 D H :: real
-  assumes ep: "0 < \<epsilon>" and le: "\<epsilon> \<le> \<epsilon>\<^sub>0"
-    and lt: "2*\<epsilon>\<^sub>0*(max 0 D) < H"
-  shows "2*\<epsilon>*D < H"
-proof -
-  have Dnn: "0 \<le> max 0 D" by simp
-  have dle: "D \<le> max 0 D" by simp
-  have e2: "0 \<le> 2*\<epsilon>" using ep by linarith
-  have s1: "2*\<epsilon>*D \<le> 2*\<epsilon>*(max 0 D)" by (rule mult_left_mono[OF dle e2])
-  have le2: "2*\<epsilon> \<le> 2*\<epsilon>\<^sub>0" using le by linarith
-  have s2: "2*\<epsilon>*(max 0 D) \<le> 2*\<epsilon>\<^sub>0*(max 0 D)"
-    by (rule mult_right_mono[OF le2 Dnn])
-  from s1 s2 lt show ?thesis by linarith
 qed
 
 text \<open>The comparison assembly at the soft penalty needs \<open>\<theta>u\<close> and \<open>-w\<close>

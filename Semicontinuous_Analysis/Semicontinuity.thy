@@ -165,29 +165,6 @@ proof -
   qed
 qed
 
-lemma usc_eps_of_continuous:
-  fixes f :: "'a::metric_space \<Rightarrow> real"
-  assumes cf: "isCont f z" and lt: "f z < c"
-  shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
-proof -
-  have d0: "0 < c - f z" using lt by simp
-  from cf obtain s where s0: "0 < s"
-    and sb: "\<And>y. y \<noteq> z \<Longrightarrow> dist y z < s \<Longrightarrow> dist (f y) (f z) < c - f z"
-    unfolding isCont_def LIM_def using d0 by blast
-  show ?thesis
-  proof (rule exI[of _ s], intro conjI allI impI s0)
-    fix y assume dzy: "dist z y < s"
-    show "f y < c"
-    proof (cases "y = z")
-      case True then show ?thesis using lt by simp
-    next
-      case False
-      have "dist y z < s" using dzy by (simp add: dist_commute)
-      from sb[OF False this] show ?thesis by (simp add: dist_real_def)
-    qed
-  qed
-qed
-
 lemma lsc_diff_continuous:
   fixes f \<psi> :: "'a::metric_space \<Rightarrow> real"
   assumes lsc: "\<And>c z. c < f z \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < f y"
@@ -243,12 +220,6 @@ proof
     then show "x \<in> (\<lambda>e. e / r) ` {0<..}" using xe by (metis image_eqI)
   qed
 qed
-
-lemma closed_abs_ge: "closed {y :: real. R \<le> \<bar>y\<bar>}"
-  by (intro closed_Collect_le continuous_intros)
-
-lemma abs_ge_nonempty: "{y :: real. R \<le> \<bar>y\<bar>} \<noteq> {}"
-  by (rule notI) (use abs_ge_self[of R] in blast)
 
 subsection \<open>Relative upper semicontinuity: extension and sublevel sets\<close>
 

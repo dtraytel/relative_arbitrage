@@ -112,10 +112,6 @@ text \<open>Monotonicity of the even powers under an absolute bound; both direct
   the rewriting between \<open>x^4\<close> and \<open>(x\<^sup>2)\<^sup>2\<close> are needed downstream.\<close>
 
 
-
-
-
-
 lemma compensated_increment_second_moment:
   fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
   assumes P: "prob_space M"

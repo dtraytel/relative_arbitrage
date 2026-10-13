@@ -146,7 +146,6 @@ text \<open>Paths take values in \<open>real^'n \<times> real^'n^'n\<close>: the
   Section-2 toolchain applies verbatim.\<close>
 
 
-
 definition exit_class ::
   "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real^'n::finite
      \<Rightarrow> (('n pairpath) measure) set"
@@ -376,20 +375,6 @@ proof -
     using a unfolding sconstraint_def Pi_constraint_def by auto
   show "0 \<le> a $ i $ i" by (rule psd_eigen_ub_diag(1)[OF p u])
   show "a $ i $ i \<le> L" by (rule psd_eigen_ub_diag(2)[OF p u])
-qed
-
-theorem exit_class_Y_diag_increment:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes L: "0 \<le> L" and Q: "Q \<in> exit_class k L T x"
-  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
-      0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
-      \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> L * (t - s)"
-proof (rule covariation_class_Y_diag_increment[OF L])
-  show "\<And>a :: real^'n^'n. a \<in> sconstraint k L
-      \<Longrightarrow> 0 \<le> a $ i $ i \<and> a $ i $ i \<le> L"
-    using sconstraint_diag by blast
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
 qed
 
 lemma exit_class_eval_measurable:

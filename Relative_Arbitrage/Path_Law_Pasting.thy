@@ -2259,28 +2259,6 @@ qed
 text \<open>Their instances for the past \<open>pcut r\<close> and the future \<open>pfut r T\<close> of a
   horizon-\<open>T\<close> path.\<close>
 
-theorem exit_class_rcd:
-  fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and PS: "prob_space P"
-  obtains \<kappa> where
-    "\<kappa> \<in> (path_borel r :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-        \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure))"
-    and "\<And>A B. A \<in> sets (path_borel r :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-        \<Longrightarrow> B \<in> sets ((path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure))
-        \<Longrightarrow> emeasure (distr P
-              ((path_borel r :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-                \<Otimes>\<^sub>M (path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure))
-              (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))) (A \<times> B)
-          = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(pair_law_of r (pcut r) P))"
-proof -
-  have Tr: "0 \<le> T - r" using rT by simp
-  show ?thesis
-    by (rule path_rcd[OF Tr PS pcut_measurable[OF r rT setsP]
-          pfut_measurable_law[OF r rT setsP]]) (rule that)
-qed
-
 theorem exit_class_rcd_ksemi:
   fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"

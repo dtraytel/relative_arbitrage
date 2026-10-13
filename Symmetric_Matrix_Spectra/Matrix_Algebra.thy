@@ -116,30 +116,6 @@ proof -
     by (rule continuous_on_compose2[OF linear_continuous_on[OF bl] cF]) auto
 qed
 
-lemma continuous_on_matrix_mult:
-  fixes F G :: "'a::topological_space \<Rightarrow> real^'n::finite^'n"
-  assumes cF: "continuous_on S F" and cG: "continuous_on S G"
-  shows "continuous_on S (\<lambda>z. F z ** G z)"
-proof -
-  have eq: "(\<lambda>z. F z ** G z)
-      = (\<lambda>z. \<chi> i j. (\<Sum>l\<in>UNIV. F z $ i $ l * G z $ l $ j))"
-    by (rule ext) (simp add: matrix_matrix_mult_def)
-  show ?thesis unfolding eq
-    by (intro continuous_on_vec_lambda continuous_on_sum continuous_on_mult
-        continuous_on_matrix_entry cF cG)
-qed
-
-lemma continuous_on_matrix_transpose:
-  fixes F :: "'a::topological_space \<Rightarrow> real^'n::finite^'n"
-  assumes cF: "continuous_on S F"
-  shows "continuous_on S (\<lambda>z. transpose (F z))"
-proof -
-  have eq: "(\<lambda>z. transpose (F z)) = (\<lambda>z. \<chi> i j. F z $ j $ i)"
-    by (rule ext) (simp add: transpose_def)
-  show ?thesis unfolding eq
-    by (intro continuous_on_vec_lambda continuous_on_matrix_entry cF)
-qed
-
 section \<open>Sums, transpose, matrix-vector multiplication\<close>
 
 lemma inner_transpose_matrix:
@@ -645,11 +621,6 @@ lemma trace_mult_scaleR:
   shows "trace (M ** (r *\<^sub>R A)) = r * trace (M ** A)"
   by (simp add: trace_mult_sum sum_distrib_left algebra_simps)
 
-lemma bounded_linear_transpose:
-  "bounded_linear (transpose :: real^'n::finite^'n \<Rightarrow> real^'n^'n)"
-  unfolding linear_conv_bounded_linear[symmetric]
-  by (intro linearI) (simp_all add: transpose_def vec_eq_iff)
-
 lemma trace_mult_add:
   fixes M A B :: "real^'n::finite^'n"
   shows "trace (M ** (A + B)) = trace (M ** A) + trace (M ** B)"
@@ -708,11 +679,6 @@ proof -
     unfolding entrysum_def by (intro sum_mono entry_abs_le_norm)
   then show ?thesis by simp
 qed
-
-lemma axis1_self:
-  fixes i :: "'n::finite"
-  shows "axis i 1 \<bullet> (axis i 1 :: real^'n) = (1::real)"
-  by (simp add: inner_axis')
 
 lemma matvec_norm_le:
   fixes M :: "real^'n::finite^'n"
@@ -1335,12 +1301,6 @@ text \<open>\<open>trace_sum_matrix\<close> is \<open>trace_matrix_sum\<close> f
 text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
   from \<open>Symmetric_Spectral\<close>.\<close>
 
-lemma unit_normalize:
-  fixes v :: "real^'n::finite"
-  assumes v0: "v \<noteq> 0"
-  shows "(v /\<^sub>R norm v) \<bullet> (v /\<^sub>R norm v) = 1"
-  using v0 by (simp add: dot_square_norm power2_eq_square)
-
 lemma orthonormal_inj:
   fixes b :: "nat \<Rightarrow> real^'n::finite"
   assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
@@ -1510,19 +1470,6 @@ proof -
     by (simp add: linear_iff matrix_vector_right_distrib matrix_vector_mult_scaleR
         scaleR_right_distrib)
   then show ?thesis by (simp add: linear_conv_bounded_linear)
-qed
-
-lemma affine_has_derivative:
-  fixes R :: "real^'n::finite^'n" and b :: "real^'n"
-  shows "((\<lambda>z. c *\<^sub>R (R *v z) + b) has_derivative (\<lambda>h. c *\<^sub>R (R *v h))) (at y)"
-proof -
-  have lin: "((\<lambda>z :: real^'n. c *\<^sub>R (R *v z)) has_derivative
-      (\<lambda>h. c *\<^sub>R (R *v h))) (at y)"
-    by (rule bounded_linear.has_derivative[OF affine_linear has_derivative_ident])
-  have "((\<lambda>z. c *\<^sub>R (R *v z) + b) has_derivative
-      (\<lambda>h. c *\<^sub>R (R *v h) + 0)) (at y)"
-    by (rule has_derivative_add[OF lin has_derivative_const])
-  then show ?thesis by simp
 qed
 
 text \<open>Two small facts about the inverse of the dilation, used to transfer

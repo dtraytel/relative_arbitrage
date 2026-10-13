@@ -356,9 +356,6 @@ subsection \<open>The limit law's process is a martingale\<close>
 
 text \<open>\<open>fst_coord_borel\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
-lemma outerp_sq: "outerp u ** outerp u = (u \<bullet> u) *\<^sub>R outerp u"
-  by (simp add: outerp_eq_outer_prod outer_prod_mult)
-
 lemma pair_holder_ball_mem:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and x :: "'a"
   assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
@@ -858,30 +855,6 @@ text \<open>The second horn dies here.  Suppose \<open>v\<^sub>*\<close> were co
   bounded \<open>K\<close> the hypothesis is discharged by
   \<open>exit_val_le_ball_bound\<close> once \<open>T\<close> exceeds twice the ball
   bound.\<close>
-
-lemma exit_class_comp_paths_cont:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and w: "\<omega> \<in> space Q"
-  shows "continuous_on {0..}
-      (\<lambda>s. (fst (\<omega> (min s T)) $ i)\<^sup>2 - snd (\<omega> (min s T)) $ i $ i)"
-proof -
-  have cx: "continuous_on {0..} (\<lambda>s. fst (\<omega> (min s T)) $ i)"
-    by (rule exit_class_coord_paths_cont[OF T setsQ w])
-  have c2: "continuous_on {0..} (\<lambda>s. snd (\<omega> (min s T)))"
-    by (rule continuous_on_snd[OF exit_class_path_cont[OF T setsQ w]])
-  have c3: "continuous_on UNIV (\<lambda>v :: real^'n^'n. v $ i)"
-    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
-  have c4: "continuous_on {0..} (\<lambda>s. snd (\<omega> (min s T)) $ i)"
-    by (rule continuous_on_compose2[OF c3 c2]) simp
-  have c5: "continuous_on UNIV (\<lambda>v :: real^'n. v $ i)"
-    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
-  have cy: "continuous_on {0..} (\<lambda>s. snd (\<omega> (min s T)) $ i $ i)"
-    by (rule continuous_on_compose2[OF c5 c4]) simp
-  show ?thesis
-    by (rule continuous_on_diff[OF continuous_on_power[OF cx] cy])
-qed
 
 lemma path_eval_at_measurable_time:
   fixes M :: "'a measure" and g :: "'a \<Rightarrow> real"
@@ -2555,19 +2528,6 @@ text \<open>\<open>prod_minus_sq_bound\<close>, \<open>fourth_power_sum_bound\<c
 
 subsection \<open>The compensated functional\<close>
 
-lemma radial_sq_upto:
-  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and y\<^sub>0 x :: "'a"
-    and TT e cn :: real and RO :: "('a) set"
-  assumes wm: "\<omega> \<in> mspace (path_metric TT :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    and grow: "\<And>t. 0 < t \<Longrightarrow> t \<le> TT \<Longrightarrow>
-      (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<Longrightarrow>
-      (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + t * cn"
-    and e0: "0 < e" and eT: "e \<le> TT"
-    and inside: "\<And>s. 0 \<le> s \<Longrightarrow> s < e \<Longrightarrow> fst (\<omega> s) \<in> RO"
-  shows "(norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
-  by (rule radial_sq_upto_gen[where F = "\<lambda>w. (norm (w - y\<^sub>0))\<^sup>2",
-        OF wm _ grow e0 eT inside]) (intro continuous_intros)
-
 lemma martingale_of_rational_set_integral_eq:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
     and Z :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
@@ -2680,34 +2640,6 @@ text \<open>The fourth moment of the coordinate itself, not of an increment: the
   start clause pins \<open>X\<^sub>0 = x\<close>, so \<open>(a+b)\<^sup>4 \<le> 8(a\<^sup>4+b\<^sup>4)\<close> turns the increment
   bound into an absolute one, uniform over the whole class.\<close>
 
-lemma eval_component_measurable_nf:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes S: "0 \<le> S" and u: "0 \<le> u"
-  shows "(\<lambda>w :: 'n pairpath. fst (w (min u S)) $ c)
-      \<in> borel_measurable (natural_filtration Q 0 (\<lambda>v w. w v) u)"
-proof -
-  let ?F = "natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u"
-  have ev: "(\<lambda>w :: 'n pairpath. w (min u S)) \<in> borel_measurable ?F"
-    by (rule natural_filtration_eval) (use S u in auto)
-  have f1: "(\<lambda>w :: 'n pairpath. fst (w (min u S))) \<in> borel_measurable ?F"
-    by (rule measurable_compose[OF ev pair_fst_borel])
-  have "(\<lambda>w :: 'n pairpath. fst (w (min u S)) \<bullet> (axis c 1 :: real^'n))
-      \<in> borel_measurable ?F"
-    by (intro borel_measurable_inner f1 borel_measurable_const)
-  then show ?thesis by (simp add: inner_axis)
-qed
-
-lemma eval_component_continuous:
-  fixes w :: "'n::finite pairpath"
-  assumes w: "w \<in> mspace (path_metric S :: ('n pairpath) metric)"
-  shows "continuous_on {0..S} (\<lambda>u. fst (w (min u S)) $ c)"
-proof -
-  have "continuous_on {0..S} (\<lambda>u. fst (w (min u S)) $ c)
-      = continuous_on {0..S} (\<lambda>u. fst (w u) $ c)"
-    by (rule continuous_on_cong[OF refl]) simp
-  then show ?thesis using path_coord_cont_on[OF w] by simp
-qed
-
 text \<open>Clause (iii) of (1.7) for the conditional law, assembled from:
 
   \<^item> \<open>pfut_rcd_F_increment_zero\<close>, supplying one almost-sure
@@ -2723,64 +2655,6 @@ text \<open>Clause (iii) of (1.7) for the conditional law, assembled from:
     rational times to all times;
   \<^item> @{thm [source] martingale_vecI}, putting the finitely many components
     back together.\<close>
-
-lemma comp_entry_measurable_nf:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes S: "0 \<le> S" and u: "0 \<le> u"
-  shows "(\<lambda>w :: 'n pairpath.
-        (outerp (fst (w (min u S))) - snd (w (min u S))) $ c $ d)
-      \<in> borel_measurable (natural_filtration Q 0 (\<lambda>v w. w v) u)"
-proof -
-  let ?F = "natural_filtration Q 0 (\<lambda>v w :: 'n pairpath. w v) u"
-  have ev: "(\<lambda>w :: 'n pairpath. w (min u S)) \<in> borel_measurable ?F"
-    by (rule natural_filtration_eval) (use S u in auto)
-  have m1: "(\<lambda>w :: 'n pairpath. outerp (fst (w (min u S))))
-      \<in> borel_measurable ?F"
-    by (rule measurable_compose
-        [OF measurable_compose[OF ev pair_fst_borel] outerp_borel])
-  have m2: "(\<lambda>w :: 'n pairpath. snd (w (min u S))) \<in> borel_measurable ?F"
-    by (rule measurable_compose[OF ev pair_snd_borel])
-  have mm: "(\<lambda>w :: 'n pairpath. outerp (fst (w (min u S))) - snd (w (min u S)))
-      \<in> borel_measurable ?F"
-    by (rule borel_measurable_diff[OF m1 m2])
-  have bl: "bounded_linear (\<lambda>M :: real^'n^'n. M $ c $ d)"
-    by (rule bounded_linear_compose[OF bounded_linear_vec_nth
-        bounded_linear_vec_nth])
-  have entm: "(\<lambda>M :: real^'n^'n. M $ c $ d) \<in> borel_measurable borel"
-    by (rule borel_measurable_continuous_onI) (rule linear_continuous_on[OF bl])
-  from measurable_compose[OF mm entm] show ?thesis by simp
-qed
-
-lemma comp_entry_continuous:
-  fixes w :: "'n::finite pairpath"
-  assumes w: "w \<in> mspace (path_metric S :: ('n pairpath) metric)"
-  shows "continuous_on {0..S}
-      (\<lambda>u. (outerp (fst (w (min u S))) - snd (w (min u S))) $ c $ d)"
-proof -
-  have cw: "continuous_on {0..S} w" by (rule mspace_path_metricD[OF w])
-  have cf: "continuous_on {0..S} (\<lambda>u. fst (w u))"
-    using cw by (rule continuous_on_fst)
-  have cs: "continuous_on {0..S} (\<lambda>u. snd (w u))"
-    using cw by (rule continuous_on_snd)
-  have c1: "continuous_on {0..S} (\<lambda>u. fst (w u) $ c)"
-    using cf by (rule bounded_linear.continuous_on[OF bounded_linear_vec_nth])
-  have c2: "continuous_on {0..S} (\<lambda>u. fst (w u) $ d)"
-    using cf by (rule bounded_linear.continuous_on[OF bounded_linear_vec_nth])
-  have bl: "bounded_linear (\<lambda>M :: real^'n^'n. M $ c $ d)"
-    by (rule bounded_linear_compose[OF bounded_linear_vec_nth
-        bounded_linear_vec_nth])
-  have c3: "continuous_on {0..S} (\<lambda>u. snd (w u) $ c $ d)"
-    using cs by (rule bounded_linear.continuous_on[OF bl])
-  have cc: "continuous_on {0..S}
-      (\<lambda>u. fst (w u) $ c * fst (w u) $ d - snd (w u) $ c $ d)"
-    by (intro continuous_on_diff continuous_on_mult c1 c2 c3)
-  have "continuous_on {0..S}
-        (\<lambda>u. (outerp (fst (w (min u S))) - snd (w (min u S))) $ c $ d)
-      = continuous_on {0..S}
-        (\<lambda>u. fst (w u) $ c * fst (w u) $ d - snd (w u) $ c $ d)"
-    by (rule continuous_on_cong[OF refl]) (simp add: outerp_def)
-  then show ?thesis using cc by simp
-qed
 
 text \<open>Clause (iv) of (1.7) for the conditional law, by the same assembly as
   clause (iii): the index set of components is now a pair, and
@@ -3021,59 +2895,6 @@ qed
 
 text \<open>A two-sided bound on the diagonal entries of \<open>S\<close> makes each diagonal
   entry of the covariation nondecreasing, at rate at most \<open>B\<close>.\<close>
-
-theorem covariation_class_Y_diag_increment:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes B0: "0 \<le> B"
-    and D: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> 0 \<le> a $ i $ i \<and> a $ i $ i \<le> B"
-    and Q: "Q \<in> covariation_class S T x"
-  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
-      0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
-      \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> B * (t - s)"
-proof -
-  have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
-    by (rule covariation_class_diffquot[OF Q])
-  from dq show ?thesis
-  proof (rule eventually_mono)
-    fix \<omega> :: "'n pairpath"
-    assume h: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
-    show "\<forall>s t. 0 \<le> s \<longrightarrow> s \<le> t \<longrightarrow> t \<le> T \<longrightarrow>
-        0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
-        \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> B * (t - s)"
-    proof (intro allI impI)
-      fix s t :: real
-      assume s: "0 \<le> s" and st: "s \<le> t" and tT: "t \<le> T"
-      show "0 \<le> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i
-          \<and> snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i \<le> B * (t - s)"
-      proof (cases "s = t")
-        case True
-        then show ?thesis using B0 by simp
-      next
-        case False
-        then have lt: "s < t" using st by simp
-        have d0: "0 < t - s" using lt by simp
-        have mem: "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
-          using h s lt tT by blast
-        have ent: "((1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))) $ i $ i
-            = (snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s)"
-          by simp
-        have nn: "0 \<le> (snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s)"
-          using D[OF mem] ent by simp
-        have ub: "(snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s) \<le> B"
-          using D[OF mem] ent by simp
-        have p1: "0 \<le> ((snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s))
-            * (t - s)"
-          using nn d0 by (intro mult_nonneg_nonneg) auto
-        have p2: "((snd (\<omega> t) $ i $ i - snd (\<omega> s) $ i $ i) / (t - s))
-            * (t - s) \<le> B * (t - s)"
-          using ub d0 by (intro mult_right_mono) auto
-        show ?thesis using p1 p2 d0 by simp
-      qed
-    qed
-  qed
-qed
 
 lemma covariation_class_Y_entry_measurable:
   fixes Q :: "(('n::finite) pairpath) measure"

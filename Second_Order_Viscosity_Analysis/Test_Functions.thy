@@ -460,21 +460,6 @@ proof -
   then show ?thesis by blast
 qed
 
-lemma test_fun_at_quadratic:
-  fixes M :: "real^'n::finite^'n" and p x :: "real^'n" and c :: real
-  assumes sym: "transpose M = M"
-  shows "test_fun_at (\<lambda>z. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2)
-      (\<lambda>z. p + M *v z) M x"
-proof -
-  have "((\<lambda>z. c + p \<bullet> z + (z \<bullet> (M *v z)) / 2) has_derivative (\<lambda>h. (p + M *v y) \<bullet> h)) (at y)"
-    for y
-    using has_derivative_add[OF has_derivative_const[of c]
-        quadratic_test_derivative[OF sym, of p 0 y]] by (simp add: add.assoc)
-  then show ?thesis
-    unfolding test_fun_at_def using sym quadratic_test_grad_derivative[of p M 0 x]
-    by (auto intro!: exI[of _ 1])
-qed
-
 section \<open>The ball exit time along a continuous path\<close>
 
 text \<open>Three pathwise facts about \<open>pball_exit\<close>, all consumed by an

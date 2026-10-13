@@ -88,9 +88,6 @@ lemma pfut_fst:
   "s \<in> {0..T - r} \<Longrightarrow> fst (pfut r T \<omega> s) = fst (\<omega> (r + s)) - fst (\<omega> r)"
   by (simp add: pfut_def)
 
-lemma padd_outside: "t \<notin> {0..T} \<Longrightarrow> padd T p' w t = undefined"
-  unfolding padd_def restrict_def by (rule if_not_P)
-
 lemma pshift_snd: "t \<in> {0..T} \<Longrightarrow> snd (pshift T x \<omega> t) = snd (\<omega> t)"
   by (simp add: pshift_def)
 

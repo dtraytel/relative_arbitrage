@@ -416,37 +416,6 @@ section \<open>The Dynkin identity for a deterministic time\<close>
 text \<open>\<open>trace (mat 1) = CARD('n)\<close> is HOL-Analysis's \<open>trace_I\<close>.\<close>
 
 
-lemma bmX_sq:
-  fixes x0 :: "real^'n::finite"
-  assumes u: "0 \<le> u"
-  shows bmX_sq_integrable:
-    "integrable bm_paths (\<lambda>\<omega>. bmX x0 u \<omega> \<bullet> bmX x0 u \<omega>)"
-    and bmX_sq_integral:
-    "(\<integral>\<omega>. bmX x0 u \<omega> \<bullet> bmX x0 u \<omega> \<partial>bm_paths)
-      = x0 \<bullet> x0 + real CARD('n) * u"
-proof -
-  have expand: "bmX x0 u \<omega> \<bullet> bmX x0 u \<omega>
-      = (\<Sum>i\<in>UNIV. (x0 $ i + \<omega> i u)\<^sup>2)" for \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
-    by (simp add: bmX_def inner_vec_def power2_eq_square)
-  show "integrable bm_paths (\<lambda>\<omega>. bmX x0 u \<omega> \<bullet> bmX x0 u \<omega>)"
-    unfolding expand
-    by (intro Bochner_Integration.integrable_sum
-        bm_coordinate_sq_integrable[OF u])
-  have "(\<integral>\<omega>. bmX x0 u \<omega> \<bullet> bmX x0 u \<omega> \<partial>bm_paths)
-      = (\<Sum>i\<in>UNIV. \<integral>\<omega>. (x0 $ i + \<omega> i u)\<^sup>2 \<partial>bm_paths)"
-    unfolding expand
-    by (intro Bochner_Integration.integral_sum
-        bm_coordinate_sq_integrable[OF u])
-  also have "\<dots> = (\<Sum>i\<in>(UNIV :: 'n set). (x0 $ i)\<^sup>2 + u)"
-    by (intro sum.cong refl bm_coordinate_sq_integral[OF u])
-  also have "\<dots> = (\<Sum>i\<in>(UNIV :: 'n set). (x0 $ i)\<^sup>2) + real CARD('n) * u"
-    by (simp add: sum.distrib)
-  also have "(\<Sum>i\<in>(UNIV :: 'n set). (x0 $ i)\<^sup>2) = x0 \<bullet> x0"
-    by (simp add: inner_vec_def power2_eq_square)
-  finally show "(\<integral>\<omega>. bmX x0 u \<omega> \<bullet> bmX x0 u \<omega> \<partial>bm_paths)
-      = x0 \<bullet> x0 + real CARD('n) * u" .
-qed
-
 text \<open>Two-sided pointwise bounds on the trace, from the eigenvalue
   conditions: positive semidefiniteness makes the diagonal, hence the trace,
   nonnegative, and an eigenvalue upper bound \<open>L\<close> caps every diagonal
