@@ -3114,11 +3114,12 @@ text \<open>Locating the doubling maximiser needs \<open>supconv u \<epsilon>\<c
   \<open>supconv u \<epsilon> \<le> u + \<sigma>\<close> for every sufficiently small \<open>\<epsilon>\<close>, with no
   Lipschitz constant needed.\<close>
 
-text \<open>\<open>supconv_uniform_upper\<close> is false for merely usc data; what usc data
+text \<open>The uniform bound is false for merely usc data; what usc data
   gives instead, matching the classical Crandall--Ishii argument, is a
   local upper bound with no continuity and no attainment: if \<open>u \<le> M\<close> on
   \<open>cball x R\<close> and the penalty already beats the global range outside it,
-  then \<open>supconv u \<epsilon> x \<le> M\<close>.\<close>
+  then \<open>supconv u \<epsilon> x \<le> M\<close>.  For continuous data this also gives the
+  uniform bound.\<close>
 
 lemma supconv_le_of_local_bound_usc:
   fixes u :: "'a::euclidean_space \<Rightarrow> real"

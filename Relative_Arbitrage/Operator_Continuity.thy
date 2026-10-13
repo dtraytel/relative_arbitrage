@@ -43,6 +43,12 @@ definition rank1proj :: "real^'n::finite \<Rightarrow> real^'n^'n" where
 lemma transpose_rank1proj: "transpose (rank1proj p) = rank1proj p"
   by (simp add: rank1proj_def transpose_scalar)
 
+lemma rank1proj_annihilates_perp:
+  fixes p :: "real^'n::finite"
+  assumes y: "p \<bullet> y = 0"
+  shows "rank1proj p *v y = 0"
+  by (simp add: rank1proj_def scaleR_matrix_vector_assoc[symmetric] y)
+
 text \<open>A symmetric \<open>a\<close> annihilating \<open>p\<close> also kills the range of the
   projection, in both orders.\<close>
 
@@ -50,15 +56,7 @@ lemma rank1proj_annihilates:
   fixes a :: "real^'n::finite^'n"
   assumes sym: "transpose a = a" and ap: "a *v p = 0"
   shows "rank1proj p *v (a *v x) = 0"
-proof -
-  have "p \<bullet> (a *v x) = x \<bullet> (a *v p)"
-    by (rule sym_inner_swap[OF sym])
-  also have "\<dots> = 0"
-    using ap by simp
-  finally have z: "p \<bullet> (a *v x) = 0" .
-  show ?thesis
-    by (simp add: rank1proj_def scaleR_matrix_vector_assoc[symmetric] z)
-qed
+  by (rule rank1proj_annihilates_perp) (simp add: sym_inner_swap[OF sym, of p x] ap)
 
 lemma proj_perp_left:
   fixes a :: "real^'n::finite^'n"

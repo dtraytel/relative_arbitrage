@@ -369,7 +369,7 @@ proof -
 qed
 
 text \<open>Positive homogeneity of \<open>F\<close> in the matrix argument: with
-  \<open>ell_op_scale\<close>, this is the strict-perturbation mechanism, scaling
+  @{thm [source] feasible_scale}, this is the strict-perturbation mechanism, scaling
   a subsolution's jet to \<open>(\<theta> p, \<theta> X)\<close> and its value to
   \<open>\<theta> F(p,X) \<le> \<theta> < 1\<close>.\<close>
 
@@ -651,7 +651,7 @@ proof -
     using sub x tfc mc unfolding visc_subsol_def by blast
   hence step: "ell_op k L (c *\<^sub>R g x) (c *\<^sub>R H) \<le> 1" by simp
   have "ell_op k L (c *\<^sub>R g x) (c *\<^sub>R H) = ell_op k L (g x) (c *\<^sub>R H)"
-    by (rule ell_op_scale[OF c0])
+    by (rule ell_op_scale) (use c0 in simp)
   also have "\<dots> = c * ell_op k L (g x) H"
     by (rule ell_op_scaleR_matrix[OF c0 ne])
   finally have "c * ell_op k L (g x) H \<le> 1" using step by simp

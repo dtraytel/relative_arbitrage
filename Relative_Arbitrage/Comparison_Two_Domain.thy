@@ -328,7 +328,7 @@ proof (rule ccontr)
     using interior_subset by blast
   have subenv: "visc_subsol_env2 k L K
       (interior K \<union> {q \<in> K - interior K. 0 < u q}) ut"
-    by (rule visc_subsol_env_agrees[OF subu OmK]) (simp add: ut_def)
+    by (rule visc_subsol_env2_cong[OF OmK _ subu]) (simp add: ut_def)
   have subloc: "visc_subsol k L
       (interior K \<union> {q \<in> K - interior K. 0 < u q}) ut"
     by (rule visc_subsol_env_imp_visc_subsol

@@ -786,7 +786,7 @@ text \<open>Paths of the tangential member cannot leave the annulus around \<ope
   before the deterministic time \<open>(rB\<^sup>2 - |x-y\<^sub>0|\<^sup>2)/(m-1)\<close>: the inner
   boundary is unreachable because the squared distance only grows, and
   reaching the outer sphere pins the time exactly.  Feeding the
-  constant-time DPP @{thm [source] exit_val_dpp_ge_const} with any time
+  DPP @{thm [source] exit_val_dpp_ge_const_time} at a constant time
   \<open>cc\<close> before that and before \<open>T\<close> turns confinement into the lower bound
   \<open>v(x) \<ge> cc + min \<beta> (T - cc)\<close>, where \<open>\<beta>\<close> bounds the value on the ball
   from below.\<close>
@@ -971,7 +971,9 @@ proof -
       using pex XccK cap vlow[OF XccB] by (simp add: min_def)
   qed
   show ?thesis
-    by (rule exit_val_dpp_ge_const[OF cc0' ccT L1 Kc P AEfun])
+    by (rule exit_val_dpp_ge_const_time[OF _ L1 Kc
+          path_stopping_time_const[OF cc0' less_imp_le[OF ccT]] borel_measurable_const P AEfun])
+      (use cc0 ccT in linarith)
 qed
 
 text \<open>With \<open>m = CARD('n)\<close> the projector is the identity, the field is
