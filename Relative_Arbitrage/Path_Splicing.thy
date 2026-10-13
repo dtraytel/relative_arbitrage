@@ -234,27 +234,15 @@ proof -
   have into: "padd T p' w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     if "w \<in> space ?B" for w
     using that p by (auto simp: space_borel_of intro: padd_mspace)
-  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). padd T p' w t) \<in> borel_measurable ?B" for t
-  proof (cases "t \<in> {0..T}")
-    case True
+  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). padd T p' w t) \<in> borel_measurable ?B"
+    if True: "t \<in> {0..T}" for t
+  proof -
     have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). p' t + w t) \<in> borel_measurable ?B"
       by (intro borel_measurable_add borel_measurable_const
           pair_law_eval_measurable[OF refl])
     then show ?thesis by (simp add: padd_apply[OF True])
-  next
-    case False
-    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). padd T p' w t) = (\<lambda>w. undefined)"
-      by (rule ext) (rule padd_outside[OF False])
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (padd T p' w) a) \<in> borel_measurable ?B"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
 lemma pshift_pshift:
@@ -340,9 +328,8 @@ proof -
     then show ?thesis using spB by (auto intro: padd_mspace)
   qed
   have ev: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). ?f p t) \<in> borel_measurable ?M"
-    for t
-  proof (cases "t \<in> {0..T}")
-    case True
+    if True: "t \<in> {0..T}" for t
+  proof -
     have e1: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). fst p t) \<in> borel_measurable ?M"
       by (rule measurable_compose[OF measurable_fst
             pair_law_eval_measurable[OF refl]])
@@ -353,21 +340,8 @@ proof -
         \<in> borel_measurable ?M"
       using e1 e2 by simp
     then show ?thesis by (simp add: padd_apply[OF True])
-  next
-    case False
-    have "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). ?f p t)
-        = (\<lambda>p. undefined)"
-      by (rule ext) (rule padd_outside[OF False])
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>p. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric) (?f p) a)
-        \<in> borel_measurable ?M"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
 text \<open>The split inverts the glue, provided the continuation stands still up
@@ -601,61 +575,6 @@ qed
 lemma pglue_ge:
   "t \<in> {0..T} \<Longrightarrow> r \<le> t \<Longrightarrow> pglue r T \<omega> \<omega>' t = \<omega> r + (\<omega>' (t - r) - \<omega>' 0)"
   by (cases "t = r") (auto simp: pglue_def)
-
-lemma pexit_pglue_split':
-  fixes K :: "('a::{polish_space,banach}) set" and \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
-    and stay: "\<And>t. t \<in> {0..r} \<Longrightarrow> fst (\<omega> t) \<in> K"
-    and cont: "\<And>s. 0 \<le> s \<Longrightarrow> s < c \<Longrightarrow> fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
-  shows "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-proof -
-  have lb: "r + c \<le> z"
-    if z: "z \<in> {t. 0 \<le> t \<and> t \<le> T
-        \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T}" for z
-  proof -
-    consider (hit) "0 \<le> z" "z \<le> T" "fst (pglue r T \<omega> \<omega>' z) \<in> - K" | (cap) "z = T"
-      using z by blast
-    then show ?thesis
-    proof cases
-      case hit
-      then have zI: "z \<in> {0..T}" by simp
-      show ?thesis
-      proof (rule ccontr)
-        assume "\<not> r + c \<le> z"
-        then have zc: "z < r + c" by simp
-        show False
-        proof (cases "z \<le> r")
-          case True
-          have "fst (\<omega> z) \<in> K" using hit(1) True by (intro stay) simp
-          then show False using hit(3) by (simp add: pglue_le[OF zI True])
-        next
-          case False
-          then have rz: "r \<le> z" by simp
-          have "fst (\<omega> r + (\<omega>' (z - r) - \<omega>' 0)) \<in> K"
-            using rz zc by (intro cont) simp_all
-          then show False using hit(3) by (simp add: pglue_ge[OF zI rz])
-        qed
-      qed
-    next
-      case cap
-      then show ?thesis using cT by simp
-    qed
-  qed
-  have "pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))
-      = Inf ({t. 0 \<le> t \<and> t \<le> T
-          \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    unfolding pexit_def etime_def ..
-  moreover have "r + c \<le> Inf ({t. 0 \<le> t \<and> t \<le> T
-      \<and> (\<lambda>t. fst (pglue r T \<omega> \<omega>' t)) t \<in> - K} \<union> {T})"
-    by (intro cInf_greatest) (use lb in auto)
-  ultimately show ?thesis by simp
-qed
-
-text \<open>The pathwise dynamic programming bound at a deterministic time \<open>r\<close>.
-  The two summands are the paper's \<open>r \<and> \<tau>\<^sub>K\<close> and \<open>v(X\<^sub>r) \<sqdot> 1\<^sub>{r \<le> \<tau>\<^sub>K}\<close>: the
-  first piece's exit time is a lower bound in all cases (\<open>pexit_pglue_ge\<close>), and when it has not exited by \<open>r\<close> --- exactly
-  \<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close> --- the continuation adds its own
-  survival time on top.\<close>
 
 lemma pglue_zero: "0 \<le> r \<Longrightarrow> 0 \<le> T \<Longrightarrow> pglue r T \<omega> \<omega>' 0 = \<omega> 0"
   by (rule pglue_le) auto
@@ -1194,55 +1113,6 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-lemma pexit_pglue_dpp:
-  fixes K :: "('a::{polish_space,banach}) set" and \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and c: "0 \<le> c" and cT: "r + c \<le> T"
-    and z0: "fst (\<omega>' 0) = 0"
-    and cont: "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<Longrightarrow> fst (\<omega> r) \<in> K
-        \<Longrightarrow> c \<le> pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s))"
-  shows "pexit r K (\<lambda>t. fst (\<omega> t))
-        + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K then c else 0)
-      \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-proof (cases "pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K")
-  case True
-  then have full: "pexit r K (\<lambda>t. fst (\<omega> t)) = r" and endK: "fst (\<omega> r) \<in> K"
-    by simp_all
-  have cnt: "c \<le> pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s))"
-    by (rule cont[OF full endK])
-  have "r + c \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-  proof (rule pexit_pglue_split'[OF r rT c cT])
-    fix t assume t: "t \<in> {0..r}"
-    show "fst (\<omega> t) \<in> K"
-    proof (rule ccontr)
-      assume nk: "fst (\<omega> t) \<notin> K"
-      have "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> t"
-        unfolding pexit_def using r t nk by (intro etime_le_of_mem) auto
-      with full t have "t = r" by simp
-      then show False using nk endK by simp
-    qed
-  next
-    fix s :: real assume s: "0 \<le> s" and sc: "s < c"
-    have sTr: "s \<le> T - r" using sc c cT by simp
-    show "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<in> K"
-    proof (rule ccontr)
-      assume nk: "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) \<notin> K"
-      have eq: "fst (\<omega> r + (\<omega>' s - \<omega>' 0)) = fst (\<omega> r) + fst (\<omega>' s)"
-        using z0 by simp
-      have "pexit (T - r) K (\<lambda>s. fst (\<omega> r) + fst (\<omega>' s)) \<le> s"
-        unfolding pexit_def using s sTr rT nk eq by (intro etime_le_of_mem) auto
-      with cnt sc show False by simp
-    qed
-  qed
-  then show ?thesis using True by simp
-next
-  case False
-  have le: "pexit r K (\<lambda>t. fst (\<omega> t)) \<le> pexit T K (\<lambda>t. fst (pglue r T \<omega> \<omega>' t))"
-    by (rule pexit_pglue_ge[OF r rT])
-  have "(if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K then c else 0) = 0"
-    using False by (rule if_not_P)
-  with le show ?thesis by simp
-qed
-
 subsection \<open>The selector as a kernel into a family of laws\<close>
 
 text \<open>\<open>exit_val_measurable_selector_kernel'\<close> below makes the selector
@@ -1505,26 +1375,14 @@ proof -
   have into: "pembed s T w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     if "w \<in> space ?Bs" for w
     using that by (auto simp: space_borel_of intro: pembed_mspace[OF s0 sT])
-  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). pembed s T w t) \<in> borel_measurable ?Bs" for t
-  proof (cases "t \<in> {0..T}")
-    case True
+  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). pembed s T w t) \<in> borel_measurable ?Bs"
+    if True: "t \<in> {0..T}" for t
+  proof -
     have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w (max (t - s) 0)) \<in> borel_measurable ?Bs"
       by (rule pair_law_eval_measurable[OF refl])
     then show ?thesis by (simp add: pembed_apply[OF True])
-  next
-    case False
-    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). pembed s T w t) = (\<lambda>w. undefined)"
-      by (rule ext) (rule pembed_outside[OF False])
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (pembed s T w) a) \<in> borel_measurable ?Bs"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
 text \<open>\<^const>\<open>prebase\<close> inverts \<^const>\<open>pembed\<close>: the delayed law carries exactly
@@ -1601,9 +1459,9 @@ proof -
   qed
   have sndm: "(\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). snd p) \<in> ?M \<rightarrow>\<^sub>M ?B"
     by (rule measurable_snd)
-  have ev: "(\<lambda>p. pdel (fst p) T (snd p) t) \<in> borel_measurable ?M" for t
-  proof (cases "t \<in> {0..T}")
-    case True
+  have ev: "(\<lambda>p. pdel (fst p) T (snd p) t) \<in> borel_measurable ?M"
+    if True: "t \<in> {0..T}" for t
+  proof -
     have gm: "(\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). max (t - max 0 (min (fst p) T)) 0)
         \<in> borel_measurable ?M" by measurable
     have g0: "0 \<le> max (t - max 0 (min (fst p) T)) 0"
@@ -1617,21 +1475,8 @@ proof -
             and g = "\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). max (t - max 0 (min (fst p) T)) 0",
             OF T0 sndm gm g0 gT])
     then show ?thesis using True by (simp add: pdel_eval)
-  next
-    case False
-    then have "(\<lambda>p :: real \<times> ((real \<Rightarrow> 'a \<times> 'b)). pdel (fst p) T (snd p) t)
-        = (\<lambda>p. undefined)"
-      unfolding pdel_def by (simp add: pembed_outside)
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>p. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (pdel (fst p) T (snd p)) a) \<in> borel_measurable ?M"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
 subsection \<open>Cutting a law commutes with shifting, and caps its value\<close>
@@ -1761,26 +1606,14 @@ proof -
       using that sp by simp
     show ?thesis by (rule prebase_mspace[OF s0 sT m])
   qed
-  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). prebase s T w u) \<in> borel_measurable ?B" for u
-  proof (cases "u \<in> {0..T - s}")
-    case True
+  have ev: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). prebase s T w u) \<in> borel_measurable ?B"
+    if True: "u \<in> {0..T - s}" for u
+  proof -
     have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). w (s + u)) \<in> borel_measurable ?B"
       by (rule pair_law_eval_measurable[OF refl])
     then show ?thesis by (simp add: prebase_apply[OF True])
-  next
-    case False
-    have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). prebase s T w u) = (\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). undefined)"
-      by (rule ext) (rule prebase_outside[OF False])
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>w. mdist (path_metric (T - s) :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (prebase s T w) a) \<in> borel_measurable ?B"
-      by (rule mdist_measurable_of_eval[OF Ts into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF Ts into ev])
 qed
 text \<open>Hence clause (i) for the kernel: re-based, the conditional law is a
   probability measure on the \<open>(T - \<theta>)\<close>-path space.\<close>
@@ -1821,7 +1654,9 @@ lemma padd_eval_split:
     and "snd (padd T p' w t) = snd (p' t) + snd (w t)"
   by (simp_all add: padd_apply[OF t])
 
-text \<open>The stopping-time analogue of @{thm [source] pexit_pglue_dpp}.  Because
+text \<open>The pathwise dynamic programming bound, at the value \<open>r\<close> a stopping
+  time takes on the path.  The two summands are the paper's \<open>r \<and> \<tau>\<^sub>K\<close>
+  and \<open>v(X\<^sub>r) \<sqdot> 1\<^sub>{r \<le> \<tau>\<^sub>K}\<close>.  Because
   \<^const>\<open>padd\<close> keeps both factors on the original clock, the
   continuation's contribution is stated as a bound on \<open>pexit T K\<close> of the
   delayed path \<open>s \<mapsto> fst (p' r) + fst (w s)\<close> --- already including the

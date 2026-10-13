@@ -800,6 +800,33 @@ proof (rule iexit_val_eq_exit_val_bounded[OF k L _ Kc KB])
   then show "(rK * rK - x \<bullet> x) / real (CARD('n) - k) < T" using big by simp
 qed
 
+text \<open>Such a horizon always exists, so for a bounded closed \<open>K\<close> the uncapped
+  value function is a capped one, as a function; the horizon also clears the
+  doubled scale \<open>2r\<^sup>2/(n-k)\<close> that the cap-inertness argument needs.\<close>
+
+corollary iexit_val_eq_exit_val_horizon:
+  fixes K :: "(real^'n::finite) set" and rK :: real
+  assumes k: "k < CARD('n)" and L: "1 \<le> L" and Kc: "closed K"
+    and KB: "K \<subseteq> cball 0 rK"
+  obtains T where "0 < T" and "rK * rK / real (CARD('n) - k) < T"
+    and "2 * (rK * rK) / real (CARD('n) - k) < T"
+    and "iexit_val k L K = exit_val k L T K"
+proof -
+  have nk: "0 < real (CARD('n) - k)" using k by simp
+  define T where "T = 2 * (rK * rK) / real (CARD('n) - k) + 1"
+  have le: "rK * rK / real (CARD('n) - k) \<le> 2 * (rK * rK) / real (CARD('n) - k)"
+    using nk by (intro divide_right_mono) auto
+  have ge: "0 \<le> 2 * (rK * rK) / real (CARD('n) - k)" using nk by simp
+  have T0: "0 < T" unfolding T_def by (rule add_nonneg_pos[OF ge]) simp
+  have T1: "rK * rK / real (CARD('n) - k) < T"
+    unfolding T_def by (rule order.strict_trans1[OF le less_add_one])
+  have T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
+    unfolding T_def by (rule less_add_one)
+  have "iexit_val k L K = exit_val k L T K"
+    by (rule ext) (rule iexit_val_eq_exit_val_ball[OF k L Kc KB T1])
+  then show ?thesis by (rule that[OF T0 T1 T2])
+qed
+
 (*<*)
 end
 (*>*)

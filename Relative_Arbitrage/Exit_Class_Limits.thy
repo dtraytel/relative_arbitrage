@@ -12,29 +12,24 @@ section \<open>The martingale clauses of Lemma 2.3\<close>
 
 text \<open>This section proves the martingale clauses of Lemma 2.3 for a weak
   limit of the paper's class, combining the class machinery of
-  @{theory Relative_Arbitrage.Exit_Class} with the law machinery of the path-space
-  libraries (\<open>martingale_bounded_test\<close>, \<open>metric_measure_eqI_bounded_cts\<close>).
+  @{theory Relative_Arbitrage.Exit_Class} with the generic weak-limit
+  martingale theorem @{thm [source] martingale_F_limit} of
+  @{theory Relative_Arbitrage.Pair_Path_Laws}.
 
   Unlike the two closed path conditions of (1.7), which pass to a weak
   limit directly (\<open>Exit_Class.exit_class_start_limit\<close>,
   \<open>\<dots>_diffquot_limit\<close>), the martingale clauses are statements about
   integrals against past-measurable test functions, and only bounded
-  continuous tests survive a weak limit.  The proof states the identity at
-  a class member against a bounded continuous test, passes it through the
-  weak limit using the uniform \<open>L\<^sup>2\<close> bound, upgrades from continuous tests
-  to past events, and reassembles a martingale via the set-integral
-  characterisation.
+  continuous tests survive a weak limit.  @{thm [source] martingale_F_limit}
+  carries the martingale property of a continuous functional \<open>F\<close> of the
+  path through a weak limit, given a uniform \<open>L\<^sup>2\<close> bound on \<open>F\<close>; the
+  coordinate clause is the case \<open>F = (\<lambda>p. fst p $ i)\<close>, and the compensated
+  clause below is the case of an entry of \<open>outerp X - Y\<close>.  The paper's class
+  admits no clamp: its processes are neither stopped nor bounded, so the
+  test functional is continuous but unbounded, and the transfer runs through
+  the uniform \<open>L\<^sup>2\<close> bound (\<open>Exit_Class.exit_class_sq_mean_le\<close>).\<close>
 
-  The test function must be measurable for the natural filtration of the
-  coordinate process, while it is naturally a function of the restricted
-  path.  The two agree because \<open>\<sigma>(restriction) \<subseteq> \<F>\<^sub>s\<close>, which is exactly
-  what \<open>Path_Space.pathify_measurable\<close> proves: the restriction map is the
-  path map of the coordinate process on \<open>{0..s}\<close>, and that theorem reduces
-  a ball of the path metric to countably many evaluation conditions.\<close>
-
-subsection \<open>The restriction map is measurable for the natural filtration\<close>
-
-
+subsection \<open>The coordinate clause\<close>
 
 lemma exit_class_X_martingale:
   fixes Q :: "('n::finite pairpath) measure"
@@ -50,80 +45,6 @@ lemma exit_class_coord_martingale:
       (\<lambda>u \<omega>. fst (\<omega> (min u T)) $ i)"
   by (rule martingale_vec_nth[OF exit_class_X_martingale[OF Q]])
 
-theorem exit_class_martingale_test:
-  fixes Q :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-  assumes Q: "Q \<in> exit_class k L T x"
-    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and hm: "h \<in> borel_measurable (path_borel s :: ('n pairpath) measure)"
-    and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
-  shows "(\<integral>\<omega>. h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i) \<partial>Q) = 0"
-proof -
-  let ?F = "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)"
-  \<comment> \<open>the class's martingale clause STOPS the process at \<open>T\<close> (it must ---
-      see the note at \<open>exit_class\<close>), and on \<open>[0,T]\<close> the stopping is
-      invisible, which is what the two \<open>min\<close> rewrites below record.\<close>
-  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ i"
-  let ?Z = "\<lambda>\<omega> :: 'n pairpath. h (restrict \<omega> {0..s})"
-  have sT: "s \<le> T" using ts tT by simp
-  have t0: "0 \<le> t" using st ts by simp
-  have mt: "min t T = t" using tT by simp
-  have ms: "min s T = s" using sT by simp
-  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
-  have MY: "martingale Q ?F 0 ?Y" by (rule exit_class_coord_martingale[OF Q])
-  then interpret MY: martingale Q ?F 0 ?Y .
-  have Zm: "?Z \<in> borel_measurable (?F s)"
-    by (rule past_test_measurable_natural_filtration
-        [OF exit_class_sets[OF Q] st sT hm])
-  have ZM: "?Z \<in> borel_measurable Q"
-    by (rule measurable_from_subalg[OF MY.subalgebras[OF st] Zm])
-  have prod_int: "integrable Q (\<lambda>\<omega>. ?Z \<omega> * ?Y u \<omega>)" if u: "0 \<le> u" for u
-  proof (rule Bochner_Integration.integrable_bound)
-    show "integrable Q (\<lambda>\<omega>. \<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>)"
-      by (intro integrable_mult_right Bochner_Integration.integrable_abs
-          MY.integrable[OF u])
-    show "(\<lambda>\<omega>. ?Z \<omega> * ?Y u \<omega>) \<in> borel_measurable Q"
-      using ZM borel_measurable_integrable[OF MY.integrable[OF u]]
-      by measurable
-    show "AE \<omega> in Q. norm (?Z \<omega> * ?Y u \<omega>) \<le> norm (\<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>)"
-    proof (intro AE_I2)
-      fix \<omega> :: "'n pairpath"
-      have "\<bar>?Z \<omega>\<bar> \<le> \<bar>B\<bar>" using hb[of "restrict \<omega> {0..s}"] by simp
-      then have "\<bar>?Z \<omega> * ?Y u \<omega>\<bar> \<le> \<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>"
-        by (simp add: abs_mult mult_right_mono)
-      then show "norm (?Z \<omega> * ?Y u \<omega>) \<le> norm (\<bar>B\<bar> * \<bar>?Y u \<omega>\<bar>)" by simp
-    qed
-  qed
-  have int_t: "integrable Q (\<lambda>\<omega>. ?Z \<omega> * ?Y t \<omega>)" by (rule prod_int[OF t0])
-  have int_s: "integrable Q (\<lambda>\<omega>. ?Z \<omega> * ?Y s \<omega>)" by (rule prod_int[OF st])
-  have eqts: "(\<integral>\<omega>. ?Z \<omega> * ?Y t \<omega> \<partial>Q) = (\<integral>\<omega>. ?Z \<omega> * ?Y s \<omega> \<partial>Q)"
-    by (rule martingale_bounded_test[OF MY st ts Zm int_t int_s])
-  have "(\<integral>\<omega>. ?Z \<omega> * (?Y t \<omega> - ?Y s \<omega>) \<partial>Q)
-      = (\<integral>\<omega>. ?Z \<omega> * ?Y t \<omega> \<partial>Q) - (\<integral>\<omega>. ?Z \<omega> * ?Y s \<omega> \<partial>Q)"
-    using Bochner_Integration.integral_diff[OF int_t int_s]
-    by (simp add: right_diff_distrib)
-  then show ?thesis using eqts mt ms by simp
-qed
-
-subsection \<open>The test functional is continuous on path space\<close>
-
-text \<open>The paper's class admits no clamp: its processes are neither stopped nor bounded, so
-  the test functional is continuous but unbounded, and the transfer runs
-  through the uniform \<open>L\<^sup>2\<close> bound
-  (\<open>Exit_Class.exit_class_sq_mean_le\<close>) rather than through
-  boundedness.\<close>
-
-
-
-
-
-
-
-
-
-
-
-
-
 lemma exit_class_sq_nn_bound:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
@@ -133,377 +54,6 @@ lemma exit_class_sq_nn_bound:
   by (rule pair_law_coord_sq_nn_bound[OF exit_class_sets[OF Q] u
         exit_class_sq_integrable[OF T L Q u]
         exit_class_sq_mean_le[OF T L Q u]])
-
-
-theorem exit_class_martingale_test_limit:
-  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and mem: "\<And>m. Qm m \<in> exit_class k L T x"
-    and wc: "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and hc: "continuous_map
-        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
-    and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
-  shows "(\<integral>\<omega>. h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i) \<partial>Q) = 0"
-proof -
-  let ?f = "\<lambda>\<omega> :: 'n pairpath.
-      h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i)"
-  let ?C = "(x $ i)\<^sup>2 + real CARD('n) * L * T"
-  have sT: "s \<le> T" using ts tT by simp
-  have sI: "s \<in> {0..T}" using st sT by simp
-  have tI: "t \<in> {0..T}" using st ts tT by simp
-  have C0: "0 \<le> ?C" using L T by simp
-  have B0: "0 \<le> B" by (rule order_trans[OF abs_ge_zero hb])
-  have Pm: "prob_space (Qm m)" for m by (rule exit_class_prob[OF mem])
-  have fmm: "finite_measure (Qm m)" for m
-    using Pm by (simp add: prob_space_def)
-  have fmQ: "finite_measure Q" using prob by (simp add: prob_space_def)
-  have setsm: "sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)" for m
-    by (rule exit_class_sets[OF mem])
-  have nnm: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>(Qm m)) \<le> ennreal ?C"
-    if u: "u \<in> {0..T}" for u m
-    by (rule exit_class_sq_nn_bound[OF T L mem u])
-  have nnQ: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>Q) \<le> ennreal ?C"
-    if u: "u \<in> {0..T}" for u
-    by (rule pair_law_limit_sq_nn_bound[OF wc u C0 nnm[OF u]])
-  have intm: "integrable (Qm m) ?f" for m
-    by (rule pair_test_integrable[OF Pm setsm st ts tT hc hb C0
-          nnm[OF sI] nnm[OF tI]])
-  have intQ: "integrable Q ?f"
-    by (rule pair_test_integrable[OF prob setsQ st ts tT hc hb C0
-          nnQ[OF sI] nnQ[OF tI]])
-  have lim: "(\<lambda>m. \<integral>\<omega>. ?f \<omega> \<partial>(Qm m)) \<longlonglongrightarrow> (\<integral>\<omega>. ?f \<omega> \<partial>Q)"
-  proof (rule weak_conv_integral_of_L2_bound)
-    show "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))" by (rule wc)
-    show "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
-        euclideanreal ?f"
-      by (rule pair_test_functional_cont[OF st sT tI hc])
-    show "\<And>m. finite_measure (Qm m)" by (rule fmm)
-    show "finite_measure Q" by (rule fmQ)
-    show "\<And>m. integrable (Qm m) ?f" by (rule intm)
-    show "integrable Q ?f" by (rule intQ)
-    show "\<And>m R. integrable (Qm m) (\<lambda>w. max (- R) (min R (?f w)))"
-      by (rule clamp_integrable[OF fmm borel_measurable_integrable[OF intm]])
-    show "\<And>R. integrable Q (\<lambda>w. max (- R) (min R (?f w)))"
-      by (rule clamp_integrable[OF fmQ borel_measurable_integrable[OF intQ]])
-    show "\<And>m R. integrable (Qm m)
-        (\<lambda>w. \<bar>?f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (?f w))"
-      by (rule tail_integrable[OF intm])
-    show "\<And>R. integrable Q (\<lambda>w. \<bar>?f w\<bar> * indicat_real {z. R < \<bar>z\<bar>} (?f w))"
-      by (rule tail_integrable[OF intQ])
-    show "0 \<le> 4 * B\<^sup>2 * ?C" using C0 by simp
-    show "\<And>m. (\<integral>w. (?f w)\<^sup>2 \<partial>(Qm m)) \<le> 4 * B\<^sup>2 * ?C"
-      by (rule pair_test_sq_bound(2)[OF Pm setsm st ts tT hc hb C0
-            nnm[OF sI] nnm[OF tI]])
-    show "(\<integral>w. (?f w)\<^sup>2 \<partial>Q) \<le> 4 * B\<^sup>2 * ?C"
-      by (rule pair_test_sq_bound(2)[OF prob setsQ st ts tT hc hb C0
-            nnQ[OF sI] nnQ[OF tI]])
-    show "\<And>m. integrable (Qm m) (\<lambda>w. (?f w)\<^sup>2)"
-      by (rule pair_test_sq_bound(1)[OF Pm setsm st ts tT hc hb C0
-            nnm[OF sI] nnm[OF tI]])
-    show "integrable Q (\<lambda>w. (?f w)\<^sup>2)"
-      by (rule pair_test_sq_bound(1)[OF prob setsQ st ts tT hc hb C0
-            nnQ[OF sI] nnQ[OF tI]])
-  qed
-  have hm: "h \<in> borel_measurable (path_borel s :: ('n pairpath) measure)"
-    using continuous_map_measurable[OF hc] by (simp add: borel_of_euclidean)
-  have zero: "(\<integral>\<omega>. ?f \<omega> \<partial>(Qm m)) = 0" for m
-    by (rule exit_class_martingale_test[OF mem st ts tT hm hb])
-  have z: "(\<lambda>m. \<integral>\<omega>. ?f \<omega> \<partial>(Qm m)) \<longlonglongrightarrow> 0" using zero by simp
-  show ?thesis by (rule tendsto_unique[OF _ lim z]) simp
-qed
-
-subsection \<open>From continuous tests to past events\<close>
-
-text \<open>The monotone-class step splits the increment into positive and
-  negative parts, pushes each forward through the restriction map as a
-  density, and uses that the limit identity says the two image measures
-  integrate every bounded continuous function alike.
-  \<open>Path_Tightness.metric_measure_eqI_bounded_cts\<close> then makes the two
-  measures equal, so they agree on every past event.
-
-  That engine supplies tests bounded only on the topspace, whereas
-  \<open>exit_class_martingale_test_limit\<close> asks for a global bound;
-  composing with \<open>rclamp\<close> repairs it, since the clamp is invisible where
-  the bound already holds.\<close>
-
-
-lemma exit_class_limit_sq_nn:
-  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and mem: "\<And>m. Qm m \<in> exit_class k L T x"
-    and wc: "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    and u: "u \<in> {0..T}"
-  shows "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>Q)
-      \<le> ennreal ((x $ i)\<^sup>2 + real CARD('n) * L * T)"
-proof -
-  have C0: "0 \<le> (x $ i)\<^sup>2 + real CARD('n) * L * T" using L T by simp
-  show ?thesis
-    by (rule pair_law_limit_sq_nn_bound[OF wc u C0
-          exit_class_sq_nn_bound[OF T L mem u]])
-qed
-
-lemma exit_class_limit_increment_integrable:
-  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and mem: "\<And>m. Qm m \<in> exit_class k L T x"
-    and wc: "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-  shows "integrable Q (\<lambda>\<omega>. fst (\<omega> t) $ i - fst (\<omega> s) $ i)"
-proof -
-  have sT: "s \<le> T" using ts tT by simp
-  have sI: "s \<in> {0..T}" using st sT by simp
-  have tI: "t \<in> {0..T}" using st ts tT by simp
-  have C0: "0 \<le> (x $ i)\<^sup>2 + real CARD('n) * L * T" using L T by simp
-  have onec: "continuous_map
-      (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal
-      (\<lambda>_. 1 :: real)" by simp
-  have one_b: "\<And>g :: 'n pairpath. \<bar>(\<lambda>_. 1 :: real) g\<bar> \<le> 1" by simp
-  have "integrable Q (\<lambda>\<omega>. (\<lambda>_. 1 :: real) (restrict \<omega> {0..s})
-      * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))"
-    by (rule pair_test_integrable[OF prob setsQ st ts tT onec one_b C0
-          exit_class_limit_sq_nn[OF T L mem wc sI]
-          exit_class_limit_sq_nn[OF T L mem wc tI]])
-  then show ?thesis by simp
-qed
-
-theorem exit_class_martingale_event_limit:
-  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and mem: "\<And>m. Qm m \<in> exit_class k L T x"
-    and wc: "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and Bs: "Bs \<in> sets (path_borel s :: ('n pairpath) measure)"
-  shows "(\<integral>\<omega>. indicat_real Bs (restrict \<omega> {0..s})
-      * (fst (\<omega> t) $ i - fst (\<omega> s) $ i) \<partial>Q) = 0"
-proof -
-  let ?PT = "mtopology_of (path_metric T :: ('n pairpath) metric)"
-  let ?PS = "mtopology_of (path_metric s :: ('n pairpath) metric)"
-  let ?g = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t) $ i - fst (\<omega> s) $ i"
-  let ?p = "\<lambda>\<omega> :: 'n pairpath. restrict \<omega> {0..s}"
-  have sT: "s \<le> T" using ts tT by simp
-  have tI: "t \<in> {0..T}" using st ts tT by simp
-  have sI: "s \<in> {0..T}" using st sT by simp
-  have finQ: "finite_measure Q" using prob by (simp add: prob_space_def)
-  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsQ])
-  have gint: "integrable Q ?g"
-    by (rule exit_class_limit_increment_integrable
-        [OF T L mem wc prob setsQ st ts tT])
-  have gmeasQ: "?g \<in> borel_measurable Q"
-    by (rule borel_measurable_integrable[OF gint])
-  have rc: "continuous_map ?PT ?PS ?p"
-    by (rule Lipschitz_continuous_imp_continuous_map
-        [OF Lipschitz_restrict_path_metric[OF st sT]])
-  have pim: "?p \<in> borel_of ?PT \<rightarrow>\<^sub>M borel_of ?PS"
-    by (rule continuous_map_measurable[OF rc])
-  have pimQ: "?p \<in> Q \<rightarrow>\<^sub>M borel_of ?PS"
-    using pim measurable_cong_sets[OF setsQ refl] by blast
-  define gp where "gp = (\<lambda>\<omega> :: 'n pairpath. max (?g \<omega>) 0)"
-  define gm where "gm = (\<lambda>\<omega> :: 'n pairpath. max (- ?g \<omega>) 0)"
-  have gp0: "\<And>\<omega>. 0 \<le> gp \<omega>" and gm0: "\<And>\<omega>. 0 \<le> gm \<omega>"
-    unfolding gp_def gm_def by simp_all
-  have gdiff: "gp \<omega> - gm \<omega> = ?g \<omega>" for \<omega>
-    unfolding gp_def gm_def by (simp add: max_def)
-  have gpm: "gp \<in> borel_measurable Q" and gmm: "gm \<in> borel_measurable Q"
-    unfolding gp_def gm_def
-    by (intro borel_measurable_max gmeasQ borel_measurable_const
-        borel_measurable_uminus)+
-  have gpi: "integrable Q gp" and gmi: "integrable Q gm"
-    unfolding gp_def gm_def
-    by (rule Bochner_Integration.integrable_max
-        [OF gint Bochner_Integration.integrable_zero],
-        rule Bochner_Integration.integrable_max
-        [OF Bochner_Integration.integrable_minus[OF gint]
-            Bochner_Integration.integrable_zero])
-  define N1 where "N1 = distr (density Q (\<lambda>\<omega>. ennreal (gp \<omega>))) (borel_of ?PS) ?p"
-  define N2 where "N2 = distr (density Q (\<lambda>\<omega>. ennreal (gm \<omega>))) (borel_of ?PS) ?p"
-  have sN1: "sets N1 = sets (borel_of ?PS)"
-    and sN2: "sets N2 = sets (borel_of ?PS)"
-    unfolding N1_def N2_def by simp_all
-  have pdm: "?p \<in> density Q (\<lambda>\<omega>. ennreal (w \<omega>)) \<rightarrow>\<^sub>M borel_of ?PS" for w
-    using pimQ measurable_cong_sets[OF sets_density refl] by blast
-  have push: "(\<integral>y. u y \<partial>(distr (density Q (\<lambda>\<omega>. ennreal (w \<omega>)))
-        (borel_of ?PS) ?p)) = (\<integral>\<omega>. u (?p \<omega>) * w \<omega> \<partial>Q)"
-    if um: "u \<in> borel_measurable (borel_of ?PS)"
-    and wm: "w \<in> borel_measurable Q" and w0: "\<And>\<omega>. 0 \<le> w \<omega>" for u w
-  proof -
-    have cmp: "(\<lambda>\<omega>. u (?p \<omega>)) \<in> borel_measurable Q"
-      using measurable_comp[OF pimQ um] by (simp add: o_def)
-    have "(\<integral>y. u y \<partial>(distr (density Q (\<lambda>\<omega>. ennreal (w \<omega>))) (borel_of ?PS) ?p))
-        = (\<integral>\<omega>. u (?p \<omega>) \<partial>(density Q (\<lambda>\<omega>. ennreal (w \<omega>))))"
-      by (rule Bochner_Integration.integral_distr[OF pdm um])
-    also have "\<dots> = (\<integral>\<omega>. u (?p \<omega>) * w \<omega> \<partial>Q)"
-      by (subst integral_density)
-        (use cmp wm w0 in \<open>auto simp: mult.commute\<close>)
-    finally show ?thesis .
-  qed
-  have finw: "finite_measure (distr (density Q (\<lambda>\<omega>. ennreal (w \<omega>)))
-      (borel_of ?PS) ?p)"
-    if wm: "w \<in> borel_measurable Q" and w0: "\<And>\<omega>. 0 \<le> w \<omega>"
-    and wi: "integrable Q w" for w
-  proof (rule finite_measureI)
-    let ?D = "density Q (\<lambda>\<omega>. ennreal (w \<omega>))"
-    have sp: "space (distr ?D (borel_of ?PS) ?p) = space (borel_of ?PS)" by simp
-    have pre: "?p -` space (borel_of ?PS) \<inter> space ?D = space Q"
-      using measurable_space[OF pdm[of w]] by auto
-    have "emeasure (distr ?D (borel_of ?PS) ?p)
-        (space (distr ?D (borel_of ?PS) ?p))
-        = emeasure ?D (?p -` space (borel_of ?PS) \<inter> space ?D)"
-      unfolding sp by (intro emeasure_distr pdm) (metis sets.top space_borel_of)
-    also have "\<dots> = emeasure ?D (space Q)" unfolding pre ..
-    also have "\<dots> = (\<integral>\<^sup>+\<omega>. ennreal (w \<omega>) * indicator (space Q) \<omega> \<partial>Q)"
-      by (intro emeasure_density measurable_compose[OF wm measurable_ennreal]) auto
-    also have "\<dots> = (\<integral>\<^sup>+\<omega>. ennreal (w \<omega>) \<partial>Q)"
-      by (intro nn_integral_cong) (simp add: indicator_def)
-    also have "\<dots> = ennreal (\<integral>\<omega>. w \<omega> \<partial>Q)"
-      by (rule nn_integral_eq_integral[OF wi]) (use w0 in simp)
-    also have "\<dots> < \<infinity>" by simp
-    finally show "emeasure (distr ?D (borel_of ?PS) ?p)
-        (space (distr ?D (borel_of ?PS) ?p)) \<noteq> \<infinity>" by simp
-  qed
-  have finN1: "finite_measure N1" unfolding N1_def by (rule finw[OF gpm gp0 gpi])
-  have finN2: "finite_measure N2" unfolding N2_def by (rule finw[OF gmm gm0 gmi])
-  have NEQ: "N1 = N2"
-  proof (rule metric_measure_eqI_bounded_cts[OF sN1 sN2 finN1 finN2])
-    fix u :: "'n pairpath \<Rightarrow> real"
-    assume uc: "continuous_map ?PS euclideanreal u"
-    assume ub: "\<exists>B. \<forall>y\<in>topspace ?PS. \<bar>u y\<bar> \<le> B"
-    then obtain B where B: "\<And>y. y \<in> topspace ?PS \<Longrightarrow> \<bar>u y\<bar> \<le> B" by blast
-    define B' where "B' = max B 0"
-    have B'0: "0 \<le> B'" unfolding B'_def by simp
-    let ?u = "\<lambda>y. rclamp B' (u y)"
-    have ucl: "continuous_map ?PS euclideanreal ?u"
-      using continuous_map_compose[OF uc rclamp_cont] by (simp add: o_def)
-    have ubd: "\<And>y. \<bar>?u y\<bar> \<le> B'" by (rule rclamp_bound[OF B'0])
-    have uagree: "?u y = u y" if y: "y \<in> mspace (path_metric s :: ('n pairpath) metric)"
-      for y
-    proof (rule rclamp_id)
-      have "\<bar>u y\<bar> \<le> B" using B y by simp
-      then show "\<bar>u y\<bar> \<le> B'" unfolding B'_def by simp
-    qed
-    have um: "u \<in> borel_measurable (borel_of ?PS)"
-      using continuous_map_measurable[OF uc] by (simp add: borel_of_euclidean)
-    have ucm: "?u \<in> borel_measurable (borel_of ?PS)"
-      using continuous_map_measurable[OF ucl] by (simp add: borel_of_euclidean)
-    have same: "(\<integral>y. u y \<partial>Nj) = (\<integral>y. ?u y \<partial>Nj)"
-      if sj: "sets Nj = sets (borel_of ?PS)" for Nj
-    proof (rule integral_cong_AE)
-      show "u \<in> borel_measurable Nj"
-        using um measurable_cong_sets[OF sj refl] by blast
-      show "?u \<in> borel_measurable Nj"
-        using ucm measurable_cong_sets[OF sj refl] by blast
-      have "space Nj = mspace (path_metric s :: ('n pairpath) metric)"
-        using sets_eq_imp_space_eq[OF sj] by (simp add: space_borel_of)
-      then show "AE y in Nj. u y = ?u y"
-        by (intro AE_I2) (simp add: uagree)
-    qed
-    have zero: "(\<integral>\<omega>. ?u (?p \<omega>) * ?g \<omega> \<partial>Q) = 0"
-      by (rule exit_class_martingale_test_limit
-          [OF T L mem wc prob setsQ st ts tT ucl ubd])
-    have i1: "integrable Q (\<lambda>\<omega>. ?u (?p \<omega>) * gp \<omega>)"
-      and i2: "integrable Q (\<lambda>\<omega>. ?u (?p \<omega>) * gm \<omega>)"
-    proof -
-      have cmp: "(\<lambda>\<omega>. ?u (?p \<omega>)) \<in> borel_measurable Q"
-        using measurable_comp[OF pimQ ucm] by (simp add: o_def)
-      show "integrable Q (\<lambda>\<omega>. ?u (?p \<omega>) * gp \<omega>)"
-        by (rule Bochner_Integration.integrable_bound
-            [OF integrable_mult_right[OF gpi, of B'] _ ])
-          (use cmp gpm ubd gp0 B'0 in
-            \<open>auto intro!: borel_measurable_times
-              simp: abs_mult mult_right_mono\<close>)
-      show "integrable Q (\<lambda>\<omega>. ?u (?p \<omega>) * gm \<omega>)"
-        by (rule Bochner_Integration.integrable_bound
-            [OF integrable_mult_right[OF gmi, of B'] _ ])
-          (use cmp gmm ubd gm0 B'0 in
-            \<open>auto intro!: borel_measurable_times
-              simp: abs_mult mult_right_mono\<close>)
-    qed
-    have "(\<integral>y. ?u y \<partial>N1) - (\<integral>y. ?u y \<partial>N2)
-        = (\<integral>\<omega>. ?u (?p \<omega>) * gp \<omega> \<partial>Q) - (\<integral>\<omega>. ?u (?p \<omega>) * gm \<omega> \<partial>Q)"
-      unfolding N1_def N2_def
-      by (simp add: push[OF ucm gpm gp0] push[OF ucm gmm gm0])
-    also have "\<dots> = (\<integral>\<omega>. ?u (?p \<omega>) * gp \<omega> - ?u (?p \<omega>) * gm \<omega> \<partial>Q)"
-      by (rule Bochner_Integration.integral_diff[OF i1 i2, symmetric])
-    also have "\<dots> = (\<integral>\<omega>. ?u (?p \<omega>) * ?g \<omega> \<partial>Q)"
-    proof -
-      have fe: "(\<lambda>\<omega>. ?u (?p \<omega>) * gp \<omega> - ?u (?p \<omega>) * gm \<omega>)
-          = (\<lambda>\<omega>. ?u (?p \<omega>) * ?g \<omega>)"
-        by (rule ext) (simp add: gdiff[symmetric] right_diff_distrib)
-      show ?thesis by (simp only: fe)
-    qed
-    also have "\<dots> = 0" by (rule zero)
-    finally have "(\<integral>y. ?u y \<partial>N1) = (\<integral>y. ?u y \<partial>N2)" by simp
-    then show "(\<integral>y. u y \<partial>N1) = (\<integral>y. u y \<partial>N2)"
-      using same[OF sN1] same[OF sN2] by simp
-  qed
-  \<comment> \<open>the two measures agree, so they integrate the indicator alike; the
-      difference of the two densities is the increment.\<close>
-  have iB1: "integrable Q (\<lambda>\<omega>. indicat_real Bs (?p \<omega>) * gp \<omega>)"
-    and iB2: "integrable Q (\<lambda>\<omega>. indicat_real Bs (?p \<omega>) * gm \<omega>)"
-  proof -
-    have cmp: "(\<lambda>\<omega>. indicat_real Bs (?p \<omega>)) \<in> borel_measurable Q"
-      using measurable_comp[OF pimQ borel_measurable_indicator[OF Bs]]
-      by (simp add: o_def)
-    show "integrable Q (\<lambda>\<omega>. indicat_real Bs (?p \<omega>) * gp \<omega>)"
-      by (rule Bochner_Integration.integrable_bound[OF gpi _])
-        (use cmp gpm gp0 in
-          \<open>auto intro!: borel_measurable_times simp: indicator_def\<close>)
-    show "integrable Q (\<lambda>\<omega>. indicat_real Bs (?p \<omega>) * gm \<omega>)"
-      by (rule Bochner_Integration.integrable_bound[OF gmi _])
-        (use cmp gmm gm0 in
-          \<open>auto intro!: borel_measurable_times simp: indicator_def\<close>)
-  qed
-  have "(\<integral>\<omega>. indicat_real Bs (?p \<omega>) * gp \<omega> \<partial>Q)
-      = (\<integral>y. indicat_real Bs y \<partial>N1)"
-    unfolding N1_def
-    by (rule push[OF borel_measurable_indicator[OF Bs] gpm gp0, symmetric])
-  also have "\<dots> = (\<integral>y. indicat_real Bs y \<partial>N2)" unfolding NEQ ..
-  also have "\<dots> = (\<integral>\<omega>. indicat_real Bs (?p \<omega>) * gm \<omega> \<partial>Q)"
-    unfolding N2_def
-    by (rule push[OF borel_measurable_indicator[OF Bs] gmm gm0])
-  finally have keq: "(\<integral>\<omega>. indicat_real Bs (?p \<omega>) * gp \<omega> \<partial>Q)
-      = (\<integral>\<omega>. indicat_real Bs (?p \<omega>) * gm \<omega> \<partial>Q)" .
-  have feB: "(\<lambda>\<omega>. indicat_real Bs (?p \<omega>) * gp \<omega>
-        - indicat_real Bs (?p \<omega>) * gm \<omega>)
-      = (\<lambda>\<omega>. indicat_real Bs (?p \<omega>) * ?g \<omega>)"
-    by (rule ext) (simp add: gdiff[symmetric] right_diff_distrib)
-  have "(\<integral>\<omega>. indicat_real Bs (?p \<omega>) * ?g \<omega> \<partial>Q)
-      = (\<integral>\<omega>. indicat_real Bs (?p \<omega>) * gp \<omega> - indicat_real Bs (?p \<omega>) * gm \<omega> \<partial>Q)"
-    by (simp only: feB)
-  also have "\<dots> = (\<integral>\<omega>. indicat_real Bs (?p \<omega>) * gp \<omega> \<partial>Q)
-      - (\<integral>\<omega>. indicat_real Bs (?p \<omega>) * gm \<omega> \<partial>Q)"
-    by (rule Bochner_Integration.integral_diff[OF iB1 iB2])
-  also have "\<dots> = 0" using keq by simp
-  finally show ?thesis .
-qed
-
-subsection \<open>The natural filtration is generated by the restriction map\<close>
-
-text \<open>The converse of \<open>restrict_measurable_natural_filtration\<close>: for
-  \<open>u \<le> s\<close> the evaluation \<open>\<omega> \<mapsto> \<omega> u\<close> factors through the restriction as
-  \<open>ev\<^sub>u \<circ> restrict\<close>, and \<open>ev\<^sub>u\<close> is continuous on the \<open>s\<close>-path space.  So
-  every event of \<open>\<FF>\<^sub>s\<close> is a past event, which turns
-  \<open>exit_class_martingale_event_limit\<close> into the set-integral
-  hypothesis of \<open>martingale_of_set_integral_eq\<close>.\<close>
-
-
-
 
 theorem exit_class_coord_martingale_limit:
   fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
@@ -516,115 +66,24 @@ theorem exit_class_coord_martingale_limit:
     and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min u T)) $ i)"
-proof -
-  let ?F = "natural_filtration Q 0 (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
-  let ?Y = "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T)) $ i"
-  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsQ])
-  have finQ: "finite_measure Q" using prob by (simp add: prob_space_def)
-  \<comment> \<open>\<open>stochastic_process\<close> is shadowed by \<open>Kolmogorov_Chentsov's\<close> homonym;
-      the Martingales one must be qualified by its theory name.\<close>
-  have SP: "Stochastic_Process.stochastic_process Q (0::real)
-      (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
-    by unfold_locales (rule pair_law_eval_measurable[OF setsQ])
-  interpret SF: finite_filtered_measure Q ?F 0
-    by (rule Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration[OF SP finQ])
-  have mI: "min u T \<in> {0..T}" if "0 \<le> u" for u using that T by simp
-  have iY: "integrable Q (?Y u)" if u: "0 \<le> u" for u
-  proof (rule integrable_of_sq_integrable[OF finQ])
-    show "?Y u \<in> borel_measurable Q"
-      by (rule pair_law_coord_measurable[OF setsQ mI[OF u]])
-    show "integrable Q (\<lambda>\<omega>. (?Y u \<omega>)\<^sup>2)"
-      by (rule pair_law_sq_integrable_of_nn_bound[OF setsQ mI[OF u]
-            exit_class_limit_sq_nn[OF T L mem wc mI[OF u]]])
-  qed
-  show ?thesis
-  proof (rule SF.martingale_of_set_integral_eq)
-    show "adapted_process Q ?F 0 ?Y"
-    proof (unfold_locales)
-      fix u :: real assume u: "0 \<le> u"
-      have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> ?F u \<rightarrow>\<^sub>M borel"
-        by (rule natural_filtration_eval) (use u T in auto)
-      show "?Y u \<in> borel_measurable (?F u)"
-        by (rule measurable_compose[OF ev fst_coord_borel])
-    qed
-    show "\<And>u. 0 \<le> u \<Longrightarrow> integrable Q (?Y u)" by (rule iY)
-    fix A and u v :: real
-    assume A: "A \<in> ?F u" and uv: "0 \<le> u" "u \<le> v"
-    have v0: "0 \<le> v" using uv by simp
-    have Ai: "A \<in> sets Q"
-      using A SF.subalgebras[OF uv(1)] by (auto simp: subalgebra_def)
-    have siY: "set_integrable Q A (?Y w)" if w: "0 \<le> w" for w
-      unfolding set_integrable_def
-      by (rule integrable_mult_indicator[OF Ai iY[OF w]])
-    show "set_lebesgue_integral Q A (?Y u) = set_lebesgue_integral Q A (?Y v)"
-    proof (cases "u \<le> T")
-      case False
-      then have "min u T = T" and "min v T = T" using uv by simp_all
-      then show ?thesis by simp
-    next
-      case True
-      have mu: "min u T = u" using True by simp
-      have tI: "min v T \<in> {0..T}" by (rule mI[OF v0])
-      have tT: "min v T \<le> T" using tI by simp
-      have ut: "u \<le> min v T" using True uv by simp
-      obtain Bs where Bs: "Bs \<in> sets (path_borel u :: ('n pairpath) measure)"
-        and Aeq: "A = (\<lambda>\<omega>. restrict \<omega> {0..u}) -` Bs \<inter> space Q"
-        using natural_filtration_eq_restrict_vimage[OF setsQ uv(1) True A]
-        by blast
-      have ind: "indicat_real A \<omega> = indicat_real Bs (restrict \<omega> {0..u})"
-        if "\<omega> \<in> space Q" for \<omega> using Aeq that by (simp add: indicator_def)
-      have zero: "(\<integral>\<omega>. indicat_real Bs (restrict \<omega> {0..u})
-          * (fst (\<omega> (min v T)) $ i - fst (\<omega> u) $ i) \<partial>Q) = 0"
-        by (rule exit_class_martingale_event_limit
-            [OF T L mem wc prob setsQ uv(1) ut tT Bs])
-      have mR: "(\<lambda>\<omega> :: 'n pairpath. indicat_real Bs (restrict \<omega> {0..u})
-            * (fst (\<omega> (min v T)) $ i - fst (\<omega> u) $ i)) \<in> borel_measurable Q"
-      proof -
-        have rm: "(\<lambda>\<omega> :: 'n pairpath. restrict \<omega> {0..u}) \<in> Q \<rightarrow>\<^sub>M
-            (path_borel u :: ('n pairpath) measure)"
-          using continuous_map_measurable
-            [OF Lipschitz_continuous_imp_continuous_map
-              [OF Lipschitz_restrict_path_metric[OF uv(1) True]]]
-            measurable_cong_sets[OF setsQ refl] by blast
-        have im: "(\<lambda>\<omega> :: 'n pairpath. indicat_real Bs (restrict \<omega> {0..u}))
-            \<in> borel_measurable Q"
-          by (rule measurable_compose[OF rm borel_measurable_indicator[OF Bs]])
-        have c1: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min v T)) $ i)
-            \<in> borel_measurable Q"
-          by (rule pair_law_coord_measurable[OF setsQ tI])
-        have c2: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u) $ i) \<in> borel_measurable Q"
-          using True uv(1) by (intro pair_law_coord_measurable[OF setsQ]) simp
-        show ?thesis by (intro borel_measurable_times im
-            borel_measurable_diff c1 c2)
-      qed
-      have mD: "(\<lambda>\<omega>. indicat_real A \<omega> *\<^sub>R ?Y v \<omega>
-          - indicat_real A \<omega> *\<^sub>R ?Y u \<omega>) \<in> borel_measurable Q"
-        using siY[OF v0] siY[OF uv(1)]
-        by (intro borel_measurable_diff)
-          (auto simp: set_integrable_def dest: borel_measurable_integrable)
-      have "(\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R ?Y v \<omega> \<partial>Q)
-          - (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R ?Y u \<omega> \<partial>Q)
-          = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R ?Y v \<omega>
-              - indicat_real A \<omega> *\<^sub>R ?Y u \<omega> \<partial>Q)"
-        using siY[OF v0] siY[OF uv(1)]
-        by (intro Bochner_Integration.integral_diff[symmetric])
-          (auto simp: set_integrable_def)
-      also have "\<dots> = (\<integral>\<omega>. indicat_real Bs (restrict \<omega> {0..u})
-          * (fst (\<omega> (min v T)) $ i - fst (\<omega> u) $ i) \<partial>Q)"
-      proof (rule integral_cong_AE[OF mD mR])
-        show "AE \<omega> in Q. indicat_real A \<omega> *\<^sub>R ?Y v \<omega>
-            - indicat_real A \<omega> *\<^sub>R ?Y u \<omega>
-            = indicat_real Bs (restrict \<omega> {0..u})
-              * (fst (\<omega> (min v T)) $ i - fst (\<omega> u) $ i)"
-          by (intro AE_I2) (simp add: ind mu right_diff_distrib)
-      qed
-      also have "\<dots> = 0" by (rule zero)
-      finally show ?thesis
-        unfolding set_lebesgue_integral_def by simp
-    qed
-  qed
-qed
+proof (rule martingale_F_limit
+    [where F = "\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p $ i"
+       and C = "(x $ i)\<^sup>2 + real CARD('n) * L * T"])
+  show "0 \<le> T" by (rule T)
+  show "continuous_on UNIV (\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p $ i)"
+    by (intro continuous_intros)
+  show "prob_space (Qm m)" for m by (rule exit_class_prob[OF mem])
+  show "sets (Qm m) = sets (path_borel T :: ('n pairpath) measure)" for m
+    by (rule exit_class_sets[OF mem])
+  show "martingale (Qm m) (natural_filtration (Qm m) 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)) $ i)" for m
+    by (rule exit_class_coord_martingale[OF mem])
+  show "0 \<le> (x $ i)\<^sup>2 + real CARD('n) * L * T"
+    by (intro add_nonneg_nonneg mult_nonneg_nonneg) (use T L in auto)
+  show "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>(Qm m))
+      \<le> ennreal ((x $ i)\<^sup>2 + real CARD('n) * L * T)" if "u \<in> {0..T}" for m u
+    by (rule exit_class_sq_nn_bound[OF T L mem that])
+qed (use wc prob setsQ in auto)
 
 corollary exit_class_X_martingale_limit:
   fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"

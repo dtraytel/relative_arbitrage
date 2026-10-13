@@ -2512,8 +2512,8 @@ lemma quartic_coeff_assoc:
   by (simp add: field_simps)
 
 text \<open>The Euler kernel varies only through the frozen matrix, so its
-  measurability reduces to continuity of \<open>S \<mapsto> law (sbmpair S T)\<close> in the
-  weak topology: pathwise \<open>S \<mapsto> sbmpair S T \<omega>\<close> is continuous into the path
+  measurability reduces to continuity in \<open>S\<close> of the law of \<open>(S W, t S S\<^sup>T)\<close> in the
+  weak topology: pathwise that pair is continuous in \<open>S\<close> into the path
   metric (the Brownian path is bounded on \<open>[0,T]\<close>), and dominated
   convergence does the rest --- no tightness, no uniform estimates.\<close>
 

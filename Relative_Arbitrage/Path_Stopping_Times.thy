@@ -213,36 +213,18 @@ proof -
     show ?thesis by (rule pstopped_mspace[OF t tT m])
   qed
   have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T (\<lambda>_. t) \<omega> s) \<in> borel_measurable ?F"
-    for s
-  proof (cases "s \<in> {0..T}")
-    case True
+    if True: "s \<in> {0..T}" for s
+  proof -
     have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min s t)) \<in> borel_measurable ?F"
       by (rule natural_filtration_eval) (use True t in auto)
     then show ?thesis by (simp add: pstopped_apply[OF True])
-  next
-    case False
-    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T (\<lambda>_. t) \<omega> s)
-        = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). undefined)"
-      by (rule ext) (rule pstopped_outside[OF False])
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>\<omega>. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (pstopped T (\<lambda>_. t) \<omega>) a) \<in> borel_measurable ?F"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
-text \<open>A criterion for landing in the path space.  The balls are a base, so
-  Borel measurability into \<open>?B\<^sub>T\<close> reduces to measurability of the distance to
-  each point, which the additive split can supply, since the distance is a
-  sup over time of evaluations and @{thm [source] path_eval_at_measurable_time}
-  makes each evaluation measurable.  The generator route through
-  @{thm [source] sets_natural_filtration_path} would work too, but needs no
-  handle on \<open>natural_filtration\<close>'s generators.\<close>
+text \<open>Stopping at a measurable time is measurable: by
+  @{thm [source] path_measurable_of_eval} it suffices that each evaluation is,
+  and @{thm [source] path_eval_at_measurable_time} makes it so.\<close>
 
 lemma pstopped_measurable:
   fixes \<theta> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}) \<Rightarrow> real"
@@ -258,9 +240,9 @@ proof -
   have into: "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     if "\<omega> \<in> space ?B" for \<omega>
     using that sp by (intro pstopped_mspace[OF th0 thT]) simp
-  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> \<omega> t) \<in> borel_measurable ?B" for t
-  proof (cases "t \<in> {0..T}")
-    case True
+  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> \<omega> t) \<in> borel_measurable ?B"
+    if True: "t \<in> {0..T}" for t
+  proof -
     have base: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min t (\<theta> \<omega>))) \<in> borel_measurable ?B"
     proof (rule path_eval_at_measurable_time
         [where X = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>" and g = "\<lambda>\<omega>. min t (\<theta> \<omega>)", OF T0])
@@ -276,29 +258,17 @@ proof -
         = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min t (\<theta> \<omega>)))"
       by (rule ext) (rule pstopped_apply[OF True])
     then show ?thesis using base by simp
-  next
-    case False
-    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> \<omega> t) = (\<lambda>\<omega>. undefined)"
-      by (rule ext) (rule pstopped_outside[OF False])
-    then show ?thesis by simp
   qed
-  show ?thesis
-  proof (rule measurable_into_path_metric[OF into])
-    fix a :: "(real \<Rightarrow> 'a \<times> 'b)"
-    assume am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    show "(\<lambda>\<omega>. mdist (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)
-        (pstopped T \<theta> \<omega>) a) \<in> borel_measurable ?B"
-      by (rule mdist_measurable_of_eval[OF T0 into am ev])
-  qed
+  show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
 subsection \<open>The regular conditional distribution, with both maps and horizons free\<close>
 
-text \<open>\<open>exit_class_rcd\<close> and
-  \<open>exit_class_rcd_ksemi\<close> use \<open>pcut r\<close> and \<open>pfut r T\<close> only
-  through their measurability, so nothing in either proof is specific to the
-  deterministic split.  Here they are with the two maps and the two horizons
-  free; the deterministic case is the instance \<open>u := r\<close>, \<open>v := T - r\<close>, and
+text \<open>The regular conditional distribution of the past given the future uses
+  the two maps only through their measurability, so it is proved
+  (\<open>path_rcd\<close>, \<open>path_rcd_ksemi\<close> in \<open>Path_Law_Pasting\<close>) with the two maps
+  and the two horizons free; the deterministic split
+  (\<open>exit_class_rcd\<close>, \<open>exit_class_rcd_ksemi\<close>) is the instance \<open>u := r\<close>, \<open>v := T - r\<close>, and
   the stopping-time case is \<open>u := v := T\<close>, \<open>\<phi>\<^sub>1 := pstopped T \<theta>\<close>,
   \<open>\<phi>\<^sub>2 := pafter T \<theta>\<close>.\<close>
 
@@ -842,6 +812,14 @@ proof -
   moreover have "min (min u T) (\<theta> \<omega>) = min (min u (\<theta> \<omega>)) T" by simp
   ultimately show ?thesis by simp
 qed
+
+text \<open>The \<open>\<sigma>\<close>-algebra of events before a stopping time, as a set of sets.
+  For a nonnegative stopping time of a filtration whose events are events of
+  \<open>M\<close>, it is the set of events of HOL-Probability's \<open>filtration.pre_sigma\<close>
+  (a sigma-generated measure, quantifying over all times); the counterparts of
+  \<open>sigma_algebra_pre_sigma_of\<close> and \<open>pre_sigma_of_mono\<close> there are
+  \<open>sigma_algebra_pre_sigma\<close> and \<open>mono_pre_sigma\<close>.  The set form is kept
+  because every use here quantifies over \<open>t \<ge> 0\<close> only.\<close>
 
 definition pre_sigma_of :: "'a measure \<Rightarrow> (real \<Rightarrow> 'a measure) \<Rightarrow> ('a \<Rightarrow> real)
     \<Rightarrow> 'a set set"
@@ -1585,7 +1563,7 @@ qed
 
 section \<open>The increment identity moves to the kernel\<close>
 
-text \<open>The stopping-time twin of \<open>pfut_rcd_X_increment_zero\<close>,
+text \<open>The stopping-time twin of \<open>pfut_rcd_F_increment_zero\<close>,
   stated once for an arbitrary real integrand \<open>h\<close> on the future factor
   together with the identity \<open>hP\<close> pulling it back to an increment of a
   horizon martingale \<open>Y\<close> of \<open>P\<close>.  Every clause of the class surviving the

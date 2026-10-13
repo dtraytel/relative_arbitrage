@@ -52,27 +52,6 @@ text \<open>Time-measurability is inherited by the continuation: the locale
   matrix type instead of \<open>real\<close>. Pin \<open>lborel :: real measure\<close> and
   annotate every binder.\<close>
 
-lemma pair_test_integrable:
-  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-  assumes P: "prob_space N"
-    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
-    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and hc: "continuous_map
-        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
-    and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
-    and C0: "0 \<le> C"
-    and Cs: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> s) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
-    and Ct: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> t) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
-  shows "integrable N
-      (\<lambda>\<omega>. h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))"
-proof -
-  have fm: "finite_measure N" using P by (simp add: prob_space_def)
-  show ?thesis
-    by (rule integrable_of_sq_integrable[OF fm
-          pair_test_measurable[OF setsN st ts tT hc]
-          pair_test_sq_bound(1)[OF P setsN st ts tT hc hb C0 Cs Ct]])
-qed
-
 subsection \<open>A second-moment bound in nn-integral form\<close>
 
 text \<open>Hence the continued volatility has all its difference quotients in the
@@ -86,17 +65,6 @@ text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>â‚€á
   \<open>0\<close>, has increments given by interval integrals, and --- for the
   continued density --- difference quotients in the constraint set for every
   \<open>0 \<le> s < t\<close>: the covariation half of \<open>exit_class\<close>.\<close>
-
-lemma pair_law_limit_sq_nn_bound:
-  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure"
-  assumes wc: "weak_conv_on Qm Q sequentially
-      (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    and u: "u \<in> {0..T}" and C0: "0 \<le> C"
-    and bnd: "\<And>m. (\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>(Qm m)) \<le> ennreal C"
-  shows "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>Q) \<le> ennreal C"
-  by (rule weak_conv_on_nn_integral_le
-      [OF wc pair_eval_coord_sq_cont[OF u] _ C0 bnd]) simp
 
 subsection \<open>The martingale identity passes to the weak limit\<close>
 
@@ -154,26 +122,6 @@ text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the c
   norm at most \<open>n\<sqdot>L\<close> (\<open>sconstraint_norm_le\<close>), so \<open>diffquot_lipschitz\<close>
   makes \<open>Y\<close> a.s. \<open>n\<sqdot>L\<close>-Lipschitz, leaving only the
   \<open>X\<close>-side Hoelder estimate.\<close>
-
-lemma nonbinding_horizon_ex:
-  fixes rK :: real
-  assumes k: "k < CARD('n::finite)"
-  shows "\<exists>T :: real. 0 < T \<and> rK * rK / real (CARD('n) - k) < T
-       \<and> 2 * (rK * rK) / real (CARD('n) - k) < T"
-proof -
-  have nk: "0 < real (CARD('n) - k)" using k by simp
-  define B :: real where "B = 2 * (rK * rK) / real (CARD('n) - k)"
-  have B0: "0 \<le> B" unfolding B_def using nk by simp
-  have le: "rK * rK / real (CARD('n) - k) \<le> B"
-    unfolding B_def using nk by (intro divide_right_mono) auto
-  show ?thesis
-  proof (intro exI[of _ "B + 1"] conjI)
-    show "0 < B + 1" using B0 by simp
-    show "rK * rK / real (CARD('n) - k) < B + 1" using le by simp
-    show "2 * (rK * rK) / real (CARD('n) - k) < B + 1"
-      unfolding B_def[symmetric] by simp
-  qed
-qed
 
 lemma standard_borel_path_metric:
   "standard_borel (path_borel U :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
@@ -1107,68 +1055,28 @@ proof -
   finally show ?thesis .
 qed
 
-lemma measurable_into_path_metric:
-  fixes f :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,banach} \<times> 'x::{polish_space,banach})"
-  assumes into: "\<And>w. w \<in> space M
-      \<Longrightarrow> f w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
-    and dm: "\<And>a. a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)
-      \<Longrightarrow> (\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a)
-          \<in> borel_measurable M"
-  shows "f \<in> M \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'b \<times> 'x)) measure)"
-proof -
-  let ?m = "path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric"
-  let ?B = "borel_of (mtopology_of ?m)"
-  interpret MS: Metric_space "mspace ?m" "mdist ?m"
-    by (rule Metric_space_mspace_mdist)
-  let ?balls = "{MS.mball a \<epsilon> | a \<epsilon>. a \<in> mspace ?m \<and> \<epsilon> > 0}"
-  have sub: "?balls \<subseteq> Pow (mspace ?m)" using MS.mball_subset_mspace by auto
-  have base: "base_in (mtopology_of ?m) ?balls"
-    using MS.mtopology_base_in_balls by (simp add: mtopology_of_def)
-  have "?B = sigma (topspace (mtopology_of ?m)) ?balls"
-    by (rule borel_of_second_countable'
-        [OF second_countable_path_metric base_is_subbase[OF base]])
-  then have setsB: "sets ?B = sigma_sets (mspace ?m) ?balls"
-    using sets_measure_of[OF sub] by simp
-  show ?thesis
-  proof (rule measurable_sigma_sets[OF setsB sub])
-    show "f \<in> space M \<rightarrow> mspace ?m" using into by blast
-  next
-    fix A assume "A \<in> ?balls"
-    then obtain a e where A: "A = MS.mball a e" and am: "a \<in> mspace ?m"
-      and epos: "e > 0" by blast
-    have ball: "(\<omega> \<in> MS.mball a e) = (\<omega> \<in> mspace ?m \<and> mdist ?m \<omega> a < e)"
-      for \<omega> :: "(real \<Rightarrow> 'b \<times> 'x)"
-      using am by (simp only: MS.in_mball MS.commute conj_commute simp_thms)
-    have "f -` A \<inter> space M = {w \<in> space M. mdist ?m (f w) a < e}"
-      unfolding A using into by (auto simp only: ball vimage_eq Int_iff)    then show "f -` A \<inter> space M \<in> sets M" using dm[OF am] by simp
-  qed
-qed
+text \<open>Landing in the path space: a map into the capped paths is measurable
+  as soon as its evaluations are (@{thm [source] pathify_measurable}, since
+  each value is its own restriction).\<close>
 
-text \<open>Hypothesis (ii) of the criterion: the distance to a fixed path is a
-  sup of evaluations over the rationals (@{thm [source] path_mdist_le_iff}),
-  hence a countable intersection.\<close>
-
-lemma mdist_measurable_of_eval:
-  fixes f :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,banach} \<times> 'x::{polish_space,banach})"
+lemma path_measurable_of_eval:
+  fixes f :: "'a \<Rightarrow> real \<Rightarrow> 'b::polish_space"
   assumes T0: "0 \<le> T"
-    and into: "\<And>w. w \<in> space M
-      \<Longrightarrow> f w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
-    and am: "a \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
-    and ev: "\<And>t. (\<lambda>w. f w t) \<in> borel_measurable M"
-  shows "(\<lambda>w. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a)
-      \<in> borel_measurable M"
-proof (rule borel_measurable_iff_le[THEN iffD2], intro allI)
-  fix q :: real
-  have cnt: "countable ({0..T} \<inter> \<rat>)" by (simp add: countable_rat)
-  have ne: "{0..T} \<inter> \<rat> \<noteq> {}" using T0 by auto
-  have eq: "{w \<in> space M. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a \<le> q}
-      = (\<Inter>t \<in> {0..T} \<inter> \<rat>. {w \<in> space M. dist (f w t) (a t) \<le> q})"
-    using ne by (auto simp: path_mdist_le_iff[OF T0 into am])
-  have inner: "{w \<in> space M. dist (f w t) (a t) \<le> q} \<in> sets M" for t
-    using ev[of t] by measurable
-  show "{w \<in> space M. mdist (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric) (f w) a \<le> q}
-      \<in> sets M"
-    unfolding eq by (intro sets.countable_INT'[OF cnt ne]) (auto simp: inner)qed
+    and into: "\<And>w. w \<in> space M \<Longrightarrow> f w \<in> mspace (path_metric T :: (real \<Rightarrow> 'b) metric)"
+    and ev: "\<And>t. t \<in> {0..T} \<Longrightarrow> (\<lambda>w. f w t) \<in> borel_measurable M"
+  shows "f \<in> M \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)"
+proof -
+  have "f \<in> M \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)
+      \<longleftrightarrow> (\<lambda>w. restrict (\<lambda>t. f w t) {0..T}) \<in> M \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'b) measure)"
+    by (rule measurable_cong) (simp add: mspace_path_restrict_self[OF into])
+  also have "\<dots>"
+  proof (rule pathify_measurable[OF T0])
+    show "(\<lambda>w. f w t) \<in> borel_measurable M" if "t \<in> {0..T}" for t by (rule ev[OF that])
+    show "continuous_on {0..T} (\<lambda>t. f w t)" if "w \<in> space M" for w
+      using mspace_path_metric_continuous[OF into[OF that]] by simp
+  qed
+  finally show ?thesis .
+qed
 
 text \<open>Hence both halves of the split are measurable maps of the path.  Only
   Borel measurability of \<open>\<theta>\<close> is used here; the stopping-time property is
@@ -1254,6 +1162,18 @@ next
     by (rule continuous_on_compose2[OF g c]) auto
 qed
 
+lemma quad_pair_cont:
+  fixes x q :: "real^'n::finite" and M :: "real^'n^'n"
+  shows "continuous_on UNIV
+      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
+        q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))))"
+proof -
+  have "continuous_on UNIV (\<lambda>p :: (real^'n) \<times> (real^'n^'n). M *v (fst p - x))"
+    by (rule continuous_on_compose2[OF linear_continuous_on[OF matvec_blin]])
+      (auto intro!: continuous_intros)
+  then show ?thesis by (intro continuous_intros)
+qed
+
 lemma open_quad_bad_event_region:
   fixes x q :: "real^'n::finite" and M :: "real^'n^'n"
     and t T thr :: real and RO :: "(real^'n) set"
@@ -1269,29 +1189,9 @@ proof -
   have o1: "openin (mtopology_of ?pm)
       {\<omega> \<in> mspace ?pm. \<forall>s\<in>{0..t}. \<omega> s \<in> fst -` RO}"
     by (rule open_stay_inside[OF T0 open_vimage_fst[OF RO] t0 tT])
-  have c0: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p - x)"
-    by (intro continuous_intros)
-  have c1: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). M *v (fst p - x))"
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF matvec_blin] c0]) auto
-  have cq: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). q \<bullet> (fst p - x))"
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF bounded_linear_inner_right] c0]) auto
-  have cin: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
-        (fst p - x) \<bullet> (M *v (fst p - x)))"
-    by (rule bounded_bilinear.continuous_on[OF bounded_bilinear_inner c0 c1])
-  have contf: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
-        q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))))"
-    by (intro continuous_on_add continuous_on_mult
-        continuous_on_const cq cin)
   have oU: "open {p :: (real^'n) \<times> (real^'n^'n).
       q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}"
-    by (rule open_Collect_less[OF contf continuous_on_const])
+    by (rule open_Collect_less[OF quad_pair_cont continuous_on_const])
   have o2: "openin (mtopology_of ?pm)
       {\<omega> \<in> mspace ?pm. \<omega> t \<in> {p. q \<bullet> (fst p - x)
         + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))) < thr}}"
@@ -1441,109 +1341,10 @@ lemma sets_natural_filtration_path_subset:
       \<subseteq> sets (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   using subalgebra_natural_filtration_path[OF refl] unfolding subalgebra_def by blast
 
-text \<open>The metric half.  @{thm [source] path_mdist_le_iff} turns the sup
-  distance into a condition at the rational times only, countably many, so
-  \<open>sets.countable_INT'\<close> applies.  The intersection must be over
-  a nonempty index set to keep \<open>\<omega> \<in> space \<FF>\<close> on the \<open>\<supseteq>\<close> side; over an empty
-  one it would be the universe.\<close>
-
-lemma mdist_measurable_natural_filtration:
-  fixes U :: real and f :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
-  assumes U: "0 \<le> U" and f: "f \<in> mspace (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-  shows "(\<lambda>\<omega>. mdist (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric) f \<omega>)
-      \<in> borel_measurable (natural_filtration
-          (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-          0 (\<lambda>v \<omega>. \<omega> v) U)"
-proof -
-  let ?m = "path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric"
-  let ?B = "borel_of (mtopology_of ?m)"
-  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) U"
-  have spF: "space ?F = mspace ?m" by (simp add: space_borel_of)
-  have Q0: "(0::real) \<in> {0..U} \<inter> \<rat>" using U by simp
-  have neQ: "{0..U} \<inter> (\<rat> :: real set) \<noteq> {}" using Q0 by blast
-  have cQ: "countable ({0..U} \<inter> (\<rat> :: real set))"
-    by (rule countable_subset[OF _ countable_rat]) simp
-  show ?thesis
-  proof (subst borel_measurable_iff_le, intro allI)
-    fix q :: real
-    have iff: "mdist ?m f \<omega> \<le> q \<longleftrightarrow> (\<forall>t\<in>{0..U} \<inter> \<rat>. dist (f t) (\<omega> t) \<le> q)"
-      if w: "\<omega> \<in> mspace ?m" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-      by (rule path_mdist_le_iff[OF U f w])
-    have mem: "{\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q} \<in> sets ?F"
-      if t: "t \<in> {0..U} \<inter> \<rat>" for t
-    proof -
-      have m: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). dist (f t) (\<omega> t)) \<in> borel_measurable ?F"
-        using natural_filtration_eval[where Y = "\<lambda>v \<omega>. \<omega> v" and N = ?B, of t U] t
-        by (intro borel_measurable_dist) auto
-      show ?thesis using iffD1[OF borel_measurable_iff_le m] by blast
-    qed
-    have seteq: "{\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}
-        = (\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})"
-    proof
-      show "{\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}
-          \<subseteq> (\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})"
-        using iff spF by auto
-    next
-      show "(\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})
-          \<subseteq> {\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}"
-      proof
-        fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-        assume w: "\<omega> \<in> (\<Inter>t \<in> {0..U} \<inter> \<rat>.
-            {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})"
-        have sp: "\<omega> \<in> space ?F" using w Q0 by blast
-        then have mw: "\<omega> \<in> mspace ?m" using spF by simp
-        have "\<forall>t\<in>{0..U} \<inter> \<rat>. dist (f t) (\<omega> t) \<le> q" using w by blast
-        then have "mdist ?m f \<omega> \<le> q" using iff[OF mw] by blast
-        then show "\<omega> \<in> {\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q}" using sp by simp
-      qed
-    qed
-    have "(\<Inter>t \<in> {0..U} \<inter> \<rat>. {\<omega> \<in> space ?F. dist (f t) (\<omega> t) \<le> q})
-        \<in> sets ?F"
-      by (rule sets.countable_INT'[OF cQ neQ]) (use mem in auto)
-    then show "{\<omega> \<in> space ?F. mdist ?m f \<omega> \<le> q} \<in> sets ?F"
-      unfolding seteq .
-  qed
-qed
-
-text \<open>Hence every metric ball is a filtration event.\<close>
-
-lemma mball_in_natural_filtration:
-  fixes U :: real and f :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
-  assumes U: "0 \<le> U" and f: "f \<in> mspace (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-  shows "Metric_space.mball (mspace (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric))
-        (mdist (path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric)) f e
-      \<in> sets (natural_filtration
-          (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-          0 (\<lambda>v \<omega>. \<omega> v) U)"
-proof -
-  let ?m = "path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric"
-  let ?B = "borel_of (mtopology_of ?m)"
-  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) U"
-  interpret MS: Metric_space "mspace ?m" "mdist ?m"
-    by (rule Metric_space_mspace_mdist)
-  have spF: "space ?F = mspace ?m" by (simp add: space_borel_of)
-  have mb: "MS.mball f e = {\<omega> \<in> space ?F. mdist ?m f \<omega> < e}"
-  proof (rule set_eqI)
-    fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
-    have "(\<omega> \<in> MS.mball f e)
-        = (f \<in> mspace ?m \<and> \<omega> \<in> mspace ?m \<and> mdist ?m f \<omega> < e)"
-      by (rule MS.in_mball)
-    also have "\<dots> = (\<omega> \<in> mspace ?m \<and> mdist ?m f \<omega> < e)"
-      by (simp only: eqTrueI[OF f] simp_thms)
-    also have "\<dots> = (\<omega> \<in> {\<omega> \<in> space ?F. mdist ?m f \<omega> < e})"
-      by (simp only: spF mem_Collect_eq)
-    finally show "(\<omega> \<in> MS.mball f e)
-        = (\<omega> \<in> {\<omega> \<in> space ?F. mdist ?m f \<omega> < e})" .
-  qed
-  have "{\<omega> \<in> space ?F. mdist ?m f \<omega> < e} \<in> sets ?F"
-    by (rule borel_measurable_less[OF mdist_measurable_natural_filtration[OF U f]
-        borel_measurable_const])
-  then show ?thesis unfolding mb[symmetric] .
-qed
-
-text \<open>And the balls generate: the path space is second countable, so its
-  Borel \<open>\<sigma>\<close>-algebra is generated by any base
-  (\<open>borel_of_second_countable'\<close>), and the balls are one.\<close>
+text \<open>The natural filtration of the path space at the horizon is all of its
+  Borel sets: the identity is measurable into the path space
+  (@{thm [source] path_measurable_of_eval}), the evaluations being measurable
+  for the natural filtration.\<close>
 
 theorem sets_natural_filtration_path:
   fixes U :: real
@@ -1553,29 +1354,16 @@ theorem sets_natural_filtration_path:
         0 (\<lambda>v \<omega>. \<omega> v) U)
       = sets (path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
 proof -
-  let ?m = "path_metric U :: ((real \<Rightarrow> 'a \<times> 'b)) metric"
-  let ?B = "borel_of (mtopology_of ?m)"
+  let ?B = "path_borel U :: ((real \<Rightarrow> 'a \<times> 'b)) measure"
   let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) U"
-  interpret MS: Metric_space "mspace ?m" "mdist ?m"
-    by (rule Metric_space_mspace_mdist)
-  let ?balls = "{MS.mball a \<epsilon> | a \<epsilon>. a \<in> mspace ?m \<and> \<epsilon> > 0}"
-  have spF: "space ?F = mspace ?m" by (simp add: space_borel_of)
-  have sub: "?balls \<subseteq> Pow (mspace ?m)" using MS.mball_subset_mspace by auto
-  have base: "base_in (mtopology_of ?m) ?balls"
-    using MS.mtopology_base_in_balls by (simp add: mtopology_of_def)
-  have "?B = sigma (topspace (mtopology_of ?m)) ?balls"
-    by (rule borel_of_second_countable'
-        [OF second_countable_path_metric base_is_subbase[OF base]])
-  then have "sets ?B = sigma_sets (mspace ?m) ?balls"
-    using sets_measure_of[OF sub] by simp
-  also have "\<dots> \<subseteq> sets ?F"
-  proof -
-    have "?balls \<subseteq> sets ?F" using mball_in_natural_filtration[OF U] by blast
-    then have "sigma_sets (space ?F) ?balls \<subseteq> sets ?F"
-      by (rule sets.sigma_sets_subset)
-    then show ?thesis using spF by simp
-  qed
-  finally show ?thesis
+  have spF: "space ?F = space ?B" by simp
+  have idm: "(\<lambda>\<omega>. \<omega>) \<in> ?F \<rightarrow>\<^sub>M ?B"
+    by (rule path_measurable_of_eval[OF U]) (auto simp: space_borel_of
+        intro: natural_filtration_eval[where Y = "\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v"])
+  have "A \<in> sets ?F" if A: "A \<in> sets ?B" for A
+    using measurable_sets[OF idm A] sets.sets_into_space[OF A] spF
+    by (simp add: Int_absorb2)
+  then show ?thesis
     using sets_natural_filtration_path_subset[of U U] by blast
 qed
 
@@ -1764,6 +1552,14 @@ proof -
     by (simp add: borel_of_euclidean)
   then show ?thesis using measurable_cong_sets[OF setsN refl] by blast
 qed
+
+lemma pair_law_coord_measurable:
+  fixes N :: "('n::finite pairpath) measure"
+  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
+    and u: "u \<in> {0..T}"
+  shows "(\<lambda>\<omega>. fst (\<omega> u) $ i) \<in> borel_measurable N"
+  by (rule pair_law_F_measurable[where F = "\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p $ i",
+        OF _ setsN u]) (intro continuous_intros)
 
 lemma traceM_sum_outer:
   fixes S :: "(real^'n::finite) set" and c :: "real^'n \<Rightarrow> real"
@@ -2465,7 +2261,7 @@ qed
 
 subsection \<open>From a generating \<open>\<pi>\<close>-system to the whole sub-\<open>\<sigma>\<close>-algebra\<close>
 
-text \<open>The conditioning set \<open>A'\<close> of \<open>pfut_rcd_X_increment_zero\<close>
+text \<open>The conditioning set \<open>A'\<close> of \<open>pfut_rcd_F_increment_zero\<close>
   also ranges over a countable family, so what arrives at almost every \<open>p'\<close>
   is the vanishing of the set integral on a \<open>\<pi>\<close>-system only.  Upgrading that
   to the generated \<open>\<sigma>\<close>-algebra is a Dynkin argument: \<open>sigma_sets_induct_disjoint\<close> does the induction and \<open>lebesgue_integral_countable_add\<close> discharges its disjoint-union case.  The
@@ -2980,78 +2776,8 @@ lemma radial_sq_upto:
     and e0: "0 < e" and eT: "e \<le> TT"
     and inside: "\<And>s. 0 \<le> s \<Longrightarrow> s < e \<Longrightarrow> fst (\<omega> s) \<in> RO"
   shows "(norm (fst (\<omega> e) - y\<^sub>0))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
-proof -
-  define g where "g = (\<lambda>s. (norm (fst (\<omega> s) - y\<^sub>0))\<^sup>2)"
-  have gc: "continuous_on {0..TT} g"
-  proof -
-    have wc: "continuous_on {0..TT} \<omega>"
-      by (rule mspace_path_metricD[OF wm])
-    have fc: "continuous_on {0..TT} (\<lambda>s. fst (\<omega> s))"
-      by (rule continuous_on_fst[OF wc])
-    show ?thesis
-      unfolding g_def by (intro continuous_intros fc)
-  qed
-  define tj where "tj = (\<lambda>j. e - e / (2 * real (Suc j)))"
-  have tjl: "0 < tj j" for j
-  proof -
-    have "e / (2 * real (Suc j)) \<le> e / 2"
-    proof (rule divide_left_mono)
-      show "2 \<le> 2 * real (Suc j)" by simp
-      show "0 \<le> e" using e0 by linarith
-      show "0 < 2 * real (Suc j) * 2" by simp
-    qed
-    then show ?thesis unfolding tj_def using e0 by linarith
-  qed
-  have tju: "tj j < e" for j
-  proof -
-    have "0 < e / (2 * real (Suc j))" using e0 by simp
-    then show ?thesis unfolding tj_def by linarith
-  qed
-  have tjT: "tj j \<le> TT" for j using tju[of j] eT by linarith
-  have glow: "g (tj j) = (norm (x - y\<^sub>0))\<^sup>2 + tj j * cn" for j
-    unfolding g_def
-  proof (rule grow)
-    show "0 < tj j" by (rule tjl)
-    show "tj j \<le> TT" by (rule tjT)
-    show "\<forall>s\<in>{0..tj j}. fst (\<omega> s) \<in> RO"
-    proof
-      fix s assume s: "s \<in> {0..tj j}"
-      then have "0 \<le> s" and "s < e" using tju[of j] by auto
-      then show "fst (\<omega> s) \<in> RO" by (rule inside)
-    qed
-  qed
-  have tjlim: "tj \<longlonglongrightarrow> e"
-  proof -
-    have eq: "(\<lambda>j. (e / 2) * inverse (real (Suc j)))
-        = (\<lambda>j. e / (2 * real (Suc j)))"
-      by (rule ext) (simp add: field_simps)
-    have "(\<lambda>j. (e / 2) * inverse (real (Suc j))) \<longlonglongrightarrow> (e / 2) * 0"
-      by (intro tendsto_mult tendsto_const LIMSEQ_inverse_real_of_nat)
-    then have "(\<lambda>j. e / (2 * real (Suc j))) \<longlonglongrightarrow> 0"
-      unfolding eq by simp
-    then have "(\<lambda>j. e - e / (2 * real (Suc j))) \<longlonglongrightarrow> e - 0"
-      by (intro tendsto_diff tendsto_const)
-    then show ?thesis unfolding tj_def by simp
-  qed
-  have gcomp: "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> g e"
-  proof -
-    have inS: "\<forall>n. tj n \<in> {0..TT}"
-      using tjl tjT by (auto intro: less_imp_le)
-    have eS: "e \<in> {0..TT}" using e0 eT by auto
-    have "(g \<circ> tj) \<longlonglongrightarrow> g e"
-      using continuous_on_sequentially[THEN iffD1, OF gc] inS eS tjlim
-      by blast
-    then show ?thesis by (simp add: o_def)
-  qed
-  have vlim: "(\<lambda>j. (norm (x - y\<^sub>0))\<^sup>2 + tj j * cn)
-      \<longlonglongrightarrow> (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
-    by (intro tendsto_add tendsto_const tendsto_mult tjlim)
-  have "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
-    using vlim unfolding glow by simp
-  then have "g e = (norm (x - y\<^sub>0))\<^sup>2 + e * cn"
-    using gcomp LIMSEQ_unique by blast
-  then show ?thesis unfolding g_def .
-qed
+  by (rule radial_sq_upto_gen[where F = "\<lambda>w. (norm (w - y\<^sub>0))\<^sup>2",
+        OF wm _ grow e0 eT inside]) (intro continuous_intros)
 
 lemma martingale_of_rational_set_integral_eq:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -3195,9 +2921,9 @@ qed
 
 text \<open>Clause (iii) of (1.7) for the conditional law, assembled from:
 
-  \<^item> \<open>pfut_rcd_X_increment_zero\<close>, supplying one almost-sure
-    condition per \<open>(q, A', c)\<close>, countably many since \<open>q\<close> is rational,
-    \<open>A'\<close> ranges over the \<open>\<pi>\<close>-system of
+  \<^item> \<open>pfut_rcd_F_increment_zero\<close>, supplying one almost-sure
+    condition per \<open>(q, A')\<close> for each coordinate \<open>c\<close>, countably many
+    since \<open>q\<close> is rational, \<open>A'\<close> ranges over the \<open>\<pi>\<close>-system of
     \<open>countable_pi_system_natural_filtration_path\<close>, and \<open>c\<close>
     ranges over the finite index type;
   \<^item> \<open>AE_ball_countable'\<close>, turning "for each, almost surely"
@@ -3277,37 +3003,14 @@ lemma quad_eval_cont:
   assumes wm: "\<omega> \<in> mspace (path_metric c :: ('n pairpath) metric)"
   shows "continuous_on {0..c} (\<lambda>s. q \<bullet> (fst (\<omega> s) - x)
       + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x))))"
-proof -
-  have wc: "continuous_on {0..c} \<omega>" by (rule mspace_path_metricD[OF wm])
-  have c0: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p - x)"
-    by (intro continuous_intros)
-  have c1: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). M *v (fst p - x))"
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF matvec_blin] c0]) auto
-  have cq: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n). q \<bullet> (fst p - x))"
-    by (rule continuous_on_compose2[OF
-        linear_continuous_on[OF bounded_linear_inner_right] c0]) auto
-  have cin: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
-        (fst p - x) \<bullet> (M *v (fst p - x)))"
-    by (rule bounded_bilinear.continuous_on[OF bounded_bilinear_inner c0 c1])
-  have contf: "continuous_on UNIV
-      (\<lambda>p :: (real^'n) \<times> (real^'n^'n).
-        q \<bullet> (fst p - x) + (1/2) * ((fst p - x) \<bullet> (M *v (fst p - x))))"
-    by (intro continuous_on_add continuous_on_mult
-        continuous_on_const cq cin)
-  show ?thesis
-    by (rule continuous_on_compose2[OF contf wc]) auto
-qed
+  by (rule continuous_on_compose2[OF quad_pair_cont
+        mspace_path_metricD[OF wm]]) auto
 
 text \<open>The quadratic lower bound extends from the times through which the
   path stays in the confinement region \<open>RO\<close> to the endpoint of a
   half-open stay \<open>[0, t)\<close>; the region and the quadratic's centre are both
-  free.  Only reachability from below is used, so the proof is a
-  sequence-and-continuity passage.\<close>
+  free.  Only reachability from below is used: the bound is an instance of
+  @{thm [source] le_from_below}.\<close>
 
 lemma quad_good_upto_region:
   fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
@@ -3321,69 +3024,13 @@ lemma quad_good_upto_region:
     and inb: "\<And>s. 0 \<le> s \<Longrightarrow> s < t \<Longrightarrow> fst (\<omega> s) \<in> RO"
   shows "t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
       + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
-proof -
-  define g where "g = (\<lambda>s. q \<bullet> (fst (\<omega> s) - x)
-      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x))))"
-  have gc: "continuous_on {0..c} g"
-    unfolding g_def by (rule quad_eval_cont[OF wm])
-  define tj where "tj = (\<lambda>j. t - t / (2 * real (Suc j)))"
-  have tjl: "0 < tj j" for j
-  proof -
-    have "t / (2 * real (Suc j)) \<le> t / 2"
-    proof (rule divide_left_mono)
-      show "2 \<le> 2 * real (Suc j)" by simp
-      show "0 \<le> t" using t0 by linarith
-      show "0 < 2 * real (Suc j) * 2" by simp
-    qed
-    then show ?thesis unfolding tj_def using t0 by linarith
-  qed
-  have tju: "tj j < t" for j
-  proof -
-    have "0 < t / (2 * real (Suc j))" using t0 by simp
-    then show ?thesis unfolding tj_def by linarith
-  qed
-  have tjc: "tj j \<le> c" for j using tju[of j] tc by linarith
-  have glow: "tj j * cm / 2 \<le> g (tj j)" for j
-    unfolding g_def
-  proof (rule good)
-    show "0 < tj j" by (rule tjl)
-    show "tj j \<le> c" by (rule tjc)
-    show "\<forall>s\<in>{0..tj j}. fst (\<omega> s) \<in> RO"
-    proof
-      fix s assume s: "s \<in> {0..tj j}"
-      then have "0 \<le> s" and "s < t" using tju[of j] by auto
-      then show "fst (\<omega> s) \<in> RO" by (rule inb)
-    qed
-  qed
-  have tjlim: "tj \<longlonglongrightarrow> t"
-  proof -
-    have eq: "(\<lambda>j. (t / 2) * inverse (real (Suc j)))
-        = (\<lambda>j. t / (2 * real (Suc j)))"
-      by (rule ext) (simp add: field_simps)
-    have "(\<lambda>j. (t / 2) * inverse (real (Suc j))) \<longlonglongrightarrow> (t / 2) * 0"
-      by (intro tendsto_mult tendsto_const LIMSEQ_inverse_real_of_nat)
-    then have "(\<lambda>j. t / (2 * real (Suc j))) \<longlonglongrightarrow> 0"
-      unfolding eq by simp
-    then have "(\<lambda>j. t - t / (2 * real (Suc j))) \<longlonglongrightarrow> t - 0"
-      by (intro tendsto_diff tendsto_const)
-    then show ?thesis unfolding tj_def by simp
-  qed
-  have gcomp: "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> g t"
-  proof -
-    have inS: "\<forall>n. tj n \<in> {0..c}"
-      using tjl tjc by (auto intro: less_imp_le)
-    have tS: "t \<in> {0..c}" using t0 tc by auto
-    have "(g \<circ> tj) \<longlonglongrightarrow> g t"
-      using continuous_on_sequentially[THEN iffD1, OF gc] inS tS tjlim
-      by blast
-    then show ?thesis by (simp add: o_def)
-  qed
-  have lim1: "(\<lambda>j. tj j * cm / 2) \<longlonglongrightarrow> t * cm / 2"
-    by (rule tendsto_divide[OF
-        tendsto_mult[OF tjlim tendsto_const] tendsto_const]) simp
-  have "t * cm / 2 \<le> g t"
-    by (rule LIMSEQ_le[OF lim1 gcomp]) (use glow in blast)
-  then show ?thesis unfolding g_def .
+proof (rule le_from_below[OF quad_eval_cont[OF wm] _ tc order_refl])
+  show "continuous_on {0..c} (\<lambda>s. s * cm / 2)" by (auto intro!: continuous_intros)
+  show "t \<in> closure {0<..<t}" using t0 by simp
+  fix s assume s: "s \<in> {0<..<t}"
+  show "s * cm / 2 \<le> q \<bullet> (fst (\<omega> s) - x)
+      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x)))"
+    using s tc by (intro good) (auto intro: inb)
 qed
 
 subsection \<open>Case 1 for the lower envelope\<close>
@@ -3412,84 +3059,13 @@ lemma quad_good_rat_to_real_region:
     and inb: "\<And>s. s \<in> {0..t} \<Longrightarrow> fst (\<omega> s) \<in> RO"
   shows "t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
       + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
-proof -
-  define g where "g = (\<lambda>s. q \<bullet> (fst (\<omega> s) - x)
-      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x))))"
-  have gc: "continuous_on {0..c} g"
-    unfolding g_def by (rule quad_eval_cont[OF wm])
-  have exr: "\<exists>r. r \<in> \<rat>
-      \<and> max 0 (t - inverse (real (Suc j))) < r \<and> r < t" for j
-  proof -
-    have "max 0 (t - inverse (real (Suc j))) < t"
-      using t0 by simp
-    then show ?thesis
-      using Rats_dense_in_real[of
-          "max 0 (t - inverse (real (Suc j)))" t] by blast
-  qed
-  have exr': "\<forall>j. \<exists>r. r \<in> \<rat>
-      \<and> max 0 (t - inverse (real (Suc j))) < r \<and> r < t"
-    using exr by blast
-  obtain rj where rjprop: "\<forall>j. rj j \<in> \<rat>
-      \<and> max 0 (t - inverse (real (Suc j))) < rj j \<and> rj j < t"
-    using choice[OF exr'] by blast
-  have rjQ: "rj j \<in> \<rat>" for j using rjprop by blast
-  have rjl: "max 0 (t - inverse (real (Suc j))) < rj j" for j
-    using rjprop by blast
-  have rju: "rj j < t" for j using rjprop by blast
-  have rj0: "0 < rj j" for j
-  proof -
-    have "(0::real) \<le> max 0 (t - inverse (real (Suc j)))" by simp
-    then show ?thesis using rjl[of j] by linarith
-  qed
-  have rjc: "rj j \<le> c" for j using rju[of j] tc by linarith
-  have glow: "rj j * cm / 2 \<le> g (rj j)" for j
-    unfolding g_def
-  proof (rule rat)
-    show "rj j \<in> \<rat>" by (rule rjQ)
-    show "0 < rj j" by (rule rj0)
-    show "rj j \<le> c" by (rule rjc)
-    show "\<forall>s\<in>{0..rj j}. fst (\<omega> s) \<in> RO"
-    proof
-      fix s assume "s \<in> {0..rj j}"
-      then have "s \<in> {0..t}" using rju[of j] by auto
-      then show "fst (\<omega> s) \<in> RO" by (rule inb)
-    qed
-  qed
-  have rjlim: "rj \<longlonglongrightarrow> t"
-  proof (rule tendsto_sandwich[of
-      "\<lambda>j. t - inverse (real (Suc j))" rj sequentially "\<lambda>_. t"])
-    show "\<forall>\<^sub>F j in sequentially. t - inverse (real (Suc j)) \<le> rj j"
-    proof (intro always_eventually allI)
-      fix j
-      have "t - inverse (real (Suc j))
-          \<le> max 0 (t - inverse (real (Suc j)))"
-        by (rule max.cobounded2)
-      then show "t - inverse (real (Suc j)) \<le> rj j"
-        using rjl[of j] by linarith
-    qed
-    show "\<forall>\<^sub>F j in sequentially. rj j \<le> t"
-      by (intro always_eventually allI less_imp_le rju)
-    show "(\<lambda>j. t - inverse (real (Suc j))) \<longlonglongrightarrow> t"
-      using tendsto_diff[OF tendsto_const
-          LIMSEQ_inverse_real_of_nat, of t] by simp
-    show "(\<lambda>_. t) \<longlonglongrightarrow> t" by (rule tendsto_const)
-  qed
-  have gcomp: "(\<lambda>j. g (rj j)) \<longlonglongrightarrow> g t"
-  proof -
-    have inS: "\<forall>n. rj n \<in> {0..c}"
-      using rj0 rjc by (auto intro: less_imp_le)
-    have tS: "t \<in> {0..c}" using t0 tc by auto
-    have "(g \<circ> rj) \<longlonglongrightarrow> g t"
-      using continuous_on_sequentially[THEN iffD1, OF gc] inS tS rjlim
-      by blast
-    then show ?thesis by (simp add: o_def)
-  qed
-  have lim1: "(\<lambda>j. rj j * cm / 2) \<longlonglongrightarrow> t * cm / 2"
-    by (rule tendsto_divide[OF
-        tendsto_mult[OF rjlim tendsto_const] tendsto_const]) simp
-  have "t * cm / 2 \<le> g t"
-    by (rule LIMSEQ_le[OF lim1 gcomp]) (use glow in blast)
-  then show ?thesis unfolding g_def .
+proof (rule le_from_below[OF quad_eval_cont[OF wm] _ tc _ rats_below_closure[OF t0]])
+  show "continuous_on {0..c} (\<lambda>s. s * cm / 2)" by (auto intro!: continuous_intros)
+  show "\<rat> \<inter> {0<..<t} \<subseteq> {0<..<t}" by blast
+  fix s assume s: "s \<in> \<rat> \<inter> {0<..<t}"
+  show "s * cm / 2 \<le> q \<bullet> (fst (\<omega> s) - x)
+      + (1/2) * ((fst (\<omega> s) - x) \<bullet> (M *v (fst (\<omega> s) - x)))"
+    using s tc by (intro rat) (auto intro: inb)
 qed
 
 section \<open>Laws with a constrained covariation\<close>

@@ -108,6 +108,37 @@ section \<open>Diagonal entries under the eigenvalue constraints\<close>
 text \<open>\<open>diag_entry_quadform\<close> lives in \<open>Matrix_Algebra\<close>.\<close>
 
 
+text \<open>Approaching a time from below.  An inequality between two
+  functions continuous on \<open>[0, c]\<close> that holds on a set \<open>S \<subseteq> (0, t)\<close>
+  accumulating at \<open>t\<close> holds at \<open>t\<close>.  Its users take \<open>S = (0, t)\<close>, or the
+  rational points of \<open>(0, t)\<close> (\<open>rats_below_closure\<close> below).\<close>
+
+lemma le_from_below:
+  fixes g h :: "real \<Rightarrow> real"
+  assumes gc: "continuous_on {0..c} g" and hc: "continuous_on {0..c} h"
+    and tc: "t \<le> c" and S: "S \<subseteq> {0<..<t}" and t: "t \<in> closure S"
+    and le: "\<And>s. s \<in> S \<Longrightarrow> h s \<le> g s"
+  shows "h t \<le> g t"
+proof -
+  have "closure S \<subseteq> closure {0..c}"
+    by (rule closure_mono) (use S tc in auto)
+  then have "continuous_on (closure S) (\<lambda>s. g s - h s)"
+    by (intro continuous_on_subset[OF continuous_on_diff[OF gc hc]]) simp
+  from continuous_ge_on_closure[OF this t, of 0] le show ?thesis by simp
+qed
+
+lemma rats_below_closure:
+  fixes t :: real assumes "0 < t"
+  shows "t \<in> closure (\<rat> \<inter> {0<..<t})"
+  unfolding closure_approachable
+proof (intro allI impI)
+  fix e :: real assume "0 < e"
+  obtain r where "r \<in> \<rat>" "max 0 (t - e) < r" "r < t"
+    using Rats_dense_in_real[of "max 0 (t - e)" t] assms \<open>0 < e\<close> by auto
+  then have "r \<in> \<rat> \<inter> {0<..<t}" "dist r t < e" by (auto simp: dist_real_def)
+  then show "\<exists>y\<in>\<rat> \<inter> {0<..<t}. dist y t < e" by blast
+qed
+
 text \<open>\<open>radial_sq_upto\<close> transports the growth identity to the
   endpoint of a half-open confinement interval.  Nothing in its proof is
   specific to \<open>\<lambda>w. (norm (w - y\<^sub>0))\<^sup>2\<close> --- any continuous functional of the
@@ -125,75 +156,19 @@ lemma radial_sq_upto_gen:
     and inside: "\<And>s. 0 \<le> s \<Longrightarrow> s < e \<Longrightarrow> fst (\<omega> s) \<in> RO"
   shows "F (fst (\<omega> e)) = c0 + e * cn"
 proof -
-  define g where "g = (\<lambda>s. F (fst (\<omega> s)))"
-  have gc: "continuous_on {0..TT} g"
-  proof -
-    have wc: "continuous_on {0..TT} \<omega>"
-      by (rule mspace_path_metricD[OF wm])
-    have fc: "continuous_on {0..TT} (\<lambda>s. fst (\<omega> s))"
-      by (rule continuous_on_fst[OF wc])
-    show ?thesis
-      unfolding g_def by (rule continuous_on_compose2[OF Fc fc]) auto
-  qed
-  define tj where "tj = (\<lambda>j. e - e / (2 * real (Suc j)))"
-  have tjl: "0 < tj j" for j
-  proof -
-    have "e / (2 * real (Suc j)) \<le> e / 2"
-    proof (rule divide_left_mono)
-      show "2 \<le> 2 * real (Suc j)" by simp
-      show "0 \<le> e" using e0 by linarith
-      show "0 < 2 * real (Suc j) * 2" by simp
-    qed
-    then show ?thesis unfolding tj_def using e0 by linarith
-  qed
-  have tju: "tj j < e" for j
-  proof -
-    have "0 < e / (2 * real (Suc j))" using e0 by simp
-    then show ?thesis unfolding tj_def by linarith
-  qed
-  have tjT: "tj j \<le> TT" for j using tju[of j] eT by linarith
-  have glow: "g (tj j) = c0 + tj j * cn" for j
-    unfolding g_def
-  proof (rule grow)
-    show "0 < tj j" by (rule tjl)
-    show "tj j \<le> TT" by (rule tjT)
-    show "\<forall>s\<in>{0..tj j}. fst (\<omega> s) \<in> RO"
-    proof
-      fix s assume s: "s \<in> {0..tj j}"
-      then have "0 \<le> s" and "s < e" using tju[of j] by auto
-      then show "fst (\<omega> s) \<in> RO" by (rule inside)
-    qed
-  qed
-  have tjlim: "tj \<longlonglongrightarrow> e"
-  proof -
-    have eq: "(\<lambda>j. (e / 2) * inverse (real (Suc j)))
-        = (\<lambda>j. e / (2 * real (Suc j)))"
-      by (rule ext) (simp add: field_simps)
-    have "(\<lambda>j. (e / 2) * inverse (real (Suc j))) \<longlonglongrightarrow> (e / 2) * 0"
-      by (intro tendsto_mult tendsto_const LIMSEQ_inverse_real_of_nat)
-    then have "(\<lambda>j. e / (2 * real (Suc j))) \<longlonglongrightarrow> 0"
-      unfolding eq by simp
-    then have "(\<lambda>j. e - e / (2 * real (Suc j))) \<longlonglongrightarrow> e - 0"
-      by (intro tendsto_diff tendsto_const)
-    then show ?thesis unfolding tj_def by simp
-  qed
-  have gcomp: "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> g e"
-  proof -
-    have inS: "\<forall>n. tj n \<in> {0..TT}"
-      using tjl tjT by (auto intro: less_imp_le)
-    have eS: "e \<in> {0..TT}" using e0 eT by auto
-    have "(g \<circ> tj) \<longlonglongrightarrow> g e"
-      using continuous_on_sequentially[THEN iffD1, OF gc] inS eS tjlim
-      by blast
-    then show ?thesis by (simp add: o_def)
-  qed
-  have vlim: "(\<lambda>j. c0 + tj j * cn) \<longlonglongrightarrow> c0 + e * cn"
-    by (intro tendsto_add tendsto_const tendsto_mult tjlim)
-  have "(\<lambda>j. g (tj j)) \<longlonglongrightarrow> c0 + e * cn"
-    using vlim unfolding glow by simp
-  then have "g e = c0 + e * cn"
-    using gcomp LIMSEQ_unique by blast
-  then show ?thesis unfolding g_def .
+  have gc: "continuous_on {0..TT} (\<lambda>s. F (fst (\<omega> s)))"
+    by (rule continuous_on_compose2[OF Fc continuous_on_fst[OF
+          mspace_path_metricD[OF wm]]]) auto
+  have lc: "continuous_on {0..TT} (\<lambda>s. c0 + s * cn)"
+    by (intro continuous_intros)
+  have eq: "F (fst (\<omega> s)) = c0 + s * cn" if "s \<in> {0<..<e}" for s
+    using that eT by (intro grow) (auto intro: inside)
+  have cl: "e \<in> closure {0<..<e}" using e0 by simp
+  have "F (fst (\<omega> e)) \<le> c0 + e * cn"
+    by (rule le_from_below[OF lc gc eT order_refl cl]) (simp add: eq)
+  moreover have "c0 + e * cn \<le> F (fst (\<omega> e))"
+    by (rule le_from_below[OF gc lc eT order_refl cl]) (simp add: eq)
+  ultimately show ?thesis by linarith
 qed
 
 text \<open>The subspace-tangential member confines the path to
@@ -794,36 +769,14 @@ subsection \<open>The constant-volatility Gaussian member\<close>
 
 text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
   so the building block is Brownian motion pushed through a constant
-  matrix \<open>S\<close>: the pair \<open>(S \<cdot> W\<^sub>t, t \<cdot> S S\<^sup>T)\<close>, started at \<open>0\<close>.  Class
-  membership mirrors \<open>bmpair_law_in_paper_pair_class\<close>: the
+  matrix \<open>S\<close>: the pair \<open>(S \<cdot> W\<^sub>t, t \<cdot> S S\<^sup>T)\<close>, started at \<open>0\<close>
+  (\<open>sbmpair\<close>, whose case \<open>S = I\<close> is the witness \<open>bmpair\<close>).  In its class
+  membership (\<open>sbmpair_law_in_paper_pair_class\<close>) the
   martingale clauses are bounded-linear images of the Brownian ones
   (@{thm [source] martingale_bounded_linear_image}), the covariation
   clause is deterministic, and an arbitrary start comes free from
   \<open>exit_class_pshift\<close>.  The only hypothesis is
   \<open>S S\<^sup>T \<in> sconstraint k L\<close>.\<close>
-
-lemma pair_eval_coord_cont:
-  fixes t T :: real
-  assumes t: "t \<in> {0..T}"
-  shows "continuous_map
-      (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
-      euclideanreal (\<lambda>\<omega>. fst (\<omega> t) $ i)"
-proof -
-  have ev: "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
-      euclidean (\<lambda>\<omega>. \<omega> t)"
-    by (rule continuous_map_path_eval[OF t])
-  have fstc: "continuous_map (euclidean :: ((real^'n) \<times> (real^'n^'n)) topology)
-      euclidean fst"
-    by (simp add: continuous_on_fst)
-  have nthc: "continuous_map (euclidean :: (real^'n) topology) euclideanreal
-      (\<lambda>v. v $ i)"
-    unfolding continuous_map_iff_continuous2
-    by (rule linear_continuous_on[OF bounded_linear_vec_nth])
-  have "continuous_map (mtopology_of (path_metric T :: ('n pairpath) metric))
-      euclideanreal (((\<lambda>v. v $ i) \<circ> fst) \<circ> (\<lambda>\<omega>. \<omega> t))"
-    by (intro continuous_map_compose[OF ev] continuous_map_compose[OF fstc] nthc)
-  then show ?thesis by (simp add: o_def)
-qed
 
 abbreviation pairX :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> 'a"
   where "pairX t \<omega> \<equiv> fst (\<omega> t)"
@@ -965,45 +918,6 @@ text \<open>Operational reading of (1.7), equivalent by compensator uniqueness: 
   unstopped clause would force the coordinate process to be almost surely
   constant, emptying the class for every \<open>T > 0\<close>. Stopping at \<open>T\<close>
   captures exactly (1.7) on \<open>[0,T]\<close>.\<close>
-
-lemma pair_eval_coord_sq_cont:
-  fixes t T :: real
-  assumes t: "t \<in> {0..T}"
-  shows "continuous_map
-      (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
-      euclideanreal (\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)"
-proof -
-  have "continuous_map
-      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclideanreal
-      (\<lambda>\<omega>. fst (\<omega> t) $ i * fst (\<omega> t) $ i)"
-    by (rule continuous_map_real_mult[OF pair_eval_coord_cont[OF t]
-          pair_eval_coord_cont[OF t]])
-  then show ?thesis by (simp add: power2_eq_square)
-qed
-
-lemma pair_test_functional_cont:
-  fixes h :: "('n::finite pairpath) \<Rightarrow> real"
-  assumes st: "0 \<le> s" and sT: "s \<le> T" and tI: "t \<in> {0..T}"
-    and hc: "continuous_map
-        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
-  shows "continuous_map
-      (mtopology_of (path_metric T :: ('n pairpath) metric)) euclideanreal
-      (\<lambda>\<omega>. h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))"
-proof -
-  let ?PT = "mtopology_of (path_metric T :: ('n pairpath) metric)"
-  have sI: "s \<in> {0..T}" using st sT by simp
-  have part1: "continuous_map ?PT euclideanreal
-      (\<lambda>\<omega>. fst (\<omega> t) $ i - fst (\<omega> s) $ i)"
-    by (intro continuous_map_diff pair_eval_coord_cont tI sI)
-  have rc: "continuous_map ?PT
-      (mtopology_of (path_metric s :: ('n pairpath) metric))
-      (\<lambda>\<omega>. restrict \<omega> {0..s})"
-    by (rule Lipschitz_continuous_imp_continuous_map
-        [OF Lipschitz_restrict_path_metric[OF st sT]])
-  have part2: "continuous_map ?PT euclideanreal (\<lambda>\<omega>. h (restrict \<omega> {0..s}))"
-    using continuous_map_compose[OF rc hc] by (simp add: o_def)
-  show ?thesis by (rule continuous_map_real_mult[OF part2 part1])
-qed
 
 subsection \<open>Integrability from the \<open>L\<^sup>2\<close> bound, for members and for limits\<close>
 
@@ -1281,21 +1195,6 @@ lemma past_test_measurable_natural_filtration:
 
 subsection \<open>The identity at a law, against a bounded test\<close>
 
-lemma pair_law_coord_measurable:
-  fixes N :: "('n::finite pairpath) measure"
-  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
-    and u: "u \<in> {0..T}"
-  shows "(\<lambda>\<omega>. fst (\<omega> u) $ i) \<in> borel_measurable N"
-proof -
-  have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u) $ i)
-      \<in> (path_borel T :: ('n pairpath) measure)
-        \<rightarrow>\<^sub>M borel"
-    using continuous_map_measurable[OF pair_eval_coord_cont[OF u]]
-    by (simp add: borel_of_euclidean)
-  then show ?thesis
-    using measurable_cong_sets[OF setsN refl] by blast
-qed
-
 lemma continuous_on_iglue:
   fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
   assumes r: "0 \<le> r"
@@ -1376,21 +1275,6 @@ proof -
   then show ?thesis by (simp add: o_def)
 qed
 
-lemma pair_law_coord_sq_measurable:
-  fixes N :: "('n::finite pairpath) measure"
-  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
-    and u: "u \<in> {0..T}"
-  shows "(\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2) \<in> borel_measurable N"
-proof -
-  have "(\<lambda>\<omega> :: 'n pairpath. (fst (\<omega> u) $ i)\<^sup>2)
-      \<in> (path_borel T :: ('n pairpath) measure)
-        \<rightarrow>\<^sub>M borel"
-    using continuous_map_measurable[OF pair_eval_coord_sq_cont[OF u]]
-    by (simp add: borel_of_euclidean)
-  then show ?thesis
-    using measurable_cong_sets[OF setsN refl] by blast
-qed
-
 lemma ess_inf_time_min_const:
   fixes c :: real
   assumes M: "prob_space M"
@@ -1444,25 +1328,6 @@ text \<open>The value function at a shorter horizon is the value function at the
   its value into the capped value.  No pasting is needed in either
   direction --- the pasting is already inside
   \<open>exit_val_horizon_mono\<close>.\<close>
-
-lemma pair_law_sq_integrable_of_nn_bound:
-  fixes N :: "('n::finite pairpath) measure"
-  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
-    and u: "u \<in> {0..T}"
-    and bnd: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
-  shows "integrable N (\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2)"
-proof -
-  have m: "(\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2) \<in> borel_measurable N"
-    by (rule pair_law_coord_sq_measurable[OF setsN u])
-  have lt: "(\<integral>\<^sup>+\<omega>. ennreal (norm ((fst (\<omega> u) $ i)\<^sup>2)) \<partial>N) < \<infinity>"
-  proof -
-    have "(\<integral>\<^sup>+\<omega>. ennreal (norm ((fst (\<omega> u) $ i)\<^sup>2)) \<partial>N) \<le> ennreal C"
-      using bnd by simp
-    also have "ennreal C < \<infinity>" by simp
-    finally show ?thesis .
-  qed
-  show ?thesis unfolding integrable_iff_bounded using m lt by blast
-qed
 
 lemma pair_law_coord_sq_nn_bound:
   fixes N :: "('n::finite pairpath) measure"
@@ -1523,45 +1388,11 @@ text \<open>
   \<open>\<P>\<^sub>x\<close>.
 \<close>
 
-lemma pair_law_sq_mean_of_nn_bound:
-  fixes N :: "('n::finite pairpath) measure"
-  assumes int: "integrable N (\<lambda>\<omega>. (fst (\<omega> u) $ i)\<^sup>2)" and C0: "0 \<le> C"
-    and bnd: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
-  shows "(\<integral>\<omega>. (fst (\<omega> u) $ i)\<^sup>2 \<partial>N) \<le> C"
-proof -
-  have "ennreal (\<integral>\<omega>. (fst (\<omega> u) $ i)\<^sup>2 \<partial>N)
-      = (\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> u) $ i)\<^sup>2) \<partial>N)"
-    by (rule nn_integral_eq_integral[OF int, symmetric]) simp
-  also have "\<dots> \<le> ennreal C" by (rule bnd)
-  finally show ?thesis using C0 by simp
-qed
-
 lemma outerp_diff:
   fixes a b :: "real^'n::finite"
   shows "outerp (a - b) = outerp a - ((\<chi> i j. a $ i * b $ j)
       + (\<chi> i j. b $ i * a $ j)) + outerp b"
   by (simp add: outerp_def vec_eq_iff algebra_simps)
-
-lemma pair_test_measurable:
-  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-  assumes setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
-    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and hc: "continuous_map
-        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
-  shows "(\<lambda>\<omega>. h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))
-      \<in> borel_measurable N"
-proof -
-  have sT: "s \<le> T" using ts tT by simp
-  have tI: "t \<in> {0..T}" using st ts tT by simp
-  have "(\<lambda>\<omega> :: 'n pairpath.
-        h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))
-      \<in> (path_borel T :: ('n pairpath) measure)
-        \<rightarrow>\<^sub>M borel"
-    using continuous_map_measurable
-      [OF pair_test_functional_cont[OF st sT tI hc, of i]]
-    by (simp add: borel_of_euclidean)
-  then show ?thesis using measurable_cong_sets[OF setsN refl] by blast
-qed
 
 lemma outerp_diff_compensated:
   fixes a b :: "real^'n::finite" and Ya Yb :: "real^'n^'n"
@@ -1596,91 +1427,6 @@ proof -
       = {r. 0 \<le> r \<and> r \<le> T \<and> y + X r \<omega> \<in> A}"
     by (auto simp: restrict_def)
   thus ?thesis unfolding etime_def by simp
-qed
-
-lemma pair_test_sq_bound:
-  fixes N :: "('n::finite pairpath) measure" and h :: "('n pairpath) \<Rightarrow> real"
-  assumes P: "prob_space N"
-    and setsN: "sets N = sets (path_borel T :: ('n pairpath) measure)"
-    and st: "0 \<le> s" and ts: "s \<le> t" and tT: "t \<le> T"
-    and hc: "continuous_map
-        (mtopology_of (path_metric s :: ('n pairpath) metric)) euclideanreal h"
-    and hb: "\<And>g. \<bar>h g\<bar> \<le> B"
-    and C0: "0 \<le> C"
-    and Cs: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> s) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
-    and Ct: "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> t) $ i)\<^sup>2) \<partial>N) \<le> ennreal C"
-  shows "integrable N (\<lambda>\<omega>. (h (restrict \<omega> {0..s})
-        * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))\<^sup>2)"
-    and "(\<integral>\<omega>. (h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i))\<^sup>2 \<partial>N)
-        \<le> 4 * B\<^sup>2 * C"
-proof -
-  let ?f = "\<lambda>\<omega> :: 'n pairpath.
-      h (restrict \<omega> {0..s}) * (fst (\<omega> t) $ i - fst (\<omega> s) $ i)"
-  let ?D = "\<lambda>\<omega> :: 'n pairpath.
-      2 * B\<^sup>2 * ((fst (\<omega> t) $ i)\<^sup>2 + (fst (\<omega> s) $ i)\<^sup>2)"
-  have sI: "s \<in> {0..T}" using st ts tT by simp
-  have tI: "t \<in> {0..T}" using st ts tT by simp
-  have B0: "0 \<le> B" by (rule order_trans[OF abs_ge_zero hb])
-  have iss: "integrable N (\<lambda>\<omega>. (fst (\<omega> s) $ i)\<^sup>2)"
-    by (rule pair_law_sq_integrable_of_nn_bound[OF setsN sI Cs])
-  have itt: "integrable N (\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)"
-    by (rule pair_law_sq_integrable_of_nn_bound[OF setsN tI Ct])
-  have fm: "?f \<in> borel_measurable N"
-    by (rule pair_test_measurable[OF setsN st ts tT hc])
-  have fsqm: "(\<lambda>\<omega>. (?f \<omega>)\<^sup>2) \<in> borel_measurable N" using fm by measurable
-  have dom_int: "integrable N ?D"
-    by (intro integrable_mult_right Bochner_Integration.integrable_add itt iss)
-  \<comment> \<open>pointwise: the test factor contributes at most \<open>B\<^sup>2\<close>, and the squared
-      increment at most twice the sum of the two squared coordinates.\<close>
-  have ptwise: "(?f \<omega>)\<^sup>2 \<le> ?D \<omega>" for \<omega>
-  proof -
-    have hsq: "(h (restrict \<omega> {0..s}))\<^sup>2 \<le> B\<^sup>2"
-    proof -
-      have "\<bar>h (restrict \<omega> {0..s})\<bar>\<^sup>2 \<le> B\<^sup>2"
-        by (rule power_mono[OF hb abs_ge_zero])
-      then show ?thesis by simp
-    qed
-    \<comment> \<open>\<open>2(a²+b²) - (a-b)² = (a+b)² \<ge> 0\<close>: stated as an EQUATION between
-        squares so that \<open>linarith\<close> sees only linear atoms.\<close>
-    have e1: "2 * ((fst (\<omega> t) $ i)\<^sup>2 + (fst (\<omega> s) $ i)\<^sup>2)
-          - (fst (\<omega> t) $ i - fst (\<omega> s) $ i)\<^sup>2
-        = (fst (\<omega> t) $ i + fst (\<omega> s) $ i)\<^sup>2"
-      by (simp add: power2_diff power2_sum)
-    have sq_le: "(fst (\<omega> t) $ i - fst (\<omega> s) $ i)\<^sup>2
-        \<le> 2 * ((fst (\<omega> t) $ i)\<^sup>2 + (fst (\<omega> s) $ i)\<^sup>2)"
-      using e1 zero_le_power2[of "fst (\<omega> t) $ i + fst (\<omega> s) $ i"] by linarith
-    have "(?f \<omega>)\<^sup>2 = (h (restrict \<omega> {0..s}))\<^sup>2
-        * (fst (\<omega> t) $ i - fst (\<omega> s) $ i)\<^sup>2"
-      by (simp add: power_mult_distrib)
-    also have "\<dots> \<le> B\<^sup>2 * (fst (\<omega> t) $ i - fst (\<omega> s) $ i)\<^sup>2"
-      by (rule mult_right_mono[OF hsq zero_le_power2])
-    also have "\<dots> \<le> B\<^sup>2 * (2 * ((fst (\<omega> t) $ i)\<^sup>2 + (fst (\<omega> s) $ i)\<^sup>2))"
-      by (rule mult_left_mono[OF sq_le zero_le_power2])
-    also have "\<dots> = ?D \<omega>" by simp
-    finally show ?thesis .
-  qed
-  show fsq_int: "integrable N (\<lambda>\<omega>. (?f \<omega>)\<^sup>2)"
-  proof (rule Bochner_Integration.integrable_bound[OF dom_int fsqm])
-    show "AE \<omega> in N. norm ((?f \<omega>)\<^sup>2) \<le> norm (?D \<omega>)"
-    proof (intro AE_I2)
-      fix \<omega> :: "'n pairpath"
-      have "0 \<le> ?D \<omega>" by simp
-      then show "norm ((?f \<omega>)\<^sup>2) \<le> norm (?D \<omega>)" using ptwise[of \<omega>] by simp
-    qed
-  qed
-  have Bs: "(\<integral>\<omega>. (fst (\<omega> s) $ i)\<^sup>2 \<partial>N) \<le> C"
-    by (rule pair_law_sq_mean_of_nn_bound[OF iss C0 Cs])
-  have Bt: "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>N) \<le> C"
-    by (rule pair_law_sq_mean_of_nn_bound[OF itt C0 Ct])
-  have "(\<integral>\<omega>. (?f \<omega>)\<^sup>2 \<partial>N) \<le> (\<integral>\<omega>. ?D \<omega> \<partial>N)"
-    by (rule integral_mono[OF fsq_int dom_int]) (rule ptwise)
-  also have "(\<integral>\<omega>. ?D \<omega> \<partial>N)
-      = 2 * B\<^sup>2 * ((\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>N) + (\<integral>\<omega>. (fst (\<omega> s) $ i)\<^sup>2 \<partial>N))"
-    by (simp add: Bochner_Integration.integral_add[OF itt iss])
-  also have "\<dots> \<le> 2 * B\<^sup>2 * (2 * C)"
-    by (rule mult_left_mono) (use Bs Bt zero_le_power2 in auto)
-  also have "\<dots> = 4 * B\<^sup>2 * C" by simp
-  finally show "(\<integral>\<omega>. (?f \<omega>)\<^sup>2 \<partial>N) \<le> 4 * B\<^sup>2 * C" .
 qed
 
 theorem vshift_path_law:
