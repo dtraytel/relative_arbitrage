@@ -509,7 +509,7 @@ proof -
         in blast)+
 qed
 
-section \<open>The \<open>max_principle_boundary\<close> interface needs continuity: the raw version is refutable\<close>
+section \<open>Supersolutions are a local notion\<close>
 
 lemma supersol_jet_cong_on:
   fixes w w' :: "real^'n::finite \<Rightarrow> real"
@@ -538,19 +538,6 @@ proof (intro ballI allI impI)
   from s x tf loc' show "1 \<le> ell_op_usc k L (g x) H"
     unfolding supersol_jet_def by blast
 qed
-
-text \<open>The refutation: given any sub/supersolution pair and nonempty interior,
-  the supersolution's boundary values can be raised uniformly enough to
-  make every boundary point lose to a fixed interior point, independent
-  of the operator, dimension or geometry of \<open>K\<close>.\<close>
-
-text \<open>The repair lives in @{theory Relative_Arbitrage.Operator_Envelope_Continuity}: the corrected
-  \<open>max_principle_boundary\<close> carries \<open>continuous_on K u\<close> and
-  \<open>continuous_on K w\<close>, and \<open>max_principle_le\<close>,
-  \<open>comparison_from_max_principle\<close>, \<open>uniqueness_from_max_principle\<close>
-  thread the two continuity hypotheses through.  Everything downstream -
-  4.2(b), Theorem 4.3, Proposition 4.1 - is unchanged except for carrying
-  this continuity.\<close>
 
 section \<open>Reduction to globally bounded, globally continuous data\<close>
 
@@ -1655,79 +1642,112 @@ proof (rule ccontr)
   qed
 qed
 
-text \<open>The continuous-data interface \<open>max_principle_boundary\<close> is a special
-  case: continuity on compact \<open>K\<close> gives relative semicontinuity and
-  bounds, and the touching-on-\<open>K\<close> predicates pass to the \<open>C\<^sup>2\<close> ones.\<close>
+text \<open>Theorem 4.2(b): ordered boundary data stay ordered, since \<open>u - w\<close> peaks
+  on the boundary.\<close>
+
+corollary max_principle_le:
+  fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
+  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and cK: "compact K" and neK: "K \<noteq> {}"
+    and uscu: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
+    and lscw: "\<And>c z. z \<in> K \<Longrightarrow> c < w z \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> c < w y"
+    and Bu: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. y \<in> K \<Longrightarrow> \<bar>w y\<bar> \<le> B"
+    and subu: "visc_subsol_env2 k L K (interior K) u"
+    and supw: "visc_supersol_env2 k L K (interior K) w"
+    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> w y"
+  shows "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
+proof -
+  fix y assume "y \<in> K"
+  moreover obtain x where "x \<in> K - interior K" and "\<forall>y\<in>K. u y - w y \<le> u x - w x"
+    using max_principle_usc_lsc[OF kk LL cK neK uscu lscw Bu Bw subu supw] by blast
+  ultimately show "u y \<le> w y" using bd by fastforce
+qed
+
+text \<open>Proposition 4.1 (uniqueness): two solutions with the same boundary data
+  agree, by the comparison in both directions.  A solution is both usc and lsc
+  relative to \<open>K\<close>.\<close>
+
+corollary uniqueness_from_max_principle:
+  fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
+  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+    and cK: "compact K" and neK: "K \<noteq> {}"
+    and uscu: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
+    and lscu: "\<And>c z. z \<in> K \<Longrightarrow> c < u z \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> c < u y"
+    and uscw: "\<And>c z. z \<in> K \<Longrightarrow> w z < c \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> w y < c"
+    and lscw: "\<And>c z. z \<in> K \<Longrightarrow> c < w z \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> c < w y"
+    and Bu: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. y \<in> K \<Longrightarrow> \<bar>w y\<bar> \<le> B"
+    and subu: "visc_subsol_env2 k L K (interior K) u"
+    and supu: "visc_supersol_env2 k L K (interior K) u"
+    and subw: "visc_subsol_env2 k L K (interior K) w"
+    and supw: "visc_supersol_env2 k L K (interior K) w"
+    and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
+  shows "\<And>y. y \<in> K \<Longrightarrow> u y = w y"
+proof -
+  fix y assume y: "y \<in> K"
+  have le1: "u z \<le> w z" and le2: "w z \<le> u z" if "z \<in> K - interior K" for z
+    using bd[OF that] by simp_all
+  have "u y \<le> w y"
+    by (rule max_principle_le[OF kk LL cK neK uscu lscw Bu Bw subu supw le1 y])
+  moreover have "w y \<le> u y"
+    by (rule max_principle_le[OF kk LL cK neK uscw lscu Bw Bu subw supu le2 y])
+  ultimately show "u y = w y" by simp
+qed
+
+text \<open>Continuous data on compact \<open>K\<close> are bounded and semicontinuous relative
+  to \<open>K\<close> in both directions, and the touching-on-\<open>K\<close> predicates pass to the
+  \<open>C\<^sup>2\<close> ones; so Theorem 4.2(a) and uniqueness hold for them.\<close>
+
+lemma continuous_on_rel_eps:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes cf: "continuous_on K f" and z: "z \<in> K"
+  shows continuous_on_rel_usc: "f z < c \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> f y < c"
+    and continuous_on_rel_lsc: "c < f z \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> c < f y"
+proof -
+  have *: "\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> \<bar>f y - f z\<bar> < \<bar>c - f z\<bar>" if "c \<noteq> f z"
+  proof -
+    have pos: "0 < \<bar>c - f z\<bar>" using that by simp
+    obtain d where "0 < d" "\<forall>y\<in>K. dist y z < d \<longrightarrow> dist (f y) (f z) < \<bar>c - f z\<bar>"
+      using cf[unfolded continuous_on_iff, rule_format, OF z pos] by blast
+    then show ?thesis by (auto simp: dist_commute dist_real_def)
+  qed
+  show "\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> f y < c" if lt: "f z < c"
+  proof -
+    obtain e where "0 < e" "\<forall>y\<in>K. dist z y < e \<longrightarrow> \<bar>f y - f z\<bar> < \<bar>c - f z\<bar>"
+      using *[of] lt by force
+    then show ?thesis using lt by (intro exI[of _ e]) (auto simp: abs_less_iff)
+  qed
+  show "\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> c < f y" if lt: "c < f z"
+  proof -
+    obtain e where "0 < e" "\<forall>y\<in>K. dist z y < e \<longrightarrow> \<bar>f y - f z\<bar> < \<bar>c - f z\<bar>"
+      using *[of] lt by force
+    then show ?thesis using lt by (intro exI[of _ e]) (auto simp: abs_less_iff)
+  qed
+qed
 
 corollary max_principle_boundary_holds:
-  fixes K :: "(real^'n::finite) set"
+  fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-  shows "max_principle_boundary k L K"
-  unfolding max_principle_boundary_def
-proof (intro allI impI)
-  fix u w :: "real^'n \<Rightarrow> real"
-  assume subE: "visc_subsol_env k L K (interior K) u"
+    and subE: "visc_subsol_env k L K (interior K) u"
     and supE: "visc_supersol_env k L K (interior K) w"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
-  have rel: "\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> dist (f y) (f z) < r"
-    if cf: "continuous_on K f" and z: "z \<in> K" and r: "0 < r"
-    for f :: "real^'n \<Rightarrow> real" and z r
-  proof -
-    obtain d where d0: "0 < d" and h: "\<forall>y\<in>K. dist y z < d \<longrightarrow> dist (f y) (f z) < r"
-      using cf[unfolded continuous_on_iff] z r by blast
-    have "\<forall>y\<in>K. dist z y < d \<longrightarrow> dist (f y) (f z) < r" using h by (simp add: dist_commute)
-    then show ?thesis using d0 by blast
-  qed
-  have uscu: "\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c" if z: "z \<in> K" and lt: "u z < c"
-    for c z
-  proof -
-    have r0: "0 < c - u z" using lt by simp
-    from rel[OF cu z r0] obtain e where e0: "0 < e"
-      and h: "\<forall>y\<in>K. dist z y < e \<longrightarrow> dist (u y) (u z) < c - u z" by blast
-    have "\<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
-    proof (intro ballI impI)
-      fix y assume "y \<in> K" "dist z y < e"
-      then have "\<bar>u y - u z\<bar> < c - u z" using h by (simp add: dist_real_def)
-      then show "u y < c" by (simp add: abs_less_iff)
-    qed
-    then show ?thesis using e0 by blast
-  qed
-  have lscw: "\<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> c < w y" if z: "z \<in> K" and lt: "c < w z"
-    for c z
-  proof -
-    have r0: "0 < w z - c" using lt by simp
-    from rel[OF cw z r0] obtain e where e0: "0 < e"
-      and h: "\<forall>y\<in>K. dist z y < e \<longrightarrow> dist (w y) (w z) < w z - c" by blast
-    have "\<forall>y\<in>K. dist z y < e \<longrightarrow> c < w y"
-    proof (intro ballI impI)
-      fix y assume "y \<in> K" "dist z y < e"
-      then have "\<bar>w y - w z\<bar> < w z - c" using h by (simp add: dist_real_def)
-      then show "c < w y" by (simp add: abs_less_iff)
-    qed
-    then show ?thesis using e0 by blast
-  qed
-  obtain Bu where Bu: "\<forall>y\<in>K. \<bar>u y\<bar> \<le> Bu" using bounded_on_compact[OF cK cu] by blast
-  obtain Bw where Bw: "\<forall>y\<in>K. \<bar>w y\<bar> \<le> Bw" using bounded_on_compact[OF cK cw] by blast
-  have BuB: "\<bar>u y\<bar> \<le> max Bu Bw" if "y \<in> K" for y
-    using Bu that by (simp add: le_max_iff_disj)
-  have BwB: "\<bar>w y\<bar> \<le> max Bu Bw" if "y \<in> K" for y
-    using Bw that by (simp add: le_max_iff_disj)
-  show "\<exists>x\<in>K - interior K. \<forall>y\<in>K. u y - w y \<le> u x - w x"
-    by (rule max_principle_usc_lsc[OF kk(1) kk(2) LL cK neK uscu lscw BuB BwB
-          visc_subsol_env_imp_env2[OF subE] visc_supersol_env_imp_env2[OF supE]])
+  shows "\<exists>x\<in>K - interior K. \<forall>y\<in>K. u y - w y \<le> u x - w x"
+proof -
+  obtain Bu Bw where "\<forall>y\<in>K. \<bar>u y\<bar> \<le> Bu" "\<forall>y\<in>K. \<bar>w y\<bar> \<le> Bw"
+    using bounded_on_compact[OF cK cu] bounded_on_compact[OF cK cw] by blast
+  then have B: "\<forall>y\<in>K. \<bar>u y\<bar> \<le> max Bu Bw \<and> \<bar>w y\<bar> \<le> max Bu Bw"
+    by (auto simp: le_max_iff_disj)
+  show ?thesis
+    by (rule max_principle_usc_lsc[OF kk LL cK neK continuous_on_rel_usc[OF cu]
+          continuous_on_rel_lsc[OF cw], where B = "max Bu Bw"])
+      (use B visc_subsol_env_imp_env2[OF subE] visc_supersol_env_imp_env2[OF supE] in auto)
 qed
 
 section \<open>Uniqueness on a general compact set\<close>
 
-text \<open>The first consequence of Theorem 4.2(a): two continuous viscosity
-  solutions on compact \<open>K\<close> agreeing on \<open>K - interior K\<close> agree everywhere
-  on \<open>K\<close>.  Both directions swap the roles of sub- and supersolution,
-  putting the maximum of \<open>u - w\<close> on the boundary where it vanishes.\<close>
-
-text \<open>The comparison principle proper, with ordered boundary data: a
-  subsolution below a supersolution on the boundary stays below it
-  throughout \<open>K\<close>.\<close>
+text \<open>The first consequence of Theorem 4.2(a), for continuous solutions on
+  compact \<open>K\<close> agreeing on \<open>K - interior K\<close>: an instance of
+  @{thm [source] uniqueness_from_max_principle}.\<close>
 
 theorem viscosity_uniqueness_compact:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
@@ -1742,29 +1762,15 @@ theorem viscosity_uniqueness_compact:
     and x: "x \<in> K"
   shows "u x = w x"
 proof -
-  have mpb: "max_principle_boundary k L K"
-    by (rule max_principle_boundary_holds[OF cK neK kk(1) kk(2) LL])
-  \<comment> \<open>\<open>u - w\<close> peaks on the boundary, where it vanishes\<close>
-  have le: "u x \<le> w x"
-  proof -
-    obtain b where bB: "b \<in> K - interior K"
-      and bmax: "\<And>y. y \<in> K \<Longrightarrow> u y - w y \<le> u b - w b"
-      using mpb subu supw cu cw unfolding max_principle_boundary_def by blast
-    have "u b - w b = 0" using bd[OF bB] by simp
-    then have "u x - w x \<le> 0" using bmax[OF x] by linarith
-    then show ?thesis by linarith
-  qed
-  \<comment> \<open>and the same with the roles swapped\<close>
-  have ge: "w x \<le> u x"
-  proof -
-    obtain b where bB: "b \<in> K - interior K"
-      and bmax: "\<And>y. y \<in> K \<Longrightarrow> w y - u y \<le> w b - u b"
-      using mpb subw supu cw cu unfolding max_principle_boundary_def by blast
-    have "w b - u b = 0" using bd[OF bB] by simp
-    then have "w x - u x \<le> 0" using bmax[OF x] by linarith
-    then show ?thesis by linarith
-  qed
-  from le ge show ?thesis by simp
+  obtain Bu Bw where "\<forall>y\<in>K. \<bar>u y\<bar> \<le> Bu" "\<forall>y\<in>K. \<bar>w y\<bar> \<le> Bw"
+    using bounded_on_compact[OF cK cu] bounded_on_compact[OF cK cw] by blast
+  then have B: "\<forall>y\<in>K. \<bar>u y\<bar> \<le> max Bu Bw \<and> \<bar>w y\<bar> \<le> max Bu Bw"
+    by (auto simp: le_max_iff_disj)
+  show ?thesis
+    by (rule uniqueness_from_max_principle[OF kk LL cK neK
+          continuous_on_rel_usc[OF cu] continuous_on_rel_lsc[OF cu]
+          continuous_on_rel_usc[OF cw] continuous_on_rel_lsc[OF cw], where B = "max Bu Bw"])
+      (use B bd x visc_subsol_env_imp_env2 visc_supersol_env_imp_env2 subu supu subw supw in auto)
 qed
 
 section \<open>Map of the Theorem 4.2(a) chain\<close>

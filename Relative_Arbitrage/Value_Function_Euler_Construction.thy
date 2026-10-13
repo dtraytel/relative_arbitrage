@@ -1667,12 +1667,13 @@ text \<open>\<open>quad_taylor_step\<close> lives in @{theory Symmetric_Matrix_S
 
 subsection \<open>The weak limit of the Euler laws\<close>
 
-text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close> all live in the compact class
-  \<open>exit_class k L c x\<close> (@{thm [source]
-  exit_class_compact_metric_space}), so some subsequence converges
-  weakly to a class member \<open>P\<close>.  The portmanteau bound --- if the
-  measures of an open set converge to \<open>b\<close>, the limit member gives the set
-  at most \<open>b\<close>, and dually for closed sets --- applies to the event that a
+text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close> all live in the class
+  \<open>exit_class k L c x\<close>, so some subsequence converges weakly to a class
+  member \<open>P\<close> (@{thm [source] exit_class_convergent_subsequence}).  The
+  portmanteau bound --- if the measures of an open set converge to \<open>b\<close>,
+  the limit member gives the set at most \<open>b\<close>, and dually for closed sets
+  (@{thm [source] weak_conv_open_liminf}, @{thm [source]
+  weak_conv_closed_limsup}) --- applies to the event that a
   path stays inside a region while the quadratic drops below its
   guaranteed growth, whose probability vanishes with the mesh by
   @{thm [source] eulerp_Xi_chebyshev} and \<open>eulerp_quad_lower_region\<close>.
@@ -1700,89 +1701,21 @@ theorem exit_class_weak_limit:
           \<longrightarrow> b \<le> measure P D)"
 proof -
   let ?pm = "path_metric T :: ('n pairpath) metric"
-  let ?C = "exit_class k L T x"
-  let ?E = "Levy_Prokhorov.LPm (mspace ?pm) (mdist ?pm)"
-  interpret CM: Metric_space ?C ?E
-    by (rule exit_class_compact_metric_space(1)[OF T L0])
-  have cs: "compact_space CM.mtopology"
-    by (rule exit_class_compact_metric_space(3)[OF T L0])
-  have rng: "range Pseq \<subseteq> ?C" using mem by auto
-  obtain P r where P: "P \<in> ?C" and r: "strict_mono r"
-    and liml: "limitin CM.mtopology (Pseq \<circ> r) P sequentially"
-    using cs[unfolded CM.compact_space_sequentially] rng by blast
-  have Ctop: "CM.mtopology = subtopology
-      (weak_conv_topology (mtopology_of ?pm)) ?C"
-    by (rule exit_class_compact_metric_space(2)[OF T L0])
-  have limW: "limitin (weak_conv_topology (mtopology_of ?pm))
-      (Pseq \<circ> r) P sequentially"
-    using liml unfolding Ctop limitin_subtopology by blast
-  have mwc: "limitin (weak_conv_topology
-      (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))
-      (Pseq \<circ> r) P sequentially"
-    using limW by (simp add: mtopology_of_def)
-  have fmi: "finite_measure (Pseq i)" for i
-    using exit_class_prob[OF mem, of i]
-    by (simp add: prob_space.emeasure_space_1 finite_measureI)
-  have fmP: "finite_measure P"
-    using exit_class_prob[OF P]
-    by (simp add: prob_space.emeasure_space_1 finite_measureI)
-  have setsP: "sets P = sets (borel_of
-      (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))"
-    using exit_class_sets[OF P] by (simp add: mtopology_of_def)
-  have ev1: "\<forall>\<^sub>F i in sequentially. sets ((Pseq \<circ> r) i)
-      = sets (borel_of (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))"
-  proof (intro always_eventually allI)
-    fix i show "sets ((Pseq \<circ> r) i)
-        = sets (borel_of (Metric_space.mtopology (mspace ?pm) (mdist ?pm)))"
-      using exit_class_sets[OF mem, of "r i"]
-      by (simp add: mtopology_of_def)
-  qed
-  have ev2: "\<forall>\<^sub>F i in sequentially. finite_measure ((Pseq \<circ> r) i)"
-    by (intro always_eventually allI) (simp add: fmi)
-  have MWfin: "mweak_conv_fin (mspace ?pm) (mdist ?pm)
-      (Pseq \<circ> r) P sequentially"
-    unfolding mweak_conv_fin_def mweak_conv_fin_axioms_def
-    using ev1 ev2 fmP setsP by (simp add: mtopology_of_def)
-  interpret MW: mweak_conv_fin "mspace ?pm" "mdist ?pm"
-      "Pseq \<circ> r" P sequentially
-    by (rule MWfin)
-  note eq3 = MW.mweak_conv_eq3[THEN iffD1, OF mwc,
-      THEN conjunct2, rule_format]
-  note eq2 = MW.mweak_conv_eq2[THEN iffD1, OF mwc,
-      THEN conjunct2, rule_format]
-  have main_open: "measure P U \<le> b"
-    if U: "openin (mtopology_of ?pm) U"
-      and cb: "(\<lambda>i. measure (Pseq i) U) \<longlonglongrightarrow> b" for U b
-  proof -
-    have U': "openin (Metric_space.mtopology (mspace ?pm) (mdist ?pm)) U"
-      using U by (simp add: mtopology_of_def)
-    have sub: "(\<lambda>n. ereal (measure ((Pseq \<circ> r) n) U))
-        \<longlonglongrightarrow> ereal b"
-      using LIMSEQ_subseq_LIMSEQ[OF cb r] by (simp add: o_def)
-    have Linf: "Liminf sequentially
-        (\<lambda>n. ereal (measure ((Pseq \<circ> r) n) U)) = ereal b"
-      by (rule lim_imp_Liminf[OF _ sub]) simp
-    have "ereal (measure P U) \<le> ereal b"
-      using eq3[OF U'] Linf by simp
-    then show ?thesis by simp
-  qed
-  have main_closed: "b \<le> measure P D"
-    if D: "closedin (mtopology_of ?pm) D"
-      and cb: "(\<lambda>i. measure (Pseq i) D) \<longlonglongrightarrow> b" for D b
-  proof -
-    have D': "closedin (Metric_space.mtopology (mspace ?pm) (mdist ?pm)) D"
-      using D by (simp add: mtopology_of_def)
-    have sub: "(\<lambda>n. ereal (measure ((Pseq \<circ> r) n) D))
-        \<longlonglongrightarrow> ereal b"
-      using LIMSEQ_subseq_LIMSEQ[OF cb r] by (simp add: o_def)
-    have Lsup: "Limsup sequentially
-        (\<lambda>n. ereal (measure ((Pseq \<circ> r) n) D)) = ereal b"
-      by (rule lim_imp_Limsup[OF _ sub]) simp
-    have "ereal b \<le> ereal (measure P D)"
-      using eq2[OF D'] Lsup by simp
-    then show ?thesis by simp
-  qed
-  show ?thesis using P main_open main_closed by blast
+  obtain r P where r: "strict_mono r" and P: "P \<in> exit_class k L T x"
+    and wc: "weak_conv_on (Pseq \<circ> r) P sequentially (mtopology_of ?pm)"
+    using exit_class_convergent_subsequence[where Qm = Pseq, OF T L0 mem] by blast
+  have sub: "(\<lambda>i. ereal (measure ((Pseq \<circ> r) i) A)) \<longlonglongrightarrow> ereal b"
+    if "(\<lambda>i. measure (Pseq i) A) \<longlonglongrightarrow> b" for A b
+    using LIMSEQ_subseq_LIMSEQ[OF that r] by (simp add: o_def)
+  have "measure P U \<le> b"
+    if "openin (mtopology_of ?pm) U" "(\<lambda>i. measure (Pseq i) U) \<longlonglongrightarrow> b" for U b
+    using weak_conv_open_liminf[OF wc that(1)] lim_imp_Liminf[OF _ sub[OF that(2)]]
+    by simp
+  moreover have "b \<le> measure P D"
+    if "closedin (mtopology_of ?pm) D" "(\<lambda>i. measure (Pseq i) D) \<longlonglongrightarrow> b" for D b
+    using weak_conv_closed_limsup[OF wc that(1)] lim_imp_Limsup[OF _ sub[OF that(2)]]
+    by simp
+  ultimately show ?thesis using P by blast
 qed
 
 text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close>: exactly \<open>i + 1\<close> steps of

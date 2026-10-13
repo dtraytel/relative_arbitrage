@@ -146,45 +146,11 @@ qed
 text \<open>The entrywise bound \<open>|a i j| \<le> L\<close> on the feasible set turns a change of
   the Hessian argument into a uniform change of the objective.\<close>
 
-definition mgap :: "real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real^'n^'n \<Rightarrow> real" where
-  "mgap L M N = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j - N $ i $ j\<bar>) * L / 2"
+abbreviation mgap :: "real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real^'n^'n \<Rightarrow> real" where
+  "mgap L M N \<equiv> entrysum (M - N) * L / 2"
 
-lemma trace_mult_feasible_bound:
-  fixes D :: "real^'n::finite^'n"
-  assumes a: "a \<in> feasible k L p"
-  shows "\<bar>trace (D ** a)\<bar> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>D $ i $ j\<bar>) * L"
-proof -
-  have tr: "trace (D ** a) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. D $ i $ j * a $ j $ i)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  have inner_le: "\<bar>\<Sum>j\<in>(UNIV :: 'n set). D $ i $ j * a $ j $ i\<bar>
-      \<le> (\<Sum>j\<in>(UNIV :: 'n set). \<bar>D $ i $ j\<bar>) * L" for i
-  proof -
-    have "\<bar>\<Sum>j\<in>(UNIV :: 'n set). D $ i $ j * a $ j $ i\<bar>
-        \<le> (\<Sum>j\<in>(UNIV :: 'n set). \<bar>D $ i $ j * a $ j $ i\<bar>)"
-      by (rule sum_abs)
-    also have "\<dots> \<le> (\<Sum>j\<in>(UNIV :: 'n set). \<bar>D $ i $ j\<bar> * L)"
-    proof (rule sum_mono)
-      fix j :: 'n
-      have "\<bar>D $ i $ j * a $ j $ i\<bar> = \<bar>D $ i $ j\<bar> * \<bar>a $ j $ i\<bar>"
-        by (simp add: abs_mult)
-      also have "\<dots> \<le> \<bar>D $ i $ j\<bar> * L"
-        by (intro mult_left_mono feasible_entry_bound[OF a]) simp
-      finally show "\<bar>D $ i $ j * a $ j $ i\<bar> \<le> \<bar>D $ i $ j\<bar> * L" .
-    qed
-    also have "\<dots> = (\<Sum>j\<in>(UNIV :: 'n set). \<bar>D $ i $ j\<bar>) * L"
-      by (simp add: sum_distrib_right)
-    finally show ?thesis .
-  qed
-  have "\<bar>(\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>UNIV. D $ i $ j * a $ j $ i)\<bar>
-      \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<bar>\<Sum>j\<in>UNIV. D $ i $ j * a $ j $ i\<bar>)"
-    by (rule sum_abs)
-  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). (\<Sum>j\<in>UNIV. \<bar>D $ i $ j\<bar>) * L)"
-    by (intro sum_mono inner_le)
-  also have "\<dots> = (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>UNIV. \<bar>D $ i $ j\<bar>) * L"
-    by (simp add: sum_distrib_right)
-  finally show ?thesis
-    unfolding tr .
-qed
+text \<open>\<open>trace_mult_feasible_bound\<close>, \<open>ell_op_le_witness\<close> and \<open>ell_op_approx\<close>
+  live in @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
 
 lemma ell_op_M_gap:
   fixes M N :: "real^'n::finite^'n"
@@ -200,20 +166,9 @@ proof -
   qed
   have step: "ell_op k L p M \<le> - trace (N ** a) / 2 + mgap L M N"
     if a: "a \<in> feasible k L p" for a
-  proof -
-    have gap: "- trace ((M - N) ** a) / 2 \<le> mgap L M N"
-      using trace_mult_feasible_bound[OF a, of "M - N"]
-      by (simp add: mgap_def)
-    have "ell_op k L p M \<le> - trace (M ** a) / 2"
-      unfolding ell_op_def
-      by (intro cInf_lower imageI a ell_op_bdd_below)
-    also have "- trace (M ** a) / 2
-        = - trace (N ** a) / 2 + - trace ((M - N) ** a) / 2"
-      using split[of a] by simp
-    also have "\<dots> \<le> - trace (N ** a) / 2 + mgap L M N"
-      using gap by simp
-    finally show ?thesis .
-  qed
+    using ell_op_le_witness[OF a, of M] split[of a]
+      trace_mult_feasible_bound[OF a, of "M - N"]
+    by (simp add: abs_le_iff)
   have main: "ell_op k L p M - mgap L M N
       \<le> Inf ((\<lambda>a. - trace (N ** a) / 2) ` feasible k L p)"
   proof (rule cInf_greatest)
@@ -236,28 +191,8 @@ lemma mgap_le_norm:
   fixes M N :: "real^'n::finite^'n"
   assumes L: "0 \<le> L"
   shows "mgap L M N \<le> real (CARD('n) * CARD('n)) * norm (M - N) * L / 2"
-proof -
-  have entry: "\<bar>M $ i $ j - N $ i $ j\<bar> \<le> norm (M - N)" for i j
-  proof -
-    have "\<bar>M $ i $ j - N $ i $ j\<bar> = \<bar>(M - N) $ i $ j\<bar>"
-      by simp
-    also have "\<dots> \<le> norm ((M - N) $ i)"
-      by (rule component_le_norm_cart)
-    also have "\<dots> \<le> norm (M - N)"
-      by (rule Finite_Cartesian_Product.norm_nth_le)
-    finally show ?thesis .
-  qed
-  have "(\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>UNIV. \<bar>M $ i $ j - N $ i $ j\<bar>)
-      \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). norm (M - N))"
-    by (intro sum_mono entry)
-  also have "\<dots> = real (CARD('n) * CARD('n)) * norm (M - N)"
-    by simp
-  finally have "(\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>UNIV. \<bar>M $ i $ j - N $ i $ j\<bar>)
-      \<le> real (CARD('n) * CARD('n)) * norm (M - N)" .
-  then show ?thesis
-    unfolding mgap_def using L
-    by (simp add: divide_right_mono mult_right_mono)
-qed
+  using mult_right_mono[OF entrysum_le_norm[of "M - N"] L]
+  by (simp add: divide_right_mono)
 
 lemma mgap_shift_id:
   fixes M :: "real^'n::finite^'n"
@@ -265,42 +200,15 @@ lemma mgap_shift_id:
   shows "mgap L M (M + \<delta> *\<^sub>R mat 1) = \<delta> * real CARD('n) * L / 2"
     and "mgap L (M - \<delta> *\<^sub>R mat 1) M = \<delta> * real CARD('n) * L / 2"
 proof -
-  have row: "(\<Sum>j\<in>(UNIV::'n set). \<bar>\<delta> * (if i = j then 1 else 0)\<bar>) = \<delta>" for i
-  proof -
-    have "(\<Sum>j\<in>(UNIV::'n set). \<bar>\<delta> * (if i = j then 1 else 0)\<bar>)
-        = (\<Sum>j\<in>(UNIV::'n set). if j = i then \<delta> else 0)"
-      by (rule sum.cong) (use d in auto)
-    also have "\<dots> = \<delta>" by simp
-    finally show ?thesis .
-  qed
-  have s1: "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-        \<bar>M $ i $ j - (M + \<delta> *\<^sub>R mat 1) $ i $ j\<bar>) = \<delta> * real CARD('n)"
-  proof -
-    have "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-          \<bar>M $ i $ j - (M + \<delta> *\<^sub>R mat 1) $ i $ j\<bar>)
-        = (\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-            \<bar>\<delta> * (if i = j then 1 else 0)\<bar>)"
-      by (intro sum.cong refl) (simp add: mat_def)
-    also have "\<dots> = (\<Sum>i\<in>(UNIV::'n set). \<delta>)"
-      by (rule sum.cong[OF refl]) (rule row)
-    finally show ?thesis by simp
-  qed
-  have s2: "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-        \<bar>(M - \<delta> *\<^sub>R mat 1) $ i $ j - M $ i $ j\<bar>) = \<delta> * real CARD('n)"
-  proof -
-    have "(\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-          \<bar>(M - \<delta> *\<^sub>R mat 1) $ i $ j - M $ i $ j\<bar>)
-        = (\<Sum>i\<in>(UNIV::'n set). \<Sum>j\<in>(UNIV::'n set).
-            \<bar>\<delta> * (if i = j then 1 else 0)\<bar>)"
-      by (intro sum.cong refl) (simp add: mat_def)
-    also have "\<dots> = (\<Sum>i\<in>(UNIV::'n set). \<delta>)"
-      by (rule sum.cong[OF refl]) (rule row)
-    finally show ?thesis by simp
-  qed
+  have "entrysum (\<delta> *\<^sub>R mat 1 :: real^'n^'n) = (\<Sum>i\<in>(UNIV::'n set). \<delta>)"
+    unfolding entrysum_def
+    by (intro sum.cong refl) (simp add: mat_def if_distrib abs_of_nonneg[OF d] cong: if_cong)
+  then have e: "entrysum (\<delta> *\<^sub>R mat 1 :: real^'n^'n) = \<delta> * real CARD('n)"
+    by simp
   show "mgap L M (M + \<delta> *\<^sub>R mat 1) = \<delta> * real CARD('n) * L / 2"
-    unfolding mgap_def s1 by simp
+    using e entrysum_sym[of M "M + \<delta> *\<^sub>R mat 1"] by simp
   show "mgap L (M - \<delta> *\<^sub>R mat 1) M = \<delta> * real CARD('n) * L / 2"
-    unfolding mgap_def s2 by simp
+    using e entrysum_sym[of "M - \<delta> *\<^sub>R mat 1" M] by simp
 qed
 
 subsection \<open>\<open>F\<close> and \<open>F\<^sup>*\<close> vanish with the Hessian, uniformly in the gradient\<close>
@@ -812,79 +720,6 @@ proof -
   show ?thesis unfolding feasible_def using iff by auto
 qed
 
-lemma ell_op_bdd:
-  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
-  assumes L0: "0 \<le> L"
-  shows "bdd_below ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p)"
-proof (rule bdd_belowI[of _
-    "- ((\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * L) / 2"])
-  fix v assume "v \<in> (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
-  then obtain a where aF: "a \<in> feasible k L p"
-    and ve: "v = - trace (M ** a) / 2" by auto
-  have tr: "trace (M ** a)
-      = (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>l\<in>(UNIV :: 'n set).
-          M $ i $ l * a $ l $ i)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  have "trace (M ** a)
-      \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>l\<in>(UNIV :: 'n set).
-          \<bar>M $ i $ l\<bar> * L)"
-    unfolding tr
-  proof (rule sum_mono)
-    fix i :: 'n assume "i \<in> (UNIV :: 'n set)"
-    show "(\<Sum>l\<in>(UNIV :: 'n set). M $ i $ l * a $ l $ i)
-        \<le> (\<Sum>l\<in>(UNIV :: 'n set). \<bar>M $ i $ l\<bar> * L)"
-    proof (rule sum_mono)
-      fix l :: 'n assume "l \<in> (UNIV :: 'n set)"
-      have "M $ i $ l * a $ l $ i \<le> \<bar>M $ i $ l * a $ l $ i\<bar>"
-        by simp
-      also have "\<dots> = \<bar>M $ i $ l\<bar> * \<bar>a $ l $ i\<bar>"
-        by (simp add: abs_mult)
-      also have "\<dots> \<le> \<bar>M $ i $ l\<bar> * L"
-        by (rule mult_left_mono[OF feasible_entry_bound[OF aF]]) simp
-      finally show "M $ i $ l * a $ l $ i \<le> \<bar>M $ i $ l\<bar> * L" .
-    qed
-  qed
-  also have "(\<Sum>i\<in>(UNIV :: 'n set). \<Sum>l\<in>(UNIV :: 'n set).
-        \<bar>M $ i $ l\<bar> * L)
-      = (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set).
-          \<bar>M $ i $ j\<bar>) * L"
-    by (simp add: sum_distrib_right)
-  finally have "trace (M ** a)
-      \<le> (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set).
-          \<bar>M $ i $ j\<bar>) * L" .
-  then show "- ((\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * L) / 2
-      \<le> v"
-    unfolding ve by linarith
-qed
-
-lemma ell_op_le_witness:
-  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
-  assumes L0: "0 \<le> L" and aF: "a \<in> feasible k L p"
-  shows "ell_op k L p M \<le> - trace (M ** a) / 2"
-  unfolding ell_op_def
-  by (rule cInf_lower[OF _ ell_op_bdd[OF L0]]) (use aF in auto)
-
-lemma ell_op_approx:
-  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
-  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
-    and e0: "0 < \<epsilon>"
-  obtains a where "a \<in> feasible k L p"
-    and "- trace (M ** a) / 2 < ell_op k L p M + \<epsilon>"
-proof -
-  have L0: "0 \<le> L" using L1 by linarith
-  have ne: "(\<lambda>a. - trace (M ** a) / 2) ` feasible k L p \<noteq> {}"
-    using feasible_nonempty[OF k1 kn L1] by blast
-  have bdd: "bdd_below ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p)"
-    by (rule ell_op_bdd[OF L0])
-  have "ell_op k L p M < ell_op k L p M + \<epsilon>" using e0 by simp
-  then have "\<exists>v \<in> (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p.
-      v < ell_op k L p M + \<epsilon>"
-    unfolding ell_op_def using cInf_less_iff[OF ne bdd] by blast
-  then obtain a where a1: "a \<in> feasible k L p"
-    and a2: "- trace (M ** a) / 2 < ell_op k L p M + \<epsilon>" by blast
-  show ?thesis by (rule that[OF a1 a2])
-qed
-
 theorem ell_op_usc_le_at_nonzero:
   fixes p :: "real^'n::finite" and M :: "real^'n^'n"
   assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
@@ -1024,7 +859,7 @@ proof (rule ereal_le_epsilon)
       have Gz: "- trace (M' ** (R ** a ** transpose R)) / 2 = G z"
         unfolding G_def zeq Rm_def R_def v_def by simp
       have "ell_op k L p' M' \<le> - trace (M' ** (R ** a ** transpose R)) / 2"
-        by (rule ell_op_le_witness[OF L0 aF'])
+        by (rule ell_op_le_witness[OF aF'])
       then have "ell_op k L p' M' \<le> G z" unfolding Gz .
       then have "ell_op k L p' M' < ell_op k L p M + r"
         using Gle aval unfolding GpM by linarith

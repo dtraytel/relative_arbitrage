@@ -34,26 +34,6 @@ text \<open>
     subsolution inequality it yields for a quadratic touching on a closed
     ball, in witness form for the relaxed operator \<open>ell_op_s\<close>: some \<open>b\<close> in
     the constraint set has \<open>- trace (M ** b) / 2 \<le> 1\<close>.\<close>
-section \<open>One witness suffices for the subsolution inequality\<close>
-
-text \<open>\<^const>\<open>ell_op\<close> is an infimum over the feasible set, and
-  @{thm [source] ell_op_bdd_below} says that infimum is over a set bounded
-  below.  So a single feasible matrix beating the threshold settles the
-  inequality --- there is no need to control the whole family.\<close>
-
-lemma ell_op_le_of_witness:
-  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes a: "a \<in> feasible k L p" and le: "- trace (M ** a) / 2 \<le> c"
-  shows "ell_op k L p M \<le> c"
-proof -
-  have mem: "- trace (M ** a) / 2 \<in> (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
-    using a by blast
-  have "ell_op k L p M \<le> - trace (M ** a) / 2"
-    unfolding ell_op_def by (rule cInf_lower[OF mem ell_op_bdd_below])
-  also have "\<dots> \<le> c" by (rule le)
-  finally show ?thesis .
-qed
-
 section \<open>The DPP at the exit time of a ball\<close>
 
 text \<open>The \<open>\<le>\<close> half of the DPP, @{thm [source] exit_val_cond_time}, needs its
@@ -170,34 +150,6 @@ text \<open>\<open>trace_mult_commute\<close> is HOL-Analysis's \<open>trace_mul
 
 definition ell_op_s :: "nat \<Rightarrow> real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
   "ell_op_s k L M = Inf ((\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L)"
-
-lemma ell_op_s_bdd_below:
-  fixes M :: "real^'n::finite^'n"
-  assumes L: "0 \<le> L"
-  shows "bdd_below ((\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L)"
-proof (rule bdd_belowI[of _
-      "- ((\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * (real CARD('n) * L)) / 2"])
-  fix v assume "v \<in> (\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L"
-  then obtain a where a: "a \<in> sconstraint k L"
-    and v: "v = - trace (M ** a) / 2" by auto
-  have eb: "\<bar>a $ j $ i\<bar> \<le> real CARD('n) * L" for i j
-  proof -
-    have "\<bar>a $ j $ i\<bar> = norm (a $ j $ i)" by simp
-    also have "\<dots> \<le> norm (a $ j)" by (rule Finite_Cartesian_Product.norm_nth_le)
-    also have "\<dots> \<le> norm a" by (rule Finite_Cartesian_Product.norm_nth_le)
-    also have "\<dots> \<le> real CARD('n) * L" by (rule sconstraint_norm_le[OF L a])
-    finally show ?thesis .
-  qed
-  have "trace (M ** a) \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j * a $ j $ i\<bar>)"
-    unfolding trace_mult_sum by (intro sum_mono order_trans[OF _ sum_abs]) auto
-  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar> * (real CARD('n) * L))"
-    by (intro sum_mono) (simp add: abs_mult mult_left_mono eb)
-  also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * (real CARD('n) * L)"
-    by (simp add: sum_distrib_right)
-  finally show
-    "- ((\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * (real CARD('n) * L)) / 2 \<le> v"
-    by (simp add: v)
-qed
 
 lemma feasible_subset_sconstraint:
   fixes p :: "real^'n::finite"
@@ -2664,7 +2616,7 @@ proof (intro ballI allI impI)
     also have "\<dots> \<le> 1 + \<delta> * C / 2"
       using tra d0 by (simp add: mult_left_mono)
     finally have wH: "- trace (H ** a) / 2 \<le> 1 + \<delta> * C / 2" .
-    show ?thesis by (rule ell_op_le_of_witness[OF afeas wH])
+    show ?thesis by (rule order_trans[OF ell_op_le_witness[OF afeas] wH])
   qed
   show "ell_op k L (g x) H \<le> 1"
   proof (rule field_le_epsilon)
@@ -2731,42 +2683,35 @@ theorem exit_val_subsol_bc:
   shows "visc_subsol_env k L K
       (interior K \<union> {x \<in> K - interior K. 0 < enn2real (exit_val k L T K x)})
       (\<lambda>z. enn2real (exit_val k L T K z))"
-  unfolding visc_subsol_env_def
-proof (intro ballI allI impI)
+proof -
   define v where "v = (\<lambda>z. enn2real (exit_val k L T K z))"
   have T0: "0 \<le> T" using T by simp
-  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assume xO: "x \<in> interior K \<union> {x \<in> K - interior K. 0 < v x}"
-    and tf: "test_fun_at \<phi> g H x"
-    and gmax: "\<forall>y\<in>K. v y - \<phi> y \<le> v x - \<phi> x"
+  have sub: "visc_subsol k L \<Omega> v" for \<Omega>
+    unfolding v_def by (rule exit_val_visc_subsol_any[OF T L1 Kc kn])
+  have "visc_subsol_env k L K (interior K) v"
+    by (rule visc_subsol_imp_env[OF sub interior_subset open_interior])
+  moreover have "visc_subsol_env k L K {x \<in> K - interior K. 0 < v x} v"
+    unfolding visc_subsol_env_def
+  proof (intro ballI allI impI)
+    fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+      and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+    assume xB: "x \<in> {x \<in> K - interior K. 0 < v x}"
+      and tf: "test_fun_at \<phi> g H x"
+      and gmax: "\<forall>y\<in>K. v y - \<phi> y \<le> v x - \<phi> x"
+    have vpos: "0 < v x" using xB by blast
 
-  text \<open>The test function is continuous at \<open>x\<close>.\<close>
-  have cphi: "isCont \<phi> x"
-  proof -
-    obtain ee where ee0: "0 < ee"
-      and dd: "\<And>y. y \<in> ball x ee \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-      using tf unfolding test_fun_at_def by blast
-    have "(\<phi> has_derivative (\<lambda>h. g x \<bullet> h)) (at x)" using dd[of x] ee0 by simp
-    then have "\<phi> differentiable (at x)" by (rule differentiableI)
-    then show ?thesis by (simp add: differentiable_imp_continuous_within)
-  qed
-
-  text \<open>The global touching upgrades to a local one.\<close>
-  have loc: "\<exists>e>0. \<forall>z \<in> ball x e. v z - \<phi> z \<le> v x - \<phi> x"
-  proof (cases "x \<in> interior K")
-    case True
-    obtain e where e0: "0 < e" and eK: "ball x e \<subseteq> K"
-      using True unfolding mem_interior by blast
-    show ?thesis
-    proof (intro exI[of _ e] conjI ballI e0)
-      fix z assume "z \<in> ball x e"
-      then have "z \<in> K" using eK by blast
-      then show "v z - \<phi> z \<le> v x - \<phi> x" using gmax by blast
+    text \<open>The test function is continuous at \<open>x\<close>.\<close>
+    have cphi: "isCont \<phi> x"
+    proof -
+      obtain ee where ee0: "0 < ee"
+        and dd: "\<And>y. y \<in> ball x ee \<Longrightarrow> (\<phi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+        using tf unfolding test_fun_at_def by blast
+      have "(\<phi> has_derivative (\<lambda>h. g x \<bullet> h)) (at x)" using dd[of x] ee0 by simp
+      then have "\<phi> differentiable (at x)" by (rule differentiableI)
+      then show ?thesis by (simp add: differentiable_imp_continuous_within)
     qed
-  next
-    case False
-    then have vpos: "0 < v x" using xO by blast
+
+    text \<open>The global touching upgrades to a local one.\<close>
     obtain e where e0: "0 < e"
       and eb: "\<And>z. dist z x < e \<Longrightarrow> \<bar>\<phi> z - \<phi> x\<bar> < v x"
     proof -
@@ -2783,7 +2728,7 @@ proof (intro ballI allI impI)
       qed
       show thesis by (rule that[OF s0 key])
     qed
-    show ?thesis
+    have loc: "\<exists>e>0. \<forall>z \<in> ball x e. v z - \<phi> z \<le> v x - \<phi> x"
     proof (intro exI[of _ e] conjI ballI e0)
       fix z assume zb: "z \<in> ball x e"
       then have dzx: "dist z x < e" by (simp add: dist_commute)
@@ -2798,14 +2743,14 @@ proof (intro ballI allI impI)
         ultimately show ?thesis by linarith
       qed
     qed
+    have "ell_op k L (g x) H \<le> 1"
+      using sub[of UNIV] tf loc unfolding visc_subsol_def by blast
+    then have "ereal (ell_op k L (g x) H) \<le> 1" by simp
+    with ell_op_lsc_le_ell_op[of k L "g x" H]
+    show "ell_op_lsc k L (g x) H \<le> 1" by (rule order_trans)
   qed
-
-  have "ell_op k L (g x) H \<le> 1"
-    using exit_val_visc_subsol_any[OF T L1 Kc kn, of UNIV] tf loc
-    unfolding visc_subsol_def v_def by blast
-  then have "ereal (ell_op k L (g x) H) \<le> 1" by simp
-  with ell_op_lsc_le_ell_op[of k L "g x" H]
-  show "ell_op_lsc k L (g x) H \<le> 1" by (rule order_trans)
+  ultimately show ?thesis
+    unfolding visc_subsol_env_def v_def by blast
 qed
 
 

@@ -2,7 +2,7 @@
 (*<*)
 theory Curvature_Operator
   imports
-    "Symmetric_Matrix_Spectra.Symmetric_Spectral"
+    "Symmetric_Matrix_Spectra.Poincare_Separation"
 begin
 
 (*>*)
@@ -286,31 +286,58 @@ proof -
   qed
 qed
 
+text \<open>So a feasible \<open>a\<close> pairs with any matrix \<open>D\<close> to at most \<open>entrysum D * L\<close>
+  in trace; in particular \<open>F\<close> is an infimum over a set bounded below, and one
+  feasible witness bounds \<open>F\<close> from above.\<close>
+
+lemma trace_mult_feasible_bound:
+  fixes D :: "real^'n::finite^'n"
+  assumes a: "a \<in> feasible k L p"
+  shows "\<bar>trace (D ** a)\<bar> \<le> entrysum D * L"
+proof -
+  have "\<bar>trace (D ** a)\<bar> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>D $ i $ j * a $ j $ i\<bar>)"
+    unfolding trace_def matrix_matrix_mult_def
+    by (auto intro!: order_trans[OF sum_abs] sum_mono)
+  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>D $ i $ j\<bar> * L)"
+    by (intro sum_mono)
+      (simp add: abs_mult mult_left_mono feasible_entry_bound[OF a])
+  finally show ?thesis
+    by (simp add: entrysum_def sum_distrib_right)
+qed
+
 lemma ell_op_bdd_below:
   fixes M :: "real^'n^'n"
   shows "bdd_below ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p)"
-proof (rule bdd_belowI[of _ "- ((\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * L) / 2"])
-  fix v assume "v \<in> (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p"
-  then obtain a where a: "a \<in> feasible k L p" and v: "v = - trace (M ** a) / 2"
-    by auto
-  have tr: "trace (M ** a) = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. M $ i $ j * a $ j $ i)"
-    by (simp add: trace_def matrix_matrix_mult_def)
-  have "trace (M ** a) \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j * a $ j $ i\<bar>)"
-    unfolding tr by (intro sum_mono order_trans[OF _ sum_abs]) auto
-  also have "\<dots> \<le> (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar> * L)"
-    by (intro sum_mono)
-      (simp add: abs_mult mult_left_mono feasible_entry_bound[OF a])
-  also have "\<dots> = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * L"
-    by (simp add: sum_distrib_right)
-  finally show "- ((\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>) * L) / 2 \<le> v"
-    by (simp add: v)
-qed
+  by (rule bdd_belowI2[of _ "- (entrysum M * L) / 2"])
+    (use trace_mult_feasible_bound[of _ k L p M] in \<open>auto simp: abs_le_iff\<close>)
+
+lemma ell_op_le_witness:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes aF: "a \<in> feasible k L p"
+  shows "ell_op k L p M \<le> - trace (M ** a) / 2"
+  unfolding ell_op_def by (rule cInf_lower[OF imageI[OF aF] ell_op_bdd_below])
 
 lemma feasible_nonempty:
   fixes p :: "real^'n"
   assumes "1 \<le> k" "k < CARD('n)" "1 \<le> L"
   shows "feasible k L p \<noteq> {}"
   using feasible_witness[OF assms] by blast
+
+lemma ell_op_approx:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
+    and e0: "0 < \<epsilon>"
+  obtains a where "a \<in> feasible k L p"
+    and "- trace (M ** a) / 2 < ell_op k L p M + \<epsilon>"
+proof -
+  have ne: "(\<lambda>a. - trace (M ** a) / 2) ` feasible k L p \<noteq> {}"
+    using feasible_nonempty[OF k1 kn L1] by blast
+  have "ell_op k L p M < ell_op k L p M + \<epsilon>" using e0 by simp
+  then have "\<exists>v \<in> (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p.
+      v < ell_op k L p M + \<epsilon>"
+    unfolding ell_op_def using cInf_less_iff[OF ne ell_op_bdd_below] by blast
+  then show ?thesis using that by blast
+qed
 
 subsection \<open>Test functions and viscosity sub-/supersolutions\<close>
 

@@ -2,7 +2,7 @@
 (*<*)
 theory Operator_Formula
   imports
-    Curvature_Operator Operator_Continuity "Symmetric_Matrix_Spectra.Poincare_Separation"
+    Curvature_Operator Operator_Continuity
 begin
 
 (*>*)
@@ -1003,8 +1003,7 @@ proof -
     and val: "trace (M ** a) = bracket (CARD('n) - k) L (Mp p M)"
     using bracket_attained[OF sym p L k(1) k(2)] by blast
   have "ell_op k L p M \<le> - trace (M ** a) / 2"
-    unfolding ell_op_def
-    by (intro cInf_lower imageI a ell_op_bdd_below)
+    by (rule ell_op_le_witness[OF a])
   also have "\<dots> = - (1/2) * bracket (CARD('n) - k) L (Mp p M)"
     unfolding val by simp
   finally show ?thesis .
