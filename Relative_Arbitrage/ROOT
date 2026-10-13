@@ -20,7 +20,6 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Second_Order_Viscosity_Analysis
     Wiener_Measure
     Disintegration
-    Levy_Prokhorov_Metric
   theories
     Pair_Path_Space
     Pair_Path_Laws

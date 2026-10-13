@@ -1,4 +1,4 @@
-session Wiener_Measure = "HOL-Probability" +
+session Wiener_Measure = Continuous_Time_Martingales +
   description "
     Brownian motion as the projective limit of its Gaussian
     finite-dimensional distributions, with independent increments and a
@@ -10,7 +10,6 @@ session Wiener_Measure = "HOL-Probability" +
   options [document = pdf, document_output = "output"]
   sessions
     Kolmogorov_Chentsov
-    Continuous_Time_Martingales
   theories
     Sorted_Lists
     Gaussian_Increments
