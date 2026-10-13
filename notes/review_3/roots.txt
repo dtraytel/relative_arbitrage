@@ -57,6 +57,8 @@ Eigenvalue_Continuity.kyfan_lipschitz
 # Poincare separation (abstract: ordered eigenvalues interlace with those of any compression to a subspace) -- O
 Poincare_Separation.quadform_le_eigval_1
 Poincare_Separation.eigval_min_le_quadform
+# the Courant-Fischer variational lower bound for an ordered eigenvalue (theory text; moved from Operator_Formula)
+Poincare_Separation.eigval_ge_of_subspace
 
 # --- Semicontinuous_Analysis: advertised deliverables (ROOT description / root.tex)
 # Upper and lower semicontinuity for real-valued functions on a metric space: the epsilon-delta calculus
@@ -81,9 +83,6 @@ Semicontinuous_Envelopes.lsc_env_Kext
 # Berge's maximum theorem (abstract: the value of a maximisation depends upper semicontinuously on its parameter
 Berge.usc_sup_over_compact
 Berge.usc_sup_over_compactin
-# measurable selection of an upper semicontinuous payoff (abstract: theorem of Bertsekas and Shreve that a usc p
-Semicontinuous_Selection.Metric_space.usc_measurable_selection
-Semicontinuous_Selection.usc_sel_def
 # The envelope is the lower semicontinuous hull of the Lower_Semicontinuous entry, proved equal to it rather tha
 Semicontinuous_Envelopes.lsc_env_ereal
 
@@ -265,6 +264,9 @@ Pathwise_Quadratic_Variation.AE_tendsto_zero_of_summable_sq
 Path_Exit_Times.pexit_def
 Path_Exit_Times.ess_inf_pexit_usc
 Path_Exit_Times.pexit_sublevel_open
+# measurable selection of an upper semicontinuous payoff (abstract: theorem of Bertsekas and Shreve that a usc p
+Semicontinuous_Selection.Metric_space.usc_measurable_selection
+Semicontinuous_Selection.usc_sel_def
 
 
 # --- kept for independent interest (notes/review_3/data/independent_interest.md):
@@ -502,7 +504,7 @@ Viscosity_Solutions.visc_subsol_gen_env_imp    # KEEP_API
 Viscosity_Solutions.visc_supersol_gen_env_imp    # KEEP_API
 # toolkit
 Pair_Path_Space.path_laws_convergent_subsequence_market    # FIX_THEN_KEEP
-Pair_Path_Space.psd_diag_nonneg    # KEEP_API
+Symmetric_Spectral.psd_diag_nonneg    # KEEP_API
 Pair_Path_Space.etime_shift_of_restrict    # KEEP_API
 Pair_Path_Space.vshift_path_law    # KEEP_API
 Pair_Path_Laws.covariation_class_martingale_fst    # KEEP_API
