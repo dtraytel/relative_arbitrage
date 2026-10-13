@@ -25,11 +25,6 @@ theorem exit_val_kpaste_ge:
     and K: "closed K"
     and Q: "Q \<in> exit_class k L r x"
     and Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
-    and Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r
-        \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-            (exit_class k L (T - r) (0::real^'n))
-            (Levy_Prokhorov.LPm (mspace (path_metric (T - r) :: ('n pairpath) metric))
-              (mdist (path_metric (T - r) :: ('n pairpath) metric))))"
     and Kc: "\<And>\<omega>. Kr \<omega> \<in> exit_class k L (T - r) 0"
     and stay: "AE p in ksemi Q ((path_borel (T - r) :: ('n pairpath) measure)) Kr.
         c \<le> pexit T K (\<lambda>t. fst (pglue r T (fst p) (snd p) t))"
@@ -46,7 +41,7 @@ proof -
   have setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have G: "kglue_law' r T Kr Q \<in> exit_class k L T x"
-    by (rule exit_class_kglue_law'[OF r rT L1 T0 Q Kp Kb Kc])
+    by (rule exit_class_kglue_law'[OF r rT L1 T0 Q Kp Kc])
   have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
       \<in> borel_measurable ?BT"
     by (rule pexit_path_measurable[OF T0' K refl])
@@ -93,17 +88,12 @@ theorem exit_val_measurable_selector_kernel':
   assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
   obtains S where
     "S \<in> borel \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
-    and "S \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-        (exit_class k L T (0::real^'n))
-        (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
-          (mdist (path_metric T :: ('n pairpath) metric))))"
     and "\<And>y. S y \<in> exit_class k L T 0"
     and "\<And>y. ess_inf_time (pshift_law T y (S y))
         (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K y"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?W = "weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?C = "exit_class k L T (0::real^'n)"
   obtain S where Sm: "S \<in> borel \<rightarrow>\<^sub>M borel_of ?W"
     and SC: "\<And>y. S y \<in> exit_class k L T 0"
     and Sval: "\<And>y. ess_inf_time (pshift_law T y (S y))
@@ -112,29 +102,7 @@ proof -
   have Sk: "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
     by (rule measurable_prob_algebra_weak_conv[OF Polish_space_path_metric Sm])
       (use exit_class_prob[OF SC] exit_class_sets[OF SC] in simp)
-  have Ssub: "S \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology ?C
-      (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
-        (mdist (path_metric T :: ('n pairpath) metric))))"
-  proof -
-    have top: "Metric_space.mtopology ?C
-        (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
-          (mdist (path_metric T :: ('n pairpath) metric)))
-        = subtopology ?W ?C"
-      using L by (intro exit_class_compact_metric_space(2)[OF T]) simp
-    have r1: "S \<in> borel \<rightarrow>\<^sub>M restrict_space (borel_of ?W) ?C"
-      by (rule measurable_restrict_space2[OF _ Sm]) (use SC in auto)
-    show ?thesis unfolding top using r1 by (simp add: borel_of_subtopology)
-  qed
-  show ?thesis
-  proof (rule that)
-    show "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B" by (rule Sk)
-    show "S \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology ?C
-        (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
-          (mdist (path_metric T :: ('n pairpath) metric))))" by (rule Ssub)
-    show "S y \<in> exit_class k L T 0" for y by (rule SC)
-    show "ess_inf_time (pshift_law T y (S y)) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-        = exit_val k L T K y" for y by (rule Sval)
-  qed
+  show ?thesis by (rule that[OF Sk SC Sval])
 qed
 
 subsection \<open>An optimal law, as an almost-sure bound\<close>
@@ -237,10 +205,6 @@ proof -
 
   \<comment> \<open>the optimal continuation from every endpoint, as a kernel\<close>
   obtain S where Sk: "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?MR"
-    and Ssub: "S \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-        (exit_class k L (T - r) (0::real^'n))
-        (Levy_Prokhorov.LPm (mspace (path_metric (T - r) :: ('n pairpath) metric))
-          (mdist (path_metric (T - r) :: ('n pairpath) metric))))"
     and SC: "\<And>y. S y \<in> exit_class k L (T - r) 0"
     and Sval: "\<And>y. ess_inf_time (pshift_law (T - r) y (S y))
         (\<lambda>\<omega>. pexit (T - r) K (\<lambda>t. fst (\<omega> t))) = exit_val k L (T - r) K y"
@@ -258,15 +222,6 @@ proof -
     by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] pair_fst_borel])
   have Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra ?MR"
     unfolding Kr_def by (rule measurable_compose[OF eQ Sk])
-  have eF: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r))
-      \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel"
-    by (rule measurable_compose[OF natural_filtration_eval[OF r order_refl] pair_fst_borel])
-  have Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r
-      \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-          (exit_class k L (T - r) (0::real^'n))
-          (Levy_Prokhorov.LPm (mspace (path_metric (T - r) :: ('n pairpath) metric))
-            (mdist (path_metric (T - r) :: ('n pairpath) metric))))"
-    unfolding Kr_def by (rule measurable_compose[OF eF Ssub])
   have Kc: "Kr \<omega> \<in> exit_class k L (T - r) 0" for \<omega>
     unfolding Kr_def by (rule SC)
 
@@ -357,7 +312,7 @@ proof -
     then show ?thesis unfolding AE_ksemi[OF Kp psetm] by simp
   qed
   show ?thesis
-    by (rule exit_val_kpaste_ge[OF r rT T0 L1 K QC Kp Kb Kc stay])
+    by (rule exit_val_kpaste_ge[OF r rT T0 L1 K QC Kp Kc stay])
 qed
 
 text \<open>The essential infimum form: the DPP integrand is bounded by \<open>T\<close>, so

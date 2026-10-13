@@ -127,32 +127,14 @@ proof -
   \<comment> \<open>clause (ii): the covariation constraint\<close>
   have cov': "AE \<omega> in ?Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-  proof (rule exit_class_diffquot_of_pairs[OF sets_pair_law_of])
-    fix p q :: real
-    assume pq: "p \<in> {0..S}" "q \<in> {0..S}" "p < q"
-    have mm: "{\<omega> \<in> space ?B.
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
-      using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]]
-      by (simp add: space_borel_of)
-    have iff: "(AE \<omega> in ?Q.
-          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L)
-        = (AE \<omega> in P. (1 / (q - p))
-            *\<^sub>R (snd (pcut S \<omega> q) - snd (pcut S \<omega> p)) \<in> sconstraint k L)"
-      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mm])
+  proof -
     have "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
       by (rule iexit_class_diffquot[OF P])
-    then have "AE \<omega> in P. (1 / (q - p))
-        *\<^sub>R (snd (pcut S \<omega> q) - snd (pcut S \<omega> p)) \<in> sconstraint k L"
-    proof eventually_elim
-      case (elim \<omega>)
-      have "(1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-        using elim pq by auto
-      then show ?case using pq by (simp add: pcut_apply)
-    qed
-    then show "AE \<omega> in ?Q.
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      unfolding iff .
+    then have "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (pcut S \<omega> t) - snd (pcut S \<omega> s)) \<in> sconstraint k L"
+      by eventually_elim (auto simp: pcut_apply)
+    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets] .
   qed
 
   \<comment> \<open>clauses (iii) and (iv): the martingales\<close>

@@ -31,33 +31,35 @@ text \<open>Both coordinate processes of a class member, restarted at \<open>r\<
   clock is shifted by @{thm [source] martingale_time_change} and the horizon
   cap becomes invisible, since \<open>r + min u (T-r) \<le> T\<close> always.\<close>
 
+lemma exit_class_shifted_martingale_of:
+  fixes P :: "('n::finite pairpath) measure"
+    and f :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> 'b::{banach,second_countable_topology}"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) 0
+      (\<lambda>u \<omega>. f (\<omega> (min u T)))"
+  shows "martingale P
+      (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + min u (T - r))) 0
+      (\<lambda>u \<omega>. f (\<omega> (r + min u (T - r))))"
+proof -
+  have "martingale P
+      (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + min u (T - r))) 0
+      (\<lambda>u \<omega>. f (\<omega> (min (r + min u (T - r)) T)))"
+    by (rule martingale_time_change[OF mg]) (use r rT in auto)
+  moreover have "min (r + min u (T - r)) T = r + min u (T - r)" for u :: real
+  proof -
+    have "min u (T - r) \<le> T - r" by simp
+    then show ?thesis by simp
+  qed
+  ultimately show ?thesis by simp
+qed
+
 lemma exit_class_shifted_X_martingale:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
   assumes r: "0 \<le> r" and rT: "r \<le> T" and P: "P \<in> exit_class k L T x"
   shows "martingale P
       (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + min u (T - r))) 0
       (\<lambda>u \<omega>. fst (\<omega> (r + min u (T - r))))"
-proof -
-  let ?S = "T - r"
-  have Tr: "0 \<le> ?S" using rT by simp
-  have MGX: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
-      (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
-    by (rule exit_class_X_martingale[OF P])
-  have s0: "0 \<le> r + min u ?S" if "0 \<le> u" for u :: real using r Tr that by simp
-  have smono: "r + min u ?S \<le> r + min v ?S" if "0 \<le> u" "u \<le> v" for u v :: real
-    using that by simp
-  have mg1: "martingale P
-      (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min u ?S)) 0
-      (\<lambda>u \<omega>. fst (\<omega> (min (r + min u ?S) T)))"
-    by (rule martingale_time_change[OF MGX s0 smono])
-  have eqmin: "min (r + min u ?S) T = r + min u ?S" for u :: real
-  proof -
-    have "min u ?S \<le> ?S" by simp
-    then have "r + min u ?S \<le> T" by simp
-    then show ?thesis by simp
-  qed
-  show ?thesis using mg1 by (simp add: eqmin)
-qed
+  by (rule exit_class_shifted_martingale_of[OF r rT exit_class_X_martingale[OF P]])
 
 lemma exit_class_shifted_comp_martingale:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -66,28 +68,8 @@ lemma exit_class_shifted_comp_martingale:
       (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + min u (T - r))) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (r + min u (T - r))))
           - snd (\<omega> (r + min u (T - r))))"
-proof -
-  let ?S = "T - r"
-  have Tr: "0 \<le> ?S" using rT by simp
-  have MGY: "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)) 0
-      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
-    by (rule exit_class_compensated_martingale[OF P])
-  have s0: "0 \<le> r + min u ?S" if "0 \<le> u" for u :: real using r Tr that by simp
-  have smono: "r + min u ?S \<le> r + min v ?S" if "0 \<le> u" "u \<le> v" for u v :: real
-    using that by simp
-  have mg1: "martingale P
-      (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + min u ?S)) 0
-      (\<lambda>u \<omega>. outerp (fst (\<omega> (min (r + min u ?S) T)))
-          - snd (\<omega> (min (r + min u ?S) T)))"
-    by (rule martingale_time_change[OF MGY s0 smono])
-  have eqmin: "min (r + min u ?S) T = r + min u ?S" for u :: real
-  proof -
-    have "min u ?S \<le> ?S" by simp
-    then have "r + min u ?S \<le> T" by simp
-    then show ?thesis by simp
-  qed
-  show ?thesis using mg1 by (simp add: eqmin)
-qed
+  by (rule exit_class_shifted_martingale_of[where f = "\<lambda>p. outerp (fst p) - snd p",
+        OF r rT exit_class_compensated_martingale[OF P]])
 
 text \<open>The compensated process of the rebased future is a martingale under
   \<open>P\<close> itself, in the shifted filtration.  This is the clause-(iv) analogue

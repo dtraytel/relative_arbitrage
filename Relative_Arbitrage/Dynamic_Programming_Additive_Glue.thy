@@ -75,9 +75,8 @@ proof -
   qed
 qed
 
-text \<open>Clause (iii) for the glued law.  @{thm [source] exit_class_diffquot_of_pairs}
-  reduces it to one pair of deterministic times, where the predicate is a
-  closed set (@{thm [source] closedin_diffquot_constraint}) and so passes
+text \<open>Clause (iii) for the glued law.  The whole clause is a closed set
+  (@{thm [source] closedin_diffquot_constraint_all}) and so passes
   through @{thm [source] AE_aglue_law}; the pathwise content is then
   @{thm [source] padd_diffquot}.\<close>
 
@@ -96,23 +95,13 @@ lemma aglue_law_diffquot:
         \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
   shows "AE \<omega> in aglue_law T \<kappa> Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T
       \<longrightarrow> (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-proof (rule exit_class_diffquot_of_pairs[OF sets_pair_law_of])
-  fix p q :: real
-  assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
-    by (simp add: space_borel_of)
-  have mset: "{\<omega> \<in> space ?B.
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
-    unfolding spB
-    by (rule borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
+proof -
   have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
     by (rule path_stopping_time_le[OF st])
-  show "AE \<omega> in aglue_law T \<kappa> Q.
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-    unfolding AE_aglue_law[OF T0 PQ setsQ Kp mset]
+  show ?thesis
+    unfolding AE_aglue_law[OF T0 PQ setsQ Kp diffquot_all_sets]
     using Qst Qcov AE_space
   proof eventually_elim
     case (elim p')
@@ -134,24 +123,26 @@ proof (rule exit_class_diffquot_of_pairs[OF sets_pair_law_of])
             \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
         by blast+
       show ?case
-      proof (rule padd_diffquot[where r = "\<theta> p'"])
-        show "0 \<le> T" by (rule T0)
-        show "0 \<le> \<theta> p'" by (rule th0)
-        show "\<theta> p' \<le> T" by (rule thT)
-        show "p' u = p' (min u (\<theta> p'))" if "u \<in> {0..T}" for u
-          by (rule idem[OF that])
-        show "w u = 0" if "u \<in> {0..T}" "u \<le> \<theta> p'" for u
-          using w0 that by blast
-        show "(1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
-          if "0 \<le> a" "a < b" "b \<le> \<theta> p'" for a b
-          using cov that by blast
-        show "(1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
-          if "\<theta> p' \<le> a" "a < b" "b \<le> T" for a b
-          using wcov that by blast
-        show "0 \<le> p" using pq(1) by simp
-        show "p < q" by (rule pq(3))
-        show "q \<le> T" using pq(2) by simp
-      qed    qed
+      proof (intro allI impI)
+        fix p q :: real assume pq: "0 \<le> p" "p < q" "q \<le> T"
+        show "(1 / (q - p)) *\<^sub>R (snd (padd T p' w q) - snd (padd T p' w p)) \<in> sconstraint k L"
+        proof (rule padd_diffquot[where r = "\<theta> p'"])
+          show "0 \<le> T" by (rule T0)
+          show "0 \<le> \<theta> p'" by (rule th0)
+          show "\<theta> p' \<le> T" by (rule thT)
+          show "p' u = p' (min u (\<theta> p'))" if "u \<in> {0..T}" for u
+            by (rule idem[OF that])
+          show "w u = 0" if "u \<in> {0..T}" "u \<le> \<theta> p'" for u
+            using w0 that by blast
+          show "(1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+            if "0 \<le> a" "a < b" "b \<le> \<theta> p'" for a b
+            using cov that by blast
+          show "(1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+            if "\<theta> p' \<le> a" "a < b" "b \<le> T" for a b
+            using wcov that by blast
+        qed (use pq in simp_all)
+      qed
+    qed
   qed
 qed
 

@@ -1148,14 +1148,6 @@ text \<open>Pointwise weak convergence of the kernels gives weak convergence of
   the second, so the inner integrals converge pointwise, and they are all
   bounded by the same constant.\<close>
 
-definition pcoord :: "real \<Rightarrow> 'n::finite \<Rightarrow> real \<Rightarrow> ('n pairpath) \<Rightarrow> real"
-  where "pcoord T i u \<omega> = fst (\<omega> (min u T)) $ i"
-
-definition ploc :: "real \<Rightarrow> 'n::finite \<Rightarrow> real \<Rightarrow> ('n pairpath) \<Rightarrow> real"
-  where "ploc T i R \<omega> = etime T {y. R \<le> \<bar>y\<bar>} (pcoord T i) \<omega>"
-
-text \<open>\<open>closed_abs_ge\<close>, \<open>abs_ge_nonempty\<close> live in @{theory Semicontinuous_Analysis.Semicontinuity}.\<close>
-
 lemma pexit_pglue_ge:
   fixes K :: "('a::{polish_space,banach}) set" and \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})"
   assumes S: "0 \<le> S" and ST: "S \<le> T"
@@ -1253,42 +1245,10 @@ qed
 subsection \<open>The selector as a kernel into a family of laws\<close>
 
 text \<open>\<open>exit_val_measurable_selector_kernel'\<close> below makes the selector
-  a Giry-monad kernel, hypothesis \<^emph>\<open>Kp\<close> of \<open>exit_class_kglue_law'\<close>.  The other hypothesis, \<^emph>\<open>Kb\<close>
-  (measurability into the class with its Levy-Prokhorov metric), is free:
-  the selector lands in the subspace, and \<open>exit_class_compact_metric_space\<close> identifies the class's metric
+  a Giry-monad kernel, hypothesis \<^emph>\<open>Kp\<close> of \<open>exit_class_kglue_law'\<close>.  Measurability into the
+  class with its Levy-Prokhorov metric then comes for free inside that proof:
+  the kernel lands in the subspace, and \<open>exit_class_compact_metric_space\<close> identifies the class's metric
   topology with the subspace topology of weak convergence.\<close>
-
-lemma ploc_nonneg: "0 \<le> T \<Longrightarrow> 0 \<le> ploc T i R \<omega>"
-  unfolding ploc_def by (rule etime_nonneg)
-
-lemma pcoord_stopped_bounded:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes T: "0 \<le> T" and R: "0 < R"
-    and start: "\<bar>pcoord T i 0 \<omega>\<bar> < R"
-    and cont: "continuous_on {0..T} (\<lambda>s. pcoord T i s \<omega>)"
-    and v: "0 \<le> v"
-  shows "\<bar>pcoord T i (min v (ploc T i R \<omega>)) \<omega>\<bar> \<le> R"
-proof -
-  have nrm: "{y :: real. R \<le> \<bar>y\<bar>} = {y. R \<le> norm y}" by simp
-  have s0: "0 \<le> min v (ploc T i R \<omega>)"
-    using v ploc_nonneg[OF T, of i R \<omega>] by simp
-  have sle: "min v (ploc T i R \<omega>)
-      \<le> etime T {y. R \<le> norm y} (pcoord T i) \<omega>"
-    unfolding ploc_def[symmetric] nrm[symmetric] by simp
-  have "pcoord T i (min v (ploc T i R \<omega>)) \<omega> \<in> cball 0 R"
-    using start cont
-    by (intro etime_stays_in_cball[OF T R _ _ s0 sle]) simp_all
-  then show ?thesis by (simp add: dist_real_def)
-qed
-
-subsection \<open>Optional stopping at the localizing time\<close>
-
-text \<open>\<open>Optional_Sampling.optional_stopping\<close> asks for an integrable
-  envelope of the unstopped process, which the market locale could not
-  supply but a class member has: \<open>Doob_Inequality.horizon_sq_int_martingale\<close>
-  builds \<open>Dsup\<close> from Doob's \<open>L\<^sup>2\<close> inequality out of nothing but
-  square-integrability, which \<open>exit_class_sq_integrable\<close>
-  provides.\<close>
 
 lemma pexit_path_measurable:
   fixes K :: "('a::{polish_space,banach}) set" and N :: "((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure"
@@ -1720,23 +1680,6 @@ text \<open>\<^const>\<open>pembed\<close> is 1-Lipschitz --- it only reindexes 
   the delayed class at a fixed \<open>s\<close> is a continuous image of the compact
   class at horizon \<open>T - s\<close>.\<close>
 
-lemma pcoord_stopped_paths_cont:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and w: "\<omega> \<in> space Q"
-  shows "continuous_on {0..} (\<lambda>s. pcoord T i (min s (ploc T i R \<omega>)) \<omega>)"
-proof -
-  have c: "continuous_on {0..} (\<lambda>s. pcoord T i s \<omega>)"
-    unfolding pcoord_def
-    by (rule exit_class_coord_paths_cont[OF T setsQ w])
-  have m: "continuous_on {0..} (\<lambda>s :: real. min s (ploc T i R \<omega>))"
-    by (intro continuous_intros)
-  have mim: "(\<lambda>s :: real. min s (ploc T i R \<omega>)) ` {0..} \<subseteq> {0..}"
-    using ploc_nonneg[OF T, of i R \<omega>] by auto
-  show ?thesis by (rule continuous_on_compose2[OF c m mim])
-qed
-
 lemma prebase_mspace:
   fixes w :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
   assumes s0: "0 \<le> s" and sT: "s \<le> T"
@@ -1809,17 +1752,6 @@ text \<open>Clause (iii) at one pair of times.  This is the analogue of the \<op
   pair-set, so the transfer is the @{thm [source] AE_ksemi} chain of clause
   (ii) rather than \<open>AE_kernel_full\<close>, and the rational grid
   stays in the original time scale.\<close>
-
-lemma ploc_eq_T_of_below:
-  fixes \<omega> :: "'n::finite pairpath"
-  assumes h: "\<And>r. 0 \<le> r \<Longrightarrow> r \<le> T \<Longrightarrow> \<bar>pcoord T i r \<omega>\<bar> < R"
-  shows "ploc T i R \<omega> = T"
-proof -
-  have e: "{r. 0 \<le> r \<and> r \<le> T \<and> pcoord T i r \<omega> \<in> {y :: real. R \<le> \<bar>y\<bar>}} \<union> {T}
-      = {T}"
-    using h by fastforce
-  show ?thesis unfolding ploc_def etime_def e by simp
-qed
 
 lemma padd_eval_split:
   fixes p' w :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"

@@ -212,6 +212,38 @@ proof -
     by simp
 qed
 
+text \<open>The whole difference-quotient clause, over all pairs at once, is a
+  closed set too: an intersection of the closed sets above.  So it is
+  measurable and passes to weak limits in one step, with no reduction to
+  rational pairs.\<close>
+
+lemma closedin_diffquot_constraint_all:
+  "closedin (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+           (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L}"
+proof -
+  let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
+  let ?D = "\<lambda>(s, t). {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L}"
+  have "closedin ?X (\<Inter> (insert (topspace ?X) (?D ` {(s, t). 0 \<le> s \<and> s < t \<and> t \<le> T})))"
+    by (intro closedin_Inter)
+      (auto intro!: closedin_diffquot_constraint closedin_topspace[of ?X, simplified])
+  moreover have "\<Inter> (insert (topspace ?X) (?D ` {(s, t). 0 \<le> s \<and> s < t \<and> t \<le> T}))
+      = {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+           (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L}"
+    by auto
+  ultimately show ?thesis by simp
+qed
+
+lemma diffquot_all_sets:
+  "{\<omega> \<in> space (path_borel T :: ('n::finite pairpath) measure).
+      \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L}
+    \<in> sets (path_borel T :: ('n pairpath) measure)"
+  using borel_of_closed[OF closedin_diffquot_constraint_all] by (simp add: space_borel_of)
+
 text \<open>\<open>diffquot_all_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
 
 
@@ -224,27 +256,6 @@ text \<open>The density statement of Eq. (1.7): the difference-quotient constrai
   makes \<open>Y\<close> Lipschitz, hence of bounded variation, hence differentiable
   off a negligible set by \<open>Lebesgue_differentiation_thm\<close>; at every point
   of differentiability the derivative lies in the constraint set.\<close>
-
-text \<open>The weak-limit transfer itself: a single difference-quotient
-  constraint, holding almost surely under every approximating law, holds
-  almost surely under the weak limit. (The a.s. statements are read as
-  full mass of the closed set, which is how the class is phrased.)\<close>
-
-theorem diffquot_constraint_weak_limit:
-  fixes \<Lambda>i :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and \<Lambda> :: "('n pairpath) measure"
-  assumes s: "s \<in> {0..T}" and t: "t \<in> {0..T}"
-    and wc: "weak_conv_on \<Lambda>i \<Lambda> sequentially
-      (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    and probs: "\<And>i. prob_space (\<Lambda>i i)" and prob: "prob_space \<Lambda>"
-    and full: "\<And>i. measure (\<Lambda>i i)
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} = 1"
-  shows "measure \<Lambda>
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} = 1"
-  by (rule weak_conv_closed_full_mass
-      [OF wc closedin_diffquot_constraint[OF s t] probs prob full])
 
 subsection \<open>Averages of constrained densities stay constrained\<close>
 
@@ -478,34 +489,6 @@ proof (rule covariation_class_sq_mean_le)
 qed (use assms in auto)
 
 
-lemma exit_class_diffquot_full_mass:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x"
-    and s: "s \<in> {0..T}" and t: "t \<in> {0..T}" and st: "s < t"
-  shows "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} = 1"
-proof -
-  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
-  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF Q])
-  have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsQ])
-  have mm: "{\<omega> \<in> space Q. (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))
-      \<in> sconstraint k L} \<in> sets Q"
-    unfolding sp setsQ
-    by (rule borel_of_closed[OF closedin_diffquot_constraint[OF s t]])
-  have ae: "AE \<omega> in Q. (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s))
-      \<in> sconstraint k L"
-  proof -
-    have "AE \<omega> in Q. \<forall>u v. 0 \<le> u \<longrightarrow> u < v \<longrightarrow> v \<le> T \<longrightarrow>
-        (1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
-      using Q unfolding exit_class_def by blast
-    then show ?thesis
-      by (rule eventually_mono) (use s t st in auto)
-  qed
-  show ?thesis using P.prob_Collect_eq_1[OF mm] ae unfolding sp by blast
-qed
-
 text \<open>The starting point is a closed condition too: evaluation at time \<open>0\<close>
   is continuous and \<open>{(x, 0)}\<close> is closed.\<close>
 
@@ -530,11 +513,11 @@ qed
 
 subsection \<open>Both closed clauses pass to the weak limit\<close>
 
-text \<open>The start clause needs nothing beyond portmanteau. The covariation
-  clause is available only pair by pair; the countable conjunction over
-  rational pairs is an almost-sure statement (\<open>AE_ball_countable'\<close>), and
-  \<open>diffquot_all_of_rational\<close> --- the paper's own last step, "by continuity"
-  --- extends it to every real pair.\<close>
+text \<open>Both clauses are closed sets of paths
+  (@{thm [source] closedin_start_point},
+  @{thm [source] closedin_diffquot_constraint_all}), so portmanteau
+  (@{thm [source] weak_conv_closed_full_mass}) carries each to the weak
+  limit.\<close>
 
 theorem exit_class_start_limit:
   fixes Qi :: "nat \<Rightarrow> ('n::finite pairpath) measure"
@@ -577,72 +560,31 @@ theorem exit_class_diffquot_limit:
   shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
 proof -
-  interpret P: prob_space Q by (rule prob)
-  have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsQ])
-  have one: "AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p))
-      \<in> sconstraint k L"
-    if pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q" for p q :: real
+  let ?D = "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L}"
+  have iff: "(AE \<omega> in M. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L)
+      \<longleftrightarrow> measure M ?D = 1"
+    if M: "prob_space M" "sets M = sets (path_borel T :: ('n pairpath) measure)"
+    for M :: "('n pairpath) measure"
   proof -
-    have mm: "{\<omega> \<in> space Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p))
-        \<in> sconstraint k L} \<in> sets Q"
-      unfolding sp setsQ
-      by (rule borel_of_closed
-          [OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
-    have "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} = 1"
-    proof (rule diffquot_constraint_weak_limit[OF pq(1) pq(2) wc])
-      show "\<And>i. prob_space (Qi i)" by (rule exit_class_prob[OF mem])
-      show "prob_space Q" by (rule prob)
-      show "\<And>i. measure (Qi i)
-          {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-             (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} = 1"
-        by (rule exit_class_diffquot_full_mass[OF mem pq])
-    qed
-    then show ?thesis
-      using P.prob_Collect_eq_1[OF mm] unfolding sp by blast
+    interpret P: prob_space M by (rule M(1))
+    have sp: "space M = mspace (path_metric T :: ('n pairpath) metric)"
+      by (rule space_of_path_sets[OF M(2)])
+    have "{\<omega> \<in> space M. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L} \<in> sets M"
+      unfolding M(2) sets_eq_imp_space_eq[OF M(2)] by (rule diffquot_all_sets)
+    from P.prob_Collect_eq_1[OF this] show ?thesis unfolding sp by blast
   qed
-  have rat: "AE \<omega> in Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
-      0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-  proof (rule AE_ball_countable'[OF _ countable_rat])
-    fix p :: real assume "p \<in> \<rat>"
-    show "AE \<omega> in Q. \<forall>q\<in>(\<rat>::real set). 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-    proof (rule AE_ball_countable'[OF _ countable_rat])
-      fix q :: real assume "q \<in> \<rat>"
-      show "AE \<omega> in Q. 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      proof (cases "0 \<le> p \<and> p < q \<and> q \<le> T")
-        case True
-        then have "p \<in> {0..T}" "q \<in> {0..T}" "p < q" by auto
-        from one[OF this] show ?thesis by (rule eventually_mono) simp
-      next
-        case False
-        then show ?thesis by auto
-      qed
-    qed
+  have "measure Q ?D = 1"
+  proof (rule weak_conv_closed_full_mass
+      [OF wc closedin_diffquot_constraint_all exit_class_prob[OF mem] prob])
+    show "measure (Qi i) ?D = 1" for i
+      using mem[of i] iff[OF exit_class_prob[OF mem[of i]] exit_class_sets[OF mem[of i]]]
+      unfolding exit_class_def by blast
   qed
-  from rat AE_space show ?thesis
-  proof eventually_elim
-    case (elim \<omega>)
-    then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
-        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      and W: "\<omega> \<in> space Q"
-      by blast+
-    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      using W sp by simp
-    have cont: "continuous_on {0..T} (\<lambda>u. snd (\<omega> u))"
-      using mspace_path_metricD[OF mw] by (intro continuous_intros)
-    show ?case
-    proof (intro allI impI)
-      fix u v :: real
-      assume uv: "0 \<le> u" "u < v" "v \<le> T"
-      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
-        by (rule diffquot_all_of_rational
-            [OF closed_sconstraint cont _ uv(1) uv(2) uv(3)]) (rule R)
-    qed
-  qed
+  then show ?thesis using iff[OF prob setsQ] by simp
 qed
 
 section \<open>The value function of Eq. (1.6), capped at horizon \<open>T\<close>\<close>

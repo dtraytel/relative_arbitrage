@@ -641,8 +641,8 @@ qed
 subsection \<open>The Euler kernel: measurability package\<close>
 
 text \<open>A continuous matrix field with admissible squares induces, through
-  the Gaussian member, a kernel with exactly the three measurability
-  properties @{thm [source] exit_class_kglue_law'} consumes.
+  the Gaussian member, a kernel with exactly the two properties
+  @{thm [source] exit_class_kglue_law'} consumes.
   Sequential continuity in the LP metric comes from
   @{thm [source] sbm_law_weak_conv}; it upgrades to topological continuity
   by the closed-preimage criterion (both sides are metric), and the
@@ -657,12 +657,6 @@ theorem sbm_kernel_package:
   shows "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T')
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
       \<in> borel \<rightarrow>\<^sub>M prob_algebra (path_borel T' :: ('n pairpath) measure)"
-    and "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T')
-        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-      \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-        (exit_class k L T' (0::real^'n))
-        (Levy_Prokhorov.LPm (mspace (path_metric T' :: ('n pairpath) metric))
-          (mdist (path_metric T' :: ('n pairpath) metric))))"
     and "\<And>z. pair_law_of T' (sbmpair (SF z) T')
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
       \<in> exit_class k L T' (0 :: real^'n)"
@@ -725,10 +719,6 @@ proof -
         {x \<in> topspace euclidean. KK x \<in> C'}"
       unfolding closed_closedin[symmetric] by simp
   qed
-  show "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T') ?M)
-      \<in> borel \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology ?C ?dd)"
-    using continuous_map_measurable[OF cont]
-    by (simp add: borel_of_euclidean KK_def)
   have contW: "continuous_map (euclidean :: (real^'n) topology) ?W KK"
     using cont unfolding Ctop continuous_map_in_subtopology by blast
   have SmB: "KK \<in> borel \<rightarrow>\<^sub>M borel_of ?W"
@@ -792,52 +782,17 @@ next
   have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r))
       \<in> borel_measurable (eulerp SF x h j)"
     by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] pair_fst_borel])
-  have eF: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r))
-      \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel"
-    by (rule measurable_compose[OF natural_filtration_eval[OF r0 order_refl] pair_fst_borel])
   have Kp: "(\<lambda>\<omega> :: 'n pairpath.
       pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
       \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra ((path_borel (T' - r) :: ('n pairpath) measure))"
     unfolding hT by (rule measurable_compose[OF eQ pack(1)])
-  have Kb: "(\<lambda>\<omega> :: 'n pairpath.
-      pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
-      \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r
-      \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-          (exit_class k L (T' - r) (0::real^'n))
-          (Levy_Prokhorov.LPm
-            (mspace (path_metric (T' - r) :: ('n pairpath) metric))
-            (mdist (path_metric (T' - r) :: ('n pairpath) metric))))"
-    unfolding hT by (rule measurable_compose[OF eF pack(2)])
   have Kc: "pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths
       \<in> exit_class k L (T' - r) 0" for \<omega> :: "'n pairpath"
-    unfolding hT by (rule pack(3))
+    unfolding hT by (rule pack(2))
   have "kglue_law' r T'
       (\<lambda>\<omega>. pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
       (eulerp SF x h j) \<in> exit_class k L T' x"
-  proof (rule exit_class_kglue_law')
-    show "0 \<le> r" by (rule r0)
-    show "r < T'" by (rule rT)
-    show "1 \<le> L" by (rule L1)
-    show "0 < T'" by (rule T0)
-    show "eulerp SF x h j \<in> exit_class k L r x" by (rule Q)
-    show "(\<lambda>\<omega> :: 'n pairpath.
-        pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
-        \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra ((path_borel (T' - r) :: ('n pairpath) measure))"
-      by (rule Kp)
-    show "(\<lambda>\<omega> :: 'n pairpath.
-        pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
-        \<in> natural_filtration (eulerp SF x h j) 0 (\<lambda>v \<omega>. \<omega> v) r
-        \<rightarrow>\<^sub>M borel_of (Metric_space.mtopology
-            (exit_class k L (T' - r) (0::real^'n))
-            (Levy_Prokhorov.LPm
-              (mspace (path_metric (T' - r) :: ('n pairpath) metric))
-              (mdist (path_metric (T' - r) :: ('n pairpath) metric))))"
-      by (rule Kb)
-    show "\<And>\<omega> :: 'n pairpath.
-        pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths
-        \<in> exit_class k L (T' - r) 0"
-      by (rule Kc)
-  qed
+    by (rule exit_class_kglue_law'[OF r0 rT L1 T0 Q Kp]) (rule Kc)
   then show ?case unfolding r_def T'_def by simp
 qed
 

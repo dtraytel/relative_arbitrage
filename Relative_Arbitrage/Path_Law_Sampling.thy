@@ -198,10 +198,8 @@ qed
 
 subsection \<open>Stopping a horizon-capped square-integrable martingale\<close>
 
-text \<open>The engine behind \<open>QH\<close> and \<open>QHC\<close>, abstracted out of
-  \<open>exit_class_stopped_coord_martingale\<close>: its proof uses
-  the localisation time only through nonnegativity and the stopping
-  property, so it generalises to any stopping time verbatim.  Doob's
+text \<open>The engine behind \<open>QH\<close> and \<open>QHC\<close>: the stopping time enters only
+  through nonnegativity and the stopping property.  Doob's
   envelope \<^term>\<open>Dsup\<close> supplies both the dominating function
   \<open>optional_stopping\<close> needs and the square-integrability of the stopped
   process, which is what promotes the conclusion back to a

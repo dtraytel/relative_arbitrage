@@ -217,31 +217,27 @@ qed
 
 section \<open>The value function of Eq. (1.6) is upper semicontinuous\<close>
 
-subsection \<open>The shift is an involution on laws\<close>
+subsection \<open>The value as a supremum of the exit functional\<close>
 
+text \<open>On any nonempty part \<open>Cs\<close> of the class at the origin, the supremum
+  of the payoff over the shifted laws is the supremum of the real-valued
+  exit functional \<^const>\<open>vshift\<close> of the shifted paths.\<close>
 
-
-
-
-
-theorem exit_val_eq_vshift_sup:
+lemma ess_inf_pexit_Sup_eq_vshift:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  \<comment> \<open>the \<open>0\<close> MUST be annotated: without it the class in the assumption
-      elaborates at a fresh type variable and \<open>rule ne\<close> silently fails.\<close>
-  assumes T: "0 \<le> T" and ne: "exit_class k L T (0 :: real^'n) \<noteq> {}"
-  shows "exit_val k L T K x
-      = ennreal (Sup (vshift T {p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K} (x, 0)
-          ` exit_class k L T 0))"
+  assumes T: "0 \<le> T" and Cs: "Cs \<subseteq> exit_class k L T (0 :: real^'n)"
+    and ne: "Cs \<noteq> {}"
+  shows "Sup ((\<lambda>Q. ess_inf_time (pshift_law T x Q) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) ` Cs)
+      = ennreal (Sup (vshift T {p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K} (x, 0) ` Cs))"
 proof -
   let ?A = "{p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K}"
-  let ?C = "exit_class k L T 0"
   let ?g = "\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))"
-  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)" if "Q \<in> ?C" for Q
-    by (rule exit_class_sets[OF that])
-  have probQ: "prob_space Q" if "Q \<in> ?C" for Q :: "('n pairpath) measure"
-    by (rule exit_class_prob[OF that])
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)" if "Q \<in> Cs" for Q
+    using that Cs by (intro exit_class_sets) auto
+  have probQ: "prob_space Q" if "Q \<in> Cs" for Q :: "('n pairpath) measure"
+    using that Cs by (intro exit_class_prob) auto
   have key: "ess_inf_time (pshift_law T x Q) ?g = ennreal (vshift T ?A (x, 0) Q)"
-    if Q: "Q \<in> ?C" for Q
+    if Q: "Q \<in> Cs" for Q
   proof -
     have "ess_inf_time (pshift_law T x Q) ?g
         = ess_inf_time Q (\<lambda>\<omega>. ?g (pshift T x \<omega>))"
@@ -257,29 +253,31 @@ proof -
       using le ennreal_less_top by (rule order_le_less_trans)
     show ?thesis unfolding e vshift_def using fin by simp
   qed
-  have img: "exit_class k L T x = pshift_law T x ` ?C"
-    by (rule exit_class_shift_image[OF T])
-  have "exit_val k L T K x
-      = Sup ((\<lambda>Q. ess_inf_time Q ?g) ` (pshift_law T x ` ?C))"
-    unfolding exit_val_def img ..
-  also have "\<dots> = Sup ((\<lambda>Q. ess_inf_time (pshift_law T x Q) ?g) ` ?C)"
-    by (simp add: image_image)
-  also have "\<dots> = Sup ((\<lambda>Q. ennreal (vshift T ?A (x, 0) Q)) ` ?C)"
-    using key by (intro arg_cong[where f = Sup] image_cong refl)
-  also have "\<dots> = Sup (ennreal ` (vshift T ?A (x, 0) ` ?C))"
-    by (simp add: image_image)
-  also have "\<dots> = ennreal (Sup (vshift T ?A (x, 0) ` ?C))"
+  have "Sup ((\<lambda>Q. ess_inf_time (pshift_law T x Q) ?g) ` Cs)
+      = Sup (ennreal ` (vshift T ?A (x, 0) ` Cs))"
+    using key by (simp add: image_image cong: image_cong)
+  also have "\<dots> = ennreal (Sup (vshift T ?A (x, 0) ` Cs))"
   proof (rule ennreal_Sup_image[where B = T])
-    show "vshift T ?A (x, 0) ` ?C \<noteq> {}"
-      unfolding image_is_empty by (rule ne)
-    fix s :: real assume "s \<in> vshift T ?A (x, 0) ` ?C"
-    then obtain Q where Q: "Q \<in> ?C" and s: "s = vshift T ?A (x, 0) Q" by blast
+    show "vshift T ?A (x, 0) ` Cs \<noteq> {}" using ne by simp
+    fix s :: real assume "s \<in> vshift T ?A (x, 0) ` Cs"
+    then obtain Q where Q: "Q \<in> Cs" and s: "s = vshift T ?A (x, 0) Q" by blast
     have "0 \<le> s" unfolding s vshift_def by simp
     moreover have "s \<le> T" unfolding s by (rule vshift_le[OF T probQ[OF Q]])
     ultimately show "0 \<le> s \<and> s \<le> T" by blast
   qed
   finally show ?thesis .
 qed
+
+theorem exit_val_eq_vshift_sup:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+  \<comment> \<open>the \<open>0\<close> MUST be annotated: without it the class in the assumption
+      elaborates at a fresh type variable and \<open>rule ne\<close> silently fails.\<close>
+  assumes T: "0 \<le> T" and ne: "exit_class k L T (0 :: real^'n) \<noteq> {}"
+  shows "exit_val k L T K x
+      = ennreal (Sup (vshift T {p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K} (x, 0)
+          ` exit_class k L T 0))"
+  using ess_inf_pexit_Sup_eq_vshift[OF T order_refl ne, of x K]
+  unfolding exit_val_def exit_class_shift_image[OF T, of k L x] by (simp add: image_image)
 
 subsection \<open>Clause (1) of Theorem 1.1, for the paper's own value function\<close>
 

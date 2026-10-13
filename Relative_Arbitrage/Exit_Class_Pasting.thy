@@ -11,58 +11,6 @@ begin
 section \<open>The class is closed under shortening the horizon\<close>
 
 
-lemma exit_class_diffquot_of_pairs:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and one: "\<And>p q :: real. p \<in> {0..T} \<Longrightarrow> q \<in> {0..T} \<Longrightarrow> p < q \<Longrightarrow>
-      AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-proof -
-  have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsQ])
-  have rat: "AE \<omega> in Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
-      0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-  proof (rule AE_ball_countable'[OF _ countable_rat])
-    fix p :: real assume "p \<in> \<rat>"
-    show "AE \<omega> in Q. \<forall>q\<in>(\<rat>::real set). 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-    proof (rule AE_ball_countable'[OF _ countable_rat])
-      fix q :: real assume "q \<in> \<rat>"
-      show "AE \<omega> in Q. 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      proof (cases "0 \<le> p \<and> p < q \<and> q \<le> T")
-        case True
-        then have "p \<in> {0..T}" "q \<in> {0..T}" "p < q" by auto
-        from one[OF this] show ?thesis by (rule eventually_mono) simp
-      next
-        case False
-        then show ?thesis by auto
-      qed
-    qed
-  qed
-  from rat AE_space show ?thesis
-  proof eventually_elim
-    case (elim \<omega>)
-    then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T
-        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      and W: "\<omega> \<in> space Q" by blast+
-    have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      using W spQ by simp
-    have cont: "continuous_on {0..T} (\<lambda>u. snd (\<omega> u))"
-      using mspace_path_metricD[OF mw] by (intro continuous_intros)
-    show ?case
-    proof (intro allI impI)
-      fix u v :: real
-      assume uv: "0 \<le> u" "u < v" "v \<le> T"
-      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
-        by (rule diffquot_all_of_rational
-            [OF closed_sconstraint cont _ uv(1) uv(2) uv(3)]) (rule R)
-    qed
-  qed
-qed
-
 lemma martingale_pcut_law:
   fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'x::{polish_space,banach})) measure"
     and f :: "'a \<times> 'x \<Rightarrow> 'b::{banach,second_countable_topology}"
@@ -137,32 +85,14 @@ proof -
   \<comment> \<open>clause (ii): the eigenvalue constraint on the covariation\<close>
   have cov': "AE \<omega> in ?Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-  proof (rule exit_class_diffquot_of_pairs[OF sets_pair_law_of])
-    fix p q :: real
-    assume pq: "p \<in> {0..S}" "q \<in> {0..S}" "p < q"
-    have mm: "{\<omega> \<in> space ?B.
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
-      using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]]
-      by (simp add: space_borel_of)
-    have iff: "(AE \<omega> in ?Q.
-          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L)
-        = (AE \<omega> in Q. (1 / (q - p))
-            *\<^sub>R (snd (pcut S \<omega> q) - snd (pcut S \<omega> p)) \<in> sconstraint k L)"
-      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mm])
+  proof -
     have "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
       using Q unfolding exit_class_def by blast
-    then have "AE \<omega> in Q. (1 / (q - p))
-        *\<^sub>R (snd (pcut S \<omega> q) - snd (pcut S \<omega> p)) \<in> sconstraint k L"
-    proof eventually_elim
-      case (elim \<omega>)
-      have "(1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-        using elim pq ST by auto
-      then show ?case using pq by (simp add: pcut_apply)
-    qed
-    then show "AE \<omega> in ?Q.
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-      unfolding iff .
+    then have "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (pcut S \<omega> t) - snd (pcut S \<omega> s)) \<in> sconstraint k L"
+      by eventually_elim (use ST in \<open>auto simp: pcut_apply\<close>)
+    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets] .
   qed
 
   \<comment> \<open>clauses (iii) and (iv): the martingales\<close>
@@ -288,35 +218,25 @@ lemma pglue_law_diffquot:
     and R: "R \<in> exit_class k L (T - r) 0"
   shows "AE \<omega> in pglue_law r T Q R. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-proof (rule exit_class_diffquot_of_pairs[OF sets_pglue_law])
-  fix p q :: real
-  assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
-    by (rule borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
-  show "AE \<omega> in pglue_law r T Q R.
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-  proof (rule AE_pglue_law[OF r rT exit_class_prob[OF Q]
-        exit_class_prob[OF R] exit_class_sets[OF Q]
-        exit_class_sets[OF R] mset])
-    show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
+proof (rule AE_pglue_law[OF r rT exit_class_prob[OF Q] exit_class_prob[OF R]
+      exit_class_sets[OF Q] exit_class_sets[OF R]
+      borel_of_closed[OF closedin_diffquot_constraint_all]])
+  show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    using Q unfolding exit_class_def by blast
+  show "AE \<omega>' in R. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
+    using R unfolding exit_class_def by blast
+  fix \<omega> \<omega>' :: "'n pairpath"
+  assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+    and "\<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
+    and A: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-      using Q unfolding exit_class_def by blast
-    show "AE \<omega>' in R. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+    and B: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
-      using R unfolding exit_class_def by blast
-    fix \<omega> \<omega>' :: "'n pairpath"
-    assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-      and "\<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
-      and A: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-      and B: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
-    show "(1 / (q - p)) *\<^sub>R
-        (snd (pglue r T \<omega> \<omega>' q) - snd (pglue r T \<omega> \<omega>' p)) \<in> sconstraint k L"
-      using pq A B by (intro pglue_diffquot[OF r rT]) auto
-  qed
+  show "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow> (1 / (t - s)) *\<^sub>R
+      (snd (pglue r T \<omega> \<omega>' t) - snd (pglue r T \<omega> \<omega>' s)) \<in> sconstraint k L"
+    using A B by (intro allI impI pglue_diffquot[OF r rT]) auto
 qed
 
 section \<open>The horizon cap does not bind\<close>
@@ -961,55 +881,45 @@ lemma kglue_law_diffquot:
     and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
   shows "AE \<omega> in kglue_law r T N Q RR. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-proof (rule exit_class_diffquot_of_pairs[OF sets_kglue_law])
-  fix p q :: real
-  assume pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q"
-  let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have mset: "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L} \<in> sets ?B"
-    by (rule borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]])
-  show "AE \<omega> in kglue_law r T N Q RR.
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
-  proof (rule AE_kglue_law[OF r rT exit_class_prob[OF Q]
-        exit_class_prob[OF R] exit_class_sets[OF Q]
-        exit_class_sets[OF R] Nm mset])
-    show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-      using Q unfolding exit_class_def by blast
-    show "AE f in Pi\<^sub>M UNIV RR. \<forall>j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L"
-      unfolding AE_all_countable
-    proof
-      fix j :: nat
-      have Pj: "prob_space (RR i)" if "i \<in> (UNIV :: nat set)" for i
-        by (rule exit_class_prob[OF R])
-      have dj: "distr (Pi\<^sub>M UNIV RR) (RR j) (\<lambda>f. f j) = RR j"
-        by (rule distr_PiM_component[OF Pj UNIV_I])
-      have mj: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f j) \<in> Pi\<^sub>M UNIV RR \<rightarrow>\<^sub>M RR j"
-        by (rule measurable_component_singleton) simp
-      have "AE \<omega>' in RR j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+proof (rule AE_kglue_law[OF r rT exit_class_prob[OF Q]
+      exit_class_prob[OF R] exit_class_sets[OF Q]
+      exit_class_sets[OF R] Nm borel_of_closed[OF closedin_diffquot_constraint_all]])
+  show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    using Q unfolding exit_class_def by blast
+  show "AE f in Pi\<^sub>M UNIV RR. \<forall>j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L"
+    unfolding AE_all_countable
+  proof
+    fix j :: nat
+    have Pj: "prob_space (RR i)" if "i \<in> (UNIV :: nat set)" for i
+      by (rule exit_class_prob[OF R])
+    have dj: "distr (Pi\<^sub>M UNIV RR) (RR j) (\<lambda>f. f j) = RR j"
+      by (rule distr_PiM_component[OF Pj UNIV_I])
+    have mj: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f j) \<in> Pi\<^sub>M UNIV RR \<rightarrow>\<^sub>M RR j"
+      by (rule measurable_component_singleton) simp
+    have "AE \<omega>' in RR j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
+      using R unfolding exit_class_def by blast
+    then have "AE \<omega>' in distr (Pi\<^sub>M UNIV RR) (RR j) (\<lambda>f. f j).
+        \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
           (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
-        using R unfolding exit_class_def by blast
-      then have "AE \<omega>' in distr (Pi\<^sub>M UNIV RR) (RR j) (\<lambda>f. f j).
-          \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-            (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
-        unfolding dj .
-      from AE_distrD[OF mj this]
-      show "AE f in Pi\<^sub>M UNIV RR. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L" .
-    qed
-    fix \<omega> :: "'n pairpath" and f :: "nat \<Rightarrow> 'n pairpath"
-    assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
-      and "f \<in> space (Pi\<^sub>M UNIV RR)"
-      and Aw: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-      and Bf: "\<forall>j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L"
-    show "(1 / (q - p)) *\<^sub>R (snd (kglue r T N (\<omega>, f) q)
-        - snd (kglue r T N (\<omega>, f) p)) \<in> sconstraint k L"
-      using pq Aw Bf unfolding kglue_def
-      by (intro pglue_diffquot[OF r rT]) auto
+      unfolding dj .
+    from AE_distrD[OF mj this]
+    show "AE f in Pi\<^sub>M UNIV RR. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L" .
   qed
+  fix \<omega> :: "'n pairpath" and f :: "nat \<Rightarrow> 'n pairpath"
+  assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
+    and "f \<in> space (Pi\<^sub>M UNIV RR)"
+    and Aw: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+    and Bf: "\<forall>j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L"
+  show "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow> (1 / (t - s)) *\<^sub>R (snd (kglue r T N (\<omega>, f) t)
+      - snd (kglue r T N (\<omega>, f) s)) \<in> sconstraint k L"
+    using Aw Bf unfolding kglue_def
+    by (intro allI impI pglue_diffquot[OF r rT]) auto
 qed
 
 text \<open>The decomposition for clauses (iii) and (iv) of the kernel glue is
