@@ -236,39 +236,7 @@ lemma gauss_measure_mean:
     "integrable (gauss_measure v) (\<lambda>y. y)"
     and gauss_measure_mean_integral:
     "(\<integral>y. y \<partial>gauss_measure v) = 0"
-proof -
-  have both: "integrable (gauss_measure v) (\<lambda>y. y)
-      \<and> (\<integral>y. y \<partial>gauss_measure v) = 0"
-  proof (cases "v \<le> 0")
-    case True
-    then have g: "gauss_measure v = return borel 0"
-      by (simp add: gauss_measure_def)
-    have "integrable (return borel (0 :: real)) (\<lambda>y. y)"
-      by (auto simp: integrable_iff_bounded nn_integral_return)
-    moreover have "(\<integral>y. y \<partial>return borel (0 :: real)) = 0"
-      by (subst integral_return) auto
-    ultimately show ?thesis by (simp add: g)
-  next
-    case False
-    then have v: "0 < v" by simp
-    have "has_bochner_integral lborel
-        (\<lambda>x. normal_density 0 (sqrt v) x * (x - 0) ^ (2 * 0 + 1)) 0"
-      using normal_moment_odd[of "sqrt v" 0 0] v by simp
-    then have "has_bochner_integral lborel
-        (\<lambda>x. normal_density 0 (sqrt v) x * x) 0"
-      by simp
-    then have "has_bochner_integral
-        (density lborel (normal_density 0 (sqrt v))) (\<lambda>y. y) 0"
-      by (subst has_bochner_integral_density)
-        (auto simp: mult_ac)
-    then have "has_bochner_integral (gauss_measure v) (\<lambda>y. y) 0"
-      using v by (simp add: gauss_measure_pos)
-    then show ?thesis
-      by (auto intro: integrable.intros has_bochner_integral_integral_eq)
-  qed
-  from both show "integrable (gauss_measure v) (\<lambda>y. y)"
-    and "(\<integral>y. y \<partial>gauss_measure v) = 0" by auto
-qed
+  using gauss_measure_moment_odd[of v 0] by (simp_all add: has_bochner_integral_iff)
 
 lemma gauss_measure_snd_moment:
   assumes v: "0 \<le> v"
@@ -276,31 +244,7 @@ lemma gauss_measure_snd_moment:
     "integrable (gauss_measure v) (\<lambda>y. y\<^sup>2)"
     and gauss_measure_snd_moment_integral:
     "(\<integral>y. y\<^sup>2 \<partial>gauss_measure v) = v"
-proof -
-  have both: "integrable (gauss_measure v) (\<lambda>y. y\<^sup>2)
-      \<and> (\<integral>y. y\<^sup>2 \<partial>gauss_measure v) = v"
-  proof (cases "v = 0")
-    case True
-    have "integrable (return borel (0 :: real)) (\<lambda>y. y\<^sup>2)"
-      by (auto simp: integrable_iff_bounded nn_integral_return)
-    moreover have "(\<integral>y. y\<^sup>2 \<partial>return borel (0 :: real)) = 0"
-      by (subst integral_return) auto
-    ultimately show ?thesis
-      by (simp add: True gauss_measure_zero)
-  next
-    case False
-    with v have v': "0 < v" by simp
-    have "has_bochner_integral (gauss_measure v) (\<lambda>x. x ^ (2 * 1))
-        (fact (2 * 1) / (2 ^ 1 * fact 1) * v ^ 1)"
-      by (rule gauss_measure_moment_even[OF v'])
-    then have "has_bochner_integral (gauss_measure v) (\<lambda>y. y\<^sup>2) v"
-      by simp
-    then show ?thesis
-      by (auto intro: integrable.intros has_bochner_integral_integral_eq)
-  qed
-  from both show "integrable (gauss_measure v) (\<lambda>y. y\<^sup>2)"
-    and "(\<integral>y. y\<^sup>2 \<partial>gauss_measure v) = v" by auto
-qed
+  using gauss_measure_moment_even[OF v, of 1] by (simp_all add: has_bochner_integral_iff)
 
 lemma gauss_shifted_square:
   assumes v: "0 \<le> v"
@@ -309,35 +253,18 @@ lemma gauss_shifted_square:
     and gauss_shifted_square_integral:
     "(\<integral>y. (c + y)\<^sup>2 \<partial>gauss_measure v) = c\<^sup>2 + v"
 proof -
-  interpret G: prob_space "gauss_measure v" by simp
-  note mean_int = gauss_measure_mean_integrable[of v]
-  note mean_val = gauss_measure_mean_integral[of v]
-  note sq_int = gauss_measure_snd_moment_integrable[OF v]
-  note sq_val = gauss_measure_snd_moment_integral[OF v]
-  have expand: "\<And>y :: real. (c + y)\<^sup>2 = c\<^sup>2 + ((2 * c) * y + y\<^sup>2)"
-    by (simp add: power2_eq_square field_simps)
-  have int_lin: "integrable (gauss_measure v) (\<lambda>y. (2 * c) * y)"
-    by (intro integrable_mult_right mean_int)
-  have int_rest: "integrable (gauss_measure v) (\<lambda>y. (2 * c) * y + y\<^sup>2)"
-    by (intro Bochner_Integration.integrable_add int_lin sq_int)
-  show "integrable (gauss_measure v) (\<lambda>y. (c + y)\<^sup>2)"
-    unfolding expand
-    by (intro Bochner_Integration.integrable_add int_rest
-        G.integrable_const)
-  have pu: "G.prob UNIV = 1"
-    using G.prob_space by simp
-  have e2: "(\<integral>y. (2 * c) * y + y\<^sup>2 \<partial>gauss_measure v) = v"
-  proof -
-    have "(\<integral>y. (2 * c) * y + y\<^sup>2 \<partial>gauss_measure v)
-        = (\<integral>y. (2 * c) * y \<partial>gauss_measure v) + (\<integral>y. y\<^sup>2 \<partial>gauss_measure v)"
-      by (rule Bochner_Integration.integral_add[OF int_lin sq_int])
-    then show ?thesis
-      by (simp add: mean_val sq_val)
-  qed
-  show "(\<integral>y. (c + y)\<^sup>2 \<partial>gauss_measure v) = c\<^sup>2 + v"
-    unfolding expand
-    by (subst Bochner_Integration.integral_add[OF G.integrable_const
-        int_rest]) (simp add: pu e2)
+  have "has_bochner_integral (gauss_measure v)
+      (\<lambda>y. c\<^sup>2 * y ^ (2 * 0) + 2 * c * y ^ (2 * 0 + 1) + y ^ (2 * 1)) (c\<^sup>2 * 1 + 2 * c * 0 + v)"
+    using gauss_measure_moment_even[OF v, of 0] gauss_measure_moment_even[OF v, of 1]
+      gauss_measure_moment_odd[of v 0]
+    by (intro has_bochner_integral_add has_bochner_integral_mult_right) simp_all
+  moreover have "(\<lambda>y. (c + y)\<^sup>2) = (\<lambda>y. c\<^sup>2 * y ^ (2 * 0) + 2 * c * y ^ (2 * 0 + 1) + y ^ (2 * 1))"
+    by (simp add: power2_sum fun_eq_iff)
+  ultimately have "has_bochner_integral (gauss_measure v) (\<lambda>y. (c + y)\<^sup>2) (c\<^sup>2 + v)"
+    by simp
+  then show "integrable (gauss_measure v) (\<lambda>y. (c + y)\<^sup>2)"
+    and "(\<integral>y. (c + y)\<^sup>2 \<partial>gauss_measure v) = c\<^sup>2 + v"
+    by (simp_all add: has_bochner_integral_iff)
 qed
 
 section \<open>Coordinate moments of the product model\<close>
@@ -363,6 +290,20 @@ proof -
   finally show ?thesis .
 qed
 
+lemma bm_coordinate_integral:
+  fixes f :: "real \<Rightarrow> real"
+  assumes u: "0 \<le> u" and f: "f \<in> borel_measurable borel"
+    and hf: "has_bochner_integral (gauss_measure u) f x"
+  shows "has_bochner_integral (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
+    (\<lambda>\<omega>. f (\<omega> i u)) x"
+proof -
+  have m: "(\<lambda>\<omega>. \<omega> i u) \<in> (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) \<rightarrow>\<^sub>M borel"
+    using u by (intro measurable_bm_coordinate) simp
+  show ?thesis
+    using hf unfolding bm_coordinate_distr[OF u, symmetric, where i = i and 'n = 'n]
+    by (simp add: has_bochner_integral_iff integrable_distr_eq[OF m f] integral_distr[OF m f])
+qed
+
 lemma bm_coordinate_sq:
   assumes u: "0 \<le> u"
   shows bm_coordinate_sq_integrable:
@@ -371,27 +312,46 @@ lemma bm_coordinate_sq:
     and bm_coordinate_sq_integral:
     "(\<integral>\<omega>. (c + \<omega> i u)\<^sup>2 \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
       = c\<^sup>2 + u"
+  using bm_coordinate_integral[OF u _ has_bochner_integral_integrable[OF gauss_shifted_square_integrable[OF u]], of _ i]
+  by (simp_all add: has_bochner_integral_iff gauss_shifted_square_integral[OF u])
+
+lemma bm_coordinate_pow4:
+  assumes h0: "0 < h"
+  shows bm_coordinate_pow4_integrable:
+    "integrable (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. (\<omega> i h) ^ 4)"
+    and bm_coordinate_pow4_integral:
+    "(\<integral>\<omega>. (\<omega> i h) ^ 4 \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      = 3 * h\<^sup>2"
+  using bm_coordinate_integral[OF _ _ gauss_measure_moment_even[of h 2], of i] h0
+  by (simp_all add: has_bochner_integral_iff fact_numeral)
+
+lemma bm_R2_moment:
+  assumes h0: "0 < h"
+  shows bm_R2_integrable:
+    "integrable (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
+      (\<lambda>\<omega>. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2)"
+    and bm_R2_integral:
+    "(\<integral>\<omega>. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2
+        \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      \<le> 3 * (real CARD('n))\<^sup>2 * h\<^sup>2"
 proof -
-  have m: "(\<lambda>\<omega>. \<omega> i u) \<in> (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-      \<rightarrow>\<^sub>M (borel :: real measure)"
-    using u by (intro measurable_bm_coordinate) simp
-  have sq_meas: "(\<lambda>y :: real. (c + y)\<^sup>2) \<in> borel_measurable borel"
-    by measurable
-  have "integrable (distr (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) borel
-      (\<lambda>\<omega>. \<omega> i u)) (\<lambda>y. (c + y)\<^sup>2)"
-    unfolding bm_coordinate_distr[OF u]
-    by (rule gauss_shifted_square_integrable[OF u])
-  then show "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
-      (\<lambda>\<omega>. (c + \<omega> i u)\<^sup>2)"
-    by (rule integrable_distr[OF m])
-  have "(\<integral>\<omega>. (c + \<omega> i u)\<^sup>2 \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-      = (\<integral>y. (c + y)\<^sup>2 \<partial>distr bm_paths borel (\<lambda>\<omega>. \<omega> i u))"
-    by (rule integral_distr[OF m sq_meas, symmetric])
-  also have "\<dots> = c\<^sup>2 + u"
-    unfolding bm_coordinate_distr[OF u]
-    by (rule gauss_shifted_square_integral[OF u])
-  finally show "(\<integral>\<omega>. (c + \<omega> i u)\<^sup>2
-      \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)) = c\<^sup>2 + u" .
+  let ?g = "\<lambda>\<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. \<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. (\<omega> i h) ^ 4 / 2 + (\<omega> j h) ^ 4 / 2"
+  have g: "has_bochner_integral bm_paths ?g (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set). 3 * h\<^sup>2 / 2 + 3 * h\<^sup>2 / 2)"
+    using bm_coordinate_integral[OF _ _ gauss_measure_moment_even[of h 2]] h0
+    by (intro has_bochner_integral_sum has_bochner_integral_add has_bochner_integral_divide_zero)
+      (simp_all add: fact_numeral)
+  have le: "(\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2 \<le> ?g \<omega>" for \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
+    unfolding power2_eq_square[of "sum _ _"] sum_product by (intro sum_mono prod_sq_le_half_pow4)
+  have m: "(\<lambda>\<omega>. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2) \<in> borel_measurable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
+    using h0 by (intro borel_measurable_power borel_measurable_sum borel_measurable_power measurable_bm_coordinate) simp
+  show int: "integrable (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure) (\<lambda>\<omega>. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2)"
+    by (rule Bochner_Integration.integrable_bound[OF integrable.intros[OF g] m])
+      (auto intro: order_trans[OF le abs_ge_self])
+  show "(\<integral>\<omega>. (\<Sum>i\<in>UNIV. (\<omega> i h)\<^sup>2)\<^sup>2 \<partial>(bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
+      \<le> 3 * (real CARD('n))\<^sup>2 * h\<^sup>2"
+    using integral_mono[OF int integrable.intros[OF g]] le has_bochner_integral_integral_eq[OF g]
+    by (simp add: power2_eq_square)
 qed
 
 section \<open>The market process\<close>
@@ -485,38 +445,6 @@ proof -
     by (simp add: inner_vec_def power2_eq_square)
   finally show "(\<integral>\<omega>. bmX x0 u \<omega> \<bullet> bmX x0 u \<omega> \<partial>bm_paths)
       = x0 \<bullet> x0 + real CARD('n) * u" .
-qed
-
-lemma bm_compensator_const:
-  assumes u: "0 \<le> u"
-  shows "set_lebesgue_integral lborel {0..u}
-      (\<lambda>_. trace (mat 1 :: real^'n::finite^'n))
-    = real CARD('n) * u"
-proof -
-  have "set_lebesgue_integral lborel {0..u}
-      (\<lambda>_. trace (mat 1 :: real^'n^'n)) = u * trace (mat 1 :: real^'n^'n)"
-    using u by (subst set_integral_const) auto
-  then show ?thesis
-    by (simp add: trace_I mult_ac)
-qed
-
-text \<open>The compensated squared norm compensates \<open>|X\<^sub>t|\<^sup>2\<close> by the trace of the
-  covariation.  A tightness argument needs more than that: it needs a
-  fourth-moment bound on each coordinate separately, so the compensated
-  square of each coordinate has to be a martingale in its own right, and a
-  trace identity alone does not give this.  The per-coordinate compensator
-  is \<open>w\<close> rather than \<open>CARD('n) * w\<close>, since \<open>mat 1 $ i $ i = 1\<close>.\<close>
-
-lemma bm_compensator_coord:
-  assumes u: "0 \<le> u"
-  shows "set_lebesgue_integral lborel {0..u}
-      (\<lambda>_. (mat 1 :: real^'n::finite^'n) $ i $ i) = u"
-proof -
-  have "set_lebesgue_integral lborel {0..u}
-      (\<lambda>_. (mat 1 :: real^'n^'n) $ i $ i)
-      = u * ((mat 1 :: real^'n^'n) $ i $ i)"
-    using u by (subst set_integral_const) auto
-  then show ?thesis by (simp add: mat_def)
 qed
 
 text \<open>Two-sided pointwise bounds on the trace, from the eigenvalue

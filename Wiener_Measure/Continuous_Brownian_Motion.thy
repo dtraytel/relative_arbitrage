@@ -117,6 +117,28 @@ proof (rule martingale_of_modification_vec[where X = "bmX x0"])
     by (intro cbmX_ae_eq) simp
 qed
 
+text \<open>Any Borel function of the state that is a martingale for the product
+  model is one for the continuous modification too, with its own natural
+  filtration, by the general modification transfer theorem.  Adaptedness holds
+  because the process is a Borel function of the state.\<close>
+
+lemma martingale_cbmX_fun:
+  fixes x0 :: "real^'n::finite" and f :: "real \<Rightarrow> real^'n \<Rightarrow> real"
+  assumes mg: "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (natural_filtration bm_paths 0 (bmX x0)) 0 (\<lambda>t \<omega>. f t (bmX x0 t \<omega>))"
+    and f: "\<And>t. f t \<in> borel_measurable borel"
+  shows "martingale (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
+      (natural_filtration bm_paths 0 (cbmX x0)) 0 (\<lambda>t \<omega>. f t (cbmX x0 t \<omega>))"
+proof (rule martingale_of_modification_gen[OF _ mg])
+  fix u :: real assume u: "0 \<le> u"
+  show "AE \<omega> in bm_paths. cbmX x0 u \<omega> = bmX x0 u \<omega>"
+    using u by (intro cbmX_ae_eq) simp
+  then show "AE \<omega> in bm_paths. f u (cbmX x0 u \<omega>) = f u (bmX x0 u \<omega>)"
+    by eventually_elim simp
+  show "bmX x0 u \<in> borel_measurable bm_paths"
+    using u by (intro measurable_bmX) simp
+qed (auto intro: measurable_compose[OF measurable_cbmX f] adapted_of_natural_filtration f)
+
 section \<open>Path continuity\<close>
 
 text \<open>\<open>continuous_on_vec_lambda\<close> is HOL-Analysis's, in
@@ -131,9 +153,7 @@ lemma cbmX_cont:
       Bcont_cont)
 
 text \<open>The same compensated coordinate square, transferred to the continuous
-  modification and its own natural filtration, by the general modification
-  transfer theorem.  Adaptedness holds because the compensated square is a
-  Borel function of the state.\<close>
+  modification and its own natural filtration.\<close>
 
 theorem martingale_cbm_coord_square:
   fixes x0 :: "real^'n::finite"
@@ -142,55 +162,8 @@ theorem martingale_cbm_coord_square:
     (\<lambda>t \<omega>. (cbmX x0 t \<omega> $ i)\<^sup>2
       - set_lebesgue_integral lborel {0..t}
           (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i))"
-proof -
-  let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?F = "natural_filtration ?M 0 (cbmX x0)"
-  let ?c = "\<lambda>t. set_lebesgue_integral lborel {0..t}
-    (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i)"
-  let ?Z = "\<lambda>t \<omega>. (bmX x0 t \<omega> $ i)\<^sup>2 - ?c t"
-  let ?Z' = "\<lambda>t \<omega>. (cbmX x0 t \<omega> $ i)\<^sup>2 - ?c t"
-  have prj: "(\<lambda>x :: real^'n. x $ i) \<in> borel_measurable borel"
-    by (intro borel_measurable_continuous_onI linear_continuous_on
-        bounded_linear_vec_nth)
-  have measZ': "?Z' u \<in> borel_measurable ?M" for u
-    by (intro borel_measurable_diff borel_measurable_const
-        borel_measurable_power measurable_compose[OF measurable_cbmX prj])
-  have aeZ: "AE \<omega> in ?M. ?Z' u \<omega> = ?Z u \<omega>" if u: "0 \<le> u" for u
-  proof -
-    have "AE \<omega> in ?M. cbmX x0 u \<omega> = bmX x0 u \<omega>"
-      using u by (intro cbmX_ae_eq) simp
-    then show ?thesis by eventually_elim simp
-  qed
-  have adaptZ': "adapted_process ?M ?F 0 ?Z'"
-  proof (rule adapted_of_natural_filtration
-      [where f = "\<lambda>u y. (y $ i)\<^sup>2 - ?c u"])
-    show "\<And>u. 0 \<le> u \<Longrightarrow> cbmX x0 u \<in> borel_measurable ?M"
-      by (rule measurable_cbmX)
-    show "\<And>u. (\<lambda>y :: real^'n. (y $ i)\<^sup>2 - ?c u)
-        \<in> borel_measurable borel"
-      by (intro borel_measurable_diff borel_measurable_const
-          borel_measurable_power prj)
-  qed
-  show ?thesis
-  proof (rule martingale_of_modification_gen[where X = "bmX x0" and Y = ?Z])
-    show "prob_space ?M"
-      by simp
-    show "martingale ?M (natural_filtration ?M 0 (bmX x0)) 0 ?Z"
-      by (rule martingale_bm_coord_square)
-    show "\<And>u. 0 \<le> u \<Longrightarrow> bmX x0 u \<in> borel_measurable ?M"
-      by (intro measurable_bmX) simp
-    show "\<And>u. 0 \<le> u \<Longrightarrow> cbmX x0 u \<in> borel_measurable ?M"
-      by (rule measurable_cbmX)
-    show "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in ?M. cbmX x0 u \<omega> = bmX x0 u \<omega>"
-      by (intro cbmX_ae_eq) simp
-    show "\<And>u. 0 \<le> u \<Longrightarrow> ?Z' u \<in> borel_measurable ?M"
-      by (rule measZ')
-    show "\<And>u. 0 \<le> u \<Longrightarrow> AE \<omega> in ?M. ?Z' u \<omega> = ?Z u \<omega>"
-      by (rule aeZ)
-    show "adapted_process ?M ?F 0 ?Z'"
-      by (rule adaptZ')
-  qed
-qed
+  by (rule martingale_cbmX_fun[where f = "\<lambda>t y. (y $ i)\<^sup>2 - set_lebesgue_integral lborel {0..t}
+          (\<lambda>s. (mat 1 :: real^'n^'n) $ i $ i)", OF martingale_bm_coord_square]) simp
 
 
 section \<open>The compensated square is a martingale for the same filtration\<close>

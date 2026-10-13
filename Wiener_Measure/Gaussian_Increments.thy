@@ -71,73 +71,67 @@ lemma sigma_finite_gauss_measure [intro, simp]:
 
 subsection \<open>Moments\<close>
 
+text \<open>All moments of \<open>gauss_measure\<close>: the degenerate case, the even moments
+  (HOL-Probability's \<open>normal_moment_even\<close>) and the odd ones.\<close>
+
+lemma gauss_measure_degenerate:
+  fixes f :: "real \<Rightarrow> real"
+  assumes v: "v \<le> 0" and f [measurable]: "f \<in> borel_measurable borel"
+  shows "has_bochner_integral (gauss_measure v) f (f 0)"
+proof -
+  have "f \<in> borel_measurable (return borel 0)"
+    by (simp add: measurable_cong_sets[OF sets_return refl])
+  then have "integrable (return borel (0::real)) f"
+    by (simp add: integrable_iff_bounded nn_integral_return)
+  then show ?thesis
+    using v by (simp add: gauss_measure_def has_bochner_integral_iff integral_return)
+qed
+
 lemma gauss_measure_moment_even:
-  assumes v: "0 < v"
+  assumes v: "0 \<le> v"
   shows "has_bochner_integral (gauss_measure v) (\<lambda>x. x ^ (2 * k))
            (fact (2 * k) / (2 ^ k * fact k) * v ^ k)"
-proof -
-  have veq: "fact (2 * k) / ((2 / v) ^ k * fact k)
-      = fact (2 * k) / (2 ^ k * fact k) * (v ^ k :: real)"
-    using v by (simp add: field_simps)
-  have "has_bochner_integral lborel
-          (\<lambda>x. normal_density 0 (sqrt v) x * x ^ (2 * k))
-          (fact (2 * k) / ((2 / v) ^ k * fact k))"
-    using normal_moment_even[of "sqrt v" 0 k] v by simp
-  then have "has_bochner_integral lborel
-          (\<lambda>x. normal_density 0 (sqrt v) x * x ^ (2 * k))
-          (fact (2 * k) / (2 ^ k * fact k) * v ^ k)"
-    by (simp add: veq)
-  then have "has_bochner_integral
-      (density lborel (normal_density 0 (sqrt v))) (\<lambda>x. x ^ (2 * k))
-      (fact (2 * k) / (2 ^ k * fact k) * v ^ k)"
-    by (subst has_bochner_integral_density)
-      (auto simp: mult_ac)
+proof (cases "v = 0")
+  case True
   then show ?thesis
-    using v by (simp add: gauss_measure_pos)
+    using gauss_measure_degenerate[of v "\<lambda>x. x ^ (2 * k)"] by (cases k) simp_all
+next
+  case False
+  with v have "0 < v" by simp
+  then have "has_bochner_integral lborel (\<lambda>x. normal_density 0 (sqrt v) x * x ^ (2 * k))
+      (fact (2 * k) / (2 ^ k * fact k) * v ^ k)"
+    using normal_moment_even[of "sqrt v" 0 k] by (simp add: field_simps)
+  with \<open>0 < v\<close> show ?thesis
+    by (simp add: gauss_measure_pos has_bochner_integral_density mult_ac)
+qed
+
+lemma gauss_measure_moment_odd:
+  "has_bochner_integral (gauss_measure v) (\<lambda>x. x ^ (2 * k + 1)) 0"
+proof (cases "v \<le> 0")
+  case True
+  then show ?thesis
+    using gauss_measure_degenerate[of v "\<lambda>x. x ^ (2 * k + 1)"] by simp
+next
+  case False
+  then show ?thesis
+    using normal_moment_odd[of "sqrt v" 0 k]
+    by (simp add: gauss_measure_pos has_bochner_integral_density mult_ac)
 qed
 
 lemma gauss_measure_fourth_moment:
   assumes v: "0 \<le> v"
   shows "(\<integral>x. x ^ 4 \<partial>gauss_measure v) = 3 * v\<^sup>2"
-proof (cases "v = 0")
-  case True
-  then show ?thesis
-    by (simp add: gauss_measure_zero integral_return)
-next
-  case False
-  with v have v': "0 < v"
-    by simp
-  have "has_bochner_integral (gauss_measure v) (\<lambda>x. x ^ (2 * 2))
-          (fact (2 * 2) / (2 ^ 2 * fact 2) * v ^ 2)"
-    by (rule gauss_measure_moment_even[OF v'])
-  moreover have "(fact (2 * 2) / (2 ^ 2 * fact 2) :: real) = 3"
-    by (simp add: fact_numeral)
-  ultimately have "has_bochner_integral (gauss_measure v) (\<lambda>x. x ^ 4) (3 * v\<^sup>2)"
-    by (simp add: power2_eq_square)
-  then show ?thesis
-    by (rule has_bochner_integral_integral_eq)
-qed
+  using has_bochner_integral_integral_eq[OF gauss_measure_moment_even[OF v, of 2]]
+  by (simp add: fact_numeral)
 
 lemma gauss_measure_fourth_moment_nn:
   assumes v: "0 \<le> v"
   shows "(\<integral>\<^sup>+x. x ^ 4 \<partial>gauss_measure v) = ennreal (3 * v\<^sup>2)"
-proof (cases "v = 0")
-  case True
+proof -
+  have "integrable (gauss_measure v) (\<lambda>x. x ^ 4)"
+    using integrable.intros[OF gauss_measure_moment_even[OF v, of 2]] by simp
   then show ?thesis
-    by (simp add: gauss_measure_zero nn_integral_return)
-next
-  case False
-  with v have v': "0 < v"
-    by simp
-  have integrable: "integrable (gauss_measure v) (\<lambda>x. x ^ 4)"
-    using gauss_measure_moment_even[OF v', of 2]
-    by (auto intro: integrable.intros)
-  have nonneg: "AE x in gauss_measure v. 0 \<le> x ^ 4"
-    by (auto intro!: zero_le_even_power)
-  have "(\<integral>\<^sup>+x. x ^ 4 \<partial>gauss_measure v) = ennreal (\<integral>x. x ^ 4 \<partial>gauss_measure v)"
-    by (rule nn_integral_eq_integral[OF integrable nonneg])
-  then show ?thesis
-    by (simp add: gauss_measure_fourth_moment[OF v])
+    by (simp add: nn_integral_eq_integral gauss_measure_fourth_moment[OF v])
 qed
 
 subsection \<open>Translation invariance of \<open>lborel\<close>\<close>
