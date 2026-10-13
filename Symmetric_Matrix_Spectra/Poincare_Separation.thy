@@ -347,7 +347,6 @@ proof -
 qed
 
 
-
 lemma transpose_weighted_outer_sum:
   fixes c :: "real^'n::finite \<Rightarrow> real"
   assumes finB: "finite B"
@@ -367,20 +366,6 @@ lemma psd_weighted_outer_sum:
 
 text \<open>The sum annihilates \<open>p\<close> as soon as every basis vector carrying a nonzero
   weight is orthogonal to \<open>p\<close>.\<close>
-
-
-lemma outer_prod_scaleR_right:
-  fixes u v :: "real^'n::finite"
-  shows "outer_prod u (c *\<^sub>R v) = c *\<^sub>R outer_prod u v"
-proof -
-  have "outer_prod u (c *\<^sub>R v) = transpose (outer_prod (c *\<^sub>R v) u)"
-    by simp
-  also have "\<dots> = transpose (c *\<^sub>R outer_prod v u)"
-    by (simp add: outer_prod_scaleR_left)
-  also have "\<dots> = c *\<^sub>R outer_prod u v"
-    by (simp add: transpose_scalar)
-  finally show ?thesis .
-qed
 
 
 lemma exists_top_eigenvector:
@@ -437,6 +422,103 @@ proof -
   also have "\<dots> = x \<bullet> (a *v x)"
     unfolding adecomp by (rule quadform_weighted_outer_sum_eq[OF finB, symmetric])
   finally show ?thesis .
+qed
+
+text \<open>The general Courant-Fischer lower bound: if the Rayleigh quotient of
+  \<open>a\<close> is at least \<open>c\<close> on a subspace of dimension \<open>\<ge> m\<close>, then
+  \<open>c \<le> eigval m a\<close>, via a comparison subspace whose dimension, together
+  with \<open>m\<close>, exceeds \<open>CARD('n)\<close>.\<close>
+
+theorem eigval_ge_of_subspace:
+  fixes a :: "real^'n::finite^'n"
+  assumes sym: "transpose a = a"
+    and S: "subspace S" "m \<le> dim S"
+    and quad: "\<And>x. x \<in> S \<Longrightarrow> c * (x \<bullet> x) \<le> x \<bullet> (a *v x)"
+    and m: "0 < m" "m \<le> CARD('n)"
+  shows "c \<le> eigval m a"
+proof -
+  obtain B where B: "onormal B" "span B = UNIV"
+    and finB: "finite B" and cardB: "card B = CARD('n)"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    using symmetric_eigendecomposition[OF sym] by metis
+  obtain T w where T: "T \<subseteq> B" "card T = m"
+    and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
+    and w: "w \<in> T" and "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
+    and eigw: "eigval m a = w \<bullet> (a *v w)"
+    using eigval_threshold_witness[OF B sym eig m] by blast
+  define U where "U = insert w (B - T)"
+  have Usub: "U \<subseteq> B"
+    unfolding U_def using w T(1) by blast
+  have onU: "onormal U"
+    by (rule onormal_subset[OF B(1) Usub])
+  have wnotin: "w \<notin> B - T"
+    using w by blast
+  have cardU: "card U = CARD('n) - m + 1"
+    unfolding U_def
+    using wnotin finB T(1) T(2) cardB
+    by (simp add: card_Diff_subset finite_subset)
+  have dimU: "dim (span U) = CARD('n) - m + 1"
+    using onormal_card_dim_span[OF onU] cardU by simp
+  text \<open>Dimensions sum past the ambient dimension, so the subspaces meet.\<close>
+  have dims: "CARD('n) < dim S + dim (span U)"
+    using S(2) dimU m(2) by simp
+  obtain x where x: "x \<in> S" "x \<in> span U" "x \<noteq> 0"
+    using subspace_inter_nonzero[OF S(1) subspace_span dims] by blast
+  have xx: "0 < x \<bullet> x"
+    using x(3) by simp
+  text \<open>Every eigenvalue occurring in \<open>U\<close> is dominated by \<open>eigval m a\<close>.\<close>
+  have Ubound: "v \<bullet> (a *v v) \<le> eigval m a" if v: "v \<in> U" for v
+  proof (cases "v = w")
+    case True
+    then show ?thesis
+      using eigw by simp
+  next
+    case False
+    then have vBT: "v \<in> B - T"
+      using v unfolding U_def by simp
+    show ?thesis
+      by (rule quadform_outside_threshold_le_eigval[OF B sym eig T(1) T(2) m(1)
+            thresh vBT])
+  qed
+  text \<open>Expand \<open>x \<bullet> (a *v x)\<close> in the eigenbasis; the terms outside \<open>U\<close> vanish
+    because \<open>x \<in> span U\<close>.\<close>
+  text \<open>Bind the eigenvalues to a local constant before decomposing, since
+    \<open>spectral_decomposition\<close> mentions \<open>a\<close> on the right as well and would loop
+    as a rewrite rule.\<close>
+  define lam where "lam = (\<lambda>v :: real^'n. v \<bullet> (a *v v))"
+  have adecomp: "a = (\<Sum>v\<in>B. lam v *\<^sub>R outer_prod v v)"
+    unfolding lam_def by (rule spectral_decomposition[OF B eig])
+  have Ubound': "lam v \<le> eigval m a" if "v \<in> U" for v
+    using Ubound[OF that] by (simp add: lam_def)
+  have vanish: "v \<bullet> x = 0" if v: "v \<in> B - U" for v
+  proof (rule onormal_orthogonal_to_span_complement[OF B(1) _ Usub _ x(2)])
+    show "v \<in> B" using v by blast
+    show "v \<notin> U" using v by blast
+  qed
+  have "x \<bullet> (a *v x) = (\<Sum>v\<in>B. lam v * (v \<bullet> x)^2)"
+    unfolding adecomp by (rule quadform_weighted_outer_sum_eq[OF finB])
+  also have "\<dots> = (\<Sum>v\<in>U. lam v * (v \<bullet> x)^2)"
+    by (rule sum.mono_neutral_right[OF finB Usub]) (auto simp: vanish)
+  also have "\<dots> \<le> (\<Sum>v\<in>U. eigval m a * (v \<bullet> x)^2)"
+    using Ubound' by (intro sum_mono mult_right_mono) auto
+  also have "\<dots> = eigval m a * (\<Sum>v\<in>U. (v \<bullet> x)^2)"
+    by (simp add: sum_distrib_left)
+  also have "\<dots> = eigval m a * (\<Sum>v\<in>B. (v \<bullet> x)^2)"
+  proof -
+    have "(\<Sum>v\<in>U. (v \<bullet> x)^2) = (\<Sum>v\<in>B. (v \<bullet> x)^2)"
+      by (rule sum.mono_neutral_right[OF finB Usub, symmetric]) (auto simp: vanish)
+    then show ?thesis
+      by simp
+  qed
+  also have "\<dots> = eigval m a * (x \<bullet> x)"
+    by (simp add: parseval_onormal[OF B])
+  finally have upper: "x \<bullet> (a *v x) \<le> eigval m a * (x \<bullet> x)" .
+  have "c * (x \<bullet> x) \<le> x \<bullet> (a *v x)"
+    by (rule quad[OF x(1)])
+  with upper have "c * (x \<bullet> x) \<le> eigval m a * (x \<bullet> x)"
+    by simp
+  then show ?thesis
+    using xx by (simp add: mult_right_le_imp_le)
 qed
 
 
@@ -522,96 +604,6 @@ proof -
 qed
 
 
-lemma inner_outer_prod_self:
-  fixes u v :: "real^'n::finite"
-  shows "outer_prod u v \<bullet> outer_prod u v = (u \<bullet> u) * (v \<bullet> v)"
-proof -
-  have "outer_prod u v \<bullet> outer_prod u v
-      = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. (u $ i * v $ j) * (u $ i * v $ j))"
-    unfolding outer_prod_def inner_vec_def by simp
-  also have "\<dots> = (\<Sum>i\<in>(UNIV :: 'n set).
-      (u $ i * u $ i) * (\<Sum>j\<in>(UNIV :: 'n set). v $ j * v $ j))"
-    by (intro sum.cong refl) (simp add: sum_distrib_left algebra_simps)
-  also have "\<dots> = (\<Sum>i\<in>(UNIV :: 'n set). u $ i * u $ i)
-      * (\<Sum>j\<in>(UNIV :: 'n set). v $ j * v $ j)"
-    by (simp add: sum_distrib_right)
-  also have "\<dots> = (u \<bullet> u) * (v \<bullet> v)"
-    unfolding inner_vec_def by simp
-  finally show ?thesis .
-qed
-
-
-lemma norm_outer_prod:
-  fixes u v :: "real^'n::finite"
-  shows "norm (outer_prod u v) = norm u * norm v"
-proof -
-  have "norm (outer_prod u v) = sqrt (outer_prod u v \<bullet> outer_prod u v)"
-    by (simp add: norm_eq_sqrt_inner)
-  also have "\<dots> = sqrt ((u \<bullet> u) * (v \<bullet> v))"
-    by (simp add: inner_outer_prod_self)
-  also have "\<dots> = sqrt (u \<bullet> u) * sqrt (v \<bullet> v)"
-    by (simp add: real_sqrt_mult)
-  also have "\<dots> = norm u * norm v"
-    by (simp add: norm_eq_sqrt_inner)
-  finally show ?thesis .
-qed
-
-
-lemma outer_prod_diff_left:
-  fixes u v w :: "real^'n::finite"
-  shows "outer_prod (u - v) w = outer_prod u w - outer_prod v w"
-  unfolding outer_prod_def by (simp add: vec_eq_iff left_diff_distrib)
-
-
-lemma outer_prod_diff_right:
-  fixes u v w :: "real^'n::finite"
-  shows "outer_prod u (v - w) = outer_prod u v - outer_prod u w"
-  unfolding outer_prod_def by (simp add: vec_eq_iff right_diff_distrib)
-
-
-lemma norm_unit_diff_le:
-  fixes p p' :: "real^'n::finite"
-  assumes p: "p \<noteq> 0" and p': "p' \<noteq> 0"
-  shows "norm (p' /\<^sub>R norm p' - p /\<^sub>R norm p) \<le> 2 * norm (p' - p) / norm p"
-proof -
-  have np: "0 < norm p"
-    using p by simp
-  have np': "0 < norm p'"
-    using p' by simp
-  have split: "p' /\<^sub>R norm p' - p /\<^sub>R norm p
-      = (p' - p) /\<^sub>R norm p + (inverse (norm p') - inverse (norm p)) *\<^sub>R p'"
-    by (simp add:
-        algebra_simps)
-  have t1: "norm ((p' - p) /\<^sub>R norm p) = norm (p' - p) / norm p"
-    using np by (simp add: divide_inverse mult.commute)
-  have t2: "norm ((inverse (norm p') - inverse (norm p)) *\<^sub>R p')
-      \<le> norm (p' - p) / norm p"
-  proof -
-    have "\<bar>inverse (norm p') - inverse (norm p)\<bar>
-        = \<bar>norm p - norm p'\<bar> / (norm p' * norm p)"
-      using np np' by (simp add: field_simps abs_mult_pos abs_minus_commute)
-    then have "norm ((inverse (norm p') - inverse (norm p)) *\<^sub>R p')
-        = \<bar>norm p - norm p'\<bar> / (norm p' * norm p) * norm p'"
-      by simp
-    also have "\<dots> = \<bar>norm p - norm p'\<bar> / norm p"
-      using np' by simp
-    also have "\<dots> \<le> norm (p' - p) / norm p"
-      using np norm_triangle_ineq3[of p p'] 
-      by (simp add: divide_right_mono abs_minus_commute norm_minus_commute)
-    finally show ?thesis .
-  qed
-  have "norm (p' /\<^sub>R norm p' - p /\<^sub>R norm p)
-      \<le> norm ((p' - p) /\<^sub>R norm p)
-        + norm ((inverse (norm p') - inverse (norm p)) *\<^sub>R p')"
-    unfolding split by (rule norm_triangle_ineq)
-  also have "\<dots> \<le> norm (p' - p) / norm p + norm (p' - p) / norm p"
-    using t1 t2 by simp
-  also have "\<dots> = 2 * norm (p' - p) / norm p"
-    by simp
-  finally show ?thesis .
-qed
-
-
 lemma inner_transpose_self:
   fixes A :: "real^'n::finite^'n"
   shows "transpose A \<bullet> transpose A = A \<bullet> A"
@@ -682,32 +674,6 @@ proof -
   finally show ?thesis .
 qed
 
-
-lemma norm_mat_1:
-  shows "norm (mat 1 :: real^'n::finite^'n) = sqrt (real CARD('n))"
-proof -
-  have "(mat 1 :: real^'n^'n) \<bullet> (mat 1 :: real^'n^'n)
-      = (\<Sum>i\<in>(UNIV :: 'n set). \<Sum>j\<in>(UNIV :: 'n set).
-          (if i = j then 1 else 0) * (if i = j then (1 :: real) else 0))"
-    unfolding inner_vec_def mat_def by simp
-  also have "\<dots> = (\<Sum>i\<in>(UNIV :: 'n set). (1 :: real))"
-  proof (intro sum.cong refl)
-    fix i :: 'n
-    have "(\<Sum>j\<in>(UNIV :: 'n set).
-            (if i = j then 1 else 0) * (if i = j then (1 :: real) else 0))
-        = (\<Sum>j\<in>(UNIV :: 'n set). (if i = j then (1 :: real) else 0))"
-      by (intro sum.cong refl) simp
-    also have "\<dots> = 1"
-      by simp
-    finally show "(\<Sum>j\<in>(UNIV :: 'n set).
-        (if i = j then 1 else 0) * (if i = j then (1 :: real) else 0)) = 1" .
-  qed
-  also have "\<dots> = real CARD('n)"
-    by simp
-  finally have "(mat 1 :: real^'n^'n) \<bullet> (mat 1 :: real^'n^'n) = real CARD('n)" .
-  then show ?thesis
-    by (simp add: norm_eq_sqrt_inner)
-qed
 
 text \<open>Hence the projection onto \<open>p\<^sup>\<bottom>\<close> is bounded independently of \<open>p\<close>.\<close>
 

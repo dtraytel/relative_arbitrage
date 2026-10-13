@@ -1,7 +1,8 @@
 
 (*<*)
 theory Semicontinuous_Selection
-  imports "HOL-Probability.Probability" "Standard_Borel_Spaces.Set_Based_Metric_Space" Berge
+  imports "HOL-Probability.Probability" "Standard_Borel_Spaces.Set_Based_Metric_Space"
+    "Semicontinuous_Analysis.Berge"
 begin
 
 (*>*)

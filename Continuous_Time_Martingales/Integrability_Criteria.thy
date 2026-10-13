@@ -1,4 +1,4 @@
-section \<open>Criteria for integrability, and a lattice helper\<close>
+section \<open>Criteria for integrability and independence, and shifting a real infimum\<close>
 
 (*<*)
 theory Integrability_Criteria
@@ -15,8 +15,9 @@ text \<open>
   degenerate sets, and independence read through a distribution or
   through the components of a product measure.
 
-  A fact about shifting an infimum of reals comes along, because the same
-  arguments need it and it has nowhere better to live.
+  One order-theoretic fact comes along: \<open>cInf_shift_real\<close>, adding a
+  constant to every element of a nonempty, bounded-below set of reals shifts
+  its infimum by that constant.
 \<close>
 
 text \<open>Independence of a pair of random variables transports along a
@@ -302,10 +303,7 @@ proof (rule Bochner_Integration.integrable_bound
     by (intro AE_I2) (auto simp: indicator_def)
 qed
 
-text \<open>This section builds the ingredients for the conditioning statement
-  isolated in \<open>d\<close>: the exit time splits at
-  \<open>r\<close> on the survival event, and the rebased future the rebased future is a measurable
-  map of path spaces.\<close>
+text \<open>Shifting a conditionally-complete infimum of reals by a constant.\<close>
 
 lemma cInf_shift_real:
   fixes S :: "real set"

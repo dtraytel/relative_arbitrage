@@ -5,7 +5,7 @@ theory Pair_Path_Space
   imports
     "Continuous_Path_Spaces.Adapted_Quadratic_Variation"
     "Continuous_Path_Spaces.Path_Exit_Times" "Continuous_Path_Spaces.Path_Tightness"
-    "Disintegration.Disintegration" "Semicontinuous_Analysis.Semicontinuous_Selection"
+    "Disintegration.Disintegration" "Continuous_Path_Spaces.Semicontinuous_Selection"
     "Symmetric_Matrix_Spectra.Householder_Rotation"
     "Symmetric_Matrix_Spectra.Symmetric_Spectral"
 begin
@@ -390,13 +390,6 @@ text \<open>The mass a class member puts outside a pair Hoelder ball.  This is
   member only has it almost surely.  Charging the failure of the
   start-and-Lipschitz event to a null set handles both.\<close>
 
-lemma psd_diag_nonneg:
-  fixes a :: "real^'m::finite^'m"
-  assumes "psd a"
-  shows "0 \<le> a $ l $ l"
-  using assms diag_eq_inner_axis[where a = a and i = l, symmetric]
-  by (auto simp: psd_def dest: spec[of _ "axis l 1"])
-
 theorem etime_shift_box_half:
   fixes T d :: real and A :: "'b::{polish_space,banach} set"
     and P :: "(real \<Rightarrow> 'b) measure" and x :: 'b
@@ -632,33 +625,6 @@ text \<open>
   conversion is faithful since the exit time is capped at \<open>T\<close>, so the
   essential infimum is never \<open>\<top>\<close>.
 \<close>
-
-lemma rot_col_cont:
-  fixes q x c :: "real^'n::finite" and M :: "real^'n^'n" and A :: "(real^'n) set"
-  assumes q0: "q \<noteq> 0"
-    and ok: "\<And>y. y \<in> A \<Longrightarrow>
-      0 < norm q * norm (q + M *v (y - x)) + q \<bullet> (q + M *v (y - x))"
-  shows "continuous_on A (\<lambda>y. rotm q (q + M *v (y - x)) *v c)"
-proof -
-  have gradc: "continuous_on A (\<lambda>y::real^'n. q + M *v (y - x))"
-  proof -
-    have d: "continuous_on A (\<lambda>y :: real^'n. y - x)"
-      by (intro continuous_intros)
-    have mv: "continuous_on A (\<lambda>y :: real^'n. M *v (y - x))"
-      by (rule continuous_on_compose2[OF
-          linear_continuous_on[OF matrix_vector_mul_bounded_linear] d]) auto
-    show ?thesis by (intro continuous_intros mv)
-  qed
-  show ?thesis
-  proof (rule continuous_on_compose2[OF _ gradc])
-    show "continuous_on {w :: real^'n. 0 < norm q * norm w + q \<bullet> w}
-        (\<lambda>w. rotm q w *v c)"
-      by (rule rotm_vec_cont[OF q0]) simp
-    show "(\<lambda>y::real^'n. q + M *v (y - x)) ` A
-        \<subseteq> {w :: real^'n. 0 < norm q * norm w + q \<bullet> w}"
-      using ok by blast
-  qed
-qed
 
 definition outerp :: "real^'n::finite \<Rightarrow> real^'n^'n" where
   "outerp x = (\<chi> i j. x $ i * x $ j)"

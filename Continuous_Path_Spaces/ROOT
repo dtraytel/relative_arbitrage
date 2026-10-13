@@ -5,7 +5,9 @@ session Continuous_Path_Spaces = Continuous_Time_Martingales +
     family of path laws from increment moments alone, and quadratic variation
     as an adapted, everywhere-continuous path functional with a summable L2
     rate -- and the exit time of a closed set by a continuous path, upper
-    semicontinuous along weak convergence of path laws.
+    semicontinuous along weak convergence of path laws.  Also measurable
+    selection of an upper semicontinuous payoff on a compact set
+    (Bertsekas-Shreve, Prop. 7.33).
   "
   options [document = pdf, document_output = "output"]
   sessions
@@ -23,6 +25,7 @@ session Continuous_Path_Spaces = Continuous_Time_Martingales +
     Conditional_UI
     Equicontinuity
     Path_Space
+    Semicontinuous_Selection
     Path_Exit_Times
     Path_Tightness
     Path_Space_Infinite

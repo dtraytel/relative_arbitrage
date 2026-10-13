@@ -1605,6 +1605,65 @@ proof -
           OF finB T0(1) T0(2) threshmin T(1) T(2)])
 qed
 
+text \<open>The upper bound in bracket form.  For a symmetric \<open>N\<close> with eigenbasis
+  \<open>B\<close>, and weights \<open>u \<bullet> (a *v u)\<close> in \<open>[0, L]\<close> whose values clipped at \<open>1\<close>
+  sum to at least \<open>m\<close>, the weighted sum of the Rayleigh quotients of \<open>N\<close> is
+  bounded by \<open>bracket m L N\<close>.  The two conversions are
+  \<open>possum_full_eq_sum_basis\<close> (the positive part) and
+  \<open>kyfan_minus_possum_threshold\<close> (the negative part, via
+  \<open>sum_min_le_threshold\<close>).\<close>
+
+theorem bracket_upper_bound:
+  fixes N a :: "real^'n::finite^'n"
+  assumes symN: "transpose N = N"
+    and B: "onormal B" "span B = UNIV"
+    and eigN: "\<And>u. u \<in> B \<Longrightarrow> N *v u = (u \<bullet> (N *v u)) *\<^sub>R u"
+    and m: "m \<le> CARD('n)" and L: "1 \<le> L"
+    and w0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> u \<bullet> (a *v u)"
+    and wL: "\<And>u. u \<in> B \<Longrightarrow> u \<bullet> (a *v u) \<le> L"
+    and wsum: "real m \<le> (\<Sum>u\<in>B. min (u \<bullet> (a *v u)) 1)"
+  shows "(\<Sum>u\<in>B. (u \<bullet> (N *v u)) * (u \<bullet> (a *v u))) \<le> bracket m L N"
+proof -
+  have finB: "finite B"
+    by (rule onormal_finite[OF B(1)])
+  have cardB: "card B = CARD('n)"
+    by (rule onormal_span_card[OF B])
+  have mB: "m \<le> card B"
+    using m cardB by simp
+  obtain T where T: "T \<subseteq> B" "card T = m"
+    and lp: "(\<Sum>u\<in>B. (u \<bullet> (N *v u)) * (u \<bullet> (a *v u)))
+        \<le> L * (\<Sum>u\<in>B. max (u \<bullet> (N *v u)) 0)
+          + (\<Sum>u\<in>T. min (u \<bullet> (N *v u)) 0)"
+    using lp_upper_bound[where lam = "\<lambda>u :: real^'n. u \<bullet> (N *v u)"
+        and w = "\<lambda>u :: real^'n. u \<bullet> (a *v u)", OF finB mB L w0 wL wsum]
+    by blast
+  text \<open>Pass to a threshold set, where the negative part becomes
+    \<open>kyfan m - possum m\<close>.\<close>
+  obtain T0 where T0: "T0 \<subseteq> B" "card T0 = m"
+    and thresh: "\<And>u v. u \<in> T0 \<Longrightarrow> v \<in> B - T0
+        \<Longrightarrow> v \<bullet> (N *v v) \<le> u \<bullet> (N *v u)"
+    using exists_top_subset[where f = "\<lambda>u :: real^'n. u \<bullet> (N *v u)", OF finB mB]
+    by metis
+  have negle: "(\<Sum>u\<in>T. min (u \<bullet> (N *v u)) 0)
+      \<le> (\<Sum>u\<in>T0. min (u \<bullet> (N *v u)) 0)"
+    by (rule sum_min_le_threshold[where lam = "\<lambda>u :: real^'n. u \<bullet> (N *v u)",
+          OF finB T0(1) T0(2) thresh T(1) T(2)])
+  have negeq: "(\<Sum>u\<in>T0. min (u \<bullet> (N *v u)) 0) = kyfan m N - possum m N"
+    by (rule kyfan_minus_possum_threshold[OF B symN eigN T0(1) T0(2) thresh,
+          symmetric])
+  have poseq: "(\<Sum>u\<in>B. max (u \<bullet> (N *v u)) 0) = possum CARD('n) N"
+    by (rule possum_full_eq_sum_basis[OF B symN eigN, symmetric])
+  have "(\<Sum>u\<in>B. (u \<bullet> (N *v u)) * (u \<bullet> (a *v u)))
+      \<le> L * (\<Sum>u\<in>B. max (u \<bullet> (N *v u)) 0)
+        + (\<Sum>u\<in>T0. min (u \<bullet> (N *v u)) 0)"
+    using lp negle by simp
+  also have "\<dots> = L * possum CARD('n) N + (kyfan m N - possum m N)"
+    unfolding poseq negeq by (rule refl)
+  also have "\<dots> = bracket m L N"
+    by (simp add: bracket_def)
+  finally show ?thesis .
+qed
+
 subsection \<open>Selecting a subset minimal for a weight\<close>
 
 text \<open>The mirror image of \<open>exists_top_subset\<close>: some \<open>m\<close>-element subset
@@ -1616,6 +1675,143 @@ lemma exists_min_subset:
   shows "m \<le> card B \<Longrightarrow> \<exists>S. S \<subseteq> B \<and> card S = m
       \<and> (\<forall>u\<in>S. \<forall>v\<in>B - S. w u \<le> w v)"
   using exists_top_subset[where f = "\<lambda>u. - w u", OF finB] by (metis neg_le_iff_le)
+
+text \<open>For weights \<open>c\<close> in \<open>[0, 1]\<close> summing to at least \<open>m\<close>, some subset of
+  \<open>B\<close> with at least \<open>m\<close> elements has a \<open>w\<close>-sum no larger than the
+  \<open>c\<close>-weighted sum of \<open>w\<close>.\<close>
+
+lemma weighted_min_value:
+  fixes w c :: "'a \<Rightarrow> real"
+  assumes finB: "finite B" and m1: "1 \<le> m" and mB: "m \<le> card B"
+    and c0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> c u" and c1: "\<And>u. u \<in> B \<Longrightarrow> c u \<le> 1"
+    and csum: "real m \<le> (\<Sum>u\<in>B. c u)"
+  obtains S where "S \<subseteq> B" and "m \<le> card S"
+    and "(\<Sum>u\<in>S. w u) \<le> (\<Sum>u\<in>B. c u * w u)"
+proof -
+  obtain S0 where S0: "S0 \<subseteq> B" and cS0: "card S0 = m"
+    and least: "\<forall>u\<in>S0. \<forall>v\<in>B - S0. w u \<le> w v"
+    using exists_min_subset[OF finB mB] by blast
+  have finS0: "finite S0" using S0 finB by (rule finite_subset)
+  have neS0: "S0 \<noteq> {}" using cS0 m1 by auto
+  define Neg where "Neg = {u \<in> B. w u < 0}"
+  have finNeg: "finite Neg" unfolding Neg_def using finB by simp
+  define \<tau> where "\<tau> = Max (w ` S0)"
+  have tauS0: "\<And>u. u \<in> S0 \<Longrightarrow> w u \<le> \<tau>"
+    unfolding \<tau>_def by (intro Max_ge finite_imageI finS0) blast
+  have tauout: "\<And>v. v \<in> B - S0 \<Longrightarrow> \<tau> \<le> w v"
+    unfolding \<tau>_def
+    by (intro Max.boundedI finite_imageI finS0)
+      (use neS0 least in blast)+
+  show ?thesis
+  proof (cases "Neg \<subseteq> S0")
+    case True
+    \<comment> \<open>the threshold is \<open>max \<tau> 0\<close>; every term is compared against it\<close>
+    define tp where "tp = max \<tau> 0"
+    have tp0: "0 \<le> tp" by (simp add: tp_def)
+    have key: "0 \<le> (\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S0. w u)"
+    proof -
+      have split: "(\<Sum>u\<in>B. c u * w u)
+          = (\<Sum>u\<in>S0. c u * w u) + (\<Sum>u\<in>B - S0. c u * w u)"
+        using sum.subset_diff[OF S0 finB, of "\<lambda>u. c u * w u"] by simp
+      have inS: "\<And>u. u \<in> S0 \<Longrightarrow> (c u - 1) * tp \<le> (c u - 1) * w u"
+      proof -
+        fix u assume u: "u \<in> S0"
+        have wle: "w u \<le> tp" using tauS0[OF u] by (simp add: tp_def)
+        have cle: "c u - 1 \<le> 0" using c1 S0 u by auto
+        show "(c u - 1) * tp \<le> (c u - 1) * w u"
+          using mult_left_mono_neg[OF wle cle] by simp
+      qed
+      have outS: "\<And>u. u \<in> B - S0 \<Longrightarrow> c u * tp \<le> c u * w u"
+      proof -
+        fix u assume u: "u \<in> B - S0"
+        have w0: "0 \<le> w u" using True u unfolding Neg_def by auto
+        have wge: "tp \<le> w u"
+          using tauout[OF u] w0 by (simp add: tp_def)
+        have c0': "0 \<le> c u" using c0 u by auto
+        show "c u * tp \<le> c u * w u"
+          by (rule mult_left_mono[OF wge c0'])
+      qed
+      have "(\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S0. w u)
+          = (\<Sum>u\<in>S0. (c u - 1) * w u) + (\<Sum>u\<in>B - S0. c u * w u)"
+        unfolding split by (simp add: sum_subtractf algebra_simps)
+      moreover have "(\<Sum>u\<in>S0. (c u - 1) * tp) + (\<Sum>u\<in>B - S0. c u * tp)
+          \<le> (\<Sum>u\<in>S0. (c u - 1) * w u) + (\<Sum>u\<in>B - S0. c u * w u)"
+        by (intro add_mono sum_mono inS outS)
+      moreover have "(\<Sum>u\<in>S0. (c u - 1) * tp) + (\<Sum>u\<in>B - S0. c u * tp)
+          = tp * ((\<Sum>u\<in>B. c u) - real m)"
+      proof -
+        have h1: "(\<Sum>u\<in>S0. (c u - 1) * tp)
+            = (\<Sum>u\<in>S0. c u * tp) - real m * tp"
+          by (simp add: sum_subtractf cS0 algebra_simps)
+        have h2: "(\<Sum>u\<in>S0. c u * tp) + (\<Sum>u\<in>B - S0. c u * tp)
+            = (\<Sum>u\<in>B. c u * tp)"
+          using sum.subset_diff[OF S0 finB, of "\<lambda>u. c u * tp"] by simp
+        have h3: "(\<Sum>u\<in>B. c u * tp) = (\<Sum>u\<in>B. c u) * tp"
+          by (simp add: sum_distrib_right)
+        show ?thesis using h1 h2 h3 by (simp add: algebra_simps)
+      qed
+      moreover have "0 \<le> tp * ((\<Sum>u\<in>B. c u) - real m)"
+        using tp0 csum by simp
+      ultimately show ?thesis by linarith
+    qed
+    show ?thesis
+      by (rule that[of S0]) (use S0 cS0 key in auto)
+  next
+    case False
+    \<comment> \<open>a negative weight escaped the minimal set, so \<open>\<tau> < 0\<close> and taking all
+      negatives on top of \<open>S0\<close> costs nothing\<close>
+    obtain vn where vn: "vn \<in> Neg" "vn \<notin> S0" using False by blast
+    have tneg: "\<tau> < 0"
+    proof -
+      have "\<tau> \<le> w vn"
+        using tauout vn unfolding Neg_def by auto
+      also have "w vn < 0" using vn unfolding Neg_def by auto
+      finally show ?thesis .
+    qed
+    define S where "S = S0 \<union> Neg"
+    have SB: "S \<subseteq> B" unfolding S_def Neg_def using S0 by auto
+    have finS: "finite S" using SB finB by (rule finite_subset)
+    have cardS: "m \<le> card S"
+      unfolding S_def using cS0 card_mono[OF finS[unfolded S_def], of S0]
+      by simp
+    have inS: "\<And>u. u \<in> S \<Longrightarrow> w u \<le> 0"
+    proof -
+      fix u assume "u \<in> S"
+      then consider "u \<in> S0" | "u \<in> Neg" unfolding S_def by blast
+      then show "w u \<le> 0"
+      proof cases
+        case 1 then show ?thesis using tauS0 tneg by fastforce
+      next
+        case 2 then show ?thesis unfolding Neg_def by auto
+      qed
+    qed
+    have key: "0 \<le> (\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S. w u)"
+    proof -
+      have split: "(\<Sum>u\<in>B. c u * w u)
+          = (\<Sum>u\<in>S. c u * w u) + (\<Sum>u\<in>B - S. c u * w u)"
+        using sum.subset_diff[OF SB finB, of "\<lambda>u. c u * w u"] by simp
+      have t1: "0 \<le> (\<Sum>u\<in>S. (c u - 1) * w u)"
+      proof (rule sum_nonneg)
+        fix u assume u: "u \<in> S"
+        have c1': "c u - 1 \<le> 0" using c1 SB u by auto
+        have w0: "w u \<le> 0" by (rule inS[OF u])
+        show "0 \<le> (c u - 1) * w u" by (rule mult_nonpos_nonpos[OF c1' w0])
+      qed
+      have t2: "0 \<le> (\<Sum>u\<in>B - S. c u * w u)"
+      proof (rule sum_nonneg)
+        fix u assume u: "u \<in> B - S"
+        have "0 \<le> w u" using u unfolding S_def Neg_def by auto
+        then show "0 \<le> c u * w u" using c0 u by auto
+      qed
+      have "(\<Sum>u\<in>B. c u * w u) - (\<Sum>u\<in>S. w u)
+          = (\<Sum>u\<in>S. (c u - 1) * w u) + (\<Sum>u\<in>B - S. c u * w u)"
+        unfolding split by (simp add: sum_subtractf algebra_simps)
+      with t1 t2 show ?thesis by linarith
+    qed
+    show ?thesis
+      by (rule that[of S]) (use SB cardS key in auto)
+  qed
+qed
 
 (*<*)
 end

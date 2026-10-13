@@ -329,6 +329,84 @@ section \<open>Positive semidefinite matrices\<close>
 definition psd :: "real^'n^'n \<Rightarrow> bool" where
   "psd a \<longleftrightarrow> transpose a = a \<and> (\<forall>x. 0 \<le> x \<bullet> (a *v x))"
 
+text \<open>The identity is positive semidefinite; a positive semidefinite matrix
+  has a nonnegative diagonal, and its kernel consists of the vectors on which
+  its quadratic form vanishes.\<close>
+
+lemma psd_mat_1: "psd (mat 1 :: real^'n::finite^'n)"
+  by (simp add: psd_def)
+
+lemma psd_diag_nonneg:
+  fixes a :: "real^'m::finite^'m"
+  assumes "psd a"
+  shows "0 \<le> a $ l $ l"
+  using assms diag_eq_inner_axis[where a = a and i = l, symmetric]
+  by (auto simp: psd_def dest: spec[of _ "axis l 1"])
+
+lemma psd_kernel_eq:
+  fixes a :: "real^'n::finite^'n" and q :: "real^'n"
+  assumes a: "psd a" and z: "q \<bullet> (a *v q) = 0"
+  shows "a *v q = 0"
+proof -
+  have sym: "transpose a = a" using a by (simp add: psd_def)
+  have nn: "0 \<le> y \<bullet> (a *v y)" for y using a by (simp add: psd_def)
+  have cross: "z \<bullet> (a *v q) = 0" for z
+  proof (rule ccontr)
+    assume ne: "z \<bullet> (a *v q) \<noteq> 0"
+    define Bc where "Bc = z \<bullet> (a *v q)"
+    define Ac where "Ac = z \<bullet> (a *v z)"
+    have Bc0: "Bc \<noteq> 0" using ne by (simp add: Bc_def)
+    have Ac0: "0 \<le> Ac" by (simp add: Ac_def nn)
+    have qa: "q \<bullet> (a *v z) = Bc"
+    proof -
+      have "q \<bullet> (a *v z) = (transpose a *v q) \<bullet> z"
+        by (rule inner_transpose_matrix)
+      also have "\<dots> = (a *v q) \<bullet> z" using sym by simp
+      also have "\<dots> = z \<bullet> (a *v q)" by (rule inner_commute)
+      finally show ?thesis by (simp add: Bc_def)
+    qed
+    have expand: "(q + r *\<^sub>R z) \<bullet> (a *v (q + r *\<^sub>R z))
+        = 2 * r * Bc + r\<^sup>2 * Ac" for r
+    proof -
+      have lin: "a *v (q + r *\<^sub>R z) = a *v q + r *\<^sub>R (a *v z)"
+        by (simp add: matrix_vector_mult_def vec_eq_iff sum.distrib
+            sum_distrib_left algebra_simps)
+      show ?thesis
+        unfolding lin
+        by (simp add: z qa Bc_def Ac_def power2_eq_square
+            algebra_simps)
+    qed
+    show False
+    proof (cases "Ac = 0")
+      case True
+      have "0 \<le> 2 * (- Bc) * Bc + (- Bc)\<^sup>2 * Ac"
+        using nn[of "q + (- Bc) *\<^sub>R z"] expand[of "- Bc"] by simp
+      then have "Bc * Bc \<le> 0" using True by (simp add: power2_eq_square)
+      moreover have "0 < Bc * Bc"
+        using Bc0 by (cases "0 < Bc") (auto intro: mult_pos_pos mult_neg_neg
+            simp: not_less le_less)
+      ultimately show False by linarith
+    next
+      case False
+      then have AcP: "0 < Ac" using Ac0 by simp
+      define r where "r = - Bc / Ac"
+      have "0 \<le> 2 * r * Bc + r\<^sup>2 * Ac"
+        using nn[of "q + r *\<^sub>R z"] expand[of r] by simp
+      also have "2 * r * Bc + r\<^sup>2 * Ac = - (Bc\<^sup>2 / Ac)"
+        unfolding r_def using AcP by (simp add: power2_eq_square field_simps)
+      finally have h: "Bc\<^sup>2 / Ac \<le> 0" by simp
+      have "0 < Bc * Bc"
+        using Bc0 by (cases "0 < Bc") (auto intro: mult_pos_pos mult_neg_neg
+            simp: not_less le_less)
+      then have "0 < Bc\<^sup>2 / Ac"
+        using AcP by (simp add: power2_eq_square)
+      with h show False by linarith
+    qed
+  qed
+  have "(a *v q) \<bullet> (a *v q) = 0" using cross[of "a *v q"] by simp
+  then show ?thesis by simp
+qed
+
 text \<open>The trace of \<open>a ** P\<close>, read off in an orthonormal eigenbasis of the
   symmetric matrix \<open>a\<close>: the eigenvalues weighted by the diagonal of \<open>P\<close>.\<close>
 
