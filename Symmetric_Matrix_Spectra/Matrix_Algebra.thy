@@ -228,205 +228,6 @@ text \<open>Trace, transpose, matrix-vector and matrix-matrix identities, the
   quadratic-form bookkeeping around them.  All of it was written as steps of
   a viscosity-comparison proof and none of it is about one.\<close>
 
-text \<open>
-  For the ball \<open>K = cball 0 r\<close> the candidate value function is
-  \<open>v x = max (r\<^sup>2 - \<bar>x\<bar>\<^sup>2) 0 / (n - k)\<close>, whose gradient at \<open>x\<close> is
-  \<open>- (2/(n-k)) *\<^sub>R x\<close> and whose Hessian is the constant matrix
-  \<open>- (2/(n-k)) *\<^sub>R mat 1\<close>.  Then \<open>F(\<nabla>v x, \<nabla>\<^sup>2 v x) = 1\<close> for all
-  interior points \<open>x \<noteq> 0\<close>.
-\<close>
-
-lemma local_min_gradient_zero:
-  fixes \<psi> :: "real^'n \<Rightarrow> real"
-  assumes deriv: "(\<psi> has_derivative (\<lambda>h. g \<bullet> h)) (at x)"
-    and min: "eventually (\<lambda>y. \<psi> x \<le> \<psi> y) (at x)"
-  shows "g = 0"
-proof -
-  have "(\<lambda>h. g \<bullet> h) = (\<lambda>h. 0)"
-    by (rule has_derivative_local_min[OF deriv min])
-  then have "g \<bullet> g = 0"
-    using fun_cong[of "(\<lambda>h. g \<bullet> h)" "(\<lambda>h. 0)" g] by simp
-  then show ?thesis
-    by simp
-qed
-
-lemma local_min_hessian_psd:
-  fixes \<psi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
-    and H :: "real^'n^'n"
-  assumes e_pos: "0 < e"
-    and deriv: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<psi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
-    and hess: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
-    and min: "\<And>y. y \<in> ball x e \<Longrightarrow> \<psi> x \<le> \<psi> y"
-  shows "0 \<le> h \<bullet> (H *v h)"
-proof (cases "h = 0")
-  case True
-  then show ?thesis
-    by simp
-next
-  case False
-  have x_mem: "x \<in> ball x e"
-    using e_pos by simp
-  have ev_min: "eventually (\<lambda>y. \<psi> x \<le> \<psi> y) (at x)"
-    using min e_pos
-    by (auto simp: eventually_at dist_commute intro!: exI[of _ e])
-  have gx0: "g x = 0"
-    by (rule local_min_gradient_zero[OF deriv[OF x_mem] ev_min])
-  define A where "A = h \<bullet> (H *v h)"
-  define nh where "nh = norm h"
-  have nh_pos: "0 < nh"
-    using False by (simp add: nh_def)
-  define d where "d = e / nh"
-  have d_pos: "0 < d"
-    using e_pos nh_pos by (simp add: d_def)
-  have mem: "x + t *\<^sub>R h \<in> ball x e" if "\<bar>t\<bar> < d" for t
-  proof -
-    have "dist x (x + t *\<^sub>R h) = \<bar>t\<bar> * nh"
-      by (simp add: dist_norm nh_def)
-    also have "\<dots> < d * nh"
-      using that nh_pos by (simp add: mult_strict_right_mono)
-    also have "\<dots> = e"
-      using nh_pos by (simp add: d_def)
-    finally show ?thesis
-      by simp
-  qed
-  have f_deriv: "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_real_derivative
-      (g (x + t *\<^sub>R h) \<bullet> h)) (at t)"
-    if t: "\<bar>t\<bar> < d" for t
-  proof -
-    have 1: "((\<lambda>s. x + s *\<^sub>R h) has_derivative (\<lambda>s. s *\<^sub>R h)) (at t)"
-      by (auto intro!: derivative_eq_intros)
-    have 2: "(\<psi> has_derivative (\<lambda>h'. g (x + t *\<^sub>R h) \<bullet> h')) (at (x + t *\<^sub>R h))"
-      by (rule deriv[OF mem[OF t]])
-    have "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative
-        (\<lambda>s. g (x + t *\<^sub>R h) \<bullet> (s *\<^sub>R h))) (at t)"
-      using diff_chain_at[OF 1 2] by (simp add: o_def)
-    then have "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative
-        (\<lambda>s. s * (g (x + t *\<^sub>R h) \<bullet> h))) (at t)"
-      by (simp add: mult_ac)
-    then show ?thesis
-      unfolding has_field_derivative_def
-      by (rule has_derivative_eq_rhs) (simp add: fun_eq_iff mult_ac)
-  qed
-  show ?thesis
-  proof (rule ccontr)
-    assume "\<not> 0 \<le> h \<bullet> (H *v h)"
-    then have A_neg: "A < 0"
-      by (simp add: A_def)
-    have flim: "filterlim (\<lambda>t :: real. x + t *\<^sub>R h) (at x) (at 0)"
-    proof -
-      have "((\<lambda>t :: real. x + t *\<^sub>R h) \<longlongrightarrow> x) (at 0)"
-        by (auto intro!: tendsto_eq_intros)
-      moreover have "eventually (\<lambda>t :: real. x + t *\<^sub>R h \<noteq> x) (at 0)"
-        using False by (auto simp: eventually_at_filter)
-      ultimately show ?thesis
-        by (simp add: filterlim_at)
-    qed
-    have hd: "((\<lambda>y. (1 / norm (y - x)) *\<^sub>R (g y - (g x + H *v (y - x)))) \<longlongrightarrow> 0) (at x)"
-      using hess unfolding has_derivative_at2 by blast
-    have comp: "((\<lambda>t. (1 / norm ((x + t *\<^sub>R h) - x)) *\<^sub>R
-        (g (x + t *\<^sub>R h) - (g x + H *v ((x + t *\<^sub>R h) - x)))) \<longlongrightarrow> 0) (at 0)"
-      by (rule filterlim_compose[OF hd flim])
-    then have comp2: "((\<lambda>t. (1 / (\<bar>t\<bar> * nh)) *\<^sub>R
-        (g (x + t *\<^sub>R h) - t *\<^sub>R (H *v h))) \<longlongrightarrow> 0) (at 0)"
-      by (simp add: gx0 matrix_vector_mult_scaleR nh_def)
-    have inner_lim: "((\<lambda>t. ((1 / (\<bar>t\<bar> * nh)) *\<^sub>R
-        (g (x + t *\<^sub>R h) - t *\<^sub>R (H *v h))) \<bullet> h) \<longlongrightarrow> 0) (at 0)"
-      using tendsto_inner[OF comp2 tendsto_const] by simp
-    define E where
-      "E = (\<lambda>t. ((1 / (\<bar>t\<bar> * nh)) *\<^sub>R (g (x + t *\<^sub>R h) - t *\<^sub>R (H *v h))) \<bullet> h)"
-    have E_lim: "(E \<longlongrightarrow> 0) (at 0)"
-      using inner_lim unfolding E_def .
-    have E_val: "g (x + t *\<^sub>R h) \<bullet> h = t * A + (\<bar>t\<bar> * nh) * E t"
-      if "t \<noteq> 0" for t
-    proof -
-      have nz: "\<bar>t\<bar> * nh \<noteq> 0"
-        using that nh_pos by simp
-      have "E t = (g (x + t *\<^sub>R h) \<bullet> h - t * A) / (\<bar>t\<bar> * nh)"
-        by (simp add: E_def A_def inner_diff_left inner_diff_right
-            inner_commute)
-      with nz show ?thesis
-        by (simp add: field_simps)
-    qed
-    define eps where "eps = - A / (2 * nh)"
-    have eps_pos: "0 < eps"
-      using A_neg nh_pos by (simp add: eps_def divide_neg_pos)
-    have "eventually (\<lambda>t. \<bar>E t\<bar> < eps) (at 0)"
-      using tendstoD[OF E_lim eps_pos] by (simp add: dist_real_def)
-    then obtain dd where dd_pos: "0 < dd"
-      and dd: "\<And>t. t \<noteq> 0 \<Longrightarrow> \<bar>t\<bar> < dd \<Longrightarrow> \<bar>E t\<bar> < eps"
-      by (auto simp: eventually_at dist_real_def)
-    define t0 where "t0 = min d dd / 2"
-    have t0_pos: "0 < t0"
-      using d_pos dd_pos by (simp add: t0_def)
-    have t0d: "t0 < d" and t0dd: "t0 < dd"
-      using d_pos dd_pos by (auto simp: t0_def)
-    have fneg: "g (x + s *\<^sub>R h) \<bullet> h < 0" if s: "0 < s" "s \<le> t0" for s
-    proof -
-      have s_ne: "s \<noteq> 0" and s_dd: "\<bar>s\<bar> < dd"
-        using s t0dd by auto
-      have Es: "\<bar>E s\<bar> < eps"
-        by (rule dd[OF s_ne s_dd])
-      have gsh: "g (x + s *\<^sub>R h) \<bullet> h = s * A + (s * nh) * E s"
-        using E_val[OF s_ne] s(1) by (simp add: abs_of_pos)
-      have snh_pos: "0 < s * nh"
-        using s(1) nh_pos by simp
-      have "(s * nh) * E s < (s * nh) * eps"
-        using Es snh_pos by (intro mult_strict_left_mono) auto
-      moreover have "(s * nh) * eps = s * (- A / 2)"
-        using nh_pos by (simp add: eps_def)
-      ultimately have "g (x + s *\<^sub>R h) \<bullet> h < s * A + s * (- A / 2)"
-        unfolding gsh by linarith
-      also have "\<dots> = s * (A / 2)"
-        by (simp add: algebra_simps)
-      also have "\<dots> < 0"
-        using s(1) A_neg by (intro mult_pos_neg) auto
-      finally show ?thesis .
-    qed
-    have cont: "continuous_on {0..t0} (\<lambda>s. \<psi> (x + s *\<^sub>R h))"
-    proof -
-      have "isCont (\<lambda>s. \<psi> (x + s *\<^sub>R h)) s" if "s \<in> {0..t0}" for s
-      proof -
-        have "\<bar>s\<bar> < d"
-          using that t0d by auto
-        from f_deriv[OF this] show ?thesis
-          by (rule DERIV_isCont)
-      qed
-      then show ?thesis
-        by (auto intro: continuous_at_imp_continuous_on)
-    qed
-    obtain \<xi> where xi: "0 < \<xi>" "\<xi> < t0"
-      and mvt_eq: "\<psi> (x + t0 *\<^sub>R h) - \<psi> (x + 0 *\<^sub>R h)
-        = (g (x + \<xi> *\<^sub>R h) \<bullet> h) * (t0 - 0)"
-    proof -
-      have derf: "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative
-          (\<lambda>y. y * (g (x + s *\<^sub>R h) \<bullet> h))) (at s)"
-        if "0 < s" "s < t0" for s
-      proof -
-        have "\<bar>s\<bar> < d"
-          using that t0d by auto
-        from f_deriv[OF this, unfolded has_field_derivative_def]
-        show ?thesis
-          by (rule has_derivative_eq_rhs) (simp add: fun_eq_iff mult_ac)
-      qed
-      from mvt[OF t0_pos cont derf] obtain \<xi>
-        where "0 < \<xi>" "\<xi> < t0"
-          "\<psi> (x + t0 *\<^sub>R h) - \<psi> (x + 0 *\<^sub>R h)
-            = (t0 - 0) * (g (x + \<xi> *\<^sub>R h) \<bullet> h)"
-        by blast
-      then show thesis
-        by (intro that[of \<xi>]) (auto simp: algebra_simps)
-    qed
-    have "\<psi> (x + 0 *\<^sub>R h) \<le> \<psi> (x + t0 *\<^sub>R h)"
-      using min[OF mem[of t0]] t0d t0_pos by simp
-    with mvt_eq have "0 \<le> (g (x + \<xi> *\<^sub>R h) \<bullet> h) * t0"
-      by simp
-    with t0_pos have "0 \<le> g (x + \<xi> *\<^sub>R h) \<bullet> h"
-      by (simp add: zero_le_mult_iff)
-    with fneg[of \<xi>] xi show False
-      by simp
-  qed
-qed
-
 text \<open>Conjugation preserves each defining condition of the feasible set.
   Orthogonality is HOL-Analysis's own \<open>orthogonal_matrix\<close>.\<close>
 
@@ -1544,49 +1345,21 @@ lemma orthonormal_inj:
   fixes b :: "nat \<Rightarrow> real^'n::finite"
   assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
   shows "inj_on b {..<m}"
-proof (rule inj_onI)
-  fix i j assume i: "i \<in> {..<m}" and j: "j \<in> {..<m}" and eq: "b i = b j"
-  have im: "i < m" and jm: "j < m" using i j by auto
-  show "i = j"
-  proof (rule ccontr)
-    assume ne: "i \<noteq> j"
-    have "b i \<bullet> b j = 0" using orth[OF im jm] ne by simp
-    moreover have "b i \<bullet> b j = b i \<bullet> b i" using eq by simp
-    moreover have "b i \<bullet> b i = 1" using orth[OF im im] by simp
-    ultimately show False by simp
-  qed
-qed
+  by (rule inj_onI) (metis lessThan_iff orth zero_neq_one)
 
 lemma orthonormal_dim_span:
   fixes b :: "nat \<Rightarrow> real^'n::finite"
   assumes orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
   shows "dim (span (b ` {..<m})) = m"
-proof (rule dim_unique[where B = "b ` {..<m}"])
-  show "b ` {..<m} \<subseteq> span (b ` {..<m})" by (rule span_superset)
-  show "span (b ` {..<m}) \<subseteq> span (b ` {..<m})" by (rule subset_refl)
-next
-  show "independent (b ` {..<m})"
-  proof (rule pairwise_orthogonal_independent)
-    show "pairwise orthogonal (b ` {..<m})"
-    proof (rule pairwiseI)
-      fix u v assume "u \<in> b ` {..<m}" and "v \<in> b ` {..<m}" and uv: "u \<noteq> v"
-      then obtain i j where i: "i < m" and j: "j < m"
-        and ui: "u = b i" and vj: "v = b j" by auto
-      have "i \<noteq> j" using uv ui vj by blast
-      then show "orthogonal u v"
-        unfolding orthogonal_def ui vj using orth[OF i j] by simp
-    qed
-    show "(0 :: real^'n) \<notin> b ` {..<m}"
-    proof (rule notI)
-      assume "(0 :: real^'n) \<in> b ` {..<m}"
-      then obtain i where i: "i < m" and z: "b i = 0" by auto
-      have "b i \<bullet> b i = 1" using orth[OF i i] by simp
-      then show False unfolding z by simp
-    qed
-  qed
-next
-  show "card (b ` {..<m}) = m"
-    using card_image[OF orthonormal_inj[OF orth]] by simp
+proof -
+  have "pairwise orthogonal (b ` {..<m})"
+    using orth by (auto simp: pairwise_def orthogonal_def)
+  moreover have "0 \<notin> b ` {..<m}"
+    using orth by (metis imageE inner_zero_left lessThan_iff zero_neq_one)
+  ultimately have "independent (b ` {..<m})"
+    by (rule pairwise_orthogonal_independent)
+  then show ?thesis
+    using card_image[OF orthonormal_inj[OF orth]] by (simp add: dim_eq_card_independent)
 qed
 
 text \<open>The square of the field is again a field of the same shape with the
@@ -1625,71 +1398,30 @@ lemma orthonormal_family_containing:
   assumes u: "x0 \<bullet> x0 = 1" and m: "m \<le> CARD('n)" and m0: "0 < m"
   shows "\<exists>b :: nat \<Rightarrow> real^'n. b 0 = x0
       \<and> (\<forall>i < m. \<forall>j < m. b i \<bullet> b j = (if i = j then 1 else 0))"
-  using m m0
-proof (induct m)
-  case 0
-  then show ?case by simp
-next
-  case (Suc m)
-  show ?case
-  proof (cases "m = 0")
-    case True
-    show ?thesis
-      by (rule exI[of _ "\<lambda>_. x0"]) (use True u in auto)
-  next
-    case False
-    then have m0': "0 < m" by simp
-    have mle: "m \<le> CARD('n)" using Suc.prems by simp
-    obtain b :: "nat \<Rightarrow> real^'n" where b0: "b 0 = x0"
-      and bo: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-      using Suc.hyps[OF mle m0'] by blast
-    have dimlt: "dim (b ` {..<m}) < DIM(real^'n)"
-    proof -
-      have "dim (b ` {..<m}) = dim (span (b ` {..<m}))" by simp
-      also have "\<dots> = m" by (rule orthonormal_dim_span[OF bo])
-      also have "\<dots> < CARD('n)" using Suc.prems by simp
-      finally show ?thesis by simp
-    qed
-    have ex: "\<exists>v :: real^'n. v \<noteq> 0
-        \<and> (\<forall>y \<in> span (b ` {..<m}). orthogonal v y)"
-    proof (rule orthogonal_to_subspace_exists[OF dimlt])
-      fix v :: "real^'n"
-      assume v0: "v \<noteq> 0"
-        and vo: "\<And>y. y \<in> span (b ` {..<m}) \<Longrightarrow> orthogonal v y"
-      show ?thesis using v0 vo by blast
-    qed
-    obtain v :: "real^'n" where v0: "v \<noteq> 0"
-      and vo: "\<And>y. y \<in> span (b ` {..<m}) \<Longrightarrow> orthogonal v y" using ex by blast
-    define w :: "real^'n" where "w = v /\<^sub>R norm v"
-    have ww: "w \<bullet> w = 1" unfolding w_def by (rule unit_normalize[OF v0])
-    have wo: "w \<bullet> b i = 0" if i: "i < m" for i
-    proof -
-      have "b i \<in> span (b ` {..<m})" using i by (intro span_base) auto
-      then have "orthogonal v (b i)" by (rule vo)
-      then show ?thesis unfolding w_def orthogonal_def by simp
-    qed
-    define b' :: "nat \<Rightarrow> real^'n" where "b' = (\<lambda>i. if i = m then w else b i)"
-    have b'0: "b' 0 = x0" unfolding b'_def using False b0 by simp
-    have b'o: "b' i \<bullet> b' j = (if i = j then 1 else 0)"
-      if i: "i < Suc m" and j: "j < Suc m" for i j
-    proof -
-      consider (both) "i = m" "j = m" | (im) "i = m" "j < m"
-        | (jm) "i < m" "j = m" | (nn) "i < m" "j < m"
-        using i j by fastforce
-      then show ?thesis
-      proof cases
-        case both then show ?thesis unfolding b'_def using ww by simp
-      next
-        case im then show ?thesis unfolding b'_def using wo[of j] by simp
-      next
-        case jm then show ?thesis
-          unfolding b'_def using wo[of i] by (simp add: inner_commute)
-      next
-        case nn then show ?thesis unfolding b'_def using bo by simp
-      qed
-    qed
-    show ?thesis by (rule exI[of _ b']) (use b'0 b'o in blast)
-  qed
+proof -
+  obtain S where S: "x0 \<in> S" "pairwise orthogonal S" "\<And>x. x \<in> S \<Longrightarrow> x \<bullet> x = 1"
+    and cardS: "card S = CARD('n)"
+    using vector_in_orthonormal_basis[of x0] u by (metis DIM_cart DIM_real mult.right_neutral norm_eq_1)
+  have "finite S"
+    using cardS by (intro card_ge_0_finite) simp
+  then obtain f where f: "bij_betw f {0..<card (S - {x0})} (S - {x0})"
+    using ex_bij_betw_nat_finite by blast
+  have cS: "card (S - {x0}) = CARD('n) - 1"
+    using cardS S(1) \<open>finite S\<close> by simp
+  have fS: "f k \<in> S - {x0}" if "Suc k < CARD('n)" for k
+    using that bij_betw_apply[OF f] cS by auto
+  have finj: "k = l" if "f k = f l" "Suc k < CARD('n)" "Suc l < CARD('n)" for k l
+    using that bij_betw_imp_inj_on[OF f] cS by (auto simp: inj_on_def)
+  define b where "b = case_nat x0 f"
+  have bS: "b i \<in> S" if "i < CARD('n)" for i
+    using that S(1) fS by (cases i) (auto simp: b_def)
+  have binj: "b i \<noteq> b j" if "i < CARD('n)" "j < CARD('n)" "i \<noteq> j" for i j
+    using that fS finj by (cases i; cases j) (auto simp: b_def)
+  have "b i \<bullet> b j = (if i = j then 1 else 0)" if "i < m" "j < m" for i j
+    using that m bS[of i] bS[of j] binj[of i j] S(2,3)
+    by (auto simp: pairwise_def orthogonal_def)
+  then show ?thesis
+    by (intro exI[of _ b]) (simp add: b_def)
 qed
 
 text \<open>The two envelope-form hypotheses in the shape the doubling produces:
@@ -1713,54 +1445,25 @@ proof -
     unfolding e by (rule neg_matrix_vector)
 qed
 
-text \<open>Symmetry and positive semidefiniteness are closed conditions and so
-  survive the passage to a limit point, proved entrywise via
-  \<open>tendsto_vec_nth\<close>: convergence in \<open>real^'n^'n\<close> is convergence of every
-  entry.\<close>
+text \<open>Symmetry is a closed condition and so survives the passage to a limit
+  (positive semidefiniteness likewise, \<open>closed_psd\<close>).\<close>
 
-lemma tendsto_entry:
-  fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
-  assumes conv: "A \<longlonglongrightarrow> A0"
-  shows "(\<lambda>i. A i $ j $ k) \<longlonglongrightarrow> A0 $ j $ k"
-  by (rule tendsto_vec_nth[OF tendsto_vec_nth[OF conv]])
+lemma closed_symmetric_matrices:
+  "closed {a :: real^'n::finite^'n. transpose a = a}"
+proof -
+  have eq: "{a :: real^'n^'n. transpose a = a}
+      = (\<Inter>i. \<Inter>j. {a. a $ j $ i = a $ i $ j})"
+    unfolding transpose_def vec_eq_iff by auto
+  have "closed {a :: real^'n^'n. a $ j $ i = a $ i $ j}" for i j
+    by (intro closed_Collect_eq continuous_on_matrix_entry continuous_on_id)
+  thus ?thesis unfolding eq by (intro closed_INT) auto
+qed
 
 lemma transpose_limit:
   fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
   assumes conv: "A \<longlonglongrightarrow> A0" and sym: "\<And>i. transpose (A i) = A i"
   shows "transpose A0 = A0"
-proof -
-  have eq: "A0 $ j $ k = A0 $ k $ j" for j k
-  proof -
-    have f: "(\<lambda>i. A i $ j $ k) = (\<lambda>i. A i $ k $ j)"
-    proof (rule ext)
-      fix i
-      have "A i $ j $ k = (transpose (A i)) $ k $ j"
-        by (simp add: transpose_def)
-      also have "\<dots> = A i $ k $ j"
-        using sym by simp
-      finally show "A i $ j $ k = A i $ k $ j" .
-    qed
-    have "(\<lambda>i. A i $ j $ k) \<longlonglongrightarrow> A0 $ k $ j"
-      unfolding f by (rule tendsto_entry[OF conv])
-    from tendsto_entry[OF conv] this show ?thesis
-      by (rule LIMSEQ_unique)
-  qed
-  show ?thesis
-    by (simp add: vec_eq_iff transpose_def eq)
-qed
-
-lemma tendsto_quadratic_form:
-  fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
-  assumes conv: "A \<longlonglongrightarrow> A0"
-  shows "(\<lambda>i. x \<bullet> (A i *v x)) \<longlonglongrightarrow> x \<bullet> (A0 *v x)"
-proof -
-  have e: "y \<bullet> (B *v y) = (\<Sum>j\<in>UNIV. y $ j * (\<Sum>k\<in>UNIV. B $ j $ k * y $ k))"
-    for B :: "real^'n^'n" and y :: "real^'n"
-    by (simp add: inner_vec_def matrix_vector_mult_def)
-  show ?thesis
-    unfolding e
-    by (intro tendsto_sum tendsto_mult tendsto_const tendsto_entry[OF conv])
-qed
+  using closed_sequentially[OF closed_symmetric_matrices, of A A0] conv sym by blast
 
 text \<open>\<open>transpose_scalar\<close> is HOL-Analysis's; \<open>transpose_add\<close> lives
   further up in this theory.\<close>

@@ -35,119 +35,7 @@ section \<open>Orthogonal projections\<close>
 definition is_proj :: "real^'n^'n \<Rightarrow> bool" where
   "is_proj P \<longleftrightarrow> transpose P = P \<and> P ** P = P"
 
-text \<open>Every orthogonal projection is the basis-projection onto its range.\<close>
-
-lemma is_proj_decomp:
-  assumes P: "is_proj P"
-  obtains C where "onormal C" "P = (\<Sum>u\<in>C. outer_prod u u)"
-    "real (card C) = trace P"
-proof -
-  have symP: "transpose P = P" and idem: "P ** P = P"
-    using P by (auto simp: is_proj_def)
-  obtain B where B: "onormal B" "span B = UNIV"
-    and eig: "\<And>u. u \<in> B \<Longrightarrow> P *v u = (u \<bullet> (P *v u)) *\<^sub>R u"
-    using symmetric_eigenbasis[OF symP] by metis
-  have mu01: "u \<bullet> (P *v u) = 0 \<or> u \<bullet> (P *v u) = 1" if u: "u \<in> B" for u
-  proof -
-    define \<mu> where "\<mu> = u \<bullet> (P *v u)"
-    have Pu: "P *v u = \<mu> *\<^sub>R u"
-      unfolding \<mu>_def using eig[OF u] .
-    have "\<mu> *\<^sub>R u = P *v u"
-      by (simp add: Pu)
-    also have "\<dots> = (P ** P) *v u"
-      by (simp add: idem)
-    also have "\<dots> = P *v (P *v u)"
-      by (simp add: matrix_vector_mul_assoc)
-    also have "\<dots> = P *v (\<mu> *\<^sub>R u)"
-      by (simp add: Pu)
-    also have "\<dots> = (\<mu> * \<mu>) *\<^sub>R u"
-      by (simp add: matrix_vector_mult_scaleR Pu)
-    finally have "\<mu> *\<^sub>R u = (\<mu> * \<mu>) *\<^sub>R u" .
-    moreover have "u \<noteq> 0"
-      using B(1) u by (auto simp: onormal_def)
-    ultimately have "\<mu> * \<mu> = \<mu>"
-      by (metis scaleR_cancel_right)
-    then have "\<mu> * (\<mu> - 1) = 0"
-      by (simp add: algebra_simps)
-    then show ?thesis
-      unfolding \<mu>_def[symmetric] by auto
-  qed
-  define C where "C = {u \<in> B. u \<bullet> (P *v u) = 1}"
-  have CB: "C \<subseteq> B"
-    by (auto simp: C_def)
-  have onC: "onormal C"
-    using B(1) CB
-    by (auto simp: onormal_def intro: finite_subset elim: pairwise_subset)
-  have Peq: "P = (\<Sum>u\<in>C. outer_prod u u)"
-  proof -
-    have agree: "P *v w = (\<Sum>u\<in>C. outer_prod u u) *v w" if w: "w \<in> B" for w
-    proof -
-      have "(\<Sum>u\<in>C. outer_prod u u) *v w = (\<Sum>u\<in>C. (u \<bullet> w) *\<^sub>R u)"
-        by (simp add: matrix_vector_mult_sum)
-      also have "\<dots> = (\<Sum>u\<in>C. if u = w then w else 0)"
-        by (intro sum.cong refl)
-          (use B(1) CB w in \<open>auto dest: onormal_inner_distinct\<close>)
-      also have "\<dots> = (if w \<in> C then w else 0)"
-        using onC by (simp add: onormal_def)
-      also have "\<dots> = P *v w"
-      proof (cases "w \<in> C")
-        case True
-        then have "w \<bullet> (P *v w) = 1"
-          by (simp add: C_def)
-        then have "P *v w = w"
-          using eig[OF w] by simp
-        then show ?thesis
-          using True by simp
-      next
-        case False
-        with mu01[OF w] w have "w \<bullet> (P *v w) = 0"
-          by (auto simp: C_def)
-        then have "P *v w = 0"
-          using eig[OF w] by simp
-        then show ?thesis
-          using False by simp
-      qed
-      finally show ?thesis ..
-    qed
-    have "P *v x = (\<Sum>u\<in>C. outer_prod u u) *v x" for x
-    proof -
-      have x: "x \<in> span B"
-        by (simp add: B(2))
-      have "P *v x = P *v (\<Sum>w\<in>B. (w \<bullet> x) *\<^sub>R w)"
-        by (simp add: onormal_expand[OF B(1) x])
-      also have "\<dots> = (\<Sum>w\<in>B. (w \<bullet> x) *\<^sub>R (P *v w))"
-        by (simp add: matrix_vector_mult_vsum matrix_vector_mult_scaleR)
-      also have "\<dots> = (\<Sum>w\<in>B. (w \<bullet> x) *\<^sub>R ((\<Sum>u\<in>C. outer_prod u u) *v w))"
-        by (simp add: agree)
-      also have "\<dots> = (\<Sum>u\<in>C. outer_prod u u) *v (\<Sum>w\<in>B. (w \<bullet> x) *\<^sub>R w)"
-        by (simp add: matrix_vector_mult_vsum matrix_vector_mult_scaleR)
-      also have "\<dots> = (\<Sum>u\<in>C. outer_prod u u) *v x"
-        by (simp add: onormal_expand[OF B(1) x])
-      finally show ?thesis .
-    qed
-    then show ?thesis
-      by (auto simp: matrix_eq)
-  qed
-  have trP: "real (card C) = trace P"
-  proof -
-    have "trace P = (\<Sum>u\<in>B. u \<bullet> (P *v u))"
-      by (rule trace_onormal_basis[OF B])
-    also have "\<dots> = (\<Sum>u\<in>B. if u \<in> C then 1 else 0)"
-      by (intro sum.cong refl) (use mu01 in \<open>auto simp: C_def\<close>)
-    also have "\<dots> = real (card C)"
-    proof -
-      have BC_eq: "B \<inter> C = C"
-        using CB by auto
-      show ?thesis
-        using B(1) by (simp add: onormal_def sum.If_cases BC_eq)
-    qed
-    finally show ?thesis ..
-  qed
-  show thesis
-    by (rule that[OF onC Peq trP])
-qed
-
-text \<open>Conversely, basis projections are orthogonal projections.\<close>
+text \<open>Basis projections are orthogonal projections.\<close>
 
 lemma onormal_proj:
   assumes C: "onormal C"
@@ -179,6 +67,50 @@ proof -
     by (intro sum.cong refl) (use C in \<open>simp\<close>)
   finally show "trace (\<Sum>u\<in>C. outer_prod u u) = real (card C)"
     by simp
+qed
+
+text \<open>Conversely, every orthogonal projection is the basis-projection onto its
+  range: in an orthonormal eigenbasis its eigenvalues are \<open>0\<close> or \<open>1\<close>, and the
+  spectral decomposition keeps the eigenvectors of eigenvalue \<open>1\<close>.\<close>
+
+lemma is_proj_decomp:
+  assumes P: "is_proj P"
+  obtains C where "onormal C" "P = (\<Sum>u\<in>C. outer_prod u u)"
+    "real (card C) = trace P"
+proof -
+  have symP: "transpose P = P" and idem: "P ** P = P"
+    using P by (auto simp: is_proj_def)
+  obtain B where B: "onormal B" "span B = UNIV"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> P *v u = (u \<bullet> (P *v u)) *\<^sub>R u"
+    using symmetric_eigenbasis[OF symP] by metis
+  have mu01: "u \<bullet> (P *v u) = 0 \<or> u \<bullet> (P *v u) = 1" if u: "u \<in> B" for u
+  proof -
+    define \<mu> where "\<mu> = u \<bullet> (P *v u)"
+    have Pu: "P *v u = \<mu> *\<^sub>R u"
+      unfolding \<mu>_def using eig[OF u] .
+    have "P *v (P *v u) = P *v u"
+      by (simp add: matrix_vector_mul_assoc idem)
+    then have "(\<mu> * \<mu>) *\<^sub>R u = \<mu> *\<^sub>R u"
+      by (simp add: Pu matrix_vector_mult_scaleR)
+    moreover have "u \<noteq> 0"
+      using B(1) u by (auto simp: onormal_def)
+    ultimately have "\<mu> * (\<mu> - 1) = 0"
+      by (simp add: algebra_simps)
+    then show ?thesis
+      unfolding \<mu>_def[symmetric] by auto
+  qed
+  define C where "C = {u \<in> B. u \<bullet> (P *v u) = 1}"
+  have onC: "onormal C"
+    by (rule onormal_subset[OF B(1)]) (auto simp: C_def)
+  have "P = (\<Sum>u\<in>B. (u \<bullet> (P *v u)) *\<^sub>R outer_prod u u)"
+    by (rule spectral_decomposition[OF B eig])
+  also have "\<dots> = (\<Sum>u\<in>B. if u \<bullet> (P *v u) = 1 then outer_prod u u else 0)"
+    by (intro sum.cong refl) (use mu01 in fastforce)
+  also have "\<dots> = (\<Sum>u\<in>C. outer_prod u u)"
+    using onormal_finite[OF B(1)] by (simp add: C_def sum.inter_filter)
+  finally have Peq: "P = (\<Sum>u\<in>C. outer_prod u u)" .
+  show thesis
+    by (rule that[OF onC Peq]) (simp add: Peq onormal_proj(2)[OF onC])
 qed
 
 lemma proj_with_trace_exists:
@@ -241,6 +173,26 @@ qed
 
 section \<open>The linear program on the simplex inside a box\<close>
 
+text \<open>Among the \<open>m\<close>-element subsets of a finite set, one maximises the
+  \<open>f\<close>-sum.\<close>
+
+lemma exists_max_sum_subset:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes finU: "finite U" and m: "m \<le> card U"
+  obtains T where "T \<subseteq> U" "card T = m"
+    and "\<And>T'. T' \<subseteq> U \<Longrightarrow> card T' = m \<Longrightarrow> (\<Sum>i\<in>T'. f i) \<le> (\<Sum>i\<in>T. f i)"
+proof -
+  define Sub where "Sub = {T. T \<subseteq> U \<and> card T = m}"
+  have "finite Sub"
+    using finU by (intro finite_subset[of Sub "Pow U"]) (auto simp: Sub_def)
+  moreover have "Sub \<noteq> {}"
+    using obtain_subset_with_card_n[OF m] by (auto simp: Sub_def)
+  ultimately obtain T where "is_arg_min (\<lambda>T. - (\<Sum>i\<in>T. f i)) (\<lambda>T. T \<in> Sub) T"
+    using ex_is_arg_min_if_finite by blast
+  then show thesis
+    by (intro that[of T]) (auto simp: is_arg_min_def Sub_def not_less)
+qed
+
 text \<open>Among the \<open>m\<close>-element subsets of a finite set there is one whose
   \<open>f\<close>-values all dominate those outside it: take a subset maximising the
   \<open>f\<close>-sum, and swap.\<close>
@@ -251,27 +203,10 @@ lemma exists_top_subset:
   obtains T where "T \<subseteq> U" "card T = m"
     and "\<And>i j. i \<in> T \<Longrightarrow> j \<in> U - T \<Longrightarrow> f j \<le> f i"
 proof -
-  define Sub where "Sub = {T. T \<subseteq> U \<and> card T = m}"
-  have finSub: "finite Sub"
-  proof (rule finite_subset)
-    show "Sub \<subseteq> Pow U" by (auto simp: Sub_def)
-    show "finite (Pow U)" using finU by simp
-  qed
-  have neSub: "Sub \<noteq> {}"
-  proof -
-    obtain T where "T \<subseteq> U" "card T = m"
-      using obtain_subset_with_card_n[OF m] by metis
-    then show ?thesis by (auto simp: Sub_def)
-  qed
   define g where "g = (\<lambda>T. \<Sum>i\<in>T. f i)"
-  have "Max (g ` Sub) \<in> g ` Sub"
-    by (rule Max_in) (use finSub neSub in auto)
-  then obtain T where T: "T \<in> Sub" and gT: "g T = Max (g ` Sub)"
-    by (metis imageE)
-  have Tmax: "g T' \<le> g T" if "T' \<in> Sub" for T'
-    unfolding gT using that finSub by (intro Max_ge) auto
-  have Tsub: "T \<subseteq> U" and cardT: "card T = m"
-    using T by (auto simp: Sub_def)
+  obtain T where Tsub: "T \<subseteq> U" and cardT: "card T = m"
+    and Tmax: "\<And>T'. T' \<subseteq> U \<Longrightarrow> card T' = m \<Longrightarrow> g T' \<le> g T"
+    unfolding g_def using exists_max_sum_subset[OF finU m] by blast
   have finT: "finite T"
     using Tsub finU by (rule finite_subset)
   have thresh: "f j \<le> f i" if i: "i \<in> T" and j: "j \<in> U - T" for i j
@@ -302,7 +237,7 @@ proof -
     moreover have "g T = f i + (\<Sum>u\<in>T - {i}. f u)"
       unfolding g_def using finT i by (simp add: sum.remove)
     moreover have "g T' \<le> g T"
-      using cardT' T'sub by (intro Tmax) (simp add: Sub_def)
+      by (rule Tmax[OF T'sub cardT'])
     ultimately show ?thesis
       by simp
   qed
@@ -463,42 +398,11 @@ section \<open>The trace against a projection, read off in an eigenbasis\<close>
 text \<open>If \<open>B\<close> is an orthonormal eigenbasis of the symmetric matrix \<open>a\<close> with
   eigenvalues \<open>\<lambda>\<^sub>u = u \<bullet> a u\<close>, then for every matrix \<open>P\<close>
 
-    \<open>trace (a ** P) = \<Sum>\<^sub>u \<lambda>\<^sub>u * (u \<bullet> P u)\<close>,
+    \<open>trace (a ** P) = \<Sum>\<^sub>u \<lambda>\<^sub>u * (u \<bullet> P u)\<close>
 
+  (\<open>trace_mult_eigen_weights\<close>, in @{theory Symmetric_Matrix_Spectra.Symmetric_Spectral}),
   so that a projection of trace \<open>m\<close> produces exactly the weights of the
   linear program: in \<open>[0,1]\<close> and summing to \<open>m\<close>.\<close>
-
-lemma trace_mult_eigen_weights:
-  fixes a :: "real^'n::finite^'n"
-  assumes B: "onormal B" "span B = UNIV"
-    and sym: "transpose a = a"
-    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-  shows "trace (a ** P) = (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (P *v u)))"
-proof -
-  have "trace (a ** P) = (\<Sum>u\<in>B. u \<bullet> ((a ** P) *v u))"
-    by (rule trace_onormal_basis[OF B])
-  also have "\<dots> = (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (P *v u)))"
-  proof (rule sum.cong[OF refl])
-    fix u assume u: "u \<in> B"
-    text \<open>Name the eigenvalue: \<open>eig\<close> rewrites \<open>a u\<close> into a term that again
-      contains \<open>a u\<close>, so it must not be handed to the simplifier directly.\<close>
-    define c where "c = u \<bullet> (a *v u)"
-    have au: "a *v u = c *\<^sub>R u"
-      unfolding c_def by (rule eig[OF u])
-    have "u \<bullet> ((a ** P) *v u) = u \<bullet> (a *v (P *v u))"
-      by (simp add: matrix_vector_mul_assoc)
-    also have "\<dots> = (P *v u) \<bullet> (a *v u)"
-      by (rule sym_inner_swap[OF sym])
-    also have "\<dots> = (P *v u) \<bullet> (c *\<^sub>R u)"
-      by (simp add: au)
-    also have "\<dots> = c * ((P *v u) \<bullet> u)"
-      by simp
-    also have "\<dots> = (u \<bullet> (a *v u)) * (u \<bullet> (P *v u))"
-      unfolding c_def by (simp add: inner_commute)
-    finally show "u \<bullet> ((a ** P) *v u) = (u \<bullet> (a *v u)) * (u \<bullet> (P *v u))" .
-  qed
-  finally show ?thesis .
-qed
 
 text \<open>The weights of a trace-\<open>m\<close> projection sum to \<open>m\<close>.\<close>
 
@@ -556,34 +460,15 @@ theorem kyfan_attained:
            \<Longrightarrow> (\<Sum>u\<in>T'. u \<bullet> (a *v u)) \<le> (\<Sum>u\<in>T. u \<bullet> (a *v u))"
 proof -
   define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (a *v u))"
-  define Subs where "Subs = {T. T \<subseteq> B \<and> card T = m}"
   define S where "S = {trace (a ** P) | P :: real^'n^'n. is_proj P \<and> trace P = real m}"
   have finB: "finite B"
     by (rule onormal_finite[OF B(1)])
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
   have m_le: "m \<le> card B"
-    using m cardB by simp
-  have finSubs: "finite Subs"
-  proof (rule finite_subset)
-    show "Subs \<subseteq> Pow B" by (auto simp: Subs_def)
-    show "finite (Pow B)" using finB by simp
-  qed
-  have neSubs: "Subs \<noteq> {}"
-  proof -
-    obtain T where "T \<subseteq> B" "card T = m"
-      using obtain_subset_with_card_n[OF m_le] by metis
-    then show ?thesis by (auto simp: Subs_def)
-  qed
+    using m onormal_span_card[OF B] by simp
   define g where "g = (\<lambda>T. \<Sum>u\<in>T. lam u)"
-  have "Max (g ` Subs) \<in> g ` Subs"
-    by (rule Max_in) (use finSubs neSubs in auto)
-  then obtain T0 where T0: "T0 \<in> Subs" and gT0: "g T0 = Max (g ` Subs)"
-    by (metis imageE)
-  have T0sub: "T0 \<subseteq> B" and cardT0: "card T0 = m"
-    using T0 by (auto simp: Subs_def)
-  have T0max: "g T' \<le> g T0" if "T' \<in> Subs" for T'
-    unfolding gT0 using that finSubs by (intro Max_ge) auto
+  obtain T0 where T0sub: "T0 \<subseteq> B" and cardT0: "card T0 = m"
+    and T0max: "\<And>T'. T' \<subseteq> B \<Longrightarrow> card T' = m \<Longrightarrow> g T' \<le> g T0"
+    unfolding g_def using exists_max_sum_subset[OF finB m_le] by blast
   text \<open>Every competitor in the supremum is dominated by \<open>g T0\<close>: expand the
     trace in the eigenbasis and apply the linear program.\<close>
   have upper: "v \<le> g T0" if v: "v \<in> S" for v
@@ -607,7 +492,7 @@ proof -
     have "v \<le> g T"
       unfolding vexp g_def by (rule le)
     also have "g T \<le> g T0"
-      using T by (intro T0max) (simp add: Subs_def)
+      by (rule T0max[OF T])
     finally show ?thesis .
   qed
   text \<open>And \<open>g T0\<close> is itself attained, by the spectral projection onto \<open>T0\<close>.\<close>
@@ -641,7 +526,7 @@ proof -
       using kf by (simp add: g_def lam_def)
     fix T' assume "T' \<subseteq> B" "card T' = m"
     then show "(\<Sum>u\<in>T'. u \<bullet> (a *v u)) \<le> (\<Sum>u\<in>T0. u \<bullet> (a *v u))"
-      using T0max[of T'] by (simp add: Subs_def g_def lam_def)
+      using T0max[of T'] by (simp add: g_def lam_def)
   qed
 qed
 
@@ -948,6 +833,62 @@ proof -
     unfolding eigval_Suc kSuc ki by simp
 qed
 
+text \<open>Every threshold set of positive size \<open>m\<close> attains \<open>eigval m a\<close> at its
+  minimum, and an eigenbasis has such a set of every size up to \<open>n\<close>.\<close>
+
+lemma eigval_threshold_min:
+  fixes a :: "real^'n::finite^'n"
+  assumes B: "onormal B" "span B = UNIV"
+    and sym: "transpose a = a"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    and T: "T \<subseteq> B" "card T = m" and m: "0 < m"
+    and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
+  obtains w where "w \<in> T" "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
+    "eigval m a = w \<bullet> (a *v w)"
+proof -
+  have finT: "finite T"
+    using T(1) onormal_finite[OF B(1)] by (rule finite_subset)
+  have Tne: "T \<noteq> {}"
+    using T(2) m by auto
+  obtain w where w: "w \<in> T"
+    and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
+    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
+        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"] by metis
+  obtain i where mi: "m = Suc i"
+    using m by (cases m) auto
+  have cardT: "card T = Suc i"
+    using T(2) mi by simp
+  have "eigval m a = w \<bullet> (a *v w)"
+    unfolding mi
+    by (rule eigval_eq_min_of_threshold[OF B sym eig T(1) cardT thresh w wmin])
+  with w wmin show thesis
+    by (rule that)
+qed
+
+lemma eigval_threshold_witness:
+  fixes a :: "real^'n::finite^'n"
+  assumes B: "onormal B" "span B = UNIV"
+    and sym: "transpose a = a"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+    and m: "0 < m" "m \<le> CARD('n)"
+  obtains T w where "T \<subseteq> B" "card T = m"
+    "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
+    "w \<in> T" "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
+    "eigval m a = w \<bullet> (a *v w)"
+proof -
+  have mB: "m \<le> card B"
+    using m(2) onormal_span_card[OF B] by simp
+  obtain T where T: "T \<subseteq> B" "card T = m"
+    and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
+    using exists_top_subset[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)",
+        OF onormal_finite[OF B(1)] mB] by metis
+  obtain w where w: "w \<in> T" "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
+    "eigval m a = w \<bullet> (a *v w)"
+    using eigval_threshold_min[OF B sym eig T m(1) thresh] by blast
+  with T thresh show thesis
+    by (rule that)
+qed
+
 text \<open>The ordered eigenvalues decrease. Applying the previous lemma to a
   threshold set of size \<open>i+1\<close> and then to the same set with its minimum
   deleted exhibits \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)\<close> and \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)\<close> as the minima of a set and of a
@@ -958,62 +899,27 @@ theorem eigval_antimono:
   assumes sym: "transpose a = a" and i: "1 \<le> i" and n: "Suc i \<le> CARD('n)"
   shows "eigval (Suc i) a \<le> eigval i a"
 proof -
-  obtain j where ij: "i = Suc j"
-    using i by (cases i) auto
   obtain B where B: "onormal B" "span B = UNIV"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
     using symmetric_eigenbasis[OF sym] by metis
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
-  have mB: "Suc i \<le> card B"
-    using n cardB by simp
-  obtain T where T: "T \<subseteq> B" "card T = Suc i"
+  obtain T w where T: "T \<subseteq> B" "card T = Suc i"
     and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
-    using exists_top_subset[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)", OF finB mB]
-    by metis
-  have finT: "finite T"
-    using T(1) finB by (rule finite_subset)
-  have Tne: "T \<noteq> {}"
-    using T(2) by auto
-  obtain w where w: "w \<in> T"
-    and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
-        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
-    by metis
-  have e1: "eigval (Suc i) a = w \<bullet> (a *v w)"
-    by (rule eigval_eq_min_of_threshold[OF B sym eig T thresh w wmin])
+    and w: "w \<in> T" and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
+    and e1: "eigval (Suc i) a = w \<bullet> (a *v w)"
+    using eigval_threshold_witness[OF B sym eig zero_less_Suc n] by blast
   text \<open>One level down, on \<open>T - {w}\<close>.\<close>
-  have T1: "T - {w} \<subseteq> B"
-    using T(1) by blast
-  have cardT1: "card (T - {w}) = Suc j"
-  proof -
-    have "card (T - {w}) = card T - 1"
-      using finT w by simp
-    then show ?thesis
-      using T(2) ij by simp
-  qed
+  have finT: "finite T"
+    using T(1) onormal_finite[OF B(1)] by (rule finite_subset)
   have th1: "v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
     if "u \<in> T - {w}" "v \<in> B - (T - {w})" for u v
     by (rule threshold_remove_min[where lam = "\<lambda>u :: real^'n. u \<bullet> (a *v u)",
           OF thresh wmin that(1) that(2)])
-  have finT1: "finite (T - {w})"
-    using finT by simp
-  have T1ne: "T - {w} \<noteq> {}"
-  proof (rule notI)
-    assume z: "T - {w} = {}"
-    have "card (T - {w}) = 0" unfolding z by simp
-    with cardT1 show False by simp
-  qed
+  have T1: "T - {w} \<subseteq> B" "card (T - {w}) = i" "0 < i"
+    using T finT w i by auto
   obtain w' where w': "w' \<in> T - {w}"
-    and w'min: "\<And>u. u \<in> T - {w} \<Longrightarrow> w' \<bullet> (a *v w') \<le> u \<bullet> (a *v u)"
-    using arg_min_if_finite(1)[OF finT1 T1ne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
-        arg_min_least[OF finT1 T1ne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
-    by metis
-  have e0: "eigval i a = w' \<bullet> (a *v w')"
-    unfolding ij
-    by (rule eigval_eq_min_of_threshold[OF B sym eig T1 cardT1 th1 w' w'min])
+    and "\<And>u. u \<in> T - {w} \<Longrightarrow> w' \<bullet> (a *v w') \<le> u \<bullet> (a *v u)"
+    and e0: "eigval i a = w' \<bullet> (a *v w')"
+    using eigval_threshold_min[OF B sym eig T1 th1] by blast
   have "w' \<in> T"
     using w' by blast
   then show ?thesis

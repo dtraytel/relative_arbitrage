@@ -384,6 +384,43 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>At a point of \<open>K\<close> where \<open>u\<close> is lower semicontinuous relative to \<open>K\<close>, the
+  envelope within \<open>K\<close> is the function itself; only values on \<open>K\<close> enter.\<close>
+
+lemma lsc_envK_eq_self:
+  fixes K :: "('a::metric_space) set" and u :: "'a \<Rightarrow> real"
+  assumes B: "\<And>y. y \<in> K \<Longrightarrow> Bl \<le> u y" and x: "x \<in> K"
+    and lsc: "\<And>c. c < u x \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist x y < e \<longrightarrow> c < u y"
+  shows "lsc_envK K u x = u x"
+proof -
+  have bddb: "bdd_below (u ` (ball x e \<inter> K))" for e
+    by (rule bdd_belowI[of _ Bl]) (use B in auto)
+  have le: "(INF y \<in> ball x e \<inter> K. u y) \<le> u x" if "0 < e" for e
+    by (rule cINF_lower[OF bddb]) (use that x in simp)
+  have bddA: "bdd_above ((\<lambda>e. INF y \<in> ball x e \<inter> K. u y) ` {0<..})"
+    by (rule bdd_aboveI[of _ "u x"]) (use le in auto)
+  show ?thesis
+  proof (rule antisym)
+    show "lsc_envK K u x \<le> u x"
+      unfolding lsc_envK_def by (rule cSUP_least) (use le in auto)
+    show "u x \<le> lsc_envK K u x"
+    proof (rule dense_le)
+      fix c assume "c < u x"
+      then obtain e where e: "0 < e" "\<forall>y\<in>K. dist x y < e \<longrightarrow> c < u y"
+        using lsc by blast
+      have xin: "x \<in> ball x e \<inter> K"
+        using e(1) x by simp
+      then have "ball x e \<inter> K \<noteq> {}"
+        by blast
+      then have "c \<le> (INF y \<in> ball x e \<inter> K. u y)"
+        by (rule cINF_greatest) (use e(2) in \<open>auto simp: less_imp_le\<close>)
+      also have "\<dots> \<le> lsc_envK K u x"
+        unfolding lsc_envK_def by (rule cSUP_upper[OF _ bddA]) (use e in simp)
+      finally show "c \<le> lsc_envK K u x" .
+    qed
+  qed
+qed
+
 lemma lsc_env_eq_on_interior:
   fixes K :: "('a::metric_space) set" and u :: "'a \<Rightarrow> real"
   assumes B: "\<And>y. Bl \<le> u y" and x: "x \<in> interior K"

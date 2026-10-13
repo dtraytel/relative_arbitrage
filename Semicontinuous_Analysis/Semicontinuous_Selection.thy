@@ -622,9 +622,9 @@ qed
 
 end
 
-subsection \<open>Countably valued approximation in a compact metric space\<close>
+subsection \<open>Countably valued approximation in a separable metric space\<close>
 
-text \<open>A measurable map into a compact metric space is a uniform limit of
+text \<open>A measurable map into a separable metric space is a uniform limit of
   countably valued measurable maps: round to the nearest point of a dense
   sequence, taking the least admissible index so that the choice is
   measurable.  The rounding is measurable for a cheap reason --- the set
@@ -633,7 +633,7 @@ text \<open>A measurable map into a compact metric space is a uniform limit of
 
 lemma (in Metric_space) countably_valued_approx:
   fixes g :: "'b \<Rightarrow> 'a" and P :: "'b measure"
-  assumes cpt: "compact_space mtopology" and ne: "M \<noteq> {}"
+  assumes sep: "separable_space mtopology" and ne: "M \<noteq> {}"
     and gm: "g \<in> P \<rightarrow>\<^sub>M borel_of mtopology" and rng: "\<And>x. g x \<in> M"
   obtains z :: "nat \<Rightarrow> 'a" and Nx :: "nat \<Rightarrow> 'b \<Rightarrow> nat"
     where "\<And>j. z j \<in> M"
@@ -642,7 +642,7 @@ lemma (in Metric_space) countably_valued_approx:
 proof -
   obtain z :: "nat \<Rightarrow> 'a" where z0: "\<forall>j. z j \<in> M"
     and zd0: "\<forall>y \<in> M. \<forall>e > 0. \<exists>j. d (z j) y < e"
-    using compact_space_dense_seq[OF cpt ne] by blast
+    using separable_space_dense_seq[OF sep ne] by blast
   have zM: "z j \<in> M" for j using z0 by blast
   have ex: "\<exists>j. d (z j) (g x) < (1/2::real)^m" for m x
     using zd0 rng[of x] by simp

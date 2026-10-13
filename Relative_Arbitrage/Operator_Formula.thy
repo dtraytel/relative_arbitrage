@@ -300,27 +300,11 @@ proof -
     by (rule onormal_finite[OF B(1)])
   have cardB: "card B = CARD('n)"
     by (rule onormal_span_card[OF B])
-  have mB: "m \<le> card B"
-    using m(2) cardB by simp
-  obtain T where T: "T \<subseteq> B" "card T = m"
+  obtain T w where T: "T \<subseteq> B" "card T = m"
     and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
-    using exists_top_subset[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)", OF finB mB]
-    by metis
-  have finT: "finite T"
-    using T(1) finB by (rule finite_subset)
-  have Tne: "T \<noteq> {}"
-    using T(2) m(1) by auto
-  obtain w where w: "w \<in> T"
-    and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
-        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"] by metis
-  obtain i where mi: "m = Suc i"
-    using m(1) by (cases m) auto
-  have cardT: "card T = Suc i"
-    using T(2) mi by simp
-  have eigw: "eigval m a = w \<bullet> (a *v w)"
-    unfolding mi
-    by (rule eigval_eq_min_of_threshold[OF B sym eig T(1) cardT thresh w wmin])
+    and w: "w \<in> T" and "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
+    and eigw: "eigval m a = w \<bullet> (a *v w)"
+    using eigval_threshold_witness[OF B sym eig m] by blast
   define U where "U = insert w (B - T)"
   have Usub: "U \<subseteq> B"
     unfolding U_def using w T(1) by blast
@@ -428,46 +412,19 @@ lemma sum_min_eigval_ge:
     and eig: "\<And>v. v \<in> V \<Longrightarrow> a *v v = (v \<bullet> (a *v v)) *\<^sub>R v"
   shows "real m \<le> (\<Sum>v\<in>V. min (v \<bullet> (a *v v)) 1)"
 proof -
-  have finV: "finite V"
-    by (rule onormal_finite[OF V(1)])
-  have cardV: "card V = CARD('n)"
-    by (rule onormal_span_card[OF V])
-  have mV: "m \<le> card V"
-    using m(2) cardV by simp
-  obtain T where T: "T \<subseteq> V" "card T = m"
-    and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> V - T \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
-    using exists_top_subset[where f = "\<lambda>u :: real^'n. u \<bullet> (a *v u)", OF finV mV]
-    by metis
-  have finT: "finite T"
-    using T(1) finV by (rule finite_subset)
-  have Tne: "T \<noteq> {}"
-    using T(2) m(1) by auto
-  obtain w where w: "w \<in> T"
-    and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
-        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"] by metis
-  obtain i where mi: "m = Suc i"
-    using m(1) by (cases m) auto
-  have cardT: "card T = Suc i"
-    using T(2) mi by simp
-  have eigw: "eigval m a = w \<bullet> (a *v w)"
-    unfolding mi
-    by (rule eigval_eq_min_of_threshold[OF V sym eig T(1) cardT thresh w wmin])
+  obtain T w where T: "T \<subseteq> V" "card T = m"
+    and "\<And>u v. u \<in> T \<Longrightarrow> v \<in> V - T \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
+    and "w \<in> T" and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
+    and eigw: "eigval m a = w \<bullet> (a *v w)"
+    using eigval_threshold_witness[OF V sym eig m] by blast
   have one: "1 \<le> eigval m a"
     by (rule eigval_ge_of_eigen_lb[OF sym lb m])
   have inT: "min (v \<bullet> (a *v v)) 1 = 1" if v: "v \<in> T" for v
-  proof -
-    have "1 \<le> w \<bullet> (a *v w)"
-      using one eigw by simp
-    also have "\<dots> \<le> v \<bullet> (a *v v)"
-      by (rule wmin[OF v])
-    finally show ?thesis
-      by simp
-  qed
+    using one wmin[OF v] unfolding eigw by simp
   have "real m = (\<Sum>v\<in>T. min (v \<bullet> (a *v v)) 1)"
     using inT T(2) by simp
   also have "\<dots> \<le> (\<Sum>v\<in>V. min (v \<bullet> (a *v v)) 1)"
-    using finV T(1) psd by (intro sum_mono2) auto
+    using onormal_finite[OF V(1)] T(1) psd by (intro sum_mono2) auto
   finally show ?thesis .
 qed
 
@@ -1369,81 +1326,43 @@ theorem bracket_Mp_top_eigenvector:
 proof -
   have symMp: "transpose (Mp q M) = Mp q M"
     by (rule transpose_Mp[OF sym])
-  define n where "n = CARD('n)"
-  define m where "m = n - k"
-  have npos: "0 < n"
-    unfolding n_def by (simp add: card_gt_0_iff)
-  obtain n' where n': "n = Suc n'"
-    using npos by (cases n) auto
-  have mn': "m \<le> n'"
-    unfolding m_def using k(1) n' by simp
-  have mn: "m \<le> n"
-    unfolding m_def by simp
-  have shiftmax: "eigval i (Mp q M) = eigval (Suc i) M"
-    if i1: "1 \<le> i" and i2: "i \<le> n'" for i
+  obtain n' where n': "CARD('n) = Suc n'"
+    using not0_implies_Suc[of "CARD('n)"] by auto
+  have shift: "eigval i (Mp q M) = eigval (Suc i) M" if "1 \<le> i" "i \<le> n'" for i
+    by (rule eigval_Mp_top_eigenvector[OF sym q eigq top that(1)]) (use that n' in simp)
+  have last: "max (eigval (Suc n') (Mp q M)) 0 = 0"
+    using eigval_Mp_last_nonpos[OF sym q] n' by simp
+  have pos: "(\<Sum>i\<in>{1..CARD('n)}. max (eigval i (Mp q M)) 0)
+      = (\<Sum>i\<in>{2..CARD('n)}. max (eigval i M) 0)"
   proof -
-    have "i \<le> CARD('n) - 1"
-      using i2 n' unfolding n_def by simp
-    then show ?thesis
-      by (rule eigval_Mp_top_eigenvector[OF sym q eigq top i1])
+    have "(\<Sum>i\<in>{1..Suc n'}. max (eigval i (Mp q M)) 0)
+        = (\<Sum>i\<in>{1..n'}. max (eigval i (Mp q M)) 0)"
+      using last by (simp add: atLeastAtMostSuc_conv)
+    also have "\<dots> = (\<Sum>i\<in>{1..n'}. max (eigval (Suc i) M) 0)"
+      by (intro sum.cong refl) (simp add: shift)
+    also have "\<dots> = (\<Sum>i\<in>{2..Suc n'}. max (eigval i M) 0)"
+      by (rule sum.reindex_bij_witness[where i = "\<lambda>i. i - 1" and j = Suc]) auto
+    finally show ?thesis
+      unfolding n' .
   qed
-  text \<open>The positive part: the last eigenvalue drops out, being nonpositive.\<close>
-  have pos: "possum n (Mp q M) = (\<Sum>i\<in>{2..n}. max (eigval i M) 0)"
+  have neg: "(\<Sum>i\<in>{1..CARD('n) - k}. min (eigval i (Mp q M)) 0)
+      = (\<Sum>i\<in>{2..CARD('n) - k + 1}. min (eigval i M) 0)"
   proof -
-    have "possum n (Mp q M) = (\<Sum>i\<in>{1..n}. max (eigval i (Mp q M)) 0)"
-      unfolding n_def by (rule possum_eq_sum_pos[OF symMp order_refl])
-    also have "\<dots> = (\<Sum>i\<in>{1..n'}. max (eigval i (Mp q M)) 0)
-        + max (eigval n (Mp q M)) 0"
-      unfolding n' by (simp add: atLeastAtMostSuc_conv)
-    also have "\<dots> = (\<Sum>i\<in>{1..n'}. max (eigval (Suc i) M) 0) + 0"
-    proof -
-      have "max (eigval n (Mp q M)) 0 = 0"
-        using eigval_Mp_last_nonpos[OF sym q] unfolding n_def by simp
-      moreover have "(\<Sum>i\<in>{1..n'}. max (eigval i (Mp q M)) 0)
-          = (\<Sum>i\<in>{1..n'}. max (eigval (Suc i) M) 0)"
-        by (intro sum.cong refl) (simp add: shiftmax)
-      ultimately show ?thesis by simp
-    qed
-    also have "\<dots> = (\<Sum>i\<in>{2..n}. max (eigval i M) 0)"
-    proof -
-      have "(\<Sum>i\<in>{1..n'}. max (eigval (Suc i) M) 0)
-          = (\<Sum>i\<in>{2..Suc n'}. max (eigval i M) 0)"
-        by (rule sum.reindex_bij_witness[where i = "\<lambda>i. i - 1" and j = Suc]) auto
-      then show ?thesis
-        unfolding n' by simp
-    qed
-    finally show ?thesis .
-  qed
-  text \<open>The negative part: every index involved is at most \<open>n-1\<close>, so the shift
-    applies throughout.\<close>
-  have neg: "kyfan m (Mp q M) - possum m (Mp q M)
-      = (\<Sum>i\<in>{2..m+1}. min (eigval i M) 0)"
-  proof -
-    have mcard: "m \<le> CARD('n)"
-      using mn unfolding n_def by simp
-    have "kyfan m (Mp q M) - possum m (Mp q M)
-        = (\<Sum>i\<in>{1..m}. min (eigval i (Mp q M)) 0)"
-      by (rule kyfan_minus_possum[OF symMp mcard])
-    also have "\<dots> = (\<Sum>i\<in>{1..m}. min (eigval (Suc i) M) 0)"
+    have "(\<Sum>i\<in>{1..CARD('n) - k}. min (eigval i (Mp q M)) 0)
+        = (\<Sum>i\<in>{1..CARD('n) - k}. min (eigval (Suc i) M) 0)"
     proof (intro sum.cong refl)
-      fix i assume "i \<in> {1..m}"
+      fix i assume "i \<in> {1..CARD('n) - k}"
       then have "1 \<le> i" "i \<le> n'"
-        using mn' by auto
+        using k n' by auto
       then show "min (eigval i (Mp q M)) 0 = min (eigval (Suc i) M) 0"
-        by (simp add: shiftmax)
+        by (simp add: shift)
     qed
-    also have "\<dots> = (\<Sum>i\<in>{2..m+1}. min (eigval i M) 0)"
+    also have "\<dots> = (\<Sum>i\<in>{2..CARD('n) - k + 1}. min (eigval i M) 0)"
       by (rule sum.reindex_bij_witness[where i = "\<lambda>i. i - 1" and j = Suc]) auto
     finally show ?thesis .
   qed
-  have "bracket m L (Mp q M)
-      = L * possum n (Mp q M) + (kyfan m (Mp q M) - possum m (Mp q M))"
-    unfolding bracket_def n_def by (rule refl)
-  also have "\<dots> = L * (\<Sum>i\<in>{2..n}. max (eigval i M) 0)
-      + (\<Sum>i\<in>{2..m+1}. min (eigval i M) 0)"
-    unfolding pos neg by (rule refl)
-  finally show ?thesis
-    unfolding m_def n_def .
+  show ?thesis
+    unfolding bracket_eq_sum[OF symMp diff_le_self] pos neg ..
 qed
 
 text \<open>The value of \<open>F\<close> along the paper's sequence \<open>(q\<^sub>1/m, M)\<close>: by scale
@@ -1583,75 +1502,36 @@ proof -
   define N where "N = Mp p M"
   have symN: "transpose N = N"
     unfolding N_def by (rule transpose_Mp[OF sym])
-  define n where "n = CARD('n)"
-  define m where "m = n - k"
-  have npos: "0 < n"
-    unfolding n_def by (simp add: card_gt_0_iff)
-  obtain n' where n': "n = Suc n'"
-    using npos by (cases n) auto
-  have mn': "m \<le> n'"
-    unfolding m_def using k(1) n' by simp
-  have mcard: "m \<le> CARD('n)"
-    unfolding m_def n_def by simp
-  have shift: "eigval (Suc i) M \<le> eigval i N" if "1 \<le> i" and "i \<le> n'" for i
+  obtain n' where n': "CARD('n) = Suc n'"
+    using not0_implies_Suc[of "CARD('n)"] by auto
+  have shift: "eigval (Suc i) M \<le> eigval i N" if "1 \<le> i" "i \<le> n'" for i
+    unfolding N_def by (rule eigval_Mp_ge_shift[OF sym that(1)]) (use that n' in simp)
+  have pos: "(\<Sum>i\<in>{2..CARD('n)}. max (eigval i M) 0)
+      \<le> (\<Sum>i\<in>{1..CARD('n)}. max (eigval i N) 0)"
   proof -
-    have "i < CARD('n)"
-      using that(2) n' unfolding n_def by simp
-    then show ?thesis
-      unfolding N_def by (rule eigval_Mp_ge_shift[OF sym that(1)])
-  qed
-  text \<open>Positive part: drop the last (nonnegative) term, then shift.\<close>
-  have pos: "(\<Sum>i\<in>{2..n}. max (eigval i M) 0) \<le> possum n N"
-  proof -
-    have "(\<Sum>i\<in>{2..n}. max (eigval i M) 0)
+    have "(\<Sum>i\<in>{2..Suc n'}. max (eigval i M) 0)
         = (\<Sum>i\<in>{1..n'}. max (eigval (Suc i) M) 0)"
-      by (rule sum.reindex_bij_witness[where i = "\<lambda>i. i - 1" and j = Suc,
-            symmetric]) (auto simp: n')
+      by (rule sum.reindex_bij_witness[where i = Suc and j = "\<lambda>i. i - 1"]) auto
     also have "\<dots> \<le> (\<Sum>i\<in>{1..n'}. max (eigval i N) 0)"
-    proof (intro sum_mono)
-      fix i assume "i \<in> {1..n'}"
-      then have "1 \<le> i" "i \<le> n'"
-        by auto
-      then have "eigval (Suc i) M \<le> eigval i N"
-        by (rule shift)
-      then show "max (eigval (Suc i) M) 0 \<le> max (eigval i N) 0"
-        by (rule max.mono[OF _ order_refl])
-    qed
-    also have "\<dots> \<le> (\<Sum>i\<in>{1..n}. max (eigval i N) 0)"
-      unfolding n' by (intro sum_mono2) auto
-    also have "\<dots> = possum n N"
-      unfolding n_def by (rule possum_eq_sum_pos[OF symN order_refl, symmetric])
-    finally show ?thesis .
+      by (intro sum_mono max.mono order_refl shift) auto
+    also have "\<dots> \<le> (\<Sum>i\<in>{1..Suc n'}. max (eigval i N) 0)"
+      by (intro sum_mono2) auto
+    finally show ?thesis
+      unfolding n' .
   qed
-  text \<open>Negative part: shift termwise, \<open>min (\<cdot>) 0\<close> being monotone.\<close>
-  have neg: "(\<Sum>i\<in>{2..m+1}. min (eigval i M) 0) \<le> kyfan m N - possum m N"
+  have neg: "(\<Sum>i\<in>{2..CARD('n) - k + 1}. min (eigval i M) 0)
+      \<le> (\<Sum>i\<in>{1..CARD('n) - k}. min (eigval i N) 0)"
   proof -
-    have "(\<Sum>i\<in>{2..m+1}. min (eigval i M) 0)
-        = (\<Sum>i\<in>{1..m}. min (eigval (Suc i) M) 0)"
-      by (rule sum.reindex_bij_witness[where i = "\<lambda>i. i - 1" and j = Suc,
-            symmetric]) auto
-    also have "\<dots> \<le> (\<Sum>i\<in>{1..m}. min (eigval i N) 0)"
-    proof (intro sum_mono)
-      fix i assume "i \<in> {1..m}"
-      then have "1 \<le> i" "i \<le> n'"
-        using mn' by auto
-      then have "eigval (Suc i) M \<le> eigval i N"
-        by (rule shift)
-      then show "min (eigval (Suc i) M) 0 \<le> min (eigval i N) 0"
-        by (rule min.mono[OF _ order_refl])
-    qed
-    also have "\<dots> = kyfan m N - possum m N"
-      by (rule kyfan_minus_possum[OF symN mcard, symmetric])
+    have "(\<Sum>i\<in>{2..CARD('n) - k + 1}. min (eigval i M) 0)
+        = (\<Sum>i\<in>{1..CARD('n) - k}. min (eigval (Suc i) M) 0)"
+      by (rule sum.reindex_bij_witness[where i = Suc and j = "\<lambda>i. i - 1"]) auto
+    also have "\<dots> \<le> (\<Sum>i\<in>{1..CARD('n) - k}. min (eigval i N) 0)"
+      using k n' by (intro sum_mono min.mono order_refl shift) auto
     finally show ?thesis .
   qed
-  have "L * (\<Sum>i\<in>{2..n}. max (eigval i M) 0)
-      + (\<Sum>i\<in>{2..m+1}. min (eigval i M) 0)
-      \<le> L * possum n N + (kyfan m N - possum m N)"
+  show ?thesis
+    unfolding N_def[symmetric] bracket_eq_sum[OF symN diff_le_self]
     using pos neg L by (intro add_mono mult_left_mono) auto
-  also have "\<dots> = bracket m L N"
-    unfolding bracket_def n_def by (rule refl)
-  finally show ?thesis
-    unfolding m_def n_def N_def .
 qed
 
 section \<open>Continuity of the bracket in the matrix\<close>

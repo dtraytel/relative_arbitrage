@@ -575,10 +575,6 @@ text \<open>Transfer to the continuous modification via
   \<open>Modification_Transfer.martingale_of_modification_gen\<close>, as
   \<open>Continuous_Brownian_Motion.martingale_cbm_coord_square\<close> does for the diagonal.\<close>
 
-lemma bm_prj_measurable: "(\<lambda>x :: real^'n::finite. x $ i) \<in> borel_measurable borel"
-  by (intro borel_measurable_continuous_onI linear_continuous_on
-      bounded_linear_vec_nth)
-
 text \<open>\<open>bounded_linear_cross_pair\<close> lives in \<open>Matrix_Algebra\<close>.\<close>
 
 lemma pair_fst_borel:

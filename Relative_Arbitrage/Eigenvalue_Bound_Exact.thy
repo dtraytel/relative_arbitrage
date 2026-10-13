@@ -99,61 +99,20 @@ lemma shift_convex_combination:
   shows "c u = (d / (e + d)) * shift c i j e u
              + (e / (e + d)) * shift c i j (- d) u"
 proof -
-  have ed: "e + d \<noteq> 0"
-    using e d by simp
-  have cancel: "(x * (e + d)) / (e + d) = x" for x
-    using ed by simp
-  have up: "(d / (e + d)) * (x + e) + (e / (e + d)) * (x - d) = x" for x
+  have key: "(d / (e + d)) * (x + t * e) + (e / (e + d)) * (x - t * d) = x" for x t
   proof -
-    have "(d / (e + d)) * (x + e) + (e / (e + d)) * (x - d)
-        = (d * (x + e) + e * (x - d)) / (e + d)"
+    have "(d / (e + d)) * (x + t * e) + (e / (e + d)) * (x - t * d)
+        = (d * (x + t * e) + e * (x - t * d)) / (e + d)"
       by (simp add: add_divide_distrib)
     also have "\<dots> = (x * (e + d)) / (e + d)"
       by (simp add: algebra_simps)
     also have "\<dots> = x"
-      by (rule cancel)
-    finally show ?thesis .
-  qed
-  have down: "(d / (e + d)) * (x - e) + (e / (e + d)) * (x + d) = x" for x
-  proof -
-    have "(d / (e + d)) * (x - e) + (e / (e + d)) * (x + d)
-        = (d * (x - e) + e * (x + d)) / (e + d)"
-      by (simp add: add_divide_distrib)
-    also have "\<dots> = (x * (e + d)) / (e + d)"
-      by (simp add: algebra_simps)
-    also have "\<dots> = x"
-      by (rule cancel)
-    finally show ?thesis .
-  qed
-  have same: "(d / (e + d)) * x + (e / (e + d)) * x = x" for x
-  proof -
-    have "(d / (e + d)) * x + (e / (e + d)) * x
-        = (d * x + e * x) / (e + d)"
-      by (simp add: add_divide_distrib)
-    also have "\<dots> = (x * (e + d)) / (e + d)"
-      by (simp add: algebra_simps)
-    also have "\<dots> = x"
-      by (rule cancel)
+      using e d by simp
     finally show ?thesis .
   qed
   show ?thesis
-  proof (cases "u = i")
-    case True
-    then show ?thesis
-      using ij up[of "c i"] by simp
-  next
-    case ni: False
-    show ?thesis
-    proof (cases "u = j")
-      case True
-      then show ?thesis
-        using ij down[of "c j"] by simp
-    next
-      case nj: False
-      show ?thesis
-        using ni nj same[of "c u"] by (simp add: shift_other)
-    qed
-  qed
+    using ij key[of "c u" 1] key[of "c u" "- 1"] key[of "c u" 0]
+    by (cases "u = i"; cases "u = j") (simp_all add: shift_other)
 qed
 
 text \<open>\<open>two_fractional\<close> lives in @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>

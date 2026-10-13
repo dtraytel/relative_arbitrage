@@ -508,6 +508,201 @@ proof -
 qed
 
 
+
+subsection \<open>The second-order necessary condition at a local minimum\<close>
+
+text \<open>The classical first- and second-order conditions at a local minimum of
+  \<open>\<psi>\<close> whose gradient \<open>g\<close> is differentiable at \<open>x\<close> with Hessian \<open>H\<close>: \<open>g x = 0\<close>
+  and \<open>H\<close> is positive semidefinite.  The latter is \<open>second_order_interior_max\<close>
+  for \<open>-\<psi>\<close> restricted to a line, once the gradient condition has been turned
+  into a second-order expansion along that line.\<close>
+
+lemma local_min_gradient_zero:
+  fixes \<psi> :: "real^'n \<Rightarrow> real"
+  assumes deriv: "(\<psi> has_derivative (\<lambda>h. g \<bullet> h)) (at x)"
+    and min: "eventually (\<lambda>y. \<psi> x \<le> \<psi> y) (at x)"
+  shows "g = 0"
+proof -
+  have "(\<lambda>h. g \<bullet> h) = (\<lambda>h. 0)"
+    by (rule has_derivative_local_min[OF deriv min])
+  then have "g \<bullet> g = 0"
+    using fun_cong[of "(\<lambda>h. g \<bullet> h)" "(\<lambda>h. 0)" g] by simp
+  then show ?thesis
+    by simp
+qed
+
+text \<open>Along a line, a gradient differentiable at \<open>x\<close> gives a second-order
+  (Peano) expansion of \<open>\<psi>\<close>: the error of the quadratic Taylor polynomial is
+  \<open>o(t\<^sup>2)\<close>, by the mean value theorem applied to the error itself.\<close>
+
+lemma peano_expansion_along_line:
+  fixes \<psi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n"
+  assumes e: "0 < e"
+    and deriv: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<psi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    and hess: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
+  shows "((\<lambda>t. (\<psi> (x + t *\<^sub>R h) - \<psi> x - t * (g x \<bullet> h) - t\<^sup>2 * (h \<bullet> (H *v h)) / 2)
+      / t\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+proof (rule tendstoI)
+  fix \<epsilon> :: real assume \<epsilon>: "0 < \<epsilon>"
+  define K where "K = (norm h)\<^sup>2 + 1"
+  have K0: "0 < K" and hK: "(norm h)\<^sup>2 \<le> K"
+    unfolding K_def using zero_le_power2[of "norm h"] by linarith+
+  define c where "c = \<epsilon> / (2 * K)"
+  have c: "0 < c"
+    unfolding c_def using \<epsilon> K0 by simp
+  have cK: "c * K = \<epsilon> / 2"
+    unfolding c_def using K0 by simp
+  obtain r where r: "0 < r"
+    and rg: "\<And>y. norm (y - x) < r \<Longrightarrow> norm (g y - g x - H *v (y - x)) \<le> c * norm (y - x)"
+    using hess c unfolding has_derivative_at_alt by blast
+  have nh: "0 < norm h + 1"
+    using norm_ge_zero[of h] by linarith
+  define d where "d = min r e / (norm h + 1)"
+  have d: "0 < d"
+    unfolding d_def using r e nh by simp
+  have small: "norm (s *\<^sub>R h) < min r e" if "\<bar>s\<bar> < d" for s
+  proof -
+    have "norm (s *\<^sub>R h) \<le> \<bar>s\<bar> * (norm h + 1)"
+      by (simp add: mult_left_mono)
+    also have "\<dots> < min r e"
+      using that nh by (simp add: d_def pos_less_divide_eq)
+    finally show ?thesis .
+  qed
+  define D where "D = (\<lambda>s. (g (x + s *\<^sub>R h) - g x - H *v (s *\<^sub>R h)) \<bullet> h)"
+  define R where "R = (\<lambda>s. \<psi> (x + s *\<^sub>R h) - s * (g x \<bullet> h) - s * s * (h \<bullet> (H *v h)) / 2)"
+  have Rd: "(R has_real_derivative D s) (at s)" if s: "\<bar>s\<bar> < d" for s
+  proof -
+    have 1: "((\<lambda>s. x + s *\<^sub>R h) has_derivative (\<lambda>s. s *\<^sub>R h)) (at s)"
+      by (auto intro!: derivative_eq_intros)
+    have 2: "(\<psi> has_derivative (\<lambda>k. g (x + s *\<^sub>R h) \<bullet> k)) (at (x + s *\<^sub>R h))"
+      by (rule deriv) (use small[OF s] in \<open>simp add: dist_norm\<close>)
+    have "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_derivative (\<lambda>u. g (x + s *\<^sub>R h) \<bullet> (u *\<^sub>R h))) (at s)"
+      using diff_chain_at[OF 1 2] by (simp add: o_def)
+    then have 3: "((\<lambda>s. \<psi> (x + s *\<^sub>R h)) has_real_derivative (g (x + s *\<^sub>R h) \<bullet> h)) (at s)"
+      unfolding has_field_derivative_def
+      by (rule has_derivative_eq_rhs) (simp add: fun_eq_iff mult.commute)
+    have Ds: "D s = g (x + s *\<^sub>R h) \<bullet> h - g x \<bullet> h - s * (h \<bullet> (H *v h))"
+      by (simp add: D_def inner_diff_left matrix_vector_mult_scaleR inner_commute[of "H *v h" h])
+    have 4: "((\<lambda>s. s * (g x \<bullet> h)) has_real_derivative (g x \<bullet> h)) (at s)"
+      by (auto intro!: derivative_eq_intros)
+    have 5: "((\<lambda>s. s * s * (h \<bullet> (H *v h)) / 2) has_real_derivative s * (h \<bullet> (H *v h))) (at s)"
+      by (auto intro!: derivative_eq_intros simp: algebra_simps)
+    show ?thesis
+      unfolding R_def Ds by (intro DERIV_diff 3 4 5)
+  qed
+  have key: "dist ((\<psi> (x + t *\<^sub>R h) - \<psi> x - t * (g x \<bullet> h)
+      - t\<^sup>2 * (h \<bullet> (H *v h)) / 2) / t\<^sup>2) 0 < \<epsilon>"
+    if t0: "t \<noteq> 0" and td: "\<bar>t\<bar> < d" for t
+  proof -
+    obtain z where z: "\<bar>z\<bar> \<le> \<bar>t\<bar>" and Rz: "R t - R 0 = t * D z"
+    proof (cases "0 < t")
+      case True
+      have "\<exists>z. 0 < z \<and> z < t \<and> R t - R 0 = (t - 0) * D z"
+        by (rule MVT2[OF True Rd]) (use td in auto)
+      then show thesis
+        using that by force
+    next
+      case False
+      with t0 have neg: "t < 0"
+        by simp
+      have "\<exists>z. t < z \<and> z < 0 \<and> R 0 - R t = (0 - t) * D z"
+        by (rule MVT2[OF neg Rd]) (use td in auto)
+      then obtain z where "t < z" "z < 0" "R 0 - R t = (0 - t) * D z"
+        by blast
+      then show thesis
+        by (intro that[of z]) (auto simp: algebra_simps)
+    qed
+    have zd: "\<bar>z\<bar> < d"
+      using z td by linarith
+    have "norm (z *\<^sub>R h) < r"
+      using small[OF zd] by simp
+    then have "norm (g (x + z *\<^sub>R h) - g x - H *v (z *\<^sub>R h)) \<le> c * norm (z *\<^sub>R h)"
+      using rg[of "x + z *\<^sub>R h"] by simp
+    then have "\<bar>D z\<bar> \<le> c * norm (z *\<^sub>R h) * norm h"
+      unfolding D_def by (rule order_trans[OF Cauchy_Schwarz_ineq2 mult_right_mono]) simp
+    also have "\<dots> \<le> c * (\<bar>t\<bar> * norm h) * norm h"
+      using z c by (intro mult_right_mono mult_left_mono) (auto intro: mult_right_mono)
+    also have "\<dots> = c * (norm h)\<^sup>2 * \<bar>t\<bar>"
+      by (simp add: power2_eq_square)
+    also have "\<dots> \<le> c * K * \<bar>t\<bar>"
+      using c hK by (intro mult_right_mono mult_left_mono) auto
+    finally have Dz: "\<bar>D z\<bar> \<le> \<epsilon> / 2 * \<bar>t\<bar>"
+      unfolding cK .
+    have "\<bar>R t - R 0\<bar> \<le> \<epsilon> / 2 * t\<^sup>2"
+    proof -
+      have "\<bar>R t - R 0\<bar> = \<bar>t\<bar> * \<bar>D z\<bar>"
+        unfolding Rz by (rule abs_mult)
+      also have "\<dots> \<le> \<bar>t\<bar> * (\<epsilon> / 2 * \<bar>t\<bar>)"
+        by (rule mult_left_mono[OF Dz]) simp
+      also have "\<dots> = \<epsilon> / 2 * t\<^sup>2"
+        by (simp add: power2_eq_square abs_mult_self)
+      finally show ?thesis .
+    qed
+    moreover have "R t - R 0 = \<psi> (x + t *\<^sub>R h) - \<psi> x - t * (g x \<bullet> h) - t\<^sup>2 * (h \<bullet> (H *v h)) / 2"
+      by (simp add: R_def power2_eq_square)
+    moreover have "0 < \<epsilon> * t\<^sup>2"
+      using t0 \<epsilon> by simp
+    ultimately have "\<bar>\<psi> (x + t *\<^sub>R h) - \<psi> x - t * (g x \<bullet> h) - t\<^sup>2 * (h \<bullet> (H *v h)) / 2\<bar>
+        < \<epsilon> * t\<^sup>2"
+      by linarith
+    then show "dist ((\<psi> (x + t *\<^sub>R h) - \<psi> x - t * (g x \<bullet> h)
+        - t\<^sup>2 * (h \<bullet> (H *v h)) / 2) / t\<^sup>2) 0 < \<epsilon>"
+      using t0 by (simp add: dist_real_def abs_divide divide_less_eq)
+  qed
+  show "\<forall>\<^sub>F t in at 0. dist ((\<psi> (x + t *\<^sub>R h) - \<psi> x - t * (g x \<bullet> h)
+      - t\<^sup>2 * (h \<bullet> (H *v h)) / 2) / t\<^sup>2) 0 < \<epsilon>"
+    unfolding eventually_at
+    by (intro exI[of _ d] conjI d ballI impI key) auto
+qed
+
+lemma local_min_hessian_psd:
+  fixes \<psi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
+    and H :: "real^'n^'n"
+  assumes e_pos: "0 < e"
+    and deriv: "\<And>y. y \<in> ball x e \<Longrightarrow> (\<psi> has_derivative (\<lambda>h. g y \<bullet> h)) (at y)"
+    and hess: "(g has_derivative (\<lambda>h. H *v h)) (at x)"
+    and min: "\<And>y. y \<in> ball x e \<Longrightarrow> \<psi> x \<le> \<psi> y"
+  shows "0 \<le> h \<bullet> (H *v h)"
+proof -
+  define d where "d = e / (norm h + 1)"
+  have d: "0 < d"
+    unfolding d_def using e_pos by (simp add: add_nonneg_pos)
+  have mx: "- \<psi> (x + (0 + t) *\<^sub>R h) \<le> - \<psi> (x + 0 *\<^sub>R h)" if "norm t < d" for t :: real
+  proof -
+    have nh: "0 < norm h + 1"
+      using norm_ge_zero[of h] by linarith
+    have "norm (t *\<^sub>R h) \<le> \<bar>t\<bar> * (norm h + 1)"
+      by (simp add: mult_left_mono)
+    also have "\<dots> < e"
+      using that nh by (simp add: d_def pos_less_divide_eq)
+    finally show ?thesis
+      using min[of "x + t *\<^sub>R h"] by (simp add: dist_norm)
+  qed
+  have peano: "((\<lambda>t. - ((\<psi> (x + t *\<^sub>R h) - \<psi> x - t * (g x \<bullet> h)
+      - t\<^sup>2 * (h \<bullet> (H *v h)) / 2) / t\<^sup>2)) \<longlongrightarrow> 0) (at 0)"
+    using tendsto_minus[OF peano_expansion_along_line[OF e_pos deriv hess, of h]]
+    unfolding minus_zero .
+  have eq: "(- \<psi> (x + (0 + t) *\<^sub>R h) - - \<psi> (x + 0 *\<^sub>R h) - (- (g x \<bullet> h)) \<bullet> t
+      - (t \<bullet> (- (h \<bullet> (H *v h)) * t)) / 2) / (norm t)\<^sup>2
+      = - ((\<psi> (x + t *\<^sub>R h) - \<psi> x - t * (g x \<bullet> h)
+      - t\<^sup>2 * (h \<bullet> (H *v h)) / 2) / t\<^sup>2)" for t :: real
+  proof -
+    have "- \<psi> (x + (0 + t) *\<^sub>R h) - - \<psi> (x + 0 *\<^sub>R h) - (- (g x \<bullet> h)) \<bullet> t
+        - (t \<bullet> (- (h \<bullet> (H *v h)) * t)) / 2
+        = - (\<psi> (x + t *\<^sub>R h) - \<psi> x - t * (g x \<bullet> h) - t\<^sup>2 * (h \<bullet> (H *v h)) / 2)"
+      by (simp add: inner_real_def power2_eq_square algebra_simps)
+    then show ?thesis
+      by (simp only: real_norm_def power2_abs divide_minus_left)
+  qed
+  have "((\<lambda>t. (- \<psi> (x + (0 + t) *\<^sub>R h) - - \<psi> (x + 0 *\<^sub>R h) - (- (g x \<bullet> h)) \<bullet> t
+      - (t \<bullet> (- (h \<bullet> (H *v h)) * t)) / 2) / (norm t)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+    unfolding eq by (rule peano)
+  from second_order_interior_max[OF bounded_linear_mult_right d mx this, of 1]
+  show ?thesis
+    by simp
+qed
+
 (*<*)
 end
 (*>*)

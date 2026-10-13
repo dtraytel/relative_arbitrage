@@ -394,8 +394,33 @@ proof -
   finally show ?thesis unfolding B_def .
 qed
 
-text \<open>For a small enough shift, the upper envelope at \<open>-\<delta>I\<close> is below
-  \<open>1\<close>, whatever the gradient.\<close>
+text \<open>Where \<open>M\<close> is small, the upper envelope is below \<open>1\<close>, whatever the
+  gradient; in particular at \<open>-\<delta>I\<close> for a small enough shift.\<close>
+
+lemma ell_op_usc_lt_one_of_small:
+  fixes M :: "real^'n::finite^'n"
+  assumes k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
+    and M: "real (CARD('n) * CARD('n)) * L * norm M < 1"
+  shows "ell_op_usc k L q M < 1"
+proof -
+  define B where "B = real (CARD('n) * CARD('n)) * L / 2"
+  have B0: "0 < B"
+    unfolding B_def using L by simp
+  have M': "2 * B * norm M < 1"
+    using M by (simp add: B_def)
+  define e where "e = (1 - 2 * B * norm M) / (4 * B)"
+  have e0: "0 < e"
+    unfolding e_def using B0 M' by simp
+  have "B * (norm M + e) = (2 * B * norm M + 1) / 4"
+    unfolding e_def using B0 by (simp add: field_simps)
+  then have lt: "B * (norm M + e) < 1"
+    using M' by simp
+  have "ell_op_usc k L q M \<le> ereal (B * (norm M + e))"
+    unfolding B_def by (rule ell_op_usc_le_scaled_norm[OF k L e0])
+  also have "\<dots> < 1"
+    using lt by simp
+  finally show ?thesis .
+qed
 
 lemma ell_op_usc_small_shift_lt_one:
   fixes k :: nat
@@ -404,48 +429,30 @@ lemma ell_op_usc_small_shift_lt_one:
     and "\<And>q :: real^'n.
       ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
 proof -
-  define B where "B = real (CARD('n) * CARD('n)) * L / 2"
-  have B0: "0 < B" unfolding B_def using L by simp
+  define A where "A = real (CARD('n) * CARD('n)) * L"
   define Nm where "Nm = norm (mat 1 :: real^'n^'n)"
-  have Nm0: "0 \<le> Nm" unfolding Nm_def by simp
-  define t where "t = 1 / (2 * B)"
-  have t0: "0 < t" unfolding t_def using B0 by simp
-  have Bt: "B * t = 1 / 2" unfolding t_def using B0 by simp
-  define \<delta> where "\<delta> = min (1 / 2) (t / (2 * (Nm + 1)))"
-  have d0: "0 < \<delta>" unfolding \<delta>_def using t0 Nm0 by simp
-  have d1: "\<delta> < 1" unfolding \<delta>_def by simp
-  have dN: "\<delta> * Nm \<le> t / 2"
-  proof -
-    have "\<delta> \<le> t / (2 * (Nm + 1))" unfolding \<delta>_def by simp
-    then have "\<delta> * Nm \<le> t / (2 * (Nm + 1)) * Nm"
-      by (rule mult_right_mono[OF _ Nm0])
-    moreover have "t / (2 * (Nm + 1)) * Nm \<le> t / 2"
-      using t0 Nm0 by (simp add: field_simps)
-    ultimately show ?thesis by linarith
-  qed
-  have key: "ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
-    for q :: "real^'n"
-  proof -
-    have e0: "0 < t / 2" using t0 by simp
-    have nrm: "norm ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) = \<delta> * Nm"
-      unfolding Nm_def using d0 by simp
-    have "ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)
-        \<le> ereal (B * (norm ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) + t / 2))"
-      unfolding B_def
-      by (rule ell_op_usc_le_scaled_norm[OF k(1) k(2) L e0])
-    also have "\<dots> = ereal (B * (\<delta> * Nm + t / 2))" unfolding nrm by (rule refl)
-    also have "\<dots> \<le> ereal (B * t)"
-    proof -
-      have "\<delta> * Nm + t / 2 \<le> t" using dN by linarith
-      then have "B * (\<delta> * Nm + t / 2) \<le> B * t"
-        by (rule mult_left_mono) (use B0 in linarith)
-      then show ?thesis by simp
-    qed
-    also have "\<dots> = ereal (1 / 2)" unfolding Bt by (rule refl)
-    also have "\<dots> < 1" by simp
-    finally show ?thesis .
-  qed
-  show ?thesis by (rule that[OF d0 d1]) (use key in blast)
+  have A0: "0 < A"
+    unfolding A_def using L by simp
+  have N1: "0 < Nm + 1"
+    unfolding Nm_def using norm_ge_zero[of "mat 1 :: real^'n^'n"] by linarith
+  define C where "C = A * (Nm + 1)"
+  have C0: "0 < C"
+    unfolding C_def using A0 N1 by simp
+  define \<delta> where "\<delta> = min (1 / 2) (1 / (2 * C))"
+  have d0: "0 < \<delta>" and d1: "\<delta> < 1"
+    unfolding \<delta>_def using C0 by auto
+  have "A * norm ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) = \<delta> * (A * Nm)"
+    using d0 unfolding Nm_def by (simp add: mult_ac)
+  also have "\<dots> \<le> \<delta> * C"
+    unfolding C_def using d0 A0 by (intro mult_left_mono) (auto simp: algebra_simps)
+  also have "\<dots> \<le> 1 / (2 * C) * C"
+    using C0 unfolding \<delta>_def by (intro mult_right_mono) auto
+  also have "\<dots> = 1 / 2"
+    using C0 by simp
+  finally have small: "A * norm ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) \<le> 1 / 2" .
+  show ?thesis
+    by (rule that[OF d0 d1], rule ell_op_usc_lt_one_of_small[OF k L])
+      (use small in \<open>simp add: A_def\<close>)
 qed
 
 theorem ell_op_lsc_at_zero:
@@ -1157,31 +1164,7 @@ text \<open>The constant test function: the touching that Definition 3.1's bound
 lemma ell_op_usc_zero_zero_lt_one:
   assumes kk: "1 \<le> k" "k < CARD('n::finite)" and LL: "1 \<le> L"
   shows "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n) < 1"
-proof -
-  have Bc0: "0 < real (CARD('n) * CARD('n)) * L / 2" using LL by simp
-  have Bcne: "real (CARD('n) * CARD('n)) * L / 2 \<noteq> 0"
-  proof
-    assume "real (CARD('n) * CARD('n)) * L / 2 = 0"
-    then show False using Bc0 by simp
-  qed
-  define ee where "ee = 1 / (2 * (real (CARD('n) * CARD('n)) * L / 2))"
-  have e0: "0 < ee" unfolding ee_def using Bc0 by simp
-  have "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n)
-      \<le> ereal (real (CARD('n) * CARD('n)) * L / 2
-          * (norm (0 :: real^'n^'n) + ee))"
-    by (rule ell_op_usc_le_scaled_norm[OF kk(1) kk(2) LL e0])
-  also have "real (CARD('n) * CARD('n)) * L / 2 * (norm (0 :: real^'n^'n) + ee)
-      = 1 / 2"
-  proof -
-    have "real (CARD('n) * CARD('n)) * L / 2 * (norm (0 :: real^'n^'n) + ee)
-        = (real (CARD('n) * CARD('n)) * L / 2) * ee" by simp
-    also have "\<dots> = 1 / 2" unfolding ee_def using Bcne by (simp add: field_simps)
-    finally show ?thesis .
-  qed
-  finally have "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n) \<le> ereal (1 / 2)" .
-  also have "ereal (1 / 2 :: real) < 1" by (simp add: one_ereal_def)
-  finally show ?thesis .
-qed
+  by (rule ell_op_usc_lt_one_of_small[OF kk LL]) simp
 
 subsection \<open>The invariances of \<open>F\<close> --- the paper's display (4.4)\<close>
 

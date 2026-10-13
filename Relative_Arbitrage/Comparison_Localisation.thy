@@ -430,7 +430,7 @@ qed
 
 subsection \<open>Symmetry and the ordering pass to the limit\<close>subsection \<open>Symmetry and the ordering pass to the limit\<close>
 
-text \<open>\<open>tendsto_entry\<close>, \<open>transpose_limit\<close>, \<open>tendsto_quadratic_form\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>transpose_limit\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 subsection \<open>The gradient alignment along the family\<close>

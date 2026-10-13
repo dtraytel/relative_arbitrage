@@ -45,19 +45,15 @@ proof -
 qed
 
 
+text \<open>A unit vector spans a one-dimensional orthonormal family, so its outer
+  product is a projection of trace one (\<open>onormal_proj\<close>), and so is the
+  complementary projection, of trace \<open>n - 1\<close>.\<close>
+
 lemma is_proj_rank1:
   fixes x :: "real^'n::finite"
   assumes x: "norm x = 1"
   shows "is_proj (outer_prod x x)" and "trace (outer_prod x x) = 1"
-proof -
-  have xx: "x \<bullet> x = 1"
-    using x by (simp add: dot_square_norm)
-  show "is_proj (outer_prod x x)"
-    unfolding is_proj_def by (simp add: outer_prod_mult xx)
-  show "trace (outer_prod x x) = 1"
-    by (simp add: xx)
-qed
-
+  using onormal_proj[of "{x}"] x by (auto simp: onormal_def)
 
 lemma is_proj_compl_rank1:
   fixes x :: "real^'n::finite"
@@ -65,38 +61,15 @@ lemma is_proj_compl_rank1:
   shows "is_proj (mat 1 - outer_prod x x :: real^'n^'n)"
     and "trace (mat 1 - outer_prod x x :: real^'n^'n) = real (CARD('n) - 1)"
 proof -
-  have xx: "x \<bullet> x = 1"
-    using x by (simp add: dot_square_norm)
-  have sq: "outer_prod x x ** outer_prod x x = (outer_prod x x :: real^'n^'n)"
-    by (simp add: outer_prod_mult xx)
-  show "is_proj (mat 1 - outer_prod x x :: real^'n^'n)"
-    unfolding is_proj_def
-  proof (intro conjI)
-    show "transpose (mat 1 - outer_prod x x :: real^'n^'n) = mat 1 - outer_prod x x"
-      by (simp add: transpose_diff_matrix)
-    have "(mat 1 - outer_prod x x) ** (mat 1 - outer_prod x x)
-        = (mat 1 - outer_prod x x) ** mat 1
-          - (mat 1 - outer_prod x x) ** outer_prod x x"
-      by (rule matrix_mul_diff_right)
-    also have "\<dots> = (mat 1 - outer_prod x x)
-                  - (mat 1 ** outer_prod x x - outer_prod x x ** outer_prod x x)"
-      by (simp add: matrix_mul_diff_left)
-    also have "\<dots> = (mat 1 - outer_prod x x :: real^'n^'n)"
-      by (simp add: sq)
-    finally show "(mat 1 - outer_prod x x :: real^'n^'n)
-        ** (mat 1 - outer_prod x x) = mat 1 - outer_prod x x" .
-  qed
-  have pos: "0 < CARD('n)"
-    by (simp add: card_gt_0_iff)
-  have "trace (mat 1 - outer_prod x x :: real^'n^'n)
-      = trace (mat 1 :: real^'n^'n) - trace (outer_prod x x)"
-    by (rule trace_sub)
-  also have "\<dots> = real CARD('n) - 1"
-    by (simp add: trace_I xx)
-  also have "\<dots> = real (CARD('n) - 1)"
-    using pos by simp
-  finally show "trace (mat 1 - outer_prod x x :: real^'n^'n)
-      = real (CARD('n) - 1)" .
+  have P: "is_proj (outer_prod x x)" "trace (outer_prod x x) = 1"
+    by (rule is_proj_rank1[OF x])+
+  then show "is_proj (mat 1 - outer_prod x x :: real^'n^'n)"
+    by (simp add: is_proj_def transpose_diff_matrix matrix_mul_diff_left
+        matrix_mul_diff_right)
+  have "0 < CARD('n)"
+    by simp
+  with P(2) show "trace (mat 1 - outer_prod x x :: real^'n^'n) = real (CARD('n) - 1)"
+    by (simp add: trace_sub trace_I of_nat_diff)
 qed
 
 text \<open>The trace of \<open>a\<close> against a rank-one projection is the Rayleigh
@@ -251,34 +224,24 @@ lemma quadform_outside_threshold_le_eigval:
     and v: "v \<in> B - T"
   shows "v \<bullet> (a *v v) \<le> eigval m a"
 proof -
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have finT: "finite T"
-    using T(1) finB by (rule finite_subset)
-  have Tne: "T \<noteq> {}"
-    using T(2) m by auto
-  obtain w where w: "w \<in> T"
-    and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
-        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"] by metis
-  obtain i where mi: "m = Suc i"
-    using m by (cases m) auto
-  have cardT: "card T = Suc i"
-    using T(2) mi by simp
-  have "eigval m a = w \<bullet> (a *v w)"
-    unfolding mi
-    by (rule eigval_eq_min_of_threshold[OF B sym eig T(1) cardT thresh w wmin])
-  moreover have "v \<bullet> (a *v v) \<le> w \<bullet> (a *v w)"
-    by (rule thresh[OF w v])
-  ultimately show ?thesis
-    by simp
+  obtain w where w: "w \<in> T" and "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
+    and eigw: "eigval m a = w \<bullet> (a *v w)"
+    using eigval_threshold_min[OF B sym eig T m thresh] by blast
+  show ?thesis
+    unfolding eigw by (rule thresh[OF w v])
 qed
 
-text \<open>The dimension-counting core of the Courant-Fischer argument: two
-  subspaces whose dimensions exceed the ambient dimension must meet in a
-  nonzero vector, applied below to \<open>S\<close> of dimension \<open>\<ge> m\<close> and
+text \<open>The dimension-counting core of the Courant-Fischer argument (Grassmann's
+  formula): two subspaces whose dimensions exceed the ambient dimension must meet
+  in a nonzero vector, applied below to \<open>S\<close> of dimension \<open>\<ge> m\<close> and
   \<open>span (B - T')\<close> of dimension \<open>CARD('n) - m + 1\<close>.\<close>
 
+lemma dim_inter_ge:
+  fixes S W :: "(real^'n::finite) set"
+  assumes S: "subspace S" and W: "subspace W"
+  shows "dim S + dim W \<le> dim (S \<inter> W) + CARD('n)"
+  using dim_sums_Int[OF S W] dim_subset_UNIV_cart[of "{x + y |x y. x \<in> S \<and> y \<in> W}"]
+  by simp
 
 lemma subspace_inter_nonzero:
   fixes S W :: "(real^'n::finite) set"
@@ -286,28 +249,10 @@ lemma subspace_inter_nonzero:
     and dims: "CARD('n) < dim S + dim W"
   shows "\<exists>x. x \<in> S \<and> x \<in> W \<and> x \<noteq> 0"
 proof -
-  have key: "dim {x + y |x y. x \<in> S \<and> y \<in> W} + dim (S \<inter> W) = dim S + dim W"
-    by (rule dim_sums_Int[OF S W])
-  have le: "dim {x + y |x y. x \<in> S \<and> y \<in> W} \<le> CARD('n)"
-    using dim_subset_UNIV[of "{x + y |x y. x \<in> S \<and> y \<in> W}"] by simp
-  have pos: "0 < dim (S \<inter> W)"
-  proof (rule ccontr)
-    assume "\<not> 0 < dim (S \<inter> W)"
-    then have z: "dim (S \<inter> W) = 0"
-      by simp
-    have "dim {x + y |x y. x \<in> S \<and> y \<in> W} = dim S + dim W"
-      using key z by simp
-    with le dims show False
-      by simp
-  qed
-  have "\<not> (S \<inter> W \<subseteq> {0})"
-  proof
-    assume "S \<inter> W \<subseteq> {0}"
-    then have "dim (S \<inter> W) = 0"
-      by simp
-    with pos show False
-      by simp
-  qed
+  have "dim (S \<inter> W) \<noteq> 0"
+    using dim_inter_ge[OF S W] dims by linarith
+  then have "\<not> S \<inter> W \<subseteq> {0}"
+    by simp
   then show ?thesis
     by blast
 qed
@@ -583,25 +528,6 @@ proof -
     by (rule exI[of _ q]) (intro conjI nq eigq top)
 qed
 
-text \<open>The Ky Fan sums of \<open>M\<^sub>q\<^sub>1\<close> are those of \<open>M\<close> shifted by one and reduced
-  by \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close>.  Since the \<open>q\<^sub>1\<close>-direction eigenvalue of \<open>M\<^sub>q\<^sub>1\<close> is minimal, a
-  top-\<open>j\<close> set can be taken inside \<open>B - {q\<^sub>1}\<close>; since \<open>q\<^sub>1\<close> attains the
-  maximum for \<open>M\<close>, a top-\<open>(j+1)\<close> set can be taken to contain it.\<close>
-
-
-lemma dim_inter_ge:
-  fixes S W :: "(real^'n::finite) set"
-  assumes S: "subspace S" and W: "subspace W"
-  shows "dim S + dim W \<le> dim (S \<inter> W) + CARD('n)"
-proof -
-  have key: "dim {x + y |x y. x \<in> S \<and> y \<in> W} + dim (S \<inter> W) = dim S + dim W"
-    by (rule dim_sums_Int[OF S W])
-  have le: "dim {x + y |x y. x \<in> S \<and> y \<in> W} \<le> CARD('n)"
-    by (rule dim_subset_UNIV_cart)
-  show ?thesis
-    using key le by simp
-qed
-
 text \<open>On the span of a threshold set, the Rayleigh quotient is bounded below by
   the smallest eigenvalue occurring there, namely \<open>eigval m a\<close>.\<close>
 
@@ -618,21 +544,10 @@ lemma quadform_ge_on_span_threshold:
 proof -
   have finB: "finite B"
     by (rule onormal_finite[OF B(1)])
-  have finT: "finite T"
-    using T(1) finB by (rule finite_subset)
-  have Tne: "T \<noteq> {}"
-    using T(2) m by auto
   obtain w where w: "w \<in> T"
     and wmin: "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    using arg_min_if_finite(1)[OF finT Tne, of "\<lambda>u :: real^'n. u \<bullet> (a *v u)"]
-        arg_min_least[OF finT Tne, of _ "\<lambda>u :: real^'n. u \<bullet> (a *v u)"] by metis
-  obtain i where mi: "m = Suc i"
-    using m by (cases m) auto
-  have cardT: "card T = Suc i"
-    using T(2) mi by simp
-  have eigw: "eigval m a = w \<bullet> (a *v w)"
-    unfolding mi
-    by (rule eigval_eq_min_of_threshold[OF B sym eig T(1) cardT thresh w wmin])
+    and eigw: "eigval m a = w \<bullet> (a *v w)"
+    using eigval_threshold_min[OF B sym eig T m thresh] by blast
   define lam where "lam = (\<lambda>u :: real^'n. u \<bullet> (a *v u))"
   have adecomp: "a = (\<Sum>u\<in>B. lam u *\<^sub>R outer_prod u u)"
     unfolding lam_def by (rule spectral_decomposition[OF B eig])
@@ -1034,41 +949,6 @@ proof -
     by (simp add: algebra_simps)
   finally show ?thesis .
 qed
-
-
-text \<open>\<open>continuous_on_matrix_entry\<close> lives in
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-lemma continuous_on_quadform:
-  fixes x :: "real^'n::finite"
-  shows "continuous_on UNIV (\<lambda>a :: real^'n^'n. x \<bullet> (a *v x))"
-  by (rule linear_continuous_on[OF bounded_linear_quadform])
-
-
-lemma closed_symmetric_matrices:
-  "closed {a :: real^'n::finite^'n. transpose a = a}"
-proof -
-  have eq: "{a :: real^'n^'n. transpose a = a}
-      = (\<Inter>i. \<Inter>j. {a. a $ j $ i = a $ i $ j})"
-    unfolding transpose_def vec_eq_iff by auto
-  have "closed {a :: real^'n^'n. a $ j $ i = a $ i $ j}" for i j
-    by (intro closed_Collect_eq continuous_on_matrix_entry continuous_on_id)
-  thus ?thesis unfolding eq by (intro closed_INT) auto
-qed
-
-
-lemma closed_psd: "closed {a :: real^'n::finite^'n. psd a}"
-proof -
-  have eq: "{a :: real^'n^'n. psd a}
-      = {a. transpose a = a} \<inter> (\<Inter>x. {a. 0 \<le> x \<bullet> (a *v x)})"
-    unfolding psd_def by auto
-  have "closed {a :: real^'n^'n. 0 \<le> x \<bullet> (a *v x)}" for x
-    by (intro closed_Collect_le continuous_on_quadform continuous_on_const)
-  thus ?thesis
-    unfolding eq
-    by (intro closed_Int closed_symmetric_matrices closed_INT) auto
-qed
-
 
 
 (*<*)

@@ -335,37 +335,56 @@ section \<open>Positive semidefinite matrices\<close>
 definition psd :: "real^'n^'n \<Rightarrow> bool" where
   "psd a \<longleftrightarrow> transpose a = a \<and> (\<forall>x. 0 \<le> x \<bullet> (a *v x))"
 
+text \<open>The trace of \<open>a ** P\<close>, read off in an orthonormal eigenbasis of the
+  symmetric matrix \<open>a\<close>: the eigenvalues weighted by the diagonal of \<open>P\<close>.\<close>
+
+lemma trace_mult_eigen_weights:
+  fixes a :: "real^'n::finite^'n"
+  assumes B: "onormal B" "span B = UNIV"
+    and sym: "transpose a = a"
+    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
+  shows "trace (a ** P) = (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (P *v u)))"
+proof -
+  have "trace (a ** P) = (\<Sum>u\<in>B. u \<bullet> ((a ** P) *v u))"
+    by (rule trace_onormal_basis[OF B])
+  also have "\<dots> = (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (P *v u)))"
+  proof (rule sum.cong[OF refl])
+    fix u assume u: "u \<in> B"
+    text \<open>Name the eigenvalue: \<open>eig\<close> rewrites \<open>a u\<close> into a term that again
+      contains \<open>a u\<close>, so it must not be handed to the simplifier directly.\<close>
+    define c where "c = u \<bullet> (a *v u)"
+    have au: "a *v u = c *\<^sub>R u"
+      unfolding c_def by (rule eig[OF u])
+    have "u \<bullet> ((a ** P) *v u) = u \<bullet> (a *v (P *v u))"
+      by (simp add: matrix_vector_mul_assoc)
+    also have "\<dots> = (P *v u) \<bullet> (a *v u)"
+      by (rule sym_inner_swap[OF sym])
+    also have "\<dots> = (P *v u) \<bullet> (c *\<^sub>R u)"
+      by (simp add: au)
+    also have "\<dots> = c * ((P *v u) \<bullet> u)"
+      by simp
+    also have "\<dots> = (u \<bullet> (a *v u)) * (u \<bullet> (P *v u))"
+      unfolding c_def by (simp add: inner_commute)
+    finally show "u \<bullet> ((a ** P) *v u) = (u \<bullet> (a *v u)) * (u \<bullet> (P *v u))" .
+  qed
+  finally show ?thesis .
+qed
+
 lemma trace_mult_psd_nonneg:
   fixes a b :: "real^'n^'n"
   assumes a: "psd a" and b: "psd b"
   shows "0 \<le> trace (a ** b)"
 proof -
-  from a have syma: "transpose a = a" and posa: "\<And>x. 0 \<le> x \<bullet> (a *v x)"
-    by (auto simp: psd_def)
-  from b have posb: "\<And>x. 0 \<le> x \<bullet> (b *v x)"
-    by (auto simp: psd_def)
+  from a have syma: "transpose a = a"
+    by (simp add: psd_def)
   obtain B where B: "onormal B" "span B = UNIV"
     and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
     using symmetric_eigenbasis[OF syma] by metis
-  have "trace (a ** b) = (\<Sum>u\<in>B. u \<bullet> ((a ** b) *v u))"
-    by (rule trace_onormal_basis[OF B])
-  moreover have "u \<bullet> ((a ** b) *v u)
-      = (u \<bullet> (a *v u)) * (u \<bullet> (b *v u))" if uB: "u \<in> B" for u
-  proof -
-    have "u \<bullet> ((a ** b) *v u) = u \<bullet> (a *v (b *v u))"
-      by (simp add: matrix_vector_mul_assoc)
-    also have "\<dots> = (b *v u) \<bullet> (a *v u)"
-      by (rule sym_inner_swap[OF syma])
-    also have "\<dots> = (b *v u) \<bullet> ((u \<bullet> (a *v u)) *\<^sub>R u)"
-      by (subst (1) eig[OF uB]) simp
-    also have "\<dots> = (u \<bullet> (a *v u)) * (u \<bullet> (b *v u))"
-      by (simp add: inner_commute)
-    finally show ?thesis .
-  qed
-  moreover have "0 \<le> (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (b *v u)))"
-    by (intro sum_nonneg mult_nonneg_nonneg posa posb)
-  ultimately show ?thesis
-    by simp
+  have "0 \<le> (\<Sum>u\<in>B. (u \<bullet> (a *v u)) * (u \<bullet> (b *v u)))"
+    using a b by (intro sum_nonneg mult_nonneg_nonneg) (auto simp: psd_def)
+  also have "\<dots> = trace (a ** b)"
+    by (rule trace_mult_eigen_weights[OF B syma eig, symmetric])
+  finally show ?thesis .
 qed
 
 lemma psd_convex_comb:
@@ -489,27 +508,28 @@ text \<open>A bounded family on which the operator bound holds yields the
   and pass to the limit automatically; \<open>p \<noteq> 0\<close> is not closed and needs a
   positive lower bound along the family.\<close>
 
+lemma continuous_on_quadform:
+  fixes x :: "real^'n::finite"
+  shows "continuous_on UNIV (\<lambda>a :: real^'n^'n. x \<bullet> (a *v x))"
+  by (rule linear_continuous_on[OF bounded_linear_quadform])
+
+lemma closed_psd: "closed {a :: real^'n::finite^'n. psd a}"
+proof -
+  have eq: "{a :: real^'n^'n. psd a}
+      = {a. transpose a = a} \<inter> (\<Inter>x. {a. 0 \<le> x \<bullet> (a *v x)})"
+    unfolding psd_def by auto
+  have "closed {a :: real^'n^'n. 0 \<le> x \<bullet> (a *v x)}" for x
+    by (intro closed_Collect_le continuous_on_quadform continuous_on_const)
+  thus ?thesis
+    unfolding eq
+    by (intro closed_Int closed_symmetric_matrices closed_INT) auto
+qed
+
 theorem psd_limit:
   fixes A :: "nat \<Rightarrow> real^'n::finite^'n"
   assumes conv: "A \<longlonglongrightarrow> A0" and p: "\<And>i. psd (A i)"
   shows "psd A0"
-proof -
-  have sym: "transpose (A i) = A i" for i
-    using p[of i] unfolding psd_def by simp
-  have nn: "0 \<le> x \<bullet> (A i *v x)" for i and x :: "real^'n"
-    using p[of i] unfolding psd_def by simp
-  have s0: "transpose A0 = A0"
-    by (rule transpose_limit[OF conv sym])
-  have q0: "0 \<le> x \<bullet> (A0 *v x)" for x :: "real^'n"
-  proof -
-    have "(\<lambda>i. x \<bullet> (A i *v x)) \<longlonglongrightarrow> x \<bullet> (A0 *v x)"
-      by (rule tendsto_quadratic_form[OF conv])
-    then show ?thesis
-      by (rule LIMSEQ_le_const) (use nn in blast)
-  qed
-  show ?thesis
-    unfolding psd_def using s0 q0 by blast
-qed
+  using closed_sequentially[OF closed_psd, of A A0] conv p by blast
 
 text \<open>\<open>psd (Y-X)\<close> is preserved when both sequences converge, since subtraction
   is continuous and \<open>psd\<close> is a closed condition.\<close>

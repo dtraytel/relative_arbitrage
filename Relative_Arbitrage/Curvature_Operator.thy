@@ -288,7 +288,7 @@ text \<open>\<open>test_fun_at\<close>, \<open>visc_subsol\<close>, \<open>visc_
 
 subsection \<open>First- and second-order conditions at interior minima\<close>
 
-text \<open>\<open>local_min_gradient_zero\<close>, \<open>local_min_hessian_psd\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>\<open>local_min_gradient_zero\<close>, \<open>local_min_hessian_psd\<close> live in \<open>Sup_Convolution\<close>.\<close>
 
 
 (*<*)

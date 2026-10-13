@@ -434,8 +434,6 @@ proof -
   qed
 qed
 
-text \<open>\<open>bm_prj_measurable\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
-
 
 theorem martingale_cbm_cross:
   fixes x0 :: "real^'n::finite" and i j :: 'n
@@ -450,7 +448,7 @@ proof -
   let ?Y' = "\<lambda>t \<omega> :: 'n \<Rightarrow> real \<Rightarrow> real. cbmX x0 t \<omega> $ i * cbmX x0 t \<omega> $ j"
   have measY': "?Y' u \<in> borel_measurable ?M" for u
     by (intro borel_measurable_times
-        measurable_compose[OF measurable_cbmX bm_prj_measurable])
+        measurable_compose[OF measurable_cbmX borel_measurable_nth])
   have aeY: "AE \<omega> in ?M. ?Y' u \<omega> = ?Y u \<omega>" if u: "0 \<le> u" for u
   proof -
     have "AE \<omega> in ?M. cbmX x0 u \<omega> = bmX x0 u \<omega>"
@@ -476,7 +474,7 @@ proof -
       show "\<And>u. 0 \<le> u \<Longrightarrow> cbmX x0 u \<in> borel_measurable ?M"
         by (rule measurable_cbmX)
       show "\<And>u. (\<lambda>y :: real^'n. (y $ i) * (y $ j)) \<in> borel_measurable borel"
-        by (intro borel_measurable_times bm_prj_measurable)
+        by (intro borel_measurable_times borel_measurable_nth)
     qed
   qed
 qed

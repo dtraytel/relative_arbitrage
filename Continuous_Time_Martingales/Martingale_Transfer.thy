@@ -26,16 +26,6 @@ text \<open>The pasting theorem needs three transfer results: a first-factor
   conditional expectation on the product and no \<open>\<pi>\<close>-\<open>\<lambda>\<close> argument is
   needed.\<close>
 
-lemma prob_space_pair_measure:
-  assumes M: "prob_space M" and N: "prob_space N"
-  shows "prob_space (M \<Otimes>\<^sub>M N)"
-proof -
-  interpret M: prob_space M by (rule M)
-  interpret N: prob_space N by (rule N)
-  interpret PP: pair_prob_space M N by unfold_locales
-  show ?thesis by (rule PP.P.prob_space_axioms)
-qed
-
 lemma sets_pair_measure_mono:
   assumes A: "sets A \<subseteq> sets M" "space A = space M"
     and B: "sets B \<subseteq> sets N" "space B = space N"
@@ -90,7 +80,7 @@ proof -
   interpret PM: prob_space M by (rule M)
   interpret PN: prob_space N by (rule N)
   interpret MG: martingale M F "0::real" X by (rule mg)
-  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair_measure[OF M N])
+  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair[OF M N])
   interpret PS: pair_sigma_finite M N by unfold_locales
   have FMF: "filtered_measure M F (0::real)" by unfold_locales
   interpret FP: finite_filtered_measure "M \<Otimes>\<^sub>M N" "\<lambda>u. F u \<Otimes>\<^sub>M G u" "0::real"
@@ -185,7 +175,7 @@ theorem martingale_pair_snd_param:
 proof -
   interpret PM: prob_space M by (rule M)
   interpret PN: prob_space N by (rule N)
-  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair_measure[OF M N])
+  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair[OF M N])
   interpret PS: pair_sigma_finite M N by unfold_locales
   interpret FP: finite_filtered_measure "M \<Otimes>\<^sub>M N" "\<lambda>u. F u \<Otimes>\<^sub>M G u" "0::real"
     unfolding finite_filtered_measure_def
@@ -292,7 +282,7 @@ proof -
   interpret PN: prob_space N by (rule N)
   interpret MX: martingale M F "0::real" X by (rule mgX)
   interpret MY: martingale N G "0::real" Y by (rule mgY)
-  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair_measure[OF M N])
+  interpret PP: prob_space "M \<Otimes>\<^sub>M N" by (rule prob_space_pair[OF M N])
   interpret PS: pair_sigma_finite M N by unfold_locales
   have FMF: "filtered_measure M F (0::real)" by unfold_locales
   have FMG: "filtered_measure N G (0::real)" by unfold_locales
@@ -570,7 +560,7 @@ proof -
   interpret MG: martingale "R i" "G i" "0::real" Y by (rule mg)
   have ins: "insert i ?I = (UNIV :: 'i set)" by auto
   have PS: "prob_space ?S" by (rule prob_space_PiM) (rule R)
-  have PP: "prob_space ?P" by (rule prob_space_pair_measure[OF R PS])
+  have PP: "prob_space ?P" by (rule prob_space_pair[OF R PS])
   have GI: "filtered_measure ?S (\<lambda>u. Pi\<^sub>M ?I (\<lambda>j. G j u)) (0::real)"
     by (rule filtered_measure_PiM) (rule F)
   have GU: "filtered_measure (Pi\<^sub>M UNIV R) ?GG (0::real)"

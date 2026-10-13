@@ -343,16 +343,6 @@ proof -
   finally show ?thesis .
 qed
 
-lemma abs_norm_diff_le:
-  fixes x y :: "'a::real_normed_vector"
-  shows "\<bar>norm x - norm y\<bar> \<le> norm (x - y)"
-proof -
-  have a: "norm x - norm y \<le> norm (x - y)" by (rule norm_triangle_ineq2)
-  have b: "norm y - norm x \<le> norm (y - x)" by (rule norm_triangle_ineq2)
-  have c: "norm (y - x) = norm (x - y)" by (rule norm_minus_commute)
-  show ?thesis using a b unfolding c by linarith
-qed
-
 lemma soft_R_lipschitz:
   fixes x y :: "real^'n::finite"
   shows "\<bar>sqrt ((norm x)\<^sup>2 + 1) - sqrt ((norm y)\<^sup>2 + 1)\<bar> \<le> norm (x - y)"
@@ -390,7 +380,7 @@ proof -
     finally show ?thesis .
   qed
   \<comment> \<open>and now the two elementary bounds\<close>
-  have b1: "\<bar>norm x - norm y\<bar> \<le> norm (x - y)" by (rule abs_norm_diff_le)
+  have b1: "\<bar>norm x - norm y\<bar> \<le> norm (x - y)" by (rule norm_triangle_ineq3)
   have b2: "norm x + norm y \<le> ?s + ?t"
     using norm_le_soft_R[of x] norm_le_soft_R[of y] by linarith
   have chain: "\<bar>?s - ?t\<bar> * (?s + ?t) \<le> norm (x - y) * (?s + ?t)"
@@ -1138,7 +1128,7 @@ lemma soft_hess_bound:
 
 subsection \<open>\<open>soft_grad\<close> is Lipschitz, at a non-sharp elementary constant\<close>
 
-text \<open>\<open>norm_le_soft_R\<close>, \<open>abs_norm_diff_le\<close>, \<open>soft_R_lipschitz\<close>, \<open>soft_shrink\<close> live in \<open>Soft_Penalty\<close>.\<close>
+text \<open>\<open>norm_le_soft_R\<close>, \<open>soft_R_lipschitz\<close>, \<open>soft_shrink\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_grad_split:
   fixes d :: "real^'n::finite"

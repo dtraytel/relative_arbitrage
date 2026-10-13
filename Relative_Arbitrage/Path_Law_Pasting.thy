@@ -676,9 +676,6 @@ lemma sets_pglue_law[simp]:
      = sets (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure)"
   unfolding pglue_law_def by (rule sets_pair_law_of)
 
-text \<open>\<open>prob_space_pair_measure\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
-
 lemma prob_space_pglue_law:
   fixes Q R :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
@@ -688,7 +685,7 @@ lemma prob_space_pglue_law:
   shows "prob_space (pglue_law r T Q R)"
 proof -
   interpret PP: prob_space "Q \<Otimes>\<^sub>M R"
-    by (rule prob_space_pair_measure[OF PQ PR])
+    by (rule prob_space_pair[OF PQ PR])
   show ?thesis
     unfolding pglue_law_def pair_law_of_def
     by (rule PP.prob_space_distr[OF pglue_measurable[OF r rT setsQ setsR]])
@@ -2583,7 +2580,7 @@ lemma prob_space_kglue_law:
   shows "prob_space (kglue_law r T N Q RR)"
 proof -
   interpret PP: prob_space "Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR"
-    by (rule prob_space_pair_measure[OF PQ prob_space_PiM]) (rule PR)
+    by (rule prob_space_pair[OF PQ prob_space_PiM]) (rule PR)
   show ?thesis
     unfolding kglue_law_def pair_law_of_def
     by (rule PP.prob_space_distr

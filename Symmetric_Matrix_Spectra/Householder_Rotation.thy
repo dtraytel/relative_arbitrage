@@ -230,23 +230,7 @@ definition rotv :: "real^'n::finite \<Rightarrow> real^'n \<Rightarrow> real^'n^
 lemma rotv_orthogonal:
   fixes u v :: "real^'n::finite"
   shows "orthogonal_matrix (rotv u v)"
-proof -
-  have "transpose (rotv u v) ** rotv u v = mat 1"
-  proof -
-    have "transpose (rotv u v) ** rotv u v
-        = (hrefl u ** hrefl (u + v)) ** (hrefl (u + v) ** hrefl u)"
-      unfolding rotv_def matrix_transpose_mul hrefl_sym by (rule refl)
-    also have "\<dots> = hrefl u ** ((hrefl (u + v) ** hrefl (u + v)) ** hrefl u)"
-      by (simp add: matrix_mul_assoc)
-    also have "\<dots> = hrefl u ** (mat 1 ** hrefl u)"
-      unfolding hrefl_sq by (rule refl)
-    also have "\<dots> = hrefl u ** hrefl u" by (simp add: matrix_mul_lid)
-    also have "\<dots> = mat 1" by (rule hrefl_sq)
-    finally show ?thesis .
-  qed
-  then show ?thesis
-    unfolding orthogonal_matrix_def using matrix_left_right_inverse by blast
-qed
+  unfolding rotv_def by (intro orthogonal_matrix_mul hrefl_orthogonal)
 
 lemma rotv_apply:
   fixes u v :: "real^'n::finite"
@@ -288,11 +272,7 @@ lemma rotm_vec:
 lemma rotm_orthogonal:
   fixes q w :: "real^'n::finite"
   shows "orthogonal_matrix (rotm q w)"
-proof (rule orthogonal_matrixI)
-  fix y z :: "real^'n"
-  show "(rotm q w *v y) \<bullet> (rotm q w *v z) = y \<bullet> z"
-    unfolding rotm_vec by (simp only: hrefl_inner)
-qed
+  unfolding rotm_def by (intro orthogonal_matrix_mul hrefl_orthogonal)
 
 lemma rotm_self: "rotm q q *v z = z"
 proof (cases "q = 0")

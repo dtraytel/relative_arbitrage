@@ -33,16 +33,6 @@ text \<open>The doubled function lives on \<open>'a \<times> 'b\<close>, itself 
   to each slice, letting the single product Hessian be read as two
   separate matrices.\<close>
 
-lemma norm_Pair_right_zero:
-  fixes h :: "'a::euclidean_space"
-  shows "norm ((h, 0) :: 'a \<times> 'b::euclidean_space) = norm h"
-  by (simp add: norm_prod_def)
-
-lemma norm_Pair_left_zero:
-  fixes h :: "'b::euclidean_space"
-  shows "norm ((0, h) :: 'a::euclidean_space \<times> 'b) = norm h"
-  by (simp add: norm_prod_def)
-
 lemma expansion_restrict_fst:
   fixes \<Psi> :: "'a::euclidean_space \<times> 'b::euclidean_space \<Rightarrow> real"
   assumes exp: "((\<lambda>k. (\<Psi> (z + k) - \<Psi> z - q \<bullet> k - (k \<bullet> Z k)/2) / (norm k)\<^sup>2)
@@ -74,7 +64,7 @@ proof -
     have inn2: "(h, 0::'b) \<bullet> Z (h, 0::'b) = h \<bullet> fst (Z (h, 0::'b))"
       by (cases "Z (h, 0::'b)") simp
     show ?thesis
-      unfolding zsum inn1 inn2 norm_Pair_right_zero ..
+      unfolding zsum inn1 inn2 norm_Pair2 ..
   qed
   show ?thesis using c unfolding eq .
 qed
@@ -110,7 +100,7 @@ proof -
     have inn2: "(0::'a, h) \<bullet> Z (0::'a, h) = h \<bullet> snd (Z (0::'a, h))"
       by (cases "Z (0::'a, h)") simp
     show ?thesis
-      unfolding zsum inn1 inn2 norm_Pair_left_zero ..
+      unfolding zsum inn1 inn2 norm_Pair1 ..
   qed
   show ?thesis using c unfolding eq .
 qed

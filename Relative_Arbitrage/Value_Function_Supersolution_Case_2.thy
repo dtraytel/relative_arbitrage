@@ -575,64 +575,6 @@ proof -
   qed
 qed
 
-subsection \<open>Where the envelope is invisible\<close>
-
-text \<open>The uniqueness theorem of \<open>Value_Function_Uniqueness\<close> works with continuous
-  solutions, and at a point of continuity the lower envelope is the
-  function itself, so on that class the faithful notion
-  @{const visc_supersol_lsc} and @{const visc_supersol_env} agree and the
-  envelope costs nothing at the interface.  The interface also relies on
-  \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close>, a separate analytic fact.\<close>
-
-text \<open>\<open>lsc_env_eq_self\<close> (at a point of continuity the lower envelope is the
-  function itself) lives in
-  @{theory Semicontinuous_Analysis.Semicontinuous_Envelopes}.\<close>
-
-lemma visc_supersol_lsc_iff_env:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes B: "\<And>y. B \<le> u y" and sub: "\<Omega> \<subseteq> K"
-    and cont: "\<And>y. y \<in> K \<Longrightarrow> isCont u y"
-  shows "visc_supersol_lsc k L K \<Omega> u \<longleftrightarrow> visc_supersol_env k L K \<Omega> u"
-proof -
-  have eqK: "\<And>y. y \<in> K \<Longrightarrow> lsc_env u y = u y"
-    by (rule lsc_env_eq_self[OF B cont])
-  have eqO: "\<And>y. y \<in> \<Omega> \<Longrightarrow> lsc_env u y = u y"
-    using eqK sub by blast
-  show ?thesis
-    unfolding visc_supersol_lsc_def visc_supersol_env_def
-  proof (intro iffI ballI allI impI)
-    fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-    assume h: "\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
-        (\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y) \<longrightarrow>
-        1 \<le> ell_op_usc k L (g x) H"
-      and x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-      and tm: "\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y"
-    have "\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
-    proof
-      fix y assume y: "y \<in> K"
-      show "lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
-        unfolding eqO[OF x] eqK[OF y] using tm y by blast
-    qed
-    then show "1 \<le> ell_op_usc k L (g x) H" using h x tf by blast
-  next
-    fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-    assume h: "\<forall>x\<in>\<Omega>. \<forall>\<phi> g H. test_fun_at \<phi> g H x \<longrightarrow>
-        (\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y) \<longrightarrow>
-        1 \<le> ell_op_usc k L (g x) H"
-      and x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-      and tm: "\<forall>y\<in>K. lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
-    have "\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y"
-    proof
-      fix y assume y: "y \<in> K"
-      have h1: "lsc_env u x - \<phi> x \<le> lsc_env u y - \<phi> y"
-        using tm y by blast
-      show "u x - \<phi> x \<le> u y - \<phi> y"
-        using h1 unfolding eqO[OF x] eqK[OF y] .
-    qed
-    then show "1 \<le> ell_op_usc k L (g x) H" using h x tf by blast
-  qed
-qed
-
 subsection \<open>The envelope is lower semicontinuous, and attains its infimum\<close>
 
 text \<open>Case 2 tilts the test function and reads off a minimiser of

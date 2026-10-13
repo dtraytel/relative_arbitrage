@@ -10,7 +10,8 @@ begin
 text \<open>
   Finite orthonormal families of vectors: the completeness relation and the
   trace formula it gives in an orthonormal basis, and the extension of any
-  orthonormal family to an orthonormal basis of the whole space.
+  orthonormal family inside a subspace to an orthonormal basis of that subspace
+  (in particular of the whole space).
 \<close>
 
 unbundle inner_syntax
@@ -127,149 +128,6 @@ qed
 
 section \<open>Extension of orthonormal families to orthonormal bases\<close>
 
-lemma onormal_extension:
-  assumes B: "onormal B"
-  obtains C where "onormal C" "B \<subseteq> C" "span C = UNIV"
-proof -
-  have orthB: "pairwise orthogonal B"
-    using B by (simp add: onormal_def)
-  obtain U where U: "pairwise orthogonal (B \<union> U)"
-    "span (B \<union> U) = span (B \<union> Basis)"
-    using orthogonal_extension[OF orthB, where T = Basis] by blast
-  define C where "C = (\<lambda>u. u /\<^sub>R norm u) ` ((B \<union> U) - {0})"
-  have C_norm: "norm u = 1" if "u \<in> C" for u
-    using that
-    by (auto simp: C_def sgn_div_norm[symmetric] norm_sgn split: if_splits)
-  have C_orth: "pairwise orthogonal C"
-  proof (rule pairwiseI)
-    fix x y assume "x \<in> C" "y \<in> C" "x \<noteq> y"
-    then obtain u v where uv: "u \<in> (B \<union> U) - {0}" "v \<in> (B \<union> U) - {0}"
-      "x = u /\<^sub>R norm u" "y = v /\<^sub>R norm v"
-      by (auto simp: C_def)
-    with \<open>x \<noteq> y\<close> have "u \<noteq> v" by auto
-    with U(1) uv have "orthogonal u v"
-      by (auto simp: pairwise_def)
-    then show "orthogonal x y"
-      by (simp add: uv orthogonal_def)
-  qed
-  have C_fin: "finite C"
-    using C_orth C_norm
-    by (intro pairwise_orthogonal_imp_finite) auto
-  have BC: "B \<subseteq> C"
-  proof
-    fix b assume b: "b \<in> B"
-    with B have "norm b = 1"
-      by (simp add: onormal_def)
-    with b show "b \<in> C"
-      by (force simp: C_def intro: rev_image_eqI)
-  qed
-  have C_sub: "C \<subseteq> span (B \<union> U)"
-  proof
-    fix y assume "y \<in> C"
-    then obtain u where u: "u \<in> (B \<union> U) - {0}" "y = u /\<^sub>R norm u"
-      by (auto simp: C_def)
-    then show "y \<in> span (B \<union> U)"
-      by (metis DiffD1 span_base span_scale)
-  qed
-  have sub_C: "B \<union> U \<subseteq> span C"
-  proof
-    fix u assume u: "u \<in> B \<union> U"
-    show "u \<in> span C"
-    proof (cases "u = 0")
-      case True
-      then show ?thesis
-        by (simp add: span_zero)
-    next
-      case False
-      with u have "u /\<^sub>R norm u \<in> C"
-        by (auto simp: C_def)
-      then have "norm u *\<^sub>R (u /\<^sub>R norm u) \<in> span C"
-        by (intro span_scale span_base)
-      with False show ?thesis
-        by simp
-    qed
-  qed
-  have "span C = span (B \<union> U)"
-    using C_sub sub_C by (simp add: span_eq)
-  also have "\<dots> = span (B \<union> Basis)"
-    by (fact U(2))
-  also have "\<dots> = UNIV"
-  proof -
-    have "(UNIV :: (real^'n) set) = span Basis"
-      by simp
-    also have "\<dots> \<subseteq> span (B \<union> Basis)"
-      by (intro span_mono) auto
-    finally show ?thesis
-      by auto
-  qed
-  finally have C_span: "span C = UNIV" .
-  show thesis
-    by (rule that[of C]) (use C_fin C_orth C_norm BC C_span in \<open>auto simp: onormal_def\<close>)
-qed
-
-section \<open>The trace lower bound (Courant--Fischer/Ky Fan argument)\<close>
-
-lemma trace_ge_dim:
-  fixes a :: "real^'n^'n"
-  assumes psd: "\<And>x. 0 \<le> x \<bullet> (a *v x)"
-    and S: "subspace S"
-    and ray: "\<And>x. x \<in> S \<Longrightarrow> x \<bullet> x \<le> x \<bullet> (a *v x)"
-  shows "real (dim S) \<le> trace a"
-proof -
-  obtain B where B: "B \<subseteq> S" "pairwise orthogonal B" "\<And>x. x \<in> B \<Longrightarrow> norm x = 1"
-    "independent B" "card B = dim S" "span B = S"
-    using orthonormal_basis_subspace[OF S] by metis
-  have onB: "onormal B"
-    using B by (auto simp: onormal_def intro: pairwise_orthogonal_imp_finite)
-  obtain C where C: "onormal C" "B \<subseteq> C" "span C = UNIV"
-    using onormal_extension[OF onB] by blast
-  have "real (dim S) = (\<Sum>u\<in>B. u \<bullet> u)"
-    using B(5) onB by (simp add: onormal_def)
-  also have "\<dots> \<le> (\<Sum>u\<in>B. u \<bullet> (a *v u))"
-    by (intro sum_mono ray) (use B(1) in auto)
-  also have "\<dots> \<le> (\<Sum>u\<in>C. u \<bullet> (a *v u))"
-    using C by (intro sum_mono2 psd) (auto simp: onormal_def)
-  also have "\<dots> = trace a"
-    by (simp add: trace_onormal_basis[OF C(1,3)])
-  finally show ?thesis .
-qed
-
-section \<open>More orthonormal-family facts\<close>
-
-lemma onormal_empty: "onormal {}"
-  by (simp add: onormal_def pairwise_def)
-
-lemma onormal_subset:
-  assumes "onormal B" and "S \<subseteq> B"
-  shows "onormal S"
-  using assms unfolding onormal_def
-  by (auto elim: pairwise_subset intro: finite_subset)
-
-lemma onormal_finite:
-  assumes "onormal B"
-  shows "finite B"
-  using assms by (simp add: onormal_def)
-
-lemma onormal_independent:
-  assumes "onormal B"
-  shows "independent B"
-  using assms
-  by (intro pairwise_orthogonal_independent) (auto simp: onormal_def)
-
-lemma onormal_card_dim_span:
-  assumes "onormal B"
-  shows "card B = dim (span B)"
-  using onormal_independent[OF assms]
-  by (simp add: dim_eq_card_independent)
-
-text \<open>An orthonormal spanning family is a basis, so it has \<open>n\<close> elements.\<close>
-
-lemma onormal_span_card:
-  fixes B :: "(real^'n::finite) set"
-  assumes B: "onormal B" and sp: "span B = UNIV"
-  shows "card B = CARD('n)"
-  using onormal_card_dim_span[OF B] sp by simp
-
 lemma onormal_extension_within:
   assumes B: "onormal B" and W: "subspace W" and BW: "B \<subseteq> W"
   obtains C where "onormal C" "B \<subseteq> C" "C \<subseteq> W" "span C = W"
@@ -363,6 +221,74 @@ proof -
     by (rule that[of C])
       (use C_fin C_orth C_norm BC CW C_span in \<open>auto simp: onormal_def\<close>)
 qed
+
+lemma onormal_extension:
+  assumes B: "onormal B"
+  obtains C where "onormal C" "B \<subseteq> C" "span C = UNIV"
+  using onormal_extension_within[OF B subspace_UNIV subset_UNIV] by metis
+
+section \<open>The trace lower bound (Courant--Fischer/Ky Fan argument)\<close>
+
+lemma trace_ge_dim:
+  fixes a :: "real^'n^'n"
+  assumes psd: "\<And>x. 0 \<le> x \<bullet> (a *v x)"
+    and S: "subspace S"
+    and ray: "\<And>x. x \<in> S \<Longrightarrow> x \<bullet> x \<le> x \<bullet> (a *v x)"
+  shows "real (dim S) \<le> trace a"
+proof -
+  obtain B where B: "B \<subseteq> S" "pairwise orthogonal B" "\<And>x. x \<in> B \<Longrightarrow> norm x = 1"
+    "independent B" "card B = dim S" "span B = S"
+    using orthonormal_basis_subspace[OF S] by metis
+  have onB: "onormal B"
+    using B by (auto simp: onormal_def intro: pairwise_orthogonal_imp_finite)
+  obtain C where C: "onormal C" "B \<subseteq> C" "span C = UNIV"
+    using onormal_extension[OF onB] by blast
+  have "real (dim S) = (\<Sum>u\<in>B. u \<bullet> u)"
+    using B(5) onB by (simp add: onormal_def)
+  also have "\<dots> \<le> (\<Sum>u\<in>B. u \<bullet> (a *v u))"
+    by (intro sum_mono ray) (use B(1) in auto)
+  also have "\<dots> \<le> (\<Sum>u\<in>C. u \<bullet> (a *v u))"
+    using C by (intro sum_mono2 psd) (auto simp: onormal_def)
+  also have "\<dots> = trace a"
+    by (simp add: trace_onormal_basis[OF C(1,3)])
+  finally show ?thesis .
+qed
+
+section \<open>More orthonormal-family facts\<close>
+
+lemma onormal_empty: "onormal {}"
+  by (simp add: onormal_def pairwise_def)
+
+lemma onormal_subset:
+  assumes "onormal B" and "S \<subseteq> B"
+  shows "onormal S"
+  using assms unfolding onormal_def
+  by (auto elim: pairwise_subset intro: finite_subset)
+
+lemma onormal_finite:
+  assumes "onormal B"
+  shows "finite B"
+  using assms by (simp add: onormal_def)
+
+lemma onormal_independent:
+  assumes "onormal B"
+  shows "independent B"
+  using assms
+  by (intro pairwise_orthogonal_independent) (auto simp: onormal_def)
+
+lemma onormal_card_dim_span:
+  assumes "onormal B"
+  shows "card B = dim (span B)"
+  using onormal_independent[OF assms]
+  by (simp add: dim_eq_card_independent)
+
+text \<open>An orthonormal spanning family is a basis, so it has \<open>n\<close> elements.\<close>
+
+lemma onormal_span_card:
+  fixes B :: "(real^'n::finite) set"
+  assumes B: "onormal B" and sp: "span B = UNIV"
+  shows "card B = CARD('n)"
+  using onormal_card_dim_span[OF B] sp by simp
 
 lemma onormal_outer_sum_eq:
   assumes B1: "onormal B1" and B2: "onormal B2" and sp: "span B1 = span B2"

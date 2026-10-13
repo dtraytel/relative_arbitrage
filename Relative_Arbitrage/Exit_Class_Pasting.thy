@@ -546,7 +546,7 @@ proof -
   qed
   show ?thesis
     unfolding pglue_law_def
-    by (rule martingale_pair_law[OF prob_space_pair_measure[OF PQ PR]
+    by (rule martingale_pair_law[OF prob_space_pair[OF PQ PR]
         pglue_measurable[OF r rT setsQ setsR] gadap Zm[unfolded pglue_law_def]
         mgl])
 qed
@@ -795,7 +795,7 @@ proof -
   qed
   show ?thesis
     unfolding pglue_law_def
-    by (rule martingale_pair_law[OF prob_space_pair_measure[OF PQ PR]
+    by (rule martingale_pair_law[OF prob_space_pair[OF PQ PR]
         pglue_measurable[OF r rT setsQ setsR] gadap Zm[unfolded pglue_law_def]
         mgl])
 qed
@@ -1417,7 +1417,7 @@ proof -
   qed
   show ?thesis
     unfolding kglue_law_def
-    by (rule martingale_pair_law[OF prob_space_pair_measure[OF PQ PS]
+    by (rule martingale_pair_law[OF prob_space_pair[OF PQ PS]
         kglue_measurable[OF r rT setsQ setsR NmQ] gadap
         Zm[unfolded kglue_law_def] mgl])
 qed
@@ -2190,7 +2190,7 @@ proof -
   qed
   show ?thesis
     unfolding kglue_law_def
-    by (rule martingale_pair_law[OF prob_space_pair_measure[OF PQ PS]
+    by (rule martingale_pair_law[OF prob_space_pair[OF PQ PS]
         kglue_measurable[OF r rT setsQ setsR NmQ] gadap
         Zm[unfolded kglue_law_def] mgl])
 qed
