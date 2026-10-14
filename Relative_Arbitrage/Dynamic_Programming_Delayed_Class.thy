@@ -365,7 +365,7 @@ qed
 
 section \<open>The delayed class supplies the additive glue's kernel clauses\<close>
 
-text \<open>@{thm [source] exit_class_aglue} asks its continuation kernel for
+text \<open>@{thm [source] covariation_class_aglue} asks its continuation kernel for
   nine facts.  Four are already in hand for \<^const>\<open>pdelclass\<close> --- \<open>Kp\<close>
   (the selector's own measurability), \<open>prob_space\<close>/\<open>sets\<close>
   (@{thm [source] pdelclass_prob}), and \<open>Kfr\<close> and \<open>K0\<close>

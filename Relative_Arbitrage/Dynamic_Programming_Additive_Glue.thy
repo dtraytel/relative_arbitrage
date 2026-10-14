@@ -28,16 +28,16 @@ section \<open>The additive glue\<close>
 
 lemma padd_diffquot:
   fixes p' w :: "'n::finite pairpath"
-  assumes T0: "0 \<le> T" and r0: "0 \<le> r" and rT: "r \<le> T"
+  assumes T0: "0 \<le> T" and Sv: "convex S" and r0: "0 \<le> r" and rT: "r \<le> T"
     and idem: "\<And>u. u \<in> {0..T} \<Longrightarrow> p' u = p' (min u r)"
     and w0: "\<And>u. u \<in> {0..T} \<Longrightarrow> u \<le> r \<Longrightarrow> w u = 0"
     and A: "\<And>a b. 0 \<le> a \<Longrightarrow> a < b \<Longrightarrow> b \<le> r
-      \<Longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+      \<Longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
     and B: "\<And>a b. r \<le> a \<Longrightarrow> a < b \<Longrightarrow> b \<le> T
-      \<Longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+      \<Longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> S"
     and s: "0 \<le> s" and stlt: "s < t" and tT: "t \<le> T"
   shows "(1 / (t - s)) *\<^sub>R (snd (padd T p' w t) - snd (padd T p' w s))
-      \<in> sconstraint k L"
+      \<in> S"
 proof -
   have sT: "s \<in> {0..T}" using s stlt tT by simp
   have tI: "t \<in> {0..T}" using s stlt tT by simp
@@ -70,7 +70,7 @@ proof -
         = (snd (p' r) - snd (p' s)) + (snd (w t) - snd (w r))"
       unfolding split pt using ws wr by simp
     show ?thesis
-      unfolding eq by (rule diffquot_convex_split[OF sconstraint_convex mid
+      unfolding eq by (rule diffquot_convex_split[OF Sv mid
           A[OF s mid(1) order_refl] B[OF order_refl mid(2) tT]])
   qed
 qed
@@ -82,32 +82,33 @@ text \<open>Clause (iii) for the glued law.  The whole clause is a closed set
 
 lemma aglue_law_diffquot:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes T0: "0 \<le> T" and PQ: "prob_space Q"
+  assumes T0: "0 \<le> T" and Sc: "closed S" and Sv: "convex S"
+    and PQ: "prob_space Q"
     and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
-        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
     and K0: "\<And>p'. p' \<in> space Q
       \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kcov: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. \<forall>a b. \<theta> p' \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
-        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> S"
   shows "AE \<omega> in aglue_law T \<kappa> Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T
-      \<longrightarrow> (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      \<longrightarrow> (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
 proof -
   have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
     by (rule path_stopping_time_le[OF st])
   show ?thesis
-    unfolding AE_aglue_law[OF T0 PQ setsQ Kp diffquot_all_sets[OF closed_sconstraint]]
+    unfolding AE_aglue_law[OF T0 PQ setsQ Kp diffquot_all_sets[OF Sc]]
     using Qst Qcov AE_space
   proof eventually_elim
     case (elim p')
     then have idem': "pstopped T \<theta> p' = p'"
       and cov: "\<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
-          \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+          \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
       and sp: "p' \<in> space Q" by blast+
     have idem: "p' u = p' (min u (\<theta> p'))" if u: "u \<in> {0..T}" for u
     proof -
@@ -120,12 +121,12 @@ proof -
       case (elim w)
       then have w0: "\<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
         and wcov: "\<forall>a b. \<theta> p' \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
-            \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+            \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> S"
         by blast+
       show ?case
       proof (intro allI impI)
         fix p q :: real assume pq: "0 \<le> p" "p < q" "q \<le> T"
-        show "(1 / (q - p)) *\<^sub>R (snd (padd T p' w q) - snd (padd T p' w p)) \<in> sconstraint k L"
+        show "(1 / (q - p)) *\<^sub>R (snd (padd T p' w q) - snd (padd T p' w p)) \<in> S"
         proof (rule padd_diffquot[where r = "\<theta> p'"])
           show "0 \<le> T" by (rule T0)
           show "0 \<le> \<theta> p'" by (rule th0)
@@ -134,13 +135,13 @@ proof -
             by (rule idem[OF that])
           show "w u = 0" if "u \<in> {0..T}" "u \<le> \<theta> p'" for u
             using w0 that by blast
-          show "(1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+          show "(1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
             if "0 \<le> a" "a < b" "b \<le> \<theta> p'" for a b
             using cov that by blast
-          show "(1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+          show "(1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> S"
             if "\<theta> p' \<le> a" "a < b" "b \<le> T" for a b
             using wcov that by blast
-        qed (use pq in simp_all)
+        qed (use pq Sv in simp_all)
       qed
     qed
   qed
@@ -166,29 +167,30 @@ text \<open>The martingale clauses do not need the weak-closedness detour that t
 
 
 
-theorem exit_class_aglue_law:
+theorem covariation_class_aglue_law:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T0: "0 \<le> T" and PQ: "prob_space Q"
+  assumes T0: "0 \<le> T" and Sc: "closed S" and Sv: "convex S"
+    and PQ: "prob_space Q"
     and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
     and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
-        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
     and K0: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. w 0 = 0"
     and Kfr: "\<And>p'. p' \<in> space Q
       \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kcov: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. \<forall>a b. \<theta> p' \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
-        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> S"
     and mgX: "martingale (aglue_law T \<kappa> Q)
         (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
         (\<lambda>t \<omega>. fst (\<omega> (min t T)))"
     and mgC: "martingale (aglue_law T \<kappa> Q)
         (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
         (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))"
-  shows "aglue_law T \<kappa> Q \<in> exit_class k L T x"
-  unfolding exit_class_def
+  shows "aglue_law T \<kappa> Q \<in> covariation_class S T x"
+  unfolding covariation_class_def
 proof (intro CollectI conjI)
   show "prob_space (aglue_law T \<kappa> Q)"
     by (rule prob_space_aglue_law[OF T0 PQ setsQ Kp])
@@ -197,8 +199,8 @@ proof (intro CollectI conjI)
   show "AE \<omega> in aglue_law T \<kappa> Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
     by (rule aglue_law_start[OF T0 PQ setsQ Kp Q0 K0])
   show "AE \<omega> in aglue_law T \<kappa> Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T
-      \<longrightarrow> (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    by (rule aglue_law_diffquot[OF T0 PQ setsQ Kp st Qst Qcov Kfr Kcov])
+      \<longrightarrow> (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+    by (rule aglue_law_diffquot[OF T0 Sc Sv PQ setsQ Kp st Qst Qcov Kfr Kcov])
   show "martingale (aglue_law T \<kappa> Q)
       (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
       (\<lambda>t \<omega>. fst (\<omega> (min t T)))" by (rule mgX)
@@ -223,9 +225,10 @@ text \<open>The set-integral transfer for the glue --- what a martingale identit
 
 
 
-theorem exit_class_aglue:
+theorem covariation_class_aglue:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T0: "0 < T" and PQ: "prob_space Q"
+  assumes T0: "0 < T" and Sc: "closed S" and Sv: "convex S"
+    and PQ: "prob_space Q"
     and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
@@ -233,7 +236,7 @@ theorem exit_class_aglue:
     and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
-        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
     and QH: "\<And>e. horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. fst (p' (min u T)) $ e) T"
@@ -244,7 +247,7 @@ theorem exit_class_aglue:
     and Kfr: "\<And>p'. p' \<in> space Q
       \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kcov: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'. \<forall>a b. \<theta> p' \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
-        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> S"
     and Kmean: "\<And>p' u e. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
       \<Longrightarrow> (\<integral>w. fst (w (min u T)) $ e \<partial>(\<kappa> p')) = 0"
     and KmeanC: "\<And>p' u c d. p' \<in> space Q \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> T
@@ -290,7 +293,7 @@ theorem exit_class_aglue:
         (\<lambda>p'. \<integral>w. indicator BB (pcut i (padd T p' w))
             * ((outerp (fst (padd T p' w (min u T)))
                 - snd (padd T p' w (min u T))) $ c $ d) \<partial>(\<kappa> p'))"
-  shows "aglue_law T \<kappa> Q \<in> exit_class k L T x"
+  shows "aglue_law T \<kappa> Q \<in> covariation_class S T x"
 proof -
   have T0': "0 \<le> T" using T0 by simp
   have QstAE: "AE p' in Q. pstopped T \<theta> p' = p'" by (rule Qst)
@@ -309,8 +312,8 @@ proof -
   have KfrAE: "AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     if sp: "p' \<in> space Q" for p' by (rule Kfr[OF sp])
   show ?thesis
-  proof (rule exit_class_aglue_law
-      [OF T0' PQ setsQ Kp st Q0 QstAE Qcov K0AE KfrAE Kcov])
+  proof (rule covariation_class_aglue_law
+      [OF T0' Sc Sv PQ setsQ Kp st Q0 QstAE Qcov K0AE KfrAE Kcov])
     show "martingale (aglue_law T \<kappa> Q)
         (natural_filtration (aglue_law T \<kappa> Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
         (\<lambda>t \<omega>. fst (\<omega> (min t T)))"

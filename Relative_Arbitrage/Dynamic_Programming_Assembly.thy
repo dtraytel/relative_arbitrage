@@ -184,7 +184,7 @@ qed
 
 section \<open>The additive glue with the selector kernel\<close>
 
-text \<open>Every kernel hypothesis of @{thm [source] exit_class_aglue} is a
+text \<open>Every kernel hypothesis of @{thm [source] covariation_class_aglue} is a
   one-line application of a \<open>pdelclass_\<close> lemma, and every side condition
   an application of the \<open>aglue_\<close> family, with the uniform constants
   supplied by @{thm [source] pdelclass_norm_mean_le} and
@@ -487,8 +487,9 @@ proof -
       and u: "0 \<le> u" and uv: "u \<le> v" and "v \<le> T" for p' C u v c d
     by (rule pdelclass_comp_increment[OF th0 thT Kmem C u uv])
   show ?thesis
-    by (rule exit_class_aglue
-        [OF T0 PQ setsQ Kp st thM Q0 Qst Qcov QH QHC Qcont Kfr Kcov
+    unfolding exit_class_eq_covariation
+    by (rule covariation_class_aglue
+        [OF T0 closed_sconstraint sconstraint_convex PQ setsQ Kp st thM Q0 Qst Qcov QH QHC Qcont Kfr Kcov
           Kmean KmeanC Kint KintC Kinc KincC RXint RCint
           msecX msecC gintX gintC])
 qed
