@@ -444,44 +444,6 @@ subsection \<open>Example 3.1 on the half-line\<close>
 text \<open>\<^bold>\<open>Example 3.1\<close>, in closed form and with no horizon left in it, for the
   same abstract \<open>S\<close>.\<close>
 
-theorem icovariation_val_example_3_1:
-  fixes r :: real and x :: "real^'n::finite"
-  assumes B0: "0 \<le> B"
-    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
-    and D0: "0 \<le> D"
-    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
-    and Sc: "closed S" and Sv: "convex S"
-    and m2: "2 \<le> m" and mn: "m \<le> CARD('n)"
-    and tan: "\<And>b u. (\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)) \<Longrightarrow>
-      norm u \<le> 1 \<Longrightarrow> projmat b m *v u = u \<Longrightarrow>
-      tanpU (projmat b m) u ** transpose (tanpU (projmat b m) u) \<in> S"
-    and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> real m - 1 \<le> trace a"
-    and r0: "0 < r"
-  shows "enn2real (icovariation_val S (cball 0 r) x)
-      = max ((r * r - x \<bullet> x) / (real m - 1)) 0"
-proof -
-  have m0: "0 < m" using m2 by simp
-  have cn0: "0 < real m - 1"
-  proof -
-    have "(2::real) \<le> real m" using m2 by simp
-    then show ?thesis by linarith
-  qed
-  obtain i :: 'n where True by blast
-  have u0: "axis i (1::real) \<bullet> axis i 1 = 1" by simp
-  obtain bb :: "nat \<Rightarrow> real^'n"
-    where orth0: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> bb i \<bullet> bb j = (if i = j then 1 else 0)"
-    using orthonormal_family_containing[OF u0 mn m0] by blast
-  have SST: "tanpU (projmat bb m) 0 ** transpose (tanpU (projmat bb m) 0) \<in> S"
-    by (rule tan[OF orth0]) simp_all
-  obtain T where T0: "0 < T" and T1: "r * r / (real m - 1) < T"
-    and T2: "2 * (r * r) / (real m - 1) < T"
-    and eq: "icovariation_val S (cball (0 :: real^'n) r) = covariation_val S T (cball 0 r)"
-    by (rule icovariation_val_eq_covariation_val_horizon[OF Sc Sv SST B0 B cn0 th closed_cball
-          subset_refl])
-  show ?thesis unfolding eq
-    by (rule covariation_val_example_3_1[OF T0 B0 B D0 D Sc Sv m2 mn tan th r0 less_imp_le[OF T1]])
-qed
-
 text \<open>For the paper's set it is the finite-horizon Example 3.1 at a horizon past
   \<open>r\<^sup>2/(n-k)\<close>.\<close>
 

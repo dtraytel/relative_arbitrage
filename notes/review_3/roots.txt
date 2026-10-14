@@ -650,3 +650,13 @@ Sup_Convolution.supconv_alexandrov    # COROLLARY
 Increment_Moments.expectation_increment_sq    # COROLLARY
 Path_Exit_Times.pexit_cap_eq    # COROLLARY
 Elliptic_Operator.eigen_ub_diag    # FIX_THEN_KEEP (general form of three live lemmas)
+# phase 8 dead-code pass: formal counterparts cited by Statement/Paper_Map, and library deliverables of CCM and GVC
+Control_Problem.bounded_sconstraint    # KEEP_ROOT: formal counterpart cited by Statement/Paper_Map (phase 8)
+Control_Problem.exit_class_fourth_moment    # KEEP_ROOT: formal counterpart cited by Statement/Paper_Map (phase 8)
+Control_Problem.exit_class_weak_closed    # KEEP_ROOT: formal counterpart cited by Statement/Paper_Map (phase 8)
+Exit_Class_Infinite.iexit_val_eq_exit_val_ball    # KEEP_ROOT: formal counterpart cited by Statement/Paper_Map (phase 8)
+Control_Problem.tight_on_set_paper_pair_class    # KEEP_ROOT: formal counterpart cited by Statement/Paper_Map (phase 8)
+Covariation_Class_Optimizer.covariation_class_compact    # KEEP_API (CCM deliverable: compactness of the class)
+Covariation_Class_Optimizer.covariation_class_relatively_compact    # KEEP_API (CCM deliverable)
+Covariation_Class_Witness.bmpair_law_in_covariation_class    # KEEP_API (CCM deliverable: the class is nonempty)
+Geometric_Operator.geometric_operator.supersol_usc_iff    # KEEP_API (elementary form, like its five siblings)

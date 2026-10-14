@@ -2187,11 +2187,6 @@ lemma quartic_coeff_assoc:
 text \<open>The distance on a product is at most the sum of the distances of the
   components.\<close>
 
-lemma dist_pair_le:
-  fixes a c :: "'a::metric_space" and b d :: "'b::metric_space"
-  shows "dist (a, b) (c, d) \<le> dist a c + dist b d"
-  unfolding dist_Pair_Pair by (rule sqrt_sum_squares_le_sum) simp_all
-
 text \<open>If the increment of \<open>B\<close> at \<open>p\<close> is eventually dominated by some \<open>D\<close>
   that is \<open>o(|h|^2)\<close>, it satisfies the one-sided hypothesis -- exactly what
   a diagonal maximiser supplies, with \<open>D\<close> the penalty; domination holds only

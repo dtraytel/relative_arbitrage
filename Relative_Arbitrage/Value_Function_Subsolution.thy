@@ -686,12 +686,6 @@ lemma trace_le_diag_bound:
   shows "trace b \<le> real CARD('n) * D"
   unfolding trace_def using sum_mono[of UNIV "\<lambda>i. b $ i $ i" "\<lambda>_. D"] assms by simp
 
-lemma sconstraint_trace_le:
-  fixes b :: "real^'n::finite^'n"
-  assumes b: "b \<in> sconstraint k L"
-  shows "trace b \<le> real CARD('n) * L"
-  by (rule trace_le_diag_bound) (rule sconstraint_diag(2)[OF b])
-
 section \<open>From the constraint set back to the feasible rates\<close>
 
 text \<open>A rate of \<open>sconstraint k L\<close> that annihilates \<open>q\<close> is matched by a
@@ -1980,7 +1974,6 @@ proof -
   ultimately show ?thesis
     unfolding visc_subsol_gen_def v_def by blast
 qed
-
 
 
 (*<*)

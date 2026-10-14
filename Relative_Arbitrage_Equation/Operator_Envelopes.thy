@@ -119,24 +119,8 @@ text \<open>\<open>F\<^sup>*\<close> is upper semicontinuous by construction, so
   \<open>\<ge> 1\<close> passes through limits in \<open>(p, M)\<close>: this moves a conclusion
   obtained at perturbed jets back to the jet of interest.\<close>
 
-lemma ell_op_usc_ge_one_limit:
-  fixes ps :: "nat \<Rightarrow> real^'n::finite" and Ms :: "nat \<Rightarrow> real^'n^'n"
-    and p0 :: "real^'n" and M0 :: "real^'n^'n"
-  assumes ge: "\<And>j. 1 \<le> ell_op_usc k L (ps j) (Ms j)"
-    and lim: "(\<lambda>j. (ps j, Ms j)) \<longlonglongrightarrow> (p0, M0)"
-  shows "1 \<le> ell_op_usc k L p0 M0"
-  unfolding ell_op_usc_eq_op_usc
-  by (rule op_usc_ge_one_limit[OF ge[unfolded ell_op_usc_eq_op_usc] lim])
-
 text \<open>The special case used twice: the inequality \<open>\<ge> 1\<close> at every softened
   Hessian \<open>H - \<delta> I\<close> survives \<open>\<delta> \<rightarrow> 0\<close>.\<close>
-
-lemma ell_op_usc_ge_one_shift:
-  fixes p :: "real^'n::finite" and H :: "real^'n^'n"
-  assumes ge: "\<And>\<delta>. 0 < \<delta> \<Longrightarrow> 1 \<le> ell_op_usc k L p (H - \<delta> *\<^sub>R mat 1)"
-  shows "1 \<le> ell_op_usc k L p H"
-  unfolding ell_op_usc_eq_op_usc
-  by (rule op_usc_ge_one_shift[OF ge[unfolded ell_op_usc_eq_op_usc]])
 
 subsection \<open>Lemma 3.1, the clause at \<open>p = 0\<close>: \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> \<bbbS>\<^sup>n\<close>\<close>
 

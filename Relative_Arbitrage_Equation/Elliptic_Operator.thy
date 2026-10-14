@@ -190,9 +190,6 @@ subsection \<open>The candidate solution of Example 3.1\<close>
 
 text \<open>\<open>v(x) = max (r\<^sup>2 - |x|\<^sup>2) 0 / (n - k)\<close> on the ball of radius \<open>r\<close>.\<close>
 
-definition ball_v :: "real \<Rightarrow> nat \<Rightarrow> real^'n \<Rightarrow> real" where
-  "ball_v r k x = max (r\<^sup>2 - x \<bullet> x) 0 / real (CARD('n) - k)"
-
 subsection \<open>Degenerate ellipticity\<close>
 
 text \<open>
@@ -258,22 +255,6 @@ lemma feasible_nonempty:
   assumes "1 \<le> k" "k < CARD('n)" "1 \<le> L"
   shows "feasible k L p \<noteq> {}"
   using feasible_witness[OF assms] by blast
-
-lemma ell_op_approx:
-  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
-  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
-    and e0: "0 < \<epsilon>"
-  obtains a where "a \<in> feasible k L p"
-    and "- trace (M ** a) / 2 < ell_op k L p M + \<epsilon>"
-proof -
-  have ne: "(\<lambda>a. - trace (M ** a) / 2) ` feasible k L p \<noteq> {}"
-    using feasible_nonempty[OF k1 kn L1] by blast
-  have "ell_op k L p M < ell_op k L p M + \<epsilon>" using e0 by simp
-  then have "\<exists>v \<in> (\<lambda>a. - trace (M ** a) / 2) ` feasible k L p.
-      v < ell_op k L p M + \<epsilon>"
-    unfolding ell_op_def using cInf_less_iff[OF ne ell_op_bdd_below] by blast
-  then show ?thesis using that by blast
-qed
 
 (*<*)
 end

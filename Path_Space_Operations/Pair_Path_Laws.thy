@@ -33,9 +33,6 @@ lemma comp_shift_split:
 
 text \<open>The running integral of a rate over \<open>[0, t]\<close>.\<close>
 
-definition Yint :: "(real \<Rightarrow> 'b::{polish_space,banach}) \<Rightarrow> real \<Rightarrow> 'b"
-  where "Yint a t = set_lebesgue_integral lborel {0..t} a"
-
 subsection \<open>The measurable structure of the path space\<close>
 
 text \<open>The path space is standard Borel and nonempty, and the evaluations

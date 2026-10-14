@@ -276,11 +276,6 @@ lemma orth_preserves_inner:
   shows "(R *v x) \<bullet> (R *v y) = x \<bullet> y"
   by (metis orth inner_transpose_matrix matrix_vector_mul_assoc matrix_vector_mul_lid)
 
-lemma inner_scaleR_diff_eq:
-  fixes q v h :: "real^'n::finite" and c :: real
-  shows "q \<bullet> h - c * (v \<bullet> h) = (q - c *\<^sub>R v) \<bullet> h"
-  by (simp add: inner_diff_left)
-
 text \<open>Shifting a symmetric matrix by a multiple of the identity keeps it
   symmetric.\<close>
 

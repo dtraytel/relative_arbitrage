@@ -242,34 +242,6 @@ qed
 
 text \<open>The paper's statement, at \<open>S = sconstraint k L\<close>.\<close>
 
-theorem theorem_1_1_uniqueness_faithful:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
-    and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
-    and KB: "K \<subseteq> cball 0 rK" and r0: "0 \<le> rK"
-    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
-    and Bu: "\<And>y. \<bar>u y\<bar> \<le> Bd"
-    and subu: "visc_subsol_env2 k L K
-      (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and supu: "visc_supersol_env2 k L K
-      (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
-    and x: "x \<in> K"
-  shows "u x = enn2real (exit_val k L T K x)"
-proof -
-  have L0: "0 \<le> L" using L1 by simp
-  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
-  show ?thesis
-    unfolding exit_val_eq_covariation_val
-    by (rule covariation_val_uniqueness[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
-          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
-          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0]
-          cK neK expK KB Tbig uscu Bu
-          subu[unfolded visc_subsol_env2_eq_gen ell_op_lsc_eq_covariation_op_lsc[OF k1 kn L1]]
-          supu[unfolded visc_supersol_env2_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]]
-          x])
-qed
-
 section \<open>The clauses for the value function of Eq. (1.6)\<close>
 
 text \<open>Everything above is stated at a finite horizon.  Since
@@ -409,32 +381,6 @@ proof -
   show ?thesis unfolding eq
     by (rule covariation_val_uniqueness[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 th0 th
           cK neK expK KB T2 usc bnd sub sups xK])
-qed
-
-theorem iexit_val_uniqueness:
-  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k"
-    and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
-    and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
-    and bnd: "\<And>y. \<bar>u y\<bar> \<le> Bd"
-    and sub: "visc_subsol_env2 k L K
-        (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and sups: "visc_supersol_env2 k L K
-        (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
-    and xK: "x \<in> K"
-  shows "u x = enn2real (iexit_val k L K x)"
-proof -
-  have L0: "0 \<le> L" using L1 by simp
-  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
-  show ?thesis
-    unfolding iexit_val_eq_icovariation_val
-    by (rule icovariation_val_uniqueness[OF sconstraint_bounds[OF L0] closed_sconstraint
-          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
-          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0]
-          cK neK expK usc bnd
-          sub[unfolded visc_subsol_env2_eq_gen ell_op_lsc_eq_covariation_op_lsc[OF k1 kn L1]]
-          sups[unfolded visc_supersol_env2_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]]
-          xK])
 qed
 
 text \<open>\<^bold>\<open>Clauses (3) and (4) with the paper's own envelope.\<close>  Definition 3.1
