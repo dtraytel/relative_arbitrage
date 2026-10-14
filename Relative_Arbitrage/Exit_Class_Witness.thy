@@ -154,7 +154,7 @@ proof -
     have mm: "{\<omega> \<in> space ?B.
         (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L}
         \<in> sets ?B"
-      using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2)]]
+      using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2) closed_sconstraint]]
       by (simp add: space_borel_of)
     have iff: "(AE \<omega> in ?Q.
           (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L)

@@ -130,7 +130,7 @@ proof -
     then have "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (pcut S \<omega> t) - snd (pcut S \<omega> s)) \<in> sconstraint k L"
       by eventually_elim (use ST in \<open>auto simp: pcut_apply\<close>)
-    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets] .
+    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets[OF closed_sconstraint]] .
   qed
 
   \<comment> \<open>clauses (iii) and (iv): the martingales\<close>
@@ -258,7 +258,7 @@ lemma pglue_law_diffquot:
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
 proof (rule AE_pglue_law[OF r rT exit_class_prob[OF Q] exit_class_prob[OF R]
       exit_class_sets[OF Q] exit_class_sets[OF R]
-      borel_of_closed[OF closedin_diffquot_constraint_all]])
+      borel_of_closed[OF closedin_diffquot_constraint_all[OF closed_sconstraint]]])
   show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
     using Q unfolding exit_class_def by blast
@@ -921,7 +921,7 @@ lemma kglue_law_diffquot:
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
 proof (rule AE_kglue_law[OF r rT exit_class_prob[OF Q]
       exit_class_prob[OF R] exit_class_sets[OF Q]
-      exit_class_sets[OF R] Nm borel_of_closed[OF closedin_diffquot_constraint_all]])
+      exit_class_sets[OF R] Nm borel_of_closed[OF closedin_diffquot_constraint_all[OF closed_sconstraint]]])
   show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
     using Q unfolding exit_class_def by blast

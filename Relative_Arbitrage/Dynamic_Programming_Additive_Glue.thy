@@ -101,7 +101,7 @@ proof -
   have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
     by (rule path_stopping_time_le[OF st])
   show ?thesis
-    unfolding AE_aglue_law[OF T0 PQ setsQ Kp diffquot_all_sets]
+    unfolding AE_aglue_law[OF T0 PQ setsQ Kp diffquot_all_sets[OF closed_sconstraint]]
     using Qst Qcov AE_space
   proof eventually_elim
     case (elim p')

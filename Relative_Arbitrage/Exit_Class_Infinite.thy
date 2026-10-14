@@ -134,7 +134,7 @@ proof -
     then have "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (pcut S \<omega> t) - snd (pcut S \<omega> s)) \<in> sconstraint k L"
       by eventually_elim (auto simp: pcut_apply)
-    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets] .
+    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets[OF closed_sconstraint]] .
   qed
 
   \<comment> \<open>clauses (iii) and (iv): the martingales\<close>

@@ -480,7 +480,7 @@ proof -
         (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L}
         \<in> sets ?B"
       unfolding spB
-      by (rule borel_of_closed[OF closedin_diffquot_constraint[OF p q]])
+      by (rule borel_of_closed[OF closedin_diffquot_constraint[OF p q closed_sconstraint]])
     have "AE w in \<mu>. (1 / (q - p)) *\<^sub>R
         (snd (pembed s T w q) - snd (pembed s T w p)) \<in> sconstraint k L"
       using cov
@@ -678,7 +678,7 @@ proof -
         (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L}
         \<in> sets ?B"
       unfolding spB
-      by (rule borel_of_closed[OF closedin_diffquot_constraint[OF p q]])
+      by (rule borel_of_closed[OF closedin_diffquot_constraint[OF p q closed_sconstraint]])
     have G: "{p' \<in> space ?B. q \<le> \<theta> p'} \<in> sets ?B" using thM by measurable
     have mset: "{p' \<in> space ?B. q \<le> \<theta> p' \<longrightarrow>
         (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L}

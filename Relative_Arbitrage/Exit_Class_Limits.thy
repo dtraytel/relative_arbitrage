@@ -17,7 +17,7 @@ text \<open>This section proves the martingale clauses of Lemma 2.3 for a weak
   @{theory Path_Space_Operations.Pair_Path_Laws}.
 
   Unlike the two closed path conditions of (1.7), which pass to a weak
-  limit directly (\<open>Exit_Class.exit_class_start_limit\<close>,
+  limit directly (\<open>Exit_Class.covariation_class_start_limit\<close>,
   \<open>\<dots>_diffquot_limit\<close>), the martingale clauses are statements about
   integrals against past-measurable test functions, and only bounded
   continuous tests survive a weak limit.  @{thm [source] martingale_F_limit}
@@ -125,10 +125,10 @@ theorem exit_class_limit_three_clauses:
         (\<lambda>t \<omega>. fst (\<omega> (min t T)))"
 proof -
   show "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    by (rule exit_class_start_limit[OF T mem wc prob setsQ])
+    by (rule covariation_class_start_limit[OF T mem[unfolded exit_class_eq_covariation] wc prob setsQ])
   show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    by (rule exit_class_diffquot_limit[OF mem wc prob setsQ])
+    by (rule covariation_class_diffquot_limit[OF closed_sconstraint mem[unfolded exit_class_eq_covariation] wc prob setsQ])
   show "martingale Q (natural_filtration Q 0 (\<lambda>t \<omega>. \<omega> t)) 0
       (\<lambda>t \<omega>. fst (\<omega> (min t T)))"
     by (rule exit_class_X_martingale_limit[OF T L mem wc prob setsQ])

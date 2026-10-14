@@ -302,7 +302,7 @@ proof -
     for p q :: real
   have CY: "C p q \<in> sets ?Y" if "p \<in> {0..?S}" "q \<in> {0..?S}" for p q
     unfolding C_def
-    using borel_of_closed[OF closedin_diffquot_constraint[OF that]]
+    using borel_of_closed[OF closedin_diffquot_constraint[OF that closed_sconstraint]]
     by (simp add: space_borel_of)
   have aeC: "AE \<omega> in P. pfut r T \<omega> \<in> C p q"
     if pq: "p \<in> {0..?S}" "q \<in> {0..?S}" "p < q" for p q
