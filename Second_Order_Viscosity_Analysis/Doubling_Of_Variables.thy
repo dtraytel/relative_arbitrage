@@ -2486,13 +2486,8 @@ proof -
       + (((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>) + 2*\<delta>)/2) * (norm z)\<^sup>2)"
     unfolding split
     by (rule semiconvex_shift_perturb[OF base dnn])
-  have c: "0 < 1/\<epsilon> + 1/\<epsilon> + 2*\<kappa> + 2*\<delta>"
-  proof -
-    have "0 < 1/\<epsilon>" using e by simp
-    then show ?thesis using k dnn by linarith
-  qed
   show ?thesis
-    by (rule semiconvex_jensen_alexandrov_point[OF cvx c rho(1) rho(2)
+    by (rule semiconvex_jensen_alexandrov_point[OF cvx less_trans[OF rho] rho(2)
           bnd d small])
 qed
 

@@ -295,184 +295,198 @@ text \<open>Jensen's lemma: for a semiconvex \<open>\<phi>\<close> whose maximum
 theorem jensen_lemma:
   fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
   assumes cvx: "convex_on UNIV (\<lambda>z. \<phi> z + (c/2) * (norm z)\<^sup>2)"
-    and c: "0 < c"
-    and rho: "0 < \<rho>" "\<rho> < r"
+    and r: "0 < r" and rho: "\<rho> < r"
     and bnd: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<rho> \<le> dist y \<xi> \<Longrightarrow> \<phi> y \<le> m"
     and d: "0 < d" and small: "2 * d * r < \<phi> \<xi> - m"
   shows "\<not> negligible {x \<in> cball \<xi> r. \<exists>p. norm p \<le> d
       \<and> (\<forall>y \<in> cball \<xi> r. \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x)}"
 proof -
-  have r: "0 < r" using rho by simp
-  define \<psi> where "\<psi> = (\<lambda>z::'a. \<phi> z + (c/2) * (norm z)\<^sup>2)"
-  have cvx': "convex_on UNIV \<psi>" unfolding \<psi>_def by (rule cvx)
-  define K where "K = {x \<in> cball \<xi> r. \<exists>p. norm p \<le> d
-      \<and> (\<forall>y \<in> cball \<xi> r. \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x)}"
-  define Q where "Q = (\<lambda>x. SOME q. q \<in> subdiff \<psi> x)"
-  define P where "P = (\<lambda>x. c *\<^sub>R x - Q x)"
-  have Qsub: "Q x \<in> subdiff \<psi> x" for x
+  have pos: ?thesis
+    if cvx: "convex_on UNIV (\<lambda>z. \<phi> z + (c/2) * (norm z)\<^sup>2)" and c: "0 < c"
+    for c
   proof -
-    have "\<exists>q. q \<in> subdiff \<psi> x" using subdiff_nonempty[OF cvx'] by blast
-    thus ?thesis unfolding Q_def by (rule someI_ex)
-  qed
-  have deepK: "dist x \<xi> < \<rho>"
-    if xin: "x \<in> cball \<xi> r" and np: "norm p \<le> d"
-      and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
-    for x p
-    by (rule perturbed_maximiser_deep_interior[OF bnd r less_imp_le[OF d]
-        small np xin xmax])
-  have QK: "Q x = c *\<^sub>R x - p"
-    if xin: "x \<in> cball \<xi> r" and np: "norm p \<le> d"
-      and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
-    for x p
-  proof -
-    have "dist x \<xi> < \<rho>" by (rule deepK[OF xin np xmax])
-    hence xball: "x \<in> ball \<xi> r" using rho by (simp add: dist_commute)
-    show ?thesis
-      by (rule interior_max_subdiff_unique[OF xball xmax
-          Qsub[of x, unfolded \<psi>_def]])
-  qed
-  have PK: "P x = p"
-    if xin: "x \<in> cball \<xi> r" and np: "norm p \<le> d"
-      and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
-    for x p
-  proof -
-    have Qx: "Q x = c *\<^sub>R x - p" by (rule QK[OF xin np xmax])
-    have "P x = c *\<^sub>R x - Q x" by (simp add: P_def)
-    thus ?thesis using Qx by simp
-  qed
-  have ub: "\<psi> y \<le> \<psi> x + Q x \<bullet> (y - x) + (c/2) * (norm (y - x))\<^sup>2"
-    if ymem: "y \<in> cball \<xi> r" and xin: "x \<in> cball \<xi> r" and np: "norm p \<le> d"
-      and xmax: "\<And>z. z \<in> cball \<xi> r \<Longrightarrow> \<phi> z + p \<bullet> z \<le> \<phi> x + p \<bullet> x"
-    for x y p
-  proof -
-    have Qx: "Q x = c *\<^sub>R x - p" by (rule QK[OF xin np xmax])
-    have "\<psi> y - \<psi> x \<le> (c *\<^sub>R x - p) \<bullet> (y - x) + (c/2) * (norm (y - x))\<^sup>2"
-      unfolding \<psi>_def by (rule max_semiconcave_bound[OF xmax ymem])
-    thus ?thesis using Qx by simp
-  qed
-  define Qb where "Qb = c * (norm \<xi> + r) + d"
-  have Qbnn: "0 \<le> Qb"
-  proof -
-    have n1: "0 \<le> norm \<xi> + r"
-      by (rule add_nonneg_nonneg[OF norm_ge_zero less_imp_le[OF r]])
-    have "0 \<le> c * (norm \<xi> + r)"
-      by (rule mult_nonneg_nonneg[OF less_imp_le[OF c] n1])
-    thus ?thesis unfolding Qb_def using d by linarith
-  qed
-  have Qbound: "norm (Q x) \<le> Qb" if xK: "x \<in> K" for x
-  proof -
-    from xK obtain p where np: "norm p \<le> d" and xin: "x \<in> cball \<xi> r"
-      and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
-      unfolding K_def by blast
-    have nx: "norm x \<le> norm \<xi> + r"
+    define \<psi> where "\<psi> = (\<lambda>z::'a. \<phi> z + (c/2) * (norm z)\<^sup>2)"
+    have cvx': "convex_on UNIV \<psi>" unfolding \<psi>_def by (rule cvx)
+    define K where "K = {x \<in> cball \<xi> r. \<exists>p. norm p \<le> d
+        \<and> (\<forall>y \<in> cball \<xi> r. \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x)}"
+    define Q where "Q = (\<lambda>x. SOME q. q \<in> subdiff \<psi> x)"
+    define P where "P = (\<lambda>x. c *\<^sub>R x - Q x)"
+    have Qsub: "Q x \<in> subdiff \<psi> x" for x
     proof -
-      have "norm x \<le> norm \<xi> + norm (x - \<xi>)" by (rule norm_triangle_sub)
-      moreover have "norm (x - \<xi>) \<le> r"
-        using xin by (simp add: dist_norm norm_minus_commute)
-      ultimately show ?thesis by simp
+      have "\<exists>q. q \<in> subdiff \<psi> x" using subdiff_nonempty[OF cvx'] by blast
+      thus ?thesis unfolding Q_def by (rule someI_ex)
     qed
-    have Qx: "Q x = c *\<^sub>R x - p" by (rule QK[OF xin np xmax])
-    have b1: "norm (c *\<^sub>R x) \<le> c * (norm \<xi> + r)" using nx c by simp
-    have b2: "norm (c *\<^sub>R x - p) \<le> norm (c *\<^sub>R x) + norm p"
-      by (rule norm_triangle_ineq4)
-    show ?thesis unfolding Qb_def using b1 b2 np Qx by simp
-  qed
-  define s where "s = min (1/c) ((r - \<rho>)/(2*Qb + 1))"
-  have pos1: "0 < 2*Qb + 1" using Qbnn by simp
-  have s0: "0 < s" unfolding s_def using c rho pos1 by simp
-  have sc: "s * c \<le> 1"
-  proof -
-    have "s \<le> 1/c" unfolding s_def by simp
-    thus ?thesis using c by (simp add: field_simps)
-  qed
-  have sQ: "s * (2*Qb) < r - \<rho>"
-  proof -
-    have le: "s \<le> (r - \<rho>)/(2*Qb + 1)" unfolding s_def by simp
-    have "s * (2*Qb) \<le> ((r - \<rho>)/(2*Qb + 1)) * (2*Qb)"
-      using le Qbnn by (intro mult_right_mono) auto
-    also have "\<dots> < ((r - \<rho>)/(2*Qb + 1)) * (2*Qb + 1)"
-      using rho pos1 by (intro mult_strict_left_mono) auto
-    also have "\<dots> = r - \<rho>" using pos1 by simp
-    finally show ?thesis .
-  qed
-  have mem: "z - s *\<^sub>R w \<in> cball \<xi> r"
-    if dz: "dist z \<xi> < \<rho>" and nw: "norm w \<le> 2*Qb" for z w
-  proof -
-    have "dist (z - s *\<^sub>R w) \<xi> = norm ((z - \<xi>) - s *\<^sub>R w)"
-      by (simp add: dist_norm algebra_simps)
-    also have "\<dots> \<le> norm (z - \<xi>) + norm (s *\<^sub>R w)" by (rule norm_triangle_ineq4)
-    also have "\<dots> = dist z \<xi> + s * norm w"
-      using s0 by (simp add: dist_norm)
-    also have "\<dots> \<le> dist z \<xi> + s * (2*Qb)"
-      using nw s0 by (intro add_left_mono mult_left_mono) auto
-    also have "\<dots> < \<rho> + (r - \<rho>)" using dz sQ by linarith
-    finally show ?thesis by (simp add: dist_commute)
-  qed
-  have lip: "norm (P x - P x') \<le> (c + 1/s) * norm (x - x')"
-    if kx: "x \<in> K" and kx': "x' \<in> K" for x x'
-  proof -
-    from kx obtain p where np: "norm p \<le> d" and xin: "x \<in> cball \<xi> r"
-      and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
-      unfolding K_def by blast
-    from kx' obtain p' where np': "norm p' \<le> d" and xin': "x' \<in> cball \<xi> r"
-      and xmax': "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p' \<bullet> y \<le> \<phi> x' + p' \<bullet> x'"
-      unfolding K_def by blast
-    have dx: "dist x \<xi> < \<rho>" by (rule deepK[OF xin np xmax])
-    have dx': "dist x' \<xi> < \<rho>" by (rule deepK[OF xin' np' xmax'])
-    have nQQ: "norm (Q x - Q x') \<le> 2*Qb"
-      using Qbound[OF kx] Qbound[OF kx'] norm_triangle_ineq4[of "Q x" "Q x'"]
-      by simp
-    have nQQ': "norm (Q x' - Q x) \<le> 2*Qb"
-      using nQQ by (simp add: norm_minus_commute)
-    have L1: "s * norm (Q x - Q x') \<le> norm (x - x')"
-    proof (rule subdiff_lipschitz_of_semiconcave[OF Qsub Qsub _ _ s0 sc])
-      show "\<psi> y \<le> \<psi> x + Q x \<bullet> (y - x) + (c/2) * (norm (y - x))\<^sup>2"
-        if "y \<in> cball \<xi> r" for y by (rule ub[OF that xin np xmax])
-      show "\<psi> y \<le> \<psi> x' + Q x' \<bullet> (y - x') + (c/2) * (norm (y - x'))\<^sup>2"
-        if "y \<in> cball \<xi> r" for y by (rule ub[OF that xin' np' xmax'])
-      show "x - s *\<^sub>R (Q x - Q x') \<in> cball \<xi> r" by (rule mem[OF dx nQQ])
-      show "x' - s *\<^sub>R (Q x' - Q x) \<in> cball \<xi> r" by (rule mem[OF dx' nQQ'])
+    have deepK: "dist x \<xi> < \<rho>"
+      if xin: "x \<in> cball \<xi> r" and np: "norm p \<le> d"
+        and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
+      for x p
+      by (rule perturbed_maximiser_deep_interior[OF bnd r less_imp_le[OF d]
+          small np xin xmax])
+    have QK: "Q x = c *\<^sub>R x - p"
+      if xin: "x \<in> cball \<xi> r" and np: "norm p \<le> d"
+        and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
+      for x p
+    proof -
+      have "dist x \<xi> < \<rho>" by (rule deepK[OF xin np xmax])
+      hence xball: "x \<in> ball \<xi> r" using rho by (simp add: dist_commute)
+      show ?thesis
+        by (rule interior_max_subdiff_unique[OF xball xmax
+            Qsub[of x, unfolded \<psi>_def]])
     qed
-    have L2: "norm (Q x - Q x') \<le> (1/s) * norm (x - x')"
-      using L1 s0 by (simp add: field_simps)
-    have "norm (P x - P x') = norm (c *\<^sub>R (x - x') - (Q x - Q x'))"
-      unfolding P_def by (simp add: algebra_simps)
-    also have "\<dots> \<le> norm (c *\<^sub>R (x - x')) + norm (Q x - Q x')"
-      by (rule norm_triangle_ineq4)
-    also have "\<dots> = c * norm (x - x') + norm (Q x - Q x')" using c by simp
-    also have "\<dots> \<le> c * norm (x - x') + (1/s) * norm (x - x')" using L2 by simp
-    finally show ?thesis by (simp add: algebra_simps)
-  qed
-  have surjP: "cball (0::'a) d \<subseteq> P ` K"
-  proof
-    fix p :: 'a assume "p \<in> cball 0 d"
-    hence np: "norm p \<le> d" by (simp add: dist_norm)
-    obtain x where xin: "x \<in> cball \<xi> r"
-      and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
-      using semiconvex_max_exists[OF cvx less_imp_le[OF r], of \<xi> p] by blast
-    have xK: "x \<in> K" unfolding K_def using xin np xmax by blast
-    have "P x = p" by (rule PK[OF xin np xmax])
-    thus "p \<in> P ` K" using xK by (metis image_eqI)
-  qed
-  have main: "\<not> negligible K"
-  proof
-    assume neg: "negligible K"
-    have negP: "negligible (P ` K)"
-    proof (rule negligible_locally_Lipschitz_image[OF order_refl neg])
-      fix x :: 'a assume xK: "x \<in> K"
-      have "\<forall>y \<in> K \<inter> UNIV. norm (P y - P x) \<le> (c + 1/s) * norm (y - x)"
-        using lip xK by blast
-      thus "\<exists>T B. open T \<and> x \<in> T
-          \<and> (\<forall>y \<in> K \<inter> T. norm (P y - P x) \<le> B * norm (y - x))"
-        by blast
+    have PK: "P x = p"
+      if xin: "x \<in> cball \<xi> r" and np: "norm p \<le> d"
+        and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
+      for x p
+    proof -
+      have Qx: "Q x = c *\<^sub>R x - p" by (rule QK[OF xin np xmax])
+      have "P x = c *\<^sub>R x - Q x" by (simp add: P_def)
+      thus ?thesis using Qx by simp
     qed
-    have "negligible (cball (0::'a) d)"
-      by (rule negligible_subset[OF negP surjP])
-    thus False using not_negligible_cball[OF d] by blast
+    have ub: "\<psi> y \<le> \<psi> x + Q x \<bullet> (y - x) + (c/2) * (norm (y - x))\<^sup>2"
+      if ymem: "y \<in> cball \<xi> r" and xin: "x \<in> cball \<xi> r" and np: "norm p \<le> d"
+        and xmax: "\<And>z. z \<in> cball \<xi> r \<Longrightarrow> \<phi> z + p \<bullet> z \<le> \<phi> x + p \<bullet> x"
+      for x y p
+    proof -
+      have Qx: "Q x = c *\<^sub>R x - p" by (rule QK[OF xin np xmax])
+      have "\<psi> y - \<psi> x \<le> (c *\<^sub>R x - p) \<bullet> (y - x) + (c/2) * (norm (y - x))\<^sup>2"
+        unfolding \<psi>_def by (rule max_semiconcave_bound[OF xmax ymem])
+      thus ?thesis using Qx by simp
+    qed
+    define Qb where "Qb = c * (norm \<xi> + r) + d"
+    have Qbnn: "0 \<le> Qb"
+    proof -
+      have n1: "0 \<le> norm \<xi> + r"
+        by (rule add_nonneg_nonneg[OF norm_ge_zero less_imp_le[OF r]])
+      have "0 \<le> c * (norm \<xi> + r)"
+        by (rule mult_nonneg_nonneg[OF less_imp_le[OF c] n1])
+      thus ?thesis unfolding Qb_def using d by linarith
+    qed
+    have Qbound: "norm (Q x) \<le> Qb" if xK: "x \<in> K" for x
+    proof -
+      from xK obtain p where np: "norm p \<le> d" and xin: "x \<in> cball \<xi> r"
+        and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
+        unfolding K_def by blast
+      have nx: "norm x \<le> norm \<xi> + r"
+      proof -
+        have "norm x \<le> norm \<xi> + norm (x - \<xi>)" by (rule norm_triangle_sub)
+        moreover have "norm (x - \<xi>) \<le> r"
+          using xin by (simp add: dist_norm norm_minus_commute)
+        ultimately show ?thesis by simp
+      qed
+      have Qx: "Q x = c *\<^sub>R x - p" by (rule QK[OF xin np xmax])
+      have b1: "norm (c *\<^sub>R x) \<le> c * (norm \<xi> + r)" using nx c by simp
+      have b2: "norm (c *\<^sub>R x - p) \<le> norm (c *\<^sub>R x) + norm p"
+        by (rule norm_triangle_ineq4)
+      show ?thesis unfolding Qb_def using b1 b2 np Qx by simp
+    qed
+    define s where "s = min (1/c) ((r - \<rho>)/(2*Qb + 1))"
+    have pos1: "0 < 2*Qb + 1" using Qbnn by simp
+    have s0: "0 < s" unfolding s_def using c rho pos1 by simp
+    have sc: "s * c \<le> 1"
+    proof -
+      have "s \<le> 1/c" unfolding s_def by simp
+      thus ?thesis using c by (simp add: field_simps)
+    qed
+    have sQ: "s * (2*Qb) < r - \<rho>"
+    proof -
+      have le: "s \<le> (r - \<rho>)/(2*Qb + 1)" unfolding s_def by simp
+      have "s * (2*Qb) \<le> ((r - \<rho>)/(2*Qb + 1)) * (2*Qb)"
+        using le Qbnn by (intro mult_right_mono) auto
+      also have "\<dots> < ((r - \<rho>)/(2*Qb + 1)) * (2*Qb + 1)"
+        using rho pos1 by (intro mult_strict_left_mono) auto
+      also have "\<dots> = r - \<rho>" using pos1 by simp
+      finally show ?thesis .
+    qed
+    have mem: "z - s *\<^sub>R w \<in> cball \<xi> r"
+      if dz: "dist z \<xi> < \<rho>" and nw: "norm w \<le> 2*Qb" for z w
+    proof -
+      have "dist (z - s *\<^sub>R w) \<xi> = norm ((z - \<xi>) - s *\<^sub>R w)"
+        by (simp add: dist_norm algebra_simps)
+      also have "\<dots> \<le> norm (z - \<xi>) + norm (s *\<^sub>R w)" by (rule norm_triangle_ineq4)
+      also have "\<dots> = dist z \<xi> + s * norm w"
+        using s0 by (simp add: dist_norm)
+      also have "\<dots> \<le> dist z \<xi> + s * (2*Qb)"
+        using nw s0 by (intro add_left_mono mult_left_mono) auto
+      also have "\<dots> < \<rho> + (r - \<rho>)" using dz sQ by linarith
+      finally show ?thesis by (simp add: dist_commute)
+    qed
+    have lip: "norm (P x - P x') \<le> (c + 1/s) * norm (x - x')"
+      if kx: "x \<in> K" and kx': "x' \<in> K" for x x'
+    proof -
+      from kx obtain p where np: "norm p \<le> d" and xin: "x \<in> cball \<xi> r"
+        and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
+        unfolding K_def by blast
+      from kx' obtain p' where np': "norm p' \<le> d" and xin': "x' \<in> cball \<xi> r"
+        and xmax': "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p' \<bullet> y \<le> \<phi> x' + p' \<bullet> x'"
+        unfolding K_def by blast
+      have dx: "dist x \<xi> < \<rho>" by (rule deepK[OF xin np xmax])
+      have dx': "dist x' \<xi> < \<rho>" by (rule deepK[OF xin' np' xmax'])
+      have nQQ: "norm (Q x - Q x') \<le> 2*Qb"
+        using Qbound[OF kx] Qbound[OF kx'] norm_triangle_ineq4[of "Q x" "Q x'"]
+        by simp
+      have nQQ': "norm (Q x' - Q x) \<le> 2*Qb"
+        using nQQ by (simp add: norm_minus_commute)
+      have L1: "s * norm (Q x - Q x') \<le> norm (x - x')"
+      proof (rule subdiff_lipschitz_of_semiconcave[OF Qsub Qsub _ _ s0 sc])
+        show "\<psi> y \<le> \<psi> x + Q x \<bullet> (y - x) + (c/2) * (norm (y - x))\<^sup>2"
+          if "y \<in> cball \<xi> r" for y by (rule ub[OF that xin np xmax])
+        show "\<psi> y \<le> \<psi> x' + Q x' \<bullet> (y - x') + (c/2) * (norm (y - x'))\<^sup>2"
+          if "y \<in> cball \<xi> r" for y by (rule ub[OF that xin' np' xmax'])
+        show "x - s *\<^sub>R (Q x - Q x') \<in> cball \<xi> r" by (rule mem[OF dx nQQ])
+        show "x' - s *\<^sub>R (Q x' - Q x) \<in> cball \<xi> r" by (rule mem[OF dx' nQQ'])
+      qed
+      have L2: "norm (Q x - Q x') \<le> (1/s) * norm (x - x')"
+        using L1 s0 by (simp add: field_simps)
+      have "norm (P x - P x') = norm (c *\<^sub>R (x - x') - (Q x - Q x'))"
+        unfolding P_def by (simp add: algebra_simps)
+      also have "\<dots> \<le> norm (c *\<^sub>R (x - x')) + norm (Q x - Q x')"
+        by (rule norm_triangle_ineq4)
+      also have "\<dots> = c * norm (x - x') + norm (Q x - Q x')" using c by simp
+      also have "\<dots> \<le> c * norm (x - x') + (1/s) * norm (x - x')" using L2 by simp
+      finally show ?thesis by (simp add: algebra_simps)
+    qed
+    have surjP: "cball (0::'a) d \<subseteq> P ` K"
+    proof
+      fix p :: 'a assume "p \<in> cball 0 d"
+      hence np: "norm p \<le> d" by (simp add: dist_norm)
+      obtain x where xin: "x \<in> cball \<xi> r"
+        and xmax: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x"
+        using semiconvex_max_exists[OF cvx less_imp_le[OF r], of \<xi> p] by blast
+      have xK: "x \<in> K" unfolding K_def using xin np xmax by blast
+      have "P x = p" by (rule PK[OF xin np xmax])
+      thus "p \<in> P ` K" using xK by (metis image_eqI)
+    qed
+    have main: "\<not> negligible K"
+    proof
+      assume neg: "negligible K"
+      have negP: "negligible (P ` K)"
+      proof (rule negligible_locally_Lipschitz_image[OF order_refl neg])
+        fix x :: 'a assume xK: "x \<in> K"
+        have "\<forall>y \<in> K \<inter> UNIV. norm (P y - P x) \<le> (c + 1/s) * norm (y - x)"
+          using lip xK by blast
+        thus "\<exists>T B. open T \<and> x \<in> T
+            \<and> (\<forall>y \<in> K \<inter> T. norm (P y - P x) \<le> B * norm (y - x))"
+          by blast
+      qed
+      have "negligible (cball (0::'a) d)"
+        by (rule negligible_subset[OF negP surjP])
+      thus False using not_negligible_cball[OF d] by blast
+    qed
+    thus ?thesis unfolding K_def .
   qed
-  thus ?thesis unfolding K_def .
+  \<comment> \<open>A semiconvexity constant may always be raised, so it may be taken positive.\<close>
+  have cvx1: "convex_on UNIV (\<lambda>z. \<phi> z + (max c 1/2) * (norm z)\<^sup>2)"
+  proof -
+    have "convex_on UNIV (\<lambda>z. (\<phi> z + (c/2) * (norm z)\<^sup>2)
+        + ((max c 1 - c)/2) * (norm z)\<^sup>2)"
+      by (intro convex_on_add cvx convex_on_cmul convex_on_norm_sq convex_UNIV) simp
+    moreover have "(\<lambda>z. (\<phi> z + (c/2) * (norm z)\<^sup>2) + ((max c 1 - c)/2) * (norm z)\<^sup>2)
+        = (\<lambda>z. \<phi> z + (max c 1/2) * (norm z)\<^sup>2)"
+      by (rule ext) (simp add: field_simps)
+    ultimately show ?thesis by simp
+  qed
+  show ?thesis by (rule pos[OF cvx1]) simp
 qed
-
 
 (*<*)
 end

@@ -114,39 +114,6 @@ text \<open>The doubled functional
   \<open>fst\<close> and \<open>snd\<close>; the penalty's own semiconvexity is
   \<open>semiconvex_penalty_gen\<close> in \<open>Doubling_Of_Variables\<close>.\<close>
 
-lemma convex_on_norm_sq:
-  fixes S :: "'a::real_inner set"
-  assumes S: "convex S"
-  shows "convex_on S (\<lambda>x. (norm x)\<^sup>2)"
-proof (rule convex_onI[OF _ S])
-  fix t :: real and x y :: 'a
-  assume t: "0 < t" "t < 1"
-  have eA: "(norm x)\<^sup>2 = x \<bullet> x" by (rule power2_norm_eq_inner)
-  have eB: "(norm y)\<^sup>2 = y \<bullet> y" by (rule power2_norm_eq_inner)
-  have eC: "(norm ((1 - t) *\<^sub>R x + t *\<^sub>R y))\<^sup>2
-      = ((1 - t) *\<^sub>R x + t *\<^sub>R y) \<bullet> ((1 - t) *\<^sub>R x + t *\<^sub>R y)"
-    by (rule power2_norm_eq_inner)
-  have expand: "((1 - t) *\<^sub>R x + t *\<^sub>R y) \<bullet> ((1 - t) *\<^sub>R x + t *\<^sub>R y)
-      = (1-t)*(1-t)*(x \<bullet> x) + 2*(1-t)*t*(x \<bullet> y) + t*t*(y \<bullet> y)"
-    by (simp add: inner_commute algebra_simps)
-  have expand2: "(x - y) \<bullet> (x - y) = (x \<bullet> x) - 2*(x \<bullet> y) + (y \<bullet> y)"
-    by (simp add: inner_diff_left inner_diff_right inner_commute)
-  have ident: "(1 - t) * (x \<bullet> x) + t * (y \<bullet> y)
-      - ((1-t)*(1-t)*(x \<bullet> x) + 2*(1-t)*t*(x \<bullet> y) + t*t*(y \<bullet> y))
-      = (t*(1-t)) * ((x \<bullet> x) - 2*(x \<bullet> y) + (y \<bullet> y))"
-    by (simp add: algebra_simps)
-  have nn: "0 \<le> (t*(1-t)) * ((x \<bullet> x) - 2*(x \<bullet> y) + (y \<bullet> y))"
-  proof -
-    have p1: "0 \<le> t*(1-t)" using t by (intro mult_nonneg_nonneg) auto
-    have p2: "0 \<le> (x \<bullet> x) - 2*(x \<bullet> y) + (y \<bullet> y)"
-      unfolding expand2[symmetric] by simp
-    show ?thesis by (rule mult_nonneg_nonneg[OF p1 p2])
-  qed
-  show "(norm ((1 - t) *\<^sub>R x + t *\<^sub>R y))\<^sup>2
-      \<le> (1 - t) * (norm x)\<^sup>2 + t * (norm y)\<^sup>2"
-    unfolding eA eB eC expand using ident nn by linarith
-qed
-
 lemma semiconvex_add:
   fixes f g :: "'a::euclidean_space \<Rightarrow> real"
   assumes f: "convex_on UNIV (\<lambda>x. f x + (c/2) * (norm x)\<^sup>2)"
@@ -274,8 +241,7 @@ text \<open>The engine, Jensen's lemma combined with Alexandrov's theorem, uses
 theorem semiconvex_jensen_alexandrov_point:
   fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real"
   assumes cvx: "convex_on UNIV (\<lambda>z. \<phi> z + (c/2) * (norm z)\<^sup>2)"
-    and c: "0 < c"
-    and rho: "0 < \<rho>" "\<rho> < r"
+    and r: "0 < r" and rho: "\<rho> < r"
     and bnd: "\<And>y. y \<in> cball \<xi> r \<Longrightarrow> \<rho> \<le> dist y \<xi> \<Longrightarrow> \<phi> y \<le> m"
     and d: "0 < d" and small: "2 * d * r < \<phi> \<xi> - m"
   shows "\<exists>x p q X. dist x \<xi> < \<rho> \<and> norm p \<le> d
@@ -285,7 +251,6 @@ theorem semiconvex_jensen_alexandrov_point:
       \<and> ((\<lambda>k. (\<phi> (x + k) - \<phi> x - q \<bullet> k - (k \<bullet> X k)/2) / (norm k)\<^sup>2)
           \<longlongrightarrow> 0) (at 0)"
 proof -
-  have r: "0 < r" using rho by simp
   define J where "J = {x \<in> cball \<xi> r. \<exists>p. norm p \<le> d
       \<and> (\<forall>y \<in> cball \<xi> r. \<phi> y + p \<bullet> y \<le> \<phi> x + p \<bullet> x)}"
   define N where "N = {y. \<not> (\<exists>q X. bounded_linear X \<and> (\<forall>v w. v \<bullet> X w = w \<bullet> X v)
@@ -293,7 +258,7 @@ proof -
       \<and> ((\<lambda>k. (\<phi> (y + k) - \<phi> y - q \<bullet> k - (k \<bullet> X k)/2) / (norm k)\<^sup>2)
           \<longlongrightarrow> 0) (at 0))}"
   have nJ: "\<not> negligible J"
-    unfolding J_def by (rule jensen_lemma[OF cvx c rho(1) rho(2) bnd d small])
+    unfolding J_def by (rule jensen_lemma[OF cvx r rho bnd d small])
   have nN: "negligible N"
     unfolding N_def by (rule semiconvex_alexandrov_bounded[OF cvx])
   have "\<not> (J \<subseteq> N)"

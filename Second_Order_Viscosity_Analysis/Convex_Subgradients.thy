@@ -62,6 +62,42 @@ proof -
     by (cases "a = 0") (auto simp: power2_eq_square mult_le_cancel_right)
 qed
 
+text \<open>The squared norm is convex; adding a nonnegative multiple of it
+  preserves semiconvexity, so a semiconvexity constant can always be raised.\<close>
+
+lemma convex_on_norm_sq:
+  fixes S :: "'a::real_inner set"
+  assumes S: "convex S"
+  shows "convex_on S (\<lambda>x. (norm x)\<^sup>2)"
+proof (rule convex_onI[OF _ S])
+  fix t :: real and x y :: 'a
+  assume t: "0 < t" "t < 1"
+  have eA: "(norm x)\<^sup>2 = x \<bullet> x" by (rule power2_norm_eq_inner)
+  have eB: "(norm y)\<^sup>2 = y \<bullet> y" by (rule power2_norm_eq_inner)
+  have eC: "(norm ((1 - t) *\<^sub>R x + t *\<^sub>R y))\<^sup>2
+      = ((1 - t) *\<^sub>R x + t *\<^sub>R y) \<bullet> ((1 - t) *\<^sub>R x + t *\<^sub>R y)"
+    by (rule power2_norm_eq_inner)
+  have expand: "((1 - t) *\<^sub>R x + t *\<^sub>R y) \<bullet> ((1 - t) *\<^sub>R x + t *\<^sub>R y)
+      = (1-t)*(1-t)*(x \<bullet> x) + 2*(1-t)*t*(x \<bullet> y) + t*t*(y \<bullet> y)"
+    by (simp add: inner_commute algebra_simps)
+  have expand2: "(x - y) \<bullet> (x - y) = (x \<bullet> x) - 2*(x \<bullet> y) + (y \<bullet> y)"
+    by (simp add: inner_diff_left inner_diff_right inner_commute)
+  have ident: "(1 - t) * (x \<bullet> x) + t * (y \<bullet> y)
+      - ((1-t)*(1-t)*(x \<bullet> x) + 2*(1-t)*t*(x \<bullet> y) + t*t*(y \<bullet> y))
+      = (t*(1-t)) * ((x \<bullet> x) - 2*(x \<bullet> y) + (y \<bullet> y))"
+    by (simp add: algebra_simps)
+  have nn: "0 \<le> (t*(1-t)) * ((x \<bullet> x) - 2*(x \<bullet> y) + (y \<bullet> y))"
+  proof -
+    have p1: "0 \<le> t*(1-t)" using t by (intro mult_nonneg_nonneg) auto
+    have p2: "0 \<le> (x \<bullet> x) - 2*(x \<bullet> y) + (y \<bullet> y)"
+      unfolding expand2[symmetric] by simp
+    show ?thesis by (rule mult_nonneg_nonneg[OF p1 p2])
+  qed
+  show "(norm ((1 - t) *\<^sub>R x + t *\<^sub>R y))\<^sup>2
+      \<le> (1 - t) * (norm x)\<^sup>2 + t * (norm y)\<^sup>2"
+    unfolding eA eB eC expand using ident nn by linarith
+qed
+
 text \<open>A semiconvex function is continuous: subtract the quadratic from the
   continuous convex function.\<close>
 
