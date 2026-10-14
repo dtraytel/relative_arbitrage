@@ -27,15 +27,17 @@ text \<open>The penalty is not the quadratic \<open>(\<alpha>/2)(norm d)\<^sup>2
   penalty, so \<open>jet_transfer_quadratic\<close> applies; the consumer
   \<open>comparison_supconv_bounded_family\<close> is penalty-agnostic.\<close>
 
+context geometric_operator
+begin
+
 theorem comparison_supconv_maximiser_complete_gen:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and \<xi>\<^sub>0 :: "(real^'n) \<times> (real^'n)"
     and D\<^sub>0 :: real
     and Pn :: "real^'n \<Rightarrow> real"
     and Gf :: "real^'n \<Rightarrow> real^'n" and Zf :: "real^'n \<Rightarrow> real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega>\<^sub>u u" and sup: "supersol_jet k L \<Omega>\<^sub>w w"
+  assumes sub: "subsol \<Omega>\<^sub>u u" and sup: "supersol_usc \<Omega>\<^sub>w w"
     and t: "0 < \<theta>" "\<theta> < 1"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>" and kap: "0 \<le> \<kappa>"
     and sc: "convex_on UNIV (\<lambda>d. (\<kappa>/2) * (norm d)\<^sup>2 - Pn d)"
     and Pjet: "\<And>d. ((\<lambda>h. (Pn (d + h) - Pn d - Gf d \<bullet> h
@@ -504,20 +506,21 @@ proof -
            and ysu = ysu and ysw = ysw
            and cs = "\<lambda>i. 2*(2*(D\<^sub>0/(2 + real i)))"
            and c = "c - KG * (2*\<rho>)",
-         OF sub sup t(1) t(2) kk(1) kk(2) LL e Bu Bw])
+         OF sub sup t(1) t(2) e Bu Bw])
        (use ysu ysw symXs symYs psdS cs0 jetu jetw au aw bX bY bG gG cG
         in blast)+
 qed
 
+end
+
 section \<open>Supersolutions are a local notion\<close>
 
 lemma supersol_jet_cong_on:
-  fixes w w' :: "real^'n::finite \<Rightarrow> real"
-  assumes s: "supersol_jet k L \<Omega> w" and op: "open \<Omega>"
+  fixes w w' :: "real^'n::finite \<Rightarrow> real" and G :: "real^'n \<Rightarrow> real^'n^'n \<Rightarrow> ereal"
+  assumes s: "visc_supersol_gen test_fun_at nhds G \<Omega> w" and op: "open \<Omega>"
     and eq: "\<And>y. y \<in> \<Omega> \<Longrightarrow> w' y = w y"
-  shows "supersol_jet k L \<Omega> w'"
-  unfolding supersol_jet_eq_gen
-proof (rule visc_supersol_gen_cong[OF s[unfolded supersol_jet_eq_gen]])
+  shows "visc_supersol_gen test_fun_at nhds G \<Omega> w'"
+proof (rule visc_supersol_gen_cong[OF s])
   show "w x = w' x" if "x \<in> \<Omega>" for x using eq[OF that] by simp
   show "eventually (\<lambda>y. w y = w' y) (nhds x)" if "x \<in> \<Omega>" for x
     using eventually_nhds_in_open[OF op that] by eventually_elim (simp add: eq)
@@ -534,12 +537,14 @@ text \<open>Off the diagonal, the \<open>x\<close>-side needs no boundary avoida
   hypothesis \<open>mxU\<close> ranges over \<open>UNIV \<times> K'\<close>, from
   \<open>doubled_maximiser_over_UNIV_snd\<close>.\<close>
 
+context geometric_operator
+begin
+
 theorem comparison_2dom_off_diagonal:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K' :: "(real^'n) set"
-  assumes sub: "visc_subsol k L {q. 0 < u q} u"
-    and sup: "supersol_jet k L (interior K') w"
+  assumes sub: "subsol {q. 0 < u q} u"
+    and sup: "supersol_usc (interior K') w"
     and t: "0 < \<theta>" "\<theta> < 1"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
     and low: "\<And>y. Blw \<le> (- w) y"
     and uu: "\<And>c z. \<theta> * u z < c \<Longrightarrow>
@@ -634,7 +639,7 @@ proof -
            and Pn = "soft_pen \<kappa>\<^sub>P" and Gf = "soft_grad \<kappa>\<^sub>P"
            and Zf = "soft_hess \<kappa>\<^sub>P" and KZ = "2*\<kappa>\<^sub>P" and KG = "3*\<kappa>\<^sub>P"
            and Bu = Bu and Bw = Bw and c = c,
-         OF sub sup t(1) t(2) kk(1) kk(2) LL epos kPnn
+         OF sub sup t(1) t(2) epos kPnn
             soft_pen_semiconcave[OF kPnn] soft_pen_jet_field soft_hess_sym
             soft_hess_bound[OF kPnn] soft_grad_lipschitz[OF kPnn] KGnn
             rpos rltk D0 Bu Bw uu uw])
@@ -653,8 +658,7 @@ text \<open>The four steps chained: at a diagonal maximiser (interior, by the
 
 theorem comparison_soft_diagonal:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and A :: "real^'n \<Rightarrow> real"
-  assumes sup: "supersol_jet k L (interior K) w"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+  assumes sup: "supersol_usc (interior K) w"
     and Bw: "\<And>y. (- w) y \<le> Bw"
     and uw: "\<And>c z. (- w) z < c \<Longrightarrow>
         \<exists>d>0. \<forall>y. dist z y < d \<longrightarrow> (- w) y < c"
@@ -706,7 +710,7 @@ proof -
   \<comment> \<open>step 4: a supersolution has no such flat point\<close>
   show False
     by (rule supersol_no_vanishing_jet_onesided
-        [OF sup ysO kk(1) kk(2) LL ubw])
+        [OF sup ysO ubw])
 qed
 
 subsection \<open>A nonempty compact set has a nonempty frontier\<close>
@@ -740,10 +744,9 @@ text \<open>The off-diagonal branch on \<open>K\<close> itself: the \<open>\<eps
 
 theorem comparison_soft_off_diagonal_usc:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
-  assumes sub: "visc_subsol k L (interior K) u"
-    and sup: "supersol_jet k L (interior K) w"
+  assumes sub: "subsol (interior K) u"
+    and sup: "supersol_usc (interior K) w"
     and t: "0 < \<theta>" "\<theta> < 1"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cK: "compact K"
     and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
     and lou: "\<And>y. Blu \<le> \<theta> * u y" and low: "\<And>y. Blw \<le> (- w) y"
@@ -842,7 +845,7 @@ proof -
            and Pn = "soft_pen kP" and Gf = "soft_grad kP"
            and Zf = "soft_hess kP" and KZ = "2*kP" and KG = "3*kP"
            and Bu = Bu and Bw = Bw and c = c,
-         OF sub sup t(1) t(2) kk(1) kk(2) LL epos kPnn
+         OF sub sup t(1) t(2) epos kPnn
             soft_pen_semiconcave[OF kPnn] soft_pen_jet_field soft_hess_sym
             soft_hess_bound[OF kPnn] soft_grad_lipschitz[OF kPnn] KGnn
             rpos rltk D0 Bu Bw uu uw])
@@ -853,19 +856,18 @@ subsection \<open>The theorem\<close>
 
 theorem max_principle_usc_lsc:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
-  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-    and cK: "compact K" and neK: "K \<noteq> {}"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
     and uscu: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
     and lscw: "\<And>c z. z \<in> K \<Longrightarrow> c < w z \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> c < w y"
     and Bu: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. y \<in> K \<Longrightarrow> \<bar>w y\<bar> \<le> B"
-    and subu: "visc_subsol_env2 k L K (interior K) u"
-    and supw: "visc_supersol_env2 k L K (interior K) w"
+    and subu: "subsol_env2 K (interior K) u"
+    and supw: "supersol_env2 K (interior K) w"
   shows "\<exists>x \<in> K - interior K. \<forall>y\<in>K. u y - w y \<le> u x - w x"
 proof (rule ccontr)
   assume nb: "\<not> (\<exists>x \<in> K - interior K. \<forall>y\<in>K. u y - w y \<le> u x - w x)"
   have clK: "closed K" by (rule compact_imp_closed[OF cK])
   have Kb: "bounded K" by (rule compact_imp_bounded[OF cK])
-  have dim: "0 < CARD('n)" using kk by simp
+  have dim: "0 < CARD('n)" by simp
   obtain x0 where x0K: "x0 \<in> K" using neK by blast
   have B0: "0 \<le> B" using Bu[OF x0K] by linarith
   have uup: "u y \<le> B" if "y \<in> K" for y using Bu[OF that] by (simp add: abs_le_iff)
@@ -1166,14 +1168,14 @@ proof (rule ccontr)
   qed
 
   \<comment> \<open>8.  the viscosity properties of the extensions, in jet form\<close>
-  have subenv: "visc_subsol_env2 k L K (interior K) ut"
+  have subenv: "subsol_env2 K (interior K) ut"
     by (rule visc_subsol_env2_cong[OF interior_subset _ subu]) (simp add: ut_def)
-  have sub: "visc_subsol k L (interior K) ut"
+  have sub: "subsol (interior K) ut"
     by (rule visc_subsol_env_imp_visc_subsol
-        [OF subenv Kb _ kk(1) kk(2) LL, where Bu = B]) (use utup in simp)
-  have supj0: "supersol_jet k L (interior K) w"
+        [OF subenv Kb _, where Bu = B]) (use utup in simp)
+  have supj0: "supersol_usc (interior K) w"
     by (rule visc_supersol_env_imp_jet[OF supw Kb wlo])
-  have sup: "supersol_jet k L (interior K) wt"
+  have sup: "supersol_usc (interior K) wt"
   proof (rule supersol_jet_cong_on[OF supj0 open_interior])
     fix y assume "y \<in> interior K"
     then have "y \<in> K" using interior_subset by blast
@@ -1189,7 +1191,7 @@ proof (rule ccontr)
           [where u = ut and w = wt and K = K and \<theta> = \<theta> and \<epsilon> = \<epsilon>
              and Bu = "\<theta>*B" and Bw = B and Blu = "\<theta>*C" and Blw = C
              and kg = kg and kP = kP and xh = xh and yh = yh,
-           OF sub sup tpos tlt1 kk(1) kk(2) LL cK Bu' Bw' lou' low' uut uwt
+           OF sub sup tpos tlt1 cK Bu' Bw' lou' low' uut uwt
               epos kgpos kPpos xhK yhK mx farx fary smallu smallw False])
   next
     case True
@@ -1214,7 +1216,7 @@ proof (rule ccontr)
       by (rule comparison_soft_diagonal
           [where w = wt and K = K and A = "supconv (\<lambda>y. \<theta> * ut y) \<epsilon>"
              and \<epsilon> = \<epsilon> and \<kappa>\<^sub>P = kP and p = xh and R\<^sub>w = "kg/4" and Bw = B,
-           OF sup kk(1) kk(2) LL Bw' uwt epos xhK pint mxd rad subw])
+           OF sup Bw' uwt epos xhK pint mxd rad subw])
   qed
 qed
 
@@ -1223,19 +1225,18 @@ text \<open>Theorem 4.2(b): ordered boundary data stay ordered, since \<open>u -
 
 corollary max_principle_le:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
-  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-    and cK: "compact K" and neK: "K \<noteq> {}"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
     and uscu: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
     and lscw: "\<And>c z. z \<in> K \<Longrightarrow> c < w z \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> c < w y"
     and Bu: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. y \<in> K \<Longrightarrow> \<bar>w y\<bar> \<le> B"
-    and subu: "visc_subsol_env2 k L K (interior K) u"
-    and supw: "visc_supersol_env2 k L K (interior K) w"
+    and subu: "subsol_env2 K (interior K) u"
+    and supw: "supersol_env2 K (interior K) w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y \<le> w y"
   shows "\<And>y. y \<in> K \<Longrightarrow> u y \<le> w y"
 proof -
   fix y assume "y \<in> K"
   moreover obtain x where "x \<in> K - interior K" and "\<forall>y\<in>K. u y - w y \<le> u x - w x"
-    using max_principle_usc_lsc[OF kk LL cK neK uscu lscw Bu Bw subu supw] by blast
+    using max_principle_usc_lsc[OF cK neK uscu lscw Bu Bw subu supw] by blast
   ultimately show "u y \<le> w y" using bd by fastforce
 qed
 
@@ -1245,17 +1246,16 @@ text \<open>Proposition 4.1 (uniqueness): two solutions with the same boundary d
 
 corollary uniqueness_from_max_principle:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
-  assumes kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-    and cK: "compact K" and neK: "K \<noteq> {}"
+  assumes cK: "compact K" and neK: "K \<noteq> {}"
     and uscu: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
     and lscu: "\<And>c z. z \<in> K \<Longrightarrow> c < u z \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> c < u y"
     and uscw: "\<And>c z. z \<in> K \<Longrightarrow> w z < c \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> w y < c"
     and lscw: "\<And>c z. z \<in> K \<Longrightarrow> c < w z \<Longrightarrow> \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> c < w y"
     and Bu: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> B" and Bw: "\<And>y. y \<in> K \<Longrightarrow> \<bar>w y\<bar> \<le> B"
-    and subu: "visc_subsol_env2 k L K (interior K) u"
-    and supu: "visc_supersol_env2 k L K (interior K) u"
-    and subw: "visc_subsol_env2 k L K (interior K) w"
-    and supw: "visc_supersol_env2 k L K (interior K) w"
+    and subu: "subsol_env2 K (interior K) u"
+    and supu: "supersol_env2 K (interior K) u"
+    and subw: "subsol_env2 K (interior K) w"
+    and supw: "supersol_env2 K (interior K) w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
   shows "\<And>y. y \<in> K \<Longrightarrow> u y = w y"
 proof -
@@ -1263,11 +1263,13 @@ proof -
   have le1: "u z \<le> w z" and le2: "w z \<le> u z" if "z \<in> K - interior K" for z
     using bd[OF that] by simp_all
   have "u y \<le> w y"
-    by (rule max_principle_le[OF kk LL cK neK uscu lscw Bu Bw subu supw le1 y])
+    by (rule max_principle_le[OF cK neK uscu lscw Bu Bw subu supw le1 y])
   moreover have "w y \<le> u y"
-    by (rule max_principle_le[OF kk LL cK neK uscw lscu Bw Bu subw supu le2 y])
+    by (rule max_principle_le[OF cK neK uscw lscu Bw Bu subw supu le2 y])
   ultimately show "u y = w y" by simp
 qed
+
+end
 
 text \<open>Continuous data on compact \<open>K\<close> are bounded and semicontinuous relative
   to \<open>K\<close> in both directions, and the touching-on-\<open>K\<close> predicates pass to the
@@ -1300,12 +1302,14 @@ proof -
   qed
 qed
 
+context geometric_operator
+begin
+
 corollary max_principle_boundary_holds:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-    and subE: "visc_subsol_env k L K (interior K) u"
-    and supE: "visc_supersol_env k L K (interior K) w"
+    and subE: "subsol_env K (interior K) u"
+    and supE: "supersol_env K (interior K) w"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
   shows "\<exists>x\<in>K - interior K. \<forall>y\<in>K. u y - w y \<le> u x - w x"
 proof -
@@ -1314,7 +1318,7 @@ proof -
   then have B: "\<forall>y\<in>K. \<bar>u y\<bar> \<le> max Bu Bw \<and> \<bar>w y\<bar> \<le> max Bu Bw"
     by (auto simp: le_max_iff_disj)
   show ?thesis
-    by (rule max_principle_usc_lsc[OF kk LL cK neK continuous_on_rel_usc[OF cu]
+    by (rule max_principle_usc_lsc[OF cK neK continuous_on_rel_usc[OF cu]
           continuous_on_rel_lsc[OF cw], where B = "max Bu Bw"])
       (use B visc_subsol_env_imp_env2[OF subE] visc_supersol_env_imp_env2[OF supE] in auto)
 qed
@@ -1328,12 +1332,11 @@ text \<open>The first consequence of Theorem 4.2(a), for continuous solutions on
 theorem viscosity_uniqueness_compact:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
-    and subu: "visc_subsol_env k L K (interior K) u"
-    and supu: "visc_supersol_env k L K (interior K) u"
-    and subw: "visc_subsol_env k L K (interior K) w"
-    and supw: "visc_supersol_env k L K (interior K) w"
+    and subu: "subsol_env K (interior K) u"
+    and supu: "supersol_env K (interior K) u"
+    and subw: "subsol_env K (interior K) w"
+    and supw: "supersol_env K (interior K) w"
     and bd: "\<And>y. y \<in> K - interior K \<Longrightarrow> u y = w y"
     and x: "x \<in> K"
   shows "u x = w x"
@@ -1343,18 +1346,20 @@ proof -
   then have B: "\<forall>y\<in>K. \<bar>u y\<bar> \<le> max Bu Bw \<and> \<bar>w y\<bar> \<le> max Bu Bw"
     by (auto simp: le_max_iff_disj)
   show ?thesis
-    by (rule uniqueness_from_max_principle[OF kk LL cK neK
+    by (rule uniqueness_from_max_principle[OF cK neK
           continuous_on_rel_usc[OF cu] continuous_on_rel_lsc[OF cu]
           continuous_on_rel_usc[OF cw] continuous_on_rel_lsc[OF cw], where B = "max Bu Bw"])
       (use B bd x visc_subsol_env_imp_env2 visc_supersol_env_imp_env2 subu supu subw supw in auto)
 qed
+
+end
 
 section \<open>Map of the Theorem 4.2(a) chain\<close>
 
 text \<open>This theory is long enough that the order of the argument is not
   visible from the section headings; the chain in dependency order:
 
-  1. The operator and its envelopes: \<open>ell_op_env_strict_contradiction\<close>
+  1. The operator and its envelopes: \<open>env_strict_contradiction\<close>
   gives the closing contradiction off the origin.
 
   2. The doubling: \<open>doubling_maximiser_exists_gen\<close>, \<open>doubling_near_soft\<close>,
@@ -1367,7 +1372,7 @@ text \<open>This theory is long enough that the order of the argument is not
   \<open>superjet_local_max\<close>, \<open>visc_subsol_scaled_uniform\<close>.
 
   4. Removing corrections, and compactness:
-  \<open>ell_op_lsc_le_of_nearby\<close> passes a bound at nearby points to the
+  \<open>op_lsc_le_of_nearby\<close> passes a bound at nearby points to the
   envelope, subsuming both the \<open>\<delta> I\<close> shift and Jensen's tilt;
   \<open>symmetric_form_bound\<close> and \<open>bounded_seq_limit_point_triple\<close> turn
   quadratic-form bounds into a limiting matrix pair without the spectral

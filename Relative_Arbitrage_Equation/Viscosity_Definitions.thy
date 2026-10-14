@@ -3,7 +3,7 @@ section \<open>The viscosity-solution predicates, in one place\<close>
 (*<*)
 theory Viscosity_Definitions
   imports
-    Curvature_Operator "Second_Order_Viscosity_Analysis.Viscosity_Solutions"
+    Curvature_Operator Geometric_Operator
     "Semicontinuous_Analysis.Semicontinuous_Envelopes"
 begin
 
@@ -131,6 +131,14 @@ text \<open>Every predicate above is an instance of the two generic predicates o
   \<open>F\<close>, \<open>F\<^sub>*\<close> or \<open>F\<^sup>*\<close>, and the function is \<open>u\<close> or its lower
   envelope.  The equations below are proved, not definitional, so that the
   definitions above read as the paper does.\<close>
+
+text \<open>The two envelopes are those of @{theory Relative_Arbitrage_Equation.Geometric_Operator}.\<close>
+
+lemma ell_op_lsc_eq_op_lsc: "ell_op_lsc k L = op_lsc (ell_op k L)"
+  by (intro ext) (simp add: ell_op_lsc_def op_lsc_def ell_op_pair_def)
+
+lemma ell_op_usc_eq_op_usc: "ell_op_usc k L = op_usc (ell_op k L)"
+  by (intro ext) (simp add: ell_op_usc_def op_usc_def ell_op_pair_def)
 
 lemma visc_subsol_eq_gen:
   "visc_subsol k L \<Omega> u = visc_subsol_gen test_fun_at nhds (\<lambda>p M. ereal (ell_op k L p M)) \<Omega> u"

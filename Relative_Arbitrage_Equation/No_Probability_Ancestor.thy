@@ -1,7 +1,7 @@
 (*<*)
 theory No_Probability_Ancestor
   imports
-    Eigenvalue_Bound_Exact Comparison_Two_Domain Subspace_Tangential_Field
+    Eigenvalue_Bound_Exact Comparison_Instance Subspace_Tangential_Field
 begin
 
 text \<open>Fails the build if a theory of a probability session, or of the paper

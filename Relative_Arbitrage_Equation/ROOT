@@ -6,12 +6,14 @@ session Relative_Arbitrage_Equation = Second_Order_Viscosity_Analysis +
     (Lemma 2.1), its semicontinuous envelopes and the viscosity notions of
     Definition 3.1, the subspace-tangential field of Example 3.1, and the
     comparison principles of Section 4 (Theorems 4.2 and 4.3, Proposition
-    4.1).
+    4.1), proved for any operator in the locale geometric_operator and
+    instantiated at the operator of Eq. (1.9).
   "
   options [document = pdf, document_output = "output"]
   sessions
     Semicontinuous_Analysis
   theories
+    Geometric_Operator
     Curvature_Operator
     Viscosity_Definitions
     Constraint_Set_Convexity
@@ -25,6 +27,7 @@ session Relative_Arbitrage_Equation = Second_Order_Viscosity_Analysis +
     Comparison_Localisation
     Comparison_Principle
     Comparison_Two_Domain
+    Comparison_Instance
   theories [document = false]
     No_Probability_Ancestor
   document_files

@@ -3,7 +3,7 @@ section \<open>Strictness, scaling, and the envelope route\<close>
 (*<*)
 theory Comparison_Strictness
   imports
-    Operator_Envelope_Continuity
+    Geometric_Operator
 begin
 
 (*>*)
@@ -14,101 +14,101 @@ text \<open>What the operator contributes to the comparison argument: it reads
   strict one, and the envelope forms of the two solution notions can be
   played against each other.  Nothing here doubles a variable yet.\<close>
 
-section \<open>\<open>F\<close> reads only the symmetric part of \<open>M\<close>\<close>
-
-text \<open>Definition 3.1 takes the envelopes of \<open>F\<close> over \<open>\<real>\<^sup>n \<times> \<S>\<^sup>n\<close>, the paper's
-  symmetric matrices, whereas \<^const>\<open>ell_op_lsc\<close> and \<^const>\<open>ell_op_usc\<close> take them
-  over \<open>\<real>\<^sup>n \<times> \<real>\<^sup>n\<^sup>\<times>\<^sup>n\<close>.  Nothing changes: the feasible matrices are psd, hence
-  symmetric, so \<open>F\<close> factors through \<open>M \<mapsto> (M + M\<^sup>T)/2\<close>, and that map is a
-  contraction fixing \<open>\<S>\<^sup>n\<close> --- so every ball around a symmetric \<open>M\<close> realises the
-  same set of values as its symmetric part does.\<close>
+section \<open>The viscosity notions: congruence, monotonicity, test classes\<close>
 
 text \<open>\<open>trace_mul_comm\<close> is HOL-Analysis's \<open>trace_mul_sym\<close>.\<close>
 
 text \<open>\<open>matrix_mult_scaleR_left\<close> is HOL-Analysis's \<open>scalar_matrix_assoc\<close>, reversed.\<close>
 
+context geometric_operator
+begin
+
 lemma visc_subsol_env2_cong:
   fixes f1 f2 :: "real^'n::finite \<Rightarrow> real"
   assumes OK: "\<Omega> \<subseteq> K" and eq: "\<And>y. y \<in> K \<Longrightarrow> f1 y = f2 y"
-    and h: "visc_subsol_env2 k L K \<Omega> f1"
-  shows "visc_subsol_env2 k L K \<Omega> f2"
-  unfolding visc_subsol_env2_eq_gen
-  by (rule visc_subsol_gen_cong[OF h[unfolded visc_subsol_env2_eq_gen]])
+    and h: "subsol_env2 K \<Omega> f1"
+  shows "subsol_env2 K \<Omega> f2"
+  by (rule visc_subsol_gen_cong[OF h])
     (use OK eq in \<open>auto simp: eventually_principal\<close>)
 
 lemma visc_supersol_env2_cong:
   fixes f1 f2 :: "real^'n::finite \<Rightarrow> real"
   assumes OK: "\<Omega> \<subseteq> K" and eq: "\<And>y. y \<in> K \<Longrightarrow> f1 y = f2 y"
-    and h: "visc_supersol_env2 k L K \<Omega> f1"
-  shows "visc_supersol_env2 k L K \<Omega> f2"
-  unfolding visc_supersol_env2_eq_gen
-  by (rule visc_supersol_gen_cong[OF h[unfolded visc_supersol_env2_eq_gen]])
+    and h: "supersol_env2 K \<Omega> f1"
+  shows "supersol_env2 K \<Omega> f2"
+  by (rule visc_supersol_gen_cong[OF h])
     (use OK eq in \<open>auto simp: eventually_principal\<close>)
 
 lemma visc_supersol_env2_mono:
   fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes "visc_supersol_env2 k L K \<Omega> u" and "\<Omega>' \<subseteq> \<Omega>"
-  shows "visc_supersol_env2 k L K \<Omega>' u"
-  using assms unfolding visc_supersol_env2_def by blast
+  assumes "supersol_env2 K \<Omega> u" and "\<Omega>' \<subseteq> \<Omega>"
+  shows "supersol_env2 K \<Omega>' u"
+  using assms unfolding supersol_env2_iff by blast
 
 lemma visc_subsol_env_imp_env2:
   fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes "visc_subsol_env k L K \<Omega> u"
-  shows "visc_subsol_env2 k L K \<Omega> u"
+  assumes "subsol_env K \<Omega> u"
+  shows "subsol_env2 K \<Omega> u"
   using assms test_fun_C2_imp_test_fun_at
-  unfolding visc_subsol_env_def visc_subsol_env2_def by blast
+  unfolding subsol_env_iff subsol_env2_iff by blast
 
 lemma visc_supersol_env_imp_env2:
   fixes u :: "real^'n::finite \<Rightarrow> real"
-  assumes "visc_supersol_env k L K \<Omega> u"
-  shows "visc_supersol_env2 k L K \<Omega> u"
+  assumes "supersol_env K \<Omega> u"
+  shows "supersol_env2 K \<Omega> u"
   using assms test_fun_C2_imp_test_fun_at
-  unfolding visc_supersol_env_def visc_supersol_env2_def by blast
+  unfolding supersol_env_iff supersol_env2_iff by blast
+
+end
 
 text \<open>The two places where the paper-facing hypothesis is actually consumed:
   a local touching is deepened by a quartic into a global one over \<open>K\<close>
   (@{thm [source] local_max_quartic_deepen}).  The \<open>C\<^sup>2\<close> versions use
-  @{thm [source] test_fun_C2_quartic_shift} where @{thm [source] visc_subsol_env_local}
-  uses @{thm [source] test_fun_at_quartic_shift}: the quartic shift of a
+  @{thm [source] test_fun_C2_quartic_shift} where the \<^const>\<open>test_fun_at\<close> versions
+  use @{thm [source] test_fun_at_quartic_shift}: the quartic shift of a
   \<open>C\<^sup>2\<close> function is again \<open>C\<^sup>2\<close>, with the same two-jet at \<open>x\<close>.\<close>
 
 theorem visc_supersol_env2_local:
   fixes K :: "(real^'n::finite) set" and w \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assumes sup: "visc_supersol_env2 k L K \<Omega> w"
+    and G :: "real^'n \<Rightarrow> real^'n^'n \<Rightarrow> ereal"
+  assumes sup: "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) G \<Omega> w"
     and x\<Omega>: "x \<in> \<Omega>"
     and tf: "test_fun_C2 \<phi> g H x"
     and wlo: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
     and phi: "\<And>y. y \<in> K \<Longrightarrow> \<phi> y \<le> B\<phi>"
     and r0: "0 < r"
     and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> w x - \<phi> x \<le> w y - \<phi> y"
-  shows "1 \<le> ell_op_usc k L (g x) H"
-  by (rule visc_supersol_gen_principal_local[OF sup[unfolded visc_supersol_env2_eq_gen] x\<Omega>
+  shows "1 \<le> G (g x) H"
+  by (rule visc_supersol_gen_principal_local[OF sup x\<Omega>
         test_fun_C2_quartic_shift[OF tf] wlo phi r0 lm])
 
 theorem visc_subsol_env2_local:
   fixes K :: "(real^'n::finite) set" and u \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assumes sub: "visc_subsol_env2 k L K \<Omega> u"
+    and G :: "real^'n \<Rightarrow> real^'n^'n \<Rightarrow> ereal"
+  assumes sub: "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) G \<Omega> u"
     and x\<Omega>: "x \<in> \<Omega>"
     and tf: "test_fun_C2 \<phi> g H x"
     and uhi: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
     and phi: "\<And>y. y \<in> K \<Longrightarrow> B\<phi> \<le> \<phi> y"
     and r0: "0 < r"
     and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
-  shows "ell_op_lsc k L (g x) H \<le> 1"
-  by (rule visc_subsol_gen_principal_local[OF sub[unfolded visc_subsol_env2_eq_gen] x\<Omega>
+  shows "G (g x) H \<le> 1"
+  by (rule visc_subsol_gen_principal_local[OF sub x\<Omega>
         test_fun_C2_quartic_shift[OF tf] uhi phi r0 lm])
 
-text \<open>\<open>supersol_jet\<close> lives in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
+text \<open>\<open>supersol_usc\<close> is the supersolution notion with local touching and
+  \<open>F\<^sup>*\<close>; the comparison argument reaches it from the paper's notion.\<close>
 
 theorem visc_supersol_env_imp_jet:
   fixes K :: "(real^'n::finite) set" and w :: "real^'n \<Rightarrow> real"
-  assumes sup: "visc_supersol_env2 k L K \<Omega> w"
+    and F :: "real^'n \<Rightarrow> real^'n^'n \<Rightarrow> real"
+  assumes sup: "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (op_usc F) \<Omega> w"
     and Kb: "bounded K"
     and wlo: "\<And>y. y \<in> K \<Longrightarrow> Bw \<le> w y"
-  shows "supersol_jet k L \<Omega> w"
-  unfolding supersol_jet_def
+  shows "visc_supersol_gen test_fun_at nhds (op_usc F) \<Omega> w"
+  unfolding visc_supersol_gen_nhds
 proof (intro ballI allI impI)
   fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
@@ -118,7 +118,7 @@ proof (intro ballI allI impI)
   obtain e0 where e00: "0 < e0"
     and lme: "\<And>y. y \<in> ball x e0 \<Longrightarrow> w x - \<phi> x \<le> w y - \<phi> y"
     using lm by blast
-  have step: "1 \<le> ell_op_usc k L (g x) (H - \<delta> *\<^sub>R mat 1)"
+  have step: "1 \<le> op_usc F (g x) (H - \<delta> *\<^sub>R mat 1)"
     if d: "0 < \<delta>" for \<delta>
   proof -
     have symM: "transpose (H - \<delta> *\<^sub>R mat 1) = H - \<delta> *\<^sub>R mat 1"
@@ -163,30 +163,32 @@ proof (intro ballI allI impI)
       have "\<psi> y \<le> \<phi> y" unfolding \<psi>_def using mino[OF y1] by simp
       then show ?thesis using lme[OF y2] unfolding psix by simp
     qed
-    have "1 \<le> ell_op_usc k L (gg x) (H - \<delta> *\<^sub>R mat 1)"
+    have "1 \<le> op_usc F (gg x) (H - \<delta> *\<^sub>R mat 1)"
       by (rule visc_supersol_env2_local[OF sup x tfp wlo Bp r0' lm'])
     then show ?thesis unfolding ggx .
   qed
-  show "1 \<le> ell_op_usc k L (g x) H"
-    by (rule ell_op_usc_ge_one_shift[OF step])
+  show "1 \<le> op_usc F (g x) H"
+    by (rule op_usc_ge_one_shift[OF step])
 qed
 
 text \<open>\<open>quad_bdd_below_on_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>The subsolution counterpart of \<open>visc_supersol_env_imp_jet\<close> lands on the
-  envelope-free notion, since \<open>F\<^sub>* = F\<close> everywhere (@{thm [source]
-  ell_op_lsc_at_zero} at \<open>p = 0\<close>, @{thm [source] ell_op_lsc_off_zero}
+  envelope-free notion, since \<open>F\<^sub>* = F\<close> at symmetric matrices (the locale's
+  \<open>lsc_at_zero\<close> at \<open>p = 0\<close> and \<open>lsc_off_zero\<close>
   elsewhere); only the touching needs upgrading from global on \<open>K\<close> to local,
-  via @{thm [source] visc_subsol_env_local}.\<close>
+  via @{thm [source] visc_subsol_env2_local}.\<close>
+
+context geometric_operator
+begin
 
 theorem visc_subsol_env_imp_visc_subsol:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes sub: "visc_subsol_env2 k L K \<Omega> u"
+  assumes sub: "subsol_env2 K \<Omega> u"
     and Kb: "bounded K"
     and uhi: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-  shows "visc_subsol k L \<Omega> u"
-  unfolding visc_subsol_def
+  shows "subsol \<Omega> u"
+  unfolding subsol_iff
 proof (intro ballI allI impI)
   fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
@@ -196,7 +198,7 @@ proof (intro ballI allI impI)
   obtain e0 where e00: "0 < e0"
     and lme: "\<And>y. y \<in> ball x e0 \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
     using lm by blast
-  have step: "ell_op k L (g x) (H + \<delta> *\<^sub>R mat 1) \<le> 1" if d: "0 < \<delta>" for \<delta>
+  have step: "F (g x) (H + \<delta> *\<^sub>R mat 1) \<le> 1" if d: "0 < \<delta>" for \<delta>
   proof -
     have symM: "transpose (H + \<delta> *\<^sub>R mat 1) = H + \<delta> *\<^sub>R mat 1"
       by (rule transpose_shift_add[OF symH])
@@ -240,57 +242,38 @@ proof (intro ballI allI impI)
       have "\<phi> y \<le> \<psi> y" unfolding \<psi>_def using majo[OF y1] by simp
       then show ?thesis using lme[OF y2] unfolding psix by simp
     qed
-    have lsc: "ell_op_lsc k L (gg x) (H + \<delta> *\<^sub>R mat 1) \<le> 1"
+    have lsc: "F_lsc (gg x) (H + \<delta> *\<^sub>R mat 1) \<le> 1"
       by (rule visc_subsol_env2_local[OF sub x tfp uhi Bp r0' lm'])
     show ?thesis
     proof (cases "g x = 0")
       case True
-      have "ell_op_lsc k L (0 :: real^'n) (H + \<delta> *\<^sub>R mat 1)
-          = ereal (ell_op k L (0 :: real^'n) (H + \<delta> *\<^sub>R mat 1))"
-        by (rule ell_op_lsc_at_zero[OF kk(1) kk(2) LL])
+      have "F_lsc (0 :: real^'n) (H + \<delta> *\<^sub>R mat 1)
+          = ereal (F (0 :: real^'n) (H + \<delta> *\<^sub>R mat 1))"
+        by (rule lsc_at_zero)
       then show ?thesis using lsc unfolding ggx True by simp
     next
       case False
-      have "ell_op_lsc k L (g x) (H + \<delta> *\<^sub>R mat 1)
-          = ereal (ell_op k L (g x) (H + \<delta> *\<^sub>R mat 1))"
-        by (rule ell_op_lsc_off_zero[OF symM False LL kk(1) kk(2)])
+      have "F_lsc (g x) (H + \<delta> *\<^sub>R mat 1)
+          = ereal (F (g x) (H + \<delta> *\<^sub>R mat 1))"
+        by (rule lsc_off_zero[OF symM False])
       then show ?thesis using lsc unfolding ggx by simp
     qed
   qed
-  show "ell_op k L (g x) H \<le> 1"
+  show "F (g x) H \<le> 1"
   proof (rule field_le_epsilon)
     fix e :: real assume e0: "0 < e"
-    have A0: "0 < real CARD('n) * L / 2" using LL by simp
-    define \<delta> where "\<delta> = e / (real CARD('n) * L / 2)"
-    have d0: "0 < \<delta>" unfolding \<delta>_def using e0 A0 by simp
-    have ne: "feasible k L (g x) \<noteq> ({} :: (real^'n^'n) set)"
-      by (rule feasible_nonempty[OF kk(1) kk(2) LL])
-    have gap: "ell_op k L (g x) H
-        \<le> ell_op k L (g x) (H + \<delta> *\<^sub>R mat 1) + mgap L H (H + \<delta> *\<^sub>R mat 1)"
-      by (rule ell_op_M_gap[OF ne])
-    have mg: "mgap L H (H + \<delta> *\<^sub>R mat 1) = \<delta> * real CARD('n) * L / 2"
-      by (rule mgap_shift_id(1)[OF less_imp_le[OF d0]])
-    have L0: "L \<noteq> 0" using LL by linarith
-    have eq: "\<delta> * real CARD('n) * L / 2 = e"
-      unfolding \<delta>_def using A0 L0 by (simp add: field_simps)
-    have mg': "mgap L H (H + \<delta> *\<^sub>R mat 1) = e" using mg eq by simp
-    show "ell_op k L (g x) H \<le> 1 + e"
-      using gap step[OF d0] mg' by linarith
+    obtain C where C0: "0 < C"
+      and gap: "\<And>p M \<delta>. 0 \<le> \<delta> \<Longrightarrow> F p M \<le> F p (M + \<delta> *\<^sub>R mat 1) + C * \<delta>"
+      using shift_bound_pos by blast
+    define \<delta> where "\<delta> = e / C"
+    have d0: "0 < \<delta>" unfolding \<delta>_def using e0 C0 by simp
+    have eq: "C * \<delta> = e"
+      unfolding \<delta>_def using C0 by simp
+    show "F (g x) H \<le> 1 + e"
+      using gap[of \<delta> "g x" H] d0 step[OF d0] eq by linarith
   qed
 qed
 
-
-lemma ell_op_strict_contradiction:
-  fixes X Y :: "real^'n::finite^'n"
-  assumes psd: "psd (Y - X)"
-    and ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
-    and sub: "ell_op k L p X < 1" and sup: "1 \<le> ell_op k L p Y"
-  shows False
-proof -
-  have "ell_op k L p Y \<le> ell_op k L p X"
-    by (rule ell_op_elliptic_le[OF psd ne])
-  thus False using sub sup by linarith
-qed
 
 subsection \<open>Where the strictness comes from\<close>
 
@@ -301,34 +284,9 @@ text \<open>\<open>F(p, M) = Inf {- tr(M a)/2 | a feasible}\<close> has no zerot
   \<open>(p, X)\<close> to \<open>(\<theta> p, \<theta> X)\<close> and \<open>F(p,X) \<le> 1\<close> to the strict
   \<open>F(\<theta> p, \<theta> X) \<le> \<theta> < 1\<close>.\<close>
 
-text \<open>Positive homogeneity of \<open>F\<close> in the matrix argument: with
-  @{thm [source] feasible_scale}, this is the strict-perturbation mechanism, scaling
-  a subsolution's jet to \<open>(\<theta> p, \<theta> X)\<close> and its value to
-  \<open>\<theta> F(p,X) \<le> \<theta> < 1\<close>.\<close>
-
-lemma ell_op_scaleR_matrix:
-  fixes M :: "real^'n::finite^'n"
-  assumes t: "0 < \<theta>" and ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
-  shows "ell_op k L p (\<theta> *\<^sub>R M) = \<theta> * ell_op k L p M"
-proof -
-  have pt: "- trace ((\<theta> *\<^sub>R M) ** a) / 2 = \<theta> * (- trace (M ** a) / 2)"
-    for a :: "real^'n^'n"
-  proof -
-    have "(\<theta> *\<^sub>R M) ** a = \<theta> *\<^sub>R (M ** a)"
-      by (rule scalar_matrix_assoc[symmetric])
-    thus ?thesis by (simp add: trace_scaleR)
-  qed
-  have img: "(\<lambda>a. - trace ((\<theta> *\<^sub>R M) ** a) / 2) ` feasible k L p
-      = (\<lambda>x. \<theta> * x) ` ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p)"
-    unfolding image_image using pt by simp
-  show ?thesis
-    unfolding ell_op_def img
-    by (rule cInf_mult_pos[OF t _ ell_op_bdd_below]) (use ne in simp)
-qed
-
 text \<open>Scaling a subsolution by \<open>\<theta> \<in> (0,1)\<close> makes its operator inequality
   strict, since \<open>F\<close> has no zeroth-order term. With
-  \<open>ell_op_strict_contradiction\<close>, a scaled subsolution and an unscaled
+  \<open>strict_contradiction\<close>, a scaled subsolution and an unscaled
   supersolution sharing a jet pair \<open>X \<preceq> Y\<close> are inconsistent -- the
   contradiction underlying Theorem 4.2(a).\<close>
 
@@ -383,9 +341,9 @@ text \<open>\<open>superjet_local_max\<close> introduces a strictly convex corre
   \<open>(\<delta>/2) * norm k\<^sup>2\<close>, so the matrix reaching the operator is \<open>X + \<delta> I\<close>
   rather than \<open>X\<close>. Removing \<open>\<delta>\<close> passes to closed second-order jets via the
   envelopes: the two envelope inequalities sandwich the sharp one, and
-  \<open>visc_subsol_imp_env\<close> / \<open>visc_supersol_imp_env\<close> (@{theory Relative_Arbitrage_Equation.Operator_Envelopes}) show the
-  envelope-free notions already imply the envelope ones on an open
-  \<open>\<Omega> \<subseteq> K\<close>.\<close>
+  the envelope-free notions already imply the envelope ones on an open
+  \<open>\<Omega> \<subseteq> K\<close> (@{thm [source] visc_subsol_gen_filter_mono} with
+  @{thm [source] nhds_le_principal_of_open}).\<close>
 
 text \<open>And the same for the upper envelope, by the dual argument: the same
   translation carries \<open>ball (p, M) e\<close> onto \<open>ball (p, N) e\<close>, and the
@@ -402,27 +360,26 @@ text \<open>Ellipticity of the envelopes alone gives \<open>F\<^sup>*(p, Y) \<le
   (\<open>ell_op_lsc_off_zero\<close>, \<open>ell_op_usc_off_zero\<close>), reducing the envelope
   contradiction to the envelope-free one.\<close>
 
-theorem ell_op_env_strict_contradiction:
+theorem env_strict_contradiction:
   fixes X Y :: "real^'n::finite^'n"
   assumes psd: "psd (Y - X)"
     and symX: "transpose X = X" and symY: "transpose Y = Y"
-    and p: "p \<noteq> 0" and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
-    and sub: "ell_op_lsc k L p X < 1" and sup: "1 \<le> ell_op_usc k L p Y"
+    and p: "p \<noteq> 0" and sub: "F_lsc p X < 1" and sup: "1 \<le> F_usc p Y"
   shows False
 proof -
-  have ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
-    by (rule feasible_nonempty[OF k(1) k(2) L])
-  have eX: "ell_op_lsc k L p X = ereal (ell_op k L p X)"
-    by (rule ell_op_lsc_off_zero[OF symX p L k(1) k(2)])
-  have eY: "ell_op_usc k L p Y = ereal (ell_op k L p Y)"
-    by (rule ell_op_usc_off_zero[OF symY p L k(1) k(2)])
-  have subr: "ell_op k L p X < 1"
+  have eX: "F_lsc p X = ereal (F p X)"
+    by (rule lsc_off_zero[OF symX p])
+  have eY: "F_usc p Y = ereal (F p Y)"
+    by (rule usc_off_zero[OF symY p])
+  have subr: "F p X < 1"
     using sub unfolding eX by (simp add: one_ereal_def)
-  have supr: "1 \<le> ell_op k L p Y"
+  have supr: "1 \<le> F p Y"
     using sup unfolding eY by (simp add: one_ereal_def)
   show False
-    by (rule ell_op_strict_contradiction[OF psd ne subr supr])
+    using elliptic[OF psd, of p] subr supr by linarith
 qed
+
+end
 
 text \<open>The same for the non-strict sandwich, the form in which the envelope
   inequalities first arrive from the doubling.\<close>
@@ -556,13 +513,15 @@ text \<open>A subsolution scaled by \<open>\<theta>\<close> satisfies \<open>F \
 
 theorem visc_subsol_scaled_uniform:
   fixes u :: "real^'n::finite \<Rightarrow> real" and H :: "real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u"
+    and F :: "real^'n \<Rightarrow> real^'n^'n \<Rightarrow> real"
+  assumes sub: "visc_subsol_gen test_fun_at nhds (\<lambda>p M. ereal (F p M)) \<Omega> u"
+    and dil: "\<And>c M. 0 < c \<Longrightarrow> F (c *\<^sub>R g x) M = F (g x) M"
+    and hom: "\<And>t. 0 < t \<Longrightarrow> F (g x) (t *\<^sub>R H) = t * F (g x) H"
     and t: "0 < \<theta>"
     and x: "x \<in> \<Omega>"
     and tf: "test_fun_at \<phi> g H x"
-    and ne: "feasible k L (g x) \<noteq> ({} :: (real^'n^'n) set)"
     and maxloc: "\<exists>e>0. \<forall>y \<in> ball x e. \<theta> * u y - \<phi> y \<le> \<theta> * u x - \<phi> x"
-  shows "ell_op k L (g x) H \<le> \<theta>"
+  shows "F (g x) H \<le> \<theta>"
 proof -
   define c where "c = 1/\<theta>"
   have c0: "0 < c" unfolding c_def using t by simp
@@ -580,14 +539,14 @@ proof -
     thus "u y - c * \<phi> y \<le> u x - c * \<phi> x"
       unfolding c_def using t by (simp add: field_simps)
   qed
-  have "ell_op k L ((\<lambda>z. c *\<^sub>R g z) x) (c *\<^sub>R H) \<le> 1"
-    using sub x tfc mc unfolding visc_subsol_def by blast
-  hence step: "ell_op k L (c *\<^sub>R g x) (c *\<^sub>R H) \<le> 1" by simp
-  have "ell_op k L (c *\<^sub>R g x) (c *\<^sub>R H) = ell_op k L (g x) (c *\<^sub>R H)"
-    by (rule ell_op_scale) (use c0 in simp)
-  also have "\<dots> = c * ell_op k L (g x) H"
-    by (rule ell_op_scaleR_matrix[OF c0 ne])
-  finally have "c * ell_op k L (g x) H \<le> 1" using step by simp
+  have "ereal (F ((\<lambda>z. c *\<^sub>R g z) x) (c *\<^sub>R H)) \<le> 1"
+    using sub x tfc mc unfolding visc_subsol_gen_nhds by blast
+  hence step: "F (c *\<^sub>R g x) (c *\<^sub>R H) \<le> 1" by simp
+  have "F (c *\<^sub>R g x) (c *\<^sub>R H) = F (g x) (c *\<^sub>R H)"
+    by (rule dil) (use c0 in simp)
+  also have "\<dots> = c * F (g x) H"
+    by (rule hom[OF c0])
+  finally have "c * F (g x) H \<le> 1" using step by simp
   thus ?thesis
     unfolding c_def using t by (simp add: field_simps)
 qed
@@ -598,14 +557,15 @@ text \<open>Symmetry of the corrected matrices, needed by the jet test function:
 
 theorem supersol_shifted_bound_onesided:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
-  assumes sup: "supersol_jet k L \<Omega> w"
+    and G :: "real^'n \<Rightarrow> real^'n^'n \<Rightarrow> ereal"
+  assumes sup: "visc_supersol_gen test_fun_at nhds G \<Omega> w"
     and yh: "yh \<in> \<Omega>"
     and Ys: "transpose Ym = Ym"
     and ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
         ((- w) (yh + hh) - (- w) yh - (- p) \<bullet> hh
           - (hh \<bullet> ((- Ym) *v hh))/2) / (norm hh)\<^sup>2 < c"
     and d: "0 < \<delta>"
-  shows "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
+  shows "1 \<le> G p (Ym - \<delta> *\<^sub>R mat 1)"
 proof -
   have sym: "transpose (Ym - \<delta> *\<^sub>R mat 1) = Ym - \<delta> *\<^sub>R mat 1"
     by (rule transpose_shift_diff[OF Ys])
@@ -622,9 +582,9 @@ proof -
       \<le> w z - (p \<bullet> (z - yh)
           + ((z - yh) \<bullet> ((Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)))/2)"
     by (rule jet_imp_local_min_test_onesided[OF ub d])
-  have "1 \<le> ell_op_usc k L ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) yh)
+  have "1 \<le> G ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - yh)) yh)
       (Ym - \<delta> *\<^sub>R mat 1)"
-    using sup yh tf minloc unfolding supersol_jet_def by blast
+    using sup yh tf minloc unfolding visc_supersol_gen_nhds by blast
   thus ?thesis unfolding g .
 qed
 
