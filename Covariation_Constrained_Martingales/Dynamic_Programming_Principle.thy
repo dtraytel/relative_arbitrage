@@ -240,11 +240,9 @@ corollary covariation_val_dpp_attained:
       = covariation_val S T K x"
 proof -
   have T0: "0 < T" using r rT by simp
-  have att: "\<exists>P \<in> covariation_class S T x.
-        ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = covariation_val S T K x"
-    by (rule covariation_val_attained[OF T0 B0 B D0 D Sc SST Kc])
   show ?thesis
-    using att covariation_val_dpp_optimizer[OF r rT B0 B D0 D Sc Sv SST Kc] by blast
+    using covariation_val_attained[OF T0 B0 B D0 D Sc SST Kc, simplified trivial_premise_simps]
+      covariation_val_dpp_optimizer[OF r rT B0 B D0 D Sc Sv SST Kc] by blast
 qed
 
 subsection \<open>Step 2: the equality at a stopping time\<close>
@@ -345,13 +343,8 @@ corollary covariation_val_dpp_time_attained:
             + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
                then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0))
       = covariation_val S T K x"
-proof -
-  have att: "\<exists>P \<in> covariation_class S T x.
-        ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = covariation_val S T K x"
-    by (rule covariation_val_attained[OF T0 B0 B D0 D Sc SST Kc])
-  show ?thesis
-    using att covariation_val_dpp_time_optimizer[OF T0 B0 B D0 D Sc Sv SST Kc st thM] by blast
-qed
+  using covariation_val_attained[OF T0 B0 B D0 D Sc SST Kc, simplified trivial_premise_simps]
+    covariation_val_dpp_time_optimizer[OF T0 B0 B D0 D Sc Sv SST Kc st thM] by blast
 
 (*<*)
 end

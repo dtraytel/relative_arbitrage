@@ -56,16 +56,11 @@ theorem xval_usc:
   assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and cK: "compact K"
     and lt: "enn2real (xval k L K z) < c"
   shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (xval k L K y) < c"
-proof -
-  have nk: "0 < real (CARD('n) - k)" using kn by simp
-  have lt': "enn2real (icovariation_val (sconstraint k L) K z) < c"
-    using lt by (simp add: xval_eq_iexit_val[OF compact_imp_closed[OF cK] L1] iexit_val_eq_icovariation_val)
-  have "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (icovariation_val (sconstraint k L) K y) < c"
-    by (rule icovariation_val_real_usc[OF closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1]
-        sconstraint_bounds[OF order_trans[OF zero_le_one L1]] nk sconstraint_trace_ge[OF kn] cK lt'])
-  then show ?thesis
-    by (simp add: xval_eq_iexit_val[OF compact_imp_closed[OF cK] L1] iexit_val_eq_icovariation_val)
-qed
+  using icovariation_val_real_usc[OF closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1]
+      sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+      sconstraint_trace_bounds(3,4)[OF kn order_trans[OF zero_le_one L1]] cK,
+      simplified trivial_premise_simps] lt
+  by (simp add: xval_eq_iexit_val[OF compact_imp_closed[OF cK] L1] iexit_val_eq_icovariation_val)
 
 theorem xval_subsolution:
   fixes K :: "(real^'n::finite) set"

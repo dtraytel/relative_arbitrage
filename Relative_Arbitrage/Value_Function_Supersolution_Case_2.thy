@@ -1438,13 +1438,8 @@ corollary covariation_val_supersol_lsc_bounded:
     and Tbig: "2 * (rK * rK) / \<theta> < T"
   shows "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S) (interior K)
       (lsc_env (\<lambda>u. enn2real (covariation_val S T K u)))"
-proof -
-  have cap: "\<And>x. x \<in> interior K \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x < T / 2"
-    by (rule covariation_val_cap_inert[OF less_imp_le[OF T0] B0 B th0 th KB Tbig])
-  show ?thesis
-    by (rule covariation_val_supersol_lsc[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc cap])
-qed
+  by (rule covariation_val_supersol_lsc[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc
+        covariation_val_cap_inert[OF less_imp_le[OF T0] B0 B th0 th KB Tbig]])
 
 
 (*<*)
