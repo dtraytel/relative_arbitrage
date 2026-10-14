@@ -747,9 +747,11 @@ text \<open>Definition 3.1 constrains only test functions with a global touching
   \<open>\<psi> := \<phi> - C\<bar>z - x\<bar>\<^sup>4\<close>: it shares \<open>\<phi>\<close>'s two-jet at \<open>x\<close>, only deepens
   the touching inside the ball, and outside it is bounded below by
   \<open>Cr\<^sup>4\<close>, which for large \<open>C\<close> overwhelms the oscillation of \<open>w - \<phi>\<close> on
-  \<open>K\<close> (\<open>local_max_quartic_deepen\<close>).  The two boundedness hypotheses are what a genuine \<open>C\<^sup>2\<close> test
-  function on compact \<open>K\<close> supplies; \<^const>\<open>test_fun_at\<close> alone would
-  tolerate truncating \<open>\<phi>\<close> far from \<open>x\<close>.\<close>
+  \<open>K\<close> (\<open>local_max_quartic_deepen\<close>); the argument is the generic
+  @{thm [source] visc_subsol_gen_principal_local}.  The two boundedness
+  hypotheses are what a genuine \<open>C\<^sup>2\<close> test function on compact \<open>K\<close>
+  supplies; \<^const>\<open>test_fun_at\<close> alone would tolerate truncating \<open>\<phi>\<close> far
+  from \<open>x\<close>.\<close>
 
 text \<open>A test function is minorised near \<open>x\<close> by its two-jet quadratic,
   once the Hessian is shifted down by any \<open>\<delta> > 0\<close>, which lets a touching
