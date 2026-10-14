@@ -7,7 +7,7 @@ theory Covariation_Class_Infinite
 begin
 (*>*)
 
-text \<open>Eq. (1.6)--(1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> without the horizon cap: the class
+text \<open>The covariation class and its value without the horizon cap: the class
   is a set of laws on the paths of @{theory Continuous_Path_Spaces.Path_Space_Infinite},
   the covariation constraint is required at every pair of times, and the
   martingale clauses carry no stopping.  The capped development is reached

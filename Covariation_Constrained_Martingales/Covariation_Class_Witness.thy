@@ -565,10 +565,10 @@ proof -
   finally show ?thesis unfolding mean .
 qed
 
-text \<open>Inequality (3.10) of \<^cite>\<open>LaiShkolnikovSoner\<close>: if the target set fits inside a ball
+text \<open>The ball bound: if the target set fits inside a ball
   of radius \<open>r\<close>, then \<open>v(x) \<le> (r\<^sup>2 - |x|\<^sup>2) / \<theta>\<close>, independent of the
   horizon \<open>T\<close> --- the quantitative form of the horizon bound, and why the horizon
-  cap is eventually invisible.  That paper derives it from It\<open>\<^bold>o\<close>'s formula; here it
+  cap is eventually invisible.  It is usually derived from It\<open>\<^bold>o\<close>'s formula; here it
   follows from \<open>covariation_class_sq_norm_mean_ge\<close>, the estimate at
   a fixed time, with no stochastic calculus.\<close>
 

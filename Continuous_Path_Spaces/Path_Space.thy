@@ -10,14 +10,14 @@ begin
 (*>*)
 
 text \<open>
-  The space the martingale laws of Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> live on:
+  The space on which the laws of continuous processes live:
   HOL-Analysis' set-based \<open>cfunspace\<close> (bounded continuous maps with the sup
   metric) over the compact interval \<open>{0..T}\<close>, valued in a Polish type.
   Completeness is \<open>Metric_space.mcomplete_cfunspace\<close> and separability
   \<open>Metric_space.separable_space_cfunspace\<close> (AFP \<open>Standard_Borel_Spaces\<close>);
   with compactness and metrizability of the domain, these are the
   hypotheses of the AFP's \<open>Prokhorov_theorem_LP\<close>, converting tightness of
-  the Lemma 2.2 laws into relative compactness in the L\'evy-Prokhorov
+  a family of path laws into relative compactness in the L\'evy-Prokhorov
   metric on this space.
 \<close>
 text \<open>A product of Polish spaces is Polish.  The class is
@@ -478,7 +478,7 @@ subsection \<open>The law of the path\<close>
 
 text \<open>
   The pushforward of a process with continuous paths along the path map: the
-  object the sets \<open>\<P>\<^sub>x\<close> of Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> consist of.
+  object that sets of laws of continuous processes consist of.
 \<close>
 
 definition path_law ::
@@ -830,8 +830,8 @@ text \<open>
   test functions. The Fatou-type lemma below transfers uniform moment bounds
   to weak limits by truncation: the truncated integrands are bounded
   continuous, so their integrals converge, and monotone convergence recovers
-  the untruncated bound. This is how the Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> package passes to the
-  limit laws of Lemma 2.2.
+  the untruncated bound. This is how a uniform fourth-moment bound passes
+  to the weak limits of a family of laws.
 \<close>
 
 lemma Lipschitz_path_eval:

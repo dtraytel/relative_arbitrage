@@ -202,7 +202,7 @@ qed
 
 subsection \<open>The inner-integral identity along the additive glue\<close>
 
-text \<open>The engine behind the \<open>X\<close> and the compensated clause (iv), stated
+text \<open>The engine behind the \<open>X\<close> clause and the compensated clause, stated
   once for a continuous real functional \<open>F\<close> of the path value.  Along the
   additive glue \<open>F\<close> splits into its value on the past \<open>p'\<close> and a remainder
   \<open>\<Psi> u p' w\<close> that has mean zero under the continuation kernel and, on a
@@ -545,7 +545,7 @@ proof -
     using compl Epart by simp
 qed
 
-subsection \<open>Clause (iv) for the glued law\<close>
+subsection \<open>The compensated clause for the glued law\<close>
 
 text \<open>The martingale property of \<open>F (\<omega> (min u T))\<close> under the glued law.
   @{thm [source] sets_natural_filtration_eq_pcut_vimage} presents the
@@ -1528,7 +1528,7 @@ proof -
         [OF T0 setsQ Kp hb cb c1 Kint HBi Kbnd])
 qed
 
-subsection \<open>Clause (iv) for the conditional law\<close>
+subsection \<open>The compensated clause for the conditional law\<close>
 
 text \<open>Only countably many conditions survive the passage from "for each,
   almost surely" to "almost surely, for all", so the martingale identity

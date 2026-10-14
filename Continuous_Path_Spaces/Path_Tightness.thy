@@ -9,8 +9,8 @@ begin
 (*>*)
 
 text \<open>
-  Laws of processes satisfying the uniform fourth-moment package of
-  Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> form a tight family on \<open>C({0..T})\<close>: \<open>dyadic_bad_event_tail_mom\<close>
+  Laws of processes satisfying a uniform fourth-moment bound
+  \<open>E (X v - X u)\<^sup>4 \<le> 8 C\<^sup>2 (v - u)\<^sup>2\<close> form a tight family on \<open>C({0..T})\<close>: \<open>dyadic_bad_event_tail_mom\<close>
   (@{theory Continuous_Path_Spaces.Modulus_Tails}) bounds the probability some dyadic increment at level
   \<open>j \<ge> n\<close> is large; on the complement, \<open>modulus_of_good_path\<close> and
   \<open>holder_of_dyadic_moduli\<close> (@{theory Continuous_Path_Spaces.Holder_Interpolation}) place the path in an
@@ -428,15 +428,14 @@ theorem tight_on_set_path_laws_vec:
   by (rule tight_on_set_path_laws_basis[where C = C, OF T0 g0 g2 P Xm cont start])
     (auto simp: Basis_vec_def inner_axis int4 mom)
 
-subsection \<open>The subsequence extraction of Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, per horizon\<close>
+subsection \<open>Subsequence extraction at a fixed horizon\<close>
 
 text \<open>
   Combining the tightness theorem with the AFP's
   \<open>tight_on_set_imp_convergent_subsequence\<close>: every sequence of laws whose
-  processes satisfy the uniform Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> package has a weakly convergent
-  subsequence on \<open>C({0..T})\<close>. This is the relative-compactness content of
-  Lemma 2.2 at a fixed horizon; the \<open>C([0,\<infinity>))\<close> statement extends it to
-  unbounded time.
+  processes satisfy the uniform fourth-moment bound has a weakly convergent
+  subsequence on \<open>C({0..T})\<close>: relative compactness at a fixed horizon. The
+  \<open>C([0,\<infinity>))\<close> statement extends it to unbounded time.
 \<close>
 
 corollary path_laws_convergent_subsequence_basis:
@@ -580,15 +579,16 @@ text \<open>Uniform integrability of the squared increments is what passes the
 
     \<open>E[(X\<^sub>t - X\<^sub>s)\<^sup>T M (X\<^sub>t - X\<^sub>s) g] \<le> (t-s) h\<^sub>S(M) E[g]\<close>
 
-  to weak limits without a Skorokhod representation (the closedness half
-  of Lemma 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close>). Quantifying only
+  to weak limits without a Skorokhod representation, so that the class of
+  laws with covariation rates in a closed set \<open>S\<close> is closed under weak
+  convergence. Quantifying only
   over \<open>M \<succeq> 0\<close> does not work: the set \<open>{a : tr(M a) \<le> h\<^sub>S(M) \<forall> M \<succeq> 0}\<close> is
-  the downward closure of \<open>S\<close> in the psd order, whereas \<open>S\<close> carries lower
-  bounds (\<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close>) and is not downward closed. Weak convergence
+  the downward closure of \<open>S\<close> in the psd order, whereas \<open>S\<close> may carry lower
+  bounds (on its eigenvalues, say) and then is not downward closed. Weak convergence
   alone gives only the Fatou direction \<open>liminf \<ge> lim\<close>, which runs the
   wrong way for the lower constraints.
 
-  The fourth-moment bound of Eq. (2.7) (\<open>fourth_moment_bound_bounded\<close>
+  The fourth-moment bound (\<open>fourth_moment_bound_bounded\<close>
   in \<open>Increment_Moments\<close>, free of Ito and BDG) controls the tail of the
   squared increment uniformly over the family, the hypothesis
   \<open>unif_integrable\<close> of \<open>Vitali_Convergence.vitali_convergence\<close>. The
@@ -687,7 +687,7 @@ text \<open>\<open>weak_conv_on_nn_integral_le\<close> handles a non-negative in
   \<open>tendsto_real_of_approximants\<close> above;
   \<open>unif_integrable_of_L2_bound\<close> supplies the tail hypothesis from an
   \<open>L\<^sup>2\<close> bound on \<open>f\<close>, which for the squared increment is the
-  fourth-moment bound of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.
+  fourth-moment bound.
 
   The integrability side conditions are kept as hypotheses, since in the
   application they all come from the moment bounds.\<close>

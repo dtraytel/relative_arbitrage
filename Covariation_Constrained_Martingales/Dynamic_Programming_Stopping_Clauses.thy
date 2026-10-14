@@ -1,4 +1,4 @@
-section \<open>Clause (iv) at a stopping time\<close>
+section \<open>The martingale clauses as square-integrable martingales up to the horizon\<close>
 
 (*<*)
 theory Dynamic_Programming_Stopping_Clauses

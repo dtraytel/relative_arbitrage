@@ -23,10 +23,9 @@ text \<open>
 subsection \<open>The path-space exit time\<close>
 
 text \<open>The capped exit time from \<open>K\<close>, read off a path rather than a sample
-  point: the composition of \<open>etime\<close> with the identity process. All laws in
-  the paper's class share the same sample space -- the path space -- and the
-  same exit functional; this is the object whose essential infimum the value
-  function (1.6) takes.\<close>
+  point: the composition of \<open>etime\<close> with the identity process. All laws on
+  the path space share this sample space and this exit functional; it is
+  the object whose essential infimum a minimum-exit-time value takes.\<close>
 
 definition pexit :: "real \<Rightarrow> ('b :: polish_space) set \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> real"
   where "pexit T K f = etime T (- K) (\<lambda>r g. g r) f"
@@ -66,7 +65,7 @@ proof -
   show ?thesis unfolding pexit_def etime_def e by simp
 qed
 
-text \<open>The paper (\<^cite>\<open>LaiShkolnikovSoner\<close>, (1.6)--(1.8)) works on \<open>C([0,\<infinity>), \<real>\<^sup>n)\<close> and
+text \<open>A minimum-exit-time problem posed on \<open>C([0,\<infinity>), \<real>\<^sup>n)\<close>
   takes the essential infimum of the uncapped exit time
   \<open>\<tau>\<^sub>K = inf {t \<ge> 0 : X t \<notin> K}\<close>, whereas \<open>pexit T K\<close> caps at the horizon \<open>T\<close>.
   The cap is monotone in \<open>T\<close> and invisible once a path has exited before
@@ -1020,10 +1019,10 @@ qed
 subsubsection \<open>Upper semicontinuity of the supremum over a compact family\<close>
 
 text \<open>
-  Granted Lemma 2.3, this gives clause (1) of Theorem 1.1: the supremum
-  of \<open>P \<mapsto> P\<hyphen>essinf \<tau>\<^sub>K(x + \<cdot>)\<close> over a weakly compact family of laws is
-  upper semicontinuous in the starting point \<open>x\<close>. Every other hypothesis
-  of Berge is discharged here; compactness of the family is Lemma 2.3.
+  The supremum of \<open>P \<mapsto> P\<hyphen>essinf \<tau>\<^sub>K(x + \<cdot>)\<close> over a weakly compact family
+  of laws is upper semicontinuous in the starting point \<open>x\<close>. Every
+  hypothesis of Berge's theorem except the compactness of the family is
+  discharged here.
 \<close>
 
 theorem vshift_sup_usc:
@@ -1139,11 +1138,10 @@ next
 qed
 
 text \<open>
-  The interface to Lemma 2.3, with exactly one obligation. Lemmas 2.2
-  and 2.3 together say that \<open>\<P>\<^sub>0\<close> is sequentially compact for weak
-  convergence: 2.2 extracts a convergent subsequence, 2.3 puts the limit
-  back into the set --- the \<open>seq\<close> hypothesis below verbatim, and nothing
-  else about \<open>\<P>\<^sub>0\<close> is used.
+  The same with compactness replaced by its sequential form, the one
+  obligation a user discharges: every sequence in \<open>\<P>\<^sub>0\<close> has a
+  subsequence converging weakly to a member of \<open>\<P>\<^sub>0\<close> --- the \<open>seq\<close>
+  hypothesis below, and nothing else about \<open>\<P>\<^sub>0\<close> is used.
 \<close>
 
 corollary vshift_sup_usc_of_seq_compact:

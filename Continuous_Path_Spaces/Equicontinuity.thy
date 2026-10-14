@@ -1,4 +1,4 @@
-section \<open>The Arzela--Ascoli step of Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>\<close>
+section \<open>The Arzela--Ascoli step for martingale laws\<close>
 
 (*<*)
 theory Equicontinuity
@@ -10,11 +10,11 @@ begin
 (*>*)
 
 text \<open>
-  Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> -- relative compactness of continuous martingale laws with
-  covariation rates in a bounded set @{text S} -- follows the chain:
+  Relative compactness of the laws of continuous martingales with covariation
+  rates in a bounded set @{text S} follows the chain:
 
-  \<^item> Ito's formula and the Burkholder-Davis-Gundy inequality give the fourth
-    moment bound of Eq. (2.7), @{text "E |X t - X s| ^ 4 \<le> 66 C\<^sup>2 (t - s)\<^sup>2"};
+  \<^item> Ito's formula and the Burkholder-Davis-Gundy inequality give a fourth
+    moment bound @{text "E |X t - X s| ^ 4 \<le> K (t - s)\<^sup>2"};
   \<^item> Kolmogorov's continuity criterion gives locally Holder paths;
   \<^item> the Arzela-Ascoli theorem gives compact sets of paths;
   \<^item> Prokhorov's theorem converts tightness into relative compactness.
@@ -22,8 +22,8 @@ text \<open>
   The last three are available in the AFP or the Isabelle distribution:
 
   \<^item> Kolmogorov's criterion is @{text Kolmogorov_Chentsov.Kolmogorov_Chentsov},
-    whose hypothesis is literally the moment bound of Eq. (2.7) with
-    @{text "a = 4"}, @{text "b = 1"}, @{text "C = 66 C\<^sup>2"}, and whose
+    whose hypothesis is literally that moment bound with
+    @{text "a = 4"}, @{text "b = 1"}, @{text "C = K"}, and whose
     conclusion is a modification with all paths @{text "local_holder_on \<gamma>"} for
     @{text "\<gamma> < 1/4"};
   \<^item> @{text Kolmogorov_Chentsov.local_holder_compact_imp_holder} upgrades that to
@@ -36,8 +36,8 @@ text \<open>
   needs it: a Holder bound with a constant @{text c} common to the whole
   family, since @{text "\<gamma>-holder_on"} quantifies its constant existentially per
   function, and Arzela-Ascoli genuinely requires a common one. Producing that
-  uniform constant from Eq. (2.7) is the remaining probabilistic content of
-  Lemma 2.2.
+  uniform constant from the moment bound is the remaining probabilistic
+  content of the compactness theorem.
 \<close>
 subsection \<open>Uniform bounds and equicontinuity from a Holder bound\<close>
 
@@ -275,7 +275,7 @@ text \<open>
   A family of paths on @{term "{0..T}"} sharing an initial value and a Holder
   constant has a uniformly convergent subsequence, and the limit is a path with
   the same initial value and the same Holder bound. This is the form in which
-  Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>'s proof uses the Arzela-Ascoli theorem.
+  the compactness of martingale laws uses the Arzela-Ascoli theorem.
 \<close>
 
 theorem holder_family_subsequence:

@@ -6,8 +6,7 @@ theory Dynamic_Programming_Principle
 begin
 (*>*)
 
-text \<open>The dynamic programming principle of Proposition 2.4 of
-  \<^cite>\<open>LaiShkolnikovSoner\<close>, Eq. (2.9), for the horizon-\<open>T\<close> value
+text \<open>The dynamic programming principle for the horizon-\<open>T\<close> value
   \<^const>\<open>covariation_val\<close> of an abstract constraint set \<open>S\<close>: at a
   deterministic time \<open>0 \<le> r < T\<close> (\<open>covariation_val_dpp\<close>) and at a path
   stopping time \<open>\<theta>\<close> with values in \<open>[0,T]\<close> (\<open>covariation_val_dpp_time\<close>).

@@ -6,8 +6,8 @@ theory Dynamic_Programming_Pasting
 begin
 
 (*>*)
-text \<open>Ingredients of the dynamic programming principle of Proposition 2.4 of
-  \<^cite>\<open>LaiShkolnikovSoner\<close>: the optimal selector as a kernel, the
+text \<open>Ingredients of the dynamic programming principle: the optimal selector
+  as a kernel, the
   almost-sure form of its optimality, and the Borel measurability of the
   value function.  The principle itself is assembled in
   \<open>Dynamic_Programming_Assembly\<close> (the \<open>\<ge>\<close> half, at a stopping time and

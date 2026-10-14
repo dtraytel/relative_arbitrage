@@ -11,7 +11,7 @@ begin
 subsection \<open>The class is closed under shortening the horizon\<close>
 
 
-text \<open>Clause (iii) from the pairwise bounds, at rational pairs only: an
+text \<open>The difference-quotient clause from the pairwise bounds, at rational pairs only: an
   almost-sure argument cannot supply the bound at all real pairs, since only
   countably many conditions survive the passage from ``for each, almost
   surely'' to ``almost surely, for all''; path continuity and closedness of
@@ -285,7 +285,7 @@ text \<open>The glued process splits as a first-factor martingale plus a
   second-factor martingale on the shifted clock \<open>u \<mapsto> (u - r)\<^sup>+\<close>: on
   \<open>[0,r]\<close> only the first piece moves, after \<open>r\<close> the first is frozen at
   \<open>X\<^sub>r\<close> and the second runs.  The identity holds only a.e. --- it uses
-  \<open>X'(0) = 0\<close> from clause (i) --- which is what \<open>martingale_cong_AE\<close> is
+  \<open>X'(0) = 0\<close> from the start clause --- which is what \<open>martingale_cong_AE\<close> is
   for.\<close>
 
 
@@ -1018,11 +1018,11 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The decomposition for clauses (iii) and (iv) of the kernel glue is
+text \<open>The decomposition for the two martingale clauses of the kernel glue is
   pointwise: the second summand subtracts the continuation's initial
   value, so it is literally \<open>0\<close> before \<open>r\<close>, keeping it adapted since \<open>N\<close>
   is only \<open>\<F>\<^sub>r\<close>-measurable.  Freezing the first coordinate turns \<open>X\<^sub>r\<close>
-  into a constant, so even clause (iv)'s cross term is a second-factor
+  into a constant, so even the compensated clause's cross term is a second-factor
   martingale (a bounded-linear image of one), and
   \<open>martingale_pair_snd_param\<close> carries everything.\<close>
 

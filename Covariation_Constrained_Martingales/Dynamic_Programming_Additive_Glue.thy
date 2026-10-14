@@ -80,7 +80,7 @@ proof -
   qed
 qed
 
-text \<open>Clause (iii) for the glued law.  The whole clause is a closed set
+text \<open>The difference-quotient clause for the glued law.  The whole clause is a closed set
   (@{thm [source] closedin_diffquot_constraint_all}) and so passes
   through @{thm [source] AE_aglue_law}; the pathwise content is then
   @{thm [source] padd_diffquot}.\<close>

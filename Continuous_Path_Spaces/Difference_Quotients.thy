@@ -179,7 +179,7 @@ qed
 text \<open>Once the constraint holds for all \<open>s < t\<close>, boundedness of the
   constraint set makes \<open>Y\<close> Lipschitz, and closedness carries through to
   the derivative wherever it exists: \<open>dY/dt \<in> S\<close> a.e., the density
-  statement of Eq. (1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.\<close>
+  form of the constraint.\<close>
 
 lemma diffquot_lipschitz:
   fixes Y :: "real \<Rightarrow> 'b :: real_normed_vector" and S :: "'b set"

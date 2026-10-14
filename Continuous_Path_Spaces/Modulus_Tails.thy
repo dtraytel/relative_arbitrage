@@ -8,20 +8,20 @@ begin
 (*>*)
 
 text \<open>
-  Combine the per-level dyadic tail bounds (from Eq. (2.7) via
+  Combine the per-level dyadic tail bounds (from the fourth-moment bound via
   @{theory Continuous_Path_Spaces.Increment_Tails}) with the deterministic chaining of @{theory Continuous_Path_Spaces.Dyadic_Chaining}
   into the quantitative tail bound on the modulus of continuity. Both the
   modulus threshold and the exceptional probability are explicit in
-  \<open>(C, T, \<gamma>, n)\<close> only --- uniformity over the family of admissible laws is
-  exactly what tightness in Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> consumes.
+  \<open>(C, T, \<gamma>, n)\<close> only --- uniformity over a family of laws that share the
+  moment bound is exactly what tightness of that family consumes.
 \<close>
 subsection \<open>The bad event at one dyadic level\<close>
 
 text \<open>
   The level bound in its abstract form: only measurability, integrability of
-  the fourth powers and the Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> moment bound itself are consumed. The
-  Lemma 2.2 there needs this for unbounded martingale laws, where (2.7)
-  will be obtained by localization + Fatou.
+  the fourth powers and the moment bound \<open>E (X v - X u)\<^sup>4 \<le> 8 C\<^sup>2 (v - u)\<^sup>2\<close>
+  itself are consumed, so the bound applies to unbounded martingales, for
+  which the moment bound is obtained by localisation and Fatou's lemma.
 \<close>
 
 lemma dyadic_level_tail_mom:

@@ -21,8 +21,9 @@ text \<open>
 subsection \<open>The functional reads the path only up to the current time\<close>
 
 text \<open>
-  The scalar theory assumes \<open>X\<close> uniformly bounded, because Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>
-  (\<open>fourth_moment_bound_bounded\<close>) does.  A member of the class is not bounded,
+  The scalar theory assumes \<open>X\<close> uniformly bounded, because its fourth-moment
+  bound (\<open>fourth_moment_bound_bounded\<close>) does.  A martingale with a bounded
+  covariation rate need not be bounded,
   so the identification has to be localised --- which is what
   @{theory Continuous_Time_Martingales.Stopped_Localization} was built for: stopping an
   \<open>L\<^sup>2\<close> martingale with continuous paths at any stopping time yields a

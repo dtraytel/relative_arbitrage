@@ -946,8 +946,7 @@ qed
 
 subsubsection \<open>The \<open>\<ge>\<close> half at a deterministic time\<close>
 
-text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close> states the dynamic programming
-  principle
+text \<open>The dynamic programming principle states
     \<open>v x = (SUP P \<in> covariation_class S T x. P-ess-inf
       (\<theta> \<and> \<tau>\<^sub>K + v (X \<theta>) * 1\<^sub>{\<theta> \<le> \<tau>\<^sub>K}))\<close>.
   Its \<open>\<ge>\<close> half at a deterministic time \<open>\<theta> = r\<close> is the case of a constant

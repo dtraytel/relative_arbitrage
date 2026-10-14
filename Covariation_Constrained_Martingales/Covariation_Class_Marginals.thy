@@ -8,9 +8,9 @@ begin
 (*>*)
 
 text \<open>
-  \<open>icovariation_class S x\<close> is a set of laws of the PAIR \<open>(X, \<langle>X\<rangle>)\<close>; the class
-  of \<^cite>\<open>LaiShkolnikovSoner\<close>, Eq. (1.7), is a set of laws of \<open>X\<close> alone, constrained
-  through \<open>d\<langle>X\<rangle>(t)/dt\<close>.  This theory states that class for any constraint set \<open>S\<close>
+  \<open>icovariation_class S x\<close> is a set of laws of the PAIR \<open>(X, \<langle>X\<rangle>)\<close>; the
+  usual formulation of a covariation constraint is a set of laws of \<open>X\<close> alone,
+  constrained through \<open>d\<langle>X\<rangle>(t)/dt\<close>.  This theory states that class for any constraint set \<open>S\<close>
   and identifies the two for every closed, convex, bounded \<open>S\<close> of
   positive semidefinite matrices.
 

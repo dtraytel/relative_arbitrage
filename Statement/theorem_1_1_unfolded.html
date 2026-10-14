@@ -1000,7 +1000,7 @@ sconstraint: {
   paper:'The set <code>S<sub>k</sub><sup>L</sup></code> of Equation (1.5) together with the condition '
        + '<code>&lambda;<sub>(1)</sub> &le; L</code>. Its compactness and convexity are what give the value '
        + 'function its semicontinuity and the dynamic programming principle.',
-  src:'Relative_Arbitrage/Control_Problem.thy:25'
+  src:'Relative_Arbitrage/Exit_Class.thy:25'
 },
 
 Pi_constraint: {
@@ -1053,7 +1053,7 @@ eigen_ub: {
        + 'Courant&ndash;Fischer characterisation so that no spectral decomposition is needed.',
   paper:'<code>&lambda;<sub>(1)</sub>(a) &le; L</code>, the technical condition accommodating a confidence '
        + 'interval around an empirical estimate of the top eigenvalue.',
-  src:'Relative_Arbitrage_Equation/Elliptic_Operator.thy:45'
+  src:'Relative_Arbitrage/Curvature_Operator.thy:45'
 },
 
 eigen_lb: {
@@ -1066,7 +1066,7 @@ eigen_lb: {
        + 'form dominates the norm.',
   paper:'At <code>m = n &minus; k</code> this is the sufficient-volatility condition '
        + '<code>&lambda;<sub>(n&minus;k)</sub>(a) &ge; 1</code>.',
-  src:'Relative_Arbitrage_Equation/Elliptic_Operator.thy:42'
+  src:'Relative_Arbitrage/Curvature_Operator.thy:42'
 },
 
 /* ---- the operator ---- */
@@ -1078,7 +1078,7 @@ feasible: {
   gloss:'The set the operator minimises over, at gradient <code>p</code>.',
   paper:'The constraint list inside Equation (1.9): <code>a &#8829; 0</code>, <code>a p = 0</code>, '
        + '<code>&lambda;<sub>(n&minus;k)</sub>(a) &ge; 1</code>, <code>&lambda;<sub>(1)</sub>(a) &le; L</code>.',
-  src:'Relative_Arbitrage_Equation/Elliptic_Operator.thy:50'
+  src:'Relative_Arbitrage/Curvature_Operator.thy:50'
 },
 
 ell_op: {
@@ -1090,7 +1090,7 @@ ell_op: {
        + '&lambda;<sub>(n&minus;k)</sub>(a) &ge; 1, &lambda;<sub>(1)</sub>(a) &le; L }</code>. '
        + 'The nonlinearity is <em>geometric</em>; at <code>L = 1</code> the equation becomes the arrival-time '
        + 'formulation of a codimension mean curvature flow.',
-  src:'Relative_Arbitrage_Equation/Elliptic_Operator.thy:56'
+  src:'Relative_Arbitrage/Curvature_Operator.thy:56'
 },
 
 ell_op_pair: {

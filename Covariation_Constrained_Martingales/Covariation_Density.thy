@@ -10,18 +10,18 @@ theory Covariation_Density
 begin
 (*>*)
 
-text \<open>Equation (1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> constrains the
-  almost-everywhere derivative of the covariation, while the class below asks
-  that every difference quotient of the compensator lie in the constraint set.
-  The paper uses both readings.  Its compactness lemma asserts that the
-  covariation is Lipschitz, rewrites the difference quotient as the average of
-  the derivative over the interval, places that average in the constraint set
-  because the set is convex and closed, and returns to the derivative by
-  Lebesgue's fundamental theorem of calculus and differentiation theorem.
+text \<open>A covariation constraint can be read in two ways: on the
+  almost-everywhere derivative of the covariation, or, as the class below
+  asks, on every difference quotient of the compensator.  Passing between them
+  is a standard argument: the covariation is Lipschitz, the difference
+  quotient is the average of the derivative over the interval, that average
+  lies in the constraint set because the set is convex and closed, and the
+  derivative is recovered by Lebesgue's fundamental theorem of calculus and
+  differentiation theorem.
 
   The two readings are therefore one and the same, and this theory proves it.
   The integral representation presupposes absolute continuity, which is exactly
-  what the derivative notation asserts.  Both analytic steps the paper takes
+  what the derivative notation asserts.  Both analytic steps
   are in HOL-Analysis: Lipschitz paths are absolutely continuous
   (@{thm [source] Lipschitz_imp_absolutely_continuous}), and paths of bounded
   variation are differentiable almost everywhere

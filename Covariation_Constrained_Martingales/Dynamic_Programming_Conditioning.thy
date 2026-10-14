@@ -60,7 +60,7 @@ text \<open>The compensated process of the rebased future is a martingale under
   of @{thm [source] covariation_class_shifted_X_martingale}, not the same
   statement since \<^const>\<open>outerp\<close> is quadratic: the decomposition
   @{thm [source] outerp_diff_compensated} splits it into the class's own
-  clause (iv) restarted at \<open>r\<close>, minus the cross term
+  compensated clause restarted at \<open>r\<close>, minus the cross term
   (@{thm [source] martingale_cross_measurable}, using \<open>\<F>\<^sub>r\<close>-measurability of
   \<open>X\<^sub>r\<close>), plus an \<open>\<F>\<^sub>r\<close>-measurable constant.\<close>
 
@@ -87,7 +87,7 @@ proof -
     then show ?thesis using r that Tr by simp
   qed
 
-  \<comment> \<open>(A) the class's own clause (iv), restarted at \<open>r\<close>\<close>
+  \<comment> \<open>(A) the class's own compensated clause, restarted at \<open>r\<close>\<close>
   have mgA: "martingale P ?FP 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (r + min u ?S))) - snd (\<omega> (r + min u ?S)))"
     by (rule covariation_class_shifted_comp_martingale[OF r rT P])

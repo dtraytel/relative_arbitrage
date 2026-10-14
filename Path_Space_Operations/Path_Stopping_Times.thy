@@ -1113,8 +1113,9 @@ next
   qed
 qed
 
-text \<open>So \<open>covariation_val_dpp_sup_ge_time\<close> applies at the exit time of
-  a ball, and optional sampling at \<open>\<tau> \<and> h\<close> is available for stochastic
+text \<open>So results stated for path stopping times, such as a dynamic
+  programming principle at a stopping time, apply at the exit time of a
+  ball, and optional sampling at \<open>\<tau> \<and> h\<close> is available for stochastic
   localisation.\<close>
 
 subsubsection \<open>Measurability of the ball exit time\<close>

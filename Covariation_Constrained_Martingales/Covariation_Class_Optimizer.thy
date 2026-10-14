@@ -57,9 +57,9 @@ qed
 
 subsubsection \<open>Relative compactness and compactness for sets of positive semidefinite matrices\<close>
 
-text \<open>Lemmas 2.2 and 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> are stated for a set
-  \<open>S \<subseteq> \<bbbS>\<^sup>n\<^sub>+\<close> of positive semidefinite matrices: bounded for relative
-  compactness, compact and convex for compactness.  A bounded set of positive semidefinite matrices supplies
+text \<open>For a set \<open>S \<subseteq> \<bbbS>\<^sup>n\<^sub>+\<close> of positive semidefinite matrices, the
+  natural hypotheses are that \<open>S\<close> is bounded, for relative compactness of the
+  class, and compact, for compactness; convexity is not needed.  A bounded set of positive semidefinite matrices supplies
   both bounds the statements above take, with the same constant: a diagonal
   entry of a positive semidefinite matrix is nonnegative and at most its norm.\<close>
 
