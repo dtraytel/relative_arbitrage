@@ -1,3 +1,4 @@
+section \<open>The closed formula for the operator: Eqs. (3.4)--(3.6)\<close>
 
 (*<*)
 theory Operator_Formula
@@ -10,7 +11,8 @@ begin
 
 text \<open>
   Formalizes Eqs. (3.4)-(3.6) of \<^cite>\<open>LaiShkolnikovSoner\<close>: the matrix \<open>M\<^sub>p\<close>,
-  the closed formula (3.5) for \<open>F\<close>, and Lemma 3.1. For \<open>p \<noteq> 0\<close>,
+  the closed formula (3.5) for \<open>F\<close>, the index shift behind Eq. (3.6), and
+  the continuity of \<open>F\<close> off \<open>p = 0\<close> that Lemma 3.1 needs. For \<open>p \<noteq> 0\<close>,
   Eq. (3.4) defines
 
     \<open>M\<^sub>p = (I - p p\<^sup>T / \<bar>p\<bar>\<^sup>2) M (I - p p\<^sup>T / \<bar>p\<bar>\<^sup>2)
@@ -29,23 +31,14 @@ text \<open>
 
     \<open>lambda\<^sub>i(M\<^sub>p) \<ge> lambda\<^bsub>i+1\<^esub>(M)\<close>,   \<open>i = 1, ..., n - 1\<close>,
 
-  together with the Rayleigh bounds it rests on. Two consequences are
+  Two consequences are
   used: for Eq. (3.5), that the eigenvalue \<open>M\<^sub>p\<close> carries in the
   \<open>p\<close>-direction, \<open>min (lambda\<^sub>n(M), 0)\<close>, is the smallest of the
   spectrum of \<open>M\<^sub>p\<close>, which needs only the weak Rayleigh bound; and for
   Eq. (3.6), the limit as \<open>p\<^sup>m \<rightarrow> 0\<close> along \<open>p\<^sup>m = q\<^sub>1 / m\<close>, where the
   index shift comes from the full separation inequality.\<close>
-section \<open>Elementary matrix algebra not already in the development\<close>
 
-text \<open>\<open>trace_conjugate\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>\<open>scaleR_matrix_matrix_left\<close> is HOL-Analysis's \<open>scalar_matrix_assoc\<close>, reversed.\<close>
-
-text \<open>\<open>trace_scaleR_matrix\<close> is \<open>trace_scaleR\<close> from
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-section \<open>The matrix \<open>M\<^sub>p\<close> of Eq. (3.4)\<close>
+subsection \<open>The matrix \<open>M\<^sub>p\<close> of Eq. (3.4)\<close>
 
 definition Mp :: "real^'n::finite \<Rightarrow> real^'n^'n \<Rightarrow> real^'n^'n" where
   "Mp p M =
@@ -117,8 +110,8 @@ qed
 text \<open>The defining property: \<open>M\<^sub>p\<close> pairs with every feasible \<open>a\<close> exactly as
   \<open>M\<close> does.  Both summands are invisible: the conjugation because \<open>a\<close> is
   supported on \<open>p\<^sup>\<bottom>\<close>, the correction term because
-  \<open>tr(p p\<^sup>\<top> a) = p \<bullet> (a p) = 0\<close>.  This is the sentence in the paper just
-  before Eq. (3.5).\<close>
+  \<open>tr(p p\<^sup>\<top> a) = p \<bullet> (a p) = 0\<close>.  So \<open>F\<close> does not distinguish \<open>M\<close>
+  from \<open>M\<^sub>p\<close>: this is the sentence in the paper just before Eq. (3.5).\<close>
 
 theorem trace_Mp:
   fixes M a :: "real^'n::finite^'n"
@@ -162,24 +155,7 @@ next
   finally show ?thesis .
 qed
 
-text \<open>Hence \<open>F\<close> does not distinguish \<open>M\<close> from \<open>M\<^sub>p\<close>.\<close>
-
-section \<open>Elementary matrix algebra, continued\<close>
-
-text \<open>\<open>matrix_mul_diff_right\<close> and \<open>matrix_mul_diff_left\<close> live in
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-section \<open>The full Ky Fan sum is the trace\<close>
-
-text \<open>\<open>kyfan CARD('n)\<close> takes the whole spectrum, so it equals the trace, by
-  evaluating \<open>kyfan\<close> on the eigenbasis via the completeness relation.\<close>
-
-section \<open>The Rayleigh bounds\<close>
-
-text \<open>A unit vector gives a rank-one projection, and its orthogonal
-  complement a projection of trace \<open>n-1\<close>.\<close>
-
-section \<open>\<open>M\<^sub>p\<close> on the hyperplane \<open>p\<^sup>\<bottom>\<close>\<close>
+subsection \<open>\<open>M\<^sub>p\<close> on the hyperplane \<open>p\<^sup>\<bottom>\<close>\<close>
 
 text \<open>On \<open>p\<^sup>\<bottom>\<close> the projection \<open>I - pp'/|p|\<^sup>2\<close> acts as the identity, so
   \<open>M\<^sub>p\<close> has exactly the Rayleigh quotients of \<open>M\<close> there, and its
@@ -246,7 +222,7 @@ proof -
   finally show ?thesis .
 qed
 
-section \<open>An orthonormal eigenbasis of \<open>M\<^sub>p\<close> containing \<open>p/|p|\<close>\<close>
+subsection \<open>An orthonormal eigenbasis of \<open>M\<^sub>p\<close> containing \<open>p/|p|\<close>\<close>
 
 text \<open>The unit vector \<open>p/|p|\<close> is an eigenvector of \<open>M\<^sub>p\<close> with eigenvalue
   \<open>min(\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0)\<close>, so the symmetric \<open>M\<^sub>p\<close> has an orthonormal eigenbasis
@@ -286,11 +262,11 @@ proof -
     using eigenbasis_containing_eigenvector[OF transpose_Mp[OF sym] nq eigq] p by auto
 qed
 
-section \<open>The Courant-Fischer min-max lower bound\<close>
+subsection \<open>The Courant--Fischer min-max lower bound\<close>
 
-text \<open>The general Courant-Fischer lower bound, @{thm [source] eigval_ge_of_subspace},
-  lives in @{theory Symmetric_Matrix_Spectra.Poincare_Separation}.  Its \<open>c = 1\<close>
-  form is what \<open>eigen_lb\<close> delivers.\<close>
+text \<open>The \<open>c = 1\<close> case of the Courant--Fischer lower bound
+  @{thm [source] eigval_ge_of_subspace}, which is what \<open>eigen_lb\<close>
+  delivers.\<close>
 
 corollary eigval_ge_of_eigen_lb:
   fixes a :: "real^'n::finite^'n"
@@ -307,7 +283,7 @@ proof -
     by (rule eigval_ge_of_subspace[OF sym S(1) S(2) quad' m(1) m(2)])
 qed
 
-section \<open>The clipped trace bound\<close>
+subsection \<open>The clipped trace bound\<close>
 
 text \<open>With the Courant-Fischer bound in hand, the clipped weights sum to at
   least \<open>m\<close> over an eigenbasis of \<open>a\<close>: the top-\<open>m\<close> threshold set has
@@ -394,26 +370,10 @@ proof -
   finally show ?thesis .
 qed
 
-section \<open>The box program\<close>
+subsection \<open>The upper bound of Eq. (3.5) in bracket form\<close>
 
-text \<open>The combinatorial heart of Eq. (3.5), stated without matrices.  Splitting
-  \<open>lam u = max (lam u) 0 + min (lam u) 0\<close>, the positive part is bounded by
-  \<open>t \<le> 1\<close> and the negative part by \<open>sum_weighted_le_top_subset\<close>, whose "top
-  subset" is the \<open>m\<close> least negative directions.\<close>
-
-text \<open>\<open>sum_weighted_le_top_subset\<close> needs weights summing to \<open>m\<close> exactly,
-  while the clipped-weight bound only gives \<open>\<ge> m\<close>.  Scaling down by
-  \<open>real m / (\<Sum>t)\<close> repairs this without hurting the negative part, since
-  \<open>min (lam u) 0 \<le> 0\<close>.\<close>
-
-section \<open>The upper bound of Eq. (3.5) in bracket form\<close>
-
-text \<open>For a symmetric \<open>N\<close> with eigenbasis \<open>B\<close>, and weights coming from any
-  \<open>a\<close> satisfying the feasible-set constraints, the objective is bounded by
-  \<open>bracket m L N\<close>: this is @{thm [source] bracket_upper_bound} in
-  @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
-
-text \<open>Applied to \<open>N = M\<^sub>p\<close> and a feasible \<open>a\<close>: this is the upper-bound half of
+text \<open>For a feasible \<open>a\<close>, the objective is bounded by
+  \<open>bracket (n - k) L M\<^sub>p\<close>: this is the upper-bound half of
   Eq. (3.5) for the actual trace pairing.  \<open>trace_Mp\<close> replaces \<open>M\<close> by \<open>M\<^sub>p\<close>,
   \<open>trace_mult_eigen_weights\<close> expands against the adapted eigenbasis,
   \<open>sum_min_weights_ge\<close> supplies the clipped-weight bound from \<open>eigen_lb\<close>, and
@@ -495,15 +455,7 @@ next
     unfolding x by simp
 qed
 
-section \<open>The objective of Eq. (3.5) in the adapted eigenbasis\<close>
-
-text \<open>The paper justifies Eq. (3.5) by observing \<open>tr(Ma) = tr(M\<^sub>p a)\<close> for
-  \<open>a \<succeq> 0\<close> with \<open>ap = 0\<close>, and writing symmetric \<open>M\<^sub>p\<close> as a linear
-  combination of outer products (\<open>trace_Mp\<close> above gives the
-  first fact).  This section carries out the expansion and its weight
-  constraints.\<close>
-
-section \<open>Feasibility of weighted outer-product sums\<close>
+subsection \<open>Feasibility of weighted outer-product sums\<close>
 
 text \<open>For the reverse inequality of Eq. (3.5) a feasible \<open>a\<close> attaining the
   bracket must be exhibited, of the form
@@ -567,7 +519,7 @@ proof (intro exI[of _ "span S"] conjI ballI)
   finally show "x \<bullet> x \<le> x \<bullet> ((\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v x)" .
 qed
 
-section \<open>The reverse inequality of Eq. (3.5): the attaining witness\<close>
+subsection \<open>The reverse inequality of Eq. (3.5): the attaining witness\<close>
 
 text \<open>The optimum of the linear program is attained at the \<open>a\<close> that puts
   weight \<open>L\<close> on every positive eigendirection of \<open>M\<^sub>p\<close> and weight \<open>1\<close> on a
@@ -756,7 +708,7 @@ proof -
   finally show ?thesis .
 qed
 
-section \<open>Eq. (3.5)\<close>
+subsection \<open>Eq. (3.5)\<close>
 
 text \<open>The two inequalities together.  This is Eq. (3.5) of the paper:
 
@@ -778,19 +730,11 @@ theorem ell_op_eq_half_bracket:
     ell_op_le_half_bracket[OF sym p L k(1) k(2)]
   by simp
 
-text \<open>And in the paper's displayed form, as sums over the ordered
-  eigenvalues.\<close>
+subsection \<open>Scale invariance: the paper's sequence is constant\<close>
 
-section \<open>Scale invariance: the paper's sequence is constant\<close>
-
-text \<open>\<open>rank1proj\<close> depends only on the line through \<open>p\<close>
-  (@{thm [source] rank1proj_scaleR} in
-  @{theory Symmetric_Matrix_Spectra.Orthogonal_Projections}), so \<open>M\<^sub>p\<close> does too.
-  Hence the paper's sequence \<open>(q\<^sub>1/m, M)\<close> for the lower bound of Eq. (3.6)
-  is constant in \<open>m\<close>: \<open>M\<^sub>q\<^sub>1\<^sub>/\<^sub>m = M\<^sub>q\<^sub>1\<close>, so only \<open>p\<^sup>m \<longrightarrow> 0\<close> matters.\<close>
-
-text \<open>\<open>F\<close> is constant along the paper's sequence: the feasible set sees only
-  the direction of \<open>p\<close>.\<close>
+text \<open>\<open>F\<close> depends only on the direction of \<open>p\<close>, since the feasible set
+  does.  Hence \<open>F\<close> is constant along the paper's sequence \<open>(q\<^sub>1/m, M)\<close>
+  for the lower bound of Eq. (3.6), and only \<open>p\<^sup>m \<longrightarrow> 0\<close> matters.\<close>
 
 corollary ell_op_scaleR_dir:
   fixes M :: "real^'n::finite^'n"
@@ -803,7 +747,7 @@ proof -
   then show ?thesis unfolding ell_op_def by simp
 qed
 
-section \<open>The spectrum of \<open>M\<^sub>q\<close> when \<open>q\<close> is an eigenvector of \<open>M\<close>\<close>
+subsection \<open>The spectrum of \<open>M\<^sub>q\<close> when \<open>q\<close> is an eigenvector of \<open>M\<close>\<close>
 
 text \<open>This is the computation behind Eq. (3.6).  If \<open>q\<close> is a unit eigenvector
   of \<open>M\<close>, any eigenbasis of \<open>M\<close> containing \<open>q\<close> is also an eigenbasis of
@@ -867,11 +811,11 @@ proof -
     by (rule exI[of _ B]) (intro conjI B(1) B(2) qB restperp MB MpB Mpq)
 qed
 
-section \<open>The index shift of Eq. (3.6)\<close>
+subsection \<open>The index shift of Eq. (3.6)\<close>
 
-text \<open>A unit eigenvector attaining \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)\<close> exists: take the top-\<open>1\<close> threshold
-  set of an eigenbasis.  This is the \<open>q\<^sub>1\<close> of the paper's sequence
-  \<open>(q\<^sub>1/m, M)\<close>.\<close>
+text \<open>For a unit eigenvector \<open>q\<close> attaining \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close>, the \<open>q\<^sub>1\<close> of the
+  paper's sequence \<open>(q\<^sub>1/m, M)\<close>, the Ky Fan sums of \<open>M\<^sub>q\<close> are those of
+  \<open>M\<close> with \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close> removed.\<close>
 
 theorem kyfan_Mp_top_eigenvector:
   fixes M :: "real^'n::finite^'n"
@@ -897,7 +841,7 @@ proof -
     by (rule onormal_span_card[OF B])
   have qq: "q \<bullet> q = 1"
     using q by (simp add: dot_square_norm)
-  text \<open>@{theory Symmetric_Matrix_Spectra.Ky_Fan}: \<open>M\<^sub>q\<close> agrees with \<open>M\<close> off \<open>q\<close> and carries
+  text \<open>\<open>M\<^sub>q\<close> agrees with \<open>M\<close> off \<open>q\<close> and carries
     \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> at \<open>q\<close>.\<close>
   define lamM where "lamM = (\<lambda>u :: real^'n. u \<bullet> (M *v u))"
   define lamP where "lamP = (\<lambda>u :: real^'n. u \<bullet> (Mp q M *v u))"
@@ -1161,7 +1105,7 @@ proof -
   finally show ?thesis .
 qed
 
-section \<open>General Poincare separation\<close>
+subsection \<open>General Poincare separation\<close>
 
 text \<open>The paper's inequality \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for arbitrary
   \<open>p \<noteq> 0\<close>, by a dimension count: the span \<open>S\<close> of the top \<open>i+1\<close>
@@ -1300,30 +1244,7 @@ proof -
     using pos neg L by (intro add_mono mult_left_mono) auto
 qed
 
-section \<open>Continuity of the bracket in the matrix\<close>
-
-text \<open>By Eq. (3.5), \<open>F\<close> is \<open>-\<onehalf> bracket (n-k) L M\<^sub>p\<close>, so the first clause
-  of Lemma 3.1 (\<open>F\<^sub>* = F\<^sup>* = F\<close> off \<open>p = 0\<close>) needs \<open>bracket\<close> continuous in
-  its matrix argument, and \<open>(p, M) \<mapsto> M\<^sub>p\<close> continuous off \<open>p = 0\<close>.  The
-  first is Lipschitz, from \<open>kyfan_lipschitz\<close>.\<close>
-
-section \<open>\<open>F\<close> only sees the symmetric part of \<open>M\<close>\<close>
-
-text \<open>Every feasible \<open>a\<close> is symmetric, and against a symmetric \<open>a\<close> the trace
-  pairing cannot distinguish \<open>M\<close> from \<open>transpose M\<close>.  So \<open>F(p, M)\<close> depends
-  only on \<open>sym M = \<onehalf>(M + M\<^sup>\<top>)\<close>, letting nearby non-symmetric matrices be
-  handled by results assuming symmetry.\<close>
-
-text \<open>Consequently Eq. (3.5) holds for an arbitrary \<open>M\<close>, symmetric or not,
-  with \<open>M\<close> replaced by its symmetric part on the right hand side.\<close>
-
-section \<open>The Frobenius norm: transpose invariance and submultiplicativity\<close>
-
-text \<open>The last two tools for the continuity clause of Lemma 3.1:
-  \<open>norm (A ** B) \<le> norm A * norm B\<close>, and that the Frobenius norm inherited
-  on \<open>real^'n^'n\<close> satisfies it; neither is in this HOL-Analysis.\<close>
-
-section \<open>The conjugation expansion, and the Lipschitz bound for \<open>M\<^sub>p\<close>\<close>
+subsection \<open>The conjugation expansion, and the Lipschitz bound for \<open>M\<^sub>p\<close>\<close>
 
 text \<open>Towards continuity of \<open>(p, M) \<mapsto> M\<^sub>p\<close> off \<open>p = 0\<close>.  The correction
   coefficient \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> does not depend on \<open>p\<close>, so the only
@@ -1461,37 +1382,16 @@ proof -
   qed
 qed
 
-section \<open>A rank obstruction: the deterministic core of Lemma 5.3\<close>
+subsection \<open>Continuity of \<open>F\<close> away from \<open>p = 0\<close>\<close>
 
-text \<open>Lemma 5.3 characterises \<open>v(x) = 0\<close>, for convex \<open>K\<close>, by
-  \<open>dim F\<^sub>x \<le> n - k\<close>, the dimension of the face \<open>F\<^sub>x\<close> containing \<open>x\<close> in its
-  relative interior.  A covariance matrix degenerate on \<open>W\<close> cannot satisfy
-  \<open>eigen_lb a m\<close> unless \<open>m + dim W \<le> n\<close>; applied to \<open>F\<^sub>x\<close>'s normal
-  directions this gives the \<open>v(x) = 0\<close> side.\<close>
-
-text \<open>The form used on a face: if the degeneracy subspace is more than
-  \<open>k\<close>-dimensional, no feasible covariance exists at all.\<close>
-
-section \<open>From the Lipschitz bounds to the norm topology\<close>
-
-text \<open>\<open>bracket_lipschitz\<close> and \<open>eigval_lipschitz\<close> are stated via \<open>entrysum\<close>;
-  a topological continuity argument needs the norm instead.  The entrywise
-  bound \<open>\<bar>D $ i $ j\<bar> \<le> norm D\<close> converts them, at the cost of a factor
-  \<open>n\<^sup>2\<close>.\<close>
-
-section \<open>Continuity of \<open>F\<close> away from \<open>p = 0\<close>\<close>
-
-text \<open>Eq. (3.5) and Eq. (3.6) are proved (\<open>ell_op_eq_half_bracket\<close> here,
-  \<open>eq36\<close> in \<open>Operator_Envelopes\<close>.thy), as is the general Poincare separation
-  inequality (\<open>poincare_separation\<close>).  The remaining clause of Lemma 3.1,
-  \<open>F\<^sub>* = F\<^sup>* = F\<close> on \<open>(\<real>\<^sup>n \ {0}) \<times> \<S>\<^sup>n\<close>, is continuity of \<open>F\<close> away from
-  \<open>p = 0\<close>.  Writing \<open>F(p, M) = -\<onehalf> bracket (n-k) L (M\<^sub>p)\<close> with \<open>M\<close> replaced
-  by its symmetric part, this reduces to the Lipschitz bounds on \<open>bracket\<close>
-  and on \<open>(p, M) \<mapsto> M\<^sub>p\<close> established above.\<close>
-
-text \<open>The estimate on \<open>F\<close> itself: for symmetric \<open>M\<close> and \<open>p \<noteq> 0\<close>,
-  \<open>p' \<mapsto> F(p', M)\<close> is Lipschitz near \<open>p\<close>.  Combined with \<open>ell_op_M_gap\<close>
-  (\<open>Operator_Envelopes\<close>), which absorbs the variation of the second argument, both
+text \<open>The clause of Lemma 3.1 that \<open>F\<^sub>* = F\<^sup>* = F\<close> on
+  \<open>(\<real>\<^sup>n - {0}) \<times> \<S>\<^sup>n\<close> is continuity of \<open>F\<close> away from \<open>p = 0\<close>.  Writing
+  \<open>F(p, M) = -\<onehalf> bracket (n-k) L (M\<^sub>p)\<close> with \<open>M\<close> replaced by its
+  symmetric part, it reduces to the Lipschitz bounds on \<open>bracket\<close>
+  (@{thm [source] bracket_lipschitz}) and on \<open>(p, M) \<mapsto> M\<^sub>p\<close>
+  (\<open>Mp_lipschitz_away_from_zero\<close>).  The estimate on \<open>F\<close> itself: for symmetric \<open>M\<close> and \<open>p \<noteq> 0\<close>,
+  \<open>p' \<mapsto> F(p', M)\<close> is Lipschitz near \<open>p\<close>.  Combined with \<open>ell_op_M_gap\<close>,
+  which absorbs the variation of the second argument, both
   semicontinuous envelopes collapse onto \<open>F\<close> off the origin.\<close>
 
 theorem ell_op_lipschitz_in_p:
@@ -1560,7 +1460,7 @@ proof -
   qed
 qed
 
-section \<open>\<open>eigen_lb\<close> as an eigenvalue condition\<close>
+subsection \<open>\<open>eigen_lb\<close> as an eigenvalue condition\<close>
 
 text \<open>\<open>eigen_lb a m\<close>, an existential over subspaces, is equivalent to the
   single inequality \<open>1 \<le> eigval m a\<close>; since \<open>eigval m\<close> is Lipschitz in \<open>a\<close>
@@ -1641,15 +1541,11 @@ proof -
     using eigen_lb_iff_eigval_ge[OF _ m0 mn] by blast
 qed
 
-section \<open>Closedness of the feasible set\<close>
+subsection \<open>Closedness of the eigenvalue upper bound\<close>
 
-text \<open>
-  The feasible set of Eq. (1.9) is closed.  Three of its four conditions are
-  continuous inequalities, closed outright; the eigenvalue lower bound is an
-  existential over subspaces, but \<open>feasible_iff_eigval\<close> trades it for
-  \<open>1 \<le> eigval (n-k) a\<close>, Lipschitz on symmetric matrices.  The entrywise
-  bound \<open>feasible_entry_bound\<close> makes it bounded, hence compact.
-\<close>
+text \<open>The eigenvalue upper bound of Eq. (1.9) is a closed condition: an
+  intersection of closed half-spaces, one for each vector.  (The lower bound
+  is closed by \<open>feasible_iff_eigval\<close>, being \<open>1 \<le> eigval (n-k) a\<close>.)\<close>
 
 lemma closed_eigen_ub:
   "closed {a :: real^'n::finite^'n. eigen_ub a L}"

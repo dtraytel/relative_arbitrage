@@ -14,32 +14,7 @@ text \<open>The tangential projector field: the orthogonal projector onto a
   clamped direction field.  For \<open>m - 1 \<ge> n - k\<close> the field is feasible for the
   eigenvalue constraint of the operator, it kills its own direction, and it
   is continuous in the clamped variables.  These are deterministic matrix
-  facts; the growth estimates they feed are proved where the controlled
-  processes live.\<close>
-
-subsection \<open>Small matrix, trace and inner-product facts\<close>
-
-text \<open>\<open>trace_matrix_diff\<close> is HOL-Analysis's \<open>trace_sub\<close>.\<close>
-
-text \<open>\<open>unit_normalize\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>\<open>orthonormal_inj\<close>, \<open>orthonormal_dim_span\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-subsection \<open>The subspace-tangential field\<close>
-
-text \<open>The lower eigenvalue bound.  The witnessing subspace is the span of the
-  family cut by the hyperplane orthogonal to the singled-out direction: the
-  dimension drops by at most one, which is exactly what \<open>n - k\<close> needs.\<close>
-
-text \<open>The field is a projector, which is what makes the Euler chain's
-  covariance equal to it and the radial drift vanish --- the two facts
-  the construction below relies on.\<close>
-
-text \<open>The radial direction is killed at the point itself: this is why the
-  squared radius has no drift beyond the trace term, so the growth is exact
-  rather than merely bounded.\<close>
+  facts, without the controlled processes that use them.\<close>
 
 subsection \<open>The subspace-tangential field with a clamped direction\<close>
 
@@ -111,6 +86,10 @@ proof -
   have n0: "norm (P *v z) \<noteq> 0" using rho0 far by linarith
   show ?thesis unfolding uvecV_def mx using n0 by simp
 qed
+
+text \<open>Once the clamp is inactive, \<open>\<rho> \<le> |P z|\<close>, the field kills the point
+  itself: this is why the squared radius has no drift beyond the trace term,
+  so the growth is exact rather than merely bounded.\<close>
 
 lemma tanpU_kill:
   fixes P :: "real^'n::finite^'n" and z :: "real^'n"
@@ -207,6 +186,10 @@ proof
   also have "\<dots> \<le> L * (y \<bullet> y)" by (rule mult_right_mono[OF L1 inner_ge_zero])
   finally show "y \<bullet> (tanpU P u *v y) \<le> L * (y \<bullet> y)" .
 qed
+
+text \<open>The lower eigenvalue bound.  The witnessing subspace is the span of the
+  family cut by the hyperplane orthogonal to the singled-out direction: the
+  dimension drops by at most one, which is exactly what \<open>n - k\<close> needs.\<close>
 
 lemma tanpU_eigen_lb:
   fixes b :: "nat \<Rightarrow> real^'n::finite" and u :: "real^'n"
@@ -309,7 +292,10 @@ proof -
     by (intro continuous_on_vec_lambda continuous_intros ci)
 qed
 
-text \<open>\<open>tanpU_sq_norm_le\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+text \<open>The square of the field is the field at the rescaled direction
+  \<open>sqrt (2 - u \<bullet> u) u\<close>, so for a unit direction the field is a
+  projector; this is what makes the covariance of a process driven by it
+  equal to the field.\<close>
 
 
 lemma tanpU_sq:

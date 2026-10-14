@@ -1,4 +1,4 @@
-section \<open>Two-domain comparison: Theorem 4.2(b), Theorem 4.3, Proposition 4.1\<close>
+section \<open>Two-domain comparison, expandable sets and uniqueness\<close>
 
 (*<*)
 theory Comparison_Two_Domain
@@ -9,18 +9,18 @@ begin
 (*>*)
 
 text \<open>
-  What the one-domain maximum principle is for: the boundary-nonnegativity
-  argument and the \<open>T\<^sub>\<iota>\<close> hypothesis it needs, the two-domain
-  principle, and the two uniqueness statements built on them.
+  Comparison with boundary conditions: nonnegativity of a supersolution
+  with the zero boundary condition, the transformation of supersolutions
+  by similarity maps, the two-domain comparison principle, and comparison
+  and uniqueness on expandable sets, built on them.
 \<close>
 
 subsection \<open>A supersolution with the zero boundary condition is nonnegative\<close>
 
-text \<open>Definition 3.1's boundary clause for the supersolution is active
-  exactly where \<open>u\<^sub>* < 0\<close>: at a global minimum the constant test function
-  touches from below, giving \<open>1 \<le> F^*(0,0) = 0\<close>, the paper's
-  diagonal-case contradiction.  Stated with \<open>w\<close> itself lsc, as
-  Proposition 4.1 feeds it.\<close>
+text \<open>The supersolution property is required on the boundary only where
+  \<open>w < 0\<close>.  At a minimum of \<open>w\<close> over \<open>K\<close> with \<open>w < 0\<close> the constant test
+  function touches from below, giving \<open>1 \<le> F\<^sup>*(0, 0)\<close> against the
+  locale's \<open>usc_zero_lt_one\<close>.  Stated with \<open>w\<close> itself lsc.\<close>
 
 context geometric_operator
 begin
@@ -57,11 +57,9 @@ qed
 
 end
 
-subsection \<open>The \<open>T\<^sub>\<iota>\<close> hypothesis and its convex instance\<close>
+subsection \<open>Supersolutions under similarity maps\<close>
 
-text \<open>\<open>expandable\<close> lives in @{theory Second_Order_Viscosity_Analysis.Test_Functions}.\<close>
-
-text \<open>Theorem 4.3's transformation of a supersolution by a rotation, a
+text \<open>Transforming a supersolution by a rotation, a
   dilation and a translation needs only that the operator, here any
   \<^typ>\<open>ereal\<close>-valued \<open>G\<close>, is invariant under positive dilations of the
   gradient and under rotations.\<close>
@@ -170,47 +168,22 @@ theorem visc_supersol_env_affine:
       (\<lambda>X. c\<^sup>2 * w ((1/c) *\<^sub>R (transpose R *v (X - b))))"
   by (rule visc_supersol_gen_affine[OF usc_dilation usc_rotation orth c0 sup])
 
-section \<open>Two-domain comparison, Theorem 4.3, Proposition 4.1\<close>
+subsection \<open>The two-domain comparison principle\<close>
 
-subsection \<open>The two-domain maximum principle: Theorem 4.2(b)\<close>
-
-text \<open>Theorem 4.2(b): the two-domain comparison principle.  For \<open>u\<close> usc
-  bounded on \<open>K\<close>, \<open>w\<close> lsc bounded on \<open>K' \<supseteq> K\<close> with
-  \<open>K \<subseteq> interior K'\<close>, a subsolution/supersolution pair with \<open>u \<le> 0\<close> on
-  \<open>\<partial>K\<close> and \<open>w \<ge> 0\<close> on \<open>K'\<close> satisfies \<open>u \<le> w\<close> on \<open>K\<close>.  The proof
-  penalises with a quartic over the product,
-  \<open>\<Phi>\<^sup>\<epsilon>(x,y) = \<kappa> u x - w y - \<epsilon>\<^sup>-\<^sup>1\<bar>x-y\<bar>\<^sup>4\<close>, \<open>\<kappa> \<in> (0,1)\<close>, and splits on
-  where the maximiser converges as \<open>\<epsilon> \<rightarrow> 0\<close>: on the diagonal,
-  Definition 3.1(b) gives \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>; in the interior of \<open>K\<close>,
-  Crandall--Ishii and continuity of \<open>F\<close> off \<open>p = 0\<close> force \<open>\<kappa> \<ge> 1\<close>; on
-  the boundary, the sign conditions on \<open>u\<close>, \<open>w\<close> force \<open>\<Phi>\<^sup>\<epsilon> \<le> 0\<close>,
-  and \<open>\<kappa> \<up> 1\<close> gives the conclusion.  The two-domain setting makes the
+text \<open>Let \<open>K \<subseteq> interior K'\<close> be compact, \<open>u\<close> usc and bounded, and \<open>w\<close>
+  lsc and bounded.  If \<open>u\<close> is a subsolution on \<open>K\<close> with the boundary
+  condition \<open>u \<le> 0\<close> in the viscosity sense (the subsolution property is
+  required on \<open>\<partial>K\<close> only where \<open>u > 0\<close>), and \<open>w\<close> is a supersolution in
+  the interior of \<open>K'\<close> with \<open>w \<ge> 0\<close> on \<open>K'\<close>, then \<open>u \<le> w\<close> on \<open>K\<close>.
+  The proof argues by contradiction from \<open>w x < u x\<close>: it clips \<open>w\<close> at
+  \<open>0\<close> outside \<open>K'\<close>, extends \<open>u\<close> below its minimum outside \<open>K\<close>, doubles
+  the variables in the sup-convolutions of \<open>\<theta> u\<close> and \<open>- w\<close> with the
+  penalty \<open>soft_pen\<close> over \<open>UNIV \<times> K'\<close>, and closes the off-diagonal
+  case with \<open>comparison_2dom_off_diagonal\<close> and the diagonal case with
+  \<open>comparison_soft_diagonal\<close>.  The two-domain setting makes the
   supersolution side's ball requirement free, since
   \<open>K \<subseteq> interior K'\<close> gives every point of \<open>K\<close> a neighbourhood inside
   \<open>K'\<close>.\<close>
-
-subsection \<open>The gate fact, verified\<close>
-
-text \<open>Definition 3.1(a)'s gate is open at every maximiser of the doubled
-  functional, boundary or not, with no case-split on the sign of \<open>u\<close>.
-  Stated for an arbitrary nonnegative penalty, so it applies to the
-  paper's quartic and to \<open>soft_pen\<close> alike.\<close>
-
-text \<open>The gate is inherited by the sup-convolution's attainment point: the
-  Jensen step reads the subsolution property at that point, not at
-  \<open>x^h\<close>, and it lies in Definition 3.1's gated \<open>\<Omega>\<close> since the attained
-  value is \<open>\<ge> \<theta>u x^h > 0\<close>.\<close>
-
-subsection \<open>The two-domain doubled maximiser\<close>
-
-text \<open>Existence of the maximiser of \<open>\<theta>u(x)-w(y)-pen(x-y)\<close> over \<open>K \<times> K'\<close>
-  for usc \<open>u\<close> and lsc \<open>w\<close>, needing no continuity: the objective is usc
-  on the compact product, by the \<open>\<epsilon>\<close>-form calculus in @{theory Semicontinuous_Analysis.Semicontinuity} and
-  \<open>usc_attains_sup_gen\<close>, stated there for an arbitrary metric space so
-  it applies to the product.\<close>
-
-text \<open>\<open>two_domain_gap\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
 
 theorem comparison_two_domain:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K K' :: "(real^'n) set"
@@ -305,7 +278,8 @@ proof (rule ccontr)
   qed
 
   \<comment> \<open>2.  the \<open>u\<close>-side extension: below the minimum, so the doubled functional
-      cannot be maximised off \<open>K\<close>, and Definition 3.1(a) is untouched\<close>
+      cannot be maximised off \<open>K\<close>, and the subsolution property on \<open>K\<close> is
+      untouched\<close>
   define C where "C = - B - 1"
   have Cneg: "C < 0" unfolding C_def using B0 by simp
   have CleB: "C \<le> - B" unfolding C_def by simp
@@ -555,15 +529,16 @@ proof (rule ccontr)
   qed
 qed
 
-subsection \<open>Theorem 4.3, on top of the two-domain principle\<close>
-
-text \<open>\<open>affine_inv_dist\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+subsection \<open>Comparison on an expandable set\<close>
 
 
-text \<open>The paper's Theorem 4.3, in the form Proposition 4.1 consumes: for usc
-  bounded \<open>u\<close> and lsc bounded \<open>w\<close> both satisfying Definition 3.1's
-  boundary condition on an expandable \<open>K\<close>, \<open>u \<le> w^*\<close> on \<open>K\<close>.  The
-  \<open>\<iota> \<down> 1\<close> limit is taken along \<open>e\<^sub>j = 1/Suc j\<close>.\<close>
+text \<open>For usc bounded \<open>u\<close> and lsc bounded \<open>w\<close> satisfying the boundary
+  conditions above on an expandable \<open>K\<close>, \<open>u \<le> w\<^sup>*\<close> on \<open>K\<close>, where
+  \<open>w\<^sup>*\<close> is the upper envelope \<^const>\<open>usc_env\<close> of \<open>w\<close>.  Each similarity
+  map \<open>T\<close> that expandability supplies puts \<open>K\<close> into the interior of
+  \<open>T ` K\<close>; the transformed supersolution and the two-domain principle on
+  \<open>(K, T ` K)\<close> compare \<open>u\<close> with \<open>w\<close> at a nearby point, and the limit
+  is taken along \<open>e\<^sub>j = 1/Suc j\<close>.\<close>
 
 theorem comparison_expandable:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
@@ -774,9 +749,9 @@ proof -
   qed
 qed
 
-subsection \<open>Proposition 4.1: uniqueness among bounded usc solutions\<close>
+subsection \<open>Uniqueness among bounded usc solutions\<close>
 
-text \<open>The paper's Proposition 4.1: both functions are assumed usc and
+text \<open>Both functions are assumed usc and
   bounded globally; a caller with data only on \<open>K\<close> extends first with
   \<open>usc_extension_bounded\<close>, which changes nothing on \<open>K\<close> and preserves
   both viscosity properties.\<close>

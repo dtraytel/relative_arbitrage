@@ -1,3 +1,4 @@
+section \<open>The envelopes of the operator and Lemma 3.1\<close>
 
 (*<*)
 theory Operator_Envelopes
@@ -10,36 +11,29 @@ begin
 (*>*)
 
 text \<open>
-  Defines the lower and upper semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close>
-  of the operator \<open>F\<close> of Eq. (1.9), as ereal-valued functions with no
-  side conditions, and states Definition 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>:
-  a subsolution satisfies
-  \<open>F\<^sub>*(grad phi, Hess phi) \<le> 1\<close> and a supersolution
-  \<open>F\<^sup>*(grad phi, Hess phi) \<ge> 1\<close>, with the paper's global touching
-  condition, a maximum over \<open>K\<close> rather than on a small ball. It proves
-  the sandwich \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close>, that the envelope-free viscosity
-  notions of \<open>Elliptic_Operator\<close> imply the envelope ones, hence that
-  Example 3.1 satisfies Definition 3.1 as stated, and the clause of
-  Lemma 3.1 at the degenerate point, \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> S\<^sup>n\<close>, using
-  that at \<open>p = 0\<close> the constraint \<open>a p = 0\<close> is vacuous and that \<open>F\<close> is
-  Lipschitz in \<open>M\<close> uniformly in \<open>p\<close>.  Its last sections prove the other
-  clauses of Lemma 3.1: Eq. (3.6) for \<open>F\<^sup>*(0, M)\<close> and the continuity of \<open>F\<close>
-  off the origin.
+  The lower and upper semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> of the
+  operator \<open>F\<close> of Eq. (1.9), \<^typ>\<open>ereal\<close>-valued with no side
+  conditions, and Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: the sandwich
+  \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close>, \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> S\<^sup>n\<close> (using that at \<open>p = 0\<close>
+  the constraint \<open>a p = 0\<close> is vacuous and that \<open>F\<close> is Lipschitz in \<open>M\<close>
+  uniformly in \<open>p\<close>), Eq. (3.6) for \<open>F\<^sup>*(0, M)\<close>, and \<open>F\<^sub>* = F\<^sup>* = F\<close>
+  off the origin.  Also the facts about \<open>F\<close> that the comparison principles
+  read: the envelope-free viscosity notions imply the envelope ones of
+  Definition 3.1, and \<open>F\<close> has the invariances of display (4.4), is
+  degenerate elliptic and is positively homogeneous in \<open>M\<close>.
 
-  The test functions here are the \<^const>\<open>test_fun_at\<close> ones, which are less
-  regular than Definition 3.1's \<open>C\<^sup>2\<close>; that makes these notions the stronger,
-  which is what the clauses \<^emph>\<open>asserting\<close> the viscosity property want.  The
-  uniqueness clause needs the paper's own class instead; \<open>Maximum_Principle\<close>
-  restates Definition 3.1 over it as \<open>visc_subsol_env2\<close> / \<open>visc_supersol_env2\<close>.\<close>
+  The envelopes and the viscosity notions are defined in
+  @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.  The notions
+  \<^const>\<open>visc_subsol_env\<close> and \<^const>\<open>visc_supersol_env\<close> use
+  \<^const>\<open>test_fun_at\<close> test functions, which are less regular than
+  Definition 3.1's \<open>C\<^sup>2\<close> ones; that makes these notions the stronger, which
+  is what the clauses \<^emph>\<open>asserting\<close> the viscosity property want.  The
+  uniqueness clause needs the paper's own class instead, as in
+  \<^const>\<open>visc_subsol_env2\<close> and \<^const>\<open>visc_supersol_env2\<close>.\<close>
+
 unbundle inner_syntax
 
-section \<open>The operator of Eq. (1.9) on pairs\<close>
-
-text \<open>\<open>ell_op_pair\<close> lives in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
-
-section \<open>The semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close>\<close>
-
-text \<open>\<open>ell_op_lsc\<close>, \<open>ell_op_usc\<close> live in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
+subsection \<open>The semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close>\<close>
 
 text \<open>Every ball around \<open>z\<close> contains \<open>z\<close>, which gives the sandwich
   \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close>.  This is all that is needed to see that the
@@ -144,7 +138,7 @@ lemma ell_op_usc_ge_one_shift:
   unfolding ell_op_usc_eq_op_usc
   by (rule op_usc_ge_one_shift[OF ge[unfolded ell_op_usc_eq_op_usc]])
 
-section \<open>Lemma 3.1, the clause at \<open>p = 0\<close>: \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> \<bbbS>\<^sup>n\<close>\<close>
+subsection \<open>Lemma 3.1, the clause at \<open>p = 0\<close>: \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> \<bbbS>\<^sup>n\<close>\<close>
 
 text \<open>At \<open>p = 0\<close> the constraint \<open>a p = 0\<close> of Eq. (1.9) is vacuous, so the
   feasible set is largest and \<open>F(0, \<sqdot>)\<close> is smallest.  Since \<open>F\<close> is also
@@ -176,9 +170,6 @@ text \<open>The entrywise bound \<open>|a i j| \<le> L\<close> on the feasible s
 
 abbreviation mgap :: "real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real^'n^'n \<Rightarrow> real" where
   "mgap L M N \<equiv> entrysum (M - N) * L / 2"
-
-text \<open>\<open>trace_mult_feasible_bound\<close>, \<open>ell_op_le_witness\<close> and \<open>ell_op_approx\<close>
-  live in @{theory Relative_Arbitrage_Equation.Elliptic_Operator}.\<close>
 
 lemma ell_op_M_gap:
   fixes M N :: "real^'n::finite^'n"
@@ -239,14 +230,15 @@ proof -
     using e entrysum_sym[of "M - \<delta> *\<^sub>R mat 1" M] by simp
 qed
 
-subsection \<open>\<open>F\<close> and \<open>F\<^sup>*\<close> vanish with the Hessian, uniformly in the gradient\<close>
+subsubsection \<open>\<open>F\<close> and \<open>F\<^sup>*\<close> vanish with the Hessian, uniformly in the gradient\<close>
 
 text \<open>At \<open>M = 0\<close>, \<open>F\<close> vanishes for every gradient, since every feasible \<open>a\<close>
   gives \<open>trace (0 a) = 0\<close>.  With the Lipschitz bound @{thm [source]
   ell_op_M_gap}, \<open>F\<close> is small whenever \<open>M\<close> is, uniformly in \<open>p\<close>, and this
-  survives the supremum defining \<open>F\<^sup>*\<close>.  Theorem 4.2(a)'s diagonal case,
-  where the doubled maximiser has \<open>x\<^sup>\<epsilon> = y\<^sup>\<epsilon>\<close>, uses \<open>F\<^sup>*(0,0) = 0\<close> for
-  this reason.\<close>
+  survives the supremum defining \<open>F\<^sup>*\<close>.  This gives \<open>F\<^sup>*(0, 0) < 1\<close>
+  and \<open>F\<^sup>*(q, - \<delta> I) < 1\<close> for small \<open>\<delta>\<close>, uniformly in \<open>q\<close>, which the
+  comparison principles use where the doubled maximiser is on the
+  diagonal.\<close>
 
 lemma ell_op_zero_matrix:
   fixes p :: "real^'n::finite"
@@ -448,15 +440,7 @@ next
     by (rule ball_env_ge_of_bound[OF C_pos zero_less_one]) (use bound in blast)
 qed
 
-text \<open>At the degenerate gradient, the subsolution inequality of
-  Definition 3.1 and the envelope-free one coincide: \<open>F\<^sub>*(0,H) \<le> 1\<close> and
-  \<open>F(0,H) \<le> 1\<close> are the same condition.\<close>
-
-section \<open>Definition 3.1 in envelope form\<close>
-
-text \<open>\<open>visc_subsol_env\<close>, \<open>visc_supersol_env\<close>, \<open>visc_sol_env\<close> live in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
-
-section \<open>The envelope-free notions are the stronger ones\<close>
+subsection \<open>The envelope-free notions are the stronger ones\<close>
 
 text \<open>Two reasons: \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close> makes the envelope inequalities weaker
   at each test function, and a global maximum over \<open>K\<close> is in particular a
@@ -481,28 +465,13 @@ lemma visc_supersol_imp_env:
         sup[unfolded visc_supersol_eq_gen] ell_op_le_ell_op_usc]
         nhds_le_principal_of_open[OF op sub_K]])
 
-section \<open>Example 3.1 satisfies Definition 3.1 as stated in the paper\<close>
+subsection \<open>Invariances of the feasible set\<close>
 
-text \<open>Putting \<open>K = cball 0 r\<close> and \<open>\<Omega> = ball 0 r = K\<^sup>\<circ>\<close>: the explicit
-  function of Eq. (3.9) is a viscosity solution in the envelope sense of
-  Definition 3.1, with zero boundary values on the sphere.\<close>
+text \<open>The feasible set is invariant under orthogonal conjugation of the
+  matrix together with the gradient, and sees only the direction of the
+  gradient.  These give the invariances of \<open>F\<close> of display (4.4) below.\<close>
 
-section \<open>The closed formula of Eq. (3.6)\<close>
-
-text \<open>Eq. (3.4) defines, for \<open>p \<noteq> 0\<close>,
-  \<open>M\<^sub>p = (I - pp\<^sup>T/|p|\<^sup>2) M (I - pp\<^sup>T/|p|\<^sup>2) + min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M),0) \<cdot> pp\<^sup>T/|p|\<^sup>2\<close>
-  (and \<open>M\<^sub>0 = M\<close>), chosen so \<open>\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)\<close> sorts to the bottom of its
-  spectrum.  Diagonalising \<open>M\<^sub>p\<close> gives \<open>F(p,M) = -\<onehalf> bracket (n-k) L M\<^sub>p\<close>
-  (Eq. (3.5)); the paper passes to \<open>p \<rightarrow> 0\<close> via the one-sided Poincare
-  separation bound and Ky Fan's maximum principle, reaching Eq. (3.6).
-  Here \<open>F\<^sup>* = F\<close> away from \<open>p = 0\<close> is instead established by transporting
-  a feasible witness under orthogonal conjugation, below.  The Householder
-  reflection \<open>hrefl\<close> and the rotations \<open>rotv\<close>, \<open>rotm\<close> built from it live in
-  @{theory Symmetric_Matrix_Spectra.Householder_Rotation}.\<close>
-
-subsection \<open>Feasibility is invariant under orthogonal conjugation\<close>
-
-text \<open>\<open>orth_preserves_inner\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
+subsubsection \<open>Feasibility is invariant under orthogonal conjugation\<close>
 
 
 theorem feasible_conj:
@@ -677,7 +646,7 @@ proof -
     unfolding feasible_def using psdA killA lbA ubA by simp
 qed
 
-subsection \<open>Feasibility sees only the direction of the gradient\<close>
+subsubsection \<open>Feasibility sees only the direction of the gradient\<close>
 
 lemma feasible_scale:
   fixes q :: "real^'n::finite"
@@ -707,11 +676,6 @@ text \<open>Definition 3.1 constrains only test functions with a global touching
   supplies; \<^const>\<open>test_fun_at\<close> alone would tolerate truncating \<open>\<phi>\<close> far
   from \<open>x\<close>.\<close>
 
-text \<open>A test function is minorised near \<open>x\<close> by its two-jet quadratic,
-  once the Hessian is shifted down by any \<open>\<delta> > 0\<close>, which lets a touching
-  by an arbitrary test function be replaced by a touching by a genuine
-  quadratic, bounded on a bounded set.\<close>
-
 
 theorem visc_subsol_env_local:
   fixes K :: "(real^'n::finite) set" and u \<phi> :: "real^'n \<Rightarrow> real"
@@ -727,33 +691,23 @@ theorem visc_subsol_env_local:
   by (rule visc_subsol_gen_principal_local[OF sub[unfolded visc_subsol_env_eq_gen] x\<Omega>
         test_fun_at_quartic_shift[OF tf] uhi phi r0 lm])
 
-section \<open>Semicontinuity toolbox and the invariances of \<open>F\<close>\<close>
+subsection \<open>The upper envelope at the origin, and the invariances of \<open>F\<close>\<close>
 
-text \<open>The semicontinuous envelopes of a general real-valued function, their
-  attainment and extension lemmas, and the elementary \<open>\<epsilon>\<close>-\<open>\<delta>\<close> calculus of
-  semicontinuity live in @{theory Semicontinuous_Analysis.Semicontinuity} and
-  @{theory Semicontinuous_Analysis.Semicontinuous_Envelopes}.  What follows
-  are the three invariances of \<open>F\<close> that make up the paper's display (4.4).\<close>
-
-text \<open>The constant test function: the touching that Definition 3.1's boundary
-  clause admits at a global minimum, and the one the paper's diagonal case
-  uses to reach \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.\<close>
+text \<open>\<open>F\<^sup>*(0, 0) < 1\<close>: this is what a constant test function, touching at a
+  global minimum, meets in the boundary clause of Definition 3.1.\<close>
 
 lemma ell_op_usc_zero_zero_lt_one:
   assumes kk: "1 \<le> k" "k < CARD('n::finite)" and LL: "1 \<le> L"
   shows "ell_op_usc k L (0 :: real^'n) (0 :: real^'n^'n) < 1"
   by (rule ell_op_usc_lt_one_of_small[OF kk LL]) simp
 
-subsection \<open>The invariances of \<open>F\<close> --- the paper's display (4.4)\<close>
-
+subsubsection \<open>The invariances of \<open>F\<close>: the paper's display (4.4)\<close>
 
 lemma ell_op_scale:
   fixes p :: "real^'n::finite" and M :: "real^'n^'n"
   assumes "c \<noteq> 0"
   shows "ell_op k L (c *\<^sub>R p) M = ell_op k L p M"
   unfolding ell_op_def feasible_scale[OF assms] ..
-
-text \<open>\<open>trace_mul_sym\<close> is HOL-Analysis's.\<close>
 
 
 lemma ell_op_conj_rot:
@@ -832,7 +786,7 @@ proof -
   then show ?thesis unfolding ell_op_def by simp
 qed
 
-subsection \<open>The two envelope invariances that Theorem 4.3 consumes\<close>
+subsubsection \<open>The two envelope invariances that Theorem 4.3 consumes\<close>
 
 text \<open>Both are instances of the transport of \<open>F\<^sup>*\<close> along an \<open>F\<close>-preserving
   map, @{thm [source] op_usc_dilation} and @{thm [source] op_usc_rotation}.\<close>
@@ -855,34 +809,13 @@ text \<open>The \<open>ell_op_lsc\<close> versions follow from @{thm [source] ba
   \<open>INF\<close> and \<open>SUP\<close> exchanged; they are not needed by Theorem 4.3, which reads the
   supersolution side only, so they are not stated.\<close>
 
-section \<open>Congruence of the envelope-free notions, and affine images of open sets\<close>
-
-text \<open>Monotonicity of \<open>lsc_env\<close>/\<open>usc_env\<close> and the fixpoint at points where the
-  underlying function is already semicontinuous live in
-  @{theory Semicontinuous_Analysis.Semicontinuous_Envelopes}.\<close>
-
-subsection \<open>Affine maps commute with \<open>interior\<close>\<close>
-
-text \<open>\<open>affine_interior_image\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-section \<open>A constant is a subsolution off \<open>K\<close>\<close>
-
-text \<open>A test function touching from above at a local minimum of itself --
-  as any touching of a locally constant function is -- satisfies the
-  subsolution inequality for free.  So extending \<open>u\<close> by a constant below
-  its minimum is a subsolution off \<open>K\<close>, turning Definition 3.1's gated
-  \<open>\<Omega>\<close> into the open set \<open>UNIV - S\<close> with
-  \<open>S = {x \<in> K - interior K. u x \<le> 0}\<close> compact -- the shape the
-  Crandall--Ishii core needs.\<close>
-
-text \<open>The remaining sections prove the clauses of Lemma 3.1 of
+text \<open>The following sections prove the clauses of Lemma 3.1 of
   \<^cite>\<open>LaiShkolnikovSoner\<close> that mention the envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close>
   away from the clause at \<open>p = 0\<close> above: Eq. (3.6) and continuity off the
   origin, from Eq. (3.5) and the index shift of Eq. (3.6) supplied by
   \<open>Operator_Formula\<close>.\<close>
 
-section \<open>Eq. (3.6): the lower bound for \<open>F\<^sup>*(0, M)\<close>\<close>
+subsection \<open>Eq. (3.6): the lower bound for \<open>F\<^sup>*(0, M)\<close>\<close>
 
 text \<open>The paper obtains Eq. (3.6) by evaluating \<open>F\<close> along the sequence
   \<open>(q\<^sub>1/m, M)\<close>, with \<open>q\<^sub>1\<close> a top eigenvector of \<open>M\<close>.  Here that sequence is
@@ -934,7 +867,7 @@ proof (rule INF_greatest)
     unfolding val[symmetric] .
 qed
 
-section \<open>Eq. (3.6): the pointwise upper bound\<close>
+subsection \<open>Eq. (3.6): the pointwise upper bound\<close>
 
 text \<open>\<open>F(p, M) \<le> eq36_rhs k L M\<close> for every \<open>p\<close>, including \<open>p = 0\<close>.  For \<open>p \<noteq> 0\<close>
   this is Eq. (3.5) combined with \<open>bracket_ge_shifted\<close> (which rests on the
@@ -986,7 +919,7 @@ proof -
   qed
 qed
 
-section \<open>Eq. (3.6): the envelope upper bound, and the equality\<close>
+subsection \<open>Eq. (3.6): the envelope upper bound, and the equality\<close>
 
 text \<open>The upper bound for the envelope.  The nearby matrices \<open>snd w\<close> need not be
   symmetric: the comparison is made against the symmetric \<open>M\<close> using
@@ -1062,7 +995,7 @@ theorem eq36:
   by (rule antisym[OF ell_op_usc_at_zero_le[OF sym L k(1) k(2)]
         ell_op_usc_at_zero_ge[OF sym L k(1) k(2)]])
 
-section \<open>The last clause of Lemma 3.1: continuity off the origin\<close>
+subsection \<open>The continuity clause of Lemma 3.1: \<open>F\<^sub>* = F\<^sup>* = F\<close> off the origin\<close>
 
 text \<open>\<open>mgap\<close> is symmetric in its two matrix arguments, so \<open>ell_op_M_gap\<close> gives a
   two-sided bound.\<close>
@@ -1238,7 +1171,7 @@ next
     using ell_op_le_usc[of k L p M] by (simp add: ell_op_pair_def)
 qed
 
-text \<open>Lemma 3.1, first clause: \<open>F\<^sub>* = F\<^sup>* = F\<close> off the origin.\<close>
+text \<open>The continuity clause of Lemma 3.1: \<open>F\<^sub>* = F\<^sup>* = F\<close> off the origin.\<close>
 
 corollary ell_op_envelopes_eq_off_zero:
   fixes M :: "real^'n::finite^'n"
@@ -1251,7 +1184,7 @@ corollary ell_op_envelopes_eq_off_zero:
     ell_op_usc_off_zero[OF sym p L k(1) k(2)]
   by simp_all
 
-section \<open>Towards Section 4: degenerate ellipticity of \<open>F\<close>\<close>
+subsection \<open>Towards Section 4: degenerate ellipticity of \<open>F\<close>\<close>
 
 text \<open>Theorem 4.2 of the paper reaches its contradiction through Eq. (4.3),
   \<open>F(p\<^sub>\<epsilon>, M\<^sub>\<epsilon>) \<ge> F(p\<^sub>\<epsilon>, N\<^sub>\<epsilon>)\<close>, which is the degenerate ellipticity of \<open>F\<close>:
@@ -1326,26 +1259,7 @@ proof -
     by (rule cInf_mult_pos[OF t _ ell_op_bdd_below]) (use ne in simp)
 qed
 
-text \<open>The same holds for the upper envelope, the form used in Section 4's
-  viscosity definitions.\<close>
-
-text \<open>Consequence of the continuity clause, and the reason Section 4 can work
-  with the envelope-free operator away from the origin: there the viscosity
-  sub- and supersolution inequalities of Definition 3.1 are literally the same
-  conditions as the envelope-free ones.  This is the off-origin companion of
-  \<open>ell_op_lsc_at_zero\<close> (above), which handles \<open>p = 0\<close>.\<close>
-
-text \<open>The shape of Theorem 4.2's argument, isolated.  At the doubled maximum
-  the Crandall-Ishii lemma produces a common gradient \<open>p\<close> and Hessians
-  \<open>X \<preceq> Y\<close>, with \<open>u\<close> subsolution at the first point and \<open>w\<close> supersolution at the
-  second.  Ellipticity then forces \<open>F(p,Y) \<le> F(p,X)\<close>, so the two operator
-  values are pinched between the sub- and supersolution inequalities, and any
-  strictness on the subsolution side is already a contradiction.\<close>
-
-text \<open>The envelope formulation of Definition 3.1, obtained by using the
-  continuity clause to replace \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close> by \<open>F\<close> at a nonzero gradient.\<close>
-
-section \<open>Lemma 3.1\<close>
+subsection \<open>Lemma 3.1\<close>
 
 text \<open>Lemma 3.1 consists of:
   \<^item> \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close> always (\<open>ell_op_lsc_le_ell_op\<close>, \<open>ell_op_le_ell_op_usc\<close>,
@@ -1360,15 +1274,6 @@ text \<open>Lemma 3.1 consists of:
   \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close> for arbitrary \<open>p \<noteq> 0\<close> is \<open>poincare_separation\<close>
   (@{theory Relative_Arbitrage_Equation.Operator_Formula}); for \<open>p\<close> an eigenvector it is an equality
   (\<open>eigval_Mp_top_eigenvector\<close>).\<close>
-
-section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>
-
-text \<open>The chain is proved in \<open>Maximum_Principle\<close> and \<open>Comparison_Two_Domain\<close>
-  for any operator of the locale \<open>geometric_operator\<close>; \<open>Comparison_Instance\<close>
-  shows that \<open>F\<close> is one and states Theorem 4.2(a) (\<open>max_principle_usc_lsc\<close>),
-  Theorem 4.2(b) (\<open>comparison_two_domain\<close>), Theorem 4.3
-  (\<open>comparison_expandable\<close>) and Proposition 4.1 (\<open>uniqueness_expandable\<close>)
-  for it.\<close>
 
 (*<*)
 end

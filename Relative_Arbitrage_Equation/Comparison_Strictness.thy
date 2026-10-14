@@ -9,16 +9,14 @@ begin
 (*>*)
 
 
-text \<open>What the operator contributes to the comparison argument: it reads
-  only the symmetric part of the Hessian, a subsolution can be scaled to a
-  strict one, and the envelope forms of the two solution notions can be
-  played against each other.  Nothing here doubles a variable yet.\<close>
+text \<open>Facts about the solution notions that the comparison argument uses
+  before any variable is doubled: congruence and monotonicity of the
+  notions with touching over a set, the passage from touching over a
+  bounded set to local touching, strict subsolutions by scaling, and the
+  contradiction between a strict subsolution and a supersolution at a
+  common nonzero gradient with ordered Hessians.\<close>
 
-section \<open>The viscosity notions: congruence, monotonicity, test classes\<close>
-
-text \<open>\<open>trace_mul_comm\<close> is HOL-Analysis's \<open>trace_mul_sym\<close>.\<close>
-
-text \<open>\<open>matrix_mult_scaleR_left\<close> is HOL-Analysis's \<open>scalar_matrix_assoc\<close>, reversed.\<close>
+subsection \<open>Congruence, monotonicity and test classes\<close>
 
 context geometric_operator
 begin
@@ -61,9 +59,12 @@ lemma visc_supersol_env_imp_env2:
 
 end
 
-text \<open>The two places where the paper-facing hypothesis is actually consumed:
-  a local touching is deepened by a quartic into a global one over \<open>K\<close>
-  (@{thm [source] local_max_quartic_deepen}).  The \<open>C\<^sup>2\<close> versions use
+subsection \<open>From touching over a set to local touching\<close>
+
+text \<open>A local touching is deepened by a quartic into a touching over
+  \<open>K\<close> (@{thm [source] local_max_quartic_deepen}), so a solution whose
+  test functions touch over a bounded \<open>K\<close> satisfies its inequality also
+  at test functions that touch only locally.  The \<open>C\<^sup>2\<close> versions use
   @{thm [source] test_fun_C2_quartic_shift} where the \<^const>\<open>test_fun_at\<close> versions
   use @{thm [source] test_fun_at_quartic_shift}: the quartic shift of a
   \<open>C\<^sup>2\<close> function is again \<open>C\<^sup>2\<close>, with the same two-jet at \<open>x\<close>.\<close>
@@ -98,8 +99,13 @@ theorem visc_subsol_env2_local:
   by (rule visc_subsol_gen_principal_local[OF sub x\<Omega>
         test_fun_C2_quartic_shift[OF tf] uhi phi r0 lm])
 
-text \<open>\<open>supersol_usc\<close> is the supersolution notion with local touching and
-  \<open>F\<^sup>*\<close>; the comparison argument reaches it from the paper's notion.\<close>
+text \<open>For the upper envelope of any operator, a supersolution whose
+  \<open>C\<^sup>2\<close> test functions touch over a bounded \<open>K\<close> is a supersolution with
+  \<^const>\<open>test_fun_at\<close> test functions touching locally.  Below a
+  \<^const>\<open>test_fun_at\<close> function with Hessian \<open>H\<close> lies, near \<open>x\<close>, the
+  quadratic with the same gradient and Hessian \<open>H - \<delta> I\<close>, which gives
+  \<open>1 \<le> F\<^sup>*(p, H - \<delta> I)\<close>; and \<open>F\<^sup>*\<close> passes to the limit \<open>\<delta> \<rightarrow> 0\<close>
+  (\<open>op_usc_ge_one_shift\<close>).\<close>
 
 theorem visc_supersol_env_imp_jet:
   fixes K :: "(real^'n::finite) set" and w :: "real^'n \<Rightarrow> real"
@@ -171,13 +177,13 @@ proof (intro ballI allI impI)
     by (rule op_usc_ge_one_shift[OF step])
 qed
 
-text \<open>\<open>quad_bdd_below_on_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>The subsolution counterpart of \<open>visc_supersol_env_imp_jet\<close> lands on the
-  envelope-free notion, since \<open>F\<^sub>* = F\<close> at symmetric matrices (the locale's
-  \<open>lsc_at_zero\<close> at \<open>p = 0\<close> and \<open>lsc_off_zero\<close>
-  elsewhere); only the touching needs upgrading from global on \<open>K\<close> to local,
-  via @{thm [source] visc_subsol_env2_local}.\<close>
+text \<open>The subsolution counterpart of \<open>visc_supersol_env_imp_jet\<close> lands on
+  the envelope-free notion: the quadratic with Hessian \<open>H + \<delta> I\<close> lies
+  above the test function near \<open>x\<close> and gives
+  \<open>F\<^sub>*(p, H + \<delta> I) \<le> 1\<close> (via @{thm [source] visc_subsol_env2_local});
+  \<open>F\<^sub>* = F\<close> at symmetric matrices (the locale's \<open>lsc_at_zero\<close> at
+  \<open>p = 0\<close> and \<open>lsc_off_zero\<close> elsewhere), and the locale's \<open>shift_bound\<close>
+  removes \<open>\<delta>\<close>.\<close>
 
 context geometric_operator
 begin
@@ -275,93 +281,16 @@ proof (intro ballI allI impI)
 qed
 
 
-subsection \<open>Where the strictness comes from\<close>
+subsection \<open>The contradiction at ordered Hessians\<close>
 
-text \<open>\<open>F\<close> has no zeroth-order term, so a subsolution cannot be made strict
-  by subtracting a constant. But \<open>F\<close> is positively homogeneous in \<open>M\<close>
-  (\<open>homogeneous\<close>) and invariant under positive dilations of \<open>p\<close>
-  (\<open>dilation\<close>): scaling a subsolution by \<open>\<theta> \<in> (0,1)\<close> sends \<open>(p, X)\<close> to
-  \<open>(\<theta> p, \<theta> X)\<close> and \<open>F(p,X) \<le> 1\<close> to the strict
-  \<open>F(\<theta> p, \<theta> X) \<le> \<theta> < 1\<close>.  For the operator of Eq. (1.9),
-  \<open>F(p, M) = Inf {- tr(M a)/2 | a feasible}\<close>, the dilation invariance holds
-  because the feasible set depends on \<open>p\<close> only through \<open>a *v p = 0\<close>.\<close>
-
-text \<open>Scaling a subsolution by \<open>\<theta> \<in> (0,1)\<close> makes its operator inequality
-  strict, since \<open>F\<close> has no zeroth-order term. With degenerate
-  ellipticity (\<open>elliptic\<close>), a scaled subsolution and an unscaled
-  supersolution sharing a jet pair \<open>X \<preceq> Y\<close> are inconsistent -- the
-  contradiction underlying Theorem 4.2(a).\<close>
-
-subsection \<open>Scaling a subsolution\<close>
-
-text \<open>A test function scales, so a subsolution scaled by \<open>\<theta> \<in> (0,1)\<close>
-  satisfies the strict operator inequality at each of its test points.\<close>
-
-
-subsection \<open>Freezing one variable in the doubled maximum\<close>
-
-text \<open>The two frozen penalties are smooth quadratics with the same gradient
-  \<open>\<alpha> *\<^sub>R (xh - yh)\<close> at their respective points, and Hessians
-  \<open>\<alpha> *\<^sub>R mat 1\<close> and \<open>- \<alpha> *\<^sub>R mat 1\<close>. The common gradient lets the two
-  viscosity inequalities be compared at a common \<open>p\<close>; the wrongly-ordered
-  Hessians are why the theorem on sums is needed to replace them by an
-  ordered pair \<open>X \<preceq> Y\<close>.\<close>
-
-text \<open>The same gradient at the other frozen point, letting the subsolution
-  and supersolution inequalities be evaluated at a common vector
-  \<open>p = \<alpha> *\<^sub>R (xh - yh)\<close>.\<close>
-
-text \<open>The two Hessians, \<open>\<alpha> I\<close> and \<open>- \<alpha> I\<close>, are ordered the wrong way, the
-  obstruction the theorem on sums removes.\<close>
-
-text \<open>Packaging both frozen penalties as test functions supplies exactly the
-  hypotheses \<open>visc_subsol\<close> and \<open>supersol_jet\<close> require: freezing one
-  variable of the doubled maximum leaves \<open>u\<close> minus the first penalty
-  maximal at \<open>xh\<close>, and \<open>w\<close> minus the second minimal at \<open>yh\<close>. So the
-  doubled maximum feeds into the two viscosity inequalities.\<close>
-
-subsection \<open>What naive doubling delivers\<close>
-
-text \<open>Feeding the two frozen test functions into the two viscosity
-  definitions gives the two operator inequalities at the common vector
-  \<open>p = \<alpha> *\<^sub>R (xh - yh)\<close>, with Hessians \<open>\<alpha> I\<close> and \<open>- \<alpha> I\<close>.\<close>
-
-text \<open>Degenerate ellipticity would close the argument if the Hessians were
-  ordered \<open>X \<preceq> Y\<close>, i.e. \<open>psd ((- \<alpha>) *\<^sub>R mat 1 - \<alpha> *\<^sub>R mat 1)\<close>; for
-  \<open>\<alpha> > 0\<close> that matrix is \<open>(- 2 * \<alpha>) *\<^sub>R mat 1\<close>, negative definite. So the
-  two inequalities arrive with Hessians ordered the wrong way, and replacing
-  \<open>(\<alpha> I, - \<alpha> I)\<close> by an ordered pair \<open>X \<preceq> Y\<close> is the theorem on sums' role.\<close>
-
-subsection \<open>From the abstract matrix inequality to \<open>psd\<close>\<close>
-
-text \<open>\<open>matrix_diff_vec\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-subsection \<open>The envelope route for removing the jet correction\<close>
-
-text \<open>\<open>superjet_local_max\<close> introduces a strictly convex correction
-  \<open>(\<delta>/2) * norm k\<^sup>2\<close>, so the matrix reaching the operator is \<open>X + \<delta> I\<close>
-  rather than \<open>X\<close>. Removing \<open>\<delta>\<close> passes to closed second-order jets via the
-  envelopes: the two envelope inequalities sandwich the sharp one, and
-  the envelope-free notions already imply the envelope ones on an open
-  \<open>\<Omega> \<subseteq> K\<close> (@{thm [source] visc_subsol_gen_filter_mono} with
-  @{thm [source] nhds_le_principal_of_open}).\<close>
-
-text \<open>And the same for the upper envelope, by the dual argument: the same
-  translation carries \<open>ball (p, M) e\<close> onto \<open>ball (p, N) e\<close>, and the
-  integrand decreases along it, so the suprema compare and then the infima
-  over the radius do.\<close>
-
-subsection \<open>The envelope-form contradiction\<close>
-
-text \<open>Ellipticity of the envelopes alone gives \<open>F\<^sup>*(p, Y) \<le> F\<^sup>*(p, X)\<close>, but
-  combined with \<open>F\<^sub>*(p, X) < 1\<close> this is consistent wherever the two
-  envelopes separate at \<open>(p, X)\<close>, i.e. wherever \<open>F\<close> is discontinuous. The
-  mixed-envelope inequalities close only where the envelopes coincide with
-  \<open>F\<close>, which the locale assumes at symmetric matrices off the origin
-  (\<open>lsc_off_zero\<close>, \<open>usc_off_zero\<close>; for the operator of Eq. (1.9) this is
-  Lemma 3.1's last clause), reducing the envelope contradiction to the
-  envelope-free one.\<close>
+text \<open>A strict subsolution inequality \<open>F\<^sub>*(p, X) < 1\<close> and a
+  supersolution inequality \<open>1 \<le> F\<^sup>*(p, Y)\<close> at a common gradient
+  \<open>p \<noteq> 0\<close> with \<open>X \<preceq> Y\<close> contradict each other: off \<open>p = 0\<close> both
+  envelopes are \<open>F\<close> at symmetric matrices (\<open>lsc_off_zero\<close>,
+  \<open>usc_off_zero\<close>), and degenerate ellipticity gives
+  \<open>F(p, Y) \<le> F(p, X)\<close>.  At \<open>p = 0\<close> the two envelopes may differ, so
+  \<open>1 \<le> F\<^sup>*(0, Y)\<close> is weaker than \<open>1 \<le> F(0, Y)\<close>; this is why the
+  doubling has to keep the common gradient away from zero.\<close>
 
 theorem env_strict_contradiction:
   fixes X Y :: "real^'n::finite^'n"
@@ -384,138 +313,16 @@ qed
 
 end
 
-text \<open>The same for the non-strict sandwich, the form in which the envelope
-  inequalities first arrive from the doubling.\<close>
+subsection \<open>Strict subsolutions by scaling\<close>
 
-text \<open>At \<open>p = 0\<close> the two envelopes may disagree: \<open>lsc_at_zero\<close> gives
-  \<open>F\<^sub>*(0, M) = F(0, M)\<close>, while for the operator of Eq. (1.9) \<open>eq36\<close>
-  gives \<open>F\<^sup>*(0, M) = eq36_rhs k L M\<close>,
-  whose index range omits the eigenvalue \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close> of Eq. (3.5). So
-  \<open>1 \<le> F\<^sup>*(0, Y)\<close> is strictly weaker than \<open>1 \<le> F(0, Y)\<close>, and envelope
-  ellipticity cannot close the gap -- the degeneracy Lemma 3.1 isolates, and
-  why the doubling needs the shared gradient to be nonzero.\<close>
-
-subsection \<open>The dichotomy the side condition forces on the doubling\<close>
-
-text \<open>In the doubling, the shared gradient at the maximising pair
-  \<open>(x', y')\<close> of \<open>\<Phi>(x,y) = u x - w y - (\<alpha>/2) \<bar>x - y\<bar>\<^sup>2\<close> is
-  \<open>p = \<alpha> (x' - y')\<close>, so \<open>p \<noteq> 0\<close> means the maximising pair is off the
-  diagonal. For \<open>\<alpha> \<noteq> 0\<close> the gradient vanishes precisely on the diagonal.\<close>
-
-subsection \<open>The penalty estimate\<close>
-
-text \<open>\<open>doubling_dist_bound\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>The dichotomy for a general penalty\<close>
-
-text \<open>\<open>doubling_diagonal_max_gen\<close>, \<open>doubling_off_diagonal_gen\<close>, \<open>doubling_penalty_bound_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>Monotonicity of the doubled maximum in the penalty parameter\<close>
-
-text \<open>The other ingredient of the \<open>\<alpha> \<rightarrow> \<infinity>\<close> passage: the doubled maximum is
-  antimonotone in \<open>\<alpha>\<close>, since a larger penalty can only decrease the
-  supremum, the maximiser for larger \<open>\<alpha>\<close> being an admissible competitor for
-  smaller \<open>\<alpha>\<close>. Since the doubled maximum is at least the value of
-  \<open>u - w\<close> at any diagonal point, this pins the family between two
-  \<open>\<alpha>\<close>-independent bounds, so the limit exists without a compactness
-  argument.\<close>
-
-subsection \<open>The components of the maximiser merge, with no subsequences\<close>
-
-text \<open>Because \<open>doubling_dist_bound\<close> comes with an explicit constant,
-  \<open>x'\<^sub>\<alpha> - y'\<^sub>\<alpha> \<rightarrow> 0\<close> is a sandwich between \<open>0\<close> and \<open>2D/\<alpha>\<close>, needing
-  neither compactness of \<open>K\<close> nor a subsequence.\<close>
-
-subsection \<open>The diagonal branch \<open>p = 0\<close>\<close>
-
-text \<open>The dichotomy leaves the diagonal branch \<open>p = 0\<close>. For the operator
-  of Eq. (1.9), since \<open>eq36\<close> identifies \<open>F\<^sup>*(0, M)\<close> with
-  \<open>eq36_rhs k L M\<close>, ellipticity of \<open>F\<^sup>*\<close>
-  transfers to \<open>eq36_rhs\<close>, a statement about the eigenvalue expression of
-  Eq. (3.6).\<close>
-
-text \<open>The gap between the two envelopes at the origin,
-  \<open>eq36_rhs k L M - F(0, M)\<close>, is nonnegative: \<open>ell_op_le_eq36\<close> specialised
-  to \<open>p = 0\<close>, combined with \<open>ell_op_lsc_at_zero\<close>.\<close>
-
-text \<open>For that operator, at \<open>p = 0\<close>, \<open>F\<^sub>*(0,X) = F(0,X)\<close> and
-  \<open>F\<^sup>*(0,Y) = eq36_rhs k L Y\<close>, with
-  \<open>eq36_rhs\<close> antitone; the supersolution gives \<open>1 \<le> eq36_rhs k L X\<close> and
-  the subsolution \<open>F(0,X) < 1\<close>. These are consistent because
-  \<open>F(0,X) \<le> eq36_rhs k L X\<close> with room to spare, so the envelope gap at
-  \<open>p = 0\<close> does not vanish in general.\<close>
-
-subsection \<open>Existence of the maximising pair\<close>
-
-text \<open>\<open>doubling_maximiser_exists_gen\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>The packaged form: on a compact \<open>K\<close> the doubling produces a
-  maximising pair together with the penalty bound and the diagonal lower
-  bound already proved for it.\<close>
-
-subsection \<open>Discharging the remaining bare hypothesis of the penalty estimate\<close>
-
-text \<open>\<open>doubling_upper_bound_exists\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>Combining the two attainment results with the penalty estimate: on a
-  compact \<open>K\<close> with continuous data the doubling produces a maximising pair
-  whose penalty is bounded by an \<open>\<alpha>\<close>-independent constant, and whose two
-  components are within \<open>O(1/\<surd>\<alpha>)\<close> of each other.\<close>
-
-subsection \<open>Producing the local-max hypotheses from a jet\<close>
-
-text \<open>\<open>visc_subsol_scaled_uniform\<close> and \<open>supersol_jet\<close> take local max/min
-  statements for the jet test function as hypotheses; these are
-  exactly what \<open>superjet_local_max\<close> yields from an Alexandrov jet once the
-  test matrix is corrected by \<open>\<delta> I\<close>, since the \<open>(\<delta>/2)\<bar>k\<bar>\<^sup>2\<close> slack it
-  leaves is precisely the extra quadratic form contributed by \<open>\<delta> I\<close>.\<close>
-
-text \<open>\<open>quad_form_shift_identity\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-text \<open>\<open>quad_form_shift_identity_neg\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-text \<open>The mirror image for the supersolution side: a subjet of \<open>v\<close> at \<open>yh\<close>
-  gives the local-min statement, with correction \<open>- \<delta> I\<close>, following from
-  the same theorem applied to \<open>-v\<close>, whose jet data is \<open>(-p, -A)\<close>.\<close>
-
-subsection \<open>The jet hypothesis only ever needs one side\<close>
-
-text \<open>\<open>superjet_local_max_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubled_Functional_Jets}.\<close>
-
-text \<open>\<open>onesided_of_dominated\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-
-text \<open>\<open>jet_imp_local_min_test_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>Removing the jet correction\<close>
-
-text \<open>The \<open>\<delta>\<close> from \<open>superjet_local_max\<close> cannot cancel against
-  \<open>X \<preceq> Y\<close>: correcting to \<open>X + \<delta> I\<close>, \<open>Y - \<delta> I\<close> would need
-  \<open>Y - X \<succeq> 2\<delta> I\<close>, but the theorem on sums gives only \<open>Y - X \<succeq> 0\<close>, so
-  \<open>\<delta>\<close> is removed by a limit instead. Degenerate ellipticity gives
-  \<open>F(p, M + \<delta> I) \<le> F(p, M)\<close>, and since \<open>F\<^sub>*\<close> is the limit over points near
-  \<open>(p, M)\<close>, \<open>F(p, M + \<delta> I) \<le> 1\<close> for all \<open>\<delta>\<close> already gives
-  \<open>F\<^sub>*(p, M) \<le> 1\<close>.\<close>
-
-text \<open>The mirror statement for the upper envelope, needed by the
-  supersolution side: a lower bound at the shifted matrices \<open>M - \<delta> I\<close>
-  transfers to \<open>F\<^sup>*\<close> at \<open>M\<close>, for the dual reason.\<close>
-
-subsection \<open>Making the strictness survive the limit\<close>
-
-text \<open>The two shift theorems above are stated with bound \<open>1\<close>, enough for the
-  sandwich but not the contradiction: passing to the limit turns
-  \<open>F(p, X + \<delta> I) < 1\<close> into \<open>F\<^sub>*(p, X) \<le> 1\<close>, losing strictness. The fix:
-  the strictness from \<open>\<theta>\<close>-scaling is uniform,
-  \<open>F(\<theta> p, \<theta> X) = \<theta> F(p, X) \<le> \<theta>\<close> with \<open>\<theta> < 1\<close> independent of \<open>\<delta>\<close>, and a
-  uniform bound survives the limit, so the shift theorems are restated with
-  an arbitrary bound \<open>c\<close> in place of \<open>1\<close>.\<close>
-
-subsection \<open>The uniform strict bound, and the shifted families\<close>
-
-text \<open>A subsolution scaled by \<open>\<theta>\<close> satisfies \<open>F \<le> \<theta>\<close> at each of its test
-  points, which for \<open>\<theta> < 1\<close> is stronger than \<open>F < 1\<close>; this is the bound
-  that survives the \<open>\<delta> \<rightarrow> 0\<close> limit.\<close>
+text \<open>\<open>F\<close> has no zeroth-order term, so a subsolution cannot be made strict
+  by subtracting a constant.  If \<open>F\<close> is positively homogeneous in \<open>M\<close>
+  and invariant under positive dilations of \<open>p\<close> (the hypotheses \<open>hom\<close>
+  and \<open>dil\<close>, needed only at the gradient in question), then a test
+  function touching \<open>\<theta> u\<close> from above, for \<open>\<theta> \<in> (0, 1)\<close>, gives
+  \<open>F \<le> \<theta>\<close> at its jet.  The bound \<open>\<theta>\<close> does not depend on any later
+  perturbation, so it survives the limit that removes a jet correction
+  \<open>\<delta> I\<close>, where a bare strict inequality would turn into \<open>\<le> 1\<close>.\<close>
 
 theorem visc_subsol_scaled_uniform:
   fixes u :: "real^'n::finite \<Rightarrow> real" and H :: "real^'n^'n"
@@ -557,9 +364,15 @@ proof -
     unfolding c_def using t by (simp add: field_simps)
 qed
 
-text \<open>Symmetry of the corrected matrices, needed by the jet test function:
-  transposition is additive entrywise, so both directions of the correction
-  preserve symmetry.\<close>
+subsection \<open>The supersolution inequality at a one-sided subjet\<close>
+
+text \<open>If \<open>(p, Y)\<close> is a second-order subjet of \<open>w\<close> at \<open>yh\<close> in the
+  one-sided sense of the hypothesis \<open>ub\<close>, then for every \<open>\<delta> > 0\<close> the
+  quadratic with gradient \<open>p\<close> and Hessian \<open>Y - \<delta> I\<close> touches \<open>w\<close> from
+  below near \<open>yh\<close> (\<open>jet_imp_local_min_test_onesided\<close>), so the
+  supersolution inequality holds at \<open>(p, Y - \<delta> I)\<close>.  The correction
+  cannot be cancelled against the ordering \<open>X \<preceq> Y\<close> that the theorem on
+  sums provides, so it is removed by a limit instead.\<close>
 
 theorem supersol_shifted_bound_onesided:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"

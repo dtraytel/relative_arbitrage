@@ -1,4 +1,4 @@
-section \<open>The instantiation: Theorem 4.2(a) from the doubling data alone\<close>
+section \<open>The maximum principle\<close>
 
 (*<*)
 theory Maximum_Principle
@@ -7,18 +7,16 @@ begin
 
 (*>*)
 
-subsection \<open>Assembly 1 complete: the contradiction from the maximiser alone\<close>
+subsection \<open>The contradiction at a maximiser of the doubled functional\<close>
 
-text \<open>The completion: from a plain maximiser of the doubled sup-convolution
-  functional at \<open>\<xi>\<^sub>0\<close> - no strict gap - plus the gradient lower bound
-  there and the attainment balls, this derives \<open>False\<close>.  The strict gap
+text \<open>From a maximiser of the doubled sup-convolution functional at
+  \<open>\<xi>\<^sub>0\<close>, not necessarily strict, a lower bound on the penalty gradient
+  there and the attainment hypotheses, this derives \<open>False\<close>.  The strict gap
   is manufactured by the \<open>-\<delta>\<^sub>i\<parallel>z-\<xi>\<^sub>0\<parallel>\<^sup>2\<close> perturbation with
   \<open>\<delta>\<^sub>i=D\<^sub>0/(2+i) \<rightarrow> 0\<close> (\<open>shifted_jensen_family_gen\<close>).  The three \<open>O(\<delta>\<^sub>i)\<close>
   costs - gradient shift \<open>2\<delta>\<^sub>i(\<cdot>-\<xi>\<^sub>0)\<close>, Hessian shift \<open>\<plusminus>2\<delta>\<^sub>iI\<close> with
   ordering defect \<open>4\<delta>\<^sub>i\<close>, and Hessian norm shift \<open>2D\<^sub>0\<parallel>I\<parallel>\<close> - land
-  exactly where the generalised interfaces expect them.\<close>
-
-text \<open>\<open>block_fst_matrix_apply_gen\<close>, \<open>block_snd_matrix_apply_gen\<close>, \<open>transpose_matrix_block_fst_gen\<close>, \<open>transpose_matrix_block_snd_gen\<close>, \<open>diff_displacement_bound\<close>, \<open>penalty_gradient_nearby_upper_gen\<close>, \<open>penalty_gradient_nearby_bound_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
+  exactly where \<open>comparison_supconv_bounded_family\<close> expects them.\<close>
 
 text \<open>The penalty is not the quadratic \<open>(\<alpha>/2)(norm d)\<^sup>2\<close> but an arbitrary
   \<open>Pn\<close> that is \<open>\<kappa>\<close>-semiconcave with gradient field \<open>Gf\<close> and Hessian
@@ -513,7 +511,7 @@ qed
 
 end
 
-section \<open>Supersolutions are a local notion\<close>
+subsection \<open>Supersolutions are a local notion\<close>
 
 lemma supersol_jet_cong_on:
   fixes w w' :: "real^'n::finite \<Rightarrow> real" and G :: "real^'n \<Rightarrow> real^'n^'n \<Rightarrow> ereal"
@@ -526,13 +524,14 @@ proof (rule visc_supersol_gen_cong[OF s])
     using eventually_nhds_in_open[OF op that] by eventually_elim (simp add: eq)
 qed
 
-section \<open>The two branches of the contradiction\<close>
+subsection \<open>The two branches of the contradiction\<close>
 
-subsection \<open>Branch (A): the off-diagonal case, in the two-domain setting\<close>
+subsubsection \<open>The off-diagonal branch, in the two-domain setting\<close>
 
 text \<open>Off the diagonal, the \<open>x\<close>-side needs no boundary avoidance, only
   \<open>posb\<close> - the sup-convolution is positive on a \<open>\<rho>\<^sub>u\<close>-ball around
-  \<open>x^h\<close>, supplied by Definition 3.1's gate with no geometry needed.  The
+  \<open>x^h\<close>, supplied by the subsolution property on \<open>{q. 0 < u q}\<close> with no
+  geometry needed.  The
   \<open>y\<close>-side keeps its ball, paid for by \<open>K \<subseteq> K'\<^sup>\<circ>\<close>; the maximality
   hypothesis \<open>mxU\<close> ranges over \<open>UNIV \<times> K'\<close>, from
   \<open>doubled_maximiser_over_UNIV_snd\<close>.\<close>
@@ -646,7 +645,7 @@ proof -
        (use mxK atu atw glb rsmall in blast)+
 qed
 
-subsection \<open>Branch (B): the diagonal case closes too\<close>
+subsubsection \<open>The diagonal branch\<close>
 
 text \<open>The four steps chained: at a diagonal maximiser (interior, by the
   localisation), the maximiser inequality bounds the increment of
@@ -713,29 +712,24 @@ proof -
         [OF sup ysO ubw])
 qed
 
-subsection \<open>A nonempty compact set has a nonempty frontier\<close>
+subsection \<open>The maximum principle\<close>
 
-text \<open>\<open>compact_frontier_nonempty\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-section \<open>Theorem 4.2(a)\<close>
-
-text \<open>Theorem 4.2(a) of \<^cite>\<open>LaiShkolnikovSoner\<close>: on a compact \<open>K\<close>, if \<open>u\<close> is
+text \<open>On a compact \<open>K\<close>, if \<open>u\<close> is
   upper semicontinuous on \<open>K\<close> and a viscosity subsolution in the interior,
   and \<open>w\<close> is lower semicontinuous on \<open>K\<close> and a viscosity supersolution in
   the interior, then \<open>u - w\<close> attains its maximum over \<open>K\<close> on the
-  boundary.  Semicontinuity is relative to \<open>K\<close>, in the \<open>\<epsilon>\<close>-form.  The
-  bounds \<open>\<bar>u\<bar>, \<bar>w\<bar> \<le> B\<close> on \<open>K\<close> are explicit here; the paper's proof uses
-  \<open>\<parallel>u\<parallel>\<^sub>\<infinity>\<close> and \<open>\<parallel>w\<parallel>\<^sub>\<infinity>\<close> without saying so.
+  boundary.  Semicontinuity is relative to \<open>K\<close>, in the \<open>\<epsilon>\<close>-form, and
+  the bounds \<open>\<bar>u\<bar>, \<bar>w\<bar> \<le> B\<close> on \<open>K\<close> are explicit hypotheses.
 
   The proof argues by contradiction with a fixed \<open>\<theta> \<in> (0,1)\<close> that makes
   \<open>\<theta>u - w\<close> strictly smaller on the boundary than at an interior maximiser,
   and closes both branches with the sup-convolution and Jensen machinery of
-  the sections above.  In place of the paper's subsequential limit of the
+  the preceding theories.  Instead of a subsequential limit of the
   maximisers, a Lebesgue number covers the boundary by open sets on which
   \<open>\<theta>u(z\<^sub>1) - w(z\<^sub>2)\<close> stays below the interior maximum; this needs only
   semicontinuity.\<close>
 
-subsection \<open>The off-diagonal branch without continuity\<close>
+subsubsection \<open>The off-diagonal branch without continuity\<close>
 
 text \<open>The off-diagonal branch on \<open>K\<close> itself: the \<open>\<epsilon>\<close>-form upper
   semicontinuity of \<open>\<theta>u\<close> and \<open>-w\<close> is assumed directly, and the assembly
@@ -852,7 +846,7 @@ proof -
        (use mxK atu atw glb rsmall in blast)+
 qed
 
-subsection \<open>The theorem\<close>
+subsubsection \<open>The theorem and its corollaries\<close>
 
 theorem max_principle_usc_lsc:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
@@ -1220,7 +1214,7 @@ proof (rule ccontr)
   qed
 qed
 
-text \<open>Theorem 4.2(b): ordered boundary data stay ordered, since \<open>u - w\<close> peaks
+text \<open>Comparison: ordered boundary data stay ordered, since \<open>u - w\<close> peaks
   on the boundary.\<close>
 
 corollary max_principle_le:
@@ -1240,7 +1234,7 @@ proof -
   ultimately show "u y \<le> w y" using bd by fastforce
 qed
 
-text \<open>Proposition 4.1 (uniqueness): two solutions with the same boundary data
+text \<open>Uniqueness: two solutions with the same boundary data
   agree, by the comparison in both directions.  A solution is both usc and lsc
   relative to \<open>K\<close>.\<close>
 
@@ -1273,7 +1267,7 @@ end
 
 text \<open>Continuous data on compact \<open>K\<close> are bounded and semicontinuous relative
   to \<open>K\<close> in both directions, and the touching-on-\<open>K\<close> predicates pass to the
-  \<open>C\<^sup>2\<close> ones; so Theorem 4.2(a) and uniqueness hold for them.\<close>
+  \<open>C\<^sup>2\<close> ones; so the maximum principle and uniqueness hold for them.\<close>
 
 lemma continuous_on_rel_eps:
   fixes f :: "'a::metric_space \<Rightarrow> real"
@@ -1323,10 +1317,10 @@ proof -
       (use B visc_subsol_env_imp_env2[OF subE] visc_supersol_env_imp_env2[OF supE] in auto)
 qed
 
-section \<open>Uniqueness on a general compact set\<close>
+subsection \<open>Uniqueness on a general compact set\<close>
 
-text \<open>The first consequence of Theorem 4.2(a), for continuous solutions on
-  compact \<open>K\<close> agreeing on \<open>K - interior K\<close>: an instance of
+text \<open>Uniqueness for continuous solutions on a compact \<open>K\<close> agreeing on
+  \<open>K - interior K\<close>: an instance of
   @{thm [source] uniqueness_from_max_principle}.\<close>
 
 theorem viscosity_uniqueness_compact:
@@ -1354,10 +1348,12 @@ qed
 
 end
 
-section \<open>Map of the Theorem 4.2(a) chain\<close>
+subsection \<open>Map of the proof\<close>
 
-text \<open>This theory is long enough that the order of the argument is not
-  visible from the section headings; the chain in dependency order:
+text \<open>The proof of the maximum principle is spread over this theory, the
+  two before it and the doubling tools of \<open>Doubling_Of_Variables\<close>, so its
+  order is not visible from the section headings; the chain in dependency
+  order:
 
   1. The operator and its envelopes: \<open>env_strict_contradiction\<close>
   gives the closing contradiction off the origin.
@@ -1381,7 +1377,7 @@ text \<open>This theory is long enough that the order of the argument is not
   5. Assembly from bounds rather than limits:
   \<open>comparison_supconv_bounded_family\<close>, \<open>tilted_doubled_psd_ordering_gen\<close>.
 
-  6. The instantiation: \<open>max_principle_usc_lsc\<close> closes Theorem 4.2(a)
+  6. The theorem: \<open>max_principle_usc_lsc\<close> closes the argument
   for semicontinuous data, with \<open>comparison_soft_diagonal\<close> closing the
   diagonal branch, where \<open>p = 0\<close>; \<open>max_principle_boundary_holds\<close> is its
   continuous-data form.\<close>

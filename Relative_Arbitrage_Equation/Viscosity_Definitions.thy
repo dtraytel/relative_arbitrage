@@ -10,6 +10,11 @@ begin
 (*>*)
 
 
+text \<open>The operator of @{theory Relative_Arbitrage_Equation.Elliptic_Operator} as an
+  \<^typ>\<open>ereal\<close>-valued function of the pair \<open>(p, M)\<close>, its two
+  semicontinuous envelopes, and the viscosity notions for the equation
+  \<open>F(Du, D\<^sup>2u) = 1\<close> built from them.\<close>
+
 definition ell_op_pair ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) \<times> (real^'n^'n) \<Rightarrow> ereal"
   where
@@ -53,8 +58,8 @@ definition visc_sol ::
 
 text \<open>The paper's touching condition is global: \<open>(u - \<phi>)(x)\<close> is the maximum
   of \<open>u - \<phi>\<close> over all of \<open>K\<close> (resp. the minimum, for supersolutions).  The
-  test-function data \<open>(\<phi>, g, H)\<close> is the same as in
-  \<open>Elliptic_Operator\<close>, i.e. \<open>g\<close> is the gradient and \<open>H\<close> the Hessian.\<close>
+  test-function data \<open>(\<phi>, g, H)\<close> is that of \<^const>\<open>test_fun_at\<close>, i.e.
+  \<open>g\<close> is the gradient and \<open>H\<close> the Hessian.\<close>
 
 definition visc_subsol_env ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
@@ -81,7 +86,8 @@ definition visc_sol_env ::
   "visc_sol_env k L K \<Omega> u \<longleftrightarrow>
      visc_subsol_env k L K \<Omega> u \<and> visc_supersol_env k L K \<Omega> u"
 
-text \<open>Definition 3.1 itself, now with the paper's own test-function class.\<close>
+text \<open>Definition 3.1 itself, with the paper's own test-function class
+  \<^const>\<open>test_fun_C2\<close>.\<close>
 
 definition visc_subsol_env2 ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set
@@ -122,7 +128,7 @@ definition supersol_jet ::
         (\<exists>e>0. \<forall>y \<in> ball x e. w x - \<phi> x \<le> w y - \<phi> y) \<longrightarrow>
         1 \<le> ell_op_usc k L (g x) H)"
 
-section \<open>The bridge to the generic predicates\<close>
+subsection \<open>The bridge to the generic predicates\<close>
 
 text \<open>Every predicate above is an instance of the two generic predicates of
   @{theory Second_Order_Viscosity_Analysis.Viscosity_Solutions}: the test class is

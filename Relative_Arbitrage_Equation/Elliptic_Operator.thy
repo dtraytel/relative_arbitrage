@@ -1,3 +1,4 @@
+section \<open>The elliptic operator of Eq. (1.9)\<close>
 
 (*<*)
 theory Elliptic_Operator
@@ -8,27 +9,23 @@ begin
 (*>*)
 
 text \<open>
-  Formalizes the deterministic core of J.-H. Lai, M. Shkolnikov and
-  H. M. Soner, Relative arbitrage problem under eigenvalue lower bounds
-  (\<^cite>\<open>LaiShkolnikovSoner\<close>): the operator \<open>F\<close> of Eq. (1.9),
+  The operator \<open>F\<close> of Eq. (1.9) of Lai, Shkolnikov and Soner
+  \<^cite>\<open>LaiShkolnikovSoner\<close>,
 
     \<open>F(p, M) = Inf {- trace (M ** a) / 2 | a. psd a \<and> a *v p = 0
        \<and> eigen_lb a (n - k) \<and> eigen_ub a L}\<close>,
 
-  with the spectral conditions expressed through their Courant-Fischer
+  with the spectral conditions expressed through their Courant--Fischer
   variational characterizations \<open>eigen_lb\<close> and \<open>eigen_ub\<close> rather than
-  ordered eigenvalues. It proves the trace lower bound
-  \<open>trace a \<ge> n - k\<close> for feasible \<open>a\<close> and its attainment by
-  rank-\<open>(n - k)\<close> orthogonal projections, the fact behind Example 3.1,
-  together with the spectral theorem for real symmetric matrices and the
-  degenerate ellipticity of \<open>F\<close>. It also gives viscosity sub- and
-  supersolutions of \<open>F(Du, D\<^sup>2u) = 1\<close> in the Crandall-Ishii-Lions
-  test-function formulation, and shows that the explicit solution of
-  Example 3.1 (Eq. 3.9) is a viscosity solution on the open ball with
-  zero boundary values.\<close>
+  ordered eigenvalues, and the facts that need no more than its
+  definition: \<open>F\<close> reads only the symmetric part of \<open>M\<close>, the feasible set
+  contains the rank-\<open>(n - k)\<close> orthogonal projections onto subspaces of
+  \<open>p\<^sup>\<bottom>\<close> and is bounded, so that \<open>F\<close> is a real infimum, and \<open>F\<close> is
+  degenerate elliptic.\<close>
+
 unbundle inner_syntax
 
-section \<open>The constraint set and the elliptic operator of Eq. (1.9)\<close>
+subsection \<open>The constraint set and the operator\<close>
 
 text \<open>
   Positive semidefinite symmetric matrices; the spectral constraints of
@@ -36,8 +33,6 @@ text \<open>
   characterizations, which for symmetric matrices are equivalent to
   \<open>\<lambda>\<^sub>(\<^sub>m\<^sub>)(a) \<ge> 1\<close> and \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(a) \<le> L\<close>, respectively.
 \<close>
-
-text \<open>\<open>psd\<close> lives in @{theory Symmetric_Matrix_Spectra.Symmetric_Spectral}.\<close>
 
 definition eigen_lb :: "real^'n^'n \<Rightarrow> nat \<Rightarrow> bool" where
   "eigen_lb a m \<longleftrightarrow> (\<exists>S. subspace S \<and> m \<le> dim S \<and> (\<forall>x\<in>S. x \<bullet> x \<le> x \<bullet> (a *v x)))"
@@ -191,20 +186,14 @@ proof -
     by (intro that[of "\<Sum>u\<in>T. outer_prod u u"]) (auto simp: feasible_def)
 qed
 
-subsection \<open>The candidate value function and its derivatives\<close>
+subsection \<open>The candidate solution of Example 3.1\<close>
+
+text \<open>\<open>v(x) = max (r\<^sup>2 - |x|\<^sup>2) 0 / (n - k)\<close> on the ball of radius \<open>r\<close>.\<close>
 
 definition ball_v :: "real \<Rightarrow> nat \<Rightarrow> real^'n \<Rightarrow> real" where
   "ball_v r k x = max (r\<^sup>2 - x \<bullet> x) 0 / real (CARD('n) - k)"
 
-text \<open>
-  Example 3.1: at every interior point of the ball --- including the centre,
-  where the gradient vanishes --- the gradient and Hessian of \<open>v\<close> satisfy the
-  PDE \<open>F(\<nabla>v, \<nabla>\<^sup>2 v) = 1\<close> of Theorem 1.1.  At \<open>p = 0\<close> the constraint \<open>a p = 0\<close>
-  of Eq. (1.9) is vacuous, so the feasible set is larger, but the value of the
-  infimum is unchanged: the trace bound \<open>tr a \<ge> n - k\<close> holds for every
-  feasible \<open>a\<close> and is attained by a rank-\<open>(n-k)\<close> projection, which is feasible
-  for \<open>p = 0\<close> as well.
-\<close>
+subsection \<open>Degenerate ellipticity\<close>
 
 text \<open>
   Degenerate ellipticity of the operator \<open>F\<close> of Eq. (1.9): increasing the
@@ -224,15 +213,6 @@ proof -
   ultimately show ?thesis
     by simp
 qed
-
-section \<open>Viscosity solutions of \<open>F(Du, D\<^sup>2u) = 1\<close> (Theorem 1.1, PDE side)\<close>
-
-text \<open>
-  The standard Crandall--Ishii--Lions test-function definitions for the
-  equation \<open>F(Du, D\<^sup>2u) = 1\<close>.  A test function at \<open>x\<close> is represented by its
-  gradient field \<open>g\<close> on a neighbourhood of \<open>x\<close> and its (symmetric) Hessian
-  matrix \<open>H\<close> at \<open>x\<close>.
-\<close>
 
 subsection \<open>Bounds on the feasible set\<close>
 
@@ -294,16 +274,6 @@ proof -
     unfolding ell_op_def using cInf_less_iff[OF ne ell_op_bdd_below] by blast
   then show ?thesis using that by blast
 qed
-
-subsection \<open>Test functions and viscosity sub-/supersolutions\<close>
-
-text \<open>\<open>test_fun_at\<close>, \<open>visc_subsol\<close>, \<open>visc_supersol\<close>, \<open>visc_sol\<close> live in \<open>Viscosity_Definitions\<close>.\<close>
-
-
-subsection \<open>First- and second-order conditions at interior minima\<close>
-
-text \<open>\<open>local_min_gradient_zero\<close>, \<open>local_min_hessian_psd\<close> live in \<open>Sup_Convolution\<close>.\<close>
-
 
 (*<*)
 end

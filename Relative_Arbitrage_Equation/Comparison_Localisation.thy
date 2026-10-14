@@ -1,4 +1,4 @@
-section \<open>Penalties, sup-convolutions and the localised maximiser\<close>
+section \<open>Sup-convolution jets and the contradiction in the limit\<close>
 
 (*<*)
 theory Comparison_Localisation
@@ -8,46 +8,24 @@ begin
 (*>*)
 
 
-text \<open>The doubling machinery as this proof consumes it: the penalty's
-  jet, the sup-convolution chain that removes the jet correction, Jensen's
-  tilt, the attainment of the sup-convolution, and the parameter threading
-  that puts the doubled maximiser away from the boundary.\<close>
+text \<open>The comparison argument doubles the variables in the
+  sup-convolutions of the scaled subsolution and of the negated
+  supersolution, which are semiconvex, and Jensen's lemma supplies
+  second-order jets at the maximisers of the doubled functional (the
+  doubling and penalty tools are in
+  @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}).  This
+  theory turns those jets into operator inequalities for the original
+  functions and shows that the inequalities contradict each other in the
+  limit.\<close>
 
-subsection \<open>The quartic penalty and its exact second-order expansion\<close>
+subsection \<open>The supersolution has no vanishing one-sided subjet\<close>
 
-text \<open>\<open>quartic_pen\<close> lives in @{theory Second_Order_Viscosity_Analysis.Soft_Penalty}.\<close>
-
-text \<open>The jet itself, in the shape the slice lemmas consume: gradient
-  \<open>\<beta>(d \<bullet> d) d\<close>, quadratic form \<open>h \<mapsto> \<beta>(d \<bullet> d)(h \<bullet> h) + 2\<beta>(d \<bullet> h)\<^sup>2\<close>.
-  Exact, holding at every \<open>d\<close> with no smallness hypothesis.\<close>
-
-text \<open>At \<open>d = 0\<close> both gradient and quadratic form vanish, so the quartic
-  penalty has second-order jet \<open>(0, 0)\<close> there; feeding this to
-  \<open>supersol_no_vanishing_jet_onesided\<close> gives the paper's \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.\<close>
-
-subsection \<open>The doubled penalty's jet, for an arbitrary penalty\<close>
-
-text \<open>Below \<open>sums_matrix_inequality\<close> the \<open>psd\<close> chain is abstract in the two
-  block maps; \<open>sums_matrix_inequality\<close> itself uses an exact identity for
-  the quadratic penalty, which for general \<open>P\<close> is only asymptotic, and this
-  lemma supplies it. Writing \<open>e k = fst k - snd k\<close>, the doubled penalty
-  \<open>z \<mapsto> P (fst z - snd z)\<close> has gradient \<open>(G, -G)\<close> and Hessian
-  \<open>k \<mapsto> (Z (e k), -Z (e k))\<close> at \<open>z'\<close>, with numerator collapsing to
-  \<open>R (e k)\<close>. Although \<open>e\<close> is not injective near \<open>0\<close>, the limit survives
-  because \<open>e\<close> is 2-Lipschitz and kills only the diagonal, where \<open>R 0 = 0\<close>.\<close>
-
-text \<open>\<open>doubled_penalty_jet\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>Semiconvexity of the doubled functional, for a general penalty\<close>
-
-text \<open>\<open>convex_on_prod_diff\<close>, \<open>convex_on_proj_sum\<close>, \<open>semiconvex_penalty_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>A concrete penalty: semiconcave, with a vanishing 2-jet at the origin\<close>
-
-text \<open>\<open>soft_pen\<close> lives in @{theory Second_Order_Viscosity_Analysis.Soft_Penalty}.\<close>
-
-text \<open>\<open>convex_on_norm_lift\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
+text \<open>A supersolution for \<open>F\<^sup>*\<close> has no one-sided second-order subjet
+  \<open>(0, 0)\<close> at a point of \<open>\<Omega>\<close>: the supersolution inequality at the
+  shifted matrix \<open>- \<delta> I\<close> (\<open>supersol_shifted_bound_onesided\<close>)
+  contradicts the locale's \<open>usc_small_shift\<close>.  This rules out a doubled
+  maximum on the diagonal for a penalty whose 2-jet vanishes at the
+  origin, such as the quartic one.\<close>
 
 context geometric_operator
 begin
@@ -83,35 +61,10 @@ proof -
 
 qed
 
-subsection \<open>Wiring the theorem on sums to the ordering hypothesis\<close>
-
-text \<open>\<open>sums_gives_ordering_gen\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>With linearity and symmetry of the two blocks, supplied by the
-  Alexandrov jet's bounded linear and symmetric Hessian, the ordering
-  becomes a \<open>psd\<close> ordering of the two block matrices.\<close>
-
-subsection \<open>Deriving the component jets from the doubled jet\<close>
-
-text \<open>\<open>penalty_difference_identity\<close>, \<open>filterlim_slice_fst\<close>, \<open>filterlim_slice_snd\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>The norm of a slice vector is the norm of its nonzero component,
-  which keeps the quotient in the jet transfer unchanged.\<close>
-
-text \<open>\<open>doubled_slice_numerator_fst\<close>, \<open>doubled_jet_slice_fst\<close>, \<open>doubled_jet_slice_fst_gen\<close>, \<open>penalty_difference_identity_snd\<close>, \<open>doubled_slice_numerator_snd\<close>, \<open>doubled_jet_slice_snd\<close>, \<open>doubled_jet_slice_snd_gen\<close>, \<open>doubled_jet_slices_at_max\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>Matching the block Hessians against their matrices\<close>
-
-text \<open>The slice jets carry their Hessians as functions
-  \<open>h \<mapsto> fst (W (h,0)) + \<alpha> h\<close> and \<open>h \<mapsto> snd (W (0,h)) + \<alpha> h\<close>, while the
-  viscosity machinery wants matrices. \<open>matrix_works\<close> bridges them, but
-  is stated for \<open>Vector_Spaces.linear\<close>, so real-vector-space \<open>linear\<close>
-  must be routed through \<open>linear_matrix_vector_mul_eq\<close> first.\<close>
-
-subsection \<open>The subsolution bound straight from a sup-convolution jet\<close>
+subsection \<open>Operator bounds from sup-convolution jets\<close>
 
 text \<open>The comparison argument's doubled functional is built from the
-  sup-convolutions of \<open>u\<close> and \<open>w\<close>, since those are what is semiconvex
+  sup-convolutions of \<open>\<theta> u\<close> and \<open>- w\<close>, since those are what is semiconvex
   and what Jensen's lemma applies to; the jet produced at the doubled
   maximum is thus a jet of \<open>supconv (\<theta> u) \<epsilon>\<close>, not of \<open>\<theta> u\<close>. This
   theorem closes that gap: the \<open>\<delta>\<close>-corrected quadratic bound for the
@@ -174,8 +127,9 @@ qed
 
 end
 
-text \<open>\<open>neg_shift_matrix_apply\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
+text \<open>The supersolution side, for any operator \<open>G\<close>: a jet of the
+  sup-convolution of \<open>- w\<close> at \<open>x\<close> gives the supersolution inequality at
+  the attaining point, with the matrix corrected to \<open>Y - \<delta> I\<close>.\<close>
 
 theorem supersol_shifted_bound_supconv:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
@@ -251,6 +205,9 @@ proof -
   thus ?thesis unfolding g .
 qed
 
+text \<open>For \<open>G = F\<^sup>*\<close> and \<open>p \<noteq> 0\<close> the envelope is \<open>F\<close> itself
+  (\<open>usc_off_zero\<close>).\<close>
+
 context geometric_operator
 begin
 
@@ -272,24 +229,15 @@ proof -
     using usc_off_zero[OF transpose_shift_diff[OF Ys] p0] by simp
 qed
 
-subsection \<open>Absorbing Jensen's tilt: the general nearby-point form\<close>
+subsection \<open>The contradiction from bounds at nearby points\<close>
 
-text \<open>The tilt perturbs the gradient as well as the matrix, unlike the
-  earlier shift theorems, which move only the matrix by \<open>\<delta> I\<close>; Jensen's
-  tilt moves the gradient by an amount \<open>\<le> dd\<close> that is at our disposal
-  but not zero. The right statement is the general one: a bound holding
-  at points arbitrarily close to \<open>(p, M)\<close>, however produced, passes to
-  the lower envelope -- exactly the content of \<open>F\<^sub>*\<close>, subsuming both
-  the \<open>\<delta> I\<close> shifts and the tilt, with the nearby point allowed to
-  depend on the radius so that \<open>dd\<close> can be chosen after it: that is
-  @{thm [source] op_lsc_le_of_nearby} and @{thm [source] op_usc_ge_of_nearby}
-  of @{theory Relative_Arbitrage_Equation.Geometric_Operator}.\<close>
-
-text \<open>The closing contradiction in that generality. Its hypotheses do not
-  name the \<open>\<delta> I\<close> shifts, only that suitable bounds hold arbitrarily near
-  \<open>(p, X)\<close> and \<open>(p, Y)\<close> -- the form the tilt-absorption argument needs,
-  since there the nearby points are produced by re-running Jensen with a
-  smaller \<open>dd\<close> rather than by a fixed algebraic shift.\<close>
+text \<open>Jensen's lemma perturbs the gradient as well as the matrix, so the
+  operator bounds arrive at points near \<open>(p, X)\<close> and \<open>(p, Y)\<close>, not at
+  them.  Bounds holding arbitrarily close to a point pass to the envelopes
+  there (@{thm [source] op_lsc_le_of_nearby},
+  @{thm [source] op_usc_ge_of_nearby}), and off \<open>p = 0\<close> the envelopes are
+  \<open>F\<close>; so a strict bound \<open>c < 1\<close> near \<open>(p, X)\<close> and the bound \<open>1\<close> near
+  \<open>(p, Y)\<close> contradict degenerate ellipticity when \<open>X \<preceq> Y\<close>.\<close>
 
 theorem env_strict_contradiction_of_nearby:
   fixes X Y :: "real^'n::finite^'n" and p :: "real^'n"
@@ -318,40 +266,12 @@ qed
 
 end
 
-subsection \<open>The quantitative input the tilt argument needs\<close>
+subsection \<open>Scaling preserves a strict gap\<close>
 
-text \<open>The nearby-point hypothesis is discharged once the perturbed data
-  approaches \<open>(p, M)\<close> at a controlled rate in the tilt parameter; this
-  lemma isolates and discharges exactly that, reducing the remaining
-  work to one estimate: the maximiser and its jet move at most linearly
-  in \<open>dd\<close>. No convergence of the jets themselves is needed, only
-  \<open>dist ((P dd, Mf dd)) (p, M) \<le> \<kappa> dd\<close> for arbitrary \<open>\<kappa>\<close>, since the
-  radius is chosen after it.\<close>
-
-text \<open>Theorem 4.2(a) reduces to one quantitative hypothesis per side: the
-  perturbed gradient/matrix pair at tilt \<open>dd\<close> lies within \<open>\<kappa> dd\<close> of the
-  limiting pair; the envelopes, strictness, ordering and off-diagonal
-  condition are already established.\<close>
-
-subsection \<open>A tilt that needs no limit at all\<close>
-
-text \<open>\<open>gradient_is_minus_tilt\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>If the tilt is antisymmetric, \<open>p = (p\<^sub>0,-p\<^sub>0)\<close>, the two block gradients
-  are exact negatives of each other, an alignment that needs no limit and
-  no rate estimate on the tilt.  This route needs Jensen's lemma to
-  deliver such an antisymmetric tilt.\<close>
-
-subsection \<open>The Hessians at the doubled maximum are two-sidedly bounded\<close>
-
-text \<open>Route (i) needs the perturbed Hessians bounded as the tilt shrinks.
-  \<open>convex_alexandrov\<close> (@{theory Second_Order_Viscosity_Analysis.Alexandrov}) supplies a Hessian \<open>B\<close> with
-  \<open>0 \<le> k \<bullet> Bk\<close>; combined with \<open>k \<bullet> Wk \<le> 0\<close> from
-  \<open>second_order_interior_max\<close>, this pins the Hessian \<open>W = B - cI\<close> at a
-  maximum of a semiconvex function between \<open>-c\<close> and \<open>0\<close>.
-  \<open>semiconvex_alexandrov_bounded\<close> carries this two-sided bound, and
-  \<open>norm_matrix_le_of_form_bound\<close> turns it into a matrix-norm bound.\<close>
-
+text \<open>If \<open>\<bar>u\<bar> \<le> B\<close> on \<open>K\<close> and \<open>u - w\<close> exceeds its values on \<open>S \<subseteq> K\<close> by
+  more than \<open>(1 - \<theta>) 2B\<close> at a point of \<open>K\<close>, then \<open>\<theta> u - w\<close> still
+  separates that point strictly from \<open>S\<close>: the strict subsolution
+  \<open>\<theta> u\<close> inherits the gap of \<open>u - w\<close>.\<close>
 
 lemma theta_gap_preserved:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
@@ -384,22 +304,14 @@ proof -
     unfolding ey ex using dexp neg by linarith
 qed
 
-subsection \<open>Symmetry and the ordering pass to the limit\<close>subsection \<open>Symmetry and the ordering pass to the limit\<close>
+subsection \<open>The contradiction along a sequence of jets\<close>
 
-text \<open>\<open>transpose_limit\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-subsection \<open>The gradient alignment along the family\<close>
-
-text \<open>\<open>tendsto_of_norm_bound\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>The diagonal step: two limits at once\<close>
-
-text \<open>\<open>nearby_of_convergent_shifted\<close>, \<open>nearby_of_convergent_shifted_neg\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>The contradiction with both limits taken together: bounds at the
-  \<open>\<delta>\<close>-corrected matrices along a sequence of tilts is exactly what the
-  doubling reaches.\<close>
+text \<open>The form in which the doubling delivers the bounds: along sequences
+  \<open>X\<^sub>i \<longlonglongrightarrow> X\<^sub>0\<close>, \<open>Y\<^sub>i \<longlonglongrightarrow> Y\<^sub>0\<close> with gradients converging to
+  \<open>p \<noteq> 0\<close>, a bound \<open>F \<le> c < 1\<close> at \<open>X\<^sub>i + \<delta> I\<close> and a bound
+  \<open>F \<ge> 1\<close> at \<open>Y\<^sub>i - \<delta> I\<close> for all small \<open>\<delta> > 0\<close> contradict
+  \<open>X\<^sub>0 \<preceq> Y\<^sub>0\<close>.  No rate and no relation between \<open>i\<close> and \<open>\<delta>\<close> is
+  assumed.\<close>
 
 context geometric_operator
 begin
@@ -446,7 +358,7 @@ proof -
     by (rule env_strict_contradiction_of_nearby[OF p0 sX0 sY0 pnz c1 subs sups])
 qed
 
-subsection \<open>Theorem 4.2(a) from a sequence of sup-convolution jets\<close>
+subsection \<open>The contradiction from a sequence of sup-convolution jets\<close>
 
 text \<open>Each index \<open>i\<close> of the Jensen application supplies a maximiser, its jet,
   and the sup-convolution attainment point.  The per-index operator bounds
@@ -527,12 +439,6 @@ qed
 
 end
 
-subsection \<open>The shrinking tilt is always available\<close>
-
-text \<open>\<open>tilt_sequence_pos\<close>, \<open>tilt_sequence_lt\<close>, \<open>tilt_sequence_tendsto\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>\<open>shifted_family_parameters\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
 subsection \<open>The sup-convolution is attained\<close>
 
 text \<open>\<open>comparison_supconv_sequence_complete\<close> takes attainment of each
@@ -541,12 +447,6 @@ text \<open>\<open>comparison_supconv_sequence_complete\<close> takes attainment
   they exist by @{thm [source] supconv_attained_usc}, and every one of them
   lies within \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))\<close> of \<open>x\<close>
   (@{thm [source] supconv_attain_radius}).\<close>
-
-text \<open>Far from \<open>K\<close> the extended function's sup-convolution returns to the
-  constant, since the whole competing ball misses \<open>K\<close>: this confines the
-  doubling maximiser to a bounded neighbourhood of \<open>K\<close> without boundary
-  avoidance on the \<open>x\<close>-side.\<close>
-
 
 lemma supconv_attained_usc_ball:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -613,25 +513,6 @@ proof -
   then show ?thesis by (rule choice)
 qed
 
-text \<open>\<open>doubled_maximiser_over_UNIV_snd\<close>, \<open>mxK_of_UNIV_snd\<close>, \<open>cont_pos_near\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-
-subsection \<open>Locating the doubling maximiser away from the boundary\<close>
-
-text \<open>\<open>uniform_modulus_on_compact\<close>, \<open>doubling_maximiser_far_from_boundary\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>The two penalty-carrying localisation helpers, generalised\<close>
-
-text \<open>\<open>doubling_maximiser_value_transfer_gen\<close>, \<open>norm_lt_of_penalty_bound_gen\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-subsection \<open>\<open>soft_pen\<close> vanishes on the diagonal and is coercive\<close>
-
-text \<open>Both facts reduce to the radial profile
-  \<open>h s = \<kappa>(s/2-(sqrt(s+1)-1))\<close> at \<open>s = norm d\<^sup>2\<close>: \<open>h 0 = 0\<close> is immediate,
-  and monotonicity follows the difference-of-squares trick of
-  \<open>soft_R_lipschitz\<close>.\<close>
-
-
 subsection \<open>The sup-convolution converges to its function uniformly on compacts\<close>
 
 text \<open>For bounded continuous \<open>u\<close>: above \<open>u\<close> always (@{thm [source] supconv_ge}),
@@ -683,17 +564,15 @@ proof (intro allI impI)
   qed
 qed
 
-subsection \<open>Skolemising a four-component existential over an index\<close>
+subsection \<open>The contradiction from bounded jets\<close>
 
-text \<open>\<open>choice4\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-text \<open>The shifted analogue, \<open>shifted_jensen_family_gen\<close> in
-  \<open>Doubling_Of_Variables\<close>, runs Jensen at the perturbation \<open>\<delta>\<^sub>i\<close> and tilt
-  \<open>dd\<^sub>i\<close> of \<open>shifted_family_parameters\<close> and skolemises.  Both hypotheses
-  Jensen needs are automatic, from \<open>shifted_annulus_bound_split_gen\<close> and the
-  smallness condition \<open>2 dd\<^sub>i r < \<delta>\<^sub>i\<rho>\<^sup>2\<close>; only the maximiser property
-  over \<open>cball \<xi>\<^sub>0 r\<close> is assumed.\<close>
-
+text \<open>The hypotheses as the doubling produces them, with no convergence
+  assumed: the Hessians \<open>X\<^sub>i\<close>, \<open>Y\<^sub>i\<close> bounded, \<open>Y\<^sub>i - X\<^sub>i\<close> positive
+  semidefinite up to \<open>c\<^sub>i I\<close> with \<open>c\<^sub>i \<longlonglongrightarrow> 0\<close>, and both gradients
+  approaching a bounded sequence \<open>G\<^sub>i\<close> with \<open>c \<le> norm G\<^sub>i\<close>.  A
+  subsequence along which everything converges has a nonzero limit
+  gradient, and \<open>comparison_supconv_sequence_complete\<close>
+  applies to it.\<close>
 
 context geometric_operator
 begin

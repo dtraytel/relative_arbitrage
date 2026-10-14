@@ -185,7 +185,8 @@ next
   finally show "?B \<le> ?A" .
 qed
 
-text \<open>The two invariances of \<open>F\<close> that Theorem 4.3 transports to \<open>F\<^sup>*\<close>:
+text \<open>The two invariances of \<open>F\<close> that pass to \<open>F\<^sup>*\<close>, as the comparison on
+  expandable sets needs them:
   positive dilations of the gradient and rotations.\<close>
 
 lemma op_usc_dilation:

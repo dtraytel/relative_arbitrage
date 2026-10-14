@@ -1,3 +1,4 @@
+section \<open>Lemma 2.1: the convexified constraint set\<close>
 
 (*<*)
 theory Constraint_Set_Convexity
@@ -7,24 +8,23 @@ begin
 (*>*)
 
 text \<open>
-  Proves Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>, the convexification of the
+  Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>, the convexification of the
   eigenvalue constraint. The operator \<open>Pi_m\<close> of Eq. (2.1) is formalized as
-  \<open>Pi_proj\<close>, and the theory establishes both inclusions
+  \<open>Pi_proj\<close>, and the theory proves
 
-    \<open>conv B\<^sub>k \<subseteq> A\<^sub>k\<close>   and   \<open>A\<^sub>k \<subseteq> closure (conv B\<^sub>k)\<close>,
+    \<open>conv B\<^sub>k = A\<^sub>k\<close>,
 
   where \<open>B\<^sub>k = {a. psd a \<and> eigen_lb a (n - k)}\<close> is the unconvexified
   sufficient-volatility set and \<open>A\<^sub>k = {a. psd a \<and> (\<forall>m \<in> {k+1..n}.
-  Pi_m a \<ge> m - k)}\<close>. The first inclusion rests on the Grassmann dimension
-  formula and basis-independent subspace traces; the second on hyperplane
-  separation from the closed convex hull together with an Abel-summation
-  estimate along the sorted eigen-frame. Together they identify \<open>A\<^sub>k\<close> as
-  the closed convex hull of \<open>B\<^sub>k\<close>, the form in which the paper applies
-  Lemma 2.1.  The last part removes the closure: \<open>A\<^sub>k = conv B\<^sub>k\<close>
-  (\<open>lemma_2_1_exact\<close>).\<close>
+  Pi_m a \<ge> m - k)}\<close>.  The inclusion \<open>conv B\<^sub>k \<subseteq> A\<^sub>k\<close>
+  (\<open>lemma_2_1_easy\<close>) rests on the Grassmann dimension formula and
+  basis-independent subspace traces; the reverse inclusion
+  (\<open>lemma_2_1_exact\<close>) on a capped trace bound and a hypersimplex
+  decomposition, and needs no closure.\<close>
+
 unbundle inner_syntax
 
-section \<open>The operator \<open>\<Pi>\<^sub>m\<close> of Eq. (2.1)\<close>
+subsection \<open>The operator \<open>\<Pi>\<^sub>m\<close> of Eq. (2.1)\<close>
 
 text \<open>\<open>Pi_proj\<close> is the dual of \<open>kyfan\<close> from
   @{theory Symmetric_Matrix_Spectra.Ky_Fan}: the sum of the \<open>m\<close> SMALLEST
@@ -33,8 +33,6 @@ text \<open>\<open>Pi_proj\<close> is the dual of \<open>kyfan\<close> from
 
 definition Pi_proj :: "real^'n^'n \<Rightarrow> nat \<Rightarrow> real" where
   "Pi_proj a m = Inf {trace (a ** P) | P. is_proj P \<and> trace P = real m}"
-
-text \<open>\<open>trace_proj_psd_nonneg\<close> lives in @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
 
 lemma Pi_proj_bdd_below:
   assumes a: "psd a"
@@ -57,7 +55,7 @@ proof (rule cInf_greatest)
     using proj_with_trace_exists[OF m] by force
 qed (use le in auto)
 
-section \<open>The easy inclusion of Lemma 2.1: \<open>conv B\<^sub>k \<subseteq> A\<^sub>k\<close>\<close>
+subsection \<open>The easy inclusion: \<open>conv B\<^sub>k \<subseteq> A\<^sub>k\<close>\<close>
 
 text \<open>The generator set \<open>B\<^sub>k = {a \<in> \<S>\<^sub>+ : \<lambda>\<^bsub>(n-k)\<^esub>(a) \<ge> 1}\<close> of Eq. (1.4)
   and the convexified set \<open>A\<^sub>k\<close> of Eq. (1.5)/(2.1).\<close>
@@ -193,16 +191,11 @@ theorem lemma_2_1_easy:
   by (intro hull_minimal suff_volatile_subset_Pi_constraint
       Pi_constraint_convex)
 
-section \<open>The hard inclusion of Lemma 2.1: \<open>A\<^sub>k \<subseteq> closure (conv B\<^sub>k)\<close>\<close>
-
-text \<open>Hyperplane separation from the closed convex hull, symmetrization of
-  the separating functional, its eigen-decomposition (by the spectral
-  theorem), and an Abel-summation estimate against the \<open>\<Pi>\<^sub>m\<close>-constraints
-  yield the reverse inclusion.  No von Neumann trace inequality is needed:
-  the sorted eigen-frame of the separating functional provides the
-  extremal projections directly.\<close>
-
 subsection \<open>Generators\<close>
+
+text \<open>Rank-\<open>(n - k)\<close> orthogonal projections are generators, and adding a
+  nonnegative multiple of a rank-one projection to a generator gives a
+  generator.\<close>
 
 lemma onormal_sum_suff_volatile:
   fixes T :: "(real^'n) set"
@@ -253,25 +246,17 @@ proof -
     using psd' lb' by (simp add: suff_volatile_def)
 qed
 
-text \<open>Lemma 2.1 in full: together with \<open>lemma_2_1_easy\<close>, the convexified
-  constraint set \<open>A\<^sub>k\<close> is wedged between the convex hull of the generator
-  set and its closure:
-  \<open>conv B\<^sub>k \<subseteq> A\<^sub>k \<subseteq> closure (conv B\<^sub>k)\<close>, so \<open>A\<^sub>k\<close> is the closed convex hull
-  of \<open>B\<^sub>k\<close> (the form in which the paper uses the lemma).\<close>
+subsection \<open>The reverse inclusion: \<open>A\<^sub>k \<subseteq> conv B\<^sub>k\<close>\<close>
 
-section \<open>Lemma 2.1 in its exact form\<close>
-
-text \<open>Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> in its exact form, with
-  the convex hull itself rather than its closure.  Building on
-  \<open>A\<^sub>k \<subseteq> closure (conv B\<^sub>k)\<close> above, it
-  establishes equality with \<open>conv B\<^sub>k\<close> in three steps: a capped trace
+text \<open>The reverse inclusion of Lemma 2.1, with the convex hull itself
+  rather than its closure, in three steps: a capped trace
   bound \<open>(\<Sum>u. min (lambda\<^sub>u, 1)) \<ge> n - k\<close> for \<open>a \<in> A\<^sub>k\<close> with eigenbasis
   values \<open>lambda\<^sub>u\<close>; a hypersimplex decomposition of any combination
   \<open>\<Sum>u c\<^sub>u (u u\<^sup>T)\<close> with coefficients in \<open>[0,1]\<close> summing to \<open>n - k\<close> into
   elements of \<open>conv B\<^sub>k\<close>; and an assembly step that caps the eigenvalues
   at \<open>1\<close>, rescales, decomposes, and adds back the nonnegative remainder.\<close>
 
-subsection \<open>The hypersimplex decomposition\<close>
+subsubsection \<open>The hypersimplex decomposition\<close>
 
 text \<open>Base case of the swap induction: if every coefficient is already \<open>0\<close>
   or \<open>1\<close>, the combination is the spectral projection onto the coefficient-\<open>1\<close>
@@ -366,8 +351,6 @@ proof -
     using ij key[of "c u" 1] key[of "c u" "- 1"] key[of "c u" 0]
     by (cases "u = i"; cases "u = j") (simp_all add: shift_other)
 qed
-
-text \<open>\<open>two_fractional\<close> lives in @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
 
 text \<open>The swap induction.  The measure is the number of coefficients that are
   not yet \<open>0\<close> or \<open>1\<close>; each swap makes at least one of the two chosen
@@ -616,7 +599,7 @@ proof (rule diag_in_convex_hull_aux
     by (rule csum)
 qed
 
-subsection \<open>The capped trace bound\<close>
+subsubsection \<open>The capped trace bound\<close>
 
 lemma Pi_constraint_capped_trace:
   fixes a :: "real^'n::finite^'n"
@@ -693,7 +676,7 @@ proof -
   qed
 qed
 
-subsection \<open>The exact inclusion\<close>
+subsubsection \<open>The exact inclusion\<close>
 
 text \<open>\<open>suff_volatile k\<close> is closed under adding a nonnegative multiple of a
   rank-one projection (\<open>suff_volatile_augment\<close>), and translation commutes with
@@ -874,22 +857,6 @@ proof
       using nu_le_lam by simp
   qed
 qed
-
-text \<open>Lemma 2.1 of the paper, verbatim: the convex hull of
-  \<open>{a \<in> \<bbbS>\<^sup>n\<^sub>+ : \<lambda>\<^sub>(\<^sub>n\<^sub>-\<^sub>k\<^sub>)(a) \<ge> 1}\<close> equals the constraint set \<open>A\<close> of Eq. (2.1),
-  with no closure.\<close>
-
-section \<open>Support-function characterisation of a closed convex constraint set\<close>
-
-text \<open>A closed convex set \<open>S\<close> of symmetric matrices is characterized by its
-  support function: \<open>a \<in> S\<close> once, for every symmetric \<open>M\<close>, some \<open>b \<in> S\<close>
-  attains \<open>tr(Ma) \<le> tr(Mb)\<close>.  This lets membership in the constraint set of
-  Eq. (1.5)/(1.7) be tested through linear inequalities, which pass to weak
-  limits in the law, in place of the constraint's original non-linear form;
-  convexity of the constraint set (Lemma 2.1) is what makes the replacement
-  faithful.  The argument runs on the symmetrized separating functional,
-  since the Frobenius inner product \<open>m \<bullet> x\<close> agrees with \<open>tr(mx)\<close> only on
-  symmetric matrices.\<close>
 
 (*<*)
 end

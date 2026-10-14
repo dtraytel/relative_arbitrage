@@ -12,9 +12,18 @@ text \<open>The operator \<^const>\<open>ell_op\<close> of Eq. (1.9) is a geomet
   \<open>1 \<le> k < n\<close> and \<open>1 \<le> L\<close>, by Lemma 3.1 and the invariances of display (4.4).
   The comparison chain of the preceding theories then gives Theorems 4.2 and
   4.3 and Proposition 4.1 for Definition 3.1 as the paper states it, with the
-  paper's predicates \<^const>\<open>visc_subsol_env2\<close> and \<^const>\<open>visc_supersol_env2\<close>.\<close>
+  paper's predicates \<^const>\<open>visc_subsol_env2\<close> and \<^const>\<open>visc_supersol_env2\<close>.
 
-section \<open>The instance\<close>
+  The locale asks for \<open>F\<^sub>* = F\<^sup>* = F\<close> at symmetric matrices only off
+  \<open>p = 0\<close> (for \<^const>\<open>ell_op\<close> this is the continuity clause of Lemma 3.1) and
+  for \<open>F\<^sub>* = F\<close> at \<open>p = 0\<close>.  At \<open>p = 0\<close> the upper envelope of
+  \<^const>\<open>ell_op\<close> is the eigenvalue expression of Eq. (3.6)
+  (@{thm [source] eq36}), whose index range omits the eigenvalue
+  \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close> of Eq. (3.5); it bounds \<open>F(0, M)\<close> from above
+  (@{thm [source] ell_op_le_eq36}), in general strictly.  This is why the
+  comparison argument keeps the doubled gradient away from zero.\<close>
+
+subsection \<open>The instance\<close>
 
 theorem ell_op_geometric_operator:
   assumes k: "1 \<le> k" "k < CARD('n::finite)" and L: "1 \<le> L"
@@ -68,7 +77,7 @@ qed
 lemmas ell_op_env2_eq_gen =
   visc_subsol_env2_eq_gen visc_supersol_env2_eq_gen ell_op_lsc_eq_op_lsc ell_op_usc_eq_op_usc
 
-section \<open>Definition 3.1: congruence, monotonicity, test classes\<close>
+subsection \<open>Definition 3.1: congruence, monotonicity, test classes\<close>
 
 text \<open>These hold for every \<open>k\<close> and \<open>L\<close>; they are the generic facts of
   @{theory Second_Order_Viscosity_Analysis.Viscosity_Solutions} read through the
@@ -128,9 +137,14 @@ theorem visc_supersol_env_affine:
   by (rule visc_supersol_gen_affine[OF ell_op_usc_scale ell_op_usc_conj_rot orth c0
         sup[unfolded visc_supersol_env2_eq_gen]])
 
-section \<open>Theorems 4.2 and 4.3 and Proposition 4.1\<close>
+subsection \<open>Theorems 4.2 and 4.3 and Proposition 4.1\<close>
 
-text \<open>Theorem 4.2(a), for upper and lower semicontinuous data on \<open>K\<close>.\<close>
+text \<open>Theorem 4.2(a), for upper and lower semicontinuous data on \<open>K\<close>.  The
+  bounds \<open>\<bar>u\<bar>, \<bar>w\<bar> \<le> B\<close> on \<open>K\<close> are explicit hypotheses; the paper's
+  proof uses \<open>\<parallel>u\<parallel>\<^sub>\<infinity>\<close> and \<open>\<parallel>w\<parallel>\<^sub>\<infinity>\<close> without saying so.  In place of
+  the paper's subsequential limit of the maximisers, the proof
+  (@{thm [source] geometric_operator.max_principle_usc_lsc}) covers the
+  boundary with a Lebesgue number, which needs only semicontinuity.\<close>
 
 theorem max_principle_usc_lsc:
   fixes K :: "(real^'n::finite) set" and u w :: "real^'n \<Rightarrow> real"
