@@ -501,9 +501,9 @@ Viscosity_Solutions.visc_supersol_gen_mono    # KEEP_API
 Viscosity_Solutions.visc_subsol_gen_env_imp    # KEEP_API
 Viscosity_Solutions.visc_supersol_gen_env_imp    # KEEP_API
 # toolkit
-Pair_Path_Space.path_laws_convergent_subsequence_market    # FIX_THEN_KEEP
+Path_Tightness.path_laws_convergent_subsequence_martingale    # FIX_THEN_KEEP
 Pair_Path_Space.psd_diag_nonneg    # KEEP_API
-Pair_Path_Space.etime_shift_of_restrict    # KEEP_API
+Stopping_Times.etime_shift_of_restrict    # KEEP_API
 Pair_Path_Space.vshift_path_law    # KEEP_API
 Pair_Path_Laws.covariation_class_martingale_fst    # KEEP_API
 Pair_Path_Laws.covariation_classI    # KEEP_API
