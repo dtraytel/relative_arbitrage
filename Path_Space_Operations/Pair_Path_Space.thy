@@ -102,7 +102,7 @@ text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
   martingale clauses are bounded-linear images of the Brownian ones
   (@{thm [source] martingale_bounded_linear_image}), the covariation
   clause is deterministic, and an arbitrary start comes free from
-  \<open>exit_class_pshift\<close>.  The only hypothesis is
+  \<open>covariation_class_pshift\<close>.  The only hypothesis is
   \<open>S S\<^sup>T \<in> sconstraint k L\<close>.\<close>
 
 abbreviation pairX :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> 'a"
