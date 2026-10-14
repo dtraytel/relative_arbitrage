@@ -1172,7 +1172,13 @@ text \<open>Every feasible \<open>a\<close> is symmetric, and against a symmetri
 text \<open>Consequently Eq. (3.5) holds for an arbitrary \<open>M\<close>, symmetric or not,
   with \<open>M\<close> replaced by its symmetric part on the right hand side.\<close>
 
-section \<open>\<open>rank1proj\<close> is Lipschitz away from the origin\<close>
+section \<open>The Frobenius norm: transpose invariance and submultiplicativity\<close>
+
+text \<open>The last two tools for the continuity clause of Lemma 3.1:
+  \<open>norm (A ** B) \<le> norm A * norm B\<close>, and that the Frobenius norm inherited
+  on \<open>real^'n^'n\<close> satisfies it; neither is in this HOL-Analysis.\<close>
+
+section \<open>The conjugation expansion, and the Lipschitz bound for \<open>M\<^sub>p\<close>\<close>
 
 text \<open>Towards continuity of \<open>(p, M) \<mapsto> M\<^sub>p\<close> off \<open>p = 0\<close>.  The correction
   coefficient \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> does not depend on \<open>p\<close>, so the only
@@ -1185,14 +1191,6 @@ text \<open>Towards continuity of \<open>(p, M) \<mapsto> M\<^sub>p\<close> off 
   toolkit into an explicit Lipschitz constant for \<open>(p, M) \<mapsto> M\<^sub>p\<close>,
   @{thm [source] norm_rank1proj} and @{thm [source] norm_perp_proj_le}, are in
   @{theory Symmetric_Matrix_Spectra.Orthogonal_Projections}.\<close>
-
-section \<open>The Frobenius norm: transpose invariance and submultiplicativity\<close>
-
-text \<open>The last two tools for the continuity clause of Lemma 3.1:
-  \<open>norm (A ** B) \<le> norm A * norm B\<close>, and that the Frobenius norm inherited
-  on \<open>real^'n^'n\<close> satisfies it; neither is in this HOL-Analysis.\<close>
-
-section \<open>The conjugation expansion, and the Lipschitz bound for \<open>M\<^sub>p\<close>\<close>
 
 text \<open>Perturbing the projection expands the conjugation into four terms.  With
   \<open>Q = I - rank1proj p\<close> and \<open>D = rank1proj p' - rank1proj p\<close>,

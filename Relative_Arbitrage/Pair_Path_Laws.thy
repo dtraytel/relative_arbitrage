@@ -1304,10 +1304,6 @@ proof -
   show ?thesis unfolding integrable_iff_bounded using m lt by blast
 qed
 
-section \<open>Selecting a value-minimal index set: the threshold argument\<close>
-
-text \<open>\<open>exists_min_subset\<close> lives in @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
-
 lemma pair_law_F_sq_mean_of_nn_bound:
   fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
     and F :: "'a \<times> 'b \<Rightarrow> real"

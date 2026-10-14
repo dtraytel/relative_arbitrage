@@ -26,9 +26,6 @@ section \<open>Elementary matrix algebra not already in the development\<close>
 text \<open>\<open>trace_conjugate\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-text \<open>\<open>transpose_diff_matrix\<close> lives in
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 text \<open>\<open>scaleR_matrix_matrix_left\<close> is HOL-Analysis's \<open>scalar_matrix_assoc\<close>, reversed.\<close>
 
 text \<open>\<open>trace_scaleR_matrix\<close> is \<open>trace_scaleR\<close> from

@@ -617,18 +617,6 @@ proof -
   qed
 qed
 
-subsection \<open>Upper semicontinuity of the supremum over a compact family\<close>
-
-text \<open>
-  The value functional, real-valued: \<open>ess_inf_time\<close> is
-  \<open>ennreal\<close>-valued but Berge's supremum needs a real number; the
-  conversion is faithful since the exit time is capped at \<open>T\<close>, so the
-  essential infimum is never \<open>\<top>\<close>.
-\<close>
-
-text \<open>\<open>trace_mult_sum\<close>, \<open>bounded_linear_trace_mult_left\<close>, \<open>bounded_linear_trace_mult_right\<close>, \<open>bounded_linear_quadform\<close>, \<open>trace_mult_diff\<close>, \<open>trace_mult_scaleR\<close>, \<open>bounded_linear_transpose\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
 subsection \<open>The constant-volatility Gaussian member\<close>
 
 text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
@@ -644,6 +632,15 @@ text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
 
 abbreviation pairX :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> 'a"
   where "pairX t \<omega> \<equiv> fst (\<omega> t)"
+
+subsection \<open>Upper semicontinuity of the supremum over a compact family\<close>
+
+text \<open>
+  The value functional, real-valued: \<open>ess_inf_time\<close> is
+  \<open>ennreal\<close>-valued but Berge's supremum needs a real number; the
+  conversion is faithful since the exit time is capped at \<open>T\<close>, so the
+  essential infimum is never \<open>\<top>\<close>.
+\<close>
 
 theorem vshift_sup_usc:
   fixes T c :: real and A :: "'b::{polish_space,banach} set"

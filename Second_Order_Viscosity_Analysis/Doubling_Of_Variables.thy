@@ -3089,8 +3089,6 @@ text \<open>\<open>symmetric_form_bound_unit\<close> gives the entrywise bound
   \<open>\<parallel>matrix W\<parallel> \<le> B\<close> with no spectral theory, since the operator norm is
   at most the sum of absolute coordinates.\<close>
 
-text \<open>\<open>norm_le_card_Basis_bound\<close>, \<open>matrix_Basis_cases\<close>, \<open>inner_matrix_axis\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 text \<open>\<open>norm_matrix_le_of_form_bound\<close> lives in
   @{theory Symmetric_Matrix_Spectra.Symmetric_Spectral};
   \<open>hessian_abs_bound_of_two_sided\<close>, \<open>block_form_bound_fst_gen\<close>,

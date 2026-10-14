@@ -364,10 +364,6 @@ lemma psd_weighted_outer_sum:
   using transpose_weighted_outer_sum[OF onormal_finite[OF B]]
     quadform_weighted_outer_sum_nonneg[OF B, of c] c0 by blast
 
-text \<open>The sum annihilates \<open>p\<close> as soon as every basis vector carrying a nonzero
-  weight is orthogonal to \<open>p\<close>.\<close>
-
-
 lemma exists_top_eigenvector:
   fixes M :: "real^'n::finite^'n"
   assumes sym: "transpose M = M"
@@ -673,10 +669,6 @@ proof -
     by (simp add: real_sqrt_mult norm_eq_sqrt_inner)
   finally show ?thesis .
 qed
-
-
-text \<open>Hence the projection onto \<open>p\<^sup>\<bottom>\<close> is bounded independently of \<open>p\<close>.\<close>
-
 
 lemma conj_diff_expand:
   fixes M Q D :: "real^'n::finite^'n"
