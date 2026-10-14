@@ -1735,7 +1735,73 @@ proof -
   then show ?thesis using that lmem w by blast
 qed
 
-section \<open>Clause (2): the subsolution property with the paper's operator\<close>
+section \<open>The operator of Eq. (1.9) for an abstract constraint set\<close>
+
+text \<open>For a set \<open>S\<close> of covariation rates, the operator of Eq. (1.9) is the
+  infimum of \<open>- tr(M a)/2\<close> over the rates in \<open>S\<close> that annihilate the
+  gradient \<open>p\<close>.  It is \<^typ>\<open>ereal\<close>-valued: when no rate in \<open>S\<close> annihilates
+  \<open>p\<close> the infimum is \<open>\<infinity>\<close>, and no side condition is needed.  The paper's
+  operator takes the infimum over \<open>feasible k L p\<close>, the rates of the
+  unconvexified sufficient-volatility set; by Lemma 2.1 the two agree at
+  \<open>S = sconstraint k L\<close> (\<open>ell_op_eq_covariation_op\<close> below).\<close>
+
+definition covariation_op ::
+  "(real^'n::finite^'n) set \<Rightarrow> real^'n \<Rightarrow> real^'n^'n \<Rightarrow> ereal" where
+  "covariation_op S p M = (INF a \<in> {a \<in> S. a *v p = 0}. ereal (- trace (M ** a) / 2))"
+
+lemma covariation_op_le_witness:
+  fixes a M :: "real^'n::finite^'n" and p :: "real^'n"
+  assumes "a \<in> S" and "a *v p = 0"
+  shows "covariation_op S p M \<le> ereal (- trace (M ** a) / 2)"
+  unfolding covariation_op_def by (rule INF_lower) (use assms in blast)
+
+lemma covariation_op_less_witness:
+  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
+  assumes "covariation_op S p M < ereal c"
+  obtains a where "a \<in> S" and "a *v p = 0" and "- trace (M ** a) / 2 < c"
+  using assms unfolding covariation_op_def INF_less_iff by auto
+
+lemma ell_op_le_covariation_op:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L"
+  shows "ereal (ell_op k L p M) \<le> covariation_op (sconstraint k L) p M"
+  unfolding covariation_op_def
+proof (rule INF_greatest)
+  fix b :: "real^'n^'n" assume "b \<in> {a \<in> sconstraint k L. a *v p = 0}"
+  then have b: "b \<in> sconstraint k L" and bp: "b *v p = 0" by auto
+  obtain a where aF: "a \<in> feasible k L p"
+    and ab: "- trace (M ** a) / 2 \<le> - trace (M ** b) / 2"
+    by (rule sconstraint_orth_feasible[OF kn L1 b bp])
+  have "ell_op k L p M \<le> - trace (M ** b) / 2"
+    using ell_op_le_witness[OF aF, of M] ab by linarith
+  then show "ereal (ell_op k L p M) \<le> ereal (- trace (M ** b) / 2)" by simp
+qed
+
+text \<open>With \<open>1 \<le> k\<close> the feasible set is nonempty and the two operators agree:
+  the infimum over the larger set \<open>sconstraint k L \<inter> {a. a *v p = 0}\<close> is
+  attained, up to \<open>\<epsilon>\<close>, by feasible rates.\<close>
+
+theorem ell_op_eq_covariation_op:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes k1: "1 \<le> k" and kn: "k < CARD('n)" and L1: "1 \<le> L"
+  shows "ereal (ell_op k L p M) = covariation_op (sconstraint k L) p M"
+proof (rule antisym[OF ell_op_le_covariation_op[OF kn L1]])
+  have sub: "feasible k L p \<subseteq> {a \<in> sconstraint k L. a *v p = 0}"
+    using feasible_subset_sconstraint unfolding feasible_def by blast
+  have "covariation_op (sconstraint k L) p M
+      \<le> (INF a \<in> feasible k L p. ereal (- trace (M ** a) / 2))"
+    unfolding covariation_op_def by (rule INF_superset_mono[OF sub order_refl])
+  also have "\<dots> = ereal (ell_op k L p M)"
+  proof -
+    have ne: "(\<lambda>a. - trace (M ** a) / 2) ` feasible k L p \<noteq> {}"
+      using feasible_nonempty[OF k1 kn L1] by blast
+    show ?thesis
+      unfolding ell_op_def ereal_Inf'[OF ell_op_bdd_below ne] image_image ..
+  qed
+  finally show "covariation_op (sconstraint k L) p M \<le> ereal (ell_op k L p M)" .
+qed
+
+section \<open>Clause (2): the subsolution property\<close>
 
 lemma feasible_trace_le:
   fixes a :: "real^'n::finite^'n" and p :: "real^'n"
@@ -1746,45 +1812,45 @@ proof -
   then show ?thesis unfolding trace_def using sum_mono[of UNIV "\<lambda>i. a $ i $ i" "\<lambda>_. L"] by simp
 qed
 
-text \<open>The subsolution half of clause (2), for the operator of Eq. (1.9)
-  itself, orthogonality constraint included.  For each test function and
-  each Hessian bump \<open>\<delta>\<close>, an anti-concentration argument together with
-  compactness produces a direction that kills the gradient
-  (@{thm [source] covariation_val_touch_orth}); the capped spectral split converts
-  it into a feasible witness (@{thm [source] sconstraint_orth_feasible}),
-  and \<open>\<delta> \<rightarrow> 0\<close> concludes as in the relaxed case.\<close>
+text \<open>The subsolution half of clause (2), for the operator of Eq. (1.9),
+  orthogonality constraint included, and for any closed convex set of
+  psd rates with bounds \<open>B\<close>, \<open>D\<close> that contains some rate \<open>\<sigma> \<sigma>\<^sup>T\<close>.  For each
+  test function and each Hessian bump \<open>\<delta>\<close>, an anti-concentration argument
+  together with compactness produces a rate that kills the gradient
+  (@{thm [source] covariation_val_touch_orth}), and \<open>\<delta> \<rightarrow> 0\<close> concludes.
 
-section \<open>The boundary subsolution clause for \<open>exit_val\<close>\<close>
+  The proof does not use \<open>x \<in> interior K\<close>: it is driven by the local
+  touching, and \<open>covariation_val_touch_orth\<close> is indifferent to where \<open>x\<close>
+  sits.  So the subsolution property holds locally on any \<open>\<Omega>\<close>.\<close>
 
-text \<open>The subsolution proof does not use \<open>x \<in> interior K\<close>: it
-  is driven by the local touching, and \<open>covariation_val_touch_orth\<close> is indifferent
-  to where \<open>x\<close> sits.  So the subsolution property holds locally on any \<open>\<Omega>\<close>.\<close>
-
-theorem exit_val_visc_subsol_any:
-  fixes K :: "(real^'n::finite) set"
-  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
-    and kn: "k < CARD('n)"
-  shows "visc_subsol k L \<Omega> (\<lambda>z. enn2real (exit_val k L T K z))"
-  unfolding visc_subsol_def
+theorem covariation_val_visc_subsol:
+  fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and Kc: "closed K"
+  shows "visc_subsol_gen test_fun_at nhds (covariation_op S) \<Omega>
+      (\<lambda>z. enn2real (covariation_val S T K z))"
+  unfolding visc_subsol_gen_nhds
 proof (intro ballI allI impI)
   fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
   assume tf: "test_fun_at \<phi> g H x"
     and lm: "\<exists>e>0. \<forall>z \<in> ball x e.
-        enn2real (exit_val k L T K z) - \<phi> z
-          \<le> enn2real (exit_val k L T K x) - \<phi> x"
-  have L0: "0 \<le> L" using L1 by simp
+        enn2real (covariation_val S T K z) - \<phi> z
+          \<le> enn2real (covariation_val S T K x) - \<phi> x"
   from lm obtain e0 where e00: "0 < e0"
     and lme: "\<And>z. z \<in> ball x e0 \<Longrightarrow>
-        enn2real (exit_val k L T K z) - \<phi> z
-          \<le> enn2real (exit_val k L T K x) - \<phi> x"
+        enn2real (covariation_val S T K z) - \<phi> z
+          \<le> enn2real (covariation_val S T K x) - \<phi> x"
     by blast
-  define C where "C = real CARD('n) * L"
-  have n0: "0 < real CARD('n)"
-    using zero_less_card_finite[where 'a = 'n] by simp
+  define C where "C = real CARD('n) * D + 1"
   have C0: "0 < C"
-    unfolding C_def by (intro mult_pos_pos n0) (use L1 in linarith)
-  have key: "ell_op k L (g x) H \<le> 1 + \<delta> * C / 2" if d0: "0 < \<delta>" for \<delta>
+    unfolding C_def using D0 by (simp add: add_nonneg_pos)
+  have key: "covariation_op S (g x) H \<le> ereal (1 + \<delta> * C / 2)" if d0: "0 < \<delta>" for \<delta>
   proof -
     obtain r where r0: "0 < r"
       and dom: "\<And>z. z \<in> ball x r \<Longrightarrow>
@@ -1794,68 +1860,91 @@ proof (intro ballI allI impI)
     define ebar where "ebar = min e0 r / 2"
     have eb0: "0 < ebar" using e00 r0 by (simp add: ebar_def)
     have touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
-        enn2real (exit_val k L T K z)
-          \<le> enn2real (exit_val k L T K x) + g x \<bullet> (z - x)
+        enn2real (covariation_val S T K z)
+          \<le> enn2real (covariation_val S T K x) + g x \<bullet> (z - x)
             + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
     proof -
       fix z assume z: "dist z x \<le> ebar"
       have zin: "z \<in> ball x e0 \<inter> ball x r"
         using z e00 r0 by (auto simp: ebar_def dist_commute)
-      have "enn2real (exit_val k L T K z) - \<phi> z
-          \<le> enn2real (exit_val k L T K x) - \<phi> x"
+      have "enn2real (covariation_val S T K z) - \<phi> z
+          \<le> enn2real (covariation_val S T K x) - \<phi> x"
         using lme zin by blast
       moreover have "\<phi> z \<le> \<phi> x + g x \<bullet> (z - x)
           + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
         using dom zin by blast
-      ultimately show "enn2real (exit_val k L T K z)
-          \<le> enn2real (exit_val k L T K x) + g x \<bullet> (z - x)
+      ultimately show "enn2real (covariation_val S T K z)
+          \<le> enn2real (covariation_val S T K x) + g x \<bullet> (z - x)
             + ((z - x) \<bullet> ((H + \<delta> *\<^sub>R mat 1) *v (z - x))) / 2"
         by linarith
     qed
-    obtain b where bmem: "b \<in> sconstraint k L"
+    obtain b where bmem: "b \<in> S"
       and wb: "- trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2 \<le> 1"
       and borth: "b *v (g x) = 0"
-      by (rule covariation_val_touch_orth[OF T sconstraint_bounds[OF L0] closed_sconstraint
-            sconstraint_convex mat_1_rate_in_sconstraint[OF L1] sconstraint_psd_entry(1) Kc eb0
-            touch[unfolded exit_val_eq_covariation_val]])
-    obtain a where afeas: "a \<in> feasible k L (g x)"
-      and aval: "- trace ((H + \<delta> *\<^sub>R mat 1) ** a) / 2
-          \<le> - trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2"
-      by (rule sconstraint_orth_feasible[OF kn L1 bmem borth])
-    have wa: "- trace ((H + \<delta> *\<^sub>R mat 1) ** a) / 2 \<le> 1"
-      using aval wb by linarith
-    have split: "trace ((H + \<delta> *\<^sub>R mat 1) ** a) = trace (H ** a) + \<delta> * trace a"
+      by (rule covariation_val_touch_orth[OF T B0 B D0 D Sc Sv SST Spsd Kc eb0 touch])
+    have split: "trace ((H + \<delta> *\<^sub>R mat 1) ** b) = trace (H ** b) + \<delta> * trace b"
     proof -
-      have "(H + \<delta> *\<^sub>R mat 1) ** a = H ** a + (\<delta> *\<^sub>R mat 1) ** a"
+      have "(H + \<delta> *\<^sub>R mat 1) ** b = H ** b + (\<delta> *\<^sub>R mat 1) ** b"
         by (rule matrix_add_rdistrib)
-      moreover have "(\<delta> *\<^sub>R mat 1) ** a = \<delta> *\<^sub>R a"
+      moreover have "(\<delta> *\<^sub>R mat 1) ** b = \<delta> *\<^sub>R b"
         by (simp add: scalar_matrix_assoc[symmetric])
-      ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** a)
-          = trace (H ** a + \<delta> *\<^sub>R a)" by simp
-      have e2: "trace (H ** a + \<delta> *\<^sub>R a) = trace (H ** a) + trace (\<delta> *\<^sub>R a)"
+      ultimately have e1: "trace ((H + \<delta> *\<^sub>R mat 1) ** b)
+          = trace (H ** b + \<delta> *\<^sub>R b)" by simp
+      have e2: "trace (H ** b + \<delta> *\<^sub>R b) = trace (H ** b) + trace (\<delta> *\<^sub>R b)"
         by (simp add: trace_def sum.distrib)
-      have e3: "trace (\<delta> *\<^sub>R a) = \<delta> * trace a" by (rule trace_scaleR)
+      have e3: "trace (\<delta> *\<^sub>R b) = \<delta> * trace b" by (rule trace_scaleR)
       from e1 e2 e3 show ?thesis by simp
     qed
-    have tra: "trace a \<le> C"
-      unfolding C_def by (rule feasible_trace_le[OF afeas])
-    have "- trace (H ** a) / 2 \<le> 1 + \<delta> * trace a / 2"
-      using wa split by (simp add: field_simps)
+    have trb: "trace b \<le> C"
+    proof -
+      have "trace b \<le> real CARD('n) * D"
+        by (rule trace_le_diag_bound) (use D[OF bmem] in blast)
+      then show ?thesis unfolding C_def by linarith
+    qed
+    have "- trace (H ** b) / 2 \<le> 1 + \<delta> * trace b / 2"
+      using wb split by (simp add: field_simps)
     also have "\<dots> \<le> 1 + \<delta> * C / 2"
-      using tra d0 by (simp add: mult_left_mono)
-    finally have wH: "- trace (H ** a) / 2 \<le> 1 + \<delta> * C / 2" .
-    show ?thesis by (rule order_trans[OF ell_op_le_witness[OF afeas] wH])
+      using trb d0 by (simp add: mult_left_mono)
+    finally have wH: "- trace (H ** b) / 2 \<le> 1 + \<delta> * C / 2" .
+    have "covariation_op S (g x) H \<le> ereal (- trace (H ** b) / 2)"
+      by (rule covariation_op_le_witness[OF bmem borth])
+    also have "\<dots> \<le> ereal (1 + \<delta> * C / 2)" using wH by simp
+    finally show ?thesis .
   qed
-  show "ell_op k L (g x) H \<le> 1"
-  proof (rule field_le_epsilon)
+  show "covariation_op S (g x) H \<le> 1"
+  proof (rule ereal_le_epsilon2)
     fix e :: real assume e0': "0 < e"
     have d0: "0 < 2 * e / C" using e0' C0 by simp
-    have "ell_op k L (g x) H \<le> 1 + (2 * e / C) * C / 2"
+    have ce: "1 + (2 * e / C) * C / 2 = 1 + e" using C0 by simp
+    have "covariation_op S (g x) H \<le> ereal (1 + (2 * e / C) * C / 2)"
       by (rule key[OF d0])
-    also have "\<dots> = 1 + e" using C0 by (simp add: field_simps)
-    finally show "ell_op k L (g x) H \<le> 1 + e" .
+    then have "covariation_op S (g x) H \<le> ereal (1 + e)" unfolding ce .
+    moreover have "ereal (1 + e) = 1 + ereal e" by simp
+    ultimately show "covariation_op S (g x) H \<le> 1 + ereal e" by metis
   qed
 qed
+
+text \<open>The paper's subsolution property is the instance \<open>S = sconstraint k L\<close>,
+  since \<open>F \<le> covariation_op (sconstraint k L)\<close>
+  (@{thm [source] ell_op_le_covariation_op}).\<close>
+
+theorem exit_val_visc_subsol_any:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and kn: "k < CARD('n)"
+  shows "visc_subsol k L \<Omega> (\<lambda>z. enn2real (exit_val k L T K z))"
+proof -
+  have L0: "0 \<le> L" using L1 by simp
+  have "visc_subsol_gen test_fun_at nhds (covariation_op (sconstraint k L)) \<Omega>
+      (\<lambda>z. enn2real (covariation_val (sconstraint k L) T K z))"
+    by (rule covariation_val_visc_subsol[OF T sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex mat_1_rate_in_sconstraint[OF L1] sconstraint_psd_entry(1) Kc])
+  then show ?thesis
+    unfolding visc_subsol_eq_gen exit_val_eq_covariation_val
+    by (rule visc_subsol_gen_mono) (rule ell_op_le_covariation_op[OF kn L1])
+qed
+
+section \<open>The boundary subsolution clause\<close>
 
 text \<open>Outside \<open>K\<close> the exit time is already zero, so the value vanishes.  This
   is what makes the gate \<open>v x > 0\<close> do its work below.\<close>
@@ -1897,29 +1986,39 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>Definition 3.1(a) for \<open>exit_val\<close>, including the boundary clause.  At a
-  boundary point where the value is strictly positive, a touching that is
-  only global over \<open>K\<close> upgrades to a local one: off \<open>K\<close> the value is \<open>0\<close>
-  (\<open>covariation_val_zero_outside\<close>) while the test function is continuous, so for
-  \<open>z\<close> close enough to \<open>x\<close> the required inequality \<open>0 - \<phi> z \<le> v x - \<phi> x\<close>
-  follows from \<open>\<phi> x - \<phi> z < v x\<close>.\<close>
+text \<open>Definition 3.1(a), including the boundary clause.  At a boundary
+  point where the value is strictly positive, a touching that is only
+  global over \<open>K\<close> upgrades to a local one: off \<open>K\<close> the value is \<open>0\<close>
+  (\<open>covariation_val_zero_outside\<close>) while the test function is continuous,
+  so for \<open>z\<close> close enough to \<open>x\<close> the required inequality
+  \<open>0 - \<phi> z \<le> v x - \<phi> x\<close> follows from \<open>\<phi> x - \<phi> z < v x\<close>.  The operator
+  here is \<open>covariation_op S\<close> itself, which is at least its lower envelope,
+  so the clause is stronger than Definition 3.1(a) asks.\<close>
 
-theorem exit_val_subsol_bc:
-  fixes K :: "(real^'n::finite) set"
-  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
-    and kn: "k < CARD('n)"
-  shows "visc_subsol_env k L K
-      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (exit_val k L T K x)})
-      (\<lambda>z. enn2real (exit_val k L T K z))"
+theorem covariation_val_subsol_bc:
+  fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and Kc: "closed K"
+  shows "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op S)
+      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (covariation_val S T K x)})
+      (\<lambda>z. enn2real (covariation_val S T K z))"
 proof -
-  define v where "v = (\<lambda>z. enn2real (exit_val k L T K z))"
+  define v where "v = (\<lambda>z. enn2real (covariation_val S T K z))"
   have T0: "0 \<le> T" using T by simp
-  have sub: "visc_subsol k L \<Omega> v" for \<Omega>
-    unfolding v_def by (rule exit_val_visc_subsol_any[OF T L1 Kc kn])
-  have "visc_subsol_env k L K (interior K) v"
-    by (rule visc_subsol_imp_env[OF sub interior_subset open_interior])
-  moreover have "visc_subsol_env k L K {x \<in> K - interior K. 0 < v x} v"
-    unfolding visc_subsol_env_def
+  have sub: "visc_subsol_gen test_fun_at nhds (covariation_op S) \<Omega> v" for \<Omega>
+    unfolding v_def
+    by (rule covariation_val_visc_subsol[OF T B0 B D0 D Sc Sv SST Spsd Kc])
+  have "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op S) (interior K) v"
+    by (rule visc_subsol_gen_filter_mono[OF sub])
+      (rule nhds_le_principal_of_open[OF open_interior interior_subset])
+  moreover have "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op S)
+      {x \<in> K - interior K. 0 < v x} v"
+    unfolding visc_subsol_gen_principal
   proof (intro ballI allI impI)
     fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
       and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
@@ -1966,19 +2065,42 @@ proof -
       next
         case False
         have "v z = 0" unfolding v_def
-          using covariation_val_zero_outside[OF T0 False] by (simp add: exit_val_eq_covariation_val)
+          using covariation_val_zero_outside[OF T0 False] by simp
         moreover have "\<phi> x - \<phi> z < v x" using eb[OF dzx] by linarith
         ultimately show ?thesis by linarith
       qed
     qed
-    have "ell_op k L (g x) H \<le> 1"
-      using sub[of UNIV] tf loc unfolding visc_subsol_def by blast
-    then have "ereal (ell_op k L (g x) H) \<le> 1" by simp
-    with ell_op_lsc_le_ell_op[of k L "g x" H]
-    show "ell_op_lsc k L (g x) H \<le> 1" by (rule order_trans)
+    show "covariation_op S (g x) H \<le> 1"
+      using sub[of UNIV] tf loc unfolding visc_subsol_gen_nhds by blast
   qed
   ultimately show ?thesis
-    unfolding visc_subsol_env_def v_def by blast
+    unfolding visc_subsol_gen_def v_def by blast
+qed
+
+text \<open>The paper's boundary clause, with the lower envelope \<open>F\<^sub>*\<close> of Definition
+  3.1(a), is the instance \<open>S = sconstraint k L\<close>: \<open>F\<^sub>* \<le> F \<le> covariation_op S\<close>.\<close>
+
+theorem exit_val_subsol_bc:
+  fixes K :: "(real^'n::finite) set"
+  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and kn: "k < CARD('n)"
+  shows "visc_subsol_env k L K
+      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (exit_val k L T K x)})
+      (\<lambda>z. enn2real (exit_val k L T K z))"
+proof -
+  have L0: "0 \<le> L" using L1 by simp
+  have le: "ell_op_lsc k L p M \<le> covariation_op (sconstraint k L) p M"
+    for p :: "real^'n" and M :: "real^'n^'n"
+    using ell_op_lsc_le_ell_op[of k L p M] ell_op_le_covariation_op[OF kn L1, of p M]
+    by (rule order_trans)
+  have "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op (sconstraint k L))
+      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (covariation_val (sconstraint k L) T K x)})
+      (\<lambda>z. enn2real (covariation_val (sconstraint k L) T K z))"
+    by (rule covariation_val_subsol_bc[OF T sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex mat_1_rate_in_sconstraint[OF L1] sconstraint_psd_entry(1) Kc])
+  then show ?thesis
+    unfolding visc_subsol_env_eq_gen exit_val_eq_covariation_val
+    by (rule visc_subsol_gen_mono) (rule le)
 qed
 
 
