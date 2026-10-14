@@ -506,7 +506,7 @@ repository.
   `Continuous_Time_Martingales` side and `Symmetric_Matrix_Spectra`'s from the
   `Second_Order_Viscosity_Analysis` side.
 
-### Phase 6 — the two session splits
+### Phase 6 — the two session splits — **done** (`7773a54`)
 
 Both were dry-run *checked* (REVIEW_3 §6.1–6.2).
 
@@ -835,6 +835,16 @@ the misplaced "constant-volatility Gaussian member" text in `Pair_Path_Space`, p
 market wording in WM, `Path_Exit_Times` and `Adapted_Quadratic_Variation` prose, and
 `Paper_Readings`' hidden `outer_prod_zero_left/_right`, which now duplicate HOL's (Statement
 is frozen: owner decision). `Statement/theorem_1_1_unfolded.html` has stale line links (M38).
+
+| date | commit | step | result |
+|---|---|---|---|
+| 2026-10-14 | `6031b78` | Phase 6.2: `Relative_Arbitrage_Equation` (RAE) = SOVA + sessions SemiC, by `git mv` of the 12 operator and comparison theories, plus `Subspace_Tangential_Field`, the probability-free half of `Value_Function_Tangential_Field` (19 facts); `No_Probability_Ancestor` fails the build if a probability, martingale, path-space or paper theory becomes an ancestor (negative controls checked). `sconstraint` stays in RA (F6) | all sessions build |
+| 2026-10-14 | `a1f1b50`, `7773a54` | Phase 6.1: `Path_Space_Operations` (PSO) = CPS + sessions SMS, SemiC, `Disintegration`, the six toolkit theories by `git mv`; `No_Viscosity_Ancestor` (no SOVA, WM, RA, RAE or `HOL-Complex_Analysis` ancestor); the paper session's parent is PSO. 22 of the 25 `@{theory Relative_Arbitrage.X}` antiquotations requalified. Analysis scripts know both sessions; ROOTS in dependency order; ROOT descriptions and documents for both; `theorem_1_1_unfolded.html` links fixed against its pin. 522 facts moved, 0 statements changed; fingerprints against phase 5: 0 changed, 0 gone. **Acceptance:** paper session 218 s (target ≤ 300 s; RA was 355 s with RAE alone, 338 s at phase 5); RAE 51 s with no probability ancestor; PSO 134 s with no SOVA ancestor. **Refuted (rule 6):** the model behind the 235 s estimate assumed that theories reached through `sessions` load from heaps; Isabelle re-checks them (RA still re-checks 13 RAE, 11 SOVA and 8 WM theories). The saving comes from the toolkit moving into the parent heap. PSO's build took 134 s against an estimate of ≈ 311 s. **Found:** this container's TeX is a stub, so no document had ever been compiled to PDF; with a real TeX, RAE, PSO and RA compile (after Unicode fixes); SOVA (combining circumflex in 10 prose lines) and Statement (`Paper_Map.thy:19`, a raw `\<dots>`) do not: phase 8 | all sessions build; 574 roots resolve; no oracles |
+
+**State after phase 6:** ten sessions: SMS, SemiC, SOVA, RAE, CTM, WM, CPS, PSO, RA (the
+paper session, 26 theories) and Statement. A cut below RA would now need RAE or SOVA on
+RA's parent chain, which a single-parent session graph cannot combine with PSO's
+no-SOVA requirement.
 
 **State after phase 2:** 104 811 lines (baseline 120 586 at `41fca32`), of which RA 53 206
 (was 64 995), SOVA 16 687 (18 461), CPS 11 352 (13 503). Dead code: 196 lines, all kept on
