@@ -49,12 +49,10 @@ theorem covariation_val_ball_lower_subspace:
     and ccdf: "cc < (rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)"
   shows "ennreal cc \<le> covariation_val S T K x"
 proof -
-  have xin': "norm (x - 0) < rB" and xfix': "projmat b m *v (x - 0) = x - 0"
-    and ccdf': "cc < (rB\<^sup>2 - (norm (x - 0))\<^sup>2) / (real m - 1)"
-    using xin xfix ccdf by simp_all
   have "ennreal (cc + min 0 (T - cc)) \<le> covariation_val S T K x"
     by (rule covariation_val_ball_lower_gen[where y\<^sub>0 = 0 and \<beta> = 0,
-          OF T0 B0 B D0 D Sc Sv tan Kc sub xnz xin' orth m2 xfix' cc0 ccT ccdf' enn2real_nonneg])
+          OF T0 B0 B D0 D Sc Sv tan Kc sub xnz _ orth m2 _ cc0 ccT])
+      (use xin xfix ccdf in simp_all)
   then show ?thesis using ccT by simp
 qed
 
