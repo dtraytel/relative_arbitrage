@@ -193,7 +193,7 @@ lemma past_test_measurable_natural_filtration:
 subsection \<open>The identity at a law, against a bounded test\<close>
 
 lemma continuous_on_iglue:
-  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
+  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'p::real_normed_vector)"
   assumes r: "0 \<le> r"
     and c1: "continuous_on {0..r} \<omega>"
     and c2: "continuous_on {0..} \<omega>'"
@@ -219,7 +219,7 @@ proof -
 qed
 
 lemma continuous_on_pglue:
-  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
+  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'p::real_normed_vector)"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and c1: "continuous_on {0..r} \<omega>"
     and c2: "continuous_on {0..T - r} \<omega>'"

@@ -829,9 +829,9 @@ text \<open>The second horn dies here.  Suppose \<open>v\<^sub>*\<close> were co
 
 lemma path_eval_at_measurable_time:
   fixes M :: "'a measure" and g :: "'a \<Rightarrow> real"
-    and X :: "'a \<Rightarrow> (real \<Rightarrow> 'b::{polish_space,banach} \<times> 'x::{polish_space,banach})"
+    and X :: "'a \<Rightarrow> (real \<Rightarrow> 'p::{polish_space,banach})"
   assumes T0: "0 \<le> T"
-    and Xm: "X \<in> M \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'b \<times> 'x)) measure)"
+    and Xm: "X \<in> M \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and gm: "g \<in> borel_measurable M"
     and g0: "\<And>w. w \<in> space M \<Longrightarrow> 0 \<le> g w"
     and gT: "\<And>w. w \<in> space M \<Longrightarrow> g w \<le> T"
@@ -860,7 +860,7 @@ proof -
   proof -
     have cont: "continuous_on {0..T} (X w)"
     proof (rule mspace_path_metricD)
-      show "X w \<in> mspace (path_metric T :: ((real \<Rightarrow> 'b \<times> 'x)) metric)"
+      show "X w \<in> mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
         using measurable_space[OF Xm w] by (simp add: space_borel_of)
     qed
     have bnd: "\<bar>real_of_int \<lceil>2^n * g w\<rceil> / 2^n - g w\<bar> \<le> (1/2)^n" for n
