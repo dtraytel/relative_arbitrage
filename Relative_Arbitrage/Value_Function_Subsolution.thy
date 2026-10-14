@@ -146,7 +146,7 @@ proof
     by (rule suff_volatile_cap_in_sconstraint[OF sv ub])
 qed
 
-text \<open>@{thm [source] exit_val_attained} supplies the optimizer, at which the
+text \<open>@{thm [source] covariation_val_attained} supplies the optimizer, at which the
   exit time dominates the value almost surely --- the reason the
   subsolution half is reachable by expectations: the DPP bound it
   consumes is an a.s. bound, and a.s. bounds survive integration, whereas
@@ -678,10 +678,15 @@ theorem exit_val_subsol_quadratic_ball:
   obtains b where "b \<in> sconstraint k L" and "- trace (M ** b) / 2 \<le> 1"
 proof -
   have T0: "0 \<le> T" using T by simp
-  obtain P where P: "P \<in> exit_class k L T x"
+  have att: "\<exists>P \<in> exit_class k L T x.
+        ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K x"
+    unfolding exit_class_eq_covariation exit_val_eq_covariation_val
+    by (rule covariation_val_attained[OF T sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint mat_1_rate_in_sconstraint[OF L1] Kc])
+  then obtain P where P: "P \<in> exit_class k L T x"
     and Pv: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
         = exit_val k L T K x"
-    using exit_val_attained[OF T L1 Kc] by blast
+    by blast
   have pos: "AE \<omega> in P. 0 < pball_exit T x \<epsilon> \<omega>"
     using exit_class_start[OF P] AE_space
   proof eventually_elim
@@ -1068,10 +1073,15 @@ next
     unfolding \<theta>'_def by (rule min.cobounded2)
   have tht: "\<theta>' \<omega> \<le> t" for \<omega> :: "'n pairpath"
     unfolding \<theta>'_def by (rule min.cobounded1)
-  obtain P where P: "P \<in> exit_class k L T x"
+  have att: "\<exists>P \<in> exit_class k L T x.
+        ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K x"
+    unfolding exit_class_eq_covariation exit_val_eq_covariation_val
+    by (rule covariation_val_attained[OF T sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint mat_1_rate_in_sconstraint[OF L1] Kc])
+  then obtain P where P: "P \<in> exit_class k L T x"
     and Pv: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
         = exit_val k L T K x"
-    using exit_val_attained[OF T L1 Kc] by blast
+    by blast
   interpret PP: prob_space P by (rule exit_class_prob[OF P])
   have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
   have thP': "\<theta>' \<in> borel_measurable P"

@@ -23,7 +23,7 @@ text \<open>The supersolution inequality is an essential-infimum statement, so i
   the subsection \<open>Exact rotations\<close> below.
 
   Either way the field is fed to an Euler scheme glued by
-  @{thm [source] exit_class_kglue_law'} and passed to a weak limit.  The
+  @{thm [source] covariation_class_kglue_law'} and passed to a weak limit.  The
   constant-volatility Gaussian member the Euler kernels are made of,
   \<open>sbmpair\<close>, is in @{theory Relative_Arbitrage.Exit_Class_Witness}; this
   section writes the field as a square and builds the limit.\<close>
@@ -270,7 +270,7 @@ subsection \<open>The Euler kernel: measurability package\<close>
 
 text \<open>A continuous matrix field with admissible squares induces, through
   the Gaussian member, a kernel with exactly the two properties
-  @{thm [source] exit_class_kglue_law'} consumes.
+  @{thm [source] covariation_class_kglue_law'} consumes.
   Sequential continuity in the LP metric comes from
   @{thm [source] sbm_law_weak_conv}; it upgrades to topological continuity
   by the closed-preimage criterion (both sides are metric), and the
@@ -302,9 +302,13 @@ proof -
   have T0': "0 \<le> T'" using T by simp
   have L0: "0 \<le> L" using L by simp
   interpret MC: Metric_space ?C ?dd
-    by (rule exit_class_compact_metric_space(1)[OF T L0])
+    by (unfold exit_class_eq_covariation,
+        rule covariation_class_compact_metric_space(1)[where S = "sconstraint k L",
+          OF T sconstraint_bounds[OF L0] closed_sconstraint])
   have Ctop: "MC.mtopology = subtopology ?W ?C"
-    by (rule exit_class_compact_metric_space(2)[OF T L0])
+    by (unfold exit_class_eq_covariation,
+        rule covariation_class_compact_metric_space(2)[where S = "sconstraint k L",
+          OF T sconstraint_bounds[OF L0] closed_sconstraint])
   show KC: "\<And>z. pair_law_of T' (sbmpair (SF z) T') ?M
       \<in> exit_class k L T' (0 :: real^'n)"
     unfolding exit_class_eq_covariation
@@ -363,7 +367,7 @@ qed
 subsection \<open>The Euler process\<close>
 
 text \<open>Freeze the field at the left endpoint of each step and glue with
-  @{thm [source] exit_class_kglue_law'}: stage \<open>j\<close> is a member on
+  @{thm [source] covariation_class_kglue_law'}: stage \<open>j\<close> is a member on
   the horizon \<open>(j+1)h\<close>, and membership is plain induction --- the
   continuation kernel is centred (\<open>pglue\<close> recenters), so it is exactly
   @{thm [source] sbm_kernel_package} composed with the endpoint map.\<close>
@@ -422,7 +426,12 @@ next
   have "kglue_law' r T'
       (\<lambda>\<omega>. pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
       (eulerp SF x h j) \<in> exit_class k L T' x"
-    by (rule exit_class_kglue_law'[OF r0 rT L1 T0 Q Kp]) (rule Kc)
+    unfolding exit_class_eq_covariation
+    by (rule covariation_class_kglue_law'[where S = "sconstraint k L",
+          OF r0 rT sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1] T0
+          Q[unfolded exit_class_eq_covariation] Kp])
+      (assumption | rule Kc[unfolded exit_class_eq_covariation])+
   then show ?case unfolding r_def T'_def by simp
 qed
 

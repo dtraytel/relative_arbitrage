@@ -8,43 +8,59 @@ begin
 
 (*>*)
 
-section \<open>The clauses of Theorem 1.1 proved for the paper's own \<open>v\<close>\<close>
-
-text \<open>The clauses of Theorem 1.1 proved for \<open>exit_val\<close> --- the faithful
-  rendering of Eq. (1.6) --- collected in one place.
-
-  Clause (2), the viscosity property, needs the dynamic programming
-  principle of Proposition 2.4 and, on top of that, Section 3's
-  It\<open>\<^bold>o\<close>/SDE layer, and is not covered here.  Clause (3) is here only for
-  the ball; the interior value for \<open>n - k \<ge> 2\<close> remains unproved.
-  Clause (4), uniqueness, is \<open>Value_Function_Uniqueness.theorem_1_1_uniqueness_general\<close>,
-  a statement about viscosity solutions rather than about \<open>exit_val\<close>.\<close>
-
 text \<open>The measurable selection theorem for upper semicontinuous payoffs,
   Bertsekas--Shreve (1978) Prop. 7.33, lives in
   @{theory Continuous_Path_Spaces.Semicontinuous_Selection}, as
   \<open>Metric_space.usc_measurable_selection\<close>.\<close>
 
-section \<open>The paper's class is a compact metric space of measures\<close>
+section \<open>The class is a compact metric space of measures\<close>
 
 text \<open>The AFP entry \<open>Levy_Prokhorov_Metric\<close> makes the space of finite
   Borel measures on a separable metric space a metric space for the
   L\'evy--Prokhorov distance, whose topology is \<open>weak_conv_topology\<close>, the
   topology \<open>weak_conv_on\<close> is a \<open>limitin\<close> of.  Prokhorov's theorem turns
   tightness into relative compactness, and weak closedness collapses the
-  closure: the paper's class is a compact subset of a metric space, the
+  closure: for a closed \<open>S\<close> with the two bounds the class is a compact subset of a metric space, the
   input @{thm [source] Metric_space.usc_measurable_selection} wants.\<close>
 
-lemma exit_class_subset_weak_topspace:
-  "exit_class k L T x \<subseteq> topspace (weak_conv_topology
+lemma covariation_class_subset_weak_topspace:
+  "covariation_class S T x \<subseteq> topspace (weak_conv_topology
       (mtopology_of (path_metric T :: ('n::finite pairpath) metric)))"
 proof
   fix N :: "('n pairpath) measure"
-  assume N: "N \<in> exit_class k L T x"
+  assume N: "N \<in> covariation_class S T x"
   show "N \<in> topspace (weak_conv_topology
       (mtopology_of (path_metric T :: ('n pairpath) metric)))"
-    using exit_class_sets[OF N] prob_space.finite_measure[OF exit_class_prob[OF N]] by simp
+    using covariation_class_sets[OF N] prob_space.finite_measure[OF covariation_class_prob[OF N]] by simp
 qed
+
+theorem covariation_class_compactin_weak:
+  fixes x :: "real^'n::finite"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S"
+  shows "compactin (weak_conv_topology
+        (mtopology_of (path_metric T :: ('n pairpath) metric)))
+      (covariation_class S T x)"
+proof (rule compactin_of_seq_compact
+    [OF metrizable_weak_conv_path_topology covariation_class_subset_weak_topspace])
+  fix \<sigma> :: "nat \<Rightarrow> ('n pairpath) measure"
+  assume "range \<sigma> \<subseteq> covariation_class S T x"
+  then have mem: "\<sigma> m \<in> covariation_class S T x" for m by auto
+  have "\<exists>r l. strict_mono r \<and> l \<in> covariation_class S T x
+      \<and> weak_conv_on (\<sigma> \<circ> r) l sequentially
+          (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    by (rule covariation_class_convergent_subsequence[where Qm = \<sigma>,
+        OF T B0 B D0 D Sc mem])
+  then show "\<exists>l r. l \<in> covariation_class S T x \<and> strict_mono r \<and> limitin
+      (weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric)))
+      (\<sigma> \<circ> r) l sequentially"
+    by blast
+qed
+
+text \<open>For the paper's constraint set this is Lemma 2.3's compactness.\<close>
 
 theorem exit_class_compactin_weak:
   fixes x :: "real^'n::finite"
@@ -52,27 +68,13 @@ theorem exit_class_compactin_weak:
   shows "compactin (weak_conv_topology
         (mtopology_of (path_metric T :: ('n pairpath) metric)))
       (exit_class k L T x)"
-proof (rule compactin_of_seq_compact
-    [OF metrizable_weak_conv_path_topology exit_class_subset_weak_topspace])
-  fix \<sigma> :: "nat \<Rightarrow> ('n pairpath) measure"
-  assume "range \<sigma> \<subseteq> exit_class k L T x"
-  then have mem: "\<sigma> m \<in> covariation_class (sconstraint k L) T x" for m
-    unfolding exit_class_eq_covariation by auto
-  have "\<exists>r l. strict_mono r \<and> l \<in> covariation_class (sconstraint k L) T x
-      \<and> weak_conv_on (\<sigma> \<circ> r) l sequentially
-          (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    by (rule covariation_class_convergent_subsequence[where Qm = \<sigma>,
-        OF T sconstraint_bounds[OF L] closed_sconstraint mem])
-  then show "\<exists>l r. l \<in> exit_class k L T x \<and> strict_mono r \<and> limitin
-      (weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric)))
-      (\<sigma> \<circ> r) l sequentially"
-    unfolding exit_class_eq_covariation by blast
-qed
+  unfolding exit_class_eq_covariation
+  by (rule covariation_class_compactin_weak[OF T sconstraint_bounds[OF L] closed_sconstraint])
 
 section \<open>Joint continuity of the shift\<close>
 
 text \<open>After @{thm [source] covariation_class_shift_image} the functional
-  whose supremum is @{term exit_val} is a function of the starting point
+  whose supremum is @{term covariation_val} is a function of the starting point
   and a member of the fixed class at the origin.  The selection theorem's
   measurability hypothesis --- that the supremum over each closed set be
   measurable in the parameter --- comes from joint upper semicontinuity,
@@ -87,19 +89,23 @@ text \<open>After @{thm [source] covariation_class_shift_image} the functional
 
 
 
-theorem exit_class_compact_metric_space:
+theorem covariation_class_compact_metric_space:
   fixes x :: "real^'n::finite"
-  assumes T: "0 < T" and L: "0 \<le> L"
-  shows "Metric_space (exit_class k L T x)
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S"
+  shows "Metric_space (covariation_class S T x)
       (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
         (mdist (path_metric T :: ('n pairpath) metric)))"
-    and "Metric_space.mtopology (exit_class k L T x)
+    and "Metric_space.mtopology (covariation_class S T x)
       (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
         (mdist (path_metric T :: ('n pairpath) metric)))
       = subtopology (weak_conv_topology
           (mtopology_of (path_metric T :: ('n pairpath) metric)))
-          (exit_class k L T x)"
-    and "compact_space (Metric_space.mtopology (exit_class k L T x)
+          (covariation_class S T x)"
+    and "compact_space (Metric_space.mtopology (covariation_class S T x)
       (Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
         (mdist (path_metric T :: ('n pairpath) metric))))"
 proof -
@@ -113,37 +119,37 @@ proof -
   have LPtop: "LP.LPm.mtopology
       = weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
     using LP.LPmtopology_eq_weak_conv_topology[OF sepLP] Xeq by simp
-  have subC: "exit_class k L T x \<subseteq> LP.\<P>"
+  have subC: "covariation_class S T x \<subseteq> LP.\<P>"
   proof
     fix N :: "('n pairpath) measure"
-    assume N: "N \<in> exit_class k L T x"
-    have p: "prob_space N" by (rule exit_class_prob[OF N])
+    assume N: "N \<in> covariation_class S T x"
+    have p: "prob_space N" by (rule covariation_class_prob[OF N])
     then have "finite_measure N"
       by (simp add: prob_space.emeasure_space_1 finite_measureI)
-    with exit_class_sets[OF N] Xeq show "N \<in> LP.\<P>" by (simp add: LP.inP_iff)
+    with covariation_class_sets[OF N] Xeq show "N \<in> LP.\<P>" by (simp add: LP.inP_iff)
   qed
-  have SMloc: "Submetric LP.\<P> LP.LPm (exit_class k L T x)"
+  have SMloc: "Submetric LP.\<P> LP.LPm (covariation_class S T x)"
     unfolding Submetric_def Submetric_axioms_def
     using LP.LPm.Metric_space_axioms subC by blast
-  interpret SM: Submetric "LP.\<P>" "LP.LPm" "exit_class k L T x"
+  interpret SM: Submetric "LP.\<P>" "LP.LPm" "covariation_class S T x"
     by (rule SMloc)
-  show ms: "Metric_space (exit_class k L T x) LP.LPm"
+  show ms: "Metric_space (covariation_class S T x) LP.LPm"
     by (rule SM.sub.Metric_space_axioms)
   show top: "SM.sub.mtopology
       = subtopology (weak_conv_topology
           (mtopology_of (path_metric T :: ('n pairpath) metric)))
-          (exit_class k L T x)"
+          (covariation_class S T x)"
     using SM.mtopology_submetric LPtop by simp
   show "compact_space SM.sub.mtopology"
     unfolding top
-    by (rule compact_space_subtopology[OF exit_class_compactin_weak[OF T L]])
+    by (rule compact_space_subtopology[OF covariation_class_compactin_weak[OF T B0 B D0 D Sc]])
 qed
 
 section \<open>A measurable optimizer: Larsson--Ruf Proposition 2.2(ii)\<close>
 
 text \<open>The supremum in (1.6) is attained, and the optimizer can be chosen
   measurably in the starting point: the class at the origin is a compact
-  metric space (@{thm [source] exit_class_compact_metric_space}),
+  metric space (@{thm [source] covariation_class_compact_metric_space}),
   the payoff is jointly upper semicontinuous
   (@{thm [source] ess_inf_pexit_pshift_usc}), and
   @{thm [source] Metric_space.usc_measurable_selection} does the rest.
@@ -157,40 +163,41 @@ text \<open>The supremum in (1.6) is attained, and the optimizer can be chosen
   (@{thm [source] ess_inf_pexit_Sup_eq_vshift}), to which Berge's theorem
   applies (@{thm [source] vshift_sup_usc}).\<close>
 
-theorem exit_val_measurable_selector:
-  fixes K :: "(real^'n::finite) set"
-  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
-  obtains S where
-    "S \<in> borel \<rightarrow>\<^sub>M borel_of (weak_conv_topology
+theorem covariation_val_measurable_selector:
+  fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S" and K: "closed K"
+  obtains Sel where
+    "Sel \<in> borel \<rightarrow>\<^sub>M borel_of (weak_conv_topology
         (mtopology_of (path_metric T :: ('n pairpath) metric)))"
-    and "\<And>y. S y \<in> exit_class k L T 0"
-    and "\<And>y. pshift_law T y (S y) \<in> exit_class k L T y"
-    and "\<And>y. ess_inf_time (pshift_law T y (S y))
-        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K y"
+    and "\<And>y. Sel y \<in> covariation_class S T 0"
+    and "\<And>y. pshift_law T y (Sel y) \<in> covariation_class S T y"
+    and "\<And>y. ess_inf_time (pshift_law T y (Sel y))
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = covariation_val S T K y"
 proof -
   let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?W = "weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  let ?C = "exit_class k L T (0 :: real^'n)"
+  let ?C = "covariation_class S T (0 :: real^'n)"
   let ?g = "\<lambda>(y :: real^'n) (R :: ('n pairpath) measure).
       ess_inf_time (pshift_law T y R) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
   have T0: "0 \<le> T" using T by simp
-  have L0: "0 \<le> L" using L by simp
-  interpret MC: Metric_space "exit_class k L T (0 :: real^'n)"
+  interpret MC: Metric_space "covariation_class S T (0 :: real^'n)"
       "Levy_Prokhorov.LPm (mspace (path_metric T :: ('n pairpath) metric))
         (mdist (path_metric T :: ('n pairpath) metric))"
-    by (rule exit_class_compact_metric_space(1)[OF T L0])
+    by (rule covariation_class_compact_metric_space(1)[OF T B0 B D0 D Sc])
   have Ctop: "MC.mtopology = subtopology ?W ?C"
-    by (rule exit_class_compact_metric_space(2)[OF T L0])
+    by (rule covariation_class_compact_metric_space(2)[OF T B0 B D0 D Sc])
   have Ccpt: "compact_space MC.mtopology"
-    by (rule exit_class_compact_metric_space(3)[OF T L0])
-  have Cne: "?C \<noteq> {}"
-    unfolding exit_class_eq_covariation
-    by (rule covariation_class_nonempty[OF T0 closed_sconstraint, where \<sigma> = "mat 1"])
-      (simp add: mat_1_in_sconstraint[OF L])
-  have prC: "prob_space R" if "R \<in> ?C" for R by (rule exit_class_prob[OF that])
+    by (rule covariation_class_compact_metric_space(3)[OF T B0 B D0 D Sc])
+  have Cne: "?C \<noteq> {}" by (rule covariation_class_nonempty[OF T0 Sc SST])
+  have prC: "prob_space R" if "R \<in> ?C" for R by (rule covariation_class_prob[OF that])
   have stC: "sets R = sets ?B" if "R \<in> ?C" for R
-    by (rule exit_class_sets[OF that])
+    by (rule covariation_class_sets[OF that])
   have convC: "weak_conv_on sq Rl sequentially ?X"
     if "limitin MC.mtopology sq Rl sequentially" for sq Rl
     using that unfolding Ctop by (simp add: limitin_subtopology)
@@ -261,7 +268,7 @@ proof -
       by (intro measurable_compose[OF _ measurable_ennreal] borel_measurableI_less)
         (simp add: borel_open)
     moreover have "Sup (?g y ` Cs) = ennreal (?f y)" for y
-      by (rule ess_inf_pexit_Sup_eq_vshift[OF T0 CsC[unfolded exit_class_eq_covariation] False])
+      by (rule ess_inf_pexit_Sup_eq_vshift[OF T0 CsC False])
     ultimately show ?thesis by simp
   qed simp
   \<comment> \<open>the selection theorem, and the transfer back to the value function\<close>
@@ -275,10 +282,10 @@ proof -
   proof
     fix N :: "('n pairpath) measure"
     assume N: "N \<in> ?C"
-    have p: "prob_space N" by (rule exit_class_prob[OF N])
+    have p: "prob_space N" by (rule covariation_class_prob[OF N])
     then have "finite_measure N"
       by (simp add: prob_space.emeasure_space_1 finite_measureI)
-    with exit_class_sets[OF N] show "N \<in> topspace ?W" by simp
+    with covariation_class_sets[OF N] show "N \<in> topspace ?W" by simp
   qed
   have smW: "s \<in> (borel :: (real^'n) measure) \<rightarrow>\<^sub>M borel_of ?W"
   proof (rule measurable_sigma_sets)
@@ -300,36 +307,40 @@ proof -
       ultimately show ?thesis by simp
     qed
   qed
-  have shiftmem: "pshift_law T y (s y) \<in> exit_class k L T y" for y
-    using covariation_class_pshift[OF T0 sC[unfolded exit_class_eq_covariation], of y]
-    unfolding exit_class_eq_covariation by simp
-  have supeq: "Sup (?g y ` ?C) = exit_val k L T K y" for y
+  have shiftmem: "pshift_law T y (s y) \<in> covariation_class S T y" for y
+    using covariation_class_pshift[OF T0 sC, of y] by simp
+  have supeq: "Sup (?g y ` ?C) = covariation_val S T K y" for y
   proof -
-    have "exit_class k L T y = pshift_law T y ` ?C"
-      unfolding exit_class_eq_covariation by (rule covariation_class_shift_image[OF T0])
+    have "covariation_class S T y = pshift_law T y ` ?C"
+      by (rule covariation_class_shift_image[OF T0])
     then have "(\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
-          ` exit_class k L T y = ?g y ` ?C"
+          ` covariation_class S T y = ?g y ` ?C"
       by (simp add: image_image)
-    then show ?thesis unfolding exit_val_def by simp
+    then show ?thesis unfolding covariation_val_def by simp
   qed
   have sval: "ess_inf_time (pshift_law T y (s y)) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-      = exit_val k L T K y" for y
+      = covariation_val S T K y" for y
     using sopt[of y] supeq[of y] by simp
   show ?thesis by (rule that[OF smW sC shiftmem sval])
 qed
 
 text \<open>In particular the supremum in (1.6) is attained at every starting point.\<close>
 
-theorem exit_val_attained:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
-  shows "\<exists>Q \<in> exit_class k L T x.
-      ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K x"
+theorem covariation_val_attained:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S" and K: "closed K"
+  shows "\<exists>Q \<in> covariation_class S T x.
+      ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = covariation_val S T K x"
 proof -
-  obtain S where "\<And>y. pshift_law T y (S y) \<in> exit_class k L T y"
-    and "\<And>y. ess_inf_time (pshift_law T y (S y)) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-      = exit_val k L T K y"
-    using exit_val_measurable_selector[OF T L K, of k] by metis
+  obtain Sel where "\<And>y. pshift_law T y (Sel y) \<in> covariation_class S T y"
+    and "\<And>y. ess_inf_time (pshift_law T y (Sel y)) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+      = covariation_val S T K y"
+    using covariation_val_measurable_selector[OF T B0 B D0 D Sc SST K] by metis
   then show ?thesis by blast
 qed
 
@@ -345,17 +356,22 @@ text \<open>Kernel pasting glues with the Giry monad's @{term bind}, which wants
   gives the measurability into the compact class that the rounding step
   of the proof below needs.\<close>
 
-theorem exit_class_kglue_law':
-  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L"
+theorem covariation_class_kglue_law':
+  fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
+  assumes r: "0 \<le> r" and rT: "r < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S"
     and T0: "0 < T"
-    and Q: "Q \<in> exit_class k L r x"
+    and Q: "Q \<in> covariation_class S r x"
     and Kp: "Kr \<in> Q \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
-    and Kc: "\<And>\<omega>. Kr \<omega> \<in> exit_class k L (T - r) 0"
-  shows "kglue_law' r T Kr Q \<in> exit_class k L T x"
+    and Kc: "\<And>\<omega>. Kr \<omega> \<in> covariation_class S (T - r) 0"
+  shows "kglue_law' r T Kr Q \<in> covariation_class S T x"
 proof -
   let ?s = "T - r"
-  let ?C0 = "exit_class k L ?s (0::real^'n)"
+  let ?C0 = "covariation_class S ?s (0::real^'n)"
   let ?dd = "Levy_Prokhorov.LPm (mspace (path_metric ?s :: ('n pairpath) metric))
       (mdist (path_metric ?s :: ('n pairpath) metric))"
   let ?MR = "(path_borel ?s :: ('n pairpath) measure)"
@@ -364,20 +380,16 @@ proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have s0: "0 < ?s" using rT by simp
   have s0': "0 \<le> ?s" using s0 by simp
-  have L0: "0 \<le> L" using L1 by simp
   have rT': "r \<le> T" using rT by simp
-  have setsQ: "sets Q = sets (borel_of ?X)" by (rule exit_class_sets[OF Q])
-  have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
-  interpret MC: Metric_space "exit_class k L ?s (0::real^'n)" ?dd
-    by (rule exit_class_compact_metric_space(1)[OF s0 L0])
+  have setsQ: "sets Q = sets (borel_of ?X)" by (rule covariation_class_sets[OF Q])
+  have PQ: "prob_space Q" by (rule covariation_class_prob[OF Q])
+  interpret MC: Metric_space "covariation_class S ?s (0::real^'n)" ?dd
+    by (rule covariation_class_compact_metric_space(1)[OF s0 B0 B D0 D Sc])
   have Ctop: "MC.mtopology = subtopology (weak_conv_topology ?Y) ?C0"
-    by (rule exit_class_compact_metric_space(2)[OF s0 L0])
+    by (rule covariation_class_compact_metric_space(2)[OF s0 B0 B D0 D Sc])
   have Ccpt: "compact_space MC.mtopology"
-    by (rule exit_class_compact_metric_space(3)[OF s0 L0])
-  have Cne: "?C0 \<noteq> {}"
-    unfolding exit_class_eq_covariation
-    by (rule covariation_class_nonempty[OF s0' closed_sconstraint, where \<sigma> = "mat 1"])
-      (simp add: mat_1_in_sconstraint[OF L1])
+    by (rule covariation_class_compact_metric_space(3)[OF s0 B0 B D0 D Sc])
+  have Cne: "?C0 \<noteq> {}" by (rule covariation_class_nonempty[OF s0' Sc SST])
   \<comment> \<open>the kernel is measurable into the class, from the time-\<open>r\<close> \<open>\<sigma>\<close>-algebra\<close>
   have Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel_of MC.mtopology"
   proof -
@@ -409,24 +421,22 @@ proof -
   proof -
     interpret MQ0: martingale Q "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
       "0::real" "\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n"
-      by (rule exit_class_X_martingale[OF Q])
+      by (rule covariation_class_martingale_fst[OF Q])
     show ?thesis by (rule measurable_from_subalg[OF MQ0.subalgebras[OF r] Nmeas])
   qed
   \<comment> \<open>each rounded glue is in the class, and is the kernel glue at the rounding\<close>
-  have memm: "kglue_law' r T (\<lambda>\<omega>. z (Nm m \<omega>)) Q \<in> exit_class k L T x" for m
+  have memm: "kglue_law' r T (\<lambda>\<omega>. z (Nm m \<omega>)) Q \<in> covariation_class S T x" for m
   proof -
-    have "kglue_law r T (Nm m) Q z \<in> exit_class k L T x"
-      unfolding exit_class_eq_covariation
-      by (rule covariation_class_kglue_law[OF r rT' closed_sconstraint sconstraint_convex
-            sconstraint_bounds(1,2)[OF L0] Q[unfolded exit_class_eq_covariation] zC[unfolded exit_class_eq_covariation] Nmeas])
+    have "kglue_law r T (Nm m) Q z \<in> covariation_class S T x"
+      by (rule covariation_class_kglue_law[OF r rT' Sc Sv B0 B Q zC Nmeas])
     moreover have "kglue_law r T (Nm m) Q z = kglue_law' r T (\<lambda>\<omega>. z (Nm m \<omega>)) Q"
     proof (rule kglue_law_eq_kglue_law'[OF r rT' PQ _ setsQ _ NmQ])
-      show "prob_space (z j)" for j by (rule exit_class_prob[OF zC])
-      show "sets (z j) = sets ?MR" for j by (rule exit_class_sets[OF zC])
+      show "prob_space (z j)" for j by (rule covariation_class_prob[OF zC])
+      show "sets (z j) = sets ?MR" for j by (rule covariation_class_sets[OF zC])
       show "(\<lambda>\<omega>. z (Nm m \<omega>)) \<in> Q \<rightarrow>\<^sub>M prob_algebra ?MR"
       proof (rule measurable_compose_countable[where f = "\<lambda>j (_ :: 'n pairpath). z j"])
         show "(\<lambda>\<omega>. z j) \<in> Q \<rightarrow>\<^sub>M prob_algebra ?MR" for j
-          using exit_class_prob[OF zC] exit_class_sets[OF zC]
+          using covariation_class_prob[OF zC] covariation_class_sets[OF zC]
           by (simp add: measurable_const space_prob_algebra)
         show "Nm m \<in> Q \<rightarrow>\<^sub>M count_space UNIV" by (rule NmQ)
       qed
@@ -437,7 +447,7 @@ proof -
   have Kpm: "(\<lambda>\<omega>. z (Nm m \<omega>)) \<in> Q \<rightarrow>\<^sub>M prob_algebra ?MR" for m
   proof (rule measurable_compose_countable[where f = "\<lambda>j (_ :: 'n pairpath). z j"])
     show "(\<lambda>\<omega>. z j) \<in> Q \<rightarrow>\<^sub>M prob_algebra ?MR" for j
-      using exit_class_prob[OF zC] exit_class_sets[OF zC]
+      using covariation_class_prob[OF zC] covariation_class_sets[OF zC]
       by (simp add: measurable_const space_prob_algebra)
     show "Nm m \<in> Q \<rightarrow>\<^sub>M count_space UNIV" by (rule NmQ)
   qed
@@ -466,7 +476,7 @@ proof -
   have pl: "prob_space (kglue_law' r T Kr Q)"
     by (rule prob_space_kglue_law'[OF r rT' PQ setsQ Kp])
   show ?thesis
-    by (rule exit_class_weak_closed[OF T0 L0 memm gconv pl]) simp
+    by (rule covariation_class_weak_closed[OF T0 B0 B D0 D Sc memm gconv pl sets_kglue_law'])
 qed
 
 

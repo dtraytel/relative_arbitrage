@@ -197,7 +197,7 @@ proof (rule antisym)
     unfolding opt[symmetric] by (rule exit_val_dpp_ess_inf_mono[OF r rT' L1 Kc P])
 qed
 
-text \<open>Optimizers exist (@{thm [source] exit_val_attained}), so the supremum
+text \<open>Optimizers exist (@{thm [source] covariation_val_attained}), so the supremum
   in (2.9) is a maximum.\<close>
 
 corollary exit_val_dpp_attained:
@@ -211,9 +211,13 @@ corollary exit_val_dpp_attained:
       = exit_val k L T K x"
 proof -
   have T0: "0 < T" using r rT by simp
+  have att: "\<exists>P \<in> exit_class k L T x.
+        ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K x"
+    unfolding exit_class_eq_covariation exit_val_eq_covariation_val
+    by (rule covariation_val_attained[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint mat_1_rate_in_sconstraint[OF L1] Kc])
   show ?thesis
-    using exit_val_attained[where k = k, OF T0 L1 Kc]
-      exit_val_dpp_optimizer[OF r rT L1 Kc] by blast
+    using att exit_val_dpp_optimizer[OF r rT L1 Kc] by blast
 qed
 
 subsection \<open>Step 2: the equality at a stopping time\<close>
@@ -299,8 +303,15 @@ corollary exit_val_dpp_time_attained:
             + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
                then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0))
       = exit_val k L T K x"
-  using exit_val_attained[where k = k, OF T0 L1 Kc]
-    exit_val_dpp_time_optimizer[OF T0 L1 Kc st thM] by blast
+proof -
+  have att: "\<exists>P \<in> exit_class k L T x.
+        ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K x"
+    unfolding exit_class_eq_covariation exit_val_eq_covariation_val
+    by (rule covariation_val_attained[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint mat_1_rate_in_sconstraint[OF L1] Kc])
+  show ?thesis
+    using att exit_val_dpp_time_optimizer[OF T0 L1 Kc st thM] by blast
+qed
 
 (*<*)
 end

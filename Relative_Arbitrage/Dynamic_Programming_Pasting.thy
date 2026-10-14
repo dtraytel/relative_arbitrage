@@ -48,7 +48,10 @@ proof -
     and SC: "\<And>y. S y \<in> exit_class k L T 0"
     and Sval: "\<And>y. ess_inf_time (pshift_law T y (S y))
         (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K y"
-    by (rule exit_val_measurable_selector[where k = k, OF T L K]) blast
+    by (rule covariation_val_measurable_selector[where S = "sconstraint k L",
+          OF T sconstraint_bounds[OF order_trans[OF zero_le_one L]]
+          closed_sconstraint mat_1_rate_in_sconstraint[OF L] K,
+          folded exit_class_eq_covariation exit_val_eq_covariation_val]) blast+
   have Sk: "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
     by (rule measurable_prob_algebra_weak_conv[OF Polish_space_path_metric Sm])
       (use exit_class_prob[OF SC] exit_class_sets[OF SC] in simp)
