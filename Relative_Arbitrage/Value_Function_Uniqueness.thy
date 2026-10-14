@@ -638,19 +638,12 @@ theorem iexit_val_subsol_bc:
       (\<lambda>z. enn2real (iexit_val k L K z))"
 proof -
   have L0: "0 \<le> L" using L by simp
-  have le: "ell_op_lsc k L p M \<le> covariation_op (sconstraint k L) p M"
-    for p :: "real^'n" and M :: "real^'n^'n"
-    using ell_op_lsc_le_ell_op[of k L p M] ell_op_le_covariation_op[OF kn L, of p M]
-    by (rule order_trans)
-  have "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op (sconstraint k L))
-      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (icovariation_val (sconstraint k L) K x)})
-      (\<lambda>z. enn2real (icovariation_val (sconstraint k L) K z))"
-    by (rule icovariation_val_subsol_bc[OF sconstraint_bounds[OF L0] closed_sconstraint
-          sconstraint_convex mat_1_rate_in_sconstraint[OF L] sconstraint_psd_entry(1)
-          sconstraint_trace_bounds(3,4)[OF kn L0] cK])
-  then show ?thesis
+  show ?thesis
     unfolding visc_subsol_env_eq_gen iexit_val_eq_icovariation_val
-    by (rule visc_subsol_gen_mono) (rule le)
+    by (rule visc_subsol_gen_mono[OF icovariation_val_subsol_bc[OF sconstraint_bounds[OF L0]
+          closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L]
+          sconstraint_psd_entry(1) sconstraint_trace_bounds(3,4)[OF kn L0] cK]
+          ell_op_lsc_le_covariation_op[OF kn L]])
 qed
 
 text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>\<close>

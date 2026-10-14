@@ -157,8 +157,8 @@ text \<open>@{thm [source] covariation_val_attained} supplies the optimizer, at 
   The test function here is quadratic and touches globally; turning a
   local touching into a global one is the Crandall--Ishii localisation
   step, not used here, so the relaxed operator, without the orthogonality
-  constraint, is what comes out; the orthogonality is recovered below
-  (\<open>covariation_val_touch_orth\<close> below).\<close>
+  constraint, is what comes out; \<open>covariation_val_touch_orth\<close> below
+  recovers the orthogonality.\<close>
 
 
 section \<open>Scalar multiples through the Bochner integral\<close>
@@ -1775,6 +1775,13 @@ proof (rule INF_greatest)
   then show "ereal (ell_op k L p M) \<le> ereal (- trace (M ** b) / 2)" by simp
 qed
 
+lemma ell_op_lsc_le_covariation_op:
+  fixes p :: "real^'n::finite" and M :: "real^'n^'n"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L"
+  shows "ell_op_lsc k L p M \<le> covariation_op (sconstraint k L) p M"
+  using ell_op_lsc_le_ell_op[of k L p M] ell_op_le_covariation_op[OF kn L1, of p M]
+  by (rule order_trans)
+
 text \<open>With \<open>1 \<le> k\<close> the feasible set is nonempty and the two operators agree:
   the infimum over the larger set \<open>sconstraint k L \<inter> {a. a *v p = 0}\<close> is
   attained, up to \<open>\<epsilon>\<close>, by feasible rates.\<close>
@@ -2076,21 +2083,11 @@ theorem exit_val_subsol_bc:
   shows "visc_subsol_env k L K
       (interior K \<union> {x \<in> K - interior K. 0 < enn2real (exit_val k L T K x)})
       (\<lambda>z. enn2real (exit_val k L T K z))"
-proof -
-  have L0: "0 \<le> L" using L1 by simp
-  have le: "ell_op_lsc k L p M \<le> covariation_op (sconstraint k L) p M"
-    for p :: "real^'n" and M :: "real^'n^'n"
-    using ell_op_lsc_le_ell_op[of k L p M] ell_op_le_covariation_op[OF kn L1, of p M]
-    by (rule order_trans)
-  have "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op (sconstraint k L))
-      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (covariation_val (sconstraint k L) T K x)})
-      (\<lambda>z. enn2real (covariation_val (sconstraint k L) T K z))"
-    by (rule covariation_val_subsol_bc[OF T sconstraint_bounds[OF L0] closed_sconstraint
-          sconstraint_convex mat_1_rate_in_sconstraint[OF L1] sconstraint_psd_entry(1) Kc])
-  then show ?thesis
-    unfolding visc_subsol_env_eq_gen exit_val_eq_covariation_val
-    by (rule visc_subsol_gen_mono) (rule le)
-qed
+  unfolding visc_subsol_env_eq_gen exit_val_eq_covariation_val
+  by (rule visc_subsol_gen_mono[OF covariation_val_subsol_bc[OF T
+        sconstraint_bounds[OF order_trans[OF zero_le_one L1]] closed_sconstraint sconstraint_convex
+        mat_1_rate_in_sconstraint[OF L1] sconstraint_psd_entry(1) Kc]
+        ell_op_lsc_le_covariation_op[OF kn L1]])
 
 
 (*<*)
