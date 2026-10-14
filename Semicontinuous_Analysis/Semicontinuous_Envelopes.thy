@@ -147,9 +147,9 @@ proof -
   then show ?thesis unfolding usc_env_def by linarith
 qed
 
-text \<open>The limsup bound that Theorem 4.3 of \<^cite>\<open>LaiShkolnikovSoner\<close>'s \<open>\<iota> \<down> 1\<close> step consumes: a value
-  bounded below along a sequence tending to \<open>x\<close> is bounded by the upper
-  envelope at \<open>x\<close>.  No continuity anywhere.\<close>
+text \<open>A limsup bound: a value bounded below along a sequence tending to
+  \<open>x\<close> is bounded by the upper envelope at \<open>x\<close>.  No continuity is
+  needed.\<close>
 
 lemma usc_env_limsup_bound:
   fixes u :: "'a::metric_space \<Rightarrow> real" and zs :: "nat \<Rightarrow> 'a"
@@ -298,8 +298,8 @@ qed
 
 text \<open>At a point of lower semicontinuity the lower envelope is the function
   itself: the mirror image of \<open>usc_env_eq_at\<close>, since
-  \<open>usc_env (- u) = - lsc_env u\<close> by definition.  Continuity is the special case
-  used downstream.\<close>
+  \<open>usc_env (- u) = - lsc_env u\<close> by definition.  Continuity is a special
+  case.\<close>
 
 lemma lsc_env_eq_at:
   fixes u :: "'a::metric_space \<Rightarrow> real"
@@ -336,18 +336,18 @@ qed
 
 subsection \<open>The envelope taken within \<open>K\<close>\<close>
 
-text \<open>Definition 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> of the paper reads its lower envelope \<open>u\<^sub>*\<close> inside \<open>K\<close>:
-  the liminf is over points of \<open>K\<close> only.  @{const lsc_env} takes it over balls
-  of \<open>'a\<close>, so the two agree at interior points of \<open>K\<close> and can differ on
-  \<open>K - interior K\<close>, which is exactly where a boundary condition is
-  read.  \<open>lsc_envK\<close> is the paper's envelope.
+text \<open>A boundary condition in the viscosity sense on a closed set \<open>K\<close> reads
+  the lower envelope \<open>u\<^sub>*\<close> inside \<open>K\<close>: the liminf is over points of \<open>K\<close>
+  only.  @{const lsc_env} takes it over balls of \<open>'a\<close>, so the two agree at
+  interior points of \<open>K\<close> and can differ on \<open>K - interior K\<close>, which is
+  exactly where a boundary condition is read.  \<open>lsc_envK\<close> is the envelope
+  within \<open>K\<close>.
 
   The bridge between them is an extension.  A function on \<open>K\<close> reaches
   \<open>'a\<close> only through one, and the extension has to do two incompatible
   looking things: stay high enough off \<open>K\<close> that it does not lower the
   infimum over a ball (or the two envelopes differ), and stay low enough at
-  \<open>K - interior K\<close> that upper semicontinuity survives (or the comparison
-  machinery does not apply).  Composing with the nearest-point projection does
+  \<open>K - interior K\<close> that upper semicontinuity survives.  Composing with the nearest-point projection does
   both --- off \<open>K\<close> the value is a value of \<open>u\<close> at a point at most twice as far
   away --- and the upper envelope of that composite repairs semicontinuity at
   the points outside \<open>K\<close> where the projection jumps, without touching \<open>K\<close>.\<close>

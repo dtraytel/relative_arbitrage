@@ -7,8 +7,7 @@ begin
 (*>*)
 
 text \<open>
-  Upper and lower semicontinuity, in the \<open>\<epsilon>\<close>-\<open>\<delta>\<close> form the comparison-principle
-  machinery consumes throughout: closure under \<open>+\<close>, positive scaling, and
+  Upper and lower semicontinuity, in the \<open>\<epsilon>\<close>-\<open>\<delta>\<close> form: closure under \<open>+\<close>, positive scaling, and
   subtracting a continuous function; eventual bounds along a convergent
   sequence; open strict sublevel sets; attainment of the sup/inf of a
   semicontinuous function on a nonempty compact set; and bounded extension
@@ -133,9 +132,9 @@ lemma usc_attains_sup_gen:
   obtains z where "z \<in> S" and "\<And>y. y \<in> S \<Longrightarrow> f y \<le> f z"
   using usc_attains_sup_compact[OF usc cS neS] that by blast
 
-text \<open>Existential repackaging: an \<open>obtains\<close>-rule cannot be consumed by
-  \<open>obtain \<dots> by (rule \<dots>)\<close> (the schematic \<open>thesis\<close> swallows the whole goal), so
-  the consumers below use these forms.\<close>
+text \<open>The existential form of \<open>lsc_attains_inf_gen\<close>: an \<open>obtains\<close>-rule
+  cannot be consumed by \<open>obtain \<dots> by (rule \<dots>)\<close> (the schematic \<open>thesis\<close>
+  swallows the whole goal), so this form is provided as well.\<close>
 
 lemma lsc_attains_inf_ex:
   fixes f :: "'a::metric_space \<Rightarrow> real" and S :: "'a set"
@@ -150,9 +149,8 @@ qed
 
 subsection \<open>A little upper-semicontinuity calculus\<close>
 
-text \<open>All in the \<open>\<epsilon>\<close>-form the comparison machinery uses, and on an arbitrary
-  metric space so that they apply on the product \<open>K \<times> K'\<close> of the two-domain
-  doubling.\<close>
+text \<open>All in the \<open>\<epsilon>\<close>-form, and on an arbitrary metric space, so that they
+  apply on products such as \<open>K \<times> K'\<close> as well.\<close>
 
 lemma usc_eps_add:
   fixes f g :: "'a::metric_space \<Rightarrow> real"
@@ -245,14 +243,9 @@ proof -
     by (rule eventually_mono) (use b in \<open>simp add: dist_commute\<close>)
 qed
 
-text \<open>A continuous real-valued difference attains its supremum on a nonempty
-  compact set.\<close>
+subsection \<open>Rescaling the positive reals\<close>
 
-subsection \<open>Three elementary sets and images\<close>
-
-text \<open>The transfer lemma: if \<open>\<Psi>\<close> leaves \<open>F\<close> invariant and distorts balls around
-  \<open>z\<close> by at most fixed factors in both directions, then it leaves the upper
-  envelope at \<open>z\<close> invariant.  Purely a statement about \<open>INF\<close>/\<open>SUP\<close> reindexing.\<close>
+text \<open>Division by a positive \<open>r\<close> maps the positive reals onto themselves.\<close>
 
 lemma pos_image_scale:
   assumes r0: "0 < r"
@@ -304,7 +297,7 @@ qed
 text \<open>Extension of a bounded usc function off a closed set: the case
   \<open>C = -B\<close> of \<open>usc_extend_rel\<close>.  The extension value must be \<^emph>\<open>below\<close>
   every value on \<open>K\<close>: extending by \<open>0\<close> need not be usc.  Semicontinuity is
-  stated in the \<open>\<epsilon>\<close>-form the comparison chain consumes.\<close>
+  stated in the \<open>\<epsilon>\<close>-form.\<close>
 
 lemma usc_extension_bounded:
   fixes u :: "'a::metric_space \<Rightarrow> real" and K :: "('a) set"

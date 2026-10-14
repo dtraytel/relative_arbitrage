@@ -6,20 +6,14 @@ begin
 
 (*>*)
 
-section \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close>: the upper semicontinuity half, without a selection theorem\<close>
+section \<open>Berge's maximum theorem: the upper semicontinuity half\<close>
 
-text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close> cites Larsson--Ruf's proof of their Proposition 2.2(ii),
-  (iii): \<open>\<P>\<^sub>x\<close> is the pushforward of \<open>\<P>\<^sub>0\<close> under \<open>x+\<cdot>\<close>, so
-  \<open>v(x) = sup\<^bsub>P \<in> \<P>\<^sub>0\<^esub> f(x,P)\<close> with \<open>f\<close> jointly upper semicontinuous and
-  \<open>\<P>\<^sub>0\<close> compact; a selection theorem (Bertsekas--Shreve, Prop. 7.33) then
-  gives both upper semicontinuity of \<open>v\<close> and a measurable optimiser.
-
-  Of those two conclusions only the measurable optimiser needs a selection
-  theorem: upper semicontinuity of a supremum of a jointly usc function over a
-  compact index set is the upper half of Berge's maximum theorem, needing no
-  measurable selection or descriptive set theory, and is proved directly here,
-  leaving Bertsekas--Shreve 7.33 needed only for the dynamic programming
-  principle's measurable optimiser.
+text \<open>The supremum of a jointly upper semicontinuous function over a compact
+  index set is upper semicontinuous in the parameter: the upper half of
+  Berge's maximum theorem \<^cite>\<open>Berge1963\<close>.  It needs no measurable
+  selection or descriptive set theory; a selection theorem is needed only
+  when, in addition, an optimiser is to be chosen measurably in the
+  parameter.
 
   The hypothesis \<open>box\<close> below is joint upper semicontinuity at \<open>(x,P)\<close>,
   written via a product neighbourhood rather than \<open>nhds (x,P)\<close>, independent
@@ -176,12 +170,12 @@ qed
 text \<open>
   \<open>usc_sup_over_compactin\<close> asks for \<open>box\<close> topologically, but weak convergence
   of measures is naturally a statement about sequences -- the form of the
-  AFP's Portmanteau theorems and of \<open>Path_Exit_Times.etime_shift_box\<close>.
+  AFP's Portmanteau theorems.
 
-  The two are equivalent when both spaces are metrizable, by the
-  Levy--Prokhorov theorem (\<open>metrizable_weak_conv_topology\<close>), applicable
-  since the path space is metrizable and separable. This lemma is that
-  equivalence; nothing about measures enters it.
+  The two are equivalent when both spaces are metrizable, as the weak
+  topology on the laws on a separable metric space is, by the Levy--Prokhorov
+  metric.  This lemma is that equivalence; nothing about measures enters
+  it.
 
   The direction proved is sequences to neighbourhoods. Its contrapositive
   picks, for each \<open>n\<close>, a counterexample inside the \<open>1/Suc n\<close> balls, and
@@ -231,7 +225,7 @@ proof (rule ccontr)
   from seq[OF limy limQ yQ(3)] show False using yQ(4) by simp
 qed
 
-text \<open>The specialisation used: the first factor is a metric type, so Berge's
+text \<open>The specialisation to a metric type as the first factor, where Berge's
   \<open>box\<close> wants type-class \<open>open\<close> rather than \<open>openin euclidean\<close>.  Since
   \<open>euclidean\<close> abbreviates \<open>topology open\<close>, \<open>unfolding open_openin\<close> rewrites
   the bare \<open>open\<close> inside \<open>euclidean\<close> and regenerates its own redex, looping;
@@ -269,13 +263,12 @@ qed
 section \<open>Sequential compactness gives \<open>compactin\<close> in a metrizable space\<close>
 
 text \<open>
-  The glue between Lemmas 2.2 and 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> and Berge's theorem. Those lemmas
-  deliver sequential compactness of the law set -- 2.2 extracts a weakly
-  convergent subsequence, 2.3 puts the limit back in the set -- whereas
-  \<open>usc_sup_over_compactin\<close> consumes \<open>compactin\<close>. In a metrizable space the
+  Compactness arguments for sets of laws usually deliver sequential
+  compactness -- tightness extracts a weakly convergent subsequence, and
+  closedness puts its limit back in the set -- whereas
+  \<open>usc_sup_over_compactin\<close> consumes \<open>compactin\<close>.  In a metrizable space the
   two coincide (\<open>Metric_space.compactin_sequentially\<close>); this lemma
-  transports that fact to a \<open>topology\<close> value, the interface Lemma 2.3 needs
-  to supply.
+  transports that fact to a \<open>topology\<close> value.
 \<close>
 
 lemma compactin_of_seq_compact:
