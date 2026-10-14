@@ -27,6 +27,6 @@ for n,f in facts.items():
     if f['sess'] in RA_SESS:
         bythy[f['thy'].split('.')[-1]][0]+=1
         if n in cand: bythy[f['thy'].split('.')[-1]][1]+=1
-for t in ["Elliptic_Operator","Viscosity_Definitions","Viscosity_Ball","Constraint_Set_Convexity","Viscosity_Comparison_Interface","Ball_Solution","Operator_Continuity","Operator_Formula","Operator_Envelopes","Operator_Envelope_Continuity","Comparison_Strictness","Comparison_Localisation","Maximum_Principle","Comparison_Two_Domain","Value_Function_Tangential_Field","Covariation_Density"]:
+for t in ["Elliptic_Operator","Viscosity_Definitions","Viscosity_Ball","Constraint_Set_Convexity","Viscosity_Comparison_Interface","Ball_Solution","Operator_Formula","Operator_Envelopes","Operator_Envelope_Continuity","Comparison_Strictness","Comparison_Localisation","Maximum_Principle","Comparison_Two_Domain","Value_Function_Tangential_Field","Covariation_Density"]:
     print(f"{t:35s} {bythy[t][1]:3d}/{bythy[t][0]:3d}")
 print("total RA facts placeable probability-free:", len(cand))
