@@ -179,7 +179,7 @@ text \<open>Obligation (b) of the bridge, for an arbitrary filtered process: a
   almost everywhere, while the localised identification wants them pointwise;
   the two are reconciled by restricting to a full-measure event, which is what
   the \<open>restrict_full\<close> package of
-  @{theory Continuous_Path_Spaces.Stopped_Localization} is for.  The event is
+  @{theory Continuous_Time_Martingales.Stopped_Localization} is for.  The event is
   built from a null set rather than from the conditions themselves, so nothing
   has to be shown measurable --- in particular not the difference-quotient
   condition, which quantifies over all real pairs.  Both the pair class and

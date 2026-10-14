@@ -2,7 +2,7 @@ section \<open>Quadratic variation in continuous time, along dyadic partitions\<
 
 (*<*)
 theory Pathwise_Quadratic_Variation
-  imports "Continuous_Path_Spaces.Increment_Moments"
+  imports "Continuous_Time_Martingales.Increment_Moments"
     "Continuous_Time_Martingales.Martingale_Algebra"
 begin
 (*>*)

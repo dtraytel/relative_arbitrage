@@ -3,7 +3,7 @@ section \<open>Families of pair path laws, and their limits\<close>
 (*<*)
 theory Pair_Path_Laws
   imports
-    "Continuous_Path_Spaces.Conditional_UI" "Continuous_Path_Spaces.Difference_Quotients"
+    "Continuous_Time_Martingales.Conditional_UI" "Continuous_Path_Spaces.Difference_Quotients"
     "Continuous_Time_Martingales.Natural_Filtration" Pair_Path_Space
     "Semicontinuous_Analysis.Semicontinuity"
     "Symmetric_Matrix_Spectra.Poincare_Separation"

@@ -2,7 +2,7 @@ section \<open>An adapted, everywhere-continuous quadratic variation\<close>
 
 (*<*)
 theory Adapted_Quadratic_Variation
-  imports Pathwise_Quadratic_Variation Stopped_Localization
+  imports Pathwise_Quadratic_Variation "Continuous_Time_Martingales.Stopped_Localization"
 begin
 
 (*>*)
@@ -24,7 +24,7 @@ text \<open>
   The scalar theory assumes \<open>X\<close> uniformly bounded, because Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>
   (\<open>fourth_moment_bound_bounded\<close>) does.  A member of the class is not bounded,
   so the identification has to be localised --- which is what
-  @{theory Continuous_Path_Spaces.Stopped_Localization} was built for: stopping an
+  @{theory Continuous_Time_Martingales.Stopped_Localization} was built for: stopping an
   \<open>L\<^sup>2\<close> martingale with continuous paths at any stopping time yields a
   martingale, unconditionally, and the same holds for the compensated square.
 

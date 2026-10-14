@@ -532,7 +532,7 @@ text \<open>The polarisation, run through the localised scalar theorem.  The
   hypotheses are pointwise on \<open>space M\<close> rather than almost everywhere, which is
   what the stopping arguments need; the intended application reaches that form
   through the \<open>restrict_full\<close> package of
-  @{theory Continuous_Path_Spaces.Stopped_Localization}.\<close>
+  @{theory Continuous_Time_Martingales.Stopped_Localization}.\<close>
 
 theorem etime_shift_box:
   fixes T d :: real and A :: "'b::{polish_space,banach} set"
