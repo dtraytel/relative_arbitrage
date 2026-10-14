@@ -566,7 +566,7 @@ Value_Function_Subsolution.stopped_X_int    # KEEP_API
 Value_Function_Subsolution.stopped_X_mean    # KEEP_API
 Product_Brownian_Motion.bm_coordinate_pow4    # FIX_THEN_KEEP
 Product_Brownian_Motion.bm_R2_moment    # FIX_THEN_KEEP
-Value_Function_Euler_Construction.sbm_xi_mean0    # KEEP_API
+Covariation_Class_Euler_Scheme.sbm_xi_mean0    # KEEP_API; theory renamed from Value_Function_Euler_Construction when it moved to Covariation_Constrained_Martingales (G-B promotion)
 # wm_cps_small
 wr.elims    # KEEP_API
 wr.induct    # KEEP_API
