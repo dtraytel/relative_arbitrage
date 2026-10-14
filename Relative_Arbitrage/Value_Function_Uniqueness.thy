@@ -19,19 +19,22 @@ text \<open>
 
 section \<open>The clauses of Theorem 1.1 and where they are proved\<close>
 
-text \<open>With \<open>v = enn2real \<circ> exit_val k L T K\<close>, Theorem 1.1 has five clauses.
+text \<open>With \<open>v = enn2real \<circ> covariation_val S T K\<close> (the paper's \<open>exit_val k L T K\<close> at
+  \<open>S = sconstraint k L\<close>), Theorem 1.1 has five clauses.
 
-  \<^item> Finiteness, \<open>exit_val k L T K x < \<top>\<close>: \<open>covariation_val_le_T\<close>, and sharply
+  \<^item> Finiteness, \<open>covariation_val S T K x < \<top>\<close>: \<open>covariation_val_le_T\<close>, and sharply
     \<open>covariation_val_le_ball_bound\<close>.
   \<^item> Upper semicontinuity: \<open>covariation_val_real_usc\<close> below.
-  \<^item> The viscosity property of Eq. (1.9): \<open>Value_Function_Subsolution.exit_val_visc_subsol_any\<close>
-    for the subsolution half, with the operator of Eq. (1.9) itself, and
-    \<open>Value_Function_Supersolution_Case_2.exit_val_supersol_lsc\<close> for the supersolution half.
+  \<^item> The viscosity property of Eq. (1.9): \<open>Value_Function_Subsolution.covariation_val_visc_subsol\<close>
+    for the subsolution half, with the operator itself, and
+    \<open>Value_Function_Supersolution_Case_2.covariation_val_supersol_lsc\<close> for the supersolution half.
   \<^item> The zero boundary condition, in the viscosity sense of
-    Definition 3.1: \<open>Value_Function_Subsolution.exit_val_subsol_bc\<close> and
-    \<open>exit_val_supersol_bc\<close> below.
-  \<^item> Uniqueness: \<open>theorem_1_1_uniqueness_faithful\<close> below, via the paper's
-    Theorem 4.2(a), Theorem 4.2(b), Theorem 4.3 and Proposition 4.1.
+    Definition 3.1: \<open>Value_Function_Subsolution.covariation_val_subsol_bc\<close> and
+    \<open>covariation_val_supersol_bc\<close> below.
+  \<^item> Uniqueness: \<open>covariation_val_uniqueness\<close> below, via the paper's
+    Theorem 4.2(a), Theorem 4.2(b), Theorem 4.3 and Proposition 4.1 for the
+    geometric operator \<^const>\<open>covariation_op_real\<close> \<open>S\<close>; the paper's form is
+    \<open>theorem_1_1_uniqueness_faithful\<close>.
 
   The boundary condition is a viscosity condition, not the pointwise identity
   \<open>v = 0\<close> on \<open>K - interior K\<close>, which is false in general: by Lemma 5.3 of the
@@ -154,26 +157,6 @@ proof -
     by (rule covariation_val_supersol_lsc_bounded[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 th0 th
           Kc KB Tbig])
   then show ?thesis unfolding v_def[symmetric] gate .
-qed
-
-theorem exit_val_supersol_bc:
-  fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
-    and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
-    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-  shows "visc_supersol_env k L K
-      (interior K \<union> {x \<in> K - interior K.
-          lsc_env (\<lambda>z. enn2real (exit_val k L T K z)) x < 0})
-      (lsc_env (\<lambda>z. enn2real (exit_val k L T K z)))"
-proof -
-  have L0: "0 \<le> L" using L1 by simp
-  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
-  show ?thesis
-    unfolding visc_supersol_env_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]
-      exit_val_eq_covariation_val
-    by (rule covariation_val_supersol_bc[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
-          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
-          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0] Kc KB Tbig])
 qed
 
 text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause.\<close>  \<open>covariation_val\<close> is upper
@@ -835,26 +818,6 @@ proof -
     unfolding v_def
     by (rule covariation_val_supersol_envK[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc cap])
   show ?thesis using main unfolding v_def[symmetric] gate .
-qed
-
-theorem exit_val_supersol_bc_K:
-  fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
-    and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
-    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-  shows "visc_supersol_env k L K
-      (interior K \<union> {x \<in> K - interior K.
-          lsc_envK K (\<lambda>z. enn2real (exit_val k L T K z)) x < 0})
-      (lsc_envK K (\<lambda>z. enn2real (exit_val k L T K z)))"
-proof -
-  have L0: "0 \<le> L" using L1 by simp
-  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
-  show ?thesis
-    unfolding visc_supersol_env_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]
-      exit_val_eq_covariation_val
-    by (rule covariation_val_supersol_bc_K[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
-          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
-          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0] Kc KB Tbig])
 qed
 
 theorem icovariation_val_supersol_bc_K:

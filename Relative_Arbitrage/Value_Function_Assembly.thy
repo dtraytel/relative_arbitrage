@@ -10,10 +10,11 @@ begin
 
 section \<open>Clause (2): the value function is a viscosity solution\<close>
 
-text \<open>\<open>enn2real \<circ> exit_val k L T K\<close> is a viscosity solution of Eq. (1.9) on
-  \<open>interior K\<close>: an ordinary subsolution (@{thm [source] exit_val_visc_subsol_any})
-  and, in the enveloped sense of Definition 3.1(b), a supersolution
-  (@{thm [source] exit_val_supersol_lsc}), where the lower semicontinuous
+text \<open>\<open>enn2real \<circ> covariation_val S T K\<close> is a viscosity solution of Eq. (1.9),
+  with the operator \<^const>\<open>covariation_op\<close> \<open>S\<close>, on \<open>interior K\<close>: an ordinary
+  subsolution (@{thm [source] covariation_val_visc_subsol}) and, in the enveloped
+  sense of Definition 3.1(b), a supersolution
+  (@{thm [source] covariation_val_supersol_lsc}), where the lower semicontinuous
   envelope replaces \<open>v\<close> because the plain supersolution property fails
   wherever \<open>v\<close> has an interior local minimum.  Both proofs are pathwise,
   built by Euler pasting of endpoint-frozen Gaussian kernels rather than

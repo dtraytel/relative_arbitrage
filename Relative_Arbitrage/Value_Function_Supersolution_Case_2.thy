@@ -1358,56 +1358,20 @@ proof (intro ballI allI impI)
           rho0 loc])
 qed
 
-text \<open>The paper's supersolution properties are the instances \<open>S = sconstraint k L\<close>:
-  that set is closed, convex, bounded, made of psd matrices, invariant under
-  orthogonal conjugation (@{thm [source] sconstraint_conj}), and contains the
-  sphere-tangential rates for \<open>1 \<le> k\<close> (@{thm [source] tanpU_id_sq_sconstraint}).\<close>
-
-theorem exit_val_supersol_lsc:
-  fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
-    and Kc: "closed K"
-    and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
-  shows "visc_supersol_lsc k L K (interior K)
-      (\<lambda>u. enn2real (exit_val k L T K u))"
-proof -
-  have L0: "0 \<le> L" using L1 by simp
-  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
-  show ?thesis
-    unfolding visc_supersol_lsc_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]
-      exit_val_eq_covariation_val
-    by (rule covariation_val_supersol_lsc[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
-          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
-          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 Kc cap[unfolded exit_val_eq_covariation_val]])
-qed
-
-theorem exit_val_supersol_envK:
-  fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
-    and Kc: "closed K"
-    and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
-  shows "visc_supersol_env k L K (interior K)
-      (lsc_envK K (\<lambda>u. enn2real (exit_val k L T K u)))"
-proof -
-  have L0: "0 \<le> L" using L1 by simp
-  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
-  show ?thesis
-    unfolding visc_supersol_env_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]
-      exit_val_eq_covariation_val
-    by (rule covariation_val_supersol_envK[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
-          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
-          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 Kc cap[unfolded exit_val_eq_covariation_val]])
-qed
+text \<open>The paper's set \<open>sconstraint k L\<close> has every property used above: it is
+  closed, convex, bounded, made of psd matrices, invariant under orthogonal
+  conjugation (@{thm [source] sconstraint_conj}), and contains the
+  sphere-tangential rates for \<open>1 \<le> k\<close> (@{thm [source] tanpU_id_sq_sconstraint});
+  the paper's supersolution clauses are its instances in
+  \<open>Value_Function_Uniqueness\<close>.\<close>
 
 subsection \<open>Discharging the horizon hypothesis\<close>
 
-text \<open>@{thm [source] exit_val_supersol_lsc} carries the assumption that the
+text \<open>@{thm [source] covariation_val_supersol_lsc} carries the assumption that the
   horizon never binds on the interior.  For a bounded \<open>K\<close> that is not an
   assumption at all but a consequence of choosing \<open>T\<close> large enough:
   @{thm [source] covariation_val_le_ball_bound} caps the value at
-  \<open>(r\<^sup>2 - \<bar>x\<bar>\<^sup>2)/(n - k)\<close>, so \<open>T > 2r\<^sup>2/(n - k)\<close> already forces
+  \<open>(r\<^sup>2 - \<bar>x\<bar>\<^sup>2)/\<theta>\<close>, so \<open>T > 2r\<^sup>2/\<theta>\<close> already forces
   \<open>v\<^sub>* < T/2\<close> everywhere.  This is the paper's own setting: it has no
   horizon, and the cap here is a device of this formalisation.\<close>
 
@@ -1457,23 +1421,6 @@ proof -
 qed
 
 text \<open>So on a bounded \<open>K\<close> the supersolution property is unconditional.\<close>
-
-corollary exit_val_supersol_lsc_bounded:
-  fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
-    and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
-    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-  shows "visc_supersol_lsc k L K (interior K)
-      (\<lambda>u. enn2real (exit_val k L T K u))"
-proof (rule exit_val_supersol_lsc[OF T0 L1 k1 kn Kc])
-  fix x :: "real^'n" assume "x \<in> interior K"
-  show "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
-    unfolding exit_val_eq_covariation_val
-    by (rule covariation_val_cap_inert[OF less_imp_le[OF T0]
-        sconstraint_trace_bounds[OF kn order_trans[OF zero_le_one L1]] KB Tbig])
-qed
-
-text \<open>The same for an abstract set with a trace lower bound \<open>\<theta>\<close>.\<close>
 
 corollary covariation_val_supersol_lsc_bounded:
   fixes K :: "(real^'n::finite) set"

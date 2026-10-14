@@ -1920,26 +1920,6 @@ proof (intro ballI allI impI)
   qed
 qed
 
-text \<open>The paper's subsolution property is the instance \<open>S = sconstraint k L\<close>,
-  since \<open>F \<le> covariation_op (sconstraint k L)\<close>
-  (@{thm [source] ell_op_le_covariation_op}).\<close>
-
-theorem exit_val_visc_subsol_any:
-  fixes K :: "(real^'n::finite) set"
-  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
-    and kn: "k < CARD('n)"
-  shows "visc_subsol k L \<Omega> (\<lambda>z. enn2real (exit_val k L T K z))"
-proof -
-  have L0: "0 \<le> L" using L1 by simp
-  have "visc_subsol_gen test_fun_at nhds (covariation_op (sconstraint k L)) \<Omega>
-      (\<lambda>z. enn2real (covariation_val (sconstraint k L) T K z))"
-    by (rule covariation_val_visc_subsol[OF T sconstraint_bounds[OF L0] closed_sconstraint
-          sconstraint_convex mat_1_rate_in_sconstraint[OF L1] sconstraint_psd_entry(1) Kc])
-  then show ?thesis
-    unfolding visc_subsol_eq_gen exit_val_eq_covariation_val
-    by (rule visc_subsol_gen_mono) (rule ell_op_le_covariation_op[OF kn L1])
-qed
-
 section \<open>The boundary subsolution clause\<close>
 
 text \<open>Outside \<open>K\<close> the exit time is already zero, so the value vanishes.  This
@@ -2073,21 +2053,6 @@ proof -
     unfolding visc_subsol_gen_def v_def by blast
 qed
 
-text \<open>The paper's boundary clause, with the lower envelope \<open>F\<^sub>*\<close> of Definition
-  3.1(a), is the instance \<open>S = sconstraint k L\<close>: \<open>F\<^sub>* \<le> F \<le> covariation_op S\<close>.\<close>
-
-theorem exit_val_subsol_bc:
-  fixes K :: "(real^'n::finite) set"
-  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
-    and kn: "k < CARD('n)"
-  shows "visc_subsol_env k L K
-      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (exit_val k L T K x)})
-      (\<lambda>z. enn2real (exit_val k L T K z))"
-  unfolding visc_subsol_env_eq_gen exit_val_eq_covariation_val
-  by (rule visc_subsol_gen_mono[OF covariation_val_subsol_bc[OF T
-        sconstraint_bounds[OF order_trans[OF zero_le_one L1]] closed_sconstraint sconstraint_convex
-        mat_1_rate_in_sconstraint[OF L1] sconstraint_psd_entry(1) Kc]
-        ell_op_lsc_le_covariation_op[OF kn L1]])
 
 
 (*<*)
