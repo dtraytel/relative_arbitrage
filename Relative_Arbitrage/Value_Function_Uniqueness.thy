@@ -105,17 +105,27 @@ text \<open>The supersolution clause of Definition 3.1 for \<open>exit_val\<clos
   lower envelope, so \<open>{x. lsc_env v x < 0} = {}\<close> and the \<open>\<Omega>\<close> of
   Definition 3.1(b) collapses to \<open>interior K\<close>.\<close>
 
-theorem exit_val_supersol_bc:
+theorem covariation_val_supersol_bc:
   fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T"
+    and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
     and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
-    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-  shows "visc_supersol_env k L K
+    and Tbig: "2 * (rK * rK) / \<theta> < T"
+  shows "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S)
       (interior K \<union> {x \<in> K - interior K.
-          lsc_env (\<lambda>z. enn2real (exit_val k L T K z)) x < 0})
-      (lsc_env (\<lambda>z. enn2real (exit_val k L T K z)))"
+          lsc_env (\<lambda>z. enn2real (covariation_val S T K z)) x < 0})
+      (lsc_env (\<lambda>z. enn2real (covariation_val S T K z)))"
 proof -
-  define v where "v = (\<lambda>z. enn2real (exit_val k L T K z))"
+  define v where "v = (\<lambda>z. enn2real (covariation_val S T K z))"
   have v0: "0 \<le> v y" for y unfolding v_def by (rule enn2real_nonneg)
   have lsc0: "0 \<le> lsc_env v x" for x by (rule lsc_env_ge[OF v0])
   have gate: "interior K \<union> {x \<in> K - interior K. lsc_env v x < 0} = interior K"
@@ -137,12 +147,32 @@ proof -
     show "interior K \<subseteq> interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}"
       by blast
   qed
-  have "visc_supersol_lsc k L K (interior K) v"
+  have "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S) (interior K)
+      (lsc_env v)"
     unfolding v_def
-    by (rule exit_val_supersol_lsc_bounded[OF T0 L1 k1 kn Kc KB Tbig])
-  then have "visc_supersol_env k L K (interior K) (lsc_env v)"
-    unfolding visc_supersol_lsc_def visc_supersol_env_def by blast
+    by (rule covariation_val_supersol_lsc_bounded[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 th0 th
+          Kc KB Tbig])
   then show ?thesis unfolding v_def[symmetric] gate .
+qed
+
+theorem exit_val_supersol_bc:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
+    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
+  shows "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K.
+          lsc_env (\<lambda>z. enn2real (exit_val k L T K z)) x < 0})
+      (lsc_env (\<lambda>z. enn2real (exit_val k L T K z)))"
+proof -
+  have L0: "0 \<le> L" using L1 by simp
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  show ?thesis
+    unfolding visc_supersol_env_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]
+      exit_val_eq_covariation_val
+    by (rule covariation_val_supersol_bc[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
+          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0] Kc KB Tbig])
 qed
 
 text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause.\<close>  \<open>exit_val\<close> is upper semicontinuous
@@ -377,7 +407,7 @@ text \<open>The interior lower bound holds at the sharp rate \<open>CARD('n) - k
 
   The hypothesis \<open>r\<^sup>2/(CARD('n) - k) \<le> T\<close> says only that the horizon does not
   bind: the value function of a finite-horizon problem is capped by its horizon
-  (@{thm [source] enn2real_paper_v_horizon_cap}), so without it the identity
+  (@{thm [source] enn2real_covariation_val_horizon_cap}), so without it the identity
   would fail at the centre.\<close>
 
 theorem covariation_val_example_3_1:
@@ -576,6 +606,30 @@ text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form o
 text \<open>\<^bold>\<open>Clause (3): the zero boundary condition\<close>, in the
   viscosity sense of Definition 3.1, both halves with the boundary gate.\<close>
 
+theorem icovariation_val_subsol_bc:
+  fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"
+  assumes B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and cK: "compact K"
+  shows "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op S)
+      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (icovariation_val S K x)})
+      (\<lambda>z. enn2real (icovariation_val S K z))"
+proof -
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
+  obtain T :: real where T0: "0 < T" and "rK * rK / \<theta> < T"
+    and "2 * (rK * rK) / \<theta> < T" and eq: "icovariation_val S K = covariation_val S T K"
+    by (rule icovariation_val_eq_covariation_val_horizon[OF Sc Sv SST B0 B th0 th Kc KB])
+  show ?thesis unfolding eq
+    by (rule covariation_val_subsol_bc[OF T0 B0 B D0 D Sc Sv SST Spsd Kc])
+qed
+
 theorem iexit_val_subsol_bc:
   fixes K :: "(real^'n::finite) set"
   assumes kn: "k < CARD('n)" and L: "1 \<le> L" and cK: "compact K"
@@ -583,13 +637,20 @@ theorem iexit_val_subsol_bc:
       (interior K \<union> {x \<in> K - interior K. 0 < enn2real (iexit_val k L K x)})
       (\<lambda>z. enn2real (iexit_val k L K z))"
 proof -
-  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
-  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
-    using compact_cball_bound[OF cK] by blast
-  obtain T :: real where T0: "0 < T" and "rK * rK / real (CARD('n) - k) < T"
-    and "2 * (rK * rK) / real (CARD('n) - k) < T" and eq: "iexit_val k L K = exit_val k L T K"
-    by (rule iexit_val_eq_exit_val_horizon[OF kn L Kc KB])
-  show ?thesis unfolding eq by (rule exit_val_subsol_bc[OF T0 L Kc kn])
+  have L0: "0 \<le> L" using L by simp
+  have le: "ell_op_lsc k L p M \<le> covariation_op (sconstraint k L) p M"
+    for p :: "real^'n" and M :: "real^'n^'n"
+    using ell_op_lsc_le_ell_op[of k L p M] ell_op_le_covariation_op[OF kn L, of p M]
+    by (rule order_trans)
+  have "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op (sconstraint k L))
+      (interior K \<union> {x \<in> K - interior K. 0 < enn2real (icovariation_val (sconstraint k L) K x)})
+      (\<lambda>z. enn2real (icovariation_val (sconstraint k L) K z))"
+    by (rule icovariation_val_subsol_bc[OF sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex mat_1_rate_in_sconstraint[OF L] sconstraint_psd_entry(1)
+          sconstraint_trace_bounds(3,4)[OF kn L0] cK])
+  then show ?thesis
+    unfolding visc_subsol_env_eq_gen iexit_val_eq_icovariation_val
+    by (rule visc_subsol_gen_mono) (rule le)
 qed
 
 text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>\<close>
@@ -628,17 +689,27 @@ text \<open>\<^bold>\<open>Clauses (3) and (4) with the paper's own envelope.\<c
   there while its liminf over balls of \<open>real^'n\<close> is \<open>0\<close>.  Both clauses are
   therefore restated, not derived by a weakening.\<close>
 
-theorem exit_val_supersol_bc_K:
+theorem covariation_val_supersol_bc_K:
   fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T"
+    and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
     and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
-    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-  shows "visc_supersol_env k L K
+    and Tbig: "2 * (rK * rK) / \<theta> < T"
+  shows "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S)
       (interior K \<union> {x \<in> K - interior K.
-          lsc_envK K (\<lambda>z. enn2real (exit_val k L T K z)) x < 0})
-      (lsc_envK K (\<lambda>z. enn2real (exit_val k L T K z)))"
+          lsc_envK K (\<lambda>z. enn2real (covariation_val S T K z)) x < 0})
+      (lsc_envK K (\<lambda>z. enn2real (covariation_val S T K z)))"
 proof -
-  define v where "v = (\<lambda>z :: real^'n. enn2real (exit_val k L T K z))"
+  define v where "v = (\<lambda>z :: real^'n. enn2real (covariation_val S T K z))"
   have v0: "0 \<le> v y" for y unfolding v_def by (rule enn2real_nonneg)
   have gate: "interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0} = interior K"
   proof
@@ -658,15 +729,64 @@ proof -
     show "interior K \<subseteq> interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0}"
       by blast
   qed
-  have cap: "lsc_env v y < T / 2" for y :: "real^'n"
-    unfolding v_def exit_val_eq_covariation_val
-    by (rule covariation_val_cap_inert[OF less_imp_le[OF T0]
-        sconstraint_trace_bounds[OF kn order_trans[OF zero_le_one L1]] KB Tbig])
-  have main: "visc_supersol_env k L K (interior K) (lsc_envK K v)"
+  have cap: "\<And>y. y \<in> interior K \<Longrightarrow>
+      lsc_env (\<lambda>z. enn2real (covariation_val S T K z)) y < T / 2"
+    by (rule covariation_val_cap_inert[OF less_imp_le[OF T0] B0 B th0 th KB Tbig])
+  have main: "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S) (interior K)
+      (lsc_envK K v)"
     unfolding v_def
-    by (rule exit_val_supersol_envK[OF T0 L1 k1 kn Kc])
-      (use cap in \<open>simp add: v_def\<close>)
+    by (rule covariation_val_supersol_envK[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc cap])
   show ?thesis using main unfolding v_def[symmetric] gate .
+qed
+
+theorem exit_val_supersol_bc_K:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
+    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
+  shows "visc_supersol_env k L K
+      (interior K \<union> {x \<in> K - interior K.
+          lsc_envK K (\<lambda>z. enn2real (exit_val k L T K z)) x < 0})
+      (lsc_envK K (\<lambda>z. enn2real (exit_val k L T K z)))"
+proof -
+  have L0: "0 \<le> L" using L1 by simp
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  show ?thesis
+    unfolding visc_supersol_env_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]
+      exit_val_eq_covariation_val
+    by (rule covariation_val_supersol_bc_K[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
+          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0] Kc KB Tbig])
+qed
+
+theorem icovariation_val_supersol_bc_K:
+  fixes K :: "(real^'n::finite) set"
+  assumes B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and cK: "compact K"
+  shows "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S)
+      (interior K \<union> {x \<in> K - interior K.
+         lsc_envK K (\<lambda>z. enn2real (icovariation_val S K z)) x < 0})
+      (lsc_envK K (\<lambda>z. enn2real (icovariation_val S K z)))"
+proof -
+  have SST: "tanpU (mat 1) 0 ** transpose (tanpU (mat 1) (0 :: real^'n)) \<in> S"
+    by (rule tan1) simp
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
+  obtain T :: real where T0: "0 < T" and "rK * rK / \<theta> < T"
+    and T2: "2 * (rK * rK) / \<theta> < T" and eq: "icovariation_val S K = covariation_val S T K"
+    by (rule icovariation_val_eq_covariation_val_horizon[OF Sc Sv SST B0 B th0 th Kc KB])
+  show ?thesis unfolding eq
+    by (rule covariation_val_supersol_bc_K[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 th0 th Kc KB T2])
 qed
 
 theorem iexit_val_supersol_bc_K:
@@ -677,16 +797,14 @@ theorem iexit_val_supersol_bc_K:
          lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)) x < 0})
       (lsc_envK K (\<lambda>z. enn2real (iexit_val k L K z)))"
 proof -
-  have L: "1 \<le> L" using L1 by simp
-  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
-  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
-    using compact_cball_bound[OF cK] by blast
-  obtain T :: real where T0: "0 < T" and "rK * rK / real (CARD('n) - k) < T"
-    and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
-    and eq: "iexit_val k L K = exit_val k L T K"
-    by (rule iexit_val_eq_exit_val_horizon[OF kn L Kc KB])
-  show ?thesis unfolding eq
-    by (rule exit_val_supersol_bc_K[OF T0 L1 k1 kn Kc KB T2])
+  have L0: "0 \<le> L" using L1 by simp
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  show ?thesis
+    unfolding visc_supersol_env_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]
+      iexit_val_eq_icovariation_val
+    by (rule icovariation_val_supersol_bc_K[OF sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
+          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0] cK])
 qed
 
 text \<open>The interior clause on its own, which is Definition 3.1(b) for
