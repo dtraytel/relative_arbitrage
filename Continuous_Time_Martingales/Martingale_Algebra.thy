@@ -392,7 +392,7 @@ proof -
   qed
 qed
 
-text \<open>\<open>Ito_Market.martingale_vecI\<close> is stated for \<open>real^'n\<close>, and its three
+text \<open>\<open>martingale_vecI\<close> is stated for \<open>real^'n\<close>, and its three
   helpers are all specific to real entries, so it does not iterate to
   \<open>real^'n^'n\<close>.  The three matrix analogues are proved here directly from
   the euclidean structure: \<open>Basis\<close> of a matrix consists of the

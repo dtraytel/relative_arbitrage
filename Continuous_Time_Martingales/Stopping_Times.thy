@@ -8,18 +8,18 @@ begin
 
 text \<open>
   The exit time of a closed set by a continuous adapted process is a
-             stopping time, and up to it the process stays in the closed ball.
-             This is the structural ingredient of Example 3.1 of the paper: the
-             horizon there is the first exit time of a ball, and the results of
-             \<open>Ito_Market\<close> ask for a stopping time whose stopped process stays in K.
+  stopping time, and up to the exit time from an open ball the process
+  stays in the closed ball.  Along the way: the strict-inequality
+  characterisation of the exit time that underlies its upper
+  semicontinuity in the path, open erosions of a set as a device for
+  uniform margins, and the reduction of hitting events to rational times.
 
-    Everything here is about an arbitrary adapted process with continuous
-    paths; nothing is Brownian-specific.\<close>
+  Everything here is about an arbitrary adapted process with continuous
+  paths; nothing is Brownian-specific.\<close>
 section \<open>The capped exit time\<close>
 
 text \<open>The first time in \<open>[0,T]\<close> at which the process is in \<open>A\<close>, capped at
-  the horizon \<open>T\<close>.  Capping keeps the time real-valued and bounded, which is
-  what the market locales need.\<close>
+  the horizon \<open>T\<close>.  Capping keeps the time real-valued and bounded.\<close>
 
 definition etime ::
   "real \<Rightarrow> 'b set \<Rightarrow> (real \<Rightarrow> 'a \<Rightarrow> 'b) \<Rightarrow> 'a \<Rightarrow> real" where
@@ -63,8 +63,8 @@ proof -
 qed
 
 
-text \<open>The strict-inequality characterisation of \<open>etime\<close>, underlying upper
-  semicontinuity of the exit time along the lines of Larsson--Ruf's Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>:
+text \<open>The strict-inequality characterisation of \<open>etime\<close>, which underlies
+  the upper semicontinuity of the exit time in the path:
   \<open>etime T A X \<omega> < c\<close> holds exactly when a witness time \<open>r < c\<close> has
   \<open>X r \<omega> \<in> A\<close>, or the cap \<open>T\<close> itself is below \<open>c\<close>.\<close>
 
@@ -211,9 +211,6 @@ next
     thus ?thesis by blast
   qed
 qed
-
-text \<open>The measure-theoretic companion to \<open>eroded_exhausts\<close> appears later,
-  after \<open>positive_of_countable_UN\<close>, which it uses.\<close>
 
 text \<open>With closed \<open>A\<close> and continuous paths the infimum is attained, so the
   exit time is at most \<open>t\<close> exactly when the process visits \<open>A\<close> before

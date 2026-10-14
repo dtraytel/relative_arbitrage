@@ -1,4 +1,4 @@
-section \<open>The second-moment bound on increments\<close>
+section \<open>Moment bounds on martingale increments\<close>
 
 (*<*)
 theory Increment_Moments
@@ -8,18 +8,20 @@ begin
 (*>*)
 
 text \<open>
-  This theory proves the second-moment bound on increments used in Lemma 2.2 of
-  \<^cite>\<open>LaiShkolnikovSoner\<close>:
+  Moment bounds on the increments of a martingale \<open>X\<close> whose square has a
+  compensator \<open>A\<close> growing at rate at most \<open>C\<close>.  The second-moment bound
 
     \<open>E[(X u - X s)\<^sup>2] \<le> C * (u - s)\<close>
 
-  whenever the compensator of the square grows at rate at most \<open>C\<close> --
-  for the admissible family there the hypothesis \<open>trace (acov) \<le> C\<close>,
-  since the compensator is \<open>integral (trace o acov)\<close>.
+  combines the energy identity along a two-point partition
+  (\<open>expectation_sq_sampled\<close>) with a martingale's constant expectation,
+  applied to the compensated square.  The fourth-moment bound
 
-  The proof needs no stochastic integral: it combines the energy identity along a
-  two-point partition (\<open>expectation_sq_sampled\<close>) with a martingale's constant
-  expectation, applied to the compensated square.
+    \<open>E[(X T - X s)\<^sup>4] \<le> 8 C\<^sup>2 (T - s)\<^sup>2\<close>
+
+  for a bounded martingale with continuous paths is reached along
+  partitions, with a remainder that vanishes in the mesh limit.  Neither
+  needs a stochastic integral or the Burkholder--Davis--Gundy inequality.
 \<close>
 subsection \<open>A martingale has constant expectation\<close>
 
@@ -534,8 +536,7 @@ text \<open>
   A localised variant of @{thm [source] increment_second_moment_bound}: the
   conditional expectation of the squared increment over \<open>[t k, t (Suc k)]\<close>
   agrees with that of the compensator increment \<open>dA k\<close>, growing at rate at
-  most @{term C} -- the form in which the admissible laws of \<^cite>\<open>LaiShkolnikovSoner\<close>
-  supply their covariation constraint.
+  most @{term C}.
 \<close>
 
 theorem second_moment_partition_bound:
@@ -566,21 +567,19 @@ proof -
   finally show ?thesis .
 qed
 
-subsection \<open>Fourth moments along a partition: Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> with an explicit remainder\<close>
+subsection \<open>Fourth moments along a partition, with an explicit remainder\<close>
 
 text \<open>
-  Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> is derived there through the Burkholder-Davis-Gundy
-  inequality, which
-  is absent from Isabelle and the AFP. The theorem below reaches the same bound by
-  expanding \<open>(Y + d)^4\<close> directly along the partition using only conditional
-  pull-outs: with a common constant \<open>8 C\<^sup>2\<close> (that route gives \<open>66 C\<^sup>2\<close>), the
-  fourth moment of the increment is bounded by \<open>8 C\<^sup>2 (t-s)\<^sup>2\<close> plus three times the
-  accumulated fourth moments of the partition increments, an explicit remainder
-  vanishing in the mesh limit for continuous paths.
+  A fourth-moment bound of this kind is usually derived through the
+  Burkholder--Davis--Gundy inequality, which is absent from Isabelle and the
+  AFP.  The theorem below expands \<open>(Y + d)^4\<close> directly along the partition,
+  using only conditional pull-outs: the fourth moment of the increment is
+  bounded by \<open>8 C\<^sup>2 (t-s)\<^sup>2\<close> plus three times the accumulated fourth moments
+  of the partition increments, an explicit remainder vanishing in the mesh
+  limit for continuous paths.
 
-  The fourth-moment integrability hypothesis is discharged in the intended
-  application by localisation: up to the exit time the paths live in the compact
-  @{term K}, so all moments exist.
+  The fourth-moment integrability hypothesis holds, for instance, for a
+  bounded process (\<open>integrable_pow4_of_bounded\<close> below).
 \<close>
 
 theorem fourth_moment_partition_bound:
@@ -1413,9 +1412,8 @@ qed
 subsection \<open>The remainder vanishes along the uniform partitions\<close>
 
 text \<open>
-  The hypotheses package the setting of \<^cite>\<open>LaiShkolnikovSoner\<close>: a global compensator @{term A}
-  with rate at most @{term C} (in the application, \<open>A u = \<integral> trace (acov)\<close>
-  over \<open>[0,u]\<close>), the conditional covariation identity per pair of times,
+  The hypotheses: a global compensator @{term A} with rate at most
+  @{term C}, the conditional covariation identity per pair of times,
   boundedness by @{term R}, and almost-surely continuous paths on \<open>[s,T]\<close>.
   Fourth-moment integrability is not assumed -- it follows from boundedness.
 \<close>
@@ -1709,14 +1707,14 @@ proof -
   qed
 qed
 
-subsection \<open>Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> for bounded continuous martingales\<close>
+subsection \<open>The fourth-moment bound for bounded continuous martingales\<close>
 
 text \<open>
-  The fourth-moment bound of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>, for a martingale
-  that is bounded and has almost-surely continuous paths on \<open>[s,T]\<close>, with
-  covariation compensator of rate at most @{term C}. The constant is \<open>8 C\<^sup>2\<close>,
-  against the \<open>66 C\<^sup>2\<close> obtained through the Burkholder-Davis-Gundy
-  inequality; no BDG and no stochastic integral is used anywhere in the proof.
+  The fourth-moment bound \<open>E[(X T - X s)\<^sup>4] \<le> 8 C\<^sup>2 (T - s)\<^sup>2\<close> for a
+  martingale that is bounded and has almost-surely continuous paths on
+  \<open>[s,T]\<close>, with covariation compensator of rate at most @{term C}.  No
+  Burkholder--Davis--Gundy inequality and no stochastic integral is used
+  anywhere in the proof.
 \<close>
 
 theorem fourth_moment_bound_bounded:

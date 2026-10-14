@@ -8,7 +8,8 @@ begin
 (*>*)
 
 text \<open>
-  Two classical facts absent from the distribution and the AFP:
+  Two classical facts \<^cite>\<open>Williams\<close> absent from the distribution and the
+  AFP:
 
   1. Absolute continuity of the integral: for integrable \<open>f\<close> and \<open>e > 0\<close> there
      is \<open>\<delta> > 0\<close> such that \<open>\<integral>\<^bsub>A\<^esub> \<bar>f\<bar> \<le> e\<close> whenever \<open>measure A < \<delta>\<close>.

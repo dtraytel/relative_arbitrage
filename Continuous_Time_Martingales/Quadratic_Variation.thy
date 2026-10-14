@@ -8,25 +8,19 @@ begin
 (*>*)
 
 text \<open>
-  Quadratic variation of square-integrable discrete-time
-             martingales.
+  Quadratic variation of square-integrable discrete-time martingales.
 
-    The AFP entry Martingales provides filtrations, adapted and
-    predictable processes, Banach-valued conditional expectation and
-    martingales, but no quadratic variation and no optional sampling; no
-    AFP entry covers stochastic integration.  This theory supplies the
-    first layer: for a square-integrable martingale X in discrete time,
+  The AFP entry Martingales provides filtrations, adapted and predictable
+  processes, Banach-valued conditional expectation and martingales, but no
+  quadratic variation and no optional sampling.  This theory supplies the
+  first: for a square-integrable martingale \<open>X\<close> in discrete time, the
+  quadratic variation \<open>[X]\<^sub>n = \<Sum>\<^sub>k\<^sub><\<^sub>n (X\<^sub>k\<^sub>+\<^sub>1 - X\<^sub>k)\<^sup>2\<close> compensates the
+  square: \<open>X\<^sup>2 - [X]\<close> is again a martingale (the discrete Ito formula for
+  the square function), whence the Dynkin identity
+  \<open>E[X\<^sub>n\<^sup>2] = E[X\<^sub>0\<^sup>2] + E[[X]\<^sub>n]\<close>.
 
-      \<open>[X]_n\<close> = sum of \<open>(X_{k+1}\<close> - \<open>X_k\<close>\<open>)^2\<close> for k < n
-
-    compensates the square, i.e. \<open>X^2\<close> - [X] is again a martingale (the
-    discrete Ito formula for the square function), whence the Dynkin
-    identity
-
-      E[\<open>X_n\<close>\<open>^2]\<close> = E[\<open>X_0\<close>\<open>^2]\<close> + \<open>E[[X]_n].\<close>
-
-    The stopped process and its quadratic variation are defined here; the
-    stopped Dynkin identity is in \<open>Optional_Sampling\<close>.\<close>
+  The stopped process and its quadratic variation are defined here; the
+  stopped Dynkin identity is in \<open>Optional_Sampling\<close>.\<close>
 section \<open>Elementary square bounds\<close>
 
 
@@ -269,9 +263,8 @@ qed
 subsection \<open>The Dynkin identity\<close>
 
 text \<open>Taking expectations in the martingale property of \<open>X\<^sup>2 - [X]\<close>
-  gives the discrete-time analogue of the martingale-problem identity
-  the quadratic Dynkin identity: the second moment grows exactly by the expected
-  quadratic variation.\<close>
+  gives the Dynkin identity: the second moment grows exactly by the
+  expected quadratic variation.\<close>
 
 theorem expectation_sq_qvar:
   "(\<integral>\<omega>. (X n \<omega>)\<^sup>2 \<partial>M)

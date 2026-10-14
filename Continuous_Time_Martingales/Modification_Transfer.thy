@@ -7,18 +7,19 @@ begin
 (*>*)
 
 text \<open>
-  Transferring the vanishing of increment integrals to a modification,
-             the resulting martingale transfer theorems, and the reduction of
-             vector martingales to their components.  Together with
-             \<open>martingale_of_set_integral_eq\<close> this gives the martingale property of
-             a modification for its own natural filtration, which is what makes
-             the continuous Kolmogorov-Chentsov modification usable as a market.\<close>
+  Transferring the vanishing of increment integrals to a modification, the
+  resulting martingale transfer theorems, and the reduction of vector
+  martingales to their components.  Together with
+  \<open>martingale_of_set_integral_eq\<close> this gives the martingale property of a
+  modification for its own natural filtration, which is what makes a
+  continuous modification, such as the one of the Kolmogorov--Chentsov
+  theorem, usable in place of the original martingale.\<close>
 text \<open>A modification agrees with the process almost surely at each fixed
   time, but their natural filtrations agree only up to null sets, so
   adaptedness --- and with it the martingale property --- does not transfer
   for free.  What does transfer is
 
-    \<open>int_A\<close> (\<open>X'_j\<close> - \<open>X'_i\<close>) = 0  for A in the natural filtration of X' at i,
+    \<open>\<integral>\<^sub>A (X' j - X' i) = 0\<close>  for \<open>A\<close> in the natural filtration of \<open>X'\<close> at \<open>i\<close>,
 
   because a cylinder event of the modification has almost surely the same
   indicator as the corresponding cylinder event of the process, and cylinders
@@ -28,8 +29,9 @@ text \<open>A modification agrees with the process almost surely at each fixed
 section \<open>Cylinder events of a process\<close>
 
 text \<open>The natural filtration of a measurable process consists of events.  This
-  needs the locale \<open>stochastic\_process,\<close> so it has to live in a theory that
-  does not import Kolmogorov-Chentsov.\<close>
+  needs the locale \<open>stochastic_process\<close>, whose name the Kolmogorov--Chentsov
+  entry reuses for a type, so it is proved in a theory that does not import
+  that entry.\<close>
 
 lemma sets_natural_filtration_subset:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b :: {second_countable_topology, banach}"
@@ -229,10 +231,10 @@ qed
 
 section \<open>The martingale property transfers to the modification\<close>
 
-text \<open>The market locales require a single filtration for both the state
-  process and its compensated square, so here the process generating the
-  filtration (\<open>X\<close> to \<open>X'\<close>) and the martingale (\<open>Y\<close> to \<open>Y'\<close>) are transferred
-  separately.  Adaptedness of the new martingale to the new filtration is
+text \<open>The process generating the filtration (\<open>X\<close> to \<open>X'\<close>) and the
+  martingale (\<open>Y\<close> to \<open>Y'\<close>) are transferred separately, so that one
+  filtration serves several martingales, such as a process and its
+  compensated square.  Adaptedness of the new martingale to the new filtration is
   assumed, since it does not transfer for free; in the applications \<open>Y'\<close> is a
   continuous function of \<open>X'\<close>.  The martingale takes values in any Euclidean
   space: the increments in \<open>set_integral_zero_transfer\<close> are real-valued, so
@@ -353,8 +355,8 @@ qed
 
 text \<open>Adaptedness of a measurable function of the state to the state's own
   natural filtration.  This is stated here rather than at the point of use
-  because the Kolmogorov-Chentsov entry has a type of the same name as the
-  locale \<open>stochastic\_process,\<close> so the locale cannot be interpreted in a
+  because the Kolmogorov--Chentsov entry has a type of the same name as the
+  locale \<open>stochastic_process\<close>, so the locale cannot be interpreted in a
   theory that imports both.\<close>
 
 lemma adapted_of_natural_filtration:

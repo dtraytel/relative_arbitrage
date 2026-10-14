@@ -8,21 +8,22 @@ begin
 (*>*)
 
 text \<open>
-  Doob's maximal inequality for discrete-time martingales.
+  Doob's maximal inequality for discrete-time martingales
+  \<^cite>\<open>Williams\<close>.
 
-    Neither HOL-Probability nor the AFP entry Martingales contains Doob's
-    inequality, and every passage from a time grid to continuous time needs
-    it (to dominate sup of |X| when approximating a stopping time).  It is
-    therefore proved here from scratch:
+  Neither HOL-Probability nor the AFP entry Martingales contains Doob's
+  inequality, and every passage from a time grid to continuous time needs
+  it (to dominate the supremum of \<open>\<bar>X\<bar>\<close> when approximating a stopping time).
+  It is therefore proved here from scratch:
 
-      l * P(max of |\<open>X_k\<close>|, k <= n, >= l)  <=  E[|\<open>X_n\<close>| on that event]  <=  E[|\<open>X_n\<close>|]
+    \<open>l * P(max\<^sub>k\<^sub>\<le>\<^sub>n \<bar>X\<^sub>k\<bar> \<ge> l) \<le> E[\<bar>X\<^sub>n\<bar>; max\<^sub>k\<^sub>\<le>\<^sub>n \<bar>X\<^sub>k\<bar> \<ge> l] \<le> E[\<bar>X\<^sub>n\<bar>]\<close>.
 
-    The proof is the classical first-passage decomposition: the event that the
-    running maximum reaches l is the disjoint union over k <= n of the events
-    "l is reached first at time k", each of which lies in F k, and on which
-    |\<open>X_k\<close>| >= l; the submartingale property of |X| on sets of F k -- itself a
-    consequence of conditional Jensen (\<open>cond_exp_contraction_real\<close>) -- replaces
-    |\<open>X_k\<close>| by |\<open>X_n\<close>|.\<close>
+  The proof is the classical first-passage decomposition: the event that the
+  running maximum reaches \<open>l\<close> is the disjoint union over \<open>k \<le> n\<close> of the
+  events "\<open>l\<close> is reached first at time \<open>k\<close>", each of which lies in \<open>F k\<close>,
+  and on which \<open>\<bar>X\<^sub>k\<bar> \<ge> l\<close>; the submartingale property of \<open>\<bar>X\<bar>\<close> on sets
+  of \<open>F k\<close> -- itself a consequence of conditional Jensen
+  (\<open>cond_exp_contraction_real\<close>) -- replaces \<open>\<bar>X\<^sub>k\<bar>\<close> by \<open>\<bar>X\<^sub>n\<bar>\<close>.\<close>
 section \<open>The running maximum\<close>
 
 definition maxabs :: "(nat \<Rightarrow> 'a \<Rightarrow> real) \<Rightarrow> nat \<Rightarrow> 'a \<Rightarrow> real" where

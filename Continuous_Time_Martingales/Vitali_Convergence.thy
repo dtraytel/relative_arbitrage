@@ -12,13 +12,11 @@ text \<open>
   Neither uniform integrability nor Vitali's convergence theorem exists
   anywhere in the Isabelle distribution or the AFP (@{text
   Vitali_Covering_Theorem} in HOL-Analysis is an unrelated result), so they are
-  developed here from scratch for the proof of Lemma 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close>,
-  which invokes Vitali's theorem to pass the covariation constraint through a
-  weak limit.
+  developed here from scratch.
 
-  The classical statement: on a finite measure space, if a sequence is
-  uniformly integrable and converges almost everywhere, then the limit is
-  \<open>integrable and the convergence also holds in @{text "L\<^sup>1"}.\<close>
+  The classical statement \<^cite>\<open>Williams\<close>: on a finite measure space, if a
+  sequence is uniformly integrable and converges almost everywhere, then the
+  limit is integrable and the convergence also holds in \<open>L\<^sup>1\<close>.
 \<close>
 definition unif_integrable :: "'a measure \<Rightarrow> (nat \<Rightarrow> 'a \<Rightarrow> real) \<Rightarrow> bool" where
   "unif_integrable M f \<longleftrightarrow>
@@ -296,8 +294,7 @@ subsection \<open>A sufficient condition: a uniform bound on a higher moment\<cl
 text \<open>
   The practical criterion, and the one a uniform higher-moment bound supplies: if the
   @{term p}-th moments are bounded uniformly for some @{term "p > 1"}, the family
-  is uniformly integrable. This is the route by which a moment bound of the
-  shape of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> feeds into Lemma 2.3.
+  is uniformly integrable.
 \<close>
 
 lemma tail_le_moment:

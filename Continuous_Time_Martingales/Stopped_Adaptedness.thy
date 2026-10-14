@@ -12,12 +12,11 @@ begin
 text \<open>
   A continuous adapted process stopped at a stopping time is adapted.
 
-    This discharges the hypothesis \<open>stopped_adapted\<close> of theorem \<open>optional_stopping\<close>
-    (\<open>Optional_Sampling\<close>.thy).\<close>
+  This discharges the hypothesis \<open>stopped_adapted\<close> of the optional stopping
+  theorem \<open>optional_stopping\<close> of \<open>Optional_Sampling\<close>.\<close>
 section \<open>The stopped process is adapted\<close>
 
-text \<open>This is the hypothesis \<open>stopped\_adapted\<close> of the optional stopping
-  theorem above.  The proof is the usual dyadic approximation: the stopped
+text \<open>The proof is the usual dyadic approximation: the stopped
   time is approximated from above by grid times, at which the process is a
   finite sum of terms measurable with respect to the filtration at the
   horizon, and the approximations converge by path continuity.\<close>

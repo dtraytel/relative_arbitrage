@@ -14,10 +14,9 @@ text \<open>
   positivity.
 \<close>
 
-text \<open>\<open>weak_conv_integral_of_L2_bound\<close> asks, besides the \<open>L\<^sup>2\<close> bound
-  itself, for integrability of the clamped and of the tail-truncated
-  integrand under every law involved.  Neither depends on the path space:
-  a clamp is bounded, and a tail truncation is dominated by \<open>\<bar>f\<bar>\<close>.\<close>
+text \<open>A clamp of a measurable function is bounded, hence integrable on a
+  finite measure; the tail truncation of an integrable \<open>f\<close> is dominated by
+  \<open>\<bar>f\<bar>\<close>, hence integrable.\<close>
 
 lemma clamp_integrable:
   fixes f :: "'a \<Rightarrow> real"

@@ -9,32 +9,26 @@ begin
 (*>*)
 
 text \<open>
-  Stochastic integration, layer 3b: optional sampling in continuous
-             time.
+  Optional sampling in continuous time \<^cite>\<open>KaratzasShreve\<close>: for a
+  martingale \<open>Z\<close> and a stopping time \<open>\<tau>\<close>,
 
-    The martingale-problem identity that the probabilistic part of \<^cite>\<open>LaiShkolnikovSoner\<close>
-    needs is
+    \<open>E[Z (min t \<tau>)] = E[Z 0]\<close>   (\<open>\<star>\<close>)
 
-      E[Z (t /\ tau)] = E[Z 0]                                          (star)
+  and the stopped process is again a martingale.  The proof has three steps:
 
-    for the process Z t = |X \<open>t|^2\<close> - \<open>int_0\<close>\<open>^t\<close> tr(a s) ds, which Ito's formula
-    makes a martingale.  Deriving (star) from "Z is a martingale" is exactly
-    optional sampling at the bounded stopping time t /\ tau, and that is what
-    is proved here, in three steps:
+    1. discrete time, arbitrary stopping time: the stopped process is the
+       martingale transform of \<open>Z\<close> by the indicators of \<open>{T > k}\<close>, so its
+       expectation is constant (no square integrability needed); for a
+       square-integrable martingale the stopped process is again one, and
+       the Dynkin identity holds at the stopping time;
 
-      1. discrete time, arbitrary stopping time: the stopped process is the
-         martingale transform of Z by the indicators of \<open>{T\<close> > \<open>k},\<close> so its
-         expectation is constant (no square integrability needed); for a
-         square-integrable martingale the stopped process is again one, and
-         the Dynkin identity holds at the stopping time;
+    2. a continuous-time martingale sampled on a grid is a discrete-time
+       martingale, so (\<open>\<star>\<close>) holds for stopping times taking finitely many
+       values on the grid;
 
-      2. a continuous-time martingale sampled on a grid is a discrete-time
-         martingale, so (star) holds for stopping times taking finitely many
-         values on the grid;
-
-      3. an arbitrary stopping time is approximated from above by the dyadic
-         stopping times of step 2, and right continuity of the paths plus an
-         integrable bound give (star) in general by dominated convergence.\<close>
+    3. an arbitrary stopping time is approximated from above by the dyadic
+       stopping times of step 2, and continuity of the paths plus an
+       integrable bound give (\<open>\<star>\<close>) in general by dominated convergence.\<close>
 section \<open>Discrete-time optional sampling for integrable martingales\<close>
 
 locale nat_stopped_martingale = martingale M F "0 :: nat" Y
@@ -530,9 +524,7 @@ text \<open>An arbitrary stopping time is approximated from above by its dyadic
   ceilings, which are simple stopping times of the previous section.  With
   continuous paths and an integrable bound on the process up to the
   horizon, dominated convergence transfers the identity to the limit.  The
-  measurability of the stopped process is assumed; in the intended
-  application it comes for free, since the market locale already assumes the
-  stopped process to be integrable.\<close>
+  measurability of the stopped process is assumed.\<close>
 
 locale stopped_cont_martingale = martingale M F "0 :: real" Z
   for M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"

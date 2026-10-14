@@ -10,16 +10,8 @@ begin
 
 text \<open>
   The real inequalities that the fourth-moment estimates, the quadratic
-  variation and the pathwise quadratic variation all run on.  They were
-  proved four times over, in four theories, in three sessions; they are
-  collected here, ahead of everything that uses them, and nothing below
-  this theory proves an arithmetic fact of this kind again.
-
-  Everything reduces to the two-square bound \<open>2\<bar>a\<bar>\<bar>b\<bar> \<le> a\<^sup>2 + b\<^sup>2\<close>
-  (@{thm [source] sum_squares_bound}); no Cauchy--Schwarz or Young
-  machinery is needed.  Polynomial identities are discharged with
-  \<open>algebra\<close> and the linear assembly with \<open>linarith\<close>, keeping every
-  nonlinear term as a shared atom.
+  variation and the pathwise quadratic variation all run on, collected
+  ahead of everything that uses them.
 \<close>
 
 subsection \<open>Squares\<close>

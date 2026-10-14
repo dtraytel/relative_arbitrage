@@ -13,9 +13,9 @@ begin
 (*>*)
 
 text \<open>
-  The repository's continuous-time \<open>optional_stopping\<close>
-  (@{theory Continuous_Time_Martingales.Optional_Sampling}) carries an integrable running-domination
-  hypothesis. For an \<open>L\<^sup>2\<close> martingale that hypothesis is dischargeable: the
+  The continuous-time \<open>optional_stopping\<close> of
+  @{theory Continuous_Time_Martingales.Optional_Sampling} carries an integrable
+  running-domination hypothesis. For an \<open>L\<^sup>2\<close> martingale that hypothesis is dischargeable: the
   \<open>horizon_sq_int_martingale\<close> locale of @{theory Continuous_Time_Martingales.Doob_Inequality} produces, per
   horizon, an integrable function \<open>Dsup\<close> dominating \<open>\<bar>X s\<bar>\<close> on the whole
   interval (Doob's \<open>L\<^sup>2\<close> inequality along dyadic grids + monotone
@@ -292,7 +292,7 @@ proof -
           stopped_L2_sq_integrable[OF P mgX sqX contX tau_nonneg tau_stop] iAS uv])
 qed
 
-section \<open>Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> for unbounded \<open>L\<^sup>2\<close> martingales, by localization and Fatou\<close>
+section \<open>The fourth-moment bound for unbounded \<open>L\<^sup>2\<close> martingales, by localization and Fatou\<close>
 
 lemma etime_eq_T_of_no_hit:
   assumes T: "0 \<le> T" and nh: "\<And>s. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> X s \<omega> \<notin> A"
@@ -303,8 +303,8 @@ proof -
 qed
 
 text \<open>
-  The paper's Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> with constant \<open>8 C\<^sup>2\<close> for an unbounded \<open>L\<^sup>2\<close>
-  martingale with an almost surely bounded start, \<open>\<bar>X\<^sub>0\<bar> \<le> B\<close>, and a
+  The fourth-moment bound of \<open>fourth_moment_bound_bounded\<close>, with constant
+  \<open>8 C\<^sup>2\<close>, for an unbounded \<open>L\<^sup>2\<close> martingale with an almost surely bounded start, \<open>\<bar>X\<^sub>0\<bar> \<le> B\<close>, and a
   Lipschitz-rate compensator for its square (adapted, being a compensator:
   \<open>compensator_adapted\<close>). Localize at the exit times of the balls of radius
   \<open>\<bar>B\<bar> + n + 1\<close>, apply the bounded estimate to each stopped process --- its
@@ -552,20 +552,6 @@ proof -
   finally show "(\<integral>\<omega>. (X v \<omega> - X u \<omega>)^4 \<partial>M) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
     using zero_le_power2[of C] zero_le_power2[of "v - u"] by simp
 qed
-
-text \<open>Restricting a filtered probability space to a full-measure event turns
-  every almost-sure hypothesis into a pointwise one while changing nothing
-  visible to the laws: the restricted measure is again a probability space,
-  integrals and integrability are unchanged, pushforwards are unchanged, and
-  adaptedness and the martingale property descend to the restricted
-  filtration.  \<open>space_restrict_full\<close>, \<open>sets_restrict_full\<close>,
-  \<open>emeasure_restrict_full\<close>, \<open>prob_space_restrict_full\<close>,
-  \<open>integrable_restrict_full\<close>, \<open>integral_restrict_full\<close>,
-  \<open>distr_restrict_full\<close>, \<open>set_integral_restrict_full\<close>,
-  \<open>filtered_measure_restrict_full\<close>,
-  \<open>sigma_finite_filtered_measure_restrict_full\<close>,
-  \<open>adapted_process_restrict_full\<close> and \<open>martingale_restrict_full\<close> live in
-  @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
 
 (*<*)
 end

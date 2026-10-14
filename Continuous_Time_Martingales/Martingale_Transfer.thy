@@ -17,8 +17,7 @@ text \<open>
 
 section \<open>Martingales on a product of two filtered measures\<close>
 
-text \<open>The pasting theorem needs three transfer results: a first-factor
-  martingale, a second-factor martingale, and the product of a
+text \<open>Three transfer results: a first-factor martingale, a second-factor martingale, and the product of a
   first-factor variable with a second-factor martingale, are all
   martingales for the product filtration.  All three follow from Fubini
   plus a sectionwise use of the factor's set-integral identity --- a
@@ -157,11 +156,10 @@ proof (intro measure_eqI)
   finally show "emeasure (distr (M \<Otimes>\<^sub>M N) N snd) A = emeasure N A" .
 qed simp
 
-text \<open>The second-factor lift the DPP needs: the process may depend on the
-  first coordinate too, as long as it is a second-factor martingale for
-  each frozen value --- exactly what an endpoint-dependent continuation
-  looks like once the endpoint is frozen.  The section argument is
-  unchanged.\<close>
+text \<open>The second-factor lift with a parameter: the process may depend on
+  the first coordinate too, as long as it is a second-factor martingale for
+  each frozen value --- the shape of a continuation that depends on where
+  the first factor ended.  The section argument is unchanged.\<close>
 
 theorem martingale_pair_snd_param:
   fixes Z :: "real \<Rightarrow> 'a \<times> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
@@ -265,7 +263,7 @@ proof -
   qed
 qed
 
-text \<open>The third transfer result, needed for the compensated clause: the
+text \<open>The third transfer result: the
   product of a first-factor martingale with a second-factor martingale is
   a martingale for the product filtration.  Independence of the two pieces
   is genuinely used here.  The proof is Fubini twice, once per variable.\<close>
@@ -409,10 +407,10 @@ qed
 
 section \<open>Lifting a martingale to an infinite product\<close>
 
-text \<open>Pasting with a kernel --- a continuation chosen per endpoint --- uses
-  as second factor the product \<open>\<Pi>\<^sub>M i. R i\<close> of all candidate
-  continuations, from which the glue picks the one the endpoint selects;
-  so the \<open>i\<close>-th coordinate process must be a martingale for the product
+text \<open>Pasting with a kernel --- a continuation chosen per endpoint --- can
+  use as second factor the product \<open>\<Pi>\<^sub>M i. R i\<close> of all candidate
+  continuations, from which the endpoint selects one; this needs the
+  \<open>i\<close>-th coordinate process to be a martingale for the product
   filtration.  The route: split the coordinate off with
   \<open>distr_pair_PiM_eq_PiM\<close>, apply \<open>martingale_pair_fst\<close>, transport back
   along the \<open>distr\<close>.\<close>
@@ -476,8 +474,7 @@ next
   qed
 qed
 
-text \<open>Transport of the martingale property along a pushforward.  This is
-  the general form of what the corresponding path-space transport in the application does for path spaces: if
+text \<open>Transport of the martingale property along a pushforward: if
   \<open>\<phi>\<close> pulls the target filtration back into the source one, a source
   martingale of the composed process is a target martingale.\<close>
 

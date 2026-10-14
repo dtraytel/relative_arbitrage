@@ -15,7 +15,7 @@ text \<open>
   theory of @{theory Continuous_Time_Martingales.Quadratic_Variation} to continuous time along an arbitrary
   monotone partition.
 
-  The two results that matter downstream are the discrete Ito formula for the
+  The two results transferred are the discrete Ito formula for the
   square function (\<open>qvar_compensates\<close>) and the energy identity
   (\<open>expectation_sq_qvar\<close>). Transferred, they say: along any partition of a
   continuous-time martingale, the compensated square is a martingale, and the

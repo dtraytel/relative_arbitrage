@@ -12,8 +12,7 @@ text \<open>
   lower bound of \<open>f\<close>, taken in \<open>ennreal\<close> so that the supremum is
   unconditionally defined and no integrability or boundedness hypothesis is
   needed anywhere.  \<open>ess_inf_time\<close> is the same construction for a
-  \<open>real\<close>-valued payoff, which is how an exit time is presented; the two were
-  defined separately, in two theories, and the second is now visibly an
+  \<open>real\<close>-valued payoff, which is how an exit time is presented; it is an
   instance of the first (\<open>ess_inf_ennreal\<close>), from which its calculus is
   read off.
 
@@ -72,14 +71,14 @@ qed
 
 subsection \<open>A real-valued payoff\<close>
 
-text \<open>\<open>P-ess inf tau\<close> of Eq. (1.6): the largest deterministic almost-sure
-  lower bound on \<open>tau\<close>. In \<open>ennreal\<close> the supremum always exists.\<close>
+text \<open>The essential infimum of a real-valued \<open>tau\<close>: the largest
+  deterministic almost-sure lower bound on \<open>tau\<close>.  In \<open>ennreal\<close> the
+  supremum always exists.\<close>
 
 definition ess_inf_time :: "'a measure \<Rightarrow> ('a \<Rightarrow> real) \<Rightarrow> ennreal" where
   "ess_inf_time M tau = Sup {c. AE \<omega> in M. c \<le> ennreal (tau \<omega>)}"
 
-text \<open>Every almost-sure lower bound is dominated by the mean, so the
-  essential infimum is below every integral.\<close>
+text \<open>It is @{const ess_inf} of \<open>tau\<close> read in \<open>ennreal\<close>.\<close>
 
 lemma ess_inf_ennreal:
   "ess_inf M (\<lambda>\<omega>. ennreal (tau \<omega>)) = ess_inf_time M tau"
@@ -93,19 +92,8 @@ lemma ess_inf_timeI:
 lemma ess_inf_time_AE: "AE \<omega> in M. ess_inf_time M tau \<le> ennreal (tau \<omega>)"
   using ess_inf_AE[of M "\<lambda>\<omega>. ennreal (tau \<omega>)"] unfolding ess_inf_ennreal .
 
-text \<open>The characterisation the upper-semicontinuity argument runs on: the
-  essential infimum is at least \<open>c\<close> exactly when \<open>c\<close> is an almost-sure lower
-  bound (\<open>ess_inf_timeI\<close> / \<open>ess_inf_time_AE\<close>). The iff lets the weak
-  convergence argument work with \<open>{\<tau> \<ge> c}\<close> rather than the essential
-  infimum itself.
-
-  This gives a shorter route to Larsson--Ruf's Lemma 2.1 than theirs, who
-  prove \<open>P \<mapsto> P-essinf \<tau>\<^sub>K\<close> usc via \<open>inf\<^bsub>\<lambda>>0\<^esub> f\<^sub>\<lambda>\<close> with
-  \<open>f\<^sub>\<lambda>(P) = -(1/\<lambda>) log E\<^sub>P[e\<^sup>-\<^sup>\<lambda>\<^sup>\<tau>]\<close> and Portmanteau on each \<open>f\<^sub>\<lambda>\<close>.
-  Since upper semicontinuity is closedness of
-  \<open>{P : c \<le> P-essinf \<tau>} = {P : P{\<tau> \<ge> c} = 1}\<close>, and \<open>\<tau>\<^sub>K\<close> being usc makes
-  \<open>{\<tau>\<^sub>K \<ge> c}\<close> closed, the closed-set form of Portmanteau closes it in one
-  step, with no Laplace transform needed.\<close>
+text \<open>Every almost-sure lower bound is dominated by the mean, so the
+  essential infimum is below every integral.\<close>
 
 lemma ess_inf_time_le_nn_integral:
   assumes M: "prob_space M"
@@ -123,11 +111,9 @@ proof (rule Sup_least)
   finally show "c \<le> (\<integral>\<^sup>+\<omega>. ennreal (tau \<omega>) \<partial>M)" .
 qed
 
-text \<open>A deterministic ceiling passes to the essential infimum: the family of
-  values \<open>{P\<hyphen>essinf \<tau>\<^sub>K : P \<in> \<P>\<^sub>0}\<close> needs to be bounded above by a real number
-  for Berge's theorem, and \<open>ess_inf_time\<close> is \<open>ennreal\<close>-valued. The exit time is
-  capped at \<open>T\<close> by construction (\<open>Stopping_Times.etime_le_T\<close>), so the ceiling is
-  available for free.\<close>
+text \<open>A deterministic ceiling passes to the essential infimum, which is
+  therefore finite for a bounded payoff, such as an exit time capped at a
+  horizon.\<close>
 
 lemma ess_inf_time_le_const:
   assumes M: "prob_space M" and bnd: "\<And>\<omega>. tau \<omega> \<le> T"
@@ -161,9 +147,12 @@ proof -
 qed
 
 text \<open>
-  Calculus for @{const ess_inf_time}, needed by Proposition 2.4: the
-  dynamic programming principle of Eq. (2.9) is an identity between essential
-  infima, however the pasting of controls is carried out.
+  Calculus for @{const ess_inf_time}.  The essential infimum is at least
+  \<open>c\<close> exactly when \<open>c\<close> is an almost-sure lower bound.  The equivalence
+  lets an argument about laws work with the event \<open>{\<tau> \<ge> c}\<close> rather than
+  with the essential infimum itself: for an upper semicontinuous \<open>\<tau>\<close> on a
+  metric space, \<open>{P. c \<le> ess_inf_time P \<tau>} = {P. P{\<tau> \<ge> c} = 1}\<close> is
+  weakly closed by the closed-set form of the Portmanteau theorem.
 
   The workhorse is @{text ess_inf_time_AE}, the instance of
   @{text ess_inf_AE}: the essential infimum is itself an almost-sure lower
@@ -298,11 +287,9 @@ proof (rule order.antisym)
 qed
 
 
-text \<open>The essential infimum transported along a pushforward: exit times of
-  a law presented as a distr (e.g.\ a path law, or a member of \<open>\<P>\<^sub>x\<close>
-  reconstructed from a limit) can be computed on either side. Needed when
-  Lemma 2.3 exhibits weak limits as members of \<open>\<P>\<^sub>x\<close> and Proposition 2.4
-  concatenates laws at stopping times.\<close>
+text \<open>The essential infimum transported along a pushforward: for a law
+  presented as an image measure, such as a path law, it can be computed on
+  either side.\<close>
 
 
 lemma ess_inf_distr:
