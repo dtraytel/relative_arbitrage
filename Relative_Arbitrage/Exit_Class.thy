@@ -195,13 +195,6 @@ lemma exit_class_start:
   using Q unfolding exit_class_eq_covariation by (rule covariation_class_start)
 
 
-lemma exit_class_X_martingale:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x"
-  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
-  using Q unfolding exit_class_eq_covariation by (rule covariation_class_martingale_fst)
-
 
 lemma closedin_diffquot_constraint:
   fixes s t :: real
@@ -394,16 +387,6 @@ lemma sconstraint_bounds:
     and "0 \<le> L"
     and "\<And>(a :: real^'n^'n) j. a \<in> sconstraint k L \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> L"
   using L sconstraint_norm_le[OF L] sconstraint_diag by auto
-
-lemma exit_class_compensated_martingale:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x"
-  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
-      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
-proof (rule covariation_class_martingale_compensated)
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed
 
 lemma exit_class_compensated_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
