@@ -202,7 +202,7 @@ text \<open>Upper semicontinuity in the form of \<open>Limsup_le_iff\<close>: wh
   positive \<open>\<Lambda>i i\<close>-mass, which is \<open>ess_inf_time (\<Lambda>i i) (pexit T K) < d\<close>.
   Neither probability nor a positive horizon is needed.\<close>
 
-theorem ess_inf_pexit_usc_min:
+theorem ess_inf_pexit_usc:
   fixes K :: "('b :: polish_space) set"
     and \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b) measure" and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
   assumes T0: "0 \<le> T" and K: "closed K"
@@ -267,18 +267,6 @@ proof -
     qed
   qed
 qed
-
-theorem ess_inf_pexit_usc:
-  fixes K :: "('b :: polish_space) set"
-    and \<Lambda>i :: "nat \<Rightarrow> (real \<Rightarrow> 'b) measure" and \<Lambda> :: "(real \<Rightarrow> 'b) measure"
-  assumes T: "0 < T" and K: "closed K"
-    and wc: "weak_conv_on \<Lambda>i \<Lambda> sequentially
-      (mtopology_of (path_metric T :: (real \<Rightarrow> 'b) metric))"
-    and probs: "\<And>i. prob_space (\<Lambda>i i)" and prob: "prob_space \<Lambda>"
-  shows "Limsup sequentially (\<lambda>i. ess_inf_time (\<Lambda>i i) (pexit T K))
-      \<le> ess_inf_time \<Lambda> (pexit T K)"
-  using T K wc by (intro ess_inf_pexit_usc_min) auto
-
 
 section \<open>Shifted exit times, confinement, and test functionals\<close>
 

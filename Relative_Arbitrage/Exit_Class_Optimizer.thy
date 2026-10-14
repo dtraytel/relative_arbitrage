@@ -203,7 +203,7 @@ proof -
       have wc: "weak_conv_on sq Rl sequentially ?X" by (rule convC[OF lim])
       have "Limsup sequentially (\<lambda>m. ?g y (sq m)) \<le> ?g y Rl"
         by (rule ess_inf_pexit_pshift_usc
-            [OF T K tendsto_const prC[OF memC] stC[OF memC]
+            [OF T0 K tendsto_const prC[OF memC] stC[OF memC]
                 prC[OF RlC] stC[OF RlC] wc])
       moreover have "c \<le> Liminf sequentially (\<lambda>m. ?g y (sq m))"
         using memA by (intro Liminf_bounded always_eventually) blast

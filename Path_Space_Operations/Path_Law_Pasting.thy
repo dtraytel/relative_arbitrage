@@ -476,7 +476,7 @@ qed (use imp space_of_path_sets[OF setsQ] space_of_path_sets[OF setsR] in auto)
 lemma ess_inf_pexit_pshift_usc:
   fixes ym :: "nat \<Rightarrow> 'a::{polish_space,banach}" and Rm :: "nat \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure"
     and K :: "('a) set"
-  assumes T: "0 < T" and K: "closed K"
+  assumes T0: "0 \<le> T" and K: "closed K"
     and yc: "ym \<longlonglongrightarrow> y"
     and prR: "\<And>m. prob_space (Rm m)"
     and setsR: "\<And>m. sets (Rm m) = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -490,14 +490,9 @@ lemma ess_inf_pexit_pshift_usc:
 proof -
   let ?Y = "mtopology_of (path_metric T :: (real \<Rightarrow> 'a) metric)"
   let ?p = "\<lambda>Q :: ((real \<Rightarrow> 'a \<times> 'b)) measure. distr Q (borel_of ?Y) (pfst T)"
-  have T0: "0 \<le> T" using T by simp
   have wcs: "weak_conv_on (\<lambda>m. pshift_law T (ym m) (Rm m)) (pshift_law T y R)
       sequentially (mtopology_of (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric))"
     by (rule pshift_law_weak_conv_joint[OF T0 yc prR setsR prR' setsR' wc])
-  have prS: "prob_space (pshift_law T (ym m) (Rm m))" for m
-    by (rule prob_space_pshift_law[OF T0 prR setsR])
-  have prS': "prob_space (pshift_law T y R)"
-    by (rule prob_space_pshift_law[OF T0 prR' setsR'])
   have wcY: "weak_conv_on (\<lambda>m. ?p (pshift_law T (ym m) (Rm m)))
       (?p (pshift_law T y R)) sequentially ?Y"
     by (rule weak_conv_on_pushforward
@@ -505,12 +500,7 @@ proof -
   have lim: "Limsup sequentially
         (\<lambda>m. ess_inf_time (?p (pshift_law T (ym m) (Rm m))) (pexit T K))
       \<le> ess_inf_time (?p (pshift_law T y R)) (pexit T K)"
-  proof (rule ess_inf_pexit_usc[OF T K wcY])
-    show "prob_space (?p (pshift_law T (ym m) (Rm m)))" for m
-      by (rule prob_space.prob_space_distr[OF prS pfst_measurable[OF T0]]) simp
-    show "prob_space (?p (pshift_law T y R))"
-      by (rule prob_space.prob_space_distr[OF prS' pfst_measurable[OF T0]]) simp
-  qed
+    by (rule ess_inf_pexit_usc[OF T0 K wcY])
   have eqS: "ess_inf_time (?p S) (pexit T K)
       = ess_inf_time S (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
     if "sets S = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
