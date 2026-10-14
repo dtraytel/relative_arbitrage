@@ -22,7 +22,7 @@ text \<open>The clauses of Theorem 1.1 proved for \<open>exit_val\<close> --- th
 
 text \<open>The measurable selection theorem for upper semicontinuous payoffs,
   Bertsekas--Shreve (1978) Prop. 7.33, lives in
-  @{theory Semicontinuous_Analysis.Semicontinuous_Selection}, as
+  @{theory Continuous_Path_Spaces.Semicontinuous_Selection}, as
   \<open>Metric_space.usc_measurable_selection\<close>.\<close>
 
 section \<open>The paper's class is a compact metric space of measures\<close>

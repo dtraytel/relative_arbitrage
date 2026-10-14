@@ -4,6 +4,7 @@ section \<open>Sup-convolutions\<close>
 theory Sup_Convolution
   imports
     Alexandrov
+    "Semicontinuous_Analysis.Semicontinuity"
 begin
 
 (*>*)
@@ -53,54 +54,6 @@ proof (rule cSUP_least)
 qed
 
 subsection \<open>Attainment for upper semicontinuous data\<close>
-
-text \<open>The session sits on plain HOL-Analysis, so the two attainment facts
-  below are proved here rather than imported from the
-  \<open>Semicontinuous_Analysis\<close> session; they are deliberately minimal.
-  Upper semicontinuity is stated in its \<open>\<epsilon>\<close>-form.\<close>
-
-lemma usc_open_lt:
-  fixes f :: "'a::metric_space \<Rightarrow> real"
-  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
-  shows "open {y. f y < c}"
-  unfolding open_dist
-proof (intro ballI)
-  fix z assume "z \<in> {y. f y < c}"
-  then have "f z < c" by simp
-  from usc[OF this] obtain e where e: "0 < e"
-    and b: "\<And>y. dist z y < e \<Longrightarrow> f y < c" by blast
-  show "\<exists>e>0. \<forall>y. dist y z < e \<longrightarrow> y \<in> {y. f y < c}"
-    by (intro exI[of _ e] conjI e allI impI)
-      (use b in \<open>simp add: dist_commute\<close>)
-qed
-
-lemma usc_attains_sup_compact:
-  fixes f :: "'a::metric_space \<Rightarrow> real"
-  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
-    and cS: "compact S" and neS: "S \<noteq> {}"
-  shows "\<exists>z\<in>S. \<forall>y\<in>S. f y \<le> f z"
-proof (rule ccontr)
-  assume "\<not> (\<exists>z\<in>S. \<forall>y\<in>S. f y \<le> f z)"
-  then have H: "\<And>z. z \<in> S \<Longrightarrow> \<exists>z'\<in>S. f z < f z'" by force
-  have cov: "S \<subseteq> (\<Union>z'\<in>S. {y. f y < f z'})"
-    using H by blast
-  have opn: "\<And>z'. z' \<in> S \<Longrightarrow> open {y. f y < f z'}"
-    by (rule usc_open_lt[OF usc])
-  obtain T where TS: "T \<subseteq> S" and fT: "finite T"
-    and covT: "S \<subseteq> (\<Union>z'\<in>T. {y. f y < f z'})"
-    using compactE_image[OF cS opn cov] by blast
-  obtain s where sS: "s \<in> S" using neS by blast
-  have neT: "T \<noteq> {}" using covT sS by blast
-  have "Max (f ` T) \<in> f ` T"
-    by (rule Max_in) (use fT neT in auto)
-  then obtain zm where zmT: "zm \<in> T" and zmM: "Max (f ` T) = f zm"
-    by (rule imageE)
-  have zmS: "zm \<in> S" using TS zmT by blast
-  have "zm \<in> (\<Union>z'\<in>T. {y. f y < f z'})" by (rule subsetD[OF covT zmS])
-  then obtain z'' where z'': "z'' \<in> T" and lt: "f zm < f z''" by auto
-  have "f z'' \<le> Max (f ` T)" by (rule Max_ge) (use fT z'' in auto)
-  then show False using lt zmM by linarith
-qed
 
 text \<open>For bounded usc \<open>u\<close> the supremum defining \<open>supconv u \<epsilon> x\<close> is attained:
   the competitor \<open>y \<mapsto> u y - dist\<^sup>2/(2\<epsilon>)\<close> is usc, and outside the ball of

@@ -25,7 +25,7 @@ Matrix_Algebra.trace_matrix_sum
 Matrix_Algebra.transpose_matrix_sum
 Matrix_Algebra.trace_conjugate
 # outer products (abstract: 'a calculus of trace, transpose, outer products, ...')
-Outer_Products.outer_prod_def
+Higher_Differentiability_Multi.outer_prod_def   # HOL-Analysis's outer_prod, which replaces the identical SMS copy in phase 5
 Outer_Products.outer_prod_mult
 Outer_Products.trace_mult_outer_sum
 # orthonormal families
@@ -57,6 +57,13 @@ Eigenvalue_Continuity.kyfan_lipschitz
 # Poincare separation (abstract: ordered eigenvalues interlace with those of any compression to a subspace) -- O
 Poincare_Separation.quadform_le_eigval_1
 Poincare_Separation.eigval_min_le_quadform
+# the Courant-Fischer variational lower bound for an ordered eigenvalue (theory text; moved from Operator_Formula)
+Poincare_Separation.eigval_ge_of_subspace
+# orthogonal projections onto orthonormal families (ROOT description; moved from the paper session)
+Orthogonal_Projections.projmat_def
+Orthogonal_Projections.projmat_idem
+Orthogonal_Projections.projmat_span_fix
+Orthogonal_Projections.rank1proj_def
 
 # --- Semicontinuous_Analysis: advertised deliverables (ROOT description / root.tex)
 # Upper and lower semicontinuity for real-valued functions on a metric space: the epsilon-delta calculus
@@ -81,9 +88,6 @@ Semicontinuous_Envelopes.lsc_env_Kext
 # Berge's maximum theorem (abstract: the value of a maximisation depends upper semicontinuously on its parameter
 Berge.usc_sup_over_compact
 Berge.usc_sup_over_compactin
-# measurable selection of an upper semicontinuous payoff (abstract: theorem of Bertsekas and Shreve that a usc p
-Semicontinuous_Selection.Metric_space.usc_measurable_selection
-Semicontinuous_Selection.usc_sel_def
 # The envelope is the lower semicontinuous hull of the Lower_Semicontinuous entry, proved equal to it rather tha
 Semicontinuous_Envelopes.lsc_env_ereal
 
@@ -265,6 +269,9 @@ Pathwise_Quadratic_Variation.AE_tendsto_zero_of_summable_sq
 Path_Exit_Times.pexit_def
 Path_Exit_Times.ess_inf_pexit_usc
 Path_Exit_Times.pexit_sublevel_open
+# measurable selection of an upper semicontinuous payoff (abstract: theorem of Bertsekas and Shreve that a usc p
+Semicontinuous_Selection.Metric_space.usc_measurable_selection
+Semicontinuous_Selection.usc_sel_def
 
 
 # --- kept for independent interest (notes/review_3/data/independent_interest.md):
@@ -365,7 +372,7 @@ Eigenvalue_Bound_Exact.diag_in_convex_hull    # FIX_THEN_KEEP
 Eigenvalue_Bound_Exact.convex_hull_augment    # KEEP_ROOT
 Eigenvalue_Bound_Exact.convex_hull_augment_sum    # KEEP_ROOT
 Eigenvalue_Bound_Exact.lemma_2_1_exact    # KEEP_ROOT
-Operator_Formula.rank1proj_scaleR    # KEEP_API
+Orthogonal_Projections.rank1proj_scaleR    # KEEP_API
 Operator_Formula.Mp_eig_on_perp    # KEEP_ROOT
 Operator_Formula.Mp_eigenbasis_of_M_eigenvector    # KEEP_ROOT
 Operator_Formula.kyfan_Mp_top_eigenvector    # KEEP_ROOT
@@ -450,12 +457,12 @@ Crandall_Ishii_Sums.subjet_neg_superjet    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.superjet_mono    # KEEP_API
 Crandall_Ishii_Sums.superjet_subset_cl    # KEEP_API
 Crandall_Ishii_Sums.subjet_subset_cl    # KEEP_API
-Sup_Convolution.usc_open_lt    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
-Sup_Convolution.usc_attains_sup_compact    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
+Semicontinuity.open_usc_sublevel    # FIX_THEN_KEEP (replaces its twin Sup_Convolution.usc_open_lt in phase 5)
+Semicontinuity.usc_attains_sup_compact    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4, to Semicontinuity in phase 5)
 Sup_Convolution.supconv_attained_usc    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
 Crandall_Ishii_Sums.quad_root_bound    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.doubled_supconv_pointwise_bound    # FIX_THEN_KEEP
-Crandall_Ishii_Sums.usc_eventually_lt    # FIX_THEN_KEEP
+Semicontinuity.usc_eventually_lt    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 5)
 Convex_Subgradients.norm_sq_add_expand    # FIX_THEN_KEEP (generalised to real_inner, moved from Crandall_Ishii_Sums in phase 4)
 Crandall_Ishii_Sums.superjet_of_transfer    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.supconv_superjet_at_optimizer    # FIX_THEN_KEEP
@@ -502,7 +509,7 @@ Viscosity_Solutions.visc_subsol_gen_env_imp    # KEEP_API
 Viscosity_Solutions.visc_supersol_gen_env_imp    # KEEP_API
 # toolkit
 Pair_Path_Space.path_laws_convergent_subsequence_market    # FIX_THEN_KEEP
-Pair_Path_Space.psd_diag_nonneg    # KEEP_API
+Symmetric_Spectral.psd_diag_nonneg    # KEEP_API
 Pair_Path_Space.etime_shift_of_restrict    # KEEP_API
 Pair_Path_Space.vshift_path_law    # KEEP_API
 Pair_Path_Laws.covariation_class_martingale_fst    # KEEP_API

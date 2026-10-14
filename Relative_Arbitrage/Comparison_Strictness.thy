@@ -339,18 +339,6 @@ text \<open>\<open>F(p, M) = Inf {- tr(M a)/2 | a feasible}\<close> has no zerot
   \<open>(p, X)\<close> to \<open>(\<theta> p, \<theta> X)\<close> and \<open>F(p,X) \<le> 1\<close> to the strict
   \<open>F(\<theta> p, \<theta> X) \<le> \<theta> < 1\<close>.\<close>
 
-text \<open>Scaling a conditionally-complete infimum by a positive constant.\<close>
-
-lemma cInf_mult_pos:
-  fixes A :: "real set"
-  assumes c0: "0 < c" and ne: "A \<noteq> {}" and bdd: "bdd_below A"
-  shows "Inf ((\<lambda>t. c * t) ` A) = c * Inf A"
-proof -
-  have "mono (\<lambda>t. c * t)" using c0 by (intro monoI mult_left_mono) auto
-  moreover have "continuous (at_right (Inf A)) (\<lambda>t. c * t)" by (intro continuous_intros)
-  ultimately show ?thesis using continuous_at_Inf_mono[of "\<lambda>t. c * t" A] ne bdd by simp
-qed
-
 text \<open>Positive homogeneity of \<open>F\<close> in the matrix argument: with
   @{thm [source] feasible_scale}, this is the strict-perturbation mechanism, scaling
   a subsolution's jet to \<open>(\<theta> p, \<theta> X)\<close> and its value to

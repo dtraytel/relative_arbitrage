@@ -1342,87 +1342,9 @@ qed
 text \<open>The diagonal bound \<open>k \<bullet> Wk\<close> does not by itself bound the operator;
   polarisation recovers the off-diagonal entries by pure algebra, and the
   parallelogram law turns the result into a bound uniform over the unit
-  sphere, with no spectral theory.\<close>
-
-lemma polarization_symmetric:
-  fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes lin: "linear W" and sym: "\<And>v w. v \<bullet> W w = w \<bullet> W v"
-  shows "4 * (u \<bullet> W v) = (u + v) \<bullet> W (u + v) - (u - v) \<bullet> W (u - v)"
-proof -
-  have a: "W (u + v) = W u + W v"
-    using lin unfolding linear_iff by blast
-  have b: "W (u - v) = W u - W v"
-    using lin by (simp add: linear_diff)
-  have e1: "(u + v) \<bullet> W (u + v) = u \<bullet> W u + u \<bullet> W v + (v \<bullet> W u + v \<bullet> W v)"
-    unfolding a by (simp add: inner_add_left inner_add_right)
-  have e2: "(u - v) \<bullet> W (u - v) = u \<bullet> W u - u \<bullet> W v - (v \<bullet> W u - v \<bullet> W v)"
-    unfolding b by (simp add: inner_diff_left inner_diff_right)
-  have s: "v \<bullet> W u = u \<bullet> W v"
-    by (rule sym)
-  show ?thesis
-    unfolding e1 e2 s by simp
-qed
-
-theorem symmetric_form_bound:
-  fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes lin: "linear W" and sym: "\<And>v w. v \<bullet> W w = w \<bullet> W v"
-    and bnd: "\<And>k. \<bar>k \<bullet> W k\<bar> \<le> c * (norm k)\<^sup>2"
-  shows "\<bar>u \<bullet> W v\<bar> \<le> c * ((norm u)\<^sup>2 + (norm v)\<^sup>2) / 2"
-proof -
-  have pol: "4 * (u \<bullet> W v) = (u + v) \<bullet> W (u + v) - (u - v) \<bullet> W (u - v)"
-    by (rule polarization_symmetric[OF lin sym])
-  have b1: "\<bar>(u + v) \<bullet> W (u + v)\<bar> \<le> c * (norm (u + v))\<^sup>2"
-    by (rule bnd)
-  have b2: "\<bar>(u - v) \<bullet> W (u - v)\<bar> \<le> c * (norm (u - v))\<^sup>2"
-    by (rule bnd)
-  have b1a: "- (c * (norm (u + v))\<^sup>2) \<le> (u + v) \<bullet> W (u + v)"
-    using b1 by (simp add: abs_le_iff)
-  have b1b: "(u + v) \<bullet> W (u + v) \<le> c * (norm (u + v))\<^sup>2"
-    using b1 by (simp add: abs_le_iff)
-  have b2a: "- (c * (norm (u - v))\<^sup>2) \<le> (u - v) \<bullet> W (u - v)"
-    using b2 by (simp add: abs_le_iff)
-  have b2b: "(u - v) \<bullet> W (u - v) \<le> c * (norm (u - v))\<^sup>2"
-    using b2 by (simp add: abs_le_iff)
-  have par: "(norm (u + v))\<^sup>2 + (norm (u - v))\<^sup>2
-      = 2*(norm u)\<^sup>2 + 2*(norm v)\<^sup>2"
-    using norm_sq_add_expand[of u v] norm_sq_diff_expand[of u v] by simp
-  have e: "c * (norm (u + v))\<^sup>2 + c * (norm (u - v))\<^sup>2
-      = 2 * (c * ((norm u)\<^sup>2 + (norm v)\<^sup>2))"
-  proof -
-    have "c * (norm (u + v))\<^sup>2 + c * (norm (u - v))\<^sup>2
-        = c * ((norm (u + v))\<^sup>2 + (norm (u - v))\<^sup>2)"
-      by (simp add: algebra_simps)
-    also have "\<dots> = c * (2*(norm u)\<^sup>2 + 2*(norm v)\<^sup>2)"
-      unfolding par ..
-    also have "\<dots> = 2 * (c * ((norm u)\<^sup>2 + (norm v)\<^sup>2))"
-      by (simp add: algebra_simps)
-    finally show ?thesis .
-  qed
-  show ?thesis
-  proof (intro abs_leI)
-    show "u \<bullet> W v \<le> c * ((norm u)\<^sup>2 + (norm v)\<^sup>2) / 2"
-      using pol b1b b2a e by linarith
-    show "- (u \<bullet> W v) \<le> c * ((norm u)\<^sup>2 + (norm v)\<^sup>2) / 2"
-      using pol b1a b2b e by linarith
-  qed
-qed
-
-text \<open>On the unit sphere the bound is simply \<open>c\<close>: the Hessians at the doubled
-  maxima are bounded entrywise by the semiconvexity constant, uniformly in
-  the tilt, giving the boundedness a Bolzano-Weierstrass argument needs.\<close>
-
-corollary symmetric_form_bound_unit:
-  fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
-  assumes lin: "linear W" and sym: "\<And>v w. v \<bullet> W w = w \<bullet> W v"
-    and bnd: "\<And>k. \<bar>k \<bullet> W k\<bar> \<le> c * (norm k)\<^sup>2"
-    and nu: "norm u = 1" and nv: "norm v = 1"
-  shows "\<bar>u \<bullet> W v\<bar> \<le> c"
-proof -
-  have "\<bar>u \<bullet> W v\<bar> \<le> c * ((norm u)\<^sup>2 + (norm v)\<^sup>2) / 2"
-    by (rule symmetric_form_bound[OF lin sym bnd])
-  then show ?thesis
-    unfolding nu nv by simp
-qed
+  sphere, with no spectral theory: @{thm [source] symmetric_form_bound_unit},
+  and its matrix form @{thm [source] norm_matrix_le_of_form_bound}, in
+  @{theory Symmetric_Matrix_Spectra.Symmetric_Spectral}.\<close>
 
 text \<open>If a property holds along a sequence converging to \<open>Z\<^sub>0\<close>, it holds at
   points arbitrarily close to \<open>Z\<^sub>0\<close> --- the hypothesis shape that estimates on a
@@ -1791,26 +1713,6 @@ lemma choice4:
   assumes "\<And>i. \<exists>a b c d. P i a b c d"
   shows "\<exists>A B C D. \<forall>i. P i (A i) (B i) (C i) (D i)"
   using assms by metis
-
-theorem norm_matrix_le_of_form_bound:
-  fixes W :: "real^'n::finite \<Rightarrow> real^'n"
-  assumes lin: "linear W" and sym: "\<And>v z. v \<bullet> W z = z \<bullet> W v"
-    and bnd: "\<And>k. \<bar>k \<bullet> W k\<bar> \<le> c * (norm k)\<^sup>2"
-  shows "norm (matrix W) \<le> real (card (Basis :: (real^'n^'n) set)) * c"
-proof (rule norm_le_card_Basis_bound)
-  fix e :: "real^'n^'n"
-  assume "e \<in> Basis"
-  then obtain i j where e: "e = axis i (axis j 1)"
-    using matrix_Basis_cases by blast
-  have nu: "norm (axis i (1::real) :: real^'n) = 1"
-    by (rule norm_axis_1)
-  have nv: "norm (axis j (1::real) :: real^'n) = 1"
-    by (rule norm_axis_1)
-  have "\<bar>(axis i 1 :: real^'n) \<bullet> W (axis j 1)\<bar> \<le> c"
-    by (rule symmetric_form_bound_unit[OF lin sym bnd nu nv])
-  then show "\<bar>matrix W \<bullet> e\<bar> \<le> c"
-    unfolding e inner_matrix_axis[OF lin] .
-qed
 
 text \<open>From the jet to \<open>\<parallel>X\<^sub>i\<parallel> \<le> BX\<close>: testing the product-space Hessian
   \<open>W\<close> against \<open>(k,0)\<close> and \<open>(0,k)\<close> bounds the two block maps, with block
@@ -3187,9 +3089,11 @@ text \<open>\<open>symmetric_form_bound_unit\<close> gives the entrywise bound
   \<open>\<parallel>matrix W\<parallel> \<le> B\<close> with no spectral theory, since the operator norm is
   at most the sum of absolute coordinates.\<close>
 
-text \<open>\<open>norm_le_card_Basis_bound\<close>, \<open>matrix_Basis_cases\<close>, \<open>inner_matrix_axis\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-text \<open>\<open>norm_matrix_le_of_form_bound\<close>, \<open>hessian_abs_bound_of_two_sided\<close>, \<open>block_form_bound_fst_gen\<close>, \<open>block_form_bound_snd_gen\<close>, \<open>norm_block_matrices_bounded_gen\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
+text \<open>\<open>norm_matrix_le_of_form_bound\<close> lives in
+  @{theory Symmetric_Matrix_Spectra.Symmetric_Spectral};
+  \<open>hessian_abs_bound_of_two_sided\<close>, \<open>block_form_bound_fst_gen\<close>,
+  \<open>block_form_bound_snd_gen\<close> and \<open>norm_block_matrices_bounded_gen\<close> are
+  proved above.\<close>
 
 text \<open>The \<open>\<delta>\<close>-perturbation shifts both Hessians by the same \<open>2\<delta>I\<close>, so the
   ordering is untouched (the shifts cancel), symmetry

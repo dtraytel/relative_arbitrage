@@ -245,20 +245,6 @@ qed
 
 section \<open>Squeeze helpers\<close>
 
-lemma usc_eventually_lt:
-  fixes f :: "'a::metric_space \<Rightarrow> real"
-  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
-    and xs: "xs \<longlonglongrightarrow> x0" and c: "f x0 < c"
-  shows "\<forall>\<^sub>F n in sequentially. f (xs n) < c"
-proof -
-  from usc[OF c] obtain e where e0: "0 < e"
-    and b: "\<And>y. dist x0 y < e \<Longrightarrow> f y < c" by blast
-  have "\<forall>\<^sub>F n in sequentially. dist (xs n) x0 < e"
-    by (rule tendstoD[OF xs e0])
-  then show ?thesis
-    by (rule eventually_mono) (use b in \<open>simp add: dist_commute\<close>)
-qed
-
 lemma sum_squeeze_pair_fst:
   fixes an bn :: "nat \<Rightarrow> real"
   assumes ua: "\<And>c. A < c \<Longrightarrow> \<forall>\<^sub>F n in sequentially. an n < c"

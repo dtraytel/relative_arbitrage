@@ -14,28 +14,27 @@
 
 \begin{document}
 
-\title{Semicontinuity: Envelopes, Berge's Theorem and Measurable Selection}
+\title{Semicontinuity: Envelopes and Berge's Theorem}
 \author{Dmitriy Traytel}
 \maketitle
 
 \begin{abstract}
   Arguments in optimal control and in the theory of viscosity solutions work
   with functions that are only upper or lower semicontinuous, and repeatedly
-  need their extrema on compacta, their semicontinuous envelopes, and a
-  measurable choice of optimiser.  This entry assembles that toolkit for
-  real-valued functions on a metric space, on top of the extended-real theory
-  of the Archive entry \texttt{Lower\_Semicontinuous}.  We formalize the
-  $\varepsilon$-$\delta$ calculus of semicontinuity, attainment of extrema on
+  need their extrema on compacta, their semicontinuous envelopes, and the
+  regularity of a value obtained by optimising over a compact set.  This
+  entry assembles that toolkit for real-valued functions on a metric space,
+  on top of the extended-real theory of the Archive entry
+  \texttt{Lower\_Semicontinuous}.  We formalize the
+  $\varepsilon$-$\delta$ calculus of semicontinuity, open strict sublevel
+  sets, eventual bounds along convergent sequences, attainment of extrema on
   nonempty compacta, bounded extension off a closed set, the envelopes taken
-  over the whole space and relative to a closed set, Berge's maximum theorem,
-  that the value of a maximisation depends upper semicontinuously on its
-  parameter, and the theorem of Bertsekas and Shreve~\cite{BertsekasShreve}
-  that an upper semicontinuous payoff on a compact set admits a measurable
-  maximiser.  The envelope is shown to be the hull of
+  over the whole space and relative to a closed set, the scaling of a real
+  infimum by a positive factor, and Berge's maximum
+  theorem, that the value of a maximisation depends upper semicontinuously on
+  its parameter.  The envelope is shown to be the hull of
   \texttt{Lower\_Semicontinuous} transported to the reals, so its basic
-  theory is inherited rather than repeated, and the selection theorem is
-  proved by greedy nested bisection, no countably valued
-  $\varepsilon$-selector being available.
+  theory is inherited rather than repeated.
 \end{abstract}
 
 \tableofcontents

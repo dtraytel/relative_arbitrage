@@ -1385,7 +1385,7 @@ text \<open>The cross term of \<open>outerp (X\<^sub>r + W)\<close> is \<open>X\
   product of two martingales.\<close>
 
 text \<open>\<open>norm_outer_prod\<close> lives in
-  @{theory Symmetric_Matrix_Spectra.Poincare_Separation}, stated through
+  @{theory Symmetric_Matrix_Spectra.Outer_Products}, stated through
   \<open>outer_prod\<close>; \<open>outerp x\<close> is \<open>outer_prod x x\<close>.\<close>
 
 

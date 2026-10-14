@@ -20,7 +20,8 @@ text \<open>
   stated in the viscosity sense actually reads, since it takes the liminf
   over points of \<open>K\<close> only.  Their
   monotonicity, and the fixpoint at points where the underlying function is
-  already semicontinuous.
+  already semicontinuous.  At the end, a fact about real infima: scaling by a
+  positive constant commutes with \<open>Inf\<close>.
 \<close>
 
 definition lsc_env :: "('a::metric_space \<Rightarrow> real) \<Rightarrow> 'a \<Rightarrow> real" where
@@ -708,6 +709,20 @@ proof -
     finally show "t \<le> lsc_env g x" .
   qed
   show ?thesis unfolding g_def[symmetric] by (rule antisym[OF d1 d2])
+qed
+
+subsection \<open>Scaling a real infimum\<close>
+
+text \<open>Scaling a conditionally-complete infimum of reals by a positive constant.\<close>
+
+lemma cInf_mult_pos:
+  fixes A :: "real set"
+  assumes c0: "0 < c" and ne: "A \<noteq> {}" and bdd: "bdd_below A"
+  shows "Inf ((\<lambda>t. c * t) ` A) = c * Inf A"
+proof -
+  have "mono (\<lambda>t. c * t)" using c0 by (intro monoI mult_left_mono) auto
+  moreover have "continuous (at_right (Inf A)) (\<lambda>t. c * t)" by (intro continuous_intros)
+  ultimately show ?thesis using continuous_at_Inf_mono[of "\<lambda>t. c * t" A] ne bdd by simp
 qed
 
 (*<*)

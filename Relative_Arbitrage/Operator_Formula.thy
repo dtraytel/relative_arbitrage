@@ -39,13 +39,9 @@ section \<open>\<open>M\<^sub>p\<close> on the hyperplane \<open>p\<^sup>\<botto
 text \<open>On \<open>p\<^sup>\<bottom>\<close> the projection \<open>I - pp'/|p|\<^sup>2\<close> acts as the identity, so
   \<open>M\<^sub>p\<close> has exactly the Rayleigh quotients of \<open>M\<close> there, and its
   \<open>p\<close>-direction eigenvalue \<open>min(\<lambda>\<^sub>(\<^sub>n\<^sub>)(M), 0)\<close> is the smallest of its
-  spectrum, as needed for Eq. (3.5).\<close>
-
-lemma perp_proj_fixes_perp:
-  fixes p :: "real^'n::finite"
-  assumes y: "p \<bullet> y = 0"
-  shows "(mat 1 - rank1proj p) *v y = y"
-  by (simp add: matrix_vector_mult_diff_rdistrib rank1proj_annihilates_perp[OF y])
+  spectrum, as needed for Eq. (3.5).  The first fact is
+  @{thm [source] perp_proj_fixes_perp} in
+  @{theory Symmetric_Matrix_Spectra.Orthogonal_Projections}.\<close>
 
 lemma Mp_apply_perp:
   fixes M :: "real^'n::finite^'n"
@@ -145,112 +141,11 @@ proof -
     using eigenbasis_containing_eigenvector[OF transpose_Mp[OF sym] nq eigq] p by auto
 qed
 
-section \<open>Traces of weighted outer-product sums\<close>
-
-text \<open>The trace of a matrix written in an orthonormal basis as a weighted sum
-  of outer products is the sum of the weights, and each basis vector reads off
-  its own weight as a Rayleigh quotient.\<close>
-
 section \<open>The Courant-Fischer min-max lower bound\<close>
 
-text \<open>The general Courant-Fischer lower bound: if the Rayleigh quotient of
-  \<open>a\<close> is at least \<open>c\<close> on a subspace of dimension \<open>\<ge> m\<close>, then
-  \<open>c \<le> eigval m a\<close>, via a comparison subspace whose dimension, together
-  with \<open>m\<close>, exceeds \<open>CARD('n)\<close>.\<close>
-
-theorem eigval_ge_of_subspace:
-  fixes a :: "real^'n::finite^'n"
-  assumes sym: "transpose a = a"
-    and S: "subspace S" "m \<le> dim S"
-    and quad: "\<And>x. x \<in> S \<Longrightarrow> c * (x \<bullet> x) \<le> x \<bullet> (a *v x)"
-    and m: "0 < m" "m \<le> CARD('n)"
-  shows "c \<le> eigval m a"
-proof -
-  obtain B where B: "onormal B" "span B = UNIV"
-    and finB: "finite B" and cardB: "card B = CARD('n)"
-    and eig: "\<And>u. u \<in> B \<Longrightarrow> a *v u = (u \<bullet> (a *v u)) *\<^sub>R u"
-    using symmetric_eigendecomposition[OF sym] by metis
-  obtain T w where T: "T \<subseteq> B" "card T = m"
-    and thresh: "\<And>u v. u \<in> T \<Longrightarrow> v \<in> B - T \<Longrightarrow> v \<bullet> (a *v v) \<le> u \<bullet> (a *v u)"
-    and w: "w \<in> T" and "\<And>u. u \<in> T \<Longrightarrow> w \<bullet> (a *v w) \<le> u \<bullet> (a *v u)"
-    and eigw: "eigval m a = w \<bullet> (a *v w)"
-    using eigval_threshold_witness[OF B sym eig m] by blast
-  define U where "U = insert w (B - T)"
-  have Usub: "U \<subseteq> B"
-    unfolding U_def using w T(1) by blast
-  have onU: "onormal U"
-    by (rule onormal_subset[OF B(1) Usub])
-  have wnotin: "w \<notin> B - T"
-    using w by blast
-  have cardU: "card U = CARD('n) - m + 1"
-    unfolding U_def
-    using wnotin finB T(1) T(2) cardB
-    by (simp add: card_Diff_subset finite_subset)
-  have dimU: "dim (span U) = CARD('n) - m + 1"
-    using onormal_card_dim_span[OF onU] cardU by simp
-  text \<open>Dimensions sum past the ambient dimension, so the subspaces meet.\<close>
-  have dims: "CARD('n) < dim S + dim (span U)"
-    using S(2) dimU m(2) by simp
-  obtain x where x: "x \<in> S" "x \<in> span U" "x \<noteq> 0"
-    using subspace_inter_nonzero[OF S(1) subspace_span dims] by blast
-  have xx: "0 < x \<bullet> x"
-    using x(3) by simp
-  text \<open>Every eigenvalue occurring in \<open>U\<close> is dominated by \<open>eigval m a\<close>.\<close>
-  have Ubound: "v \<bullet> (a *v v) \<le> eigval m a" if v: "v \<in> U" for v
-  proof (cases "v = w")
-    case True
-    then show ?thesis
-      using eigw by simp
-  next
-    case False
-    then have vBT: "v \<in> B - T"
-      using v unfolding U_def by simp
-    show ?thesis
-      by (rule quadform_outside_threshold_le_eigval[OF B sym eig T(1) T(2) m(1)
-            thresh vBT])
-  qed
-  text \<open>Expand \<open>x \<bullet> (a *v x)\<close> in the eigenbasis; the terms outside \<open>U\<close> vanish
-    because \<open>x \<in> span U\<close>.\<close>
-  text \<open>Bind the eigenvalues to a local constant before decomposing, since
-    \<open>spectral_decomposition\<close> mentions \<open>a\<close> on the right as well and would loop
-    as a rewrite rule.\<close>
-  define lam where "lam = (\<lambda>v :: real^'n. v \<bullet> (a *v v))"
-  have adecomp: "a = (\<Sum>v\<in>B. lam v *\<^sub>R outer_prod v v)"
-    unfolding lam_def by (rule spectral_decomposition[OF B eig])
-  have Ubound': "lam v \<le> eigval m a" if "v \<in> U" for v
-    using Ubound[OF that] by (simp add: lam_def)
-  have vanish: "v \<bullet> x = 0" if v: "v \<in> B - U" for v
-  proof (rule onormal_orthogonal_to_span_complement[OF B(1) _ Usub _ x(2)])
-    show "v \<in> B" using v by blast
-    show "v \<notin> U" using v by blast
-  qed
-  have "x \<bullet> (a *v x) = (\<Sum>v\<in>B. lam v * (v \<bullet> x)^2)"
-    unfolding adecomp by (rule quadform_weighted_outer_sum_eq[OF finB])
-  also have "\<dots> = (\<Sum>v\<in>U. lam v * (v \<bullet> x)^2)"
-    by (rule sum.mono_neutral_right[OF finB Usub]) (auto simp: vanish)
-  also have "\<dots> \<le> (\<Sum>v\<in>U. eigval m a * (v \<bullet> x)^2)"
-    using Ubound' by (intro sum_mono mult_right_mono) auto
-  also have "\<dots> = eigval m a * (\<Sum>v\<in>U. (v \<bullet> x)^2)"
-    by (simp add: sum_distrib_left)
-  also have "\<dots> = eigval m a * (\<Sum>v\<in>B. (v \<bullet> x)^2)"
-  proof -
-    have "(\<Sum>v\<in>U. (v \<bullet> x)^2) = (\<Sum>v\<in>B. (v \<bullet> x)^2)"
-      by (rule sum.mono_neutral_right[OF finB Usub, symmetric]) (auto simp: vanish)
-    then show ?thesis
-      by simp
-  qed
-  also have "\<dots> = eigval m a * (x \<bullet> x)"
-    by (simp add: parseval_onormal[OF B])
-  finally have upper: "x \<bullet> (a *v x) \<le> eigval m a * (x \<bullet> x)" .
-  have "c * (x \<bullet> x) \<le> x \<bullet> (a *v x)"
-    by (rule quad[OF x(1)])
-  with upper have "c * (x \<bullet> x) \<le> eigval m a * (x \<bullet> x)"
-    by simp
-  then show ?thesis
-    using xx by (simp add: mult_right_le_imp_le)
-qed
-
-text \<open>The original \<open>c = 1\<close> form, which is what \<open>eigen_lb\<close> delivers.\<close>
+text \<open>The general Courant-Fischer lower bound, @{thm [source] eigval_ge_of_subspace},
+  lives in @{theory Symmetric_Matrix_Spectra.Poincare_Separation}.  Its \<open>c = 1\<close>
+  form is what \<open>eigen_lb\<close> delivers.\<close>
 
 corollary eigval_ge_of_eigen_lb:
   fixes a :: "real^'n::finite^'n"
@@ -370,60 +265,8 @@ section \<open>The upper bound of Eq. (3.5) in bracket form\<close>
 
 text \<open>For a symmetric \<open>N\<close> with eigenbasis \<open>B\<close>, and weights coming from any
   \<open>a\<close> satisfying the feasible-set constraints, the objective is bounded by
-  \<open>bracket m L N\<close>.  The two conversions are \<open>possum_full_eq_sum_basis\<close> (the
-  positive part) and \<open>kyfan_minus_possum_threshold\<close> (the negative part, via
-  \<open>sum_min_le_threshold\<close>).\<close>
-
-theorem bracket_upper_bound:
-  fixes N a :: "real^'n::finite^'n"
-  assumes symN: "transpose N = N"
-    and B: "onormal B" "span B = UNIV"
-    and eigN: "\<And>u. u \<in> B \<Longrightarrow> N *v u = (u \<bullet> (N *v u)) *\<^sub>R u"
-    and m: "m \<le> CARD('n)" and L: "1 \<le> L"
-    and w0: "\<And>u. u \<in> B \<Longrightarrow> 0 \<le> u \<bullet> (a *v u)"
-    and wL: "\<And>u. u \<in> B \<Longrightarrow> u \<bullet> (a *v u) \<le> L"
-    and wsum: "real m \<le> (\<Sum>u\<in>B. min (u \<bullet> (a *v u)) 1)"
-  shows "(\<Sum>u\<in>B. (u \<bullet> (N *v u)) * (u \<bullet> (a *v u))) \<le> bracket m L N"
-proof -
-  have finB: "finite B"
-    by (rule onormal_finite[OF B(1)])
-  have cardB: "card B = CARD('n)"
-    by (rule onormal_span_card[OF B])
-  have mB: "m \<le> card B"
-    using m cardB by simp
-  obtain T where T: "T \<subseteq> B" "card T = m"
-    and lp: "(\<Sum>u\<in>B. (u \<bullet> (N *v u)) * (u \<bullet> (a *v u)))
-        \<le> L * (\<Sum>u\<in>B. max (u \<bullet> (N *v u)) 0)
-          + (\<Sum>u\<in>T. min (u \<bullet> (N *v u)) 0)"
-    using lp_upper_bound[where lam = "\<lambda>u :: real^'n. u \<bullet> (N *v u)"
-        and w = "\<lambda>u :: real^'n. u \<bullet> (a *v u)", OF finB mB L w0 wL wsum]
-    by blast
-  text \<open>Pass to a threshold set, where the negative part becomes
-    \<open>kyfan m - possum m\<close>.\<close>
-  obtain T0 where T0: "T0 \<subseteq> B" "card T0 = m"
-    and thresh: "\<And>u v. u \<in> T0 \<Longrightarrow> v \<in> B - T0
-        \<Longrightarrow> v \<bullet> (N *v v) \<le> u \<bullet> (N *v u)"
-    using exists_top_subset[where f = "\<lambda>u :: real^'n. u \<bullet> (N *v u)", OF finB mB]
-    by metis
-  have negle: "(\<Sum>u\<in>T. min (u \<bullet> (N *v u)) 0)
-      \<le> (\<Sum>u\<in>T0. min (u \<bullet> (N *v u)) 0)"
-    by (rule sum_min_le_threshold[where lam = "\<lambda>u :: real^'n. u \<bullet> (N *v u)",
-          OF finB T0(1) T0(2) thresh T(1) T(2)])
-  have negeq: "(\<Sum>u\<in>T0. min (u \<bullet> (N *v u)) 0) = kyfan m N - possum m N"
-    by (rule kyfan_minus_possum_threshold[OF B symN eigN T0(1) T0(2) thresh,
-          symmetric])
-  have poseq: "(\<Sum>u\<in>B. max (u \<bullet> (N *v u)) 0) = possum CARD('n) N"
-    by (rule possum_full_eq_sum_basis[OF B symN eigN, symmetric])
-  have "(\<Sum>u\<in>B. (u \<bullet> (N *v u)) * (u \<bullet> (a *v u)))
-      \<le> L * (\<Sum>u\<in>B. max (u \<bullet> (N *v u)) 0)
-        + (\<Sum>u\<in>T0. min (u \<bullet> (N *v u)) 0)"
-    using lp negle by simp
-  also have "\<dots> = L * possum CARD('n) N + (kyfan m N - possum m N)"
-    unfolding poseq negeq by (rule refl)
-  also have "\<dots> = bracket m L N"
-    by (simp add: bracket_def)
-  finally show ?thesis .
-qed
+  \<open>bracket m L N\<close>: this is @{thm [source] bracket_upper_bound} in
+  @{theory Symmetric_Matrix_Spectra.Ky_Fan}.\<close>
 
 text \<open>Applied to \<open>N = M\<^sub>p\<close> and a feasible \<open>a\<close>: this is the upper-bound half of
   Eq. (3.5) for the actual trace pairing.  \<open>trace_Mp\<close> replaces \<open>M\<close> by \<open>M\<^sub>p\<close>,
@@ -520,26 +363,9 @@ section \<open>Feasibility of weighted outer-product sums\<close>
 text \<open>For the reverse inequality of Eq. (3.5) a feasible \<open>a\<close> attaining the
   bracket must be exhibited, of the form
   \<open>a = (\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)\<close> for an orthonormal basis \<open>B\<close>.  This
-  section checks each clause of \<open>feasible\<close> for such a sum.\<close>
-
-lemma weighted_outer_sum_annihilates:
-  fixes c :: "real^'n::finite \<Rightarrow> real"
-  assumes finB: "finite B"
-    and van: "\<And>u. u \<in> B \<Longrightarrow> c u = 0 \<or> p \<bullet> u = 0"
-  shows "(\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v p = 0"
-proof -
-  have "(\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u) *v p = (\<Sum>u\<in>B. c u *\<^sub>R ((u \<bullet> p) *\<^sub>R u))"
-    by (simp add: matrix_vector_mult_sum scaleR_matrix_vector_assoc[symmetric])
-  also have "\<dots> = (\<Sum>u\<in>B. 0)"
-  proof (intro sum.cong refl)
-    fix u assume u: "u \<in> B"
-    show "c u *\<^sub>R ((u \<bullet> p) *\<^sub>R u) = 0"
-      using van[OF u] by (auto simp: inner_commute)
-  qed
-  also have "\<dots> = 0"
-    by simp
-  finally show ?thesis .
-qed
+  section checks each clause of \<open>feasible\<close> for such a sum; the
+  annihilation clause is @{thm [source] weighted_outer_sum_annihilates} in
+  @{theory Symmetric_Matrix_Spectra.Outer_Products}.\<close>
 
 text \<open>The upper eigenvalue bound: all weights below \<open>L\<close> gives \<open>eigen_ub \<dots> L\<close>,
   by Parseval.\<close>
@@ -812,33 +638,11 @@ text \<open>And in the paper's displayed form, as sums over the ordered
 
 section \<open>Scale invariance: the paper's sequence is constant\<close>
 
-text \<open>\<open>rank1proj\<close> depends only on the line through \<open>p\<close>, so \<open>M\<^sub>p\<close> does too.
+text \<open>\<open>rank1proj\<close> depends only on the line through \<open>p\<close>
+  (@{thm [source] rank1proj_scaleR} in
+  @{theory Symmetric_Matrix_Spectra.Orthogonal_Projections}), so \<open>M\<^sub>p\<close> does too.
   Hence the paper's sequence \<open>(q\<^sub>1/m, M)\<close> for the lower bound of Eq. (3.6)
   is constant in \<open>m\<close>: \<open>M\<^sub>q\<^sub>1\<^sub>/\<^sub>m = M\<^sub>q\<^sub>1\<close>, so only \<open>p\<^sup>m \<longrightarrow> 0\<close> matters.\<close>
-
-lemma rank1proj_scaleR:
-  fixes p :: "real^'n::finite"
-  assumes c: "c \<noteq> 0" and p: "p \<noteq> 0"
-  shows "rank1proj (c *\<^sub>R p) = rank1proj p"
-proof -
-  have pp: "p \<bullet> p \<noteq> 0"
-    using p by simp
-  have c2: "c * c \<noteq> 0"
-    using c by simp
-  have num: "outer_prod (c *\<^sub>R p) (c *\<^sub>R p) = (c * c) *\<^sub>R outer_prod p p"
-    by (simp add: outer_prod_scaleR_left outer_prod_scaleR_right)
-  have den: "(c *\<^sub>R p) \<bullet> (c *\<^sub>R p) = (c * c) * (p \<bullet> p)"
-    by simp
-  have "rank1proj (c *\<^sub>R p)
-      = inverse ((c * c) * (p \<bullet> p)) *\<^sub>R ((c * c) *\<^sub>R outer_prod p p)"
-    unfolding rank1proj_def num den by (rule refl)
-  also have "\<dots> = (inverse ((c * c) * (p \<bullet> p)) * (c * c)) *\<^sub>R outer_prod p p"
-    by (rule scaleR_scaleR)
-  also have "\<dots> = inverse (p \<bullet> p) *\<^sub>R outer_prod p p"
-    using c2 pp by (simp add: field_simps)
-  finally show ?thesis
-    unfolding rank1proj_def .
-qed
 
 text \<open>\<open>F\<close> is constant along the paper's sequence: the feasible set sees only
   the direction of \<open>p\<close>.\<close>
@@ -1368,106 +1172,25 @@ text \<open>Every feasible \<open>a\<close> is symmetric, and against a symmetri
 text \<open>Consequently Eq. (3.5) holds for an arbitrary \<open>M\<close>, symmetric or not,
   with \<open>M\<close> replaced by its symmetric part on the right hand side.\<close>
 
-section \<open>The norm of an outer product, and \<open>rank1proj\<close> as a unit outer product\<close>
-
-text \<open>Towards continuity of \<open>(p, M) \<mapsto> M\<^sub>p\<close> off \<open>p = 0\<close>.  The correction
-  coefficient \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> does not depend on \<open>p\<close>, so the only
-  \<open>p\<close>-dependence is through \<open>rank1proj p\<close>, reducing to an estimate on
-  \<open>norm (rank1proj p' - rank1proj p)\<close>.\<close>
-
-lemma rank1proj_eq_outer_unit:
-  fixes p :: "real^'n::finite"
-  assumes p: "p \<noteq> 0"
-  shows "rank1proj p = outer_prod (p /\<^sub>R norm p) (p /\<^sub>R norm p)"
-proof -
-  have np: "norm p \<noteq> 0"
-    using p by simp
-  have pp: "p \<bullet> p = norm p * norm p"
-    by (simp add: dot_square_norm power2_eq_square)
-  have "outer_prod (inverse (norm p) *\<^sub>R p) (inverse (norm p) *\<^sub>R p)
-      = (inverse (norm p) * inverse (norm p)) *\<^sub>R outer_prod p p"
-    by (simp add: outer_prod_scaleR_left outer_prod_scaleR_right)
-  also have "\<dots> = inverse (p \<bullet> p) *\<^sub>R outer_prod p p"
-    unfolding pp using np by (simp add: field_simps)
-  finally show ?thesis
-    unfolding rank1proj_def by simp
-qed
-
-section \<open>\<open>rank1proj\<close> is Lipschitz away from the origin\<close>
-
-text \<open>Since \<open>rank1proj p = outer_prod q q\<close> with \<open>q = p/|p|\<close> a unit vector,
-  and \<open>outer_prod\<close> is bilinear, it suffices to bound the normalisation map,
-  Lipschitz with constant \<open>2/|p|\<close> away from the origin, blowing up as
-  \<open>p \<rightarrow> 0\<close>, why Eq. (3.6) differs there.\<close>
-
-theorem norm_rank1proj_diff_le:
-  fixes p p' :: "real^'n::finite"
-  assumes p: "p \<noteq> 0" and p': "p' \<noteq> 0"
-  shows "norm (rank1proj p' - rank1proj p) \<le> 4 * norm (p' - p) / norm p"
-proof -
-  define q where "q = p /\<^sub>R norm p"
-  define q' where "q' = p' /\<^sub>R norm p'"
-  have nq: "norm q = 1"
-    unfolding q_def using p by simp
-  have nq': "norm q' = 1"
-    unfolding q'_def using p' by simp
-  have r: "rank1proj p = outer_prod q q"
-    unfolding q_def by (rule rank1proj_eq_outer_unit[OF p])
-  have r': "rank1proj p' = outer_prod q' q'"
-    unfolding q'_def by (rule rank1proj_eq_outer_unit[OF p'])
-  have bil: "outer_prod q' q' - outer_prod q q
-      = outer_prod (q' - q) q' + outer_prod q (q' - q)"
-    by (simp add: outer_prod_diff_left outer_prod_diff_right)
-  have "norm (rank1proj p' - rank1proj p)
-      \<le> norm (outer_prod (q' - q) q') + norm (outer_prod q (q' - q))"
-    unfolding r r' bil by (rule norm_triangle_ineq)
-  also have "\<dots> = 2 * norm (q' - q)"
-    by (simp add: norm_outer_prod nq nq')
-  also have "\<dots> \<le> 2 * (2 * norm (p' - p) / norm p)"
-    using norm_unit_diff_le[OF p p'] unfolding q_def q'_def by simp
-  also have "\<dots> = 4 * norm (p' - p) / norm p"
-    by simp
-  finally show ?thesis .
-qed
-
 section \<open>The Frobenius norm: transpose invariance and submultiplicativity\<close>
 
 text \<open>The last two tools for the continuity clause of Lemma 3.1:
   \<open>norm (A ** B) \<le> norm A * norm B\<close>, and that the Frobenius norm inherited
   on \<open>real^'n^'n\<close> satisfies it; neither is in this HOL-Analysis.\<close>
 
-section \<open>The two constants: \<open>norm (rank1proj p)\<close> and \<open>norm (mat 1)\<close>\<close>
-
-text \<open>The last numbers needed to turn the toolkit into an explicit Lipschitz
-  constant for \<open>(p, M) \<mapsto> M\<^sub>p\<close>: a rank-one orthogonal projection has Frobenius
-  norm \<open>1\<close>, and the identity has Frobenius norm \<open>\<surd>n\<close>.\<close>
-
-lemma norm_rank1proj:
-  fixes p :: "real^'n::finite"
-  assumes p: "p \<noteq> 0"
-  shows "norm (rank1proj p) = 1"
-proof -
-  have "norm (rank1proj p) = norm (p /\<^sub>R norm p) * norm (p /\<^sub>R norm p)"
-    unfolding rank1proj_eq_outer_unit[OF p] by (rule norm_outer_prod)
-  also have "\<dots> = 1"
-    using p by simp
-  finally show ?thesis .
-qed
-
-corollary norm_perp_proj_le:
-  fixes p :: "real^'n::finite"
-  assumes p: "p \<noteq> 0"
-  shows "norm (mat 1 - rank1proj p :: real^'n^'n) \<le> sqrt (real CARD('n)) + 1"
-proof -
-  have "norm (mat 1 - rank1proj p :: real^'n^'n)
-      \<le> norm (mat 1 :: real^'n^'n) + norm (rank1proj p)"
-    by (rule norm_triangle_ineq4)
-  also have "\<dots> = sqrt (real CARD('n)) + 1"
-    by (simp add: norm_mat_1 norm_rank1proj[OF p])
-  finally show ?thesis .
-qed
-
 section \<open>The conjugation expansion, and the Lipschitz bound for \<open>M\<^sub>p\<close>\<close>
+
+text \<open>Towards continuity of \<open>(p, M) \<mapsto> M\<^sub>p\<close> off \<open>p = 0\<close>.  The correction
+  coefficient \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> does not depend on \<open>p\<close>, so the only
+  \<open>p\<close>-dependence is through \<open>rank1proj p\<close>, reducing to an estimate on
+  \<open>norm (rank1proj p' - rank1proj p)\<close>.  Since \<open>rank1proj p = outer_prod q q\<close>
+  with \<open>q = p/|p|\<close> a unit vector, and the normalisation map is Lipschitz with
+  constant \<open>2/|p|\<close> away from the origin, the estimate has constant \<open>4/|p|\<close>,
+  blowing up as \<open>p \<rightarrow> 0\<close>, why Eq. (3.6) differs there.  The estimate,
+  @{thm [source] norm_rank1proj_diff_le}, and the two constants that turn the
+  toolkit into an explicit Lipschitz constant for \<open>(p, M) \<mapsto> M\<^sub>p\<close>,
+  @{thm [source] norm_rank1proj} and @{thm [source] norm_perp_proj_le}, are in
+  @{theory Symmetric_Matrix_Spectra.Orthogonal_Projections}.\<close>
 
 text \<open>Perturbing the projection expands the conjugation into four terms.  With
   \<open>Q = I - rank1proj p\<close> and \<open>D = rank1proj p' - rank1proj p\<close>,

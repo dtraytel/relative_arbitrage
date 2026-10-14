@@ -1367,7 +1367,7 @@ qed
 
 subsection \<open>Countably valued approximation of a kernel\<close>
 
-text \<open>\<open>countably_valued_approx\<close>, \<open>limitin_of_dist_half\<close> live in @{theory Semicontinuous_Analysis.Semicontinuous_Selection}.\<close>
+text \<open>\<open>countably_valued_approx\<close>, \<open>limitin_of_dist_half\<close> live in @{theory Continuous_Path_Spaces.Semicontinuous_Selection}.\<close>
 
 
 subsection \<open>The two constructions agree at a countably valued kernel\<close>

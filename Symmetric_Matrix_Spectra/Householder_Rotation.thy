@@ -324,6 +324,35 @@ proof -
     unfolding eq by (intro continuous_intros Vc) (use Vne in auto)
 qed
 
+text \<open>The same along an affine family of targets \<open>q + M (y - x)\<close>.\<close>
+
+lemma rot_col_cont:
+  fixes q x c :: "real^'n::finite" and M :: "real^'n^'n" and A :: "(real^'n) set"
+  assumes q0: "q \<noteq> 0"
+    and ok: "\<And>y. y \<in> A \<Longrightarrow>
+      0 < norm q * norm (q + M *v (y - x)) + q \<bullet> (q + M *v (y - x))"
+  shows "continuous_on A (\<lambda>y. rotm q (q + M *v (y - x)) *v c)"
+proof -
+  have gradc: "continuous_on A (\<lambda>y::real^'n. q + M *v (y - x))"
+  proof -
+    have d: "continuous_on A (\<lambda>y :: real^'n. y - x)"
+      by (intro continuous_intros)
+    have mv: "continuous_on A (\<lambda>y :: real^'n. M *v (y - x))"
+      by (rule continuous_on_compose2[OF
+          linear_continuous_on[OF matrix_vector_mul_bounded_linear] d]) auto
+    show ?thesis by (intro continuous_intros mv)
+  qed
+  show ?thesis
+  proof (rule continuous_on_compose2[OF _ gradc])
+    show "continuous_on {w :: real^'n. 0 < norm q * norm w + q \<bullet> w}
+        (\<lambda>w. rotm q w *v c)"
+      by (rule rotm_vec_cont[OF q0]) simp
+    show "(\<lambda>y::real^'n. q + M *v (y - x)) ` A
+        \<subseteq> {w :: real^'n. 0 < norm q * norm w + q \<bullet> w}"
+      using ok by blast
+  qed
+qed
+
 text \<open>The real-valued functional the assembly actually needs: the Hessian
   paired with the conjugated witness.\<close>
 

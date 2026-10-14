@@ -1,22 +1,19 @@
-session Semicontinuous_Analysis = "HOL-Probability" +
+session Semicontinuous_Analysis = Lower_Semicontinuous +
   description "
     Upper and lower semicontinuity for real-valued functions on a metric
-    space: the epsilon-delta calculus, attainment on compacta, bounded
+    space: the epsilon-delta calculus, open strict sublevel sets, eventual
+    bounds along convergent sequences, attainment on compacta, bounded
     extension off a closed set, the semicontinuous envelopes over the whole
-    space and relative to a closed set, Berge's maximum theorem, and
-    measurable selection of an upper semicontinuous payoff.  The envelope is
-    the lower semicontinuous hull of the Lower_Semicontinuous entry, proved
-    equal to it rather than reproved.
+    space and relative to a closed set, scaling of a real infimum, and
+    Berge's maximum theorem.  The envelope is the lower semicontinuous hull
+    of the Lower_Semicontinuous entry, on which this session is built,
+    proved equal to it rather than reproved.
   "
   options [document = pdf, document_output = "output"]
-  sessions
-    Standard_Borel_Spaces
-    Lower_Semicontinuous
   theories
     Semicontinuity
     Semicontinuous_Envelopes
     Berge
-    Semicontinuous_Selection
   document_files
     "root.tex"
     "root.bib"

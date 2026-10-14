@@ -329,6 +329,84 @@ section \<open>Positive semidefinite matrices\<close>
 definition psd :: "real^'n^'n \<Rightarrow> bool" where
   "psd a \<longleftrightarrow> transpose a = a \<and> (\<forall>x. 0 \<le> x \<bullet> (a *v x))"
 
+text \<open>The identity is positive semidefinite; a positive semidefinite matrix
+  has a nonnegative diagonal, and its kernel consists of the vectors on which
+  its quadratic form vanishes.\<close>
+
+lemma psd_mat_1: "psd (mat 1 :: real^'n::finite^'n)"
+  by (simp add: psd_def)
+
+lemma psd_diag_nonneg:
+  fixes a :: "real^'m::finite^'m"
+  assumes "psd a"
+  shows "0 \<le> a $ l $ l"
+  using assms diag_eq_inner_axis[where a = a and i = l, symmetric]
+  by (auto simp: psd_def dest: spec[of _ "axis l 1"])
+
+lemma psd_kernel_eq:
+  fixes a :: "real^'n::finite^'n" and q :: "real^'n"
+  assumes a: "psd a" and z: "q \<bullet> (a *v q) = 0"
+  shows "a *v q = 0"
+proof -
+  have sym: "transpose a = a" using a by (simp add: psd_def)
+  have nn: "0 \<le> y \<bullet> (a *v y)" for y using a by (simp add: psd_def)
+  have cross: "z \<bullet> (a *v q) = 0" for z
+  proof (rule ccontr)
+    assume ne: "z \<bullet> (a *v q) \<noteq> 0"
+    define Bc where "Bc = z \<bullet> (a *v q)"
+    define Ac where "Ac = z \<bullet> (a *v z)"
+    have Bc0: "Bc \<noteq> 0" using ne by (simp add: Bc_def)
+    have Ac0: "0 \<le> Ac" by (simp add: Ac_def nn)
+    have qa: "q \<bullet> (a *v z) = Bc"
+    proof -
+      have "q \<bullet> (a *v z) = (transpose a *v q) \<bullet> z"
+        by (rule inner_transpose_matrix)
+      also have "\<dots> = (a *v q) \<bullet> z" using sym by simp
+      also have "\<dots> = z \<bullet> (a *v q)" by (rule inner_commute)
+      finally show ?thesis by (simp add: Bc_def)
+    qed
+    have expand: "(q + r *\<^sub>R z) \<bullet> (a *v (q + r *\<^sub>R z))
+        = 2 * r * Bc + r\<^sup>2 * Ac" for r
+    proof -
+      have lin: "a *v (q + r *\<^sub>R z) = a *v q + r *\<^sub>R (a *v z)"
+        by (simp add: matrix_vector_mult_def vec_eq_iff sum.distrib
+            sum_distrib_left algebra_simps)
+      show ?thesis
+        unfolding lin
+        by (simp add: z qa Bc_def Ac_def power2_eq_square
+            algebra_simps)
+    qed
+    show False
+    proof (cases "Ac = 0")
+      case True
+      have "0 \<le> 2 * (- Bc) * Bc + (- Bc)\<^sup>2 * Ac"
+        using nn[of "q + (- Bc) *\<^sub>R z"] expand[of "- Bc"] by simp
+      then have "Bc * Bc \<le> 0" using True by (simp add: power2_eq_square)
+      moreover have "0 < Bc * Bc"
+        using Bc0 by (cases "0 < Bc") (auto intro: mult_pos_pos mult_neg_neg
+            simp: not_less le_less)
+      ultimately show False by linarith
+    next
+      case False
+      then have AcP: "0 < Ac" using Ac0 by simp
+      define r where "r = - Bc / Ac"
+      have "0 \<le> 2 * r * Bc + r\<^sup>2 * Ac"
+        using nn[of "q + r *\<^sub>R z"] expand[of r] by simp
+      also have "2 * r * Bc + r\<^sup>2 * Ac = - (Bc\<^sup>2 / Ac)"
+        unfolding r_def using AcP by (simp add: power2_eq_square field_simps)
+      finally have h: "Bc\<^sup>2 / Ac \<le> 0" by simp
+      have "0 < Bc * Bc"
+        using Bc0 by (cases "0 < Bc") (auto intro: mult_pos_pos mult_neg_neg
+            simp: not_less le_less)
+      then have "0 < Bc\<^sup>2 / Ac"
+        using AcP by (simp add: power2_eq_square)
+      with h show False by linarith
+    qed
+  qed
+  have "(a *v q) \<bullet> (a *v q) = 0" using cross[of "a *v q"] by simp
+  then show ?thesis by simp
+qed
+
 text \<open>The trace of \<open>a ** P\<close>, read off in an orthonormal eigenbasis of the
   symmetric matrix \<open>a\<close>: the eigenvalues weighted by the diagonal of \<open>P\<close>.\<close>
 
@@ -510,7 +588,113 @@ text \<open>The quadratic form of \<open>W\<close> is bounded in absolute value 
 
 subsection \<open>From the quadratic-form bound to a genuine operator bound\<close>
 
-text \<open>\<open>polarization_symmetric\<close>, \<open>symmetric_form_bound\<close>, \<open>symmetric_form_bound_unit\<close> live in \<open>Doubling_Of_Variables\<close>.\<close>
+text \<open>The diagonal bound \<open>\<bar>k \<bullet> W k\<bar> \<le> c \<parallel>k\<parallel>\<^sup>2\<close> of a symmetric linear
+  map does not by itself bound the off-diagonal entries; polarisation
+  recovers them by pure algebra, and the parallelogram law turns the result
+  into a bound uniform over the unit sphere, with no spectral theory.\<close>
+
+lemma polarization_symmetric:
+  fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
+  assumes lin: "linear W" and sym: "\<And>v w. v \<bullet> W w = w \<bullet> W v"
+  shows "4 * (u \<bullet> W v) = (u + v) \<bullet> W (u + v) - (u - v) \<bullet> W (u - v)"
+proof -
+  have a: "W (u + v) = W u + W v"
+    using lin unfolding linear_iff by blast
+  have b: "W (u - v) = W u - W v"
+    using lin by (simp add: linear_diff)
+  have e1: "(u + v) \<bullet> W (u + v) = u \<bullet> W u + u \<bullet> W v + (v \<bullet> W u + v \<bullet> W v)"
+    unfolding a by (simp add: inner_add_left inner_add_right)
+  have e2: "(u - v) \<bullet> W (u - v) = u \<bullet> W u - u \<bullet> W v - (v \<bullet> W u - v \<bullet> W v)"
+    unfolding b by (simp add: inner_diff_left inner_diff_right)
+  have s: "v \<bullet> W u = u \<bullet> W v"
+    by (rule sym)
+  show ?thesis
+    unfolding e1 e2 s by simp
+qed
+
+theorem symmetric_form_bound:
+  fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
+  assumes lin: "linear W" and sym: "\<And>v w. v \<bullet> W w = w \<bullet> W v"
+    and bnd: "\<And>k. \<bar>k \<bullet> W k\<bar> \<le> c * (norm k)\<^sup>2"
+  shows "\<bar>u \<bullet> W v\<bar> \<le> c * ((norm u)\<^sup>2 + (norm v)\<^sup>2) / 2"
+proof -
+  have pol: "4 * (u \<bullet> W v) = (u + v) \<bullet> W (u + v) - (u - v) \<bullet> W (u - v)"
+    by (rule polarization_symmetric[OF lin sym])
+  have b1: "\<bar>(u + v) \<bullet> W (u + v)\<bar> \<le> c * (norm (u + v))\<^sup>2"
+    by (rule bnd)
+  have b2: "\<bar>(u - v) \<bullet> W (u - v)\<bar> \<le> c * (norm (u - v))\<^sup>2"
+    by (rule bnd)
+  have b1a: "- (c * (norm (u + v))\<^sup>2) \<le> (u + v) \<bullet> W (u + v)"
+    using b1 by (simp add: abs_le_iff)
+  have b1b: "(u + v) \<bullet> W (u + v) \<le> c * (norm (u + v))\<^sup>2"
+    using b1 by (simp add: abs_le_iff)
+  have b2a: "- (c * (norm (u - v))\<^sup>2) \<le> (u - v) \<bullet> W (u - v)"
+    using b2 by (simp add: abs_le_iff)
+  have b2b: "(u - v) \<bullet> W (u - v) \<le> c * (norm (u - v))\<^sup>2"
+    using b2 by (simp add: abs_le_iff)
+  have par: "(norm (u + v))\<^sup>2 + (norm (u - v))\<^sup>2
+      = 2*(norm u)\<^sup>2 + 2*(norm v)\<^sup>2"
+    by (simp add: power2_norm_eq_inner inner_add_left inner_add_right
+        inner_diff_left inner_diff_right inner_commute)
+  have e: "c * (norm (u + v))\<^sup>2 + c * (norm (u - v))\<^sup>2
+      = 2 * (c * ((norm u)\<^sup>2 + (norm v)\<^sup>2))"
+  proof -
+    have "c * (norm (u + v))\<^sup>2 + c * (norm (u - v))\<^sup>2
+        = c * ((norm (u + v))\<^sup>2 + (norm (u - v))\<^sup>2)"
+      by (simp add: algebra_simps)
+    also have "\<dots> = c * (2*(norm u)\<^sup>2 + 2*(norm v)\<^sup>2)"
+      unfolding par ..
+    also have "\<dots> = 2 * (c * ((norm u)\<^sup>2 + (norm v)\<^sup>2))"
+      by (simp add: algebra_simps)
+    finally show ?thesis .
+  qed
+  show ?thesis
+  proof (intro abs_leI)
+    show "u \<bullet> W v \<le> c * ((norm u)\<^sup>2 + (norm v)\<^sup>2) / 2"
+      using pol b1b b2a e by linarith
+    show "- (u \<bullet> W v) \<le> c * ((norm u)\<^sup>2 + (norm v)\<^sup>2) / 2"
+      using pol b1a b2b e by linarith
+  qed
+qed
+
+text \<open>On the unit sphere the bound is simply \<open>c\<close>.\<close>
+
+corollary symmetric_form_bound_unit:
+  fixes W :: "'a::euclidean_space \<Rightarrow> 'a"
+  assumes lin: "linear W" and sym: "\<And>v w. v \<bullet> W w = w \<bullet> W v"
+    and bnd: "\<And>k. \<bar>k \<bullet> W k\<bar> \<le> c * (norm k)\<^sup>2"
+    and nu: "norm u = 1" and nv: "norm v = 1"
+  shows "\<bar>u \<bullet> W v\<bar> \<le> c"
+proof -
+  have "\<bar>u \<bullet> W v\<bar> \<le> c * ((norm u)\<^sup>2 + (norm v)\<^sup>2) / 2"
+    by (rule symmetric_form_bound[OF lin sym bnd])
+  then show ?thesis
+    unfolding nu nv by simp
+qed
+
+text \<open>Applied to the basis matrices, the bound on the unit sphere bounds every
+  entry of the matrix by \<open>c\<close>, hence its norm by the number of entries times
+  \<open>c\<close>.\<close>
+
+theorem norm_matrix_le_of_form_bound:
+  fixes W :: "real^'n::finite \<Rightarrow> real^'n"
+  assumes lin: "linear W" and sym: "\<And>v z. v \<bullet> W z = z \<bullet> W v"
+    and bnd: "\<And>k. \<bar>k \<bullet> W k\<bar> \<le> c * (norm k)\<^sup>2"
+  shows "norm (matrix W) \<le> real (card (Basis :: (real^'n^'n) set)) * c"
+proof (rule norm_le_card_Basis_bound)
+  fix e :: "real^'n^'n"
+  assume "e \<in> Basis"
+  then obtain i j where e: "e = axis i (axis j 1)"
+    using matrix_Basis_cases by blast
+  have nu: "norm (axis i (1::real) :: real^'n) = 1"
+    by (rule norm_axis_1)
+  have nv: "norm (axis j (1::real) :: real^'n) = 1"
+    by (rule norm_axis_1)
+  have "\<bar>(axis i 1 :: real^'n) \<bullet> W (axis j 1)\<bar> \<le> c"
+    by (rule symmetric_form_bound_unit[OF lin sym bnd nu nv])
+  then show "\<bar>matrix W \<bullet> e\<bar> \<le> c"
+    unfolding e inner_matrix_axis[OF lin] .
+qed
 
 subsection \<open>Boundedness to a limit point, and limit point to nearby points\<close>
 

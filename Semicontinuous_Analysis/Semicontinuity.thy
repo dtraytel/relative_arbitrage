@@ -9,9 +9,10 @@ begin
 text \<open>
   Upper and lower semicontinuity, in the \<open>\<epsilon>\<close>-\<open>\<delta>\<close> form the comparison-principle
   machinery consumes throughout: closure under \<open>+\<close>, positive scaling, and
-  subtracting a continuous function; usc/lsc from ordinary continuity;
-  attainment of the sup/inf of a semicontinuous function on a nonempty
-  compact set; and bounded extension of an usc function off a closed set.
+  subtracting a continuous function; eventual bounds along a convergent
+  sequence; open strict sublevel sets; attainment of the sup/inf of a
+  semicontinuous function on a nonempty compact set; and bounded extension
+  of an usc function off a closed set.
 \<close>
 
 subsection \<open>Attainment for semicontinuous functions on compact sets\<close>
@@ -75,32 +76,62 @@ proof -
   qed
 qed
 
+text \<open>The strict sublevel sets of an usc function are open, so an usc
+  function attains its supremum on a nonempty compact set; no bound is
+  needed, since the finitely many sublevel sets of a subcover already
+  have a largest level.\<close>
+
+lemma open_usc_sublevel:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+  shows "open {y. f y < a}"
+  unfolding open_dist
+proof
+  fix x assume "x \<in> {y. f y < a}"
+  then have "f x < a" by simp
+  from usc[OF this] obtain e where e0: "0 < e" and h: "\<forall>y. dist x y < e \<longrightarrow> f y < a"
+    by blast
+  show "\<exists>e>0. \<forall>y. dist y x < e \<longrightarrow> y \<in> {y. f y < a}"
+    using e0 h by (auto simp: dist_commute)
+qed
+
+lemma usc_attains_sup_compact:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+    and cS: "compact S" and neS: "S \<noteq> {}"
+  shows "\<exists>z\<in>S. \<forall>y\<in>S. f y \<le> f z"
+proof (rule ccontr)
+  assume "\<not> (\<exists>z\<in>S. \<forall>y\<in>S. f y \<le> f z)"
+  then have H: "\<And>z. z \<in> S \<Longrightarrow> \<exists>z'\<in>S. f z < f z'" by force
+  have cov: "S \<subseteq> (\<Union>z'\<in>S. {y. f y < f z'})"
+    using H by blast
+  have opn: "\<And>z'. z' \<in> S \<Longrightarrow> open {y. f y < f z'}"
+    by (rule open_usc_sublevel[OF usc])
+  obtain T where TS: "T \<subseteq> S" and fT: "finite T"
+    and covT: "S \<subseteq> (\<Union>z'\<in>T. {y. f y < f z'})"
+    using compactE_image[OF cS opn cov] by blast
+  obtain s where sS: "s \<in> S" using neS by blast
+  have neT: "T \<noteq> {}" using covT sS by blast
+  have "Max (f ` T) \<in> f ` T"
+    by (rule Max_in) (use fT neT in auto)
+  then obtain zm where zmT: "zm \<in> T" and zmM: "Max (f ` T) = f zm"
+    by (rule imageE)
+  have zmS: "zm \<in> S" using TS zmT by blast
+  have "zm \<in> (\<Union>z'\<in>T. {y. f y < f z'})" by (rule subsetD[OF covT zmS])
+  then obtain z'' where z'': "z'' \<in> T" and lt: "f zm < f z''" by auto
+  have "f z'' \<le> Max (f ` T)" by (rule Max_ge) (use fT z'' in auto)
+  then show False using lt zmM by linarith
+qed
+
+text \<open>The same in \<open>obtains\<close>-form; the bound \<open>B\<close> is not needed.\<close>
+
 lemma usc_attains_sup_gen:
   fixes f :: "'a::metric_space \<Rightarrow> real" and S :: "'a set"
   assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
     and B: "\<And>y. y \<in> S \<Longrightarrow> f y \<le> B"
     and cS: "compact S" and neS: "S \<noteq> {}"
   obtains z where "z \<in> S" and "\<And>y. y \<in> S \<Longrightarrow> f y \<le> f z"
-proof -
-  have lsc': "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> c < - f y" if "c < - f z" for c z
-  proof -
-    have "f z < - c" using that by linarith
-    from usc[OF this] obtain e where e0: "0 < e"
-      and ey: "\<forall>y. dist z y < e \<longrightarrow> f y < - c" by blast
-    show ?thesis by (rule exI[of _ e]) (use e0 ey in force)
-  qed
-  have B': "\<And>y. y \<in> S \<Longrightarrow> - B \<le> - f y" using B by simp
-  show ?thesis
-  proof (rule lsc_attains_inf_gen[where f = "\<lambda>y. - f y" and S = S and B = "- B",
-          OF lsc' B' cS neS])
-    fix z assume zS: "z \<in> S" and zm: "\<And>y. y \<in> S \<Longrightarrow> - f z \<le> - f y"
-    show thesis
-    proof (rule that[OF zS])
-      fix y assume "y \<in> S"
-      then show "f y \<le> f z" using zm by simp
-    qed
-  qed
-qed
+  using usc_attains_sup_compact[OF usc cS neS] that by blast
 
 text \<open>Existential repackaging: an \<open>obtains\<close>-rule cannot be consumed by
   \<open>obtain \<dots> by (rule \<dots>)\<close> (the schematic \<open>thesis\<close> swallows the whole goal), so
@@ -197,6 +228,23 @@ proof -
   ultimately show ?thesis by blast
 qed
 
+text \<open>Along a convergent sequence an usc function is eventually below
+  every strict upper bound of its value at the limit.\<close>
+
+lemma usc_eventually_lt:
+  fixes f :: "'a::metric_space \<Rightarrow> real"
+  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
+    and xs: "xs \<longlonglongrightarrow> x0" and c: "f x0 < c"
+  shows "\<forall>\<^sub>F n in sequentially. f (xs n) < c"
+proof -
+  from usc[OF c] obtain e where e0: "0 < e"
+    and b: "\<And>y. dist x0 y < e \<Longrightarrow> f y < c" by blast
+  have "\<forall>\<^sub>F n in sequentially. dist (xs n) x0 < e"
+    by (rule tendstoD[OF xs e0])
+  then show ?thesis
+    by (rule eventually_mono) (use b in \<open>simp add: dist_commute\<close>)
+qed
+
 text \<open>A continuous real-valued difference attains its supremum on a nonempty
   compact set.\<close>
 
@@ -221,7 +269,7 @@ proof
   qed
 qed
 
-subsection \<open>Relative upper semicontinuity: extension and sublevel sets\<close>
+subsection \<open>Relative upper semicontinuity: extension off a closed set\<close>
 
 text \<open>Extending a function that is usc relative to a closed \<open>K\<close> by a
   constant below its values on \<open>K\<close> gives a globally usc function.\<close>
@@ -274,20 +322,6 @@ proof (rule that)
     if "(if z \<in> K then u z else - B) < c" for c z
     by (rule usc_extend_rel[OF cl usc lo that])
 qed (use Bd B0 in auto)
-
-lemma open_usc_sublevel:
-  fixes f :: "'a::metric_space \<Rightarrow> real"
-  assumes usc: "\<And>c z. f z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> f y < c"
-  shows "open {y. f y < a}"
-  unfolding open_dist
-proof
-  fix x assume "x \<in> {y. f y < a}"
-  then have "f x < a" by simp
-  from usc[OF this] obtain e where e0: "0 < e" and h: "\<forall>y. dist x y < e \<longrightarrow> f y < a"
-    by blast
-  show "\<exists>e>0. \<forall>y. dist y x < e \<longrightarrow> y \<in> {y. f y < a}"
-    using e0 h by (auto simp: dist_commute)
-qed
 
 (*<*)
 end
