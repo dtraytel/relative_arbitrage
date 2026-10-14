@@ -1622,11 +1622,14 @@ text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close> all live in the cl
   (@{thm [source] path_mdist_le_iff_all}).\<close>
 
 
-theorem exit_class_weak_limit:
+theorem covariation_class_weak_limit:
   fixes Pseq :: "nat \<Rightarrow> ('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T: "0 < T" and L0: "0 \<le> L"
-    and mem: "\<And>i. Pseq i \<in> exit_class k L T x"
-  shows "\<exists>P \<in> exit_class k L T x.
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and mem: "\<And>i. Pseq i \<in> covariation_class S T x"
+  shows "\<exists>P \<in> covariation_class S T x.
       (\<forall>U b. openin (mtopology_of
             (path_metric T :: ('n pairpath) metric)) U
           \<longrightarrow> (\<lambda>i. measure (Pseq i) U) \<longlonglongrightarrow> b
@@ -1637,13 +1640,13 @@ theorem exit_class_weak_limit:
           \<longrightarrow> b \<le> measure P D)"
 proof -
   let ?pm = "path_metric T :: ('n pairpath) metric"
-  have "\<exists>r P. strict_mono r \<and> P \<in> covariation_class (sconstraint k L) T x
+  have "\<exists>r P. strict_mono r \<and> P \<in> covariation_class S T x
       \<and> weak_conv_on (Pseq \<circ> r) P sequentially (mtopology_of ?pm)"
     by (rule covariation_class_convergent_subsequence[where Qm = Pseq,
-        OF T sconstraint_bounds[OF L0] closed_sconstraint mem[unfolded exit_class_eq_covariation]])
-  then obtain r P where r: "strict_mono r" and P: "P \<in> exit_class k L T x"
+        OF T B0 B D0 D Sc mem])
+  then obtain r P where r: "strict_mono r" and P: "P \<in> covariation_class S T x"
     and wc: "weak_conv_on (Pseq \<circ> r) P sequentially (mtopology_of ?pm)"
-    unfolding exit_class_eq_covariation by blast
+    by blast
   have sub: "(\<lambda>i. ereal (measure ((Pseq \<circ> r) i) A)) \<longlonglongrightarrow> ereal b"
     if "(\<lambda>i. measure (Pseq i) A) \<longlonglongrightarrow> b" for A b
     using LIMSEQ_subseq_LIMSEQ[OF that r] by (simp add: o_def)
@@ -1697,8 +1700,9 @@ theorem eulerp_weak_limit:
 proof -
   have L0: "0 \<le> L" using L1 by linarith
   show ?thesis
-    by (rule exit_class_weak_limit[OF c0 L0
-        eulerp_seq_in_class[OF c0 L1 SFc SFs]])
+    unfolding exit_class_eq_covariation
+    by (rule covariation_class_weak_limit[OF c0 sconstraint_bounds[OF L0] closed_sconstraint
+        eulerp_seq_in_class[OF c0 L1 SFc SFs, unfolded exit_class_eq_covariation]])
 qed
 
 subsection \<open>The bad event vanishes with the mesh\<close>
@@ -1712,71 +1716,77 @@ text \<open>The bad event --- the path stays inside a bounded region through
   nearest grid point (\<open>eulerp_quad_lower_region\<close>), and a
   fourth-moment tail for the one-step gap between the grid point and
   \<open>t\<close>, derived below from
-  @{thm [source] exit_class_fourth_moment}.\<close>
+  @{thm [source] covariation_class_fourth_moment_bochner}.\<close>
 
-lemma exit_class_increment_tail:
+lemma covariation_class_increment_tail:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Q: "Q \<in> covariation_class S T x"
     and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
     and l: "0 < l"
   shows "measure Q {\<omega> \<in> space Q.
       l \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
-    \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2 / l^4"
+    \<le> 8 * D\<^sup>2 * (tt - s)\<^sup>2 / l^4"
 proof -
   have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF Q])
+    by (rule covariation_class_sets[OF Q])
   have int4: "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
-    by (rule covariation_class_fourth_moment_integrable[OF T sconstraint_bounds[OF L]
-        Q[unfolded exit_class_eq_covariation] st stt ttT])
-  have intgl: "(\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q) \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
-    by (rule covariation_class_fourth_moment_bochner[OF T sconstraint_bounds[OF L]
-        Q[unfolded exit_class_eq_covariation] st stt ttT])
+    by (rule covariation_class_fourth_moment_integrable[OF T B0 B D0 D Q st stt ttT])
+  have intgl: "(\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q) \<le> 8 * D\<^sup>2 * (tt - s)\<^sup>2"
+    by (rule covariation_class_fourth_moment_bochner[OF T B0 B D0 D Q st stt ttT])
   have "measure Q {\<omega> \<in> space Q. l \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
       \<le> (\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q) / l^4"
     using st stt ttT
-    by (intro fourth_moment_tail[OF exit_class_prob[OF Q] _ int4 l] borel_measurable_diff
+    by (intro fourth_moment_tail[OF covariation_class_prob[OF Q] _ int4 l] borel_measurable_diff
         pair_law_coord_measurable[OF setsQ]) simp_all
-  also have "\<dots> \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2 / l^4"
+  also have "\<dots> \<le> 8 * D\<^sup>2 * (tt - s)\<^sup>2 / l^4"
     using intgl l by (intro divide_right_mono) simp_all
   finally show ?thesis .
 qed
 
-lemma exit_class_increment_tail_norm:
+lemma covariation_class_increment_tail_norm:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Q: "Q \<in> covariation_class S T x"
     and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
     and l: "0 < l"
   shows "measure Q {\<omega> \<in> space Q. l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))}
-    \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (tt - s)\<^sup>2) / l^4"
+    \<le> real (CARD('n)) ^ 5 * (8 * D\<^sup>2 * (tt - s)\<^sup>2) / l^4"
 proof -
   let ?n = "real (CARD('n))"
   have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF Q])
+    by (rule covariation_class_sets[OF Q])
   have n0: "0 < ?n" by (simp add: card_gt_0_iff)
   define l' where "l' = l / ?n"
   have l'0: "0 < l'" unfolding l'_def using l n0 by simp
+  have tail: "measure Q {\<omega> \<in> space Q. l' \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
+      \<le> 8 * D\<^sup>2 * (tt - s)\<^sup>2 / l'^4" for i
+    by (rule covariation_class_increment_tail[OF T B0 B D0 D Q st stt ttT l'0])
   have "measure Q {\<omega> \<in> space Q. l \<le> norm (fst (\<omega> tt) - fst (\<omega> s))}
       \<le> (\<Sum>i\<in>UNIV. measure Q
           {\<omega> \<in> space Q. l' \<le> \<bar>(fst (\<omega> tt) - fst (\<omega> s)) $ i\<bar>})"
     unfolding l'_def using st stt ttT
-    by (intro norm_tail_le_coord_tails[OF exit_class_prob[OF Q] _ l])
+    by (intro norm_tail_le_coord_tails[OF covariation_class_prob[OF Q] _ l])
       (auto intro!: borel_measurable_diff pair_law_coord_measurable[OF setsQ])
-  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). 8 * L\<^sup>2 * (tt - s)\<^sup>2 / l'^4)"
-    by (intro sum_mono)
-      (use exit_class_increment_tail[OF T L Q st stt ttT l'0] in simp)
-  also have "\<dots> = ?n * (8 * L\<^sup>2 * (tt - s)\<^sup>2 / l'^4)" by simp
-  also have "\<dots> = ?n ^ 5 * (8 * L\<^sup>2 * (tt - s)\<^sup>2) / l^4"
+  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). 8 * D\<^sup>2 * (tt - s)\<^sup>2 / l'^4)"
+    by (intro sum_mono) (use tail in simp)
+  also have "\<dots> = ?n * (8 * D\<^sup>2 * (tt - s)\<^sup>2 / l'^4)" by simp
+  also have "\<dots> = ?n ^ 5 * (8 * D\<^sup>2 * (tt - s)\<^sup>2) / l^4"
   proof -
     have l'4: "l'^4 = l^4 / ?n^4"
       unfolding l'_def by (simp add: power_divide)
     have ln0: "l^4 \<noteq> 0" using l by simp
     have nn0: "(?n :: real)^4 \<noteq> 0" using n0 by simp
-    have "?n * (8 * L\<^sup>2 * (tt - s)\<^sup>2 / l'^4)
-        = ?n * (8 * L\<^sup>2 * (tt - s)\<^sup>2 * ?n^4 / l^4)"
+    have "?n * (8 * D\<^sup>2 * (tt - s)\<^sup>2 / l'^4)
+        = ?n * (8 * D\<^sup>2 * (tt - s)\<^sup>2 * ?n^4 / l^4)"
       unfolding l'4 using ln0 nn0 by (simp add: field_simps)
-    also have "\<dots> = ?n ^ 5 * (8 * L\<^sup>2 * (tt - s)\<^sup>2) / l^4"
+    also have "\<dots> = ?n ^ 5 * (8 * D\<^sup>2 * (tt - s)\<^sup>2) / l^4"
       by (simp add: eval_nat_numeral field_simps)
     finally show ?thesis .
   qed

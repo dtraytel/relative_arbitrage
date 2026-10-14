@@ -812,8 +812,8 @@ proof -
       have mE2: "measure ?Q E2
           \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4"
         unfolding E2_def
-        by (rule exit_class_increment_tail_norm[OF c0 L0 Qc
-            mh0 mh_le tc \<delta>0])
+        by (rule covariation_class_increment_tail_norm[OF c0 sconstraint_bounds[OF L0]
+            Qc[unfolded exit_class_eq_covariation] mh0 mh_le tc \<delta>0])
       have sE1: "E1 \<in> sets ?Q"
       proof -
         have xm: "euXi SF M h m \<in> borel_measurable ?Q"
