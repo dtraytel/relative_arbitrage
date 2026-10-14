@@ -1,0 +1,56 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+\urlstyle{rm}
+\isabellestyle{it}
+
+\begin{document}
+
+\title{Comparison of Viscosity Solutions for Geometric Operators}
+\author{Dmitriy Traytel}
+\maketitle
+
+\begin{abstract}
+  We prove comparison principles for viscosity solutions of the equation
+  $F(Du, D^2u) = 1$, where $F$ is any second-order operator on
+  $\mathbb{R}^n \times \mathbb{R}^{n \times n}$ with ten properties,
+  collected in a locale of geometric operators: degenerate ellipticity,
+  positive homogeneity in the Hessian, invariance under positive dilations
+  of the gradient and under rotations, a bound on the effect of shifting
+  the Hessian by a multiple of the identity, agreement with both
+  semicontinuous envelopes where the gradient does not vanish and with the
+  lower one where it does, and the upper envelope $F^*$ below $1$ at
+  $(0, 0)$ and uniformly at $(q, -\delta I)$.  The operator may thus be
+  discontinuous where the gradient vanishes, as operators of geometric
+  equations are.  The entry defines the semicontinuous envelopes of an
+  operator and their invariances, and proves the maximum principle for an
+  upper semicontinuous subsolution and a lower semicontinuous
+  supersolution on a bounded set, by doubling the variables in the
+  sup-convolutions of the two functions, with a penalty whose gradient
+  stays away from zero; comparison between two domains; and comparison
+  and uniqueness on expandable sets and on compact sets.  The viscosity
+  notions are those of \texttt{Second\_Order\_Viscosity\_Analysis}, at
+  local touching and at touching over a set, and the second-order tools
+  (the sup-convolution, Jensen's lemma and the doubling of variables) come
+  from there as well.  We follow the User's Guide of
+  Crandall, Ishii and Lions~\cite{CrandallIshiiLions}.
+\end{abstract}
+
+\tableofcontents
+
+\parindent 0pt\parskip 0.5ex
+
+\input{session}
+
+\bibliographystyle{abbrv}
+\bibliography{root}
+
+\end{document}

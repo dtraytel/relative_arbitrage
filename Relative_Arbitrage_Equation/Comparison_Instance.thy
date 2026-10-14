@@ -3,14 +3,15 @@ section \<open>Section 4 for the operator of Eq. (1.9)\<close>
 (*<*)
 theory Comparison_Instance
   imports
-    Comparison_Two_Domain Operator_Envelopes
+    "Geometric_Viscosity_Comparison.Comparison_Two_Domain" Operator_Envelopes
 begin
 (*>*)
 
 text \<open>The operator \<^const>\<open>ell_op\<close> of Eq. (1.9) is a geometric operator in the
-  sense of @{theory Relative_Arbitrage_Equation.Geometric_Operator} whenever
+  sense of @{theory Geometric_Viscosity_Comparison.Geometric_Operator} whenever
   \<open>1 \<le> k < n\<close> and \<open>1 \<le> L\<close>, by Lemma 3.1 and the invariances of display (4.4).
-  The comparison chain of the preceding theories then gives Theorems 4.2 and
+  The comparison chain of the session
+  \<open>Geometric_Viscosity_Comparison\<close> then gives Theorems 4.2 and
   4.3 and Proposition 4.1 for Definition 3.1 as the paper states it, with the
   paper's predicates \<^const>\<open>visc_subsol_env2\<close> and \<^const>\<open>visc_supersol_env2\<close>.
 

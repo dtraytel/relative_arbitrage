@@ -1,0 +1,36 @@
+session Geometric_Viscosity_Comparison = Second_Order_Viscosity_Analysis +
+  description "
+    Comparison principles for viscosity solutions of F(Du, D^2 u) = 1 for
+    any second-order operator F on R^n x R^(n x n) in the locale
+    geometric_operator: degenerate ellipticity, positive homogeneity in the
+    Hessian, invariance under positive dilations of the gradient and under
+    rotations, a bound on the effect of shifting the Hessian by a multiple
+    of the identity, agreement with both semicontinuous envelopes off a
+    vanishing gradient and with the lower one at a vanishing gradient, and
+    the upper envelope below 1 at (0, 0) and uniformly at (q, -delta I).
+    For such an operator: the semicontinuous envelopes of an operator and
+    their invariances; strict subsolutions by scaling; the contradiction
+    between second-order jets of the sup-convolutions of a subsolution and
+    a supersolution at a maximiser of the doubled functional; the maximum
+    principle for an upper semicontinuous subsolution and a lower
+    semicontinuous supersolution on a bounded set, which may degenerate
+    where the gradient vanishes; comparison between two domains, comparison
+    and uniqueness on expandable sets, and uniqueness on compact sets.
+    Built on Second_Order_Viscosity_Analysis for the doubling of variables,
+    the sup-convolution, Jensen's lemma and the viscosity notions, and on
+    Semicontinuous_Analysis for semicontinuity and envelopes.
+  "
+  options [document = pdf, document_output = "output"]
+  sessions
+    Semicontinuous_Analysis
+  theories
+    Geometric_Operator
+    Comparison_Strictness
+    Comparison_Localisation
+    Maximum_Principle
+    Comparison_Two_Domain
+  theories [document = false]
+    No_Probability_Or_Paper_Ancestor
+  document_files
+    "root.tex"
+    "root.bib"

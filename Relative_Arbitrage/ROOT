@@ -8,8 +8,10 @@ session Relative_Arbitrage = Covariation_Constrained_Martingales +
 
     The operator of Eq. (1.9), its envelopes, the subspace-tangential field
     and the comparison principle (Theorem 4.2(a)) are in the probability-free
-    session Relative_Arbitrage_Equation; the operations on path laws (cutting,
-    glueing, shifting, sampling at a stopping time) and the class of laws
+    session Relative_Arbitrage_Equation (the comparison chain itself, for
+    any geometric operator, in Geometric_Viscosity_Comparison); the
+    operations on path laws (cutting, glueing, shifting, sampling at a
+    stopping time) and the class of laws
     with constrained covariation are in Path_Space_Operations, and its
     compactness, pasting and dynamic programming principle, for an arbitrary
     constraint set, are in Covariation_Constrained_Martingales.  This session

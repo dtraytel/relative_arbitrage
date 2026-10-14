@@ -141,6 +141,18 @@ Sup_Convolution.supconv_def
 Sup_Convolution.supconv_semiconvex
 Sup_Convolution.supconv_lipschitz
 
+# --- Geometric_Viscosity_Comparison: advertised deliverables (ROOT description / root.tex)
+# the semicontinuous envelopes of an operator
+Geometric_Operator.op_lsc_def
+Geometric_Operator.op_usc_def
+# the maximum principle for usc/lsc data on a bounded set
+Maximum_Principle.geometric_operator.max_principle_usc_lsc
+# comparison between two domains, comparison and uniqueness on expandable sets
+Comparison_Two_Domain.geometric_operator.comparison_two_domain
+Comparison_Two_Domain.geometric_operator.comparison_expandable
+Comparison_Two_Domain.geometric_operator.uniqueness_expandable
+# (uniqueness on compact sets: Maximum_Principle.geometric_operator.viscosity_uniqueness_compact, below)
+
 # --- Continuous_Time_Martingales: advertised deliverables (ROOT description / root.tex)
 # Doob's maximal inequality (abstract: bounding the chance that a martingale ever exceeds a level by its termina
 Doob_Inequality.prob_sq_int_martingale.doob_maximal_inequality

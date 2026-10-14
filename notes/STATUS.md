@@ -23,15 +23,16 @@ Theorem 1.1 of arXiv:2512.17702 is formalised in full, with no `sorry`, no
   deviations from the paper stated beside it; Section 5 is listed as not
   formalised.
 
-**Sessions**, in `ROOTS` order (lines and theories at `f2da170`; 88 078
-lines in all):
+**Sessions**, in `ROOTS` order (lines and theories at `f2da170`, 88 078
+lines in all; GVC and RAE after the comparison chain moved out of RAE):
 
 | session | short | parent | further `sessions` | theories | lines |
 |---|---|---|---|---:|---:|
 | `Symmetric_Matrix_Spectra` | SMS | HOL-Analysis | — | 9 | 6 547 |
 | `Semicontinuous_Analysis` | SemiC | `Lower_Semicontinuous` | — | 3 | 1 356 |
 | `Second_Order_Viscosity_Analysis` | SOVA | SMS | SemiC | 12 | 14 251 |
-| `Relative_Arbitrage_Equation` | RAE | SOVA | SemiC | 13 | 9 143 |
+| `Geometric_Viscosity_Comparison` | GVC | SOVA | SemiC | 6 | 3 716 |
+| `Relative_Arbitrage_Equation` | RAE | GVC | SemiC | 8 | 4 861 |
 | `Continuous_Time_Martingales` | CTM | HOL-Probability | `Martingales` | 23 | 11 248 |
 | `Wiener_Measure` | WM | CTM | `Kolmogorov_Chentsov` | 8 | 3 308 |
 | `Continuous_Path_Spaces` | CPS | `Levy_Prokhorov_Metric` | CTM, `Kolmogorov_Chentsov`, SemiC | 13 | 8 319 |
@@ -41,12 +42,13 @@ lines in all):
 | `Relative_Arbitrage_Statement` | Statement | RA | — | 3 | 1 790 |
 
 The paper is RAE (probability-free: the operator of Eq. (1.9), its envelopes,
-Lemma 2.1, the viscosity predicates and Section 4, with
-`No_Probability_Ancestor` as a build-time check) plus RA (the class of
-Eq. (1.7), the value function, the viscosity property of Section 3,
-Example 3.1 and the assembly). The other eight sessions are libraries and do
-not depend on the paper; PSO's `No_Viscosity_Ancestor` and CCM's
-`No_Paper_Ancestor` check their ancestry at build time.
+Lemma 2.1, the viscosity predicates and Section 4 as an instance of GVC's
+chain, with `No_Probability_Ancestor` as a build-time check) plus RA (the
+class of Eq. (1.7), the value function, the viscosity property of Section 3,
+Example 3.1 and the assembly). The other nine sessions are libraries and do
+not depend on the paper; PSO's `No_Viscosity_Ancestor`, CCM's
+`No_Paper_Ancestor` and GVC's `No_Probability_Or_Paper_Ancestor` check their
+ancestry at build time.
 
 **Where the paper's items are now:**
 
@@ -61,7 +63,7 @@ not depend on the paper; PSO's `No_Viscosity_Ancestor` and CCM's
 | Section 3.1 (subsolution) | RA `Value_Function_Subsolution` |
 | Section 3.2 (supersolution; Case 1 by exact rotations, Case 2) | RA `Value_Function_Supersolution`, with its inputs in `Euler_Limit_Growth` (the rotated field `covariation_rotSF_exists`, growth along Euler limits) and `Value_Function_Tangential_Field` |
 | Example 3.1 | RA `Example_3_1` |
-| Section 4 (Theorems 4.2 and 4.3, Proposition 4.1) for any operator of the locale `geometric_operator` | RAE `Geometric_Operator`, `Comparison_Strictness`, `Comparison_Localisation`, `Maximum_Principle` (Theorem 4.2(a)), `Comparison_Two_Domain` (Theorems 4.2(b), 4.3, Proposition 4.1) |
+| Section 4 (Theorems 4.2 and 4.3, Proposition 4.1) for any operator of the locale `geometric_operator` | GVC `Geometric_Operator`, `Comparison_Strictness`, `Comparison_Localisation`, `Maximum_Principle` (Theorem 4.2(a)), `Comparison_Two_Domain` (Theorems 4.2(b), 4.3, Proposition 4.1) |
 | the paper's operator as an instance; `covariation_op S` as an instance | RAE `Comparison_Instance`; RA `Covariation_Operator` |
 | Theorem 1.1: the clauses for the horizon-`T` value, uniqueness | RA `Value_Function_Uniqueness` |
 | Theorem 1.1 for `xval`, and for an abstract `S` (`covariation_theorem_1_1`) | RA `Theorem_1_1` |
@@ -100,7 +102,7 @@ are older still; `git log --follow` on a current theory finds them.
 - The "named gaps" below (`comparison_principle`, `max_principle_boundary`)
   are closed: the locale and the interface predicate are deleted, and
   Theorem 4.2(a) is proved in the paper's form for usc/lsc data
-  (`max_principle_usc_lsc`, RAE `Maximum_Principle` and `Comparison_Instance`).
+  (`max_principle_usc_lsc`, GVC `Maximum_Principle` and RAE `Comparison_Instance`).
 
 ---
 

@@ -6,7 +6,7 @@ import sys, os, re, glob, collections
 OUT, REPO = sys.argv[1], sys.argv[2]
 WRITE = '--write' in sys.argv
 USER = {"Symmetric_Matrix_Spectra", "Semicontinuous_Analysis", "Second_Order_Viscosity_Analysis",
-        "Relative_Arbitrage_Equation", "Wiener_Measure", "Continuous_Time_Martingales", "Continuous_Path_Spaces", "Path_Space_Operations",
+        "Geometric_Viscosity_Comparison", "Relative_Arbitrage_Equation", "Wiener_Measure", "Continuous_Time_Martingales", "Continuous_Path_Spaces", "Path_Space_Operations",
         "Covariation_Constrained_Martingales",
         "Relative_Arbitrage", "Relative_Arbitrage_Statement"}
 DIRS = {"Relative_Arbitrage_Statement": "Statement"}

@@ -303,8 +303,8 @@ section) states this item by item.
   session `Relative_Arbitrage_Equation` (phase 6), now holds. The paper's
   proof dilates `v` into `interior K` and compares the dilated `v`, as a
   subsolution, with `v_*` by Theorem 4.2(b). What exists: Theorem 4.2(b)
-  (`paper_theorem_4_2_b`; `comparison_two_domain`, RAE `Comparison_Two_Domain`
-  and `Comparison_Instance`), the scaling of the operator and of its upper
+  (`paper_theorem_4_2_b`; `comparison_two_domain`, GVC `Comparison_Two_Domain`
+  and RAE `Comparison_Instance`), the scaling of the operator and of its upper
   envelope (`ell_op_scale`, `ell_op_usc_scale`, RAE `Operator_Envelopes`), and
   the dilation invariance of Definition 3.1 for supersolutions
   (`visc_supersol_env_affine`, RAE `Comparison_Instance`). What is missing: the same invariance for

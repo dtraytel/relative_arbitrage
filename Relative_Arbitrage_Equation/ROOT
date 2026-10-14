@@ -1,4 +1,4 @@
-session Relative_Arbitrage_Equation = Second_Order_Viscosity_Analysis +
+session Relative_Arbitrage_Equation = Geometric_Viscosity_Comparison +
   description "
     The degenerate elliptic equation of Lai, Shkolnikov and Soner, Relative
     arbitrage problem under eigenvalue lower bounds (arXiv:2512.17702),
@@ -6,24 +6,19 @@ session Relative_Arbitrage_Equation = Second_Order_Viscosity_Analysis +
     (Lemma 2.1), its semicontinuous envelopes and the viscosity notions of
     Definition 3.1, the subspace-tangential field of Example 3.1, and the
     comparison principles of Section 4 (Theorems 4.2 and 4.3, Proposition
-    4.1), proved for any operator in the locale geometric_operator and
-    instantiated at the operator of Eq. (1.9).
+    4.1) for that operator, as an instance of the comparison chain of
+    Geometric_Viscosity_Comparison.
   "
   options [document = pdf, document_output = "output"]
   sessions
     Semicontinuous_Analysis
   theories
-    Geometric_Operator
     Elliptic_Operator
     Viscosity_Definitions
     Constraint_Set_Convexity
     Operator_Formula
     Subspace_Tangential_Field
     Operator_Envelopes
-    Comparison_Strictness
-    Comparison_Localisation
-    Maximum_Principle
-    Comparison_Two_Domain
     Comparison_Instance
   theories [document = false]
     No_Probability_Ancestor

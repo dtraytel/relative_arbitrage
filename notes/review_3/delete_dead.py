@@ -25,6 +25,7 @@ for a in sys.argv[3:]:
 DIRS = {"Symmetric_Matrix_Spectra": "Symmetric_Matrix_Spectra",
         "Semicontinuous_Analysis": "Semicontinuous_Analysis",
         "Second_Order_Viscosity_Analysis": "Second_Order_Viscosity_Analysis",
+        "Geometric_Viscosity_Comparison": "Geometric_Viscosity_Comparison",
         "Relative_Arbitrage_Equation": "Relative_Arbitrage_Equation",
         "Wiener_Measure": "Wiener_Measure",
         "Continuous_Time_Martingales": "Continuous_Time_Martingales",

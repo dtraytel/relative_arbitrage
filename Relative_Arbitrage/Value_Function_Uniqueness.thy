@@ -14,7 +14,7 @@ text \<open>
   joins the two halves of that statement: the viscosity property, proved in
   @{theory Relative_Arbitrage.Value_Function_Subsolution} and
   @{theory Relative_Arbitrage.Value_Function_Supersolution}, and the comparison principle, proved in
-  @{theory Relative_Arbitrage_Equation.Maximum_Principle}.
+  @{theory Geometric_Viscosity_Comparison.Maximum_Principle}.
 \<close>
 
 text \<open>With \<open>v = enn2real \<circ> covariation_val S T K\<close> (the paper's \<open>exit_val k L T K\<close> at

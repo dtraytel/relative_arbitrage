@@ -3,7 +3,7 @@ section \<open>The operator of an abstract constraint set is a geometric operato
 (*<*)
 theory Covariation_Operator
   imports
-    "Relative_Arbitrage_Equation.Comparison_Two_Domain" Value_Function_Supersolution
+    "Geometric_Viscosity_Comparison.Comparison_Two_Domain" Value_Function_Supersolution
 begin
 (*>*)
 
@@ -21,7 +21,7 @@ text \<open>The comparison chain of Section 4 holds for every operator of the lo
 section \<open>Envelopes from local bounds\<close>
 
 text \<open>Generic facts about the envelopes @{const op_lsc} and @{const op_usc} of
-  @{theory Relative_Arbitrage_Equation.Geometric_Operator}.\<close>
+  @{theory Geometric_Viscosity_Comparison.Geometric_Operator}.\<close>
 
 lemma op_lsc_eq_of_local_lower:
   fixes F :: "'a::metric_space \<Rightarrow> 'b::metric_space \<Rightarrow> real"

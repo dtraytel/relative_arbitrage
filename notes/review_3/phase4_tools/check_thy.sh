@@ -2,7 +2,7 @@
 # Batch replacement for PIDE: check one theory file as a throwaway session.
 #   check_thy.sh /abs/path/My_Theory.thy [BASE_SESSION]
 # The theory may import any theory of the repository's sessions (session-qualified,
-# e.g. "Relative_Arbitrage_Equation.Comparison_Two_Domain"); BASE defaults to
+# e.g. "Geometric_Viscosity_Comparison.Comparison_Two_Domain"); BASE defaults to
 # Relative_Arbitrage_Statement, whose heap holds all of them.  Prints the build's
 # error/warning messages and "RESULT: OK" or "RESULT: FAILED".  Runs with
 # threads=2 and a 600 s timeout; a looping proof shows up as a timeout.
@@ -24,7 +24,7 @@ cat > "$DIR/ROOT" <<ROOTEOF
 session "$SESS" = "$BASE" +
   options [document = false, timeout = 600]
   sessions
-    Second_Order_Viscosity_Analysis Continuous_Time_Martingales Wiener_Measure
+    Second_Order_Viscosity_Analysis Geometric_Viscosity_Comparison Continuous_Time_Martingales Wiener_Measure
     Continuous_Path_Spaces Path_Space_Operations Covariation_Constrained_Martingales Relative_Arbitrage_Equation Relative_Arbitrage Symmetric_Matrix_Spectra
     Semicontinuous_Analysis
   theories
