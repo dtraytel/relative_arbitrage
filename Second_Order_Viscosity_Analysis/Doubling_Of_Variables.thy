@@ -2221,7 +2221,7 @@ text \<open>Two elementary choices of small parameters: an \<open>\<epsilon> > 0
   \<open>2\<epsilon>D < H\<close>, and a \<open>\<theta> < 1\<close> close enough to \<open>1\<close> that
   \<open>(1 - \<theta>) 2B < G\<close>.\<close>
 
-lemma exists_eps_aux:
+lemma exists_pos_twice_mult_less:
   fixes H D :: real
   assumes H: "0 < H" and D: "0 \<le> D"
   shows "\<exists>\<epsilon>. 0 < \<epsilon> \<and> 2*\<epsilon>*D < H"
@@ -2242,13 +2242,13 @@ proof -
   with epos show ?thesis by blast
 qed
 
-lemma theta_exists_aux:
+lemma exists_near_one_twice_mult_less:
   fixes B G :: real
   assumes B: "0 \<le> B" and G: "0 < G"
   shows "\<exists>\<theta>. 0 < \<theta> \<and> \<theta> < 1 \<and> (1-\<theta>)*(2*B) < G"
 proof -
   obtain t where tpos: "0 < t" and tlt: "2*t*B < G"
-    using exists_eps_aux[OF G B] by blast
+    using exists_pos_twice_mult_less[OF G B] by blast
   define t' where "t' = min t (1/2)"
   have t'pos: "0 < t'" unfolding t'_def using tpos by simp
   have t'le: "t' \<le> t" unfolding t'_def by simp

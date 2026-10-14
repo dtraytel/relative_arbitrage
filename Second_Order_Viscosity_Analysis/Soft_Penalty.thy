@@ -55,7 +55,7 @@ text \<open>\<open>semiconvex_penalty_gen\<close> reduces the question to exhibi
 definition soft_pen :: "real \<Rightarrow> 'a::euclidean_space \<Rightarrow> real" where
   "soft_pen \<kappa> d = (\<kappa>/2) * (norm d)\<^sup>2 - \<kappa> * (sqrt ((norm d)\<^sup>2 + 1) - 1)"
 
-lemma div_mul_div_cancel_aux:
+lemma mult_divide_cancel_denominator:
   fixes k s r :: real
   assumes s: "s \<noteq> 0"
   shows "k * (s / r) / s = k / r"
@@ -87,7 +87,7 @@ text \<open>The same identity without the quotient, holding for every \<open>\<D
   including \<open>0\<close>. The algebraic heart: \<open>(S+R)\<^sup>2 - \<Delta> = 2R(S+R)\<close>, whence
   \<open>\<Delta>/(2R) - \<Delta>\<^sup>2/(2R(S+R)\<^sup>2) = \<Delta>/(S+R) = S - R\<close>.\<close>
 
-lemma sqrt_rhs_aux:
+lemma conjugate_difference_quotient:
   fixes D R T :: real
   assumes R: "R \<noteq> 0" and T: "T \<noteq> 0" and key: "T\<^sup>2 - D = 2 * R * T"
   shows "D / (2 * R) - D\<^sup>2 / (2 * R * T\<^sup>2) = D / T"
@@ -127,7 +127,7 @@ proof -
   have rhs: "D / (2 * sqrt u)
         - D\<^sup>2 / (2 * sqrt u * (sqrt (u + D) + sqrt u)\<^sup>2)
       = D / (sqrt (u + D) + sqrt u)"
-    by (rule sqrt_rhs_aux) (use R SR key in auto)
+    by (rule conjugate_difference_quotient) (use R SR key in auto)
   show ?thesis unfolding e rhs ..
 qed
 
@@ -137,7 +137,7 @@ text \<open>Collecting the expansion into gradient + Hessian + remainder: with
   giving the gradient and half the Hessian term exactly; the remainder is
   the two quotient terms.\<close>
 
-lemma soft_pen_rem_aux:
+lemma soft_pen_remainder_identity:
   fixes k R a b W :: real
   assumes R: "R \<noteq> 0"
   shows "(k/2) * (2*a + b) - k * ((2*a + b) / (2*R) - W)
@@ -279,7 +279,7 @@ text \<open>The remainder quotient splits into a bounded factor times a vanishin
   \<open>4a\<^sup>2\<close> carries the bounded factor, and \<open>(4ab + b\<^sup>2)/b\<close> is the second
   summand.\<close>
 
-lemma rem_split_aux:
+lemma soft_pen_remainder_split:
   fixes k R T a b :: real
   assumes R: "R \<noteq> 0" and T: "T \<noteq> 0" and b: "b \<noteq> 0"
   shows "(k * ((2*a + b)\<^sup>2 / (2 * R * T\<^sup>2)) - k * a\<^sup>2 / (2 * R^3)) / b
@@ -425,7 +425,7 @@ lemma soft_grad_norm_pos:
   shows "0 < norm (soft_grad \<kappa> d)"
   using soft_grad_nonzero[OF d k] by simp
 
-lemma exists_small_rho_aux:
+lemma exists_pos_less_and_six_mult_less:
   fixes B G :: real
   assumes B: "0 < B" and G: "0 < G"
   shows "\<exists>\<rho>. 0 < \<rho> \<and> \<rho> < B \<and> 6 * \<rho> < G"
@@ -458,7 +458,7 @@ lemma soft_rho_exists:
   assumes d: "d \<noteq> 0" and B: "0 < B"
   shows "\<exists>\<rho>. 0 < \<rho> \<and> \<rho> < B
       \<and> 6 * \<rho> < (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * norm d"
-  by (rule exists_small_rho_aux[OF B soft_gap_pos[OF d]])
+  by (rule exists_pos_less_and_six_mult_less[OF B soft_gap_pos[OF d]])
 
 lemma sqrt_shift_diff_bound:
   fixes s t :: real
@@ -688,7 +688,7 @@ proof -
     using s0 by simp
   also have "(\<kappa> * ((norm h)\<^sup>2 / (sqrt ((norm h)\<^sup>2 + 1) + 1))) / (norm h)\<^sup>2
       = \<kappa> / (sqrt ((norm h)\<^sup>2 + 1) + 1)"
-    by (rule div_mul_div_cancel_aux) (use s0 in linarith)
+    by (rule mult_divide_cancel_denominator) (use s0 in linarith)
   finally show ?thesis .
 qed
 
@@ -780,11 +780,11 @@ proof -
   have R: "sqrt ((norm d)\<^sup>2 + 1) \<noteq> 0" using up by simp
   show ?thesis
     unfolding soft_pen_expand
-    by (rule soft_pen_rem_aux[OF R])
+    by (rule soft_pen_remainder_identity[OF R])
 qed
 
 text \<open>The jet assembles the analysis above via \<open>soft_pen_rem\<close> and
-  \<open>rem_split_aux\<close>, killing the first summand by \<open>Lim_null_comparison\<close> and
+  \<open>soft_pen_remainder_split\<close>, killing the first summand by \<open>Lim_null_comparison\<close> and
   adding the second. Stated with the Hessian as a quadratic form;
   converting it to the matrix \<open>\<kappa>(1 - 1/R) I + (\<kappa>/R\<^sup>3) d d\<^sup>T\<close> is a separate
   step.\<close>
@@ -880,7 +880,7 @@ proof -
     have nb: "(norm h)\<^sup>2 = h \<bullet> h" by (simp add: power2_norm_eq_inner)
     show ?case
       unfolding soft_pen_rem nb
-      by (rule rem_split_aux[symmetric, OF Rnz Tnz bnz])
+      by (rule soft_pen_remainder_split[symmetric, OF Rnz Tnz bnz])
   qed
   show ?thesis by (rule Lim_transform_eventually[OF sum0 ev])
 qed

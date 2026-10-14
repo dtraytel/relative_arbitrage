@@ -55,11 +55,11 @@ Ky_Fan.eigval_antimono_le
 # their (the ordered eigenvalues') Lipschitz dependence on the matrix
 Eigenvalue_Continuity.eigval_lipschitz
 Eigenvalue_Continuity.kyfan_lipschitz
-# Poincare separation (abstract: ordered eigenvalues interlace with those of any compression to a subspace) -- O
-Poincare_Separation.quadform_le_eigval_1
-Poincare_Separation.eigval_min_le_quadform
+# the Rayleigh bounds, on which Poincare separation (Operator_Formula.poincare_separation) rests
+Eigenvalue_Bounds.quadform_le_eigval_1
+Eigenvalue_Bounds.eigval_min_le_quadform
 # the Courant-Fischer variational lower bound for an ordered eigenvalue (theory text; moved from Operator_Formula)
-Poincare_Separation.eigval_ge_of_subspace
+Eigenvalue_Bounds.eigval_ge_of_subspace
 # orthogonal projections onto orthonormal families (ROOT description; moved from the paper session)
 Orthogonal_Projections.projmat_def
 Orthogonal_Projections.projmat_idem
@@ -380,7 +380,7 @@ Constraint_Set_Convexity.shift_j    # FIX_THEN_KEEP
 Constraint_Set_Convexity.shift_other    # FIX_THEN_KEEP
 Constraint_Set_Convexity.sum_shift    # FIX_THEN_KEEP
 Constraint_Set_Convexity.shift_convex_combination    # FIX_THEN_KEEP
-Constraint_Set_Convexity.diag_in_convex_hull_aux    # FIX_THEN_KEEP
+Constraint_Set_Convexity.diag_in_convex_hull_induct    # FIX_THEN_KEEP
 Constraint_Set_Convexity.diag_in_convex_hull    # FIX_THEN_KEEP
 Constraint_Set_Convexity.convex_hull_augment    # KEEP_ROOT
 Constraint_Set_Convexity.convex_hull_augment_sum    # KEEP_ROOT
@@ -429,11 +429,11 @@ Sup_Convolution.local_min_hessian_psd    # FIX_THEN_KEEP (moved from Matrix_Alge
 Matrix_Algebra.diag_eq_inner_axis    # KEEP_API
 Matrix_Algebra.trace_nonneg_psd    # KEEP_API
 Orthonormal_Families.trace_ge_dim    # KEEP_API
-Poincare_Separation.quadform_le_eigval_1    # KEEP_API
+Eigenvalue_Bounds.quadform_le_eigval_1    # KEEP_API
 Symmetric_Spectral.eigenbasis_containing_eigenvector    # FIX_THEN_KEEP
-Poincare_Separation.exists_top_eigenvector    # FIX_THEN_KEEP
-Poincare_Separation.dim_inter_ge    # KEEP_ROOT
-Poincare_Separation.quadform_ge_on_span_threshold    # KEEP_ROOT
+Eigenvalue_Bounds.exists_top_eigenvector    # FIX_THEN_KEEP
+Eigenvalue_Bounds.dim_inter_ge    # KEEP_ROOT
+Eigenvalue_Bounds.quadform_ge_on_span_threshold    # KEEP_ROOT
 Semicontinuity.usc_extension_bounded    # FIX_THEN_KEEP
 Semicontinuous_Envelopes.lsc_env_eq_self    # FIX_THEN_KEEP
 Metric_space.compact_space_dense_seq    # FIX_THEN_KEEP
@@ -635,7 +635,7 @@ Optional_Sampling.nat_stopped_martingale.stopped_expectation    # COROLLARY
 Sampled_Quadratic_Variation.expectation_sq_sampled    # COROLLARY
 Maximum_Principle.geometric_operator.max_principle_le    # COROLLARY; in the locale since G-C
 Maximum_Principle.geometric_operator.uniqueness_from_max_principle    # COROLLARY; in the locale since G-C
-Poincare_Separation.is_proj_rank1    # COROLLARY
+Eigenvalue_Bounds.is_proj_rank1    # COROLLARY
 Doubling_Of_Variables.doubling_dist_bound    # COROLLARY
 Doubling_Of_Variables.penalty_difference_identity    # COROLLARY
 Doubling_Of_Variables.doubled_slice_numerator_fst    # COROLLARY

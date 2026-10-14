@@ -939,7 +939,7 @@ text \<open>The dichotomy.  Either arbitrarily small tilts admit a local
   them, the gradients tend to \<open>0\<close> because \<open>\<bar>y - x\<bar> \<le> 4\<bar>\<eta>\<bar>/\<epsilon>\<close>, and
   \<open>covariation_op_usc_ge_one_limit\<close> delivers the inequality at \<open>p = 0\<close> --- or
   some threshold fails, which is exactly the hypothesis of
-  \<open>horn_B_locally_constant\<close>, and then \<open>v\<^sub>*\<close> is locally constant, which
+  \<open>locally_constant_of_stationary_tilted_minima\<close>, and then \<open>v\<^sub>*\<close> is locally constant, which
   \<open>covariation_val_not_locally_constant\<close> refutes.
 
   A singular \<open>H - \<epsilon>\<cdot>1\<close> needs no separate treatment: it supplies
@@ -1135,7 +1135,7 @@ proof -
       qed
       obtain rr where rr0: "0 < rr"
         and rc: "\<And>y. dist x y < rr \<Longrightarrow> ?W y = ?W x"
-      proof (rule horn_B_locally_constant[OF lscW symM True rho c0 h0 hle sep
+      proof (rule locally_constant_of_stationary_tilted_minima[OF lscW symM True rho c0 h0 hle sep
               hornB])
         fix r' :: real
         assume b1: "0 < r'" and b2: "\<And>y. dist x y < r' \<Longrightarrow> ?W y = ?W x"

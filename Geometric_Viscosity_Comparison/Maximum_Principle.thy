@@ -972,7 +972,7 @@ proof (rule ccontr)
   have Gpos: "0 < (u xs - w xs) - (u xb - w xb)" using gap by linarith
   obtain \<theta> where tpos: "0 < \<theta>" and tlt1: "\<theta> < 1"
     and tgap: "(1-\<theta>)*(2*B) < (u xs - w xs) - (u xb - w xb)"
-    using theta_exists_aux[OF B0 Gpos] by blast
+    using exists_near_one_twice_mult_less[OF B0 Gpos] by blast
   have strict: "\<theta> * u y - w y < \<theta> * u xs - w xs" if y: "y \<in> S" for y
     by (rule theta_gap_preserved
         [where u = u and w = w and K = K and B = B and \<theta> = \<theta>
@@ -1056,7 +1056,7 @@ proof (rule ccontr)
   have Dnn: "0 \<le> D" unfolding D_def C_def using B0 by linarith
   have H0: "0 < (kg/4)\<^sup>2" using kgpos by simp
   obtain \<epsilon> where epos: "0 < \<epsilon>" and esm: "2*\<epsilon>*D < (kg/4)\<^sup>2"
-    using exists_eps_aux[OF H0 Dnn] by blast
+    using exists_pos_twice_mult_less[OF H0 Dnn] by blast
   have tD: "\<theta> * D \<le> D"
     by (rule mult_left_le_one_le[OF Dnn less_imp_le[OF tpos] less_imp_le[OF tlt1]])
   have eq1: "\<theta>*B - \<theta>*C = \<theta> * D" unfolding D_def by (simp add: right_diff_distrib)

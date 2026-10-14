@@ -6,8 +6,8 @@ session Symmetric_Matrix_Spectra = "HOL-Analysis" +
     projections onto them, positive semidefinite matrices, norm bounds from
     bounds on the quadratic form, Householder reflections and rotations, the
     spectral theorem, Ky Fan partial sums, the ordered eigenvalues as their
-    differences, their Lipschitz dependence on the matrix, the
-    Courant-Fischer lower bound, and Poincare separation -- for anyone who
+    differences, their Lipschitz dependence on the matrix, the Rayleigh
+    bounds and the Courant-Fischer lower bound -- for anyone who
     constrains a matrix through its spectrum rather than through its
     entries.
   "
@@ -20,7 +20,7 @@ session Symmetric_Matrix_Spectra = "HOL-Analysis" +
     Symmetric_Spectral
     Ky_Fan
     Eigenvalue_Continuity
-    Poincare_Separation
+    Eigenvalue_Bounds
     Householder_Rotation
   document_files
     "root.tex"

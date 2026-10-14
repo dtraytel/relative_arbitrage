@@ -244,15 +244,14 @@ and convex this is equivalent to every difference quotient of `A` lying in `S`
 ## Infrastructure that had to be built
 
 None of the following existed in Isabelle/HOL or its Archive of Formal Proofs.
-The development is eleven sessions. Eight of them are libraries, none of which
-depends on this paper, and each of which is independently submittable in
-dependency order (a few of their texts still cite the paper;
-`notes/PLAN_RESTRUCTURING_3.md` phase 8 removes those):
+The development is twelve sessions. Nine of them are libraries, none of which
+depends on this paper or mentions it in its theories, and each of which is
+independently submittable in dependency order:
 
 * **`Symmetric_Matrix_Spectra`** — the spectral theorem for real symmetric
   matrices, Ky Fan partial sums, the ordered eigenvalues as their differences,
   their Lipschitz dependence on the matrix, the Courant–Fischer lower bound,
-  Poincaré separation, orthogonal projections onto orthonormal families, and
+  the Rayleigh bounds on which Poincaré separation rests, orthogonal projections onto orthonormal families, and
   the Householder reflections and rotations that transport them.
 * **`Semicontinuous_Analysis`** — the ε–δ semicontinuity calculus, attainment
   on compacta, the upper and lower envelopes (including the envelope relative
@@ -262,10 +261,15 @@ dependency order (a few of their texts still cite the paper;
   on sums, and the doubling-of-variables toolbox they exist to serve, the last
   stated at `'a::euclidean_space` rather than at `ℝⁿ`; on top of them, viscosity
   sub- and supersolutions for an arbitrary second-order operator.
+* **`Geometric_Viscosity_Comparison`** — the maximum principle (an upper
+  semicontinuous subsolution against a lower semicontinuous supersolution on a
+  bounded set), comparison between two domains, and comparison and uniqueness
+  on expandable sets, for any operator `F(Du, D²u) = 1` in the locale
+  `geometric_operator` (your Section 4, stated once for the whole locale).
 * **`Continuous_Time_Martingales`** — Doob's maximal inequality; optional
   sampling and stopping at a bounded stopping time in continuous time;
   quadratic variation and its compensator; second and fourth moment bounds on
-  martingale increments without stochastic integration (the `8C²` of
+  martingale increments without stochastic integration (the `8C²` of your
   Eq. (2.7)); Vitali's convergence theorem and uniform integrability of a
   family of conditional expectations; exit times as stopping times and bounds
   on their means; and the algebra of transporting the martingale property
@@ -300,7 +304,8 @@ dependency order (a few of their texts still cite the paper;
 
 The paper itself is the two remaining sessions plus the statement:
 `Relative_Arbitrage_Equation` (the operator of Eq. (1.9), its envelopes,
-Lemma 2.1, Definition 3.1 and all of Section 4, with no probability theory
-underneath, checked at build time) and `Relative_Arbitrage` (the class of
+Lemma 2.1, Definition 3.1 and Section 4 for that operator as an instance of
+`Geometric_Viscosity_Comparison`, with no probability theory underneath,
+checked at build time) and `Relative_Arbitrage` (the class of
 Eq. (1.7), the value function, the viscosity property of Section 3,
 Example 3.1 and the assembly of Theorem 1.1).

@@ -1,6 +1,6 @@
 
 (*<*)
-theory Poincare_Separation
+theory Eigenvalue_Bounds
   imports Eigenvalue_Continuity
 begin
 

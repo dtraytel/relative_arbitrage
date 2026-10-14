@@ -397,7 +397,7 @@ proof (rule ccontr)
   have Dnn: "0 \<le> D" unfolding D_def using B0 by simp
   have H0: "0 < H" unfolding H_def using dQ0 kg0 by simp
   obtain \<epsilon> where e0: "0 < \<epsilon>" and esm: "2*\<epsilon>*D < H"
-    using exists_eps_aux[OF H0 Dnn] by blast
+    using exists_pos_twice_mult_less[OF H0 Dnn] by blast
   have esm1: "2*\<epsilon>*(B - \<theta>*C) < dQ\<^sup>2"
   proof -
     have "2*\<epsilon>*(B - \<theta>*C) \<le> 2*\<epsilon>*D"

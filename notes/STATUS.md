@@ -23,23 +23,23 @@ Theorem 1.1 of arXiv:2512.17702 is formalised in full, with no `sorry`, no
   deviations from the paper stated beside it; Section 5 is listed as not
   formalised.
 
-**Sessions**, in `ROOTS` order (lines and theories at `f2da170`, 88 078
-lines in all; GVC and RAE after the comparison chain moved out of RAE):
+**Sessions**, in `ROOTS` order (lines and theories at the end of phase 8,
+85 696 lines in all):
 
 | session | short | parent | further `sessions` | theories | lines |
 |---|---|---|---|---:|---:|
-| `Symmetric_Matrix_Spectra` | SMS | HOL-Analysis | — | 9 | 6 547 |
-| `Semicontinuous_Analysis` | SemiC | `Lower_Semicontinuous` | — | 3 | 1 356 |
-| `Second_Order_Viscosity_Analysis` | SOVA | SMS | SemiC | 12 | 14 251 |
+| `Symmetric_Matrix_Spectra` | SMS | HOL-Analysis | — | 9 | 6 403 |
+| `Semicontinuous_Analysis` | SemiC | `Lower_Semicontinuous` | — | 3 | 1 342 |
+| `Second_Order_Viscosity_Analysis` | SOVA | SMS | SemiC | 12 | 13 811 |
 | `Geometric_Viscosity_Comparison` | GVC | SOVA | SemiC | 6 | 3 716 |
 | `Relative_Arbitrage_Equation` | RAE | GVC | SemiC | 8 | 4 861 |
-| `Continuous_Time_Martingales` | CTM | HOL-Probability | `Martingales` | 23 | 11 248 |
-| `Wiener_Measure` | WM | CTM | `Kolmogorov_Chentsov` | 8 | 3 308 |
-| `Continuous_Path_Spaces` | CPS | `Levy_Prokhorov_Metric` | CTM, `Kolmogorov_Chentsov`, SemiC | 13 | 8 319 |
-| `Path_Space_Operations` | PSO | CPS | SMS, `Disintegration` | 7 | 10 685 |
-| `Covariation_Constrained_Martingales` | CCM | PSO | WM | 18 | 12 629 |
-| `Relative_Arbitrage` | RA | CCM | RAE | 13 | 8 802 |
-| `Relative_Arbitrage_Statement` | Statement | RA | — | 3 | 1 790 |
+| `Continuous_Time_Martingales` | CTM | HOL-Probability | `Martingales` | 23 | 11 148 |
+| `Wiener_Measure` | WM | CTM | `Kolmogorov_Chentsov` | 8 | 3 275 |
+| `Continuous_Path_Spaces` | CPS | `Levy_Prokhorov_Metric` | CTM, `Kolmogorov_Chentsov`, SemiC | 13 | 8 227 |
+| `Path_Space_Operations` | PSO | CPS | SMS, `Disintegration` | 7 | 10 138 |
+| `Covariation_Constrained_Martingales` | CCM | PSO | WM | 18 | 12 353 |
+| `Relative_Arbitrage` | RA | CCM | RAE | 13 | 8 627 |
+| `Relative_Arbitrage_Statement` | Statement | RA | — | 3 | 1 795 |
 
 The paper is RAE (probability-free: the operator of Eq. (1.9), its envelopes,
 Lemma 2.1, the viscosity predicates and Section 4 as an instance of GVC's
@@ -81,7 +81,9 @@ ancestry at build time.
 `Value_Function_Supersolution_Case_1` → `Euler_Limit_Growth`;
 `Value_Function_Assembly` → merged into `Example_3_1`, which also received the
 Example 3.1 blocks of `Value_Function_Uniqueness`; `Exit_Class` →
-`Control_Problem`. The renamed facts are listed in
+`Control_Problem`; `Poincare_Separation` → `Eigenvalue_Bounds` (SMS: Rayleigh
+bounds, the Courant–Fischer lower bound and Lipschitz bounds; Poincaré
+separation itself is `poincare_separation` in RAE `Operator_Formula`). The renamed facts are listed in
 `notes/review_3/renames.txt`. Older names (`Exit_Class_DPP`,
 `Value_Function_Viscosity`, `Comparison_Assembly`, `Lemma_3_1_Envelopes`, …)
 are older still; `git log --follow` on a current theory finds them.

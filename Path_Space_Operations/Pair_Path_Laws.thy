@@ -6,7 +6,7 @@ theory Pair_Path_Laws
     "Continuous_Time_Martingales.Conditional_UI" "Continuous_Path_Spaces.Difference_Quotients"
     "Continuous_Time_Martingales.Natural_Filtration" Pair_Path_Space
     "Semicontinuous_Analysis.Semicontinuity"
-    "Symmetric_Matrix_Spectra.Poincare_Separation"
+    "Symmetric_Matrix_Spectra.Eigenvalue_Bounds"
 begin
 
 (*>*)
@@ -641,7 +641,7 @@ text \<open>The first-order alternative to the tilting lemma.  Suppose that at e
   quadratic vanishes, \<open>M (y - x) + \<eta> = 0\<close>.  For a symmetric invertible
   \<open>M\<close> this forces \<open>W\<close> to be constant near \<open>x\<close>.\<close>
 
-lemma horn_B_locally_constant:
+lemma locally_constant_of_stationary_tilted_minima:
   fixes W :: "real^'n::finite \<Rightarrow> real" and M :: "real^'n^'n" and x :: "real^'n"
   assumes lsc: "\<And>a z. a < W z \<Longrightarrow> \<exists>d>0. \<forall>u. dist z u < d \<longrightarrow> a < W u"
     and symM: "transpose M = M" and inv: "invertible M"

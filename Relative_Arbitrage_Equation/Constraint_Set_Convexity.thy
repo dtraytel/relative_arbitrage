@@ -357,7 +357,7 @@ text \<open>The swap induction.  The measure is the number of coefficients that 
   coordinates integral without disturbing the others, and the original
   coefficients are a convex combination of the two swapped ones.\<close>
 
-lemma diag_in_convex_hull_aux:
+lemma diag_in_convex_hull_induct:
   fixes B :: "(real^'n::finite) set"
   assumes B: "onormal B"
   shows "\<And>c. card {u \<in> B. c u \<notin> {0, 1}} \<le> N \<Longrightarrow>
@@ -587,7 +587,7 @@ lemma diag_in_convex_hull:
     and csum: "(\<Sum>u\<in>B. c u) = real (CARD('n) - k)"
   shows "(\<Sum>u\<in>B. c u *\<^sub>R outer_prod u u)
        \<in> convex hull (suff_volatile k :: (real^'n^'n) set)"
-proof (rule diag_in_convex_hull_aux
+proof (rule diag_in_convex_hull_induct
     [OF B, where N = "card {u \<in> B. c u \<notin> {0, 1}}"])
   show "card {u \<in> B. c u \<notin> {0, 1}} \<le> card {u \<in> B. c u \<notin> {0, 1}}"
     by simp

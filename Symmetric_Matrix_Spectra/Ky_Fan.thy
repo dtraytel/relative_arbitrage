@@ -1173,7 +1173,7 @@ qed
 text \<open>The descending chain, by induction on \<open>n = card S\<close>, where the measure
   decreases visibly.  The step splits on whether \<open>j\<close> is already \<open>card S\<close>.\<close>
 
-lemma threshold_chain_aux:
+lemma threshold_subset_of_smaller_card:
   fixes lam :: "'a \<Rightarrow> real"
   assumes finB: "finite B"
   shows "\<And>S j. card S = n \<Longrightarrow> S \<subseteq> B
@@ -1249,7 +1249,7 @@ proof -
     then show "lam v \<le> lam u" by (rule thresh)
   qed
   show ?thesis
-    by (rule threshold_chain_aux[OF finB refl S th j])
+    by (rule threshold_subset_of_smaller_card[OF finB refl S th j])
 qed
 
 text \<open>Specialised to an eigenbasis: for every \<open>j \<le> m\<close> the Ky Fan sum

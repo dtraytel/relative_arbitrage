@@ -3,7 +3,7 @@ section \<open>The elliptic operator of Eq. (1.9)\<close>
 (*<*)
 theory Elliptic_Operator
   imports
-    "Symmetric_Matrix_Spectra.Poincare_Separation"
+    "Symmetric_Matrix_Spectra.Eigenvalue_Bounds"
 begin
 
 (*>*)
