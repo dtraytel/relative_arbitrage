@@ -307,7 +307,8 @@ proof -
     by (rule exit_class_compact_metric_space(2)[OF T L0])
   show KC: "\<And>z. pair_law_of T' (sbmpair (SF z) T') ?M
       \<in> exit_class k L T' (0 :: real^'n)"
-    by (rule sbmpair_law_in_paper_pair_class[OF T0' L SFs])
+    unfolding exit_class_eq_covariation
+    by (rule sbmpair_law_in_covariation_class[OF T0' closed_sconstraint SFs])
   have KCk: "KK z \<in> ?C" for z unfolding KK_def by (rule KC)
   have seq: "limitin MC.mtopology (\<lambda>m. KK (zm m)) (KK z) sequentially"
     if zc: "zm \<longlonglongrightarrow> z" for zm and z :: "real^'n"
@@ -390,8 +391,9 @@ proof (induction j)
   have "pshift_law h x (pair_law_of h (sbmpair (SF x) h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
       \<in> exit_class k L h x"
-    by (rule sbmpair_pshift_law_in_paper_pair_class)
-      (use h0 L1 SFs in simp_all)
+    unfolding exit_class_eq_covariation
+    by (rule sbmpair_pshift_law_in_covariation_class[OF _ closed_sconstraint])
+      (use h0 SFs in simp_all)
   then show ?case by simp
 next
   case (Suc j)
@@ -473,7 +475,8 @@ proof -
   have h0': "(0::real) \<le> h" using h0 by simp
   have hI: "h \<in> {0..h}" using h0' by simp
   have mem: "?\<mu> \<in> exit_class k L h (0 :: real^'n)"
-    by (rule sbmpair_law_in_paper_pair_class[OF h0' L1 SST])
+    unfolding exit_class_eq_covariation
+    by (rule sbmpair_law_in_covariation_class[OF h0' closed_sconstraint SST])
   have sets\<mu>: "sets ?\<mu> = sets ?B" by simp
   have evh: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' h) \<in> ?B \<rightarrow>\<^sub>M borel"
     by (rule pair_law_eval_measurable[OF refl])

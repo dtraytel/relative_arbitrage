@@ -113,7 +113,8 @@ theorem exit_val_horizon_cap:
   shows "exit_val k L S K x = min (exit_val k L T K x) (ennreal S)"
 proof (rule order.antisym)
   show "exit_val k L S K x \<le> min (exit_val k L T K x) (ennreal S)"
-    by (intro min.boundedI exit_val_horizon_mono[OF S0 ST L K] exit_val_le_T[OF S0])
+    by (intro min.boundedI exit_val_horizon_mono[OF S0 ST L K] covariation_val_le_T[OF S0, of "sconstraint k L",
+          folded exit_val_eq_covariation_val])
   show "min (exit_val k L T K x) (ennreal S) \<le> exit_val k L S K x"
   proof (rule ccontr)
     assume "\<not> min (exit_val k L T K x) (ennreal S) \<le> exit_val k L S K x"

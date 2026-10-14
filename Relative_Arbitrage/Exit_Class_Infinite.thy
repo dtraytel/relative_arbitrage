@@ -205,7 +205,9 @@ proof -
         (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
       by (rule ess_inf_pexit_cut[OF T Kc iexit_class_sets[OF P], symmetric])
     also have "\<dots> \<le> exit_val k L T K x"
-      by (rule exit_val_ge_ess_inf[OF iexit_class_pcut[OF T P]])
+      unfolding exit_val_eq_covariation_val
+      by (rule covariation_val_ge_ess_inf
+          [OF iexit_class_pcut[OF T P, unfolded exit_class_eq_covariation]])
     finally show ?thesis .
   qed
   show ?thesis
@@ -367,8 +369,8 @@ theorem ibm_law_cut_in_class:
   assumes S: "0 \<le> S" and L: "1 \<le> L"
   shows "pair_law_of S (pcut S) (ibm_law :: ('n::finite pairpath) measure)
       \<in> exit_class k L S (0 :: real^'n)"
-  unfolding pair_law_of_pcut_ibm_law[OF S]
-  by (rule bmpair_law_in_paper_pair_class[OF S L])
+  unfolding pair_law_of_pcut_ibm_law[OF S] exit_class_eq_covariation
+  by (rule bmpair_law_in_covariation_class[OF S closed_sconstraint mat_1_in_sconstraint[OF L]])
 
 subsection \<open>The extension of a horizon law to the half-line\<close>
 

@@ -55,7 +55,8 @@ proof -
     have rT: "?r \<le> T" by (rule thT)
     have Tr: "0 \<le> T - ?r" using rT by simp
     have c0: "0 \<le> ?c" by simp
-    have cle: "?c \<le> T - ?r" by (rule enn2real_leI[OF Tr exit_val_le_T[OF Tr]])
+    have cle: "?c \<le> T - ?r" unfolding exit_val_eq_covariation_val
+      by (rule enn2real_leI[OF Tr covariation_val_le_T[OF Tr]])
     have stop: "p' t = p' ?r" if t: "t \<in> {0..T}" and rt: "?r \<le> t" for t
     proof -
       have "p' t = pstopped T \<theta> p' t" unfolding idem ..
@@ -604,7 +605,9 @@ proof -
         [of T Q ?\<kappa> K, OF T0' PQ setsQ Kp Kc L1 st Qst Qbnd Kfr Kval])
 
   \<comment> \<open>hence \<open>c\<close> is below the value function\<close>
-  show ?thesis by (rule exit_val_ge_of_AE[OF Rmem Rbnd])
+  show ?thesis
+    unfolding exit_val_eq_covariation_val
+    by (rule covariation_val_ge_of_AE[OF Rmem[unfolded exit_class_eq_covariation] Rbnd])
 qed
 
 subsection \<open>Transporting the bound from the law to its stopped version\<close>
@@ -882,7 +885,8 @@ proof (rule SUP_least)
     have p: "0 \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))" "pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) \<le> \<theta> \<omega>"
       by (rule pexit_nonneg[OF th0], rule pexit_le_T[OF th0])
     have "enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) \<le> T - \<theta> \<omega>"
-      using thT[of \<omega>] by (intro enn2real_leI exit_val_le_T) simp_all
+      using thT[of \<omega>] unfolding exit_val_eq_covariation_val
+      by (intro enn2real_leI covariation_val_le_T) simp_all
     with p thT[of \<omega>]
     show "0 \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
         + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K

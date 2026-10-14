@@ -184,7 +184,10 @@ proof -
     by (rule exit_class_compact_metric_space(2)[OF T L0])
   have Ccpt: "compact_space MC.mtopology"
     by (rule exit_class_compact_metric_space(3)[OF T L0])
-  have Cne: "?C \<noteq> {}" by (rule exit_class_nonempty[OF T0 L])
+  have Cne: "?C \<noteq> {}"
+    unfolding exit_class_eq_covariation
+    by (rule covariation_class_nonempty[OF T0 closed_sconstraint, where \<sigma> = "mat 1"])
+      (simp add: mat_1_in_sconstraint[OF L])
   have prC: "prob_space R" if "R \<in> ?C" for R by (rule exit_class_prob[OF that])
   have stC: "sets R = sets ?B" if "R \<in> ?C" for R
     by (rule exit_class_sets[OF that])
@@ -371,7 +374,10 @@ proof -
     by (rule exit_class_compact_metric_space(2)[OF s0 L0])
   have Ccpt: "compact_space MC.mtopology"
     by (rule exit_class_compact_metric_space(3)[OF s0 L0])
-  have Cne: "?C0 \<noteq> {}" by (rule exit_class_nonempty[OF s0' L1])
+  have Cne: "?C0 \<noteq> {}"
+    unfolding exit_class_eq_covariation
+    by (rule covariation_class_nonempty[OF s0' closed_sconstraint, where \<sigma> = "mat 1"])
+      (simp add: mat_1_in_sconstraint[OF L1])
   \<comment> \<open>the kernel is measurable into the class, from the time-\<open>r\<close> \<open>\<sigma>\<close>-algebra\<close>
   have Kb: "Kr \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M borel_of MC.mtopology"
   proof -

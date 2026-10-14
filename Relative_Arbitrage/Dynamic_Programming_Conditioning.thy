@@ -479,9 +479,9 @@ proof -
   also have "\<dots> = ess_inf_time (pshift_law S y R) (\<lambda>w. pexit S K (\<lambda>t. fst (w t)))"
     by (rule ess_inf_time_pshift_law[OF S setsR, symmetric])
   also have "\<dots> \<le> exit_val k L S K y"
-    by (rule exit_val_ge_ess_inf)
-      (use covariation_class_pshift[OF S R[unfolded exit_class_eq_covariation]] in
-        \<open>simp add: exit_class_eq_covariation\<close>)
+    unfolding exit_val_eq_covariation_val
+    by (rule covariation_val_ge_ess_inf)
+      (use covariation_class_pshift[OF S R[unfolded exit_class_eq_covariation]] in simp)
   finally show ?thesis .
 qed
 

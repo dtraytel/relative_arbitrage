@@ -101,7 +101,7 @@ subsection \<open>The exact expansion of a quadratic test function\<close>
 
 text \<open>The second-order identity holds with no symmetry hypothesis on \<open>M\<close> and
   no stopping: clause (iv) is used at the fixed time \<open>t\<close>, exactly as in
-  @{thm [source] exit_class_sq_norm_mean_ge}, of which this is the
+  @{thm [source] covariation_class_sq_norm_mean_ge}, of which this is the
   \<open>M = 1\<close> case with the inequality replaced by an identity.\<close>
 
 text \<open>The mean increment of a quadratic test function along any class member

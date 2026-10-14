@@ -801,7 +801,8 @@ proof -
     define R where "R = pair_law_of (T - S) (bmpair (T - S))
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
     have R: "R \<in> exit_class k L (T - S) (0 :: real^'n)"
-      unfolding R_def by (rule bmpair_law_in_paper_pair_class[OF TS L])
+      unfolding R_def exit_class_eq_covariation
+      by (rule bmpair_law_in_covariation_class[OF TS closed_sconstraint mat_1_in_sconstraint[OF L]])
     have G: "pglue_law S T Q R \<in> exit_class k L T x"
       by (rule exit_class_pglue_law[OF S ST Q R])
     let ?M = "Q \<Otimes>\<^sub>M R"
@@ -1017,7 +1018,8 @@ proof -
     then show ?thesis by linarith
   qed
   have ni: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
-    by (rule exit_class_norm_sq_integrable[OF T L Q t])
+    by (rule covariation_class_norm_sq_integrable
+        [OF T sconstraint_bounds(1,2)[OF L] Q[unfolded exit_class_eq_covariation] t])
   have i1: "integrable Q (\<lambda>\<omega>. 1 + fst (\<omega> t) \<bullet> fst (\<omega> t))"
     using ni by simp
   have nm: "(\<lambda>\<omega> :: 'n pairpath. norm (fst (\<omega> t))) \<in> borel_measurable Q"
@@ -1491,7 +1493,8 @@ proof -
   have iN: "integrable Q (\<lambda>\<omega>. norm (outerp (fst (\<omega> t)) - snd (\<omega> t)))"
     by (rule integrable_norm[OF iC])
   have iX: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
-    by (rule exit_class_norm_sq_integrable[OF T L Q t])
+    by (rule covariation_class_norm_sq_integrable
+        [OF T sconstraint_bounds(1,2)[OF L] Q[unfolded exit_class_eq_covariation] t])
   have Ym: "(\<lambda>\<omega> :: 'n pairpath. norm (snd (\<omega> t))) \<in> borel_measurable Q"
   proof -
     have "(\<lambda>\<omega> :: 'n pairpath. snd (\<omega> t)) \<in> borel_measurable Q"

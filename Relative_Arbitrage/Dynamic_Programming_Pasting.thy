@@ -104,7 +104,8 @@ lemma exit_val_neq_top:
   assumes T: "0 \<le> T"
   shows "exit_val k L T K y \<noteq> \<top>"
 proof -
-  have "exit_val k L T K y \<le> ennreal T" by (rule exit_val_le_T[OF T])
+  have "exit_val k L T K y \<le> ennreal T"
+    unfolding exit_val_eq_covariation_val by (rule covariation_val_le_T[OF T])
   moreover have "(ennreal T :: ennreal) \<noteq> \<top>" by simp
   ultimately show ?thesis by (auto simp: top_unique)
 qed

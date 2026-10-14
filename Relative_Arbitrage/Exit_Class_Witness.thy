@@ -29,14 +29,14 @@ proof (rule martingale_matI)
     by (simp add: outerp_def)
 qed
 
-section \<open>The paper's class is nonempty\<close>
+section \<open>The class is nonempty\<close>
 
-text \<open>The witness: Brownian motion started at \<open>0\<close> paired with the
-  deterministic covariation \<open>Y\<^sub>t = t \<sqdot> I\<close>, capped at the horizon.\<close>
-
-text \<open>It is the case \<open>S = I\<close> of Brownian motion pushed through a constant
-  matrix \<open>S\<close>, paired with the covariation \<open>t \<sqdot> S S\<^sup>T\<close>; the Euler scheme of
-  the supersolution half is built from the general one.\<close>
+text \<open>The witness: Brownian motion started at \<open>0\<close> and pushed through a
+  constant matrix \<open>\<sigma>\<close>, paired with the deterministic covariation
+  \<open>Y\<^sub>t = t \<sqdot> \<sigma> \<sigma>\<^sup>T\<close>, capped at the horizon.  It is a member of
+  \<open>covariation_class S\<close> for every closed \<open>S\<close> that contains \<open>\<sigma> \<sigma>\<^sup>T\<close>; the
+  Euler scheme of the supersolution half is built from it, and plain
+  Brownian motion is the case \<open>\<sigma> = I\<close>.\<close>
 
 definition sbmpair ::
   "real^'n::finite^'n \<Rightarrow> real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath"
@@ -134,63 +134,63 @@ proof -
 qed
 
 lemma sbmpair_law_diffquot:
-  assumes T: "0 \<le> T"
-    and SST: "S ** transpose S \<in> sconstraint k L"
-  shows "AE \<omega> in pair_law_of T (sbmpair S T)
+  assumes T: "0 \<le> T" and S: "closed S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+  shows "AE \<omega> in pair_law_of T (sbmpair \<sigma> T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure).
         \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?Q = "pair_law_of T (sbmpair S T) ?M"
+  let ?Q = "pair_law_of T (sbmpair \<sigma> T) ?M"
   let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have phim: "sbmpair S T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF T])
+  have phim: "sbmpair \<sigma> T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF T])
   have spQ: "space ?Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_pair_law_of)
   have one: "AE \<omega> in ?Q.
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S"
     if pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q" for p q :: real
   proof -
     have mm: "{\<omega> \<in> space ?B.
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L}
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S}
         \<in> sets ?B"
-      using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2) closed_sconstraint]]
+      using borel_of_closed[OF closedin_diffquot_constraint[OF pq(1) pq(2) S]]
       by (simp add: space_borel_of)
     have iff: "(AE \<omega> in ?Q.
-          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L)
+          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S)
         = (AE \<omega> in ?M. (1 / (q - p))
-            *\<^sub>R (snd (sbmpair S T \<omega> q) - snd (sbmpair S T \<omega> p))
-            \<in> sconstraint k L)"
+            *\<^sub>R (snd (sbmpair \<sigma> T \<omega> q) - snd (sbmpair \<sigma> T \<omega> p))
+            \<in> S)"
       unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mm])
     have "AE \<omega> in ?M. (1 / (q - p))
-        *\<^sub>R (snd (sbmpair S T \<omega> q) - snd (sbmpair S T \<omega> p))
-        \<in> sconstraint k L"
+        *\<^sub>R (snd (sbmpair \<sigma> T \<omega> q) - snd (sbmpair \<sigma> T \<omega> p))
+        \<in> S"
     proof (intro AE_I2)
       fix \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
       have "(1 / (q - p))
-          *\<^sub>R (snd (sbmpair S T \<omega> q) - snd (sbmpair S T \<omega> p))
-          = (1 / (q - p)) *\<^sub>R ((q - p) *\<^sub>R (S ** transpose S))"
+          *\<^sub>R (snd (sbmpair \<sigma> T \<omega> q) - snd (sbmpair \<sigma> T \<omega> p))
+          = (1 / (q - p)) *\<^sub>R ((q - p) *\<^sub>R (\<sigma> ** transpose \<sigma>))"
         using pq by (simp add: sbmpair_apply scaleR_left_diff_distrib)
-      also have "\<dots> = S ** transpose S"
+      also have "\<dots> = \<sigma> ** transpose \<sigma>"
         using pq(3) by simp
       finally show "(1 / (q - p))
-          *\<^sub>R (snd (sbmpair S T \<omega> q) - snd (sbmpair S T \<omega> p))
-          \<in> sconstraint k L"
+          *\<^sub>R (snd (sbmpair \<sigma> T \<omega> q) - snd (sbmpair \<sigma> T \<omega> p))
+          \<in> S"
         using SST by simp
     qed
     then show ?thesis unfolding iff .
   qed
   have rat: "AE \<omega> in ?Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
       0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S"
   proof (rule AE_ball_countable'[OF _ countable_rat])
     fix p :: real assume "p \<in> \<rat>"
     show "AE \<omega> in ?Q. \<forall>q\<in>(\<rat>::real set). 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S"
     proof (rule AE_ball_countable'[OF _ countable_rat])
       fix q :: real assume "q \<in> \<rat>"
       show "AE \<omega> in ?Q. 0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+          (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S"
       proof (cases "0 \<le> p \<and> p < q \<and> q \<le> T")
         case True
         then have "p \<in> {0..T}" "q \<in> {0..T}" "p < q" by auto
@@ -206,7 +206,7 @@ proof -
     case (elim \<omega>)
     then have R: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> 0 \<le> p \<Longrightarrow> p < q
         \<Longrightarrow> q \<le> T
-        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+        \<Longrightarrow> (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S"
       and W: "\<omega> \<in> space ?Q" by blast+
     have mw: "\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric)"
       using W spQ by simp
@@ -216,9 +216,9 @@ proof -
     proof (intro allI impI)
       fix u v :: real
       assume uv: "0 \<le> u" "u < v" "v \<le> T"
-      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
+      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> S"
         by (rule diffquot_all_of_rational
-            [OF closed_sconstraint cont _ uv(1) uv(2) uv(3)]) (rule R)
+            [OF S cont _ uv(1) uv(2) uv(3)]) (rule R)
     qed
   qed
 qed
@@ -349,59 +349,24 @@ proof -
         sbmpair_measurable[OF T] sbmpair_adapted Zm mg])
 qed
 
-theorem sbmpair_law_in_paper_pair_class:
-  assumes T: "0 \<le> T" and L: "1 \<le> L"
-    and SST: "S ** transpose S \<in> sconstraint k L"
-  shows "pair_law_of T (sbmpair S T)
+theorem sbmpair_law_in_covariation_class:
+  assumes T: "0 \<le> T" and S: "closed S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+  shows "pair_law_of T (sbmpair \<sigma> T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
-    \<in> exit_class k L T (0 :: real^'n)"
-  unfolding exit_class_def
-proof (intro CollectI conjI)
-  show "prob_space (pair_law_of T (sbmpair S T)
-      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))"
-    by (rule prob_space_sbmpair_law[OF T])
-  show "sets (pair_law_of T (sbmpair S T)
-        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-      = sets (path_borel T :: ('n pairpath) measure)"
-    by simp
-  show "AE \<omega> in pair_law_of T (sbmpair S T)
-      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
-        fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0"
-    by (rule sbmpair_law_start[OF T])
-  show "AE \<omega> in pair_law_of T (sbmpair S T)
-      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
-        \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    by (rule sbmpair_law_diffquot[OF T SST])
-  show "martingale (pair_law_of T (sbmpair S T)
-        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-      (natural_filtration (pair_law_of T (sbmpair S T) bm_paths) 0
-        (\<lambda>t \<omega>. \<omega> t)) 0
-      (\<lambda>t \<omega>. fst (\<omega> (min t T)) :: real^'n)"
-    by (rule sbmpair_law_X_martingale[OF T])
-  show "martingale (pair_law_of T (sbmpair S T)
-        (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-      (natural_filtration (pair_law_of T (sbmpair S T) bm_paths) 0
-        (\<lambda>t \<omega>. \<omega> t)) 0
-      (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T)) :: real^'n) - snd (\<omega> (min t T)))"
-    by (rule sbmpair_law_comp_martingale[OF T])
-qed
+    \<in> covariation_class S T (0 :: real^'n)"
+  by (rule covariation_classI[OF prob_space_sbmpair_law[OF T] _ sbmpair_law_start[OF T]
+        sbmpair_law_diffquot[OF T S SST] sbmpair_law_X_martingale[OF T]
+        sbmpair_law_comp_martingale[OF T]]) simp
 
-corollary sbmpair_pshift_law_in_paper_pair_class:
-  assumes T: "0 \<le> T" and L: "1 \<le> L"
-    and SST: "S ** transpose S \<in> sconstraint k L"
-  shows "pshift_law T v (pair_law_of T (sbmpair S T)
+corollary sbmpair_pshift_law_in_covariation_class:
+  assumes T: "0 \<le> T" and S: "closed S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+  shows "pshift_law T v (pair_law_of T (sbmpair \<sigma> T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))
-    \<in> exit_class k L T (v :: real^'n)"
-proof -
-  have "pshift_law T v (pair_law_of T (sbmpair S T)
-      (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-    \<in> exit_class k L T (v + 0)"
-    unfolding exit_class_eq_covariation
-    by (rule covariation_class_pshift[OF T
-          sbmpair_law_in_paper_pair_class[OF T L SST, unfolded exit_class_eq_covariation]])
-  then show ?thesis by simp
-qed
+    \<in> covariation_class S T (v :: real^'n)"
+  using covariation_class_pshift[OF T sbmpair_law_in_covariation_class[OF T S SST], of v]
+  by simp
 
 subsection \<open>The witness is a member, so the class is nonempty\<close>
 
@@ -411,22 +376,28 @@ definition bmpair :: "real \<Rightarrow> ('n::finite \<Rightarrow> real \<Righta
 lemma bmpair_eq_sbmpair: "bmpair T = sbmpair (mat 1) T"
   by (rule ext) (simp add: bmpair_def sbmpair_def)
 
-theorem bmpair_law_in_paper_pair_class:
-  assumes T: "0 \<le> T" and L: "1 \<le> L"
+theorem bmpair_law_in_covariation_class:
+  assumes T: "0 \<le> T" and S: "closed S" and I: "mat 1 \<in> S"
   shows "pair_law_of T (bmpair T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
-    \<in> exit_class k L T (0 :: real^'n)"
+    \<in> covariation_class S T (0 :: real^'n)"
   unfolding bmpair_eq_sbmpair
-  by (rule sbmpair_law_in_paper_pair_class[OF T L]) (use mat_1_in_sconstraint[OF L] in simp)
+  by (rule sbmpair_law_in_covariation_class[OF T S]) (use I in simp)
 
-corollary exit_class_nonempty:
-  assumes T: "0 \<le> T" and L: "1 \<le> L"
-  shows "exit_class k L T (0 :: real^'n::finite) \<noteq> {}"
-  using bmpair_law_in_paper_pair_class[OF T L] by blast
+text \<open>So the class is nonempty as soon as \<open>S\<close> contains one covariation
+  rate \<open>\<sigma> \<sigma>\<^sup>T\<close>: Brownian motion pushed through \<open>\<sigma>\<close> is a member.\<close>
+
+corollary covariation_class_nonempty:
+  fixes \<sigma> :: "real^'n::finite^'n"
+  assumes T: "0 \<le> T" and S: "closed S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+  shows "covariation_class S T (x :: real^'n) \<noteq> {}"
+  using sbmpair_pshift_law_in_covariation_class[OF T S SST, of x] by blast
 
 text \<open>Hence clause (1) of Theorem 1.1 for the paper's value function, under
   no hypothesis beyond the paper's own standing ones: \<open>0 < T\<close>, \<open>1 \<le> L\<close>
-  (Eq. (1.5)), and \<open>K\<close> closed.\<close>
+  (Eq. (1.5)), and \<open>K\<close> closed.  The identity is admissible
+  (@{thm [source] mat_1_in_sconstraint}), so the class is nonempty.\<close>
 
 corollary exit_val_usc_unconditional:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and b :: ennreal
@@ -436,63 +407,65 @@ corollary exit_val_usc_unconditional:
 proof -
   have L0: "0 \<le> L" using L by simp
   have ne: "covariation_class (sconstraint k L) T (0 :: real^'n) \<noteq> {}"
-    using T L by (intro exit_class_nonempty[unfolded exit_class_eq_covariation]) simp_all
+    using T mat_1_in_sconstraint[OF L]
+    by (intro covariation_class_nonempty[OF _ closed_sconstraint, of _ "mat 1"]) simp_all
   show ?thesis
     unfolding exit_val_eq_covariation_val
     by (rule covariation_val_usc[OF T sconstraint_bounds[OF L0] closed_sconstraint K ne
           lt[unfolded exit_val_eq_covariation_val]])
 qed
 
-section \<open>Consolidating the clauses onto the paper's value function\<close>
+section \<open>Bounds on the value\<close>
 
-text \<open>Lower bounds for \<open>exit_val\<close>: every member of the class bounds it
+text \<open>Lower bounds for the value: every member of the class bounds it
   from below by its essential infimum, so an almost-sure lower bound on one
   member's exit time is a lower bound for the value.\<close>
 
-lemma exit_val_ge_ess_inf:
-  assumes "Q \<in> exit_class k L T x"
-  shows "ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) \<le> exit_val k L T K x"
-  unfolding exit_val_def using assms by (intro Sup_upper imageI)
+lemma covariation_val_ge_ess_inf:
+  assumes "Q \<in> covariation_class S T x"
+  shows "ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) \<le> covariation_val S T K x"
+  unfolding covariation_val_def using assms by (intro Sup_upper imageI)
 
-lemma exit_val_ge_of_AE:
-  assumes Q: "Q \<in> exit_class k L T x"
+lemma covariation_val_ge_of_AE:
+  assumes Q: "Q \<in> covariation_class S T x"
     and ae: "AE \<omega> in Q. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
-  shows "ennreal c \<le> exit_val k L T K x"
+  shows "ennreal c \<le> covariation_val S T K x"
 proof -
   have "ennreal c \<le> ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
     unfolding ess_inf_time_def
     by (intro Sup_upper CollectI) (use ae in \<open>auto elim: eventually_mono intro: ennreal_leI\<close>)
-  then show ?thesis using exit_val_ge_ess_inf[OF Q] by (rule order_trans)
+  then show ?thesis using covariation_val_ge_ess_inf[OF Q] by (rule order_trans)
 qed
 
-text \<open>Clause (0) for \<open>exit_val\<close>: the exit functional of Eq. (1.6) is capped
-  at the horizon, so the value is bounded by it outright.  The sharp bound
-  \<open>exit_val \<le> ball_v\<close>, giving also clause (3), needs the class-level
+text \<open>Clause (0): the exit functional of Eq. (1.6) is capped at the horizon,
+  so the value is bounded by it outright, for any constraint set.  The sharp
+  bound on a ball, giving also clause (3), needs the class-level
   expected-exit-time estimate below.\<close>
 
-theorem exit_val_le_T:
+theorem covariation_val_le_T:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
   assumes T: "0 \<le> T"
-  shows "exit_val k L T K x \<le> ennreal T"
-  unfolding exit_val_def
+  shows "covariation_val S T K x \<le> ennreal T"
+  unfolding covariation_val_def
 proof (rule Sup_least)
   fix c :: ennreal
   assume "c \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
-      ` exit_class k L T x"
+      ` covariation_class S T x"
   then obtain Q :: "('n pairpath) measure"
-    where Q: "Q \<in> exit_class k L T x"
+    where Q: "Q \<in> covariation_class S T x"
       and c: "c = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
   show "c \<le> ennreal T"
     unfolding c
-    by (rule ess_inf_time_le_const[OF exit_class_prob[OF Q]])
+    by (rule ess_inf_time_le_const[OF covariation_class_prob[OF Q]])
       (simp add: pexit_def etime_le_T[OF T])
 qed
 
-text \<open>The trace lower bound carried by the constraint set: the identity is a
-  rank-\<open>n\<close> projection, so \<open>Pi_proj a n \<le> trace a\<close>, and the constraint's own
-  bound at \<open>m = n\<close> is \<open>n - k\<close>.  This makes \<open>|X|\<^sup>2\<close> a submartingale with rate
-  at least \<open>n - k\<close>, giving Lemma 2.1's exit-time estimate at the class
-  level.\<close>
+text \<open>A lower bound \<open>\<theta>\<close> on the trace over the constraint set makes
+  \<open>|X|\<^sup>2\<close> a submartingale with rate at least \<open>\<theta>\<close>, which gives Lemma 2.1's
+  exit-time estimate at the class level.  The paper's constraint set carries
+  \<open>\<theta> = n - k\<close>: the identity is a rank-\<open>n\<close> projection, so
+  \<open>Pi_proj a n \<le> trace a\<close>, and the constraint's own bound at \<open>m = n\<close> is
+  \<open>n - k\<close>.\<close>
 
 lemma sconstraint_trace_ge:
   fixes a :: "real^'n::finite^'n"
@@ -513,88 +486,92 @@ text \<open>\<open>bounded_linear_trace\<close> lives in @{theory Symmetric_Matr
 
 
 
-theorem exit_class_trace_rate:
+theorem covariation_class_trace_rate:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes k: "k < CARD('n)" and Q: "Q \<in> exit_class k L T x"
+  assumes th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and Q: "Q \<in> covariation_class S T x"
   shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      real (CARD('n) - k) * (t - s)
+      \<theta> * (t - s)
         \<le> trace (snd (\<omega> t)) - trace (snd (\<omega> s))"
 proof -
   have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding exit_class_def by blast
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+    by (rule covariation_class_diffquot[OF Q])
   show ?thesis
   proof (rule eventually_mono[OF dq])
     fix \<omega> :: "'n pairpath"
     assume q: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
     show "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        real (CARD('n) - k) * (t - s)
+        \<theta> * (t - s)
           \<le> trace (snd (\<omega> t)) - trace (snd (\<omega> s))"
     proof (intro allI impI)
       fix s t :: real
       assume s: "0 \<le> s" and st: "s < t" and tT: "t \<le> T"
-      have mem: "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      have mem: "(1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
         using q s st tT by blast
-      have "real (CARD('n) - k)
+      have "\<theta>
           \<le> trace ((1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)))"
-        by (rule sconstraint_trace_ge[OF k mem])
+        by (rule th[OF mem])
       also have "\<dots> = (trace (snd (\<omega> t)) - trace (snd (\<omega> s))) / (t - s)"
         by (simp add: trace_scaleR trace_sub)
-      finally show "real (CARD('n) - k) * (t - s)
+      finally show "\<theta> * (t - s)
           \<le> trace (snd (\<omega> t)) - trace (snd (\<omega> s))"
         using st by (simp add: pos_le_divide_eq)
     qed
   qed
 qed
 
-lemma exit_class_norm_sq_integrable:
+lemma covariation_class_norm_sq_integrable:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
+  assumes T: "0 \<le> T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and Q: "Q \<in> covariation_class S T x" and t: "t \<in> {0..T}"
   shows "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
 proof -
   have "integrable Q (\<lambda>\<omega> :: 'n pairpath. \<Sum>i\<in>UNIV. (fst (\<omega> t) $ i)\<^sup>2)"
     by (intro Bochner_Integration.integrable_sum
-        exit_class_sq_integrable[OF T L Q t])
+        covariation_class_sq_integrable[OF B0 B T Q t])
   then show ?thesis by (simp add: inner_vec_def power2_eq_square)
 qed
 
 text \<open>The class-level form of Lemma 2.1's estimate: the expected squared
-  norm grows at rate at least \<open>n - k\<close>, using the compensated clause only at
+  norm grows at rate at least \<open>\<theta>\<close>, using the compensated clause only at
   the fixed time \<open>t\<close> --- no stopping, no optional sampling.\<close>
 
-theorem exit_class_sq_norm_mean_ge:
+theorem covariation_class_sq_norm_mean_ge:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes k: "k < CARD('n)" and T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-  shows "x \<bullet> x + real (CARD('n) - k) * t
+  assumes T: "0 \<le> T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and Q: "Q \<in> covariation_class S T x" and t: "t \<in> {0..T}"
+  shows "x \<bullet> x + \<theta> * t
       \<le> (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
 proof -
-  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
+  interpret P: prob_space Q by (rule covariation_class_prob[OF Q])
   have t0: "0 \<le> t" and tT: "t \<le> T" using t by auto
   have ci: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
-    by (rule exit_class_compensated_integrable[OF Q t])
+    by (rule covariation_class_compensated_integrable[OF Q t])
   have ti: "integrable Q (\<lambda>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)))"
     by (rule integrable_bounded_linear[OF bounded_linear_trace ci])
   have ni: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
-    by (rule exit_class_norm_sq_integrable[OF T L Q t])
+    by (rule covariation_class_norm_sq_integrable[OF T B0 B Q t])
   have mean: "(\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q) = x \<bullet> x"
   proof -
     have "(\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
         = trace (\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q)"
       by (rule integral_bounded_linear[OF bounded_linear_trace ci])
     also have "\<dots> = trace (outerp x)"
-      by (simp add: exit_class_compensated_mean[OF Q t])
+      by (simp add: covariation_class_compensated_mean[OF Q t])
     finally show ?thesis by (simp add: trace_outerp)
   qed
   have st: "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using Q unfolding exit_class_def by blast
+    by (rule covariation_class_start[OF Q])
   have tr: "AE \<omega> in Q. \<forall>s t'. 0 \<le> s \<longrightarrow> s < t' \<longrightarrow> t' \<le> T \<longrightarrow>
-      real (CARD('n) - k) * (t' - s)
+      \<theta> * (t' - s)
         \<le> trace (snd (\<omega> t')) - trace (snd (\<omega> s))"
-    by (rule exit_class_trace_rate[OF k Q])
-  have rate: "AE \<omega> in Q. real (CARD('n) - k) * t \<le> trace (snd (\<omega> t))"
+    by (rule covariation_class_trace_rate[OF th Q])
+  have rate: "AE \<omega> in Q. \<theta> * t \<le> trace (snd (\<omega> t))"
     using st tr
   proof eventually_elim
     case (elim \<omega>)
@@ -605,19 +582,19 @@ proof -
     next
       case False
       with t0 have pos: "0 < t" by simp
-      have "real (CARD('n) - k) * (t - 0)
+      have "\<theta> * (t - 0)
           \<le> trace (snd (\<omega> t)) - trace (snd (\<omega> 0))"
         using elim pos tT by blast
       then show ?thesis using elim by (simp add: trace_def)
     qed
   qed
   have ptw: "AE \<omega> in Q. trace (outerp (fst (\<omega> t)) - snd (\<omega> t))
-      + real (CARD('n) - k) * t \<le> fst (\<omega> t) \<bullet> fst (\<omega> t)"
+      + \<theta> * t \<le> fst (\<omega> t) \<bullet> fst (\<omega> t)"
     using rate by eventually_elim (simp add: trace_sub trace_outerp)
   have "(\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
-      + real (CARD('n) - k) * t
+      + \<theta> * t
       = (\<integral>\<omega>. trace (outerp (fst (\<omega> t)) - snd (\<omega> t))
-            + real (CARD('n) - k) * t \<partial>Q)"
+            + \<theta> * t \<partial>Q)"
     using ti by (simp add: P.prob_space)
   also have "\<dots> \<le> (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
     by (rule integral_mono_AE) (use ti ni ptw in auto)
@@ -625,35 +602,35 @@ proof -
 qed
 
 text \<open>Example 3.1, inequality (3.10): if the target set fits inside a ball
-  of radius \<open>r\<close>, then \<open>v(x) \<le> (r\<^sup>2 - |x|\<^sup>2) / (n - k)\<close>, independent of the
+  of radius \<open>r\<close>, then \<open>v(x) \<le> (r\<^sup>2 - |x|\<^sup>2) / \<theta>\<close>, independent of the
   horizon \<open>T\<close> --- the quantitative form of clause (0), and why the horizon
   cap is eventually invisible.  The paper derives (3.10) from It\<open>\<^bold>o\<close>'s formula; here it
-  follows from \<open>exit_class_sq_norm_mean_ge\<close>, Lemma 2.1's estimate at
+  follows from \<open>covariation_class_sq_norm_mean_ge\<close>, Lemma 2.1's estimate at
   a fixed time, with no stochastic calculus.\<close>
 
-theorem exit_val_le_ball_bound:
+theorem covariation_val_le_ball_bound:
   fixes r :: real and x :: "real^'n::finite" and K :: "(real^'n) set"
-  assumes k: "k < CARD('n)" and T: "0 \<le> T" and L: "0 \<le> L"
+  assumes T: "0 \<le> T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
     and KB: "K \<subseteq> cball 0 r"
-  shows "exit_val k L T K x
-      \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
+  shows "covariation_val S T K x \<le> ennreal ((r * r - x \<bullet> x) / \<theta>)"
 proof -
-  define B where "B = (r * r - x \<bullet> x) / real (CARD('n) - k)"
-  have nk: "0 < real (CARD('n) - k)" using k by simp
-  have main: "exit_val k L T K x \<le> ennreal B"
-    unfolding exit_val_def
+  define V where "V = (r * r - x \<bullet> x) / \<theta>"
+  have main: "covariation_val S T K x \<le> ennreal V"
+    unfolding covariation_val_def
   proof (rule Sup_least)
     fix e :: ennreal
     assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
-        ` exit_class k L T x"
+        ` covariation_class S T x"
     then obtain Q :: "('n pairpath) measure"
-      where Q: "Q \<in> exit_class k L T x"
+      where Q: "Q \<in> covariation_class S T x"
         and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
-    interpret P: prob_space Q by (rule exit_class_prob[OF Q])
-    show "e \<le> ennreal B"
+    interpret P: prob_space Q by (rule covariation_class_prob[OF Q])
+    show "e \<le> ennreal V"
     proof (rule ccontr)
-      assume "\<not> e \<le> ennreal B"
-      then have gt: "ennreal B < e" by simp
+      assume "\<not> e \<le> ennreal V"
+      then have gt: "ennreal V < e" by simp
       have ele: "e \<le> ennreal T"
         unfolding e
         by (rule ess_inf_time_le_const[OF P.prob_space_axioms])
@@ -664,16 +641,16 @@ proof -
       have ec: "e = ennreal c" unfolding c_def using efin by simp
       have c0: "0 \<le> c" unfolding c_def by simp
       have cT: "c \<le> T" using ele T unfolding ec by simp
-      define m where "m = max B 0"
-      have m0: "0 \<le> m" and mB: "B \<le> m" unfolding m_def by auto
+      define m where "m = max V 0"
+      have m0: "0 \<le> m" and mB: "V \<le> m" unfolding m_def by auto
       have mc: "m < c"
-      proof (cases "0 \<le> B")
+      proof (cases "0 \<le> V")
         case True
-        then have "B < c" using gt unfolding ec by (simp add: ennreal_less_iff)
+        then have "V < c" using gt unfolding ec by (simp add: ennreal_less_iff)
         then show ?thesis using True unfolding m_def by simp
       next
         case False
-        then have z: "ennreal B = 0" by (simp add: ennreal_neg)
+        then have z: "ennreal V = 0" by (simp add: ennreal_neg)
         have "0 < c"
         proof (rule ccontr)
           assume "\<not> 0 < c"
@@ -685,7 +662,7 @@ proof -
       define t where "t = (m + c) / 2"
       have t0: "0 < t" unfolding t_def using m0 mc by simp
       have tc: "t < c" unfolding t_def using mc by simp
-      have Bt: "B < t" unfolding t_def using mB mc by simp
+      have Bt: "V < t" unfolding t_def using mB mc by simp
       have tT: "t \<le> T" using tc cT by simp
       have tI: "t \<in> {0..T}" using t0 tT by simp
       have ae1: "AE \<omega> in Q. e \<le> ennreal (pexit T K (\<lambda>s. fst (\<omega> s)))"
@@ -715,10 +692,10 @@ proof -
           by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
       qed
       have ni: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
-        by (rule exit_class_norm_sq_integrable[OF T L Q tI])
-      have lo: "x \<bullet> x + real (CARD('n) - k) * t
+        by (rule covariation_class_norm_sq_integrable[OF T B0 B Q tI])
+      have lo: "x \<bullet> x + \<theta> * t
           \<le> (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
-        by (rule exit_class_sq_norm_mean_ge[OF k T L Q tI])
+        by (rule covariation_class_sq_norm_mean_ge[OF T B0 B th Q tI])
       have hi: "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q) \<le> r * r"
       proof -
         have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q) \<le> (\<integral>\<omega>. r * r \<partial>Q)"
@@ -726,18 +703,49 @@ proof -
         also have "\<dots> = r * r" by (simp add: P.prob_space)
         finally show ?thesis .
       qed
-      from lo hi have "real (CARD('n) - k) * t \<le> r * r - x \<bullet> x" by simp
-      then have "t \<le> B" unfolding B_def
-        using nk by (simp add: pos_le_divide_eq mult.commute)
+      from lo hi have "\<theta> * t \<le> r * r - x \<bullet> x" by simp
+      then have "t \<le> V" unfolding V_def
+        using th0 by (simp add: pos_le_divide_eq mult.commute)
       with Bt show False by simp
     qed
   qed
-  from main show ?thesis unfolding B_def .
+  from main show ?thesis unfolding V_def .
+qed
+
+text \<open>For the paper's constraint set the rate is \<open>n - k\<close>
+  (@{thm [source] sconstraint_trace_ge}), which is inequality (3.10).\<close>
+
+theorem exit_val_le_ball_bound:
+  fixes r :: real and x :: "real^'n::finite" and K :: "(real^'n) set"
+  assumes k: "k < CARD('n)" and T: "0 \<le> T" and L: "0 \<le> L"
+    and KB: "K \<subseteq> cball 0 r"
+  shows "exit_val k L T K x
+      \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
+proof -
+  have nk: "0 < real (CARD('n) - k)" using k by simp
+  show ?thesis
+    unfolding exit_val_eq_covariation_val
+    by (rule covariation_val_le_ball_bound[OF T sconstraint_bounds(1,2)[OF L] nk
+          sconstraint_trace_ge[OF k] KB])
 qed
 
 text \<open>Clause (3) on the ball: a member starting on the boundary
   \<open>|x| = r\<close> has exit value \<open>0\<close>, the case \<open>x \<bullet> x = r\<^sup>2\<close> of the
   bound above.\<close>
+
+theorem covariation_val_boundary_zero:
+  fixes r :: real and x :: "real^'n::finite"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and x: "norm x = r"
+  shows "covariation_val S T (cball 0 r) x = 0"
+proof -
+  have "x \<bullet> x = r * r"
+    using x by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
+  then show ?thesis using T
+    covariation_val_le_ball_bound[OF _ B0 B th0 th order_refl, where r = r and x = x] by simp
+qed
 
 theorem exit_val_boundary_zero:
   fixes r :: real and x :: "real^'n::finite"
