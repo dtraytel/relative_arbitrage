@@ -1,35 +1,39 @@
-session Continuous_Path_Spaces = Continuous_Time_Martingales +
+session Continuous_Path_Spaces = Levy_Prokhorov_Metric +
   description "
     Weak convergence of processes done properly: C([0,T],'b) as a Polish
-    space with portmanteau and the continuous mapping theorem, tightness of a
-    family of path laws from increment moments alone, and quadratic variation
+    space with portmanteau, the continuous mapping theorem and
+    Arzela-Ascoli; tightness of a family of path laws from increment moments
+    alone, hence a weakly convergent subsequence of the path laws of any
+    sequence of continuous L2 martingales from a common start whose
+    compensators grow at a common bounded rate; difference quotients of a
+    continuous path controlled from the rational times; quadratic variation
     as an adapted, everywhere-continuous path functional with a summable L2
-    rate -- and the exit time of a closed set by a continuous path, upper
-    semicontinuous along weak convergence of path laws.  Also measurable
+    rate, equal to the compensator of a continuous L2 martingale whose
+    compensator grows at a bounded rate, with no boundedness hypothesis on
+    the martingale -- and the exit time of a closed set by a continuous
+    path, upper semicontinuous along weak convergence of path laws, with
+    Berge's theorem for the supremum of its essential infimum over a weakly
+    compact family of laws.  Also measurable
     selection of an upper semicontinuous payoff on a compact set
     (Bertsekas-Shreve, Prop. 7.33).
   "
   options [document = pdf, document_output = "output"]
   sessions
+    Continuous_Time_Martingales
     Kolmogorov_Chentsov
-    Levy_Prokhorov_Metric
-    Standard_Borel_Spaces
     Semicontinuous_Analysis
-    "HOL-Complex_Analysis"
   theories
-    Increment_Moments
+    Difference_Quotients
     Increment_Tails
     Dyadic_Chaining
     Modulus_Tails
     Holder_Interpolation
-    Conditional_UI
     Equicontinuity
     Path_Space
     Semicontinuous_Selection
     Path_Exit_Times
     Path_Tightness
     Path_Space_Infinite
-    Stopped_Localization
     Pathwise_Quadratic_Variation
     Adapted_Quadratic_Variation
   document_files

@@ -313,7 +313,7 @@ Doob_Inequality.horizon_sq_int_martingale.esup.cong    # KEEP_API
 Doob_Inequality.horizon_sq_int_martingale.Dsup.cong    # KEEP_API
 Doob_Inequality.horizon_sq_int_martingale.dy_floor    # KEEP_API
 Essential_Infimum.ess_inf_time_ge_iff_measure    # KEEP_API
-Integrability_Criteria.measure_pmf.indep_vars_cong_sets    # KEEP_API
+Product_Brownian_Motion.measure_pmf.indep_vars_cong_sets    # KEEP_API
 Martingale_Algebra.martingale_coarser_filtration    # FIX_THEN_KEEP
 Martingale_Transfer.uniform_measure_density_real    # FIX_THEN_KEEP
 Martingale_Transfer.integral_uniform_measure_eq    # FIX_THEN_KEEP
@@ -508,9 +508,9 @@ Viscosity_Solutions.visc_supersol_gen_mono    # KEEP_API
 Viscosity_Solutions.visc_subsol_gen_env_imp    # KEEP_API
 Viscosity_Solutions.visc_supersol_gen_env_imp    # KEEP_API
 # toolkit
-Pair_Path_Space.path_laws_convergent_subsequence_market    # FIX_THEN_KEEP
+Path_Tightness.path_laws_convergent_subsequence_martingale    # FIX_THEN_KEEP
 Symmetric_Spectral.psd_diag_nonneg    # KEEP_API
-Pair_Path_Space.etime_shift_of_restrict    # KEEP_API
+Stopping_Times.etime_shift_of_restrict    # KEEP_API
 Pair_Path_Space.vshift_path_law    # KEEP_API
 Pair_Path_Laws.covariation_class_martingale_fst    # KEEP_API
 Pair_Path_Laws.covariation_classI    # KEEP_API
@@ -526,10 +526,10 @@ Path_Stopping_Times.path_stopping_time_max    # KEEP_API
 Path_Stopping_Times.path_stopping_time_shift    # KEEP_API
 Path_Stopping_Times.path_stopping_time_cut_eq    # KEEP_ROOT
 Path_Stopping_Times.pstopped_cut_compose    # KEEP_ROOT
-Path_Stopping_Times.pre_sigma_ofI_le    # KEEP_ROOT
+Stopping_Time_Sampling.pre_sigma_ofI_le    # KEEP_ROOT
 Path_Stopping_Times.pstopped_vimage_pre_sigma    # KEEP_ROOT
-Path_Stopping_Times.sigma_algebra_pre_sigma_of    # KEEP_API
-Path_Stopping_Times.integrable_at_bounded_stopping_time    # FIX_THEN_KEEP
+Stopping_Time_Sampling.sigma_algebra_pre_sigma_of    # KEEP_API
+Stopping_Time_Sampling.integrable_at_bounded_stopping_time    # FIX_THEN_KEEP
 Path_Stopping_Times.set_integral_increment_times_known    # FIX_THEN_KEEP
 Path_Law_Pasting.kglue_law'_rcd_eq    # KEEP_API
 Path_Law_Pasting.AE_kglue_law_of_kernel    # KEEP_API

@@ -513,7 +513,7 @@ proof -
 qed
 
 text \<open>The Bochner forms: integrability of the fourth power and the bound
-  itself, ready for \<open>dyadic_bad_event_tail_mom\<close>.\<close>
+  itself, ready for the dyadic tail bounds of a tightness argument.\<close>
 
 corollary fourth_moment_L2_bochner:
   fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real" and C B :: real

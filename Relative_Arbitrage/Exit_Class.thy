@@ -243,12 +243,12 @@ lemma diffquot_all_sets:
     \<in> sets (path_borel T :: ('n pairpath) measure)"
   using borel_of_closed[OF closedin_diffquot_constraint_all] by (simp add: space_borel_of)
 
-text \<open>\<open>diffquot_all_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
+text \<open>\<open>diffquot_all_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Difference_Quotients}.\<close>
 
 
 section \<open>From difference quotients to the density\<close>
 
-text \<open>\<open>diffquot_lipschitz\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
+text \<open>\<open>diffquot_lipschitz\<close> lives in @{theory Continuous_Path_Spaces.Difference_Quotients}.\<close>
 
 
 text \<open>The density statement of Eq. (1.7): the difference-quotient constraint

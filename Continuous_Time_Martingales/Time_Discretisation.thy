@@ -8,25 +8,15 @@ begin
 (*>*)
 
 text \<open>
-  Stochastic integration, layer 2: sampling a continuous-time
-             martingale on a time grid.
+  Sampling a continuous-time martingale on a time grid.  \<open>time_grid\<close> is
+  an increasing grid of nonnegative times and \<open>sampled_martingale\<close> a
+  square-integrable continuous-time martingale read along it.  The sampled
+  process is a discrete-time square-integrable martingale for the sampled
+  filtration (\<open>sq_int_martingale_sampled\<close>), so every result of the
+  discrete-time calculus (\<open>Quadratic_Variation\<close>: compensated square,
+  optional sampling, stopped Dynkin identity) is available along the grid,
+  through the sublocale \<open>D\<close> below.\<close>
 
-    Every result of the discrete-time calculus (\<open>Quadratic_Variation\<close>:
-    compensated square, optional sampling, stopped Dynkin identity) becomes
-    available for a CONTINUOUS-TIME martingale along an arbitrary increasing
-    grid of times, because the sampled process is a discrete-time
-    square-integrable martingale for the sampled filtration.
-
-    The payoff proved here:
-
-      \<open>E[Y(t\<^sub>n)\<^sup>2] - E[Y(t\<^sub>0)\<^sup>2] = E[\<Sum>\<^sub>k<\<^sub>n (Y(t\<^sub>k\<^sub>+\<^sub>1) - Y(t\<^sub>k))\<^sup>2],\<close>
-
-    i.e. the expected discrete quadratic variation of a continuous-time
-    martingale along a grid depends only on the end points of the grid, not
-    on the grid itself.  That is the first half of the construction of the
-    quadratic variation <Y> (whose existence as a process is layer 3, and is
-    what turns the martingale-problem assumption the quadratic Dynkin identity of
-    \<open>Volatile_Market\<close> into a theorem).\<close>
 section \<open>Time grids\<close>
 
 locale time_grid =
@@ -54,47 +44,6 @@ sublocale sampled_martingale
   \<subseteq> D: sq_int_martingale M "\<lambda>n. F (t n)" "\<lambda>n. Y (t n)"
   by (intro sq_int_martingale_sampled t_ge_0 mono_t Y_sq_integrable)
     unfold_locales
-
-context sampled_martingale
-begin
-
-text \<open>The discrete quadratic variation of the sampled process, written out.\<close>
-
-text \<open>The Dynkin identity along the grid: for a continuous-time
-  square-integrable martingale, the expected sum of squared increments over
-  a grid equals the increase of the second moment between the end points.
-  In particular it does not depend on the grid in between.\<close>
-
-text \<open>The compensated square along the grid is a martingale, and the
-  discrete optional-sampling results of \<open>Optional_Sampling\<close> apply verbatim to the
-  sampled process.\<close>
-
-end
-
-section \<open>Grid independence of the expected quadratic variation\<close>
-
-text \<open>Two grids with the same end points give the same expected sum of
-  squared increments.  This is the statement that makes the quadratic
-  variation of a continuous-time martingale well defined in expectation,
-  before any limit is taken.\<close>
-
-subsection \<open>Two facts about the dyadic floor grid\<close>
-
-lemma finite_dyceil_range:
-  "finite ((\<lambda>j. min U (real_of_int j / 2^n)) ` {0..\<lceil>2^n * U\<rceil>})"
-  by (rule finite_imageI) simp
-
-lemma dyceil_grid_le:
-  assumes t: "0 \<le> t"
-  shows "real_of_int \<lfloor>2^n * t\<rfloor> / 2^n \<le> t" and "0 \<le> real_of_int \<lfloor>2^n * t\<rfloor> / 2^n"
-proof -
-  have p: "(0 :: real) < 2^n" by simp
-  have "real_of_int \<lfloor>2^n * t\<rfloor> \<le> 2^n * t" by (rule of_int_floor_le)
-  then show "real_of_int \<lfloor>2^n * t\<rfloor> / 2^n \<le> t" using p by (simp add: field_simps)
-  have "0 \<le> 2^n * t" using t by simp
-  then have "(0 :: int) \<le> \<lfloor>2^n * t\<rfloor>" by simp
-  then show "0 \<le> real_of_int \<lfloor>2^n * t\<rfloor> / 2^n" by simp
-qed
 
 (*<*)
 end

@@ -2,149 +2,18 @@ section \<open>Stopping times as path functionals\<close>
 
 (*<*)
 theory Path_Stopping_Times
-  imports Path_Splicing
+  imports Path_Splicing "Continuous_Time_Martingales.Stopping_Time_Sampling"
 begin
 
 (*>*)
 
 text \<open>\<open>path_stopping_time T \<theta>\<close> asks that \<open>\<theta>\<close> read only the path up to
-  \<open>\<theta>\<close> itself; \<open>pstopped\<close> and \<open>pafter\<close> split a path there, \<open>pre_sigma_of\<close>
-  is the sigma-algebra of the past, and \<open>dyceil\<close> is the dyadic ceiling that
+  \<open>\<theta>\<close> itself; \<open>pstopped\<close> and \<open>pafter\<close> split a path there.  The
+  sigma-algebra of the past, \<open>pre_sigma_of\<close>, and optional sampling of a
+  martingale at two bounded stopping times come from
+  @{theory Continuous_Time_Martingales.Stopping_Time_Sampling}; \<open>dyceil\<close>
+  (@{theory Continuous_Time_Martingales.Dyadic_Grids}) is the dyadic ceiling that
   approximates a stopping time from above by simple ones.\<close>
-
-definition dyceil :: "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real"
-  where "dyceil n U x = min U (real_of_int \<lceil>2^n * x\<rceil> / 2^n)"
-
-lemma dyceil_le_U: "dyceil n U x \<le> U"
-  unfolding dyceil_def by simp
-
-lemma dyceil_ge:
-  assumes x: "0 \<le> x" and xU: "x \<le> U"
-  shows "x \<le> dyceil n U x"
-proof -
-  have p: "(0 :: real) < 2^n" by simp
-  have "2^n * x \<le> real_of_int \<lceil>2^n * x\<rceil>" by (rule le_of_int_ceiling)
-  then have "x \<le> real_of_int \<lceil>2^n * x\<rceil> / 2^n" using p by (simp add: field_simps)
-  then show ?thesis unfolding dyceil_def using xU by simp
-qed
-
-lemma dyceil_nonneg:
-  assumes x: "0 \<le> x" and xU: "x \<le> U"
-  shows "0 \<le> dyceil n U x"
-  using x dyceil_ge[OF x xU, of n] by simp
-
-text \<open>Finitely many values --- which is what makes
-  \<open>set_martingale_sampling_simple\<close> applicable.\<close>
-
-lemma dyceil_range:
-  assumes U: "0 \<le> U" and x: "0 \<le> x" and xU: "x \<le> U"
-  shows "dyceil n U x
-      \<in> (\<lambda>j. min U (real_of_int j / 2^n)) ` {0..\<lceil>2^n * U\<rceil>}"
-proof -
-  have p: "(0 :: real) < 2^n" by simp
-  have lo: "0 \<le> \<lceil>2^n * x\<rceil>"
-  proof -
-    have "(0::real) \<le> 2^n * x" using x by simp
-    then have "\<lceil>(0::real)\<rceil> \<le> \<lceil>2^n * x\<rceil>" by (rule ceiling_mono)
-    then show ?thesis by simp
-  qed  have hi: "\<lceil>2^n * x\<rceil> \<le> \<lceil>2^n * U\<rceil>" using xU by (intro ceiling_mono) simp
-  show ?thesis unfolding dyceil_def using lo hi by (intro image_eqI) auto
-qed
-
-text \<open>\<open>finite_dyceil_range\<close> lives in @{theory Continuous_Time_Martingales.Time_Discretisation}.\<close>
-
-
-text \<open>The key computation: below the horizon, \<open>dyceil\<close> is at most \<open>t\<close> exactly
-  when the original time is at most the grid point just below \<open>t\<close>, which is
-  \<open>\<le> t\<close>, so the event lands in the filtration at \<open>t\<close>.\<close>
-
-lemma dyceil_le_iff:
-  assumes t: "0 \<le> t" and tU: "t < U"
-  shows "(dyceil n U x \<le> t) = (x \<le> real_of_int \<lfloor>2^n * t\<rfloor> / 2^n)"
-proof -
-  have p: "(0 :: real) < 2^n" by simp
-  have "(dyceil n U x \<le> t) = (real_of_int \<lceil>2^n * x\<rceil> / 2^n \<le> t)"
-    unfolding dyceil_def using tU by (auto simp: min_le_iff_disj)
-  also have "\<dots> = (real_of_int \<lceil>2^n * x\<rceil> \<le> 2^n * t)"
-    using p by (simp add: field_simps)
-  also have "\<dots> = (\<lceil>2^n * x\<rceil> \<le> \<lfloor>2^n * t\<rfloor>)" by (simp add: le_floor_iff)
-  also have "\<dots> = (2^n * x \<le> real_of_int \<lfloor>2^n * t\<rfloor>)" by (simp add: ceiling_le_iff)
-  also have "\<dots> = (x \<le> real_of_int \<lfloor>2^n * t\<rfloor> / 2^n)"
-    using p by (simp add: field_simps)
-  finally show ?thesis .
-qed
-
-text \<open>\<open>dyceil_grid_le\<close> lives in @{theory Continuous_Time_Martingales.Time_Discretisation}.\<close>
-
-lemma dyceil_tendsto:
-  assumes x: "0 \<le> x" and xU: "x \<le> U"
-  shows "(\<lambda>n. dyceil n U x) \<longlonglongrightarrow> x"
-proof -
-  have bnd: "\<bar>dyceil n U x - x\<bar> \<le> (1/2)^n" for n
-  proof -
-    have p: "(0 :: real) < 2^n" by simp
-    have lo: "x \<le> dyceil n U x" by (rule dyceil_ge[OF x xU])
-    have "real_of_int \<lceil>2^n * x\<rceil> < 2^n * x + 1"
-      using ceiling_correct[of "2^n * x"] by simp
-    then have "real_of_int \<lceil>2^n * x\<rceil> / 2^n \<le> x + 1 / 2^n"
-      using p by (simp add: field_simps)
-    then have "dyceil n U x \<le> x + 1 / 2^n"
-      unfolding dyceil_def by simp
-    with lo show ?thesis by (simp add: power_one_over)
-  qed
-  have "(\<lambda>n. dyceil n U x - x) \<longlonglongrightarrow> 0"
-  proof (rule Lim_null_comparison)
-    show "\<forall>\<^sub>F n in sequentially. norm (dyceil n U x - x) \<le> (1/2)^n"
-      using bnd by simp
-    show "(\<lambda>n. ((1 :: real)/2)^n) \<longlonglongrightarrow> 0" by (rule LIMSEQ_realpow_zero) simp_all
-  qed
-  then show ?thesis by (rule Lim_transform[OF tendsto_const])
-qed
-
-text \<open>And the stopping-time property survives: \<open>{dyceil \<circ> \<sigma> \<le> t}\<close> is
-  \<open>{\<sigma> \<le> (grid point below t)}\<close>, an event of the filtration at that grid
-  point, hence at \<open>t\<close>.\<close>
-
-text \<open>And the \<open>stops\<close> hypothesis at the shifted time.  Above the horizon the
-  event is everything, since \<open>(\<theta>+i) \<and> T \<le> T\<close>; below it,
-  \<open>path_stopping_time_event_filtration\<close> applies to the shifted
-  stopping time.\<close>
-
-lemma dyceil_stopping:
-  assumes mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-    and sub: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
-    and sig0: "\<And>\<omega>. 0 \<le> \<sigma> \<omega>" and sigU: "\<And>\<omega>. \<sigma> \<omega> \<le> U"
-    and t: "0 \<le> t"
-  shows "{\<omega> \<in> space M. dyceil n U (\<sigma> \<omega>) \<le> t} \<in> sets (F t)"
-proof (cases "t < U")
-  case True
-  define g where "g = real_of_int \<lfloor>2^n * t\<rfloor> / 2^n"
-  have g0: "0 \<le> g" unfolding g_def by (rule dyceil_grid_le(2)[OF t])
-  have gt: "g \<le> t" unfolding g_def by (rule dyceil_grid_le(1)[OF t])
-  have "{\<omega> \<in> space M. dyceil n U (\<sigma> \<omega>) \<le> t} = {\<omega> \<in> space M. \<sigma> \<omega> \<le> g}"
-    unfolding g_def using dyceil_le_iff[OF t True] by simp
-  moreover have "{\<omega> \<in> space M. \<sigma> \<omega> \<le> g} \<in> sets (F t)"
-    using stop[OF g0] mono[OF g0 gt] by blast
-  ultimately show ?thesis by simp
-next
-  case False
-  have "dyceil n U (\<sigma> \<omega>) \<le> t" for \<omega>
-  proof -
-    have "dyceil n U (\<sigma> \<omega>) \<le> U" by (rule dyceil_le_U)
-    then show ?thesis using False by simp
-  qed
-  then have "{\<omega> \<in> space M. dyceil n U (\<sigma> \<omega>) \<le> t} = space M" by blast  moreover have "space M \<in> sets (F t)"
-  proof -
-    have "space (F t) = space M" using sub[OF t] by (simp add: subalgebra_def)
-    then show ?thesis using sets.top[of "F t"] by simp
-  qed
-  ultimately show ?thesis by simp
-qed
-
-text \<open>Sampling a process at a simple stopping time is measurable, because the
-  result is a finite sum of pieces.  \<open>space M\<close> is itself an \<open>\<F>\<^sub>\<tau>\<close>-set, so the
-  value slices come straight from \<open>pre_sigma_of_value_slice\<close>.\<close>
 
 definition pstopped :: "real \<Rightarrow> ((real \<Rightarrow> 'b) \<Rightarrow> real) \<Rightarrow> (real \<Rightarrow> 'b)
     \<Rightarrow> (real \<Rightarrow> 'b)"
@@ -697,12 +566,6 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-text \<open>Comparing two stopping times: apply
-  \<open>set_martingale_sampling\<close> at each of them against the common
-  horizon.  The conditioning set is legal for the later one because
-  \<open>pre_sigma_of_mono\<close> carries it up.  This is the form clause
-  (iv) uses, at \<open>\<sigma> = (\<theta>+i) \<and> T\<close> and \<open>\<rho> = (\<theta>+j) \<and> T\<close>.\<close>
-
 section \<open>Clause (iv) at a stopping time: the increment identity\<close>
 
 text \<open>The assembly.  Every hypothesis of
@@ -813,61 +676,12 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-text \<open>The \<open>\<sigma>\<close>-algebra of events before a stopping time, as a set of sets.
-  For a nonnegative stopping time of a filtration whose events are events of
-  \<open>M\<close>, it is the set of events of HOL-Probability's \<open>filtration.pre_sigma\<close>
-  (a sigma-generated measure, quantifying over all times); the counterparts of
-  \<open>sigma_algebra_pre_sigma_of\<close> and \<open>pre_sigma_of_mono\<close> there are
-  \<open>sigma_algebra_pre_sigma\<close> and \<open>mono_pre_sigma\<close>.  The set form is kept
-  because every use here quantifies over \<open>t \<ge> 0\<close> only.\<close>
-
-definition pre_sigma_of :: "'a measure \<Rightarrow> (real \<Rightarrow> 'a measure) \<Rightarrow> ('a \<Rightarrow> real)
-    \<Rightarrow> 'a set set"
-  where "pre_sigma_of M F \<sigma> =
-     {A. A \<in> sets M
-       \<and> (\<forall>t. 0 \<le> t \<longrightarrow> A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t))}"
-
-lemma pre_sigma_ofI:
-  "A \<in> sets M \<Longrightarrow> (\<And>t. 0 \<le> t \<Longrightarrow> A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t))
-    \<Longrightarrow> A \<in> pre_sigma_of M F \<sigma>"
-  unfolding pre_sigma_of_def by blast
-
-lemma space_in_pre_sigma_of:
-  assumes stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<tau> \<omega> \<le> t} \<in> sets (F t)"
-  shows "space M \<in> pre_sigma_of M F \<tau>"
-proof (rule pre_sigma_ofI)
-  show "space M \<in> sets M" by simp
-  fix t :: real assume t: "0 \<le> t"
-  have "space M \<inter> {\<omega> \<in> space M. \<tau> \<omega> \<le> t} = {\<omega> \<in> space M. \<tau> \<omega> \<le> t}" by blast
-  then show "space M \<inter> {\<omega> \<in> space M. \<tau> \<omega> \<le> t} \<in> sets (F t)"
-    using stop[OF t] by simp
-qed
-
-lemma pre_sigma_ofI_le:
-  assumes T0: "0 \<le> T"
-    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and bd: "\<And>\<omega>. \<sigma> \<omega> \<le> T"
-    and S: "S \<in> sets M"
-    and key: "\<And>t. 0 \<le> t \<Longrightarrow> t \<le> T
-      \<Longrightarrow> S \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-  shows "S \<in> pre_sigma_of M F \<sigma>"
-proof (rule pre_sigma_ofI[OF S])
-  fix t :: real assume t: "0 \<le> t"
-  show "S \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-  proof (cases "t \<le> T")
-    case True
-    show ?thesis by (rule key[OF t True])
-  next
-    case False
-    have lt: "\<sigma> \<omega> \<le> t" for \<omega> using bd[of \<omega>] False by simp
-    have "{\<omega> \<in> space M. \<sigma> \<omega> \<le> t} = {\<omega> \<in> space M. \<sigma> \<omega> \<le> T}"
-      using lt bd by blast
-    then have "S \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F T)"
-      using key[OF T0 order_refl] by simp
-    moreover have "sets (F T) \<subseteq> sets (F t)" using mono[OF T0] False by simp
-    ultimately show ?thesis by blast
-  qed
-qed
+text \<open>Galmarino's half: the path stopped at \<open>\<theta>\<close> is measurable with respect to
+  the \<open>\<sigma>\<close>-algebra of events before \<open>\<theta>\<close>
+  (\<open>pre_sigma_of\<close>, from @{theory Continuous_Time_Martingales.Stopping_Time_Sampling}).
+  Below \<open>t\<close> the stopped path is read off the path stopped at \<open>t\<close>
+  --- \<open>pstopped_cut_compose\<close> --- and that composite is
+  \<open>\<F>\<^sub>t\<close>-measurable by \<open>pstopped_const_measurable_filtration\<close>.\<close>
 
 lemma pstopped_vimage_pre_sigma:
   fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -927,419 +741,6 @@ proof -
   qed
 qed
 
-text \<open>The second factor.  An \<open>\<F>\<^sub>u\<close>-set of the path space is a
-  \<open>pcut u\<close>-preimage --- \<open>sets_natural_filtration_eq_pcut_vimage\<close>
-  --- so only the delayed future on \<open>[0,u]\<close> matters, and that is decided by
-  the path stopped at \<open>t\<close> as soon as \<open>u \<or> \<theta> \<le> t\<close>.\<close>
-
-lemma pre_sigma_of_sets: "A \<in> pre_sigma_of M F \<sigma> \<Longrightarrow> A \<in> sets M"
-  unfolding pre_sigma_of_def by blast
-
-lemma pre_sigma_of_cut:
-  "A \<in> pre_sigma_of M F \<sigma> \<Longrightarrow> 0 \<le> t
-    \<Longrightarrow> A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-  unfolding pre_sigma_of_def by blast
-
-text \<open>It is a \<open>\<sigma>\<close>-algebra: the complement step is where the stopping-time
-  property of \<open>\<sigma>\<close> is spent, since \<open>{\<sigma> \<le> t}\<close> itself has to be in \<open>F t\<close> for
-  the relative complement to stay there.\<close>
-
-text \<open>The first factor.  Below \<open>t\<close> the stopped path is read off the path
-  stopped at \<open>t\<close> --- \<open>pstopped_cut_compose\<close> --- and that composite is
-  \<open>\<F>\<^sub>t\<close>-measurable by \<open>pstopped_const_measurable_filtration\<close>.\<close>
-
-lemma sigma_algebra_pre_sigma_of:
-  assumes filt: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
-    and stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-  shows "sigma_algebra (space M) (pre_sigma_of M F \<sigma>)"
-proof (rule sigma_algebra_iff2[THEN iffD2], intro conjI ballI allI impI)
-  show "pre_sigma_of M F \<sigma> \<subseteq> Pow (space M)"
-    using pre_sigma_of_sets sets.sets_into_space by blast
-  show "{} \<in> pre_sigma_of M F \<sigma>"
-    by (rule pre_sigma_ofI) (simp_all add: stop)
-next
-  fix A assume A: "A \<in> pre_sigma_of M F \<sigma>"
-  show "space M - A \<in> pre_sigma_of M F \<sigma>"
-  proof (rule pre_sigma_ofI)
-    show "space M - A \<in> sets M" using pre_sigma_of_sets[OF A] by simp
-    fix t :: real assume t: "0 \<le> t"
-    have spF: "space (F t) = space M"
-      using filt[OF t] by (simp add: subalgebra_def)
-    have "(space M - A) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}
-        = {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} - (A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t})" by blast
-    moreover have "\<dots> \<in> sets (F t)"
-      using stop[OF t] pre_sigma_of_cut[OF A t] by (rule sets.Diff)
-    ultimately show "(space M - A) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-      by simp
-  qed
-next
-  fix AA :: "nat \<Rightarrow> 'a set"
-  assume AA: "range AA \<subseteq> pre_sigma_of M F \<sigma>"
-  show "(\<Union>i. AA i) \<in> pre_sigma_of M F \<sigma>"
-  proof (rule pre_sigma_ofI)
-    show "(\<Union>i. AA i) \<in> sets M"
-      using AA pre_sigma_of_sets by (intro sets.countable_UN) blast
-    fix t :: real assume t: "0 \<le> t"
-    have "(\<Union>i. AA i) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}
-        = (\<Union>i. AA i \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t})" by blast
-    moreover have "\<dots> \<in> sets (F t)"
-      using AA t by (intro sets.countable_UN) (auto intro: pre_sigma_of_cut)
-    ultimately show "(\<Union>i. AA i) \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-      by simp
-  qed
-qed
-
-text \<open>Monotone in the stopping time, and it sits below \<open>M\<close>.  Monotonicity is
-  the step the two-stopping-time sampling theorem consumes: the conditioning
-  set for the earlier time is legal for the later one.\<close>
-
-lemma pre_sigma_of_mono:
-  assumes le: "\<And>\<omega>. \<sigma> \<omega> \<le> \<rho> \<omega>"
-    and stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<rho> \<omega> \<le> t} \<in> sets (F t)"
-  shows "pre_sigma_of M F \<sigma> \<subseteq> pre_sigma_of M F \<rho>"
-proof
-  fix A assume A: "A \<in> pre_sigma_of M F \<sigma>"
-  show "A \<in> pre_sigma_of M F \<rho>"
-  proof (rule pre_sigma_ofI)
-    show "A \<in> sets M" by (rule pre_sigma_of_sets[OF A])
-    fix t :: real assume t: "0 \<le> t"
-    have "A \<inter> {\<omega> \<in> space M. \<rho> \<omega> \<le> t}
-        = (A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}) \<inter> {\<omega> \<in> space M. \<rho> \<omega> \<le> t}"
-      by (auto intro: order_trans[OF le])
-    moreover have "\<dots> \<in> sets (F t)"
-      using pre_sigma_of_cut[OF A t] stop[OF t] by (rule sets.Int)
-    ultimately show "A \<inter> {\<omega> \<in> space M. \<rho> \<omega> \<le> t} \<in> sets (F t)" by simp
-  qed
-qed
-
-text \<open>And a deterministic time gives back the filtration itself, which is how
-  the new layer connects to everything already proved.\<close>
-
-text \<open>The slice lemma: an \<open>\<F>\<^sub>\<sigma>\<close>-set, cut down to a half-open band of values of
-  \<open>\<sigma>\<close>, lands in the filtration at the top of the band.  This is the brick
-  the two-stopping-time sampling theorem runs on: for a simple \<open>\<sigma>\<close> with
-  values \<open>t\<^sub>1 < \<dots> < t\<^sub>m\<close> the sets \<open>A \<inter> {\<sigma> = t\<^sub>j}\<close> are exactly such bands, so
-  the conditioning set decomposes into finitely many pieces that the
-  ordinary deterministic-time sampling can already handle.\<close>
-
-lemma pre_sigma_of_band:
-  assumes mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and A: "A \<in> pre_sigma_of M F \<sigma>"
-    and s: "0 \<le> s" and st: "s \<le> t"
-  shows "A \<inter> {\<omega> \<in> space M. s < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-proof -
-  have t: "0 \<le> t" using s st by simp
-  have "A \<inter> {\<omega> \<in> space M. s < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> t}
-      = (A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}) - (A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> s})"
-    by auto
-  moreover have "(A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t}) \<in> sets (F t)"
-    by (rule pre_sigma_of_cut[OF A t])
-  moreover have "(A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> s}) \<in> sets (F t)"
-    using pre_sigma_of_cut[OF A s] mono[OF s st] by blast
-  ultimately show ?thesis by (simp add: sets.Diff)
-qed
-
-text \<open>And the bottom band, \<open>\<sigma> \<le> t\<^sub>1\<close>, is @{thm [source] pre_sigma_of_cut}
-  itself, so a simple \<open>\<sigma>\<close> gives a finite partition of \<open>A\<close> into pieces each
-  living in the filtration at its own value.  Stated as the partition it
-  will be used as.\<close>
-
-text \<open>The value-set form of the slice, which is what the sampling theorem
-  wants: the pieces indexed by the values of \<open>\<sigma>\<close> are genuinely disjoint,
-  whereas pieces indexed by positions in a list need not be.\<close>
-
-lemma pre_sigma_of_value_slice:
-  assumes mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and A: "A \<in> pre_sigma_of M F \<sigma>"
-    and V: "finite V" and Vnn: "\<And>u. u \<in> V \<Longrightarrow> 0 \<le> u"
-    and vals: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<sigma> \<omega> \<in> V"
-    and v: "v \<in> V"
-  shows "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = v} \<in> sets (F v)"
-proof (cases "{u \<in> V. u < v} = {}")
-  case False
-  define b where "b = Max {u \<in> V. u < v}"
-  have fin: "finite {u \<in> V. u < v}" using V by simp
-  have bmem: "b \<in> {u \<in> V. u < v}" unfolding b_def by (rule Max_in[OF fin False])
-  then have b0: "0 \<le> b" and bv: "b < v" using Vnn by auto
-  have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = v}
-      = A \<inter> {\<omega> \<in> space M. b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> v}"
-  proof -
-    have "(\<sigma> \<omega> = v) = (b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> v)" if w: "\<omega> \<in> space M" for \<omega>
-    proof
-      assume "\<sigma> \<omega> = v" then show "b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> v" using bv by simp
-    next
-      assume h: "b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> v"
-      show "\<sigma> \<omega> = v"
-      proof (rule ccontr)
-        assume "\<sigma> \<omega> \<noteq> v"
-        then have "\<sigma> \<omega> \<in> {u \<in> V. u < v}" using vals[OF w] h by auto
-        then have "\<sigma> \<omega> \<le> b" unfolding b_def by (rule Max_ge[OF fin])
-        then show False using h by simp
-      qed
-    qed
-    then show ?thesis by auto
-  qed
-  moreover have "A \<inter> {\<omega> \<in> space M. b < \<sigma> \<omega> \<and> \<sigma> \<omega> \<le> v} \<in> sets (F v)"
-    by (rule pre_sigma_of_band[OF mono A b0 less_imp_le[OF bv]])
-  ultimately show ?thesis by simp
-next
-  case True
-  have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = v} = A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> v}"
-  proof -
-    have "(\<sigma> \<omega> = v) = (\<sigma> \<omega> \<le> v)" if w: "\<omega> \<in> space M" for \<omega>
-      using vals[OF w] True by force
-    then show ?thesis by auto
-  qed
-  moreover have "A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> \<le> v} \<in> sets (F v)"
-    by (rule pre_sigma_of_cut[OF A Vnn[OF v]])
-  ultimately show ?thesis by simp
-qed
-
-
-text \<open>With the \<open>\<F>\<^sub>\<sigma>\<close> layer in place the simple case is the classical
-  argument: split the conditioning set along the finitely many values of
-  \<open>\<sigma>\<close>, note each piece lies in the filtration at its own value by
-  @{thm [source] pre_sigma_of_value_slice}, and apply the ordinary
-  deterministic-time martingale identity on each piece.  No optional
-  sampling machinery is needed at all.\<close>
-
-theorem set_martingale_sampling_simple:
-  fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
-    and Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<sigma> :: "'a \<Rightarrow> real"
-  assumes mg: "martingale M F 0 Y"
-    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and A: "A \<in> pre_sigma_of M F \<sigma>"
-    and V: "finite V" and Vnn: "\<And>u. u \<in> V \<Longrightarrow> 0 \<le> u"
-    and VU: "\<And>u. u \<in> V \<Longrightarrow> u \<le> U"
-    and vals: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<sigma> \<omega> \<in> V"
-  shows "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
-       = set_lebesgue_integral M A (Y U)"
-proof -
-  interpret Mg: martingale M F 0 Y by (rule mg)
-  define Av where "Av u = A \<inter> {\<omega> \<in> space M. \<sigma> \<omega> = u}" for u :: real
-  have AM: "A \<in> sets M" by (rule pre_sigma_of_sets[OF A])
-  have Asp: "A \<subseteq> space M" using AM by (rule sets.sets_into_space)
-  have AvF: "Av u \<in> sets (F u)" if u: "u \<in> V" for u
-    unfolding Av_def by (rule pre_sigma_of_value_slice[OF mono A V Vnn vals u])
-  have AvM: "Av u \<in> sets M" if u: "u \<in> V" for u
-  proof -
-    have "sets (F u) \<subseteq> sets M"
-      using Mg.subalgebras[OF Vnn[OF u]] by (simp add: subalgebra_def)
-    then show ?thesis using AvF[OF u] by blast
-  qed  have disj: "disjoint_family_on Av V"
-    unfolding disjoint_family_on_def Av_def by auto
-  have un: "(\<Union>u\<in>V. Av u) = A"
-  proof
-    show "(\<Union>u\<in>V. Av u) \<subseteq> A" unfolding Av_def by blast
-    show "A \<subseteq> (\<Union>u\<in>V. Av u)"
-    proof
-      fix \<omega> assume w: "\<omega> \<in> A"
-      then have sp: "\<omega> \<in> space M" using Asp by blast
-      then have "\<sigma> \<omega> \<in> V" by (rule vals)
-      moreover have "\<omega> \<in> Av (\<sigma> \<omega>)" unfolding Av_def using w sp by simp
-      ultimately show "\<omega> \<in> (\<Union>u\<in>V. Av u)" by blast
-    qed
-  qed
-
-  \<comment> \<open>on each piece the two integrands agree with a DETERMINISTIC-time one\<close>
-  have congL: "set_lebesgue_integral M (Av u) (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
-      = set_lebesgue_integral M (Av u) (Y u)" if u: "u \<in> V" for u
-    unfolding set_lebesgue_integral_def
-    by (rule Bochner_Integration.integral_cong)
-       (auto simp: Av_def indicator_def)
-  have intU: "set_integrable M (Av u) (Y U)" if u: "u \<in> V" for u
-  proof -
-    have U0: "0 \<le> U" using Vnn[OF u] VU[OF u] by simp
-    show ?thesis
-      unfolding set_integrable_def
-      by (rule integrable_mult_indicator[OF AvM[OF u] Mg.integrable[OF U0]])
-  qed
-  have intu: "set_integrable M (Av u) (Y u)" if u: "u \<in> V" for u
-    unfolding set_integrable_def
-    by (rule integrable_mult_indicator[OF AvM[OF u] Mg.integrable[OF Vnn[OF u]]])  have intL: "set_integrable M (Av u) (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)" if u: "u \<in> V" for u
-  proof -
-    have "(\<lambda>\<omega>. indicat_real (Av u) \<omega> *\<^sub>R Y (\<sigma> \<omega>) \<omega>)
-        = (\<lambda>\<omega>. indicat_real (Av u) \<omega> *\<^sub>R Y u \<omega>)"
-      by (rule ext) (auto simp: Av_def indicator_def)
-    then show ?thesis using intu[OF u] unfolding set_integrable_def by simp
-  qed
-  have step: "set_lebesgue_integral M (Av u) (Y u)
-      = set_lebesgue_integral M (Av u) (Y U)" if u: "u \<in> V" for u
-    by (rule Mg.set_integral_eq[OF AvF[OF u] Vnn[OF u] VU[OF u]])
-
-  have "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
-      = (\<Sum>u\<in>V. set_lebesgue_integral M (Av u) (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>))"
-    unfolding un[symmetric]
-    by (rule set_integral_finite_Union[OF V disj intL AvM])
-  also have "\<dots> = (\<Sum>u\<in>V. set_lebesgue_integral M (Av u) (Y U))"
-    using congL step by simp
-  also have "\<dots> = set_lebesgue_integral M A (Y U)"
-    unfolding un[symmetric]
-    by (rule set_integral_finite_Union[OF V disj intU AvM, symmetric])
-  finally show ?thesis .
-qed
-
-subsection \<open>Dyadic approximation from above\<close>
-
-text \<open>@{theory Continuous_Time_Martingales.Optional_Sampling}'s \<open>dceil\<close> is locale-bound, so here is a
-  free-standing one.  Approximating a stopping time from above is what
-  keeps \<open>\<F>\<^sub>\<sigma> \<subseteq> \<F>\<^sub>\<sigma>\<^sub>n\<close>, so the conditioning set stays legal all along the
-  approximating sequence.\<close>
-
-lemma borel_measurable_at_simple_time:
-  fixes Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<tau> :: "'a \<Rightarrow> real"
-  assumes sub: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
-    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<tau> \<omega> \<le> t} \<in> sets (F t)"
-    and V: "finite V" and Vnn: "\<And>u. u \<in> V \<Longrightarrow> 0 \<le> u"
-    and vals: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<tau> \<omega> \<in> V"
-    and Ym: "\<And>u. 0 \<le> u \<Longrightarrow> Y u \<in> borel_measurable M"
-  shows "(\<lambda>\<omega>. Y (\<tau> \<omega>) \<omega>) \<in> borel_measurable M"
-proof -
-  have sps: "space M \<in> pre_sigma_of M F \<tau>" by (rule space_in_pre_sigma_of[OF stop])
-  have Sv: "{\<omega> \<in> space M. \<tau> \<omega> = v} \<in> sets M" if v: "v \<in> V" for v
-  proof -
-    have eq: "space M \<inter> {\<omega> \<in> space M. \<tau> \<omega> = v} = {\<omega> \<in> space M. \<tau> \<omega> = v}"
-      by blast
-    have "space M \<inter> {\<omega> \<in> space M. \<tau> \<omega> = v} \<in> sets (F v)"
-      by (rule pre_sigma_of_value_slice[OF mono sps V Vnn vals v])
-    then have "{\<omega> \<in> space M. \<tau> \<omega> = v} \<in> sets (F v)" unfolding eq .
-    moreover have "sets (F v) \<subseteq> sets M"
-      using sub[OF Vnn[OF v]] by (simp add: subalgebra_def)
-    ultimately show ?thesis by blast  qed
-  have eq: "(\<Sum>v\<in>V. indicat_real {\<omega> \<in> space M. \<tau> \<omega> = v} \<omega> * Y v \<omega>) = Y (\<tau> \<omega>) \<omega>"
-    if w: "\<omega> \<in> space M" for \<omega>
-  proof -
-    have tv: "\<tau> \<omega> \<in> V" by (rule vals[OF w])
-    have "(\<Sum>v\<in>V. indicat_real {\<omega> \<in> space M. \<tau> \<omega> = v} \<omega> * Y v \<omega>)
-        = indicat_real {\<omega>' \<in> space M. \<tau> \<omega>' = \<tau> \<omega>} \<omega> * Y (\<tau> \<omega>) \<omega>
-          + (\<Sum>v\<in>V - {\<tau> \<omega>}. indicat_real {\<omega>' \<in> space M. \<tau> \<omega>' = v} \<omega> * Y v \<omega>)"
-      by (rule sum.remove[OF V tv])
-    moreover have "indicat_real {\<omega>' \<in> space M. \<tau> \<omega>' = \<tau> \<omega>} \<omega> = 1"
-      using w by simp
-    moreover have "(\<Sum>v\<in>V - {\<tau> \<omega>}. indicat_real {\<omega>' \<in> space M. \<tau> \<omega>' = v} \<omega> * Y v \<omega>)
-        = 0"
-      by (rule sum.neutral) auto
-    ultimately show ?thesis by simp
-  qed
-  have "(\<lambda>\<omega>. \<Sum>v\<in>V. indicat_real {\<omega>' \<in> space M. \<tau> \<omega>' = v} \<omega> * Y v \<omega>)
-      \<in> borel_measurable M"
-    using Sv Ym Vnn by measurable
-  then show ?thesis
-    by (subst measurable_cong[OF eq[symmetric]]) simp_all
-qed
-
-section \<open>Optional sampling at two stopping times: the general case\<close>
-
-text \<open>The general bounded \<open>\<sigma>\<close>: approximate from above by \<open>dyceil\<close>, which
-  keeps the conditioning set legal (@{thm [source] pre_sigma_of_mono}) and
-  lands in the simple case at every stage; then dominated convergence.\<close>
-
-theorem set_martingale_sampling:
-  fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
-    and Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<sigma> :: "'a \<Rightarrow> real"
-  assumes mg: "martingale M F 0 Y"
-    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and sub: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
-    and A: "A \<in> pre_sigma_of M F \<sigma>"
-    and stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-    and sig0: "\<And>\<omega>. 0 \<le> \<sigma> \<omega>" and sigU: "\<And>\<omega>. \<sigma> \<omega> \<le> U" and U0: "0 \<le> U"
-    and cont: "\<And>\<omega>. \<omega> \<in> space M
-      \<Longrightarrow> (\<lambda>n. Y (dyceil n U (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
-    and Dbd: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> U \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> D \<omega>"
-    and Dint: "integrable M D"
-  shows "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
-       = set_lebesgue_integral M A (Y U)"
-proof -
-  interpret Mg: martingale M F 0 Y by (rule mg)
-  have AM: "A \<in> sets M" by (rule pre_sigma_of_sets[OF A])
-  define \<sigma>n where "\<sigma>n n \<omega> = dyceil n U (\<sigma> \<omega>)" for n :: nat and \<omega> :: 'a
-  define Vn where "Vn n = (\<lambda>j. min U (real_of_int j / 2^n)) ` {0..\<lceil>2^n * U\<rceil>}"
-    for n :: nat
-  have Vfin: "finite (Vn n)" for n
-    unfolding Vn_def by (rule finite_dyceil_range)
-  have Vnn: "0 \<le> u" if "u \<in> Vn n" for u n
-  proof -
-    from that obtain j where j: "j \<in> {0..\<lceil>2^n * U\<rceil>}"
-      and u: "u = min U (real_of_int j / 2^n)" unfolding Vn_def by blast
-    show ?thesis using j u U0 by simp
-  qed
-  have VU: "u \<le> U" if "u \<in> Vn n" for u n
-    using that unfolding Vn_def by auto
-  have vals: "\<sigma>n n \<omega> \<in> Vn n" for n \<omega>
-    unfolding \<sigma>n_def Vn_def
-    by (rule dyceil_range[OF U0 sig0 sigU])
-  have stopn: "{\<omega> \<in> space M. \<sigma>n n \<omega> \<le> t} \<in> sets (F t)" if t: "0 \<le> t" for n t
-    unfolding \<sigma>n_def
-    by (rule dyceil_stopping[OF mono stop sub sig0 sigU t])
-  have An: "A \<in> pre_sigma_of M F (\<sigma>n n)" for n
-  proof -
-    have "pre_sigma_of M F \<sigma> \<subseteq> pre_sigma_of M F (\<sigma>n n)"
-      unfolding \<sigma>n_def
-      by (rule pre_sigma_of_mono)
-         (use dyceil_ge[OF sig0 sigU] stopn[unfolded \<sigma>n_def] in auto)
-    then show ?thesis using A by blast
-  qed
-  have simple: "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma>n n \<omega>) \<omega>)
-      = set_lebesgue_integral M A (Y U)" for n
-    by (rule set_martingale_sampling_simple
-        [OF mg mono An Vfin Vnn VU vals])
-
-  \<comment> \<open>and the limit\<close>
-  have Ym: "Y u \<in> borel_measurable M" if "0 \<le> u" for u
-    using Mg.integrable[OF that] by (rule borel_measurable_integrable)
-  have gm: "(\<lambda>\<omega>. indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega>) \<in> borel_measurable M" for n
-  proof -
-    have "(\<lambda>\<omega>. Y (\<sigma>n n \<omega>) \<omega>) \<in> borel_measurable M"
-      by (rule borel_measurable_at_simple_time
-          [OF sub mono stopn Vfin Vnn vals Ym])
-    then show ?thesis using AM by measurable
-  qed
-  have lim: "(\<lambda>n. indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega>)
-      \<longlonglongrightarrow> indicat_real A \<omega> * Y (\<sigma> \<omega>) \<omega>" if w: "\<omega> \<in> space M" for \<omega>
-    unfolding \<sigma>n_def using cont[OF w] by (intro tendsto_intros)
-  have bd: "AE \<omega> in M.
-      \<forall>n. norm (indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega>) \<le> \<bar>D \<omega>\<bar>"
-    using Dbd
-  proof eventually_elim
-    case (elim \<omega>)
-    show ?case
-    proof
-      fix n
-      have "0 \<le> \<sigma>n n \<omega>" unfolding \<sigma>n_def by (rule dyceil_nonneg[OF sig0 sigU])
-      moreover have "\<sigma>n n \<omega> \<le> U" unfolding \<sigma>n_def by (rule dyceil_le_U)
-      ultimately have b: "\<bar>Y (\<sigma>n n \<omega>) \<omega>\<bar> \<le> D \<omega>" using elim by simp
-      then have D0: "0 \<le> D \<omega>" by simp
-      show "norm (indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega>) \<le> \<bar>D \<omega>\<bar>"
-        using b D0 by (simp add: indicator_def abs_mult)
-    qed
-  qed  have glim: "(\<lambda>\<omega>. indicat_real A \<omega> * Y (\<sigma> \<omega>) \<omega>) \<in> borel_measurable M"
-    by (rule borel_measurable_LIMSEQ_metric[OF gm lim])
-  have conv: "(\<lambda>n. \<integral>\<omega>. indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega> \<partial>M)
-      \<longlonglongrightarrow> (\<integral>\<omega>. indicat_real A \<omega> * Y (\<sigma> \<omega>) \<omega> \<partial>M)"
-  proof (rule integral_dominated_convergence[where w = "\<lambda>\<omega>. \<bar>D \<omega>\<bar>"])
-    show "(\<lambda>\<omega>. indicat_real A \<omega> * Y (\<sigma> \<omega>) \<omega>) \<in> borel_measurable M"
-      by (rule glim)
-    show "(\<lambda>\<omega>. indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega>) \<in> borel_measurable M" for n
-      by (rule gm)
-    show "integrable M (\<lambda>\<omega>. \<bar>D \<omega>\<bar>)" using Dint by simp
-    show "AE x in M. norm (indicat_real A x * Y (\<sigma>n n x) x) \<le> \<bar>D x\<bar>" for n
-      using bd by (auto elim: eventually_mono)
-    show "AE x in M. (\<lambda>n. indicat_real A x * Y (\<sigma>n n x) x)
-        \<longlonglongrightarrow> indicat_real A x * Y (\<sigma> x) x"
-      by (rule eventually_mono[OF AE_space]) (rule lim)
-  qed
-  have const: "(\<integral>\<omega>. indicat_real A \<omega> * Y (\<sigma>n n \<omega>) \<omega> \<partial>M)
-      = set_lebesgue_integral M A (Y U)" for n
-    using simple[of n] unfolding set_lebesgue_integral_def by simp
-  have "(\<lambda>n :: nat. set_lebesgue_integral M A (Y U))
-      \<longlonglongrightarrow> (\<integral>\<omega>. indicat_real A \<omega> * Y (\<sigma> \<omega>) \<omega> \<partial>M)"
-    using conv const by simp
-  then have "set_lebesgue_integral M A (Y U)
-      = (\<integral>\<omega>. indicat_real A \<omega> * Y (\<sigma> \<omega>) \<omega> \<partial>M)"
-    by (simp add: LIMSEQ_const_iff)
-  then show ?thesis unfolding set_lebesgue_integral_def by simp
-qed
 section \<open>From the pathwise stopping time to the filtration one\<close>
 
 text \<open>\<open>path_stopping_time\<close> is the pathwise notion: \<open>\<theta>\<close> is decided by the
@@ -1348,95 +749,6 @@ text \<open>\<open>path_stopping_time\<close> is the pathwise notion: \<open>\<t
   the path stopped at \<open>t\<close>: \<open>\<theta> \<omega> \<le> t\<close> exactly when
   \<open>\<theta> (\<omega> stopped at t) \<le> t\<close>, and the stopped path is an \<open>\<F>\<^sub>t\<close>-measurable
   function of \<open>\<omega>\<close>.\<close>
-
-theorem set_martingale_sampling_two:
-  fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
-    and Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<sigma> \<rho> :: "'a \<Rightarrow> real"
-  assumes mg: "martingale M F 0 Y"
-    and mono: "\<And>s t. 0 \<le> s \<Longrightarrow> s \<le> t \<Longrightarrow> sets (F s) \<subseteq> sets (F t)"
-    and sub: "\<And>t. 0 \<le> t \<Longrightarrow> subalgebra M (F t)"
-    and A: "A \<in> pre_sigma_of M F \<sigma>"
-    and stops: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-    and stopr: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<rho> \<omega> \<le> t} \<in> sets (F t)"
-    and sig0: "\<And>\<omega>. 0 \<le> \<sigma> \<omega>" and sigU: "\<And>\<omega>. \<sigma> \<omega> \<le> U"
-    and rho0: "\<And>\<omega>. 0 \<le> \<rho> \<omega>" and rhoU: "\<And>\<omega>. \<rho> \<omega> \<le> U" and U0: "0 \<le> U"
-    and le: "\<And>\<omega>. \<sigma> \<omega> \<le> \<rho> \<omega>"
-    and conts: "\<And>\<omega>. \<omega> \<in> space M
-      \<Longrightarrow> (\<lambda>n. Y (dyceil n U (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
-    and contr: "\<And>\<omega>. \<omega> \<in> space M
-      \<Longrightarrow> (\<lambda>n. Y (dyceil n U (\<rho> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<rho> \<omega>) \<omega>"
-    and Dbd: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> U \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> D \<omega>"
-    and Dint: "integrable M D"
-  shows "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)       = set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<rho> \<omega>) \<omega>)"
-proof -
-  have s: "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)
-      = set_lebesgue_integral M A (Y U)"
-    by (rule set_martingale_sampling
-        [OF mg mono sub A stops sig0 sigU U0 conts Dbd Dint])
-  have Ar: "A \<in> pre_sigma_of M F \<rho>"
-    using pre_sigma_of_mono[OF le stopr] A by blast
-  have r: "set_lebesgue_integral M A (\<lambda>\<omega>. Y (\<rho> \<omega>) \<omega>)
-      = set_lebesgue_integral M A (Y U)"
-    by (rule set_martingale_sampling
-        [OF mg mono sub Ar stopr rho0 rhoU U0 contr Dbd Dint])
-  show ?thesis using s r by simp
-qed
-
-
-lemma integrable_at_bounded_stopping_time:
-  fixes M :: "'a measure" and F :: "real \<Rightarrow> 'a measure"
-    and Y :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<sigma> :: "'a \<Rightarrow> real"
-  assumes mg: "martingale M F 0 Y"
-    and stop: "\<And>t. 0 \<le> t \<Longrightarrow> {\<omega> \<in> space M. \<sigma> \<omega> \<le> t} \<in> sets (F t)"
-    and sig0: "\<And>\<omega>. 0 \<le> \<sigma> \<omega>" and sigU: "\<And>\<omega>. \<sigma> \<omega> \<le> U" and U0: "0 \<le> U"
-    and cont: "\<And>\<omega>. \<omega> \<in> space M
-      \<Longrightarrow> (\<lambda>n. Y (dyceil n U (\<sigma> \<omega>)) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>"
-    and Dbd: "AE \<omega> in M. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> U \<longrightarrow> \<bar>Y s \<omega>\<bar> \<le> D \<omega>"
-    and Dint: "integrable M D"
-  shows "integrable M (\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>)"
-proof -
-  interpret Mg: martingale M F 0 Y by (rule mg)
-  have mono: "sets (F s) \<subseteq> sets (F t)" if "0 \<le> s" "s \<le> t" for s t
-    using Mg.sets_F_mono[OF that] by simp
-  note sub = Mg.subalgebras
-  define \<sigma>n where "\<sigma>n n \<omega> = dyceil n U (\<sigma> \<omega>)" for n :: nat and \<omega> :: 'a
-  define Vn where "Vn n = (\<lambda>j. min U (real_of_int j / 2^n)) ` {0..\<lceil>2^n * U\<rceil>}"
-    for n :: nat
-  have Vfin: "finite (Vn n)" for n
-    unfolding Vn_def by (rule finite_dyceil_range)
-  have Vnn: "0 \<le> u" if "u \<in> Vn n" for u n
-  proof -
-    from that obtain j where j: "j \<in> {0..\<lceil>2^n * U\<rceil>}"
-      and u: "u = min U (real_of_int j / 2^n)" unfolding Vn_def by blast
-    show ?thesis using j u U0 by simp
-  qed
-  have vals: "\<sigma>n n \<omega> \<in> Vn n" for n \<omega>
-    unfolding \<sigma>n_def Vn_def by (rule dyceil_range[OF U0 sig0 sigU])
-  have stopn: "{\<omega> \<in> space M. \<sigma>n n \<omega> \<le> t} \<in> sets (F t)" if t: "0 \<le> t" for n t
-    unfolding \<sigma>n_def by (rule dyceil_stopping[OF mono stop sub sig0 sigU t])
-  have Ym: "Y u \<in> borel_measurable M" if "0 \<le> u" for u
-    using Mg.integrable[OF that] by (rule borel_measurable_integrable)
-  have gm: "(\<lambda>\<omega>. Y (\<sigma>n n \<omega>) \<omega>) \<in> borel_measurable M" for n
-    by (rule borel_measurable_at_simple_time
-        [OF sub mono stopn Vfin Vnn vals Ym])
-  have lim: "(\<lambda>n. Y (\<sigma>n n \<omega>) \<omega>) \<longlonglongrightarrow> Y (\<sigma> \<omega>) \<omega>" if w: "\<omega> \<in> space M" for \<omega>
-    unfolding \<sigma>n_def by (rule cont[OF w])
-  have glim: "(\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>) \<in> borel_measurable M"
-    by (rule borel_measurable_LIMSEQ_metric[OF gm lim])
-  have bd: "AE \<omega> in M. norm (Y (\<sigma> \<omega>) \<omega>) \<le> norm \<bar>D \<omega>\<bar>"
-    using Dbd
-  proof eventually_elim
-    case (elim \<omega>)
-    have "\<bar>Y (\<sigma> \<omega>) \<omega>\<bar> \<le> D \<omega>" using elim sig0[of \<omega>] sigU[of \<omega>] by simp
-    then show ?case by simp
-  qed
-  show ?thesis
-  proof (rule Bochner_Integration.integrable_bound[where f = "\<lambda>\<omega>. \<bar>D \<omega>\<bar>"])
-    show "integrable M (\<lambda>\<omega>. \<bar>D \<omega>\<bar>)" using Dint by simp
-    show "(\<lambda>\<omega>. Y (\<sigma> \<omega>) \<omega>) \<in> borel_measurable M" by (rule glim)
-    show "AE \<omega> in M. norm (Y (\<sigma> \<omega>) \<omega>) \<le> norm \<bar>D \<omega>\<bar>" by (rule bd)
-  qed
-qed
 
 theorem stopped_increment_of_horizon_gen:
   fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -1767,6 +1079,380 @@ text \<open>The second, and last, clause-(iv) instance.  The pathwise identity i
   @{thm [source] set_integral_increment_times_known} kills.  The constants
   \<open>outerp b\<close> and \<open>\<langle>X\<rangle>\<^sub>\<theta>\<close> have already cancelled between the two times.\<close>
 
+
+section \<open>The exit time of a ball\<close>
+
+text \<open>The capped exit time of the state component of a pair path from an open
+  ball, and the pathwise facts about it that the viscosity arguments consume.\<close>
+
+definition pball_exit :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real \<Rightarrow> 'n pairpath \<Rightarrow> real"
+  where "pball_exit T x \<epsilon> \<omega> = pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t))"
+
+lemma pball_exit_nonneg:
+  assumes T0: "0 \<le> T" shows "0 \<le> pball_exit T x \<epsilon> \<omega>"
+  unfolding pball_exit_def by (rule pexit_nonneg[OF T0])
+
+lemma pball_exit_le:
+  assumes T0: "0 \<le> T" shows "pball_exit T x \<epsilon> \<omega> \<le> T"
+  unfolding pball_exit_def by (rule pexit_le_T[OF T0])
+
+lemma pball_exit_cong:
+  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+    and eq: "\<And>t. t \<in> {0..pball_exit T x \<epsilon> \<omega>} \<Longrightarrow> \<omega> t = \<omega>' t"
+  shows "pball_exit T x \<epsilon> \<omega>' = pball_exit T x \<epsilon> \<omega>"
+  unfolding pball_exit_def
+proof (rule pexit_cong_stopping[OF T0 open_ball cont])
+  fix t :: real
+  assume t: "0 \<le> t" "t \<le> pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t))"
+  then have "t \<in> {0..pball_exit T x \<epsilon> \<omega>}" by (simp add: pball_exit_def)
+  from eq[OF this] show "fst (\<omega> t) = fst (\<omega>' t)" by simp
+qed
+
+text \<open>What makes the exit time useful to the expansion: below
+  the horizon the path has actually travelled the full distance \<open>\<epsilon>\<close>.\<close>
+
+lemma pball_exit_outside:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+    and lt: "pball_exit T x \<epsilon> \<omega> < T"
+  shows "\<epsilon> \<le> dist (fst (\<omega> (pball_exit T x \<epsilon> \<omega>))) x"
+proof -
+  have "fst (\<omega> (pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t)))) \<notin> ball x \<epsilon>"
+    using lt unfolding pball_exit_def
+    by (intro pexit_mem_of_less_T[OF T0 open_ball cont]) simp
+  then show ?thesis
+    unfolding pball_exit_def by (simp add: dist_commute)
+qed
+
+text \<open>And it is strictly positive when the path starts strictly inside the
+  ball --- exactly the situation of the subsolution argument, where the
+  starting point is the touching point \<open>x\<close> itself.  Without this the DPP
+  bound of \<open>exit_val_cond_at_time\<close> would be vacuous.\<close>
+
+lemma pball_exit_pos:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 < T"
+    and start: "dist (fst (\<omega> 0)) x < \<epsilon>"
+    and cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+  shows "0 < pball_exit T x \<epsilon> \<omega>"
+proof -
+  have T0': "0 \<le> T" using T0 by simp
+  have z: "(0::real) \<in> {0..T}" using T0 by simp
+  have e0: "0 < \<epsilon> - dist (fst (\<omega> 0)) x" using start by simp
+  from cont[unfolded continuous_on_iff] z e0
+  obtain \<delta> where d0: "0 < \<delta>"
+    and dd: "\<And>t. t \<in> {0..T} \<Longrightarrow> dist t 0 < \<delta>
+        \<Longrightarrow> dist (fst (\<omega> t)) (fst (\<omega> 0)) < \<epsilon> - dist (fst (\<omega> 0)) x"
+    by blast
+  have mle: "min \<delta> T \<le> pball_exit T x \<epsilon> \<omega>"
+  proof (rule ccontr)
+    assume "\<not> min \<delta> T \<le> pball_exit T x \<epsilon> \<omega>"
+    then have lt0: "pball_exit T x \<epsilon> \<omega> < min \<delta> T" by (rule not_le_imp_less)
+    then have lt: "pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t)) < min \<delta> T"
+      by (simp add: pball_exit_def)
+    have "(\<exists>r. 0 \<le> r \<and> r \<le> T \<and> fst (\<omega> r) \<in> - ball x \<epsilon> \<and> r < min \<delta> T)
+        \<or> T < min \<delta> T"
+      using lt[unfolded pexit_less_iff[OF T0']] .
+    then obtain r where r: "0 \<le> r" "r \<le> T" "fst (\<omega> r) \<notin> ball x \<epsilon>"
+      "r < min \<delta> T" by auto
+    have dr: "dist (fst (\<omega> r)) (fst (\<omega> 0)) < \<epsilon> - dist (fst (\<omega> 0)) x"
+      using r by (intro dd) (auto simp: dist_real_def)
+    have "dist (fst (\<omega> r)) x
+        \<le> dist (fst (\<omega> r)) (fst (\<omega> 0)) + dist (fst (\<omega> 0)) x"
+      by (rule dist_triangle)
+    also have "\<dots> < \<epsilon>" using dr by simp
+    finally have "fst (\<omega> r) \<in> ball x \<epsilon>" by (simp add: dist_commute)
+    with r(3) show False by simp
+  qed
+  have m0: "0 < min \<delta> T" using d0 T0 by simp
+  show ?thesis by (rule order_less_le_trans[OF m0 mle])
+qed
+
+subsection \<open>The ball exit time is a stopping time\<close>
+
+text \<open>\<^const>\<open>path_stopping_time\<close> restricts its congruence clause to
+  continuous paths, which is exactly what @{thm [source] pexit_mem_of_less_T}
+  shows is forced: attainment of the infimum genuinely fails off the path
+  space, so no redefinition of the exit time could have avoided it.  The
+  restriction costs nothing, because \<open>space Q = mspace (path_metric T)\<close> is
+  the set of continuous paths, and it buys this:\<close>
+
+theorem pball_exit_path_stopping_time:
+  fixes x :: "real^'n::finite"
+  assumes T0: "0 \<le> T"
+  shows "path_stopping_time T (pball_exit T x \<epsilon>)"
+  unfolding path_stopping_time_def
+proof (intro conjI)
+  show "\<forall>\<omega> :: 'n pairpath.
+      0 \<le> pball_exit T x \<epsilon> \<omega> \<and> pball_exit T x \<epsilon> \<omega> \<le> T"
+    using pball_exit_nonneg[OF T0] pball_exit_le[OF T0] by blast
+next
+  show "\<forall>\<omega> \<omega>' :: 'n pairpath.
+      continuous_on {0..T} (\<lambda>t. fst (\<omega> t)) \<longrightarrow>
+      continuous_on {0..T} (\<lambda>t. fst (\<omega>' t)) \<longrightarrow>
+      (\<forall>t \<in> {0..pball_exit T x \<epsilon> \<omega>}. \<omega> t = \<omega>' t) \<longrightarrow>
+      pball_exit T x \<epsilon> \<omega>' = pball_exit T x \<epsilon> \<omega>"
+  proof (intro allI impI)
+    fix \<omega> \<omega>' :: "'n pairpath"
+    assume c: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+      and c': "continuous_on {0..T} (\<lambda>t. fst (\<omega>' t))"
+      and e: "\<forall>t \<in> {0..pball_exit T x \<epsilon> \<omega>}. \<omega> t = \<omega>' t"
+    show "pball_exit T x \<epsilon> \<omega>' = pball_exit T x \<epsilon> \<omega>"
+      by (rule pball_exit_cong[OF T0 c]) (use e in blast)
+  qed
+qed
+
+text \<open>So \<open>exit_val_dpp_sup_ge_time\<close> applies at the exit time of
+  a ball, and optional sampling at \<open>\<tau> \<and> h\<close> is available for stochastic
+  localisation.\<close>
+
+subsection \<open>Measurability of the ball exit time\<close>
+
+text \<open>\<open>pexit_path_measurable\<close> covers closed targets and the ball is open, so
+  this cannot be inherited directly.  With the closed set \<open>- ball x \<epsilon>\<close> as
+  the hitting target, along a continuous path the sublevel event
+  \<open>{\<tau> \<le> t}\<close> is (by @{thm [source] etime_le_iff}, using attainment) the
+  event that the path reaches distance \<open>\<ge> \<epsilon>\<close> somewhere on \<open>[0,t]\<close>, and by
+  continuity that is decided by countably many times: the rationals of
+  \<open>[0,t]\<close> and \<open>t\<close> itself.  A countable intersection of countable unions of
+  evaluation events remains measurable.\<close>
+
+lemma pball_exit_le_iff_dense:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T" and t: "0 \<le> t" and tT: "t < T"
+    and cont: "continuous_on {0..T} (\<lambda>s. fst (\<omega> s))"
+  shows "pball_exit T x \<epsilon> \<omega> \<le> t \<longleftrightarrow>
+     (\<forall>n :: nat. \<exists>r \<in> insert t ({0..t} \<inter> \<rat>).
+        \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x)"
+proof -
+  have Ac: "closed (- ball x \<epsilon> :: (real^'n) set)"
+    by (simp add: closed_Compl)
+  have hc: "continuous_on {0..T} (\<lambda>s. dist (fst (\<omega> s)) x)"
+    by (intro continuous_on_dist cont continuous_on_const)
+  show ?thesis
+  proof
+    assume le: "pball_exit T x \<epsilon> \<omega> \<le> t"
+    then have "etime T (- ball x \<epsilon>) (\<lambda>r g. g r) (\<lambda>s. fst (\<omega> s)) \<le> t"
+      by (simp add: pball_exit_def pexit_def)
+    then have "\<exists>r\<in>{0..t}. fst (\<omega> r) \<in> - ball x \<epsilon>"
+      using etime_le_iff[where X = "\<lambda>r g. g r" and \<omega> = "\<lambda>s. fst (\<omega> s)",
+          OF T0 t tT Ac cont] by simp
+    then obtain r0 where r0: "r0 \<in> {0..t}" and m0: "fst (\<omega> r0) \<notin> ball x \<epsilon>"
+      by auto
+    have d0: "\<epsilon> \<le> dist (fst (\<omega> r0)) x"
+      using m0 by (simp add: dist_commute)
+    show "\<forall>n :: nat. \<exists>r \<in> insert t ({0..t} \<inter> \<rat>).
+        \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x"
+    proof
+      fix n :: nat
+      show "\<exists>r \<in> insert t ({0..t} \<inter> \<rat>).
+          \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x"
+      proof (cases "r0 = 0 \<or> r0 = t")
+        case True
+        have mem: "r0 \<in> insert t ({0..t} \<inter> \<rat>)"
+          using True r0 t by auto
+        have p1: "0 < 1 / real (Suc n)" by simp
+        with d0 have "\<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r0)) x" by linarith
+        with mem show ?thesis by blast
+      next
+        case False
+        then have r00: "0 < r0" and r0t: "r0 < t" using r0 by auto
+        have r0T: "r0 \<in> {0..T}" using r0 tT by auto
+        have cw: "continuous (at r0 within {0..T}) (\<lambda>s. dist (fst (\<omega> s)) x)"
+          using hc r0T by (simp add: continuous_on_eq_continuous_within)
+        have e1: "0 < 1 / real (Suc n)" by simp
+        obtain d where dd: "0 < d"
+          and near: "\<And>s. s \<in> {0..T} \<Longrightarrow> dist s r0 < d \<Longrightarrow>
+              dist (dist (fst (\<omega> s)) x) (dist (fst (\<omega> r0)) x) < 1 / real (Suc n)"
+          using cw[unfolded continuous_within_eps_delta, rule_format, OF e1]
+          by blast
+        obtain q where q: "q \<in> \<rat>" and ql: "r0 - min d r0 < q" and qu: "q < r0"
+          using Rats_dense_in_real[of "r0 - min d r0" r0] dd r00 by auto
+        have q0: "0 \<le> q" using ql dd r00 by simp
+        have qt: "q \<le> t" using qu r0t by simp
+        have qT: "q \<in> {0..T}" using q0 qt tT by auto
+        have "dist q r0 < d" using ql qu dd by (simp add: dist_real_def)
+        then have "dist (dist (fst (\<omega> q)) x) (dist (fst (\<omega> r0)) x)
+            < 1 / real (Suc n)"
+          by (rule near[OF qT])
+        then have "dist (fst (\<omega> r0)) x - 1 / real (Suc n) < dist (fst (\<omega> q)) x"
+          by (simp add: dist_real_def abs_diff_less_iff)
+        with d0 have "\<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> q)) x" by simp
+        moreover have "q \<in> insert t ({0..t} \<inter> \<rat>)" using q q0 qt by auto
+        ultimately show ?thesis by blast
+      qed
+    qed
+  next
+    assume H: "\<forall>n :: nat. \<exists>r \<in> insert t ({0..t} \<inter> \<rat>).
+        \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x"
+    have "\<exists>r \<in> {0..t}. \<epsilon> \<le> dist (fst (\<omega> r)) x"
+    proof -
+      obtain rs where rs: "\<And>n :: nat. rs n \<in> insert t ({0..t} \<inter> \<rat>)
+          \<and> \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> (rs n))) x"
+        using H by metis
+      have rng: "rs n \<in> {0..t}" for n using rs[of n] t by auto
+      have bdd: "bounded (range rs)"
+      proof (rule boundedI[of _ t])
+        fix w assume "w \<in> range rs"
+        then obtain n where "w = rs n" by blast
+        then show "norm w \<le> t" using rng[of n] t by auto
+      qed
+      obtain l \<sigma> where sm: "strict_mono \<sigma>" and lim: "(rs \<circ> \<sigma>) \<longlonglongrightarrow> l"
+        using bounded_imp_convergent_subsequence[OF bdd] by blast
+      have inI: "(rs \<circ> \<sigma>) n \<in> {0..t}" for n using rng[of "\<sigma> n"] by simp
+      have lI: "l \<in> {0..t}"
+        by (rule closed_sequentially[OF closed_atLeastAtMost _ lim])
+          (use inI in blast)
+      have lT: "l \<in> {0..T}" using lI tT by auto
+      have cl: "continuous (at l within {0..T}) (\<lambda>s. dist (fst (\<omega> s)) x)"
+        using hc lT by (simp add: continuous_on_eq_continuous_within)
+      have inT: "(rs \<circ> \<sigma>) n \<in> {0..T}" for n using inI[of n] tT by auto
+      have tends: "(\<lambda>n. dist (fst (\<omega> ((rs \<circ> \<sigma>) n))) x)
+          \<longlonglongrightarrow> dist (fst (\<omega> l)) x"
+        using cl[unfolded continuous_within_sequentially, rule_format,
+            of "rs \<circ> \<sigma>"] inT lim by (simp add: o_def)
+      have low: "\<epsilon> - 1 / real (Suc n) \<le> dist (fst (\<omega> ((rs \<circ> \<sigma>) n))) x" for n
+      proof -
+        have "\<epsilon> - 1 / real (Suc (\<sigma> n)) < dist (fst (\<omega> (rs (\<sigma> n)))) x"
+          using rs[of "\<sigma> n"] by blast
+        moreover have "\<epsilon> - 1 / real (Suc n) \<le> \<epsilon> - 1 / real (Suc (\<sigma> n))"
+          using seq_suble[OF sm, of n] by (simp add: frac_le)
+        ultimately show ?thesis by (simp add: o_def)
+      qed
+      have lima: "(\<lambda>n. \<epsilon> - 1 / real (Suc n)) \<longlonglongrightarrow> \<epsilon>"
+      proof -
+        have "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
+          using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
+        then have "(\<lambda>n. \<epsilon> - 1 / real (Suc n)) \<longlonglongrightarrow> \<epsilon> - 0"
+          by (intro tendsto_diff tendsto_const)
+        then show ?thesis by simp
+      qed
+      have "\<epsilon> \<le> dist (fst (\<omega> l)) x"
+        by (rule LIMSEQ_le[OF lima tends]) (use low in blast)
+      then show ?thesis using lI by blast
+    qed
+    then obtain r where r: "r \<in> {0..t}" and rd: "\<epsilon> \<le> dist (fst (\<omega> r)) x"
+      by blast
+    have "fst (\<omega> r) \<notin> ball x \<epsilon>" using rd by (simp add: dist_commute)
+    then have "pexit T (ball x \<epsilon>) (\<lambda>s. fst (\<omega> s)) \<le> r"
+      using r tT by (intro pexit_le_of_mem[OF T0]) auto
+    then have "pball_exit T x \<epsilon> \<omega> \<le> r" by (simp add: pball_exit_def)
+    then show "pball_exit T x \<epsilon> \<omega> \<le> t"
+      using r by (auto intro: order_trans)
+  qed
+qed
+
+theorem pball_exit_measurable:
+  fixes x :: "real^'n::finite"
+  assumes T0: "0 \<le> T"
+  shows "pball_exit T x \<epsilon> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+proof (rule borel_measurableI_le)
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  fix a :: real
+  show "{\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a} \<in> sets ?B"
+  proof (cases "a < 0")
+    case True
+    have empty: "{\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a} = {}"
+    proof (rule set_eqI)
+      fix \<omega> :: "'n pairpath"
+      have "\<not> pball_exit T x \<epsilon> \<omega> \<le> a"
+        using pball_exit_nonneg[OF T0, of x \<epsilon> \<omega>] True by linarith
+      then show "\<omega> \<in> {\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a}
+          \<longleftrightarrow> \<omega> \<in> {}" by simp
+    qed
+    show ?thesis unfolding empty by simp
+  next
+    case False
+    then have a0: "0 \<le> a" by simp
+    show ?thesis
+    proof (cases "T \<le> a")
+      case True
+      have ya: "pball_exit T x \<epsilon> \<omega> \<le> a" for \<omega> :: "'n pairpath"
+        using pball_exit_le[OF T0, of x \<epsilon> \<omega>] True by linarith
+      then have "{\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a} = space ?B" by auto
+      then show ?thesis by simp
+    next
+      case False
+      then have aT: "a < T" by simp
+      let ?D = "insert a ({0..a} \<inter> \<rat>)"
+      let ?S = "\<lambda>n r. {\<omega> \<in> space ?B. \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x}"
+      have cntD: "countable ?D"
+        by (intro countable_insert countable_Int2 countable_rat)
+      have atom: "?S n r \<in> sets ?B" for n r
+      proof -
+        have "(\<lambda>\<omega> :: 'n pairpath. dist (fst (\<omega> r)) x) \<in> borel_measurable ?B"
+          by (rule dist_eval_measurable)
+        then have "(\<lambda>\<omega> :: 'n pairpath. dist (fst (\<omega> r)) x) -` {\<epsilon> - 1 / real (Suc n) <..}
+            \<inter> space ?B \<in> sets ?B"
+          by (rule measurable_sets) simp
+        moreover have "?S n r = (\<lambda>\<omega> :: 'n pairpath. dist (fst (\<omega> r)) x)
+            -` {\<epsilon> - 1 / real (Suc n) <..} \<inter> space ?B"
+          by auto
+        ultimately show ?thesis by simp
+      qed
+      have eq: "{\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a}
+          = (\<Inter>n. \<Union>r \<in> ?D. ?S n r)"
+      proof (rule set_eqI)
+        fix \<omega> :: "'n pairpath"
+        show "\<omega> \<in> {\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a}
+            \<longleftrightarrow> \<omega> \<in> (\<Inter>n. \<Union>r \<in> ?D. ?S n r)"
+        proof (cases "\<omega> \<in> space ?B")
+          case True
+          have cw: "continuous_on {0..T} (\<lambda>s. fst (\<omega> s))"
+            by (rule path_sets_fst_continuous[OF refl True])
+          show ?thesis
+            using pball_exit_le_iff_dense[OF T0 a0 aT cw, of x \<epsilon>] True
+            by auto
+        next
+          case False
+          then show ?thesis by auto
+        qed
+      qed
+      have un_m: "(\<Union>r \<in> ?D. ?S n r) \<in> sets ?B" for n
+        by (rule sets.countable_UN'[OF cntD]) (use atom in blast)
+      have "(\<Inter>n. \<Union>r \<in> ?D. ?S n r) \<in> sets ?B"
+        using un_m by blast
+      with eq show ?thesis by metis
+    qed
+  qed
+qed
+
+subsection \<open>Up to the exit time the path stays in the closed ball\<close>
+
+lemma pball_exit_stays_cball:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and start: "dist (fst (\<omega> 0)) x < \<epsilon>"
+    and cont: "continuous_on {0..T} (\<lambda>s. fst (\<omega> s))"
+    and s: "0 \<le> s" and sle: "s \<le> pball_exit T x \<epsilon> \<omega>"
+  shows "dist (fst (\<omega> s)) x \<le> \<epsilon>"
+proof (rule ccontr)
+  assume "\<not> dist (fst (\<omega> s)) x \<le> \<epsilon>"
+  then have gt: "\<epsilon> < dist (fst (\<omega> s)) x" by simp
+  have sT: "s \<le> T" using sle pball_exit_le[OF T0] order_trans by blast
+  have notin: "fst (\<omega> s) \<notin> ball x \<epsilon>"
+    using gt by (simp add: dist_commute)
+  have le1: "pball_exit T x \<epsilon> \<omega> \<le> s"
+    unfolding pball_exit_def
+    by (rule pexit_le_of_mem[where f = "\<lambda>s. fst (\<omega> s)" and r = s
+          and K = "ball x \<epsilon>", OF T0 s sT notin])
+  with sle have seq: "s = pball_exit T x \<epsilon> \<omega>" by simp
+  have h0: "dist (fst (\<omega> 0)) x \<le> \<epsilon>" using start by simp
+  have hc: "continuous_on {0..s} (\<lambda>r. dist (fst (\<omega> r)) x)"
+    by (rule continuous_on_subset[of "{0..T}"])
+      (use sT in \<open>auto intro!: continuous_on_dist cont continuous_on_const\<close>)
+  obtain r where r0: "0 \<le> r" and rs: "r \<le> s" and rd: "dist (fst (\<omega> r)) x = \<epsilon>"
+    using IVT'[of "\<lambda>r. dist (fst (\<omega> r)) x" 0 \<epsilon> s] h0 gt s hc by auto
+  have rlt: "r < s" using rd gt rs by (cases "r = s") auto
+  have "fst (\<omega> r) \<notin> ball x \<epsilon>" using rd by (simp add: dist_commute)
+  then have "pball_exit T x \<epsilon> \<omega> \<le> r"
+    unfolding pball_exit_def
+    by (intro pexit_le_of_mem[OF T0 r0]) (use rs sT in auto)
+  with rlt seq show False by simp
+qed
 
 (*<*)
 end

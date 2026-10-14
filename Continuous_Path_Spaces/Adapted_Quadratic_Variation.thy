@@ -2,7 +2,7 @@ section \<open>An adapted, everywhere-continuous quadratic variation\<close>
 
 (*<*)
 theory Adapted_Quadratic_Variation
-  imports Pathwise_Quadratic_Variation Stopped_Localization
+  imports Pathwise_Quadratic_Variation "Continuous_Time_Martingales.Stopped_Localization"
 begin
 
 (*>*)
@@ -24,7 +24,7 @@ text \<open>
   The scalar theory assumes \<open>X\<close> uniformly bounded, because Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>
   (\<open>fourth_moment_bound_bounded\<close>) does.  A member of the class is not bounded,
   so the identification has to be localised --- which is what
-  @{theory Continuous_Path_Spaces.Stopped_Localization} was built for: stopping an
+  @{theory Continuous_Time_Martingales.Stopped_Localization} was built for: stopping an
   \<open>L\<^sup>2\<close> martingale with continuous paths at any stopping time yields a
   martingale, unconditionally, and the same holds for the compensated square.
 
@@ -716,6 +716,354 @@ lemma qvmata_eq_qvmat:
   unfolding qvmata_def qvmat_def
   by (simp add: qvsa_eq_qvps[OF gp C] qvsa_eq_qvps[OF gm C])
 
+
+subsection \<open>The scalar identification without the boundedness hypothesis\<close>
+
+text \<open>Stopping at the exit time from a ball of radius \<open>r\<close> makes the process
+  bounded, which is the one hypothesis of the scalar theory that a class member fails.
+  Everything else survives stopping: the martingale property by
+  \<open>stopped_martingale_L2\<close>, the compensator relation by
+  \<open>stopped_compensated_square\<close>, and the rate because \<open>min u tau \<le> min v tau\<close> with
+  \<open>min v tau - min u tau \<le> v - u\<close>.\<close>
+
+lemma qvps_eq_A_stopped:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes P: "prob_space M"
+    and mgX: "martingale M F (0::real) X"
+    and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
+    and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
+    and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
+    and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
+    and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+                    0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
+    and C0: "0 \<le> C"
+    and T0: "0 < T" and r0: "0 < r"
+    and X0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<bar>X 0 \<omega>\<bar> < r"
+  defines "tau \<equiv> etime T {y :: real. r \<le> norm y} X"
+  shows "AE \<omega> in M. qvp_good C (\<lambda>s. X (min s (tau \<omega>)) \<omega>)
+           \<and> (\<forall>t. 0 \<le> t \<longrightarrow>
+                qvps (\<lambda>s. X (min s (tau \<omega>)) \<omega>) t = A (min t (tau \<omega>)) \<omega>)"proof -
+  interpret MX: martingale M F "0::real" X by (rule mgX)
+  have Tnn: "0 \<le> T" using T0 by simp
+  have Acl: "closed {y :: real. r \<le> norm y}"
+    by (intro closed_Collect_le continuous_intros)
+  have Ane: "{y :: real. r \<le> norm y} \<noteq> {}" using r0 by (auto intro!: exI[of _ r])
+  have contT: "continuous_on {0..T} (\<lambda>s. X s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
+    by (rule continuous_on_subset[OF contX[OF w]]) auto
+
+  text \<open>The exit time is a stopping time.\<close>
+  interpret CA: cont_adapted_process M F X T
+  proof (intro cont_adapted_process.intro cont_adapted_process_axioms.intro)
+    show "adapted_process M F 0 X" by (rule MX.adapted_process_axioms)
+    show "0 \<le> T" by (rule Tnn)
+    show "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..T} (\<lambda>s. X s \<omega>)" by (rule contT)
+  qed
+  have tau_stop: "{\<omega> \<in> space M. tau \<omega> \<le> s} \<in> sets (F s)" if s: "0 \<le> s" for s
+    unfolding tau_def by (rule CA.etime_stopping_time[OF Acl Ane s])
+  have tau_nn: "0 \<le> tau \<omega>" for \<omega> unfolding tau_def by (rule etime_nonneg[OF Tnn])
+  have tau_le: "tau \<omega> \<le> T" for \<omega> unfolding tau_def by (rule etime_le_T[OF Tnn])
+
+  text \<open>The stopped process is bounded by the radius.\<close>
+  have bndS: "\<bar>X (min v (tau \<omega>)) \<omega>\<bar> \<le> r" if w: "\<omega> \<in> space M" and v: "0 \<le> v" for v \<omega>
+  proof -
+    have s1: "0 \<le> min v (tau \<omega>)" using v tau_nn[of \<omega>] by simp
+    have s2: "min v (tau \<omega>) \<le> etime T {y :: real. r \<le> norm y} X \<omega>"
+      unfolding tau_def[symmetric] by simp
+    have "X (min v (tau \<omega>)) \<omega> \<in> cball 0 r"
+      by (rule etime_stays_in_cball[where T = T and r = r and X = X and \<omega> = \<omega>
+            and s = "min v (tau \<omega>)"])
+         (use X0[OF w] contT[OF w] s1 s2 r0 Tnn in simp_all)
+    then show ?thesis by (simp add: dist_norm)
+  qed
+
+  text \<open>The stopped compensator keeps the rate.\<close>
+  have rateS: "0 \<le> A (min v (tau \<omega>)) \<omega> - A (min u (tau \<omega>)) \<omega>
+      \<and> A (min v (tau \<omega>)) \<omega> - A (min u (tau \<omega>)) \<omega> \<le> C * (v - u)"
+    if w: "\<omega> \<in> space M" and u: "0 \<le> u" and uv: "u \<le> v" for u v \<omega>
+  proof -
+    have m1: "0 \<le> min u (tau \<omega>)" using u tau_nn[of \<omega>] by simp
+    have m2: "min u (tau \<omega>) \<le> min v (tau \<omega>)" using uv by simp
+    have le: "min v (tau \<omega>) - min u (tau \<omega>) \<le> v - u" using uv by simp
+    from A_rate[OF w, rule_format, OF m1 m2] have
+      nn: "0 \<le> A (min v (tau \<omega>)) \<omega> - A (min u (tau \<omega>)) \<omega>"
+      and ub: "A (min v (tau \<omega>)) \<omega> - A (min u (tau \<omega>)) \<omega>
+                 \<le> C * (min v (tau \<omega>) - min u (tau \<omega>))" by simp_all
+    have "C * (min v (tau \<omega>) - min u (tau \<omega>)) \<le> C * (v - u)"
+      using C0 le by (rule mult_left_mono[rotated])
+    with nn ub show ?thesis by simp
+  qed
+
+  text \<open>The stopped pair satisfies the hypotheses of the scalar theory.\<close>
+  interpret S: bounded_martingale_compensator M F
+      "\<lambda>v \<omega>. X (min v (tau \<omega>)) \<omega>" "\<lambda>v \<omega>. A (min v (tau \<omega>)) \<omega>" C r
+  proof (rule bounded_martingale_compensator.intro)
+    show "prob_space M" by (rule P)
+    show "0 \<le> C" by (rule C0)
+    show "0 \<le> r" using r0 by simp
+    show "martingale M F 0 (\<lambda>v \<omega>. X (min v (tau \<omega>)) \<omega>)"
+      by (rule stopped_martingale_L2[OF P mgX sqX contX tau_nn tau_stop])
+    show "martingale M F 0 (\<lambda>v \<omega>. (X (min v (tau \<omega>)) \<omega>)\<^sup>2 - A (min v (tau \<omega>)) \<omega>)"
+      by (rule stopped_compensated_square
+            [OF P mgX sqX contX mgZ A0 A_rate C0 tau_nn tau_stop])
+    show "AE \<omega> in M. \<bar>X (min v (tau \<omega>)) \<omega>\<bar> \<le> r" if "0 \<le> v" for v
+      using bndS[OF _ that] by (intro AE_I2) blast
+    show "AE \<omega> in M. \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+        0 \<le> A (min v (tau \<omega>)) \<omega> - A (min u (tau \<omega>)) \<omega>
+        \<and> A (min v (tau \<omega>)) \<omega> - A (min u (tau \<omega>)) \<omega> \<le> C * (v - u)"
+      using rateS by (intro AE_I2) blast
+    show "AE \<omega> in M. A (min 0 (tau \<omega>)) \<omega> = 0"
+      using A0 tau_nn by (intro AE_I2) simp
+    show "AE \<omega> in M. continuous_on {0..} (\<lambda>p. X (min p (tau \<omega>)) \<omega>)"
+    proof (intro AE_I2)
+      fix \<omega> assume w: "\<omega> \<in> space M"
+      have "continuous_on {0..} (\<lambda>p. min p (tau \<omega>))" by (intro continuous_intros)
+      moreover have "(\<lambda>p. min p (tau \<omega>)) ` {0..} \<subseteq> {0..}"
+        using tau_nn[of \<omega>] by auto
+      ultimately show "continuous_on {0..} (\<lambda>p. X (min p (tau \<omega>)) \<omega>)"
+        by (rule continuous_on_compose2[OF contX[OF w], unfolded o_def])
+    qed
+  qed
+  show ?thesis using S.qvp_good_ae S.qvps_eq_A by eventually_elim blast
+qed
+
+text \<open>Letting the radius and the horizon grow together.  For a fixed time the
+  path is bounded on \<open>{0..t}\<close> by continuity, so some level is never reached
+  before \<open>t\<close>; there the stopped process agrees with \<open>X\<close> and the stopped
+  compensator with \<open>A\<close>, and the congruence carries the identification across.
+  The levels are indexed by naturals, so one countable intersection serves all
+  of them.\<close>
+
+theorem qvps_eq_A_localised:
+  fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
+  assumes P: "prob_space M"
+    and mgX: "martingale M F (0::real) X"
+    and sqX: "\<And>s. 0 \<le> s \<Longrightarrow> integrable M (\<lambda>\<omega>. (X s \<omega>)\<^sup>2)"
+    and contX: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega>)"
+    and mgZ: "martingale M F 0 (\<lambda>t \<omega>. (X t \<omega>)\<^sup>2 - A t \<omega>)"
+    and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
+    and A_rate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+                    0 \<le> A v \<omega> - A u \<omega> \<and> A v \<omega> - A u \<omega> \<le> C * (v - u)"
+    and C0: "0 \<le> C"
+    and B0: "0 \<le> B" and X0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<bar>X 0 \<omega>\<bar> \<le> B"
+  shows "AE \<omega> in M. qvp_good C (\<lambda>s. X s \<omega>)
+           \<and> (\<forall>t. 0 \<le> t \<longrightarrow> qvps (\<lambda>s. X s \<omega>) t = A t \<omega>)"
+proof -
+  define lev where "lev = (\<lambda>R::nat. B + real (Suc R))"
+  define tau where
+    "tau = (\<lambda>R::nat. etime (real (Suc R)) {y :: real. lev R \<le> norm y} X)"
+  have lev_pos: "0 < lev R" for R using B0 by (simp add: lev_def)
+  have T_pos: "(0::real) < real (Suc R)" for R by simp
+  have X0lt: "\<bar>X 0 \<omega>\<bar> < lev R" if "\<omega> \<in> space M" for \<omega> R
+    using X0[OF that] by (simp add: lev_def)
+  have step: "AE \<omega> in M. qvp_good C (\<lambda>s. X (min s (tau R \<omega>)) \<omega>)
+      \<and> (\<forall>t. 0 \<le> t \<longrightarrow>
+           qvps (\<lambda>s. X (min s (tau R \<omega>)) \<omega>) t = A (min t (tau R \<omega>)) \<omega>)" for R
+    unfolding tau_def
+    by (rule qvps_eq_A_stopped
+          [OF P mgX sqX contX mgZ A0 A_rate C0 T_pos lev_pos X0lt])
+  have all: "AE \<omega> in M. \<forall>R::nat. qvp_good C (\<lambda>s. X (min s (tau R \<omega>)) \<omega>)
+      \<and> (\<forall>t. 0 \<le> t \<longrightarrow>
+           qvps (\<lambda>s. X (min s (tau R \<omega>)) \<omega>) t = A (min t (tau R \<omega>)) \<omega>)"
+    by (subst AE_all_countable) (rule allI, rule step)
+  have sp: "AE \<omega> in M. \<omega> \<in> space M" by (rule AE_I2) simp
+  from all sp show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    then have key: "\<And>R t. 0 \<le> t \<Longrightarrow>
+        qvps (\<lambda>s. X (min s (tau R \<omega>)) \<omega>) t = A (min t (tau R \<omega>)) \<omega>"
+      and keyg: "\<And>R. qvp_good C (\<lambda>s. X (min s (tau R \<omega>)) \<omega>)"
+      and w: "\<omega> \<in> space M" by blast+
+
+    text \<open>Some level is not reached before a given time, because the path is
+      bounded on the compact interval.\<close>
+    have esc: "\<exists>n :: nat. t < tau n \<omega>" if t: "0 \<le> t" for t
+    proof -
+      have contt: "continuous_on {0..t} (\<lambda>s. X s \<omega>)"
+        by (rule continuous_on_subset[OF contX[OF w]]) auto
+      have "compact ((\<lambda>s. X s \<omega>) ` {0..t})"
+        by (rule compact_continuous_image[OF contt compact_Icc])
+      then have "bounded ((\<lambda>s. X s \<omega>) ` {0..t})" by (rule compact_imp_bounded)
+      then obtain Bd where Bd: "\<And>y. y \<in> (\<lambda>s. X s \<omega>) ` {0..t} \<Longrightarrow> norm y \<le> Bd"
+        by (auto simp: bounded_iff)
+      obtain n :: nat where n: "max t Bd < real n" using reals_Archimedean2 by blast
+      have nt: "t < real (Suc n)" using n by simp
+      have nB: "Bd < lev n" using n B0 by (simp add: lev_def)
+      have "t < tau n \<omega>"
+      proof (rule ccontr)
+        assume "\<not> t < tau n \<omega>"
+        then have le: "tau n \<omega> \<le> t" by simp
+        have "tau n \<omega> \<le> t \<longleftrightarrow> (\<exists>s\<in>{0..t}. X s \<omega> \<in> {y :: real. lev n \<le> norm y})"
+          unfolding tau_def
+        proof (rule etime_le_iff[OF _ t nt])
+          show "(0::real) \<le> real (Suc n)" by simp
+          show "closed {y :: real. lev n \<le> norm y}"
+            by (intro closed_Collect_le continuous_intros)
+          show "continuous_on {0..real (Suc n)} (\<lambda>s. X s \<omega>)"
+            by (rule continuous_on_subset[OF contX[OF w]]) auto
+        qed
+        with le obtain s where s: "s \<in> {0..t}" and hit: "lev n \<le> \<bar>X s \<omega>\<bar>" by auto
+        have "\<bar>X s \<omega>\<bar> \<le> Bd" using Bd[of "X s \<omega>"] s by auto
+        with hit nB show False by simp
+      qed
+      then show ?thesis by blast
+    qed
+
+    show ?case
+    proof
+      show "\<forall>t. 0 \<le> t \<longrightarrow> qvps (\<lambda>s. X s \<omega>) t = A t \<omega>"
+      proof (intro allI impI)
+        fix t :: real assume t: "0 \<le> t"
+        obtain n :: nat where taut: "t < tau n \<omega>" using esc[OF t] by blast
+        have "qvps (\<lambda>s. X (min s (tau n \<omega>)) \<omega>) t = qvps (\<lambda>s. X s \<omega>) t"
+          by (rule qvps_cong) (use taut in simp)
+        moreover have "A (min t (tau n \<omega>)) \<omega> = A t \<omega>" using taut by simp
+        ultimately show "qvps (\<lambda>s. X s \<omega>) t = A t \<omega>" using key[OF t, of n] by simp
+      qed
+    next
+      show "qvp_good C (\<lambda>s. X s \<omega>)"
+        unfolding qvp_good_def
+      proof (intro conjI)
+        show "qvp (\<lambda>s. X s \<omega>) 0 = 0" by simp
+        show "\<forall>p q :: rat. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+            0 \<le> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) - qvp (\<lambda>s. X s \<omega>) (real_of_rat p)
+            \<and> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) - qvp (\<lambda>s. X s \<omega>) (real_of_rat p)
+                \<le> C * (real_of_rat q - real_of_rat p)"
+        proof (intro allI impI)
+        fix p q :: rat assume p: "0 \<le> p" and pq: "p \<le> q"
+        then have q: "0 \<le> q" by simp
+        have pq': "real_of_rat p \<le> real_of_rat q" using pq by (simp add: of_rat_less_eq)
+        have q': "(0::real) \<le> real_of_rat q" using q by simp
+        obtain n :: nat where taut: "real_of_rat q < tau n \<omega>" using esc[OF q'] by blast
+        have ep: "qvp (\<lambda>s. X (min s (tau n \<omega>)) \<omega>) (real_of_rat p)
+            = qvp (\<lambda>s. X s \<omega>) (real_of_rat p)"
+          by (rule qvp_cong) (use taut pq' p in auto)
+        have eq: "qvp (\<lambda>s. X (min s (tau n \<omega>)) \<omega>) (real_of_rat q)
+            = qvp (\<lambda>s. X s \<omega>) (real_of_rat q)"
+          by (rule qvp_cong) (use taut q in auto)
+        from keyg[of n] p pq have
+          "0 \<le> qvp (\<lambda>s. X (min s (tau n \<omega>)) \<omega>) (real_of_rat q)
+                 - qvp (\<lambda>s. X (min s (tau n \<omega>)) \<omega>) (real_of_rat p)
+           \<and> qvp (\<lambda>s. X (min s (tau n \<omega>)) \<omega>) (real_of_rat q)
+                 - qvp (\<lambda>s. X (min s (tau n \<omega>)) \<omega>) (real_of_rat p)
+               \<le> C * (real_of_rat q - real_of_rat p)"
+          unfolding qvp_good_def by blast
+        then show "0 \<le> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) - qvp (\<lambda>s. X s \<omega>) (real_of_rat p)
+            \<and> qvp (\<lambda>s. X s \<omega>) (real_of_rat q) - qvp (\<lambda>s. X s \<omega>) (real_of_rat p)
+                \<le> C * (real_of_rat q - real_of_rat p)"
+          using ep eq by simp
+        qed
+      qed
+    qed
+  qed
+qed
+
+subsection \<open>The matrix identification without the boundedness hypothesis\<close>
+
+text \<open>The polarisation, run through the localised scalar theorem.  The
+  hypotheses are pointwise on \<open>space M\<close> rather than almost everywhere, which is
+  what the stopping arguments need; the intended application reaches that form
+  through the \<open>restrict_full\<close> package of
+  @{theory Continuous_Time_Martingales.Stopped_Localization}.\<close>
+
+theorem qvmat_eq_A_localised:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite" and A :: "real \<Rightarrow> 'a \<Rightarrow> real^'n^'n"
+  assumes P: "prob_space M"
+    and Xcomp: "\<And>i. martingale M F (0::real) (\<lambda>v \<omega>. X v \<omega> $ i)"
+    and XAcomp: "\<And>i j. martingale M F (0::real)
+                    (\<lambda>v \<omega>. X v \<omega> $ i * X v \<omega> $ j - A v \<omega> $ i $ j)"
+    and contX: "\<And>\<omega> i. \<omega> \<in> space M \<Longrightarrow> continuous_on {0..} (\<lambda>s. X s \<omega> $ i)"
+    and A0: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> A 0 \<omega> = 0"
+    and Apsd: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>p q. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+                  (\<forall>y. 0 \<le> y \<bullet> ((A q \<omega> - A p \<omega>) *v y))"
+    and Arate: "\<And>\<omega>. \<omega> \<in> space M \<Longrightarrow> \<forall>p q i j. 0 \<le> p \<longrightarrow> p \<le> q \<longrightarrow>
+                  \<bar>A q \<omega> $ i $ j - A p \<omega> $ i $ j\<bar> \<le> C * (q - p)"
+    and C0: "0 \<le> C"
+    and B0: "0 \<le> B" and X0: "\<And>\<omega> i. \<omega> \<in> space M \<Longrightarrow> \<bar>X 0 \<omega> $ i\<bar> \<le> B"
+  shows "AE \<omega> in M.
+     (\<forall>i j. qvp_good (4 * C) (\<lambda>s. X s \<omega> $ i + X s \<omega> $ j)
+          \<and> qvp_good (4 * C) (\<lambda>s. X s \<omega> $ i - X s \<omega> $ j))
+     \<and> (\<forall>t. 0 \<le> t \<longrightarrow>
+          qvmat (\<lambda>s. X s \<omega>) t = (\<chi> i. \<chi> j. (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2))"
+proof -
+  interpret P: prob_space M by (rule P)
+  have pol: "AE \<omega> in M. qvp_good (4 * C) (\<lambda>s. X s \<omega> $ i + c * (X s \<omega> $ j))
+      \<and> (\<forall>t. 0 \<le> t \<longrightarrow>
+           qvps (\<lambda>s. X s \<omega> $ i + c * (X s \<omega> $ j)) t
+             = A t \<omega> $ i $ i + c * (A t \<omega> $ i $ j + A t \<omega> $ j $ i)
+               + c\<^sup>2 * (A t \<omega> $ j $ j))"
+    if c: "\<bar>c\<bar> \<le> 1" for c i j
+  proof -
+    define Y where "Y = (\<lambda>v \<omega>. X v \<omega> $ i + c * (X v \<omega> $ j))"
+    define G where "G = (\<lambda>v \<omega>. A v \<omega> $ i $ i
+        + c * (A v \<omega> $ i $ j + A v \<omega> $ j $ i) + c\<^sup>2 * (A v \<omega> $ j $ j))"
+    have mgY: "martingale M F 0 Y"
+      unfolding Y_def by (rule polarised_martingale(1)[OF Xcomp XAcomp])
+    have mgZ: "martingale M F 0 (\<lambda>v \<omega>. (Y v \<omega>)\<^sup>2 - G v \<omega>)"
+      unfolding Y_def G_def by (rule polarised_martingale(2)[OF Xcomp XAcomp])
+    have Grate: "\<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+        0 \<le> G v \<omega> - G u \<omega> \<and> G v \<omega> - G u \<omega> \<le> (4 * C) * (v - u)"
+      if w: "\<omega> \<in> space M" for \<omega>
+      unfolding G_def by (rule polarised_rate[OF c C0 Apsd[OF w] Arate[OF w]])
+    have G0: "G 0 \<omega> = 0" if w: "\<omega> \<in> space M" for \<omega>
+      unfolding G_def using A0[OF w] by simp
+    have contY: "continuous_on {0..} (\<lambda>s. Y s \<omega>)" if w: "\<omega> \<in> space M" for \<omega>
+      unfolding Y_def
+      by (intro continuous_on_add continuous_on_mult_left contX[OF w])
+    have Y0: "\<bar>Y 0 \<omega>\<bar> \<le> 2 * B" if w: "\<omega> \<in> space M" for \<omega>
+    proof -
+      have "\<bar>Y 0 \<omega>\<bar> \<le> \<bar>X 0 \<omega> $ i\<bar> + \<bar>c * (X 0 \<omega> $ j)\<bar>"
+        unfolding Y_def by (rule abs_triangle_ineq)
+      also have "\<dots> = \<bar>X 0 \<omega> $ i\<bar> + \<bar>c\<bar> * \<bar>X 0 \<omega> $ j\<bar>" by (simp add: abs_mult)
+      also have "\<dots> \<le> B + 1 * B"
+        using X0[OF w] c B0 by (intro add_mono mult_mono) auto
+      finally show ?thesis by simp
+    qed
+    have "AE \<omega> in M. qvp_good (4 * C) (\<lambda>s. Y s \<omega>)
+        \<and> (\<forall>t. 0 \<le> t \<longrightarrow> qvps (\<lambda>s. Y s \<omega>) t = G t \<omega>)"
+      by (rule qvps_eq_A_localised[OF P mgY
+            compensator_sq_integrable(2)[OF P mgY mgZ G0 Grate] contY mgZ G0 Grate _ _ Y0])
+         (use C0 B0 in auto)
+    then show ?thesis unfolding Y_def G_def .
+  qed
+  have c1: "\<bar>(1::real)\<bar> \<le> 1" by simp
+  have cm1: "\<bar>(- 1::real)\<bar> \<le> 1" by simp
+  have all1: "AE \<omega> in M. \<forall>i \<in> (UNIV :: 'n set). \<forall>j \<in> (UNIV :: 'n set).
+      qvp_good (4 * C) (\<lambda>s. X s \<omega> $ i + X s \<omega> $ j)
+      \<and> (\<forall>t. 0 \<le> t \<longrightarrow> qvps (\<lambda>s. X s \<omega> $ i + X s \<omega> $ j) t
+           = A t \<omega> $ i $ i + (A t \<omega> $ i $ j + A t \<omega> $ j $ i) + A t \<omega> $ j $ j)"
+    by (intro AE_finite_allI; use pol[OF c1] in simp)
+  have all2: "AE \<omega> in M. \<forall>i \<in> (UNIV :: 'n set). \<forall>j \<in> (UNIV :: 'n set).
+      qvp_good (4 * C) (\<lambda>s. X s \<omega> $ i - X s \<omega> $ j)
+      \<and> (\<forall>t. 0 \<le> t \<longrightarrow> qvps (\<lambda>s. X s \<omega> $ i - X s \<omega> $ j) t
+           = A t \<omega> $ i $ i + (- A t \<omega> $ i $ j - A t \<omega> $ j $ i) + A t \<omega> $ j $ j)"
+    by (intro AE_finite_allI; use pol[OF cm1] in simp)
+  from all1 all2 show ?thesis
+  proof eventually_elim
+    case (elim \<omega>)
+    have e1: "qvps (\<lambda>s. X s \<omega> $ i + X s \<omega> $ j) t
+        = A t \<omega> $ i $ i + (A t \<omega> $ i $ j + A t \<omega> $ j $ i) + A t \<omega> $ j $ j"
+      if "0 \<le> t" for i j t using elim(1) that by blast
+    have e2: "qvps (\<lambda>s. X s \<omega> $ i - X s \<omega> $ j) t
+        = A t \<omega> $ i $ i + (- A t \<omega> $ i $ j - A t \<omega> $ j $ i) + A t \<omega> $ j $ j"
+      if "0 \<le> t" for i j t using elim(2) that by blast
+    show ?case
+    proof
+      show "\<forall>i j. qvp_good (4 * C) (\<lambda>s. X s \<omega> $ i + X s \<omega> $ j)
+          \<and> qvp_good (4 * C) (\<lambda>s. X s \<omega> $ i - X s \<omega> $ j)"
+        using elim(1) elim(2) by blast
+    next
+      show "\<forall>t. 0 \<le> t \<longrightarrow>
+          qvmat (\<lambda>s. X s \<omega>) t = (\<chi> i. \<chi> j. (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2)"
+      proof (intro allI impI)
+        fix t :: real assume t: "0 \<le> t"
+        have ent: "qvmat (\<lambda>s. X s \<omega>) t $ i $ j = (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2"
+          for i j by (simp add: qvmat_def e1[OF t] e2[OF t])
+        show "qvmat (\<lambda>s. X s \<omega>) t = (\<chi> i. \<chi> j. (A t \<omega> $ i $ j + A t \<omega> $ j $ i) / 2)"
+          by (simp add: vec_eq_iff ent)
+      qed
+    qed
+  qed
+qed
 
 (*<*)
 end

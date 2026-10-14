@@ -3,10 +3,10 @@ section \<open>The covariation constraint: quotients and densities\<close>
 (*<*)
 theory Covariation_Density
   imports
-    "Disintegration.Disintegration" "HOL-Complex_Analysis.Great_Picard"
+    "Disintegration.Disintegration"
     "Kolmogorov_Chentsov.Dyadic_Interval" "Kolmogorov_Chentsov.Holder_Continuous"
     "Levy_Prokhorov_Metric.Prokhorov_Theorem" "Martingales.Martingale"
-    "Second_Order_Viscosity_Analysis.Rademacher" "Continuous_Path_Spaces.Increment_Moments"
+    "Second_Order_Viscosity_Analysis.Rademacher" "Continuous_Path_Spaces.Difference_Quotients"
 begin
 (*>*)
 

@@ -59,7 +59,7 @@ proof -
   show "sets \<nu> = sets (path_borel T :: ('n pairpath) measure)" unfolding nu by simp
 qed
 
-text \<open>\<open>vanishes_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Increment_Moments}.\<close>
+text \<open>\<open>vanishes_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Difference_Quotients}.\<close>
 
 
 

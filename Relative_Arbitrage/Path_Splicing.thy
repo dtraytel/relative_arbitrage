@@ -15,9 +15,6 @@ text \<open>The surgery: \<open>pcut\<close> truncates at a time, \<open>pglue\<
   definition on functions; what takes room is that each is continuous where
   it should be and measurable for the Borel algebra of the path metric.\<close>
 
-text \<open>\<open>cInf_shift_real\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
-
-
 definition pfut :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pfut r T \<omega> = restrict (\<lambda>s. \<omega> (r + s) - \<omega> r) {0..T - r}"
 
@@ -320,7 +317,7 @@ text \<open>Conditioning on an event of the past keeps martingales martingales:
   \<open>martingale_uniform_measure\<close> live in
   @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
 
-text \<open>\<open>pair_fst_borel\<close> lives in \<open>Exit_Class_Pasting\<close>.\<close>
+text \<open>\<open>pair_fst_borel\<close> lives in @{theory Relative_Arbitrage.Pair_Path_Laws}.\<close>
 
 lemma pshift_measurable:
   fixes x :: "'a::{polish_space,banach}"

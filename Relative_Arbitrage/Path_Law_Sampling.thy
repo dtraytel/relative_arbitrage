@@ -1541,7 +1541,7 @@ text \<open>Only countably many conditions survive the passage from "for each,
   family of conditional expectations of the single terminal value, so
   \<open>prob_space.unif_integrable_of_averaging\<close> applies verbatim
   and \<open>finite_measure.vitali_convergence\<close> finishes, both from
-  @{theory Continuous_Path_Spaces.Conditional_UI}.
+  @{theory Continuous_Time_Martingales.Conditional_UI}.
 
   Larsson--Ruf's argument instead uses a regular conditional distribution
   citing Stroock--Varadhan, Thm 1.3.4; their classical conditioning theorem

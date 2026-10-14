@@ -280,6 +280,38 @@ proof -
     by (rule continuous_le_on_closure[OF contc Icc_rats_dense[OF T t] le])
 qed
 
+text \<open>Approaching a time from below.  An inequality between two
+  functions continuous on \<open>[0, c]\<close> that holds on a set \<open>S \<subseteq> (0, t)\<close>
+  accumulating at \<open>t\<close> holds at \<open>t\<close>.  Its users take \<open>S = (0, t)\<close>, or the
+  rational points of \<open>(0, t)\<close> (\<open>rats_below_closure\<close> below).\<close>
+
+lemma le_from_below:
+  fixes g h :: "real \<Rightarrow> real"
+  assumes gc: "continuous_on {0..c} g" and hc: "continuous_on {0..c} h"
+    and tc: "t \<le> c" and S: "S \<subseteq> {0<..<t}" and t: "t \<in> closure S"
+    and le: "\<And>s. s \<in> S \<Longrightarrow> h s \<le> g s"
+  shows "h t \<le> g t"
+proof -
+  have "closure S \<subseteq> closure {0..c}"
+    by (rule closure_mono) (use S tc in auto)
+  then have "continuous_on (closure S) (\<lambda>s. g s - h s)"
+    by (intro continuous_on_subset[OF continuous_on_diff[OF gc hc]]) simp
+  from continuous_ge_on_closure[OF this t, of 0] le show ?thesis by simp
+qed
+
+lemma rats_below_closure:
+  fixes t :: real assumes "0 < t"
+  shows "t \<in> closure (\<rat> \<inter> {0<..<t})"
+  unfolding closure_approachable
+proof (intro allI impI)
+  fix e :: real assume "0 < e"
+  obtain r where "r \<in> \<rat>" "max 0 (t - e) < r" "r < t"
+    using Rats_dense_in_real[of "max 0 (t - e)" t] assms \<open>0 < e\<close> by auto
+  then have "r \<in> \<rat> \<inter> {0<..<t}" "dist r t < e" by (auto simp: dist_real_def)
+  then show "\<exists>y\<in>\<rat> \<inter> {0<..<t}. dist y t < e" by blast
+qed
+
+
 lemma path_mdist_le_iff:
   fixes g h :: "real \<Rightarrow> 'b::polish_space"
   assumes T: "0 \<le> T"

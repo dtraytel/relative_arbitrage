@@ -3,7 +3,7 @@ section \<open>Families of pair path laws, and their limits\<close>
 (*<*)
 theory Pair_Path_Laws
   imports
-    "Continuous_Path_Spaces.Conditional_UI"
+    "Continuous_Time_Martingales.Conditional_UI" "Continuous_Path_Spaces.Difference_Quotients"
     "Continuous_Time_Martingales.Natural_Filtration" Pair_Path_Space
     "Semicontinuous_Analysis.Semicontinuity"
     "Symmetric_Matrix_Spectra.Poincare_Separation"
@@ -321,7 +321,25 @@ qed
 
 subsection \<open>The limit law's process is a martingale\<close>
 
-text \<open>\<open>fst_coord_borel\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+text \<open>The coordinate projections of a pair are Borel measurable.\<close>
+
+lemma fst_coord_borel:
+  "(\<lambda>p :: (real^'n::finite) \<times> (real^'n^'n). fst p $ i) \<in> borel_measurable borel"
+proof -
+  have f: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n) \<in> borel_measurable borel"
+    by (intro borel_measurable_continuous_onI continuous_intros)
+  show ?thesis by (rule measurable_compose[OF f borel_measurable_nth])
+qed
+
+lemma pair_fst_borel:
+  "(fst :: ('a::topological_space) \<times> ('b::topological_space) \<Rightarrow> 'a)
+     \<in> borel_measurable borel"
+  by (intro borel_measurable_continuous_onI continuous_intros)
+
+lemma pair_snd_borel:
+  "(snd :: ('a::topological_space) \<times> ('b::topological_space) \<Rightarrow> 'b)
+     \<in> borel_measurable borel"
+  by (intro borel_measurable_continuous_onI continuous_intros)
 
 lemma pair_holder_ball_mem:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and x :: "'a"
@@ -1428,7 +1446,6 @@ proof -
   finally show "(\<integral>\<omega>. (?f \<omega>)\<^sup>2 \<partial>N) \<le> 4 * B\<^sup>2 * C" .
 qed
 
-text \<open>\<open>pair_fst_borel\<close>, \<open>pair_snd_borel\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
 
 lemma outerp_borel:
   "(outerp :: real^'n::finite \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"

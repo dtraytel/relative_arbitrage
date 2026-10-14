@@ -3,7 +3,7 @@ section \<open>Tightness of the path laws\<close>
 (*<*)
 theory Path_Tightness
   imports
-    Holder_Interpolation Increment_Moments Path_Space
+    Holder_Interpolation Path_Space "Continuous_Time_Martingales.Stopped_Localization"
 begin
 
 (*>*)
@@ -574,6 +574,104 @@ text \<open>
 definition dyadic_ext :: "(real \<Rightarrow> 'b) \<Rightarrow> real \<Rightarrow> 'b::complete_space" where
   "dyadic_ext f t = lim (\<lambda>k. f (danchor k t))"
 
+subsection \<open>Truncation: the other half of the \<open>3\<epsilon>\<close> argument\<close>
+
+text \<open>Uniform integrability of the squared increments is what passes the
+  covariation constraint's linear inequalities
+
+    \<open>E[(X\<^sub>t - X\<^sub>s)\<^sup>T M (X\<^sub>t - X\<^sub>s) g] \<le> (t-s) h\<^sub>S(M) E[g]\<close>
+
+  to weak limits without a Skorokhod representation (the closedness half
+  of Lemma 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close>). Quantifying only
+  over \<open>M \<succeq> 0\<close> does not work: the set \<open>{a : tr(M a) \<le> h\<^sub>S(M) \<forall> M \<succeq> 0}\<close> is
+  the downward closure of \<open>S\<close> in the psd order, whereas \<open>S\<close> carries lower
+  bounds (\<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close>) and is not downward closed. Weak convergence
+  alone gives only the Fatou direction \<open>liminf \<ge> lim\<close>, which runs the
+  wrong way for the lower constraints.
+
+  The fourth-moment bound of Eq. (2.7) (\<open>fourth_moment_bound_bounded\<close>
+  in \<open>Increment_Moments\<close>, free of Ito and BDG) controls the tail of the
+  squared increment uniformly over the family, the hypothesis
+  \<open>unif_integrable\<close> of \<open>Vitali_Convergence.vitali_convergence\<close>. The
+  estimate is pointwise and elementary: on \<open>{Z\<^sup>2 > R}\<close>,
+  \<open>Z\<^sup>2 = Z\<^sup>4/Z\<^sup>2 < Z\<^sup>4/R\<close>, and off that set the left side vanishes.\<close>
+
+text \<open>Weak convergence upgrades to convergence of unbounded continuous
+  integrals \<open>\<integral>f dP\<^sub>m \<rightarrow> \<integral>f dP\<close> when \<open>f\<close> has uniformly integrable tails:
+  truncate \<open>f\<close> at height \<open>R\<close> --- bounded and continuous, so weak
+  convergence applies directly --- and control the two truncation errors
+  by the tail integral of \<open>|f|\<close> over \<open>{|f| > R}\<close>.
+
+  The error estimate: pointwise the clamped function differs from \<open>f\<close>
+  only where \<open>|f| > R\<close>, and there by at most \<open>|f|\<close> itself, so the error
+  is dominated by that tail integral (\<open>clamp_integral_error\<close>), which
+  \<open>unif_integrable_of_L2_bound\<close> makes uniformly small
+  under an \<open>L\<^sup>2\<close> bound.\<close>
+
+text \<open>The abstract shape of the \<open>3\<epsilon>\<close> argument, with the measure theory
+  removed: a sequence uniformly within \<open>e\<close> of some convergent sequence,
+  whose limit is itself within \<open>e\<close> of \<open>z\<close> for every \<open>e\<close>, converges to
+  \<open>z\<close> -- what truncating the integrand at height \<open>R\<close> and bounding the two
+  errors by the tail integral leaves to prove.
+
+  The margin is \<open>e = \<epsilon>/4\<close> rather than \<open>\<epsilon>/3\<close> so the three terms sum to
+  \<open>3\<epsilon>/4 < \<epsilon>\<close> strictly, as \<open>LIMSEQ_I\<close> wants.\<close>
+
+lemma tendsto_real_of_approximants:
+  fixes x :: "nat \<Rightarrow> real" and z :: real
+  assumes approx: "\<And>e. 0 < e \<Longrightarrow>
+      \<exists>y w. (\<forall>m. \<bar>x m - y m\<bar> \<le> e) \<and> (y \<longlonglongrightarrow> w) \<and> \<bar>w - z\<bar> \<le> e"
+  shows "x \<longlonglongrightarrow> z"
+proof (rule LIMSEQ_I)
+  fix r :: real assume r: "0 < r"
+  have q: "0 < r/4" using r by simp
+  obtain y w where near: "\<And>m. \<bar>x m - y m\<bar> \<le> r/4"
+    and lim: "y \<longlonglongrightarrow> w" and wz: "\<bar>w - z\<bar> \<le> r/4"
+    using approx[OF q] by blast
+  obtain no where no: "\<And>m. no \<le> m \<Longrightarrow> norm (y m - w) < r/4"
+    using LIMSEQ_D[OF lim q] by blast
+  have "norm (x m - z) < r" if m: "no \<le> m" for m
+  proof -
+    have "\<bar>x m - z\<bar> \<le> \<bar>x m - y m\<bar> + \<bar>y m - w\<bar> + \<bar>w - z\<bar>" by simp
+    moreover have "\<bar>y m - w\<bar> < r/4" using no[OF m] by simp
+    ultimately have "\<bar>x m - z\<bar> < r/4 + r/4 + r/4"
+      using near[of m] wz by linarith
+    moreover have "r/4 + r/4 + r/4 < r" using r by simp
+    ultimately show ?thesis by simp
+  qed
+  then show "\<exists>no. \<forall>m\<ge>no. norm (x m - z) < r" by blast
+qed
+
+lemma clamp_diff_le_tail_pointwise:
+  fixes z R :: real
+  assumes Rnn: "0 \<le> R"
+  shows "\<bar>z - max (- R) (min R z)\<bar> \<le> \<bar>z\<bar> * indicat_real {w. R < \<bar>w\<bar>} z"
+  using Rnn by (auto simp: indicator_def abs_if max_def min_def)
+
+lemma clamp_integral_error:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes M: "finite_measure M"
+    and R: "0 \<le> R"
+    and iF: "integrable M f"
+    and iC: "integrable M (\<lambda>\<omega>. max (- R) (min R (f \<omega>)))"
+    and iT: "integrable M (\<lambda>\<omega>. \<bar>f \<omega>\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f \<omega>))"
+  shows "\<bar>(\<integral>\<omega>. f \<omega> \<partial>M) - (\<integral>\<omega>. max (- R) (min R (f \<omega>)) \<partial>M)\<bar>
+      \<le> (\<integral>\<omega>. \<bar>f \<omega>\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f \<omega>) \<partial>M)"
+proof -
+  have diff: "(\<integral>\<omega>. f \<omega> \<partial>M) - (\<integral>\<omega>. max (- R) (min R (f \<omega>)) \<partial>M)
+      = (\<integral>\<omega>. f \<omega> - max (- R) (min R (f \<omega>)) \<partial>M)"
+    by (rule Bochner_Integration.integral_diff[symmetric, OF iF iC])
+  have idiff: "integrable M (\<lambda>\<omega>. f \<omega> - max (- R) (min R (f \<omega>)))"
+    by (rule Bochner_Integration.integrable_diff[OF iF iC])
+  have "\<bar>(\<integral>\<omega>. f \<omega> - max (- R) (min R (f \<omega>)) \<partial>M)\<bar>
+      \<le> (\<integral>\<omega>. \<bar>f \<omega> - max (- R) (min R (f \<omega>))\<bar> \<partial>M)"
+    by (rule integral_abs_bound)
+  also have "\<dots> \<le> (\<integral>\<omega>. \<bar>f \<omega>\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f \<omega>) \<partial>M)"
+    by (rule integral_mono[OF integrable_abs[OF idiff] iT])
+       (rule clamp_diff_le_tail_pointwise[OF R])
+  finally show ?thesis unfolding diff .
+qed
+
 subsection \<open>Weak convergence upgraded by uniform integrability\<close>
 
 text \<open>\<open>weak_conv_on_nn_integral_le\<close> handles a non-negative integrand and
@@ -586,8 +684,8 @@ text \<open>\<open>weak_conv_on_nn_integral_le\<close> handles a non-negative in
   \<open>limsup \<le>\<close> is what uniform integrability buys, via the \<open>3\<epsilon>\<close> argument:
   truncate \<open>f\<close> at height \<open>R\<close> (bounded and continuous, so weak convergence
   applies directly) and control both truncation errors by the tail
-  hypothesis, using \<open>Increment_Moments.clamp_integral_error\<close> and
-  \<open>Increment_Moments.tendsto_real_of_approximants\<close>;
+  hypothesis, using \<open>clamp_integral_error\<close> and
+  \<open>tendsto_real_of_approximants\<close> above;
   \<open>unif_integrable_of_L2_bound\<close> supplies the tail hypothesis from an
   \<open>L\<^sup>2\<close> bound on \<open>f\<close>, which for the squared increment is the
   fourth-moment bound of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.
@@ -1031,10 +1129,61 @@ text \<open>
   \<open>path_laws_convergent_subsequence_vec\<close> are discharged per coordinate by
   \<open>fourth_moment_L2_bochner\<close>, so the
   subsequence extraction of Lemma 2.2 holds for any sequence of laws carrying,
-  per coordinate, an \<open>L\<^sup>2\<close> martingale with a compensated square whose adapted
+  per coordinate, an \<open>L\<^sup>2\<close> martingale with a compensated square whose
   compensator grows at rate at most \<open>C\<close> --- the formal content of the paper's
   admissibility conditions Eqs. (1.7)-(1.8).
 \<close>
+
+
+corollary path_laws_convergent_subsequence_martingale:
+  fixes MM :: "nat \<Rightarrow> 'a measure" and FF :: "nat \<Rightarrow> real \<Rightarrow> 'a measure"
+    and XX :: "nat \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real^'m::finite"
+    and AA :: "nat \<Rightarrow> 'm \<Rightarrow> real \<Rightarrow> 'a \<Rightarrow> real"
+    and T C \<gamma> :: real and x :: "real^'m"
+  assumes T0: "0 \<le> T" and g0: "0 < \<gamma>" and g2: "\<gamma> < 1/4" and C0: "0 \<le> C"
+    and P: "\<And>i. prob_space (MM i)"
+    and Xm: "\<And>i u. 0 \<le> u \<Longrightarrow> XX i u \<in> borel_measurable (MM i)"
+    and mgX: "\<And>i l. martingale (MM i) (FF i) 0 (\<lambda>s \<omega>. XX i s \<omega> $ l)"
+    and sqX: "\<And>i l s. 0 \<le> s \<Longrightarrow> integrable (MM i) (\<lambda>\<omega>. (XX i s \<omega> $ l)\<^sup>2)"
+    and contX: "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> continuous_on {0..} (\<lambda>s. XX i s \<omega>)"
+    and start: "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x"
+    and mgZ: "\<And>i l. martingale (MM i) (FF i) 0
+        (\<lambda>t \<omega>. (XX i t \<omega> $ l)\<^sup>2 - AA i l t \<omega>)"
+    and A0: "\<And>i l \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> AA i l 0 \<omega> = 0"
+    and A_rate: "\<And>i l \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> \<forall>u v. 0 \<le> u \<longrightarrow> u \<le> v \<longrightarrow>
+        0 \<le> AA i l v \<omega> - AA i l u \<omega> \<and> AA i l v \<omega> - AA i l u \<omega> \<le> C * (v - u)"
+  shows "\<exists>a N. strict_mono a \<and> finite_measure N
+      \<and> sets N = sets (path_borel T :: (real \<Rightarrow> real^'m) measure)
+      \<and> prob_space N
+      \<and> weak_conv_on ((\<lambda>i. path_law (MM i) (XX i) T) \<circ> a) N sequentially
+          (mtopology_of (path_metric T :: (real \<Rightarrow> real^'m) metric))"
+proof (rule path_laws_convergent_subsequence_vec[where C = C and x = x, OF T0 g0 g2])
+  show "\<And>i. prob_space (MM i)" by (rule P)
+  show "\<And>i u. 0 \<le> u \<Longrightarrow> XX i u \<in> borel_measurable (MM i)" by (rule Xm)
+  show "continuous_on {0..T} (\<lambda>t. XX i t \<omega>)"
+    if w: "\<omega> \<in> space (MM i)" for i \<omega>
+    by (rule continuous_on_subset[OF contX[OF w]]) auto
+  show "\<And>i \<omega>. \<omega> \<in> space (MM i) \<Longrightarrow> XX i 0 \<omega> = x" by (rule start)
+  have bochner: "integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4)
+      \<and> (\<integral>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+    if u0: "0 \<le> u" and uv: "u \<le> v" for i l u v
+  proof -
+    have contl: "continuous_on {0..} (\<lambda>s. XX i s \<omega> $ l)"
+      if w: "\<omega> \<in> space (MM i)" for \<omega>
+      by (rule continuous_on_component[OF contX[OF w]])
+    have startl: "AE \<omega> in MM i. \<bar>XX i 0 \<omega> $ l\<bar> \<le> \<bar>x $ l\<bar>"
+      by (intro AE_I2) (simp add: start)
+    show ?thesis
+      using fourth_moment_L2_bochner[OF P mgX sqX contl startl mgZ A0 A_rate C0 u0 uv]
+      by blast
+  qed
+  show "integrable (MM i) (\<lambda>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4)"
+    if "0 \<le> u" and "u \<le> v" and "v \<le> T" for i l u v
+    using bochner[OF that(1,2)] by blast
+  show "(\<integral>\<omega>. (XX i v \<omega> $ l - XX i u \<omega> $ l)^4 \<partial>(MM i)) \<le> 8*C\<^sup>2*(v - u)\<^sup>2"
+    if "0 \<le> u" and "u \<le> v" and "v \<le> T" for i l u v
+    using bochner[OF that(1,2)] by blast
+qed
 
 (*<*)
 end

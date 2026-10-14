@@ -176,7 +176,7 @@ qed
 text \<open>
   \<open>usc_sup_over_compactin\<close> asks for \<open>box\<close> topologically, but weak convergence
   of measures is naturally a statement about sequences -- the form of the
-  AFP's Portmanteau theorems and of \<open>Exit_Time_Semicontinuity.etime_shift_box\<close>.
+  AFP's Portmanteau theorems and of \<open>Path_Exit_Times.etime_shift_box\<close>.
 
   The two are equivalent when both spaces are metrizable, by the
   Levy--Prokhorov theorem (\<open>metrizable_weak_conv_topology\<close>), applicable
