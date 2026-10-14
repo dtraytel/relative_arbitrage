@@ -445,7 +445,7 @@ feasible, but the rebase makes ≈ 3 200 unreachable lines live and needs 500–
 **Acceptance:** each pilot's measured line count and timing goes in the completion note, and
 so does each abandoned pilot.
 
-### Phase 5 — library moves and parent changes
+### Phase 5 — library moves and parent changes — **done** (`9b8cb01`)
 
 Each move starts with a dry run: copy the theories, change the imports, load them in PIDE,
 and assert the ancestors with `Theory.nodes_of`, as in REVIEW_3 §6.2. Only then edit the
@@ -822,6 +822,19 @@ SMS 5 594 (7 397), SemiC 1 999 (2 221), SOVA 14 290 (16 244), CTM 7 949 (8 939),
 (3 774), CPS 9 318 (10 363), RA 41 154 (52 217), Statement 1 790 (1 693). User facts 4 049
 (4 233 at `34e6d91`). A full rebuild of all sessions takes about 17 minutes of wall-clock
 time with two threads; RA 5:46, CPS 5:26.
+
+| date | commit | step | result |
+|---|---|---|---|
+| 2026-10-14 | `4039eaf` | Phase 5 move list re-scoped against the post-phase-4 tree (`data/phase5_rescope.json`: two scouts, two adversarial checkers). Already done by phase 4: the Brownian blocks of `Exit_Class_Witness` and the fourth moments (M26, M27), the HOL renames of the SMS re-proofs (F2). Illegal or not recommended, as before: `sbmpair` to WM (F5), `pstopped_vimage_pre_sigma` to CPS (F4, it goes with the toolkit), dropping SemiC from CPS's sessions (M29: `Semicontinuous_Selection` now needs `Berge`) | — |
+| 2026-10-14 | `9b8cb01` | Phase 5, two tracks merged. **Parents:** SemiC on `Lower_Semicontinuous` (no HOL-Probability ancestor), SOVA on SMS, WM on CTM, CPS on `Levy_Prokhorov_Metric` without `HOL-Complex_Analysis` (Arzelà–Ascoli copied into `Equicontinuity` with attribution). **Moves (statements verbatim):** `Semicontinuous_Selection` to CPS; `cInf_mult_pos` to `Semicontinuous_Envelopes`; the CIS/`Sup_Convolution` semicontinuity lemmas to `Semicontinuity`; the `outerp` family, psd facts, Courant–Fischer bound, threshold lemma, rotation continuity, polarisation and form bounds into SMS, with the new `Orthogonal_Projections` (`rank1proj`, `projmat`); `Increment_Moments` (martingale part), `Conditional_UI`, `Stopped_Localization` and the new `Dyadic_Grids` and `Stopping_Time_Sampling` into CTM; the non-martingale tail of `Increment_Moments` into `Path_Tightness` and the new `Difference_Quotients`; the QV identifications into `Adapted_Quadratic_Variation`; the generic exit-time semicontinuity block into `Path_Exit_Times`; `pball_exit` into `Path_Stopping_Times`; generic `Essential_Infimum`, `Stopping_Times` and `Semidirect_Kernels` facts into CTM; the independence lemmas into `Product_Brownian_Motion`; `Integrability_Criteria` reduced to four lemmas on `HOL-Probability`. **Clone:** SMS's `outer_prod` and four of its lemmas replaced by HOL-Analysis's identical ones. One strengthening: `path_laws_convergent_subsequence_martingale` (was `…_market`) drops an unused hypothesis. ROOT descriptions and abstracts updated. Fingerprints against the end of phase 4: 0 changed, 7 gone (the five `outer_prod` twins, `usc_open_lt` = `open_usc_sublevel`, the rename). Dead code: none. Build (2 threads): CPS 6:19 → 1:47, RA 7:35 → 5:38, WM 2:11 → 1:00 | all sessions build; 574 roots resolve; no oracles |
+
+**State after phase 5:** 85 262 lines: SMS 6 547, SemiC 1 356, SOVA 14 133, CTM 11 248, WM
+3 308, CPS 8 331, RA 38 549, Statement 1 790. RA lost 2 605 lines to the libraries.
+Left for phase 8 (reported by the reviewers): text-only sections in `Operator_Formula`,
+the misplaced "constant-volatility Gaussian member" text in `Pair_Path_Space`, paper and
+market wording in WM, `Path_Exit_Times` and `Adapted_Quadratic_Variation` prose, and
+`Paper_Readings`' hidden `outer_prod_zero_left/_right`, which now duplicate HOL's (Statement
+is frozen: owner decision). `Statement/theorem_1_1_unfolded.html` has stale line links (M38).
 
 **State after phase 2:** 104 811 lines (baseline 120 586 at `41fca32`), of which RA 53 206
 (was 64 995), SOVA 16 687 (18 461), CPS 11 352 (13 503). Dead code: 196 lines, all kept on
