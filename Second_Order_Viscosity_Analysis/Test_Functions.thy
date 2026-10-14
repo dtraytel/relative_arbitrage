@@ -314,7 +314,7 @@ qed
 
 text \<open>The form used downstream has the jet matrix arrive as an abstract
   symmetric bounded linear map, as produced throughout
-  @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}.\<close>
+  @{theory Second_Order_Viscosity_Analysis.Doubled_Functional_Jets}.\<close>
 
 subsection \<open>The jet interface to Definition 3.1(b)\<close>
 

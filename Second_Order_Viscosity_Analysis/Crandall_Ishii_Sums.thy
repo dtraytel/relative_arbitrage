@@ -8,7 +8,7 @@ begin
 
 (*>*)
 
-text \<open>The machinery of @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}
+text \<open>The machinery of @{theory Second_Order_Viscosity_Analysis.Doubled_Functional_Jets}
   and @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables} proves the
   Crandall--Ishii theorem on sums in the distributed form a comparison
   argument consumes.  This theory assembles it into standalone statements in

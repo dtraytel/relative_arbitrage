@@ -581,7 +581,7 @@ text \<open>A scaled subsolution and a supersolution touching an ordered jet pai
   development in \<open>Rademacher\<close>,
   \<open>Alexandrov\<close>,
   \<open>Jensen_Lemma\<close> and
-  \<open>Theorem_On_Sums\<close>.\<close>
+  \<open>Doubled_Functional_Jets\<close>.\<close>
 
 text \<open>The quadratic form of \<open>W\<close> is bounded in absolute value by \<open>c\<parallel>k\<parallel>\<^sup>2\<close>,
   uniformly over the family and independent of the tilt.\<close>

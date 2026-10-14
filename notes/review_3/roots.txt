@@ -105,7 +105,7 @@ Jensen_Lemma.jensen_lemma
 # The Crandall-Ishii theorem on sums (ROOT); abstract: 'at a local maximum of u(x)+w(y) produces second-order je
 Crandall_Ishii_Sums.theorem_on_sums_quadratic_closed
 Crandall_Ishii_Sums.theorem_on_sums_quadratic
-Theorem_On_Sums.sums_matrix_inequality
+Doubled_Functional_Jets.sums_matrix_inequality
 # Second-order semijets and their closures (abstract: 'stated in the vocabulary of the literature')
 Crandall_Ishii_Sums.superjet_def
 Crandall_Ishii_Sums.subjet_def
@@ -478,8 +478,8 @@ Crandall_Ishii_Sums.superjet_supconv_form_lower    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.supconv_optimizer_location    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.superjet_supconv_transfer    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.bounded_symmetric_forms_subseq    # FIX_THEN_KEEP
-Theorem_On_Sums.doubling_limit_maximises    # FIX_THEN_KEEP
-Theorem_On_Sums.supconv_jet_transfer    # FIX_THEN_KEEP
+Doubled_Functional_Jets.doubling_limit_maximises    # FIX_THEN_KEEP
+Doubled_Functional_Jets.supconv_jet_transfer    # FIX_THEN_KEEP
 # sova_tools
 Soft_Penalty.soft_grad_coeff_pos    # KEEP_API
 Soft_Penalty.soft_grad_nonzero    # KEEP_API
@@ -633,7 +633,7 @@ Doubling_Of_Variables.doubled_slice_numerator_snd    # COROLLARY
 Doubling_Of_Variables.doubled_jet_slice_snd    # COROLLARY
 Doubling_Of_Variables.tilted_doubled_hessian_nonpositive    # COROLLARY
 Doubling_Of_Variables.doubled_supconv_jet_exists_shifted    # COROLLARY
-Theorem_On_Sums.second_order_form_unique    # COROLLARY
+Doubled_Functional_Jets.second_order_form_unique    # COROLLARY
 Sup_Convolution.supconv_alexandrov    # COROLLARY
 Increment_Moments.expectation_increment_sq    # COROLLARY
 Path_Exit_Times.pexit_cap_eq    # COROLLARY

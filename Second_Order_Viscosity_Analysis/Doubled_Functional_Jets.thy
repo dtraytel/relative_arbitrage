@@ -1,7 +1,7 @@
-section \<open>The Crandall--Ishii theorem on sums\<close>
+section \<open>Second-order jets of the doubled functional\<close>
 
 (*<*)
-theory Theorem_On_Sums
+theory Doubled_Functional_Jets
   imports
     Jensen_Lemma Sup_Convolution "Symmetric_Matrix_Spectra.Matrix_Algebra"
 begin

@@ -3,7 +3,7 @@ section \<open>Doubling of variables\<close>
 (*<*)
 theory Doubling_Of_Variables
   imports
-    Theorem_On_Sums "Symmetric_Matrix_Spectra.Symmetric_Spectral"
+    Doubled_Functional_Jets "Symmetric_Matrix_Spectra.Symmetric_Spectral"
 begin
 
 (*>*)
@@ -27,7 +27,7 @@ text \<open>
   functional and their slices in each variable, Jensen's tilt and its
   removal, the block structure of the resulting Hessians and the bounds on
   them, and the sequence lemmas used to pass to a limit.  It builds on
-  @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}, which supplies
+  @{theory Second_Order_Viscosity_Analysis.Doubled_Functional_Jets}, which supplies
   the matrix inequality between the two diagonal blocks.
 
   Everything is at \<open>'a::euclidean_space\<close> except the statements that
@@ -917,7 +917,7 @@ lemma interior_radius_pos:
 text \<open>A comparison argument reads the two block Hessians as symmetric
   matrices, so it needs \<open>transpose Xm = Xm\<close> and \<open>transpose Ym = Ym\<close>.  Both
   follow from the jet: \<open>matrix_of_symmetric\<close>
-  (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}) converts an
+  (@{theory Second_Order_Viscosity_Analysis.Doubled_Functional_Jets}) converts an
   abstract symmetric linear map into a symmetric matrix, fed by
   \<open>linear_block_fst_gen\<close>, \<open>sym_block_fst_gen\<close> and their \<open>snd\<close> twins.\<close>
 
@@ -2626,7 +2626,7 @@ text \<open>With those block properties, the \<open>psd\<close> ordering needs n
 subsection \<open>Transferring the jet back from the sup-convolution to \<open>u\<close>\<close>
 
 text \<open>The viscosity hypotheses concern \<open>u\<close> and \<open>w\<close>, not the
-  sup-convolutions. \<open>supconv_dominates_shift\<close> (@{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums})
+  sup-convolutions. \<open>supconv_dominates_shift\<close> (@{theory Second_Order_Viscosity_Analysis.Doubled_Functional_Jets})
   bridges them: if the sup-convolution at \<open>x\<close> is attained at \<open>y\<^sub>s\<close>,
   increments of \<open>u\<close> at \<open>y\<^sub>s\<close> are dominated by increments of
   \<open>supconv u \<epsilon>\<close> at \<open>x\<close> with the same increment vector \<open>k\<close>. A local

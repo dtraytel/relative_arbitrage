@@ -480,7 +480,7 @@ text \<open>The mirror image for the supersolution side: a subjet of \<open>v\<c
 
 subsection \<open>The jet hypothesis only ever needs one side\<close>
 
-text \<open>\<open>superjet_local_max_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}.\<close>
+text \<open>\<open>superjet_local_max_onesided\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubled_Functional_Jets}.\<close>
 
 text \<open>\<open>onesided_of_dominated\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
