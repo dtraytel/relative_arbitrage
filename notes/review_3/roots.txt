@@ -25,7 +25,7 @@ Matrix_Algebra.trace_matrix_sum
 Matrix_Algebra.transpose_matrix_sum
 Matrix_Algebra.trace_conjugate
 # outer products (abstract: 'a calculus of trace, transpose, outer products, ...')
-Outer_Products.outer_prod_def
+Higher_Differentiability_Multi.outer_prod_def   # HOL-Analysis's outer_prod, which replaces the identical SMS copy in phase 5
 Outer_Products.outer_prod_mult
 Outer_Products.trace_mult_outer_sum
 # orthonormal families
@@ -457,7 +457,7 @@ Crandall_Ishii_Sums.subjet_neg_superjet    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.superjet_mono    # KEEP_API
 Crandall_Ishii_Sums.superjet_subset_cl    # KEEP_API
 Crandall_Ishii_Sums.subjet_subset_cl    # KEEP_API
-Sup_Convolution.usc_open_lt    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
+Semicontinuity.open_usc_sublevel    # FIX_THEN_KEEP (replaces its twin Sup_Convolution.usc_open_lt in phase 5)
 Sup_Convolution.usc_attains_sup_compact    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
 Sup_Convolution.supconv_attained_usc    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
 Crandall_Ishii_Sums.quad_root_bound    # FIX_THEN_KEEP
