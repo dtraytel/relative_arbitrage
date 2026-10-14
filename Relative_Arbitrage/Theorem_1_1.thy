@@ -36,11 +36,15 @@ theorem xval_bounded:
 proof -
   obtain rK :: real where KB: "K \<subseteq> cball 0 rK"
     using compact_cball_bound[OF cK] by blast
+  have nk: "0 < real (CARD('n) - k)" using kn by simp
   show ?thesis
   proof (intro exI[of _ "rK * rK / real (CARD('n) - k)"] allI)
     fix y
     have "iexit_val k L K y \<le> ennreal ((rK * rK - y \<bullet> y) / real (CARD('n) - k))"
-      by (rule iexit_val_le_ball_bound[OF kn L1 compact_imp_closed[OF cK] KB])
+      unfolding iexit_val_eq_icovariation_val
+      by (rule icovariation_val_le_ball_bound[OF closed_sconstraint sconstraint_convex
+          mat_1_rate_in_sconstraint[OF L1] sconstraint_bounds(1,2)[OF order_trans[OF zero_le_one L1]]
+          nk sconstraint_trace_ge[OF kn] compact_imp_closed[OF cK] KB])
     also have "\<dots> \<le> ennreal (rK * rK / real (CARD('n) - k))"
       by (intro ennreal_leI divide_right_mono) auto
     finally show "xval k L K y \<le> ennreal (rK * rK / real (CARD('n) - k))"
@@ -53,8 +57,16 @@ theorem xval_usc:
   assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and cK: "compact K"
     and lt: "enn2real (xval k L K z) < c"
   shows "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (xval k L K y) < c"
-  using iexit_val_real_usc[OF kn L1 cK] lt
-  by (simp add: xval_eq_iexit_val[OF compact_imp_closed[OF cK] L1])
+proof -
+  have nk: "0 < real (CARD('n) - k)" using kn by simp
+  have lt': "enn2real (icovariation_val (sconstraint k L) K z) < c"
+    using lt by (simp add: xval_eq_iexit_val[OF compact_imp_closed[OF cK] L1] iexit_val_eq_icovariation_val)
+  have "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> enn2real (icovariation_val (sconstraint k L) K y) < c"
+    by (rule icovariation_val_real_usc[OF closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1]
+        sconstraint_bounds[OF order_trans[OF zero_le_one L1]] nk sconstraint_trace_ge[OF kn] cK lt'])
+  then show ?thesis
+    by (simp add: xval_eq_iexit_val[OF compact_imp_closed[OF cK] L1] iexit_val_eq_icovariation_val)
+qed
 
 theorem xval_subsolution:
   fixes K :: "(real^'n::finite) set"
