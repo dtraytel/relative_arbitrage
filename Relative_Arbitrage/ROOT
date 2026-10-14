@@ -42,6 +42,7 @@ session Relative_Arbitrage = Path_Space_Operations +
     Value_Function_Supersolution_Case_2
     Value_Function_Tangential_Field
     Value_Function_Assembly
+    Covariation_Operator
     Value_Function_Uniqueness
     Exit_Class_Infinite
     Exit_Class_Marginals

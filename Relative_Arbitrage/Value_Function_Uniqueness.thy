@@ -4,6 +4,7 @@ section \<open>Theorem 1.1: the value function is the unique viscosity solution\
 theory Value_Function_Uniqueness
   imports
     "Relative_Arbitrage_Equation.Comparison_Instance" Exit_Class_Infinite Value_Function_Assembly
+    Covariation_Operator
 begin
 (*>*)
 
@@ -175,11 +176,101 @@ proof -
           tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0] Kc KB Tbig])
 qed
 
-text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause.\<close>  \<open>exit_val\<close> is upper semicontinuous
-  (\<open>covariation_val_real_usc\<close>), nonnegative, globally bounded (\<open>covariation_val_real_bounded\<close>)
-  and satisfies both clauses of Definition 3.1 with their boundary gates
-  (\<open>exit_val_subsol_bc\<close>, \<open>exit_val_supersol_bc\<close>); on an expandable \<open>K\<close> it is the
-  only such function.\<close>
+text \<open>\<^bold>\<open>Theorem 1.1, uniqueness clause.\<close>  \<open>covariation_val\<close> is upper
+  semicontinuous (\<open>covariation_val_real_usc\<close>), nonnegative, globally bounded
+  (\<open>covariation_val_real_bounded\<close>) and satisfies both clauses of Definition 3.1
+  with their boundary gates (\<open>covariation_val_subsol_bc\<close>,
+  \<open>covariation_val_supersol_bc\<close>); on an expandable \<open>K\<close> it is the only such
+  function.  The comparison principle applies because \<^const>\<open>covariation_op_real\<close>
+  is a geometric operator (\<open>covariation_op_real_geometric_operator\<close>): the
+  hypotheses on \<open>S\<close> are those of the supersolution property, and the
+  sphere-tangential rates supply a rate annihilating each gradient.\<close>
+
+theorem covariation_val_uniqueness:
+  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  assumes T0: "0 < T"
+    and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
+    and KB: "K \<subseteq> cball 0 rK"
+    and Tbig: "2 * (rK * rK) / \<theta> < T"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+    and Bu: "\<And>y. \<bar>u y\<bar> \<le> Bd"
+    and subu: "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_lsc S)
+      (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
+    and supu: "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_usc S)
+      (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
+    and x: "x \<in> K"
+  shows "u x = enn2real (covariation_val S T K x)"
+proof -
+  define v where "v = (\<lambda>z. enn2real (covariation_val S T K z))"
+  define F where "F = (covariation_op_real S :: real^'n \<Rightarrow> real^'n^'n \<Rightarrow> real)"
+  have kill: "\<exists>a\<in>S. a *v p = 0" for p :: "real^'n"
+    by (rule tangential_rates_kill) (rule tan1)
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  have SST: "tanpU (mat 1) 0 ** transpose (tanpU (mat 1) (0 :: real^'n)) \<in> S"
+    by (rule tan1) simp
+  have "norm x \<le> rK" using subsetD[OF KB x] by simp
+  then have r0: "0 \<le> rK" using norm_ge_zero[of x] by linarith
+  have GO: "geometric_operator F"
+    unfolding F_def by (rule covariation_op_real_geometric_operator[OF B Spsd rot kill])
+  have lscF: "op_lsc F = covariation_op_lsc S"
+    unfolding F_def by (rule op_lsc_covariation_op_real[OF B Spsd kill])
+  have uscF: "op_usc F = covariation_op_usc S"
+    unfolding F_def by (rule op_usc_covariation_op_real[OF B Spsd kill])
+  have Fop: "ereal (F p M) = covariation_op S p M" for p M
+    unfolding F_def by (rule ereal_covariation_op_real[OF B Spsd kill])
+  define BB where "BB = max Bd (rK * rK / \<theta>)"
+  have Bv: "\<bar>v y\<bar> \<le> BB" for y
+  proof -
+    have "\<bar>v y\<bar> \<le> rK * rK / \<theta>"
+      unfolding v_def
+      by (rule covariation_val_real_bounded[OF less_imp_le[OF T0] B0 B th0 th KB r0])
+    then show ?thesis unfolding BB_def by (simp add: le_max_iff_disj)
+  qed
+  have Bu': "\<bar>u y\<bar> \<le> BB" for y
+    using Bu[of y] unfolding BB_def by (simp add: le_max_iff_disj)
+  have uscv: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c" if "v z < c" for c z
+    unfolding v_def
+    by (rule covariation_val_real_usc[OF T0 B0 B D0 D Sc SST Kc that[unfolded v_def]])
+  have subv: "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (op_lsc F)
+      (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
+  proof -
+    have "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op S)
+        (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
+      unfolding v_def by (rule covariation_val_subsol_bc[OF T0 B0 B D0 D Sc Sv SST Spsd Kc])
+    then have "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op S)
+        (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
+      by (rule visc_subsol_gen_test_mono) (rule test_fun_C2_imp_test_fun_at)
+    then show ?thesis
+      by (rule visc_subsol_gen_mono) (metis op_lsc_le Fop)
+  qed
+  have supv: "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (op_usc F)
+      (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
+  proof -
+    have "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S)
+        (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
+      unfolding v_def
+      by (rule covariation_val_supersol_bc[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 th0 th
+            Kc KB Tbig])
+    then show ?thesis unfolding uscF
+      by (rule visc_supersol_gen_test_mono) (rule test_fun_C2_imp_test_fun_at)
+  qed
+  have "u x = v x"
+    by (rule geometric_operator.uniqueness_expandable[OF GO cK neK expK uscu uscv Bu' Bv
+          subu[folded lscF] supu[folded uscF] subv supv x])
+  then show ?thesis unfolding v_def .
+qed
+
+text \<open>The paper's statement, at \<open>S = sconstraint k L\<close>.\<close>
 
 theorem theorem_1_1_uniqueness_faithful:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
@@ -196,38 +287,17 @@ theorem theorem_1_1_uniqueness_faithful:
     and x: "x \<in> K"
   shows "u x = enn2real (exit_val k L T K x)"
 proof -
-  define v where "v = (\<lambda>z. enn2real (exit_val k L T K z))"
-  define B where "B = max Bd (rK * rK / real (CARD('n) - k))"
-  have L0: "1 \<le> L" using L1 by simp
-  have T0': "0 \<le> T" using T0 by simp
-  have L0': "0 \<le> L" using L1 by simp
-  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
-  have Bv: "\<bar>v y\<bar> \<le> B" for y
-  proof -
-    have "\<bar>v y\<bar> \<le> rK * rK / real (CARD('n) - k)"
-      unfolding v_def exit_val_eq_covariation_val
-      by (rule covariation_val_real_bounded[OF T0' sconstraint_trace_bounds[OF kn L0'] KB r0])
-    then show ?thesis unfolding B_def by (simp add: le_max_iff_disj)
-  qed
-  have Bu': "\<bar>u y\<bar> \<le> B" for y
-    using Bu[of y] unfolding B_def by (simp add: le_max_iff_disj)
-  have uscv: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c" if "v z < c" for c z
-    unfolding v_def exit_val_eq_covariation_val
-    by (rule covariation_val_real_usc[OF T0 sconstraint_bounds[OF L0'] closed_sconstraint
-        mat_1_rate_in_sconstraint[OF L0] Kc that[unfolded v_def exit_val_eq_covariation_val]])
-  have supv: "visc_supersol_env2 k L K
-      (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
-    unfolding v_def
-    by (rule visc_supersol_env_imp_env2
-          [OF exit_val_supersol_bc[OF T0 L1 k1 kn Kc KB Tbig]])
-  have subv: "visc_subsol_env2 k L K
-      (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
-    unfolding v_def
-    by (rule visc_subsol_env_imp_env2[OF exit_val_subsol_bc[OF T0 L0 Kc kn]])
-  have "u x = v x"
-    by (rule uniqueness_expandable
-        [OF k1 kn L0 cK neK expK uscu uscv Bu' Bv subu supu subv supv x])
-  then show ?thesis unfolding v_def by simp
+  have L0: "0 \<le> L" using L1 by simp
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  show ?thesis
+    unfolding exit_val_eq_covariation_val
+    by (rule covariation_val_uniqueness[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
+          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0]
+          cK neK expK KB Tbig uscu Bu
+          subu[unfolded visc_subsol_env2_eq_gen ell_op_lsc_eq_covariation_op_lsc[OF k1 kn L1]]
+          supu[unfolded visc_supersol_env2_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]]
+          x])
 qed
 
 section \<open>Example 3.1 from the interior lower bound\<close>
@@ -648,6 +718,41 @@ qed
 
 text \<open>\<^bold>\<open>Clause (4): uniqueness.\<close>\<close>
 
+theorem icovariation_val_uniqueness:
+  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  assumes B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
+    and usc: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+    and bnd: "\<And>y. \<bar>u y\<bar> \<le> Bd"
+    and sub: "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_lsc S)
+        (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
+    and sups: "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_usc S)
+        (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
+    and xK: "x \<in> K"
+  shows "u x = enn2real (icovariation_val S K x)"
+proof -
+  have SST: "tanpU (mat 1) 0 ** transpose (tanpU (mat 1) (0 :: real^'n)) \<in> S"
+    by (rule tan1) simp
+  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
+  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
+    using compact_cball_bound[OF cK] by blast
+  obtain T :: real where T0: "0 < T" and "rK * rK / \<theta> < T"
+    and T2: "2 * (rK * rK) / \<theta> < T" and eq: "icovariation_val S K = covariation_val S T K"
+    by (rule icovariation_val_eq_covariation_val_horizon[OF Sc Sv SST B0 B th0 th Kc KB])
+  show ?thesis unfolding eq
+    by (rule covariation_val_uniqueness[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 th0 th
+          cK neK expK KB T2 usc bnd sub sups xK])
+qed
+
 theorem iexit_val_uniqueness:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
   assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k"
@@ -661,17 +766,17 @@ theorem iexit_val_uniqueness:
     and xK: "x \<in> K"
   shows "u x = enn2real (iexit_val k L K x)"
 proof -
-  have L: "1 \<le> L" using L1 by simp
-  have Kc: "closed K" by (rule compact_imp_closed[OF cK])
-  obtain rK :: real where r0: "0 \<le> rK" and KB: "K \<subseteq> cball 0 rK"
-    using compact_cball_bound[OF cK] by blast
-  obtain T :: real where T0: "0 < T" and "rK * rK / real (CARD('n) - k) < T"
-    and T2: "2 * (rK * rK) / real (CARD('n) - k) < T"
-    and eq: "iexit_val k L K = exit_val k L T K"
-    by (rule iexit_val_eq_exit_val_horizon[OF kn L Kc KB])
-  show ?thesis unfolding eq
-    by (rule theorem_1_1_uniqueness_faithful[OF T0 L1 k1 kn cK neK expK KB r0
-          T2 usc bnd sub sups xK])
+  have L0: "0 \<le> L" using L1 by simp
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  show ?thesis
+    unfolding iexit_val_eq_icovariation_val
+    by (rule icovariation_val_uniqueness[OF sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
+          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0]
+          cK neK expK usc bnd
+          sub[unfolded visc_subsol_env2_eq_gen ell_op_lsc_eq_covariation_op_lsc[OF k1 kn L1]]
+          sups[unfolded visc_supersol_env2_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]]
+          xK])
 qed
 
 text \<open>\<^bold>\<open>Clauses (3) and (4) with the paper's own envelope.\<close>  Definition 3.1
@@ -804,19 +909,28 @@ text \<open>The interior clause on its own, which is Definition 3.1(b) for
   \<^const>\<open>iexit_val\<close> with the paper's envelope: the boundary gate is empty,
   since the value function is nonnegative and so is its liminf within \<open>K\<close>.\<close>
 
-theorem iexit_val_uniqueness_K:
+theorem icovariation_val_uniqueness_K:
   fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
-  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k"
+  assumes B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
     and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
     and usc: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
       \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
     and bnd: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bd"
-    and sub: "visc_subsol_env2 k L K
+    and sub: "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_lsc S)
         (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
-    and sups: "visc_supersol_env2 k L K
+    and sups: "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_usc S)
         (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0}) (lsc_envK K u)"
     and xK: "x \<in> K"
-  shows "u x = enn2real (iexit_val k L K x)"
+  shows "u x = enn2real (icovariation_val S K x)"
 proof -
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
   have Bu: "u y \<le> Bd" if "y \<in> K" for y
@@ -842,16 +956,45 @@ proof -
   have gate2: "{z \<in> K - interior K. lsc_env ubar z < 0}
       = {z \<in> K - interior K. lsc_envK K u z < 0}"
     using lscK by auto
-  have sub': "visc_subsol_env2 k L K
+  have sub': "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_lsc S)
       (interior K \<union> {z \<in> K - interior K. 0 < ubar z}) ubar"
-    unfolding gate1 by (rule visc_subsol_env2_cong[OF _ _ sub]) (use eqK iK in auto)
-  have sups': "visc_supersol_env2 k L K
+    unfolding gate1
+    by (rule visc_subsol_gen_cong[OF sub]) (use eqK iK in \<open>auto simp: eventually_principal\<close>)
+  have sups': "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_usc S)
       (interior K \<union> {z \<in> K - interior K. lsc_env ubar z < 0}) (lsc_env ubar)"
     unfolding gate2
-    by (rule visc_supersol_env2_cong[OF _ _ sups]) (use lscK iK in auto)
-  have "ubar x = enn2real (iexit_val k L K x)"
-    by (rule iexit_val_uniqueness[OF kn L1 k1 cK neK expK usc' bnd' sub' sups' xK])
+    by (rule visc_supersol_gen_cong[OF sups]) (use lscK iK in \<open>auto simp: eventually_principal\<close>)
+  have "ubar x = enn2real (icovariation_val S K x)"
+    by (rule icovariation_val_uniqueness[OF B0 B D0 D Sc Sv Spsd rot tan1 n2 th0 th
+          cK neK expK usc' bnd' sub' sups' xK])
   then show ?thesis using eqK[OF xK] by simp
+qed
+
+theorem iexit_val_uniqueness_K:
+  fixes K :: "(real^'n::finite) set" and u :: "real^'n \<Rightarrow> real"
+  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and k1: "1 \<le> k"
+    and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
+    and usc: "\<And>c z. z \<in> K \<Longrightarrow> u z < c \<Longrightarrow>
+      \<exists>e>0. \<forall>y\<in>K. dist z y < e \<longrightarrow> u y < c"
+    and bnd: "\<And>y. y \<in> K \<Longrightarrow> \<bar>u y\<bar> \<le> Bd"
+    and sub: "visc_subsol_env2 k L K
+        (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
+    and sups: "visc_supersol_env2 k L K
+        (interior K \<union> {x \<in> K - interior K. lsc_envK K u x < 0}) (lsc_envK K u)"
+    and xK: "x \<in> K"
+  shows "u x = enn2real (iexit_val k L K x)"
+proof -
+  have L0: "0 \<le> L" using L1 by simp
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  show ?thesis
+    unfolding iexit_val_eq_icovariation_val
+    by (rule icovariation_val_uniqueness_K[OF sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
+          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 sconstraint_trace_bounds(3,4)[OF kn L0]
+          cK neK expK usc bnd
+          sub[unfolded visc_subsol_env2_eq_gen ell_op_lsc_eq_covariation_op_lsc[OF k1 kn L1]]
+          sups[unfolded visc_supersol_env2_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]]
+          xK])
 qed
 
 text \<open>\<^bold>\<open>Example 3.1\<close>, in closed form and with no horizon left in it, for the
