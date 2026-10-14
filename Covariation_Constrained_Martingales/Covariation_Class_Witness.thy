@@ -100,14 +100,14 @@ qed
 
 lemma prob_space_sbmpair_law:
   assumes T: "0 \<le> T"
-  shows "prob_space (pair_law_of T (sbmpair S T)
+  shows "prob_space (process_law T (sbmpair S T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))"
-  unfolding pair_law_of_def
+  unfolding process_law_def
   by (rule BMP.prob_space_distr[OF sbmpair_measurable[OF T]])
 
 lemma sbmpair_law_start:
   assumes T: "0 \<le> T"
-  shows "AE \<omega> in pair_law_of T (sbmpair S T)
+  shows "AE \<omega> in process_law T (sbmpair S T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure).
         fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0"
 proof -
@@ -117,11 +117,11 @@ proof -
   have mset: "{\<omega> \<in> space ?B. fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0}
       \<in> sets ?B"
     by (rule start_set_sets[OF refl])
-  have iff: "(AE \<omega> in pair_law_of T (sbmpair S T) ?M.
+  have iff: "(AE \<omega> in process_law T (sbmpair S T) ?M.
         fst (\<omega> 0) = (0 :: real^'n) \<and> snd (\<omega> 0) = 0)
       = (AE \<omega> in ?M. fst (sbmpair S T \<omega> 0) = (0 :: real^'n)
           \<and> snd (sbmpair S T \<omega> 0) = 0)"
-    unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
+    unfolding process_law_def by (rule AE_distr_iff[OF phim mset])
   have z: "(0::real) \<in> {0..T}" using T by simp
   have "AE \<omega> in ?M. cbmX (0 :: real^'n) 0 \<omega> = bmX 0 0 \<omega>"
     by (intro cbmX_ae_eq) simp
@@ -136,17 +136,17 @@ qed
 lemma sbmpair_law_diffquot:
   assumes T: "0 \<le> T" and S: "closed S"
     and SST: "\<sigma> ** transpose \<sigma> \<in> S"
-  shows "AE \<omega> in pair_law_of T (sbmpair \<sigma> T)
+  shows "AE \<omega> in process_law T (sbmpair \<sigma> T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure).
         \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
           (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?Q = "pair_law_of T (sbmpair \<sigma> T) ?M"
+  let ?Q = "process_law T (sbmpair \<sigma> T) ?M"
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have phim: "sbmpair \<sigma> T \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF T])
   have spQ: "space ?Q = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_pair_law_of)
+    by (rule space_process_law)
   have one: "AE \<omega> in ?Q.
       (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S"
     if pq: "p \<in> {0..T}" "q \<in> {0..T}" "p < q" for p q :: real
@@ -161,7 +161,7 @@ proof -
         = (AE \<omega> in ?M. (1 / (q - p))
             *\<^sub>R (snd (sbmpair \<sigma> T \<omega> q) - snd (sbmpair \<sigma> T \<omega> p))
             \<in> S)"
-      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mm])
+      unfolding process_law_def by (rule AE_distr_iff[OF phim mm])
     have "AE \<omega> in ?M. (1 / (q - p))
         *\<^sub>R (snd (sbmpair \<sigma> T \<omega> q) - snd (sbmpair \<sigma> T \<omega> p))
         \<in> S"
@@ -262,14 +262,14 @@ qed
 
 theorem sbmpair_law_X_martingale:
   assumes T: "0 \<le> T"
-  shows "martingale (pair_law_of T (sbmpair S T)
+  shows "martingale (process_law T (sbmpair S T)
         (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))
-      (natural_filtration (pair_law_of T (sbmpair S T) bm_paths) 0
+      (natural_filtration (process_law T (sbmpair S T) bm_paths) 0
         (\<lambda>v \<omega>. \<omega> v)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min u T)) :: real^'n)"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?Q = "pair_law_of T (sbmpair S T) ?M"
+  let ?Q = "process_law T (sbmpair S T) ?M"
   let ?F = "natural_filtration ?M 0 (cbmX (0 :: real^'n))"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have Zm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (min u T))) \<in> borel_measurable (?G u)"
@@ -289,20 +289,20 @@ proof -
       by (rule ext) (simp add: sbmpair_apply[OF mI])
   qed
   show ?thesis
-    by (rule martingale_pair_law[OF prob_space_bm_paths
+    by (rule martingale_process_law[OF prob_space_bm_paths
         sbmpair_measurable[OF T] sbmpair_adapted Zm mg])
 qed
 
 theorem sbmpair_law_comp_martingale:
   assumes T: "0 \<le> T"
-  shows "martingale (pair_law_of T (sbmpair S T)
+  shows "martingale (process_law T (sbmpair S T)
         (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))
-      (natural_filtration (pair_law_of T (sbmpair S T) bm_paths) 0
+      (natural_filtration (process_law T (sbmpair S T) bm_paths) 0
         (\<lambda>v \<omega>. \<omega> v)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T)) :: real^'n) - snd (\<omega> (min u T)))"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?Q = "pair_law_of T (sbmpair S T) ?M"
+  let ?Q = "process_law T (sbmpair S T) ?M"
   let ?F = "natural_filtration ?M 0 (cbmX (0 :: real^'n))"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have Zm: "(\<lambda>\<omega> :: 'n pairpath.
@@ -345,14 +345,14 @@ proof -
     qed
   qed
   show ?thesis
-    by (rule martingale_pair_law[OF prob_space_bm_paths
+    by (rule martingale_process_law[OF prob_space_bm_paths
         sbmpair_measurable[OF T] sbmpair_adapted Zm mg])
 qed
 
 theorem sbmpair_law_in_covariation_class:
   assumes T: "0 \<le> T" and S: "closed S"
     and SST: "\<sigma> ** transpose \<sigma> \<in> S"
-  shows "pair_law_of T (sbmpair \<sigma> T)
+  shows "process_law T (sbmpair \<sigma> T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
     \<in> covariation_class S T (0 :: real^'n)"
   by (rule covariation_classI[OF prob_space_sbmpair_law[OF T] _ sbmpair_law_start[OF T]
@@ -362,7 +362,7 @@ theorem sbmpair_law_in_covariation_class:
 corollary sbmpair_pshift_law_in_covariation_class:
   assumes T: "0 \<le> T" and S: "closed S"
     and SST: "\<sigma> ** transpose \<sigma> \<in> S"
-  shows "pshift_law T v (pair_law_of T (sbmpair \<sigma> T)
+  shows "pshift_law T v (process_law T (sbmpair \<sigma> T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure))
     \<in> covariation_class S T (v :: real^'n)"
   using covariation_class_pshift[OF T sbmpair_law_in_covariation_class[OF T S SST], of v]
@@ -378,7 +378,7 @@ lemma bmpair_eq_sbmpair: "bmpair T = sbmpair (mat 1) T"
 
 theorem bmpair_law_in_covariation_class:
   assumes T: "0 \<le> T" and S: "closed S" and I: "mat 1 \<in> S"
-  shows "pair_law_of T (bmpair T)
+  shows "process_law T (bmpair T)
       (bm_paths :: ('n::finite \<Rightarrow> real \<Rightarrow> real) measure)
     \<in> covariation_class S T (0 :: real^'n)"
   unfolding bmpair_eq_sbmpair

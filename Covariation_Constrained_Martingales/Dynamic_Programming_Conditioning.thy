@@ -275,25 +275,25 @@ lemma pfut_rcd_diffquot:
           ((path_borel r :: ('n pairpath) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: ('n pairpath) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: ('n pairpath) measure)) \<kappa>"
     and cov: "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
-  shows "AE p' in pair_law_of r (pcut r) P.
+  shows "AE p' in process_law r (pcut r) P.
       AE w in \<kappa> p'. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (w t) - snd (w s)) \<in> S"
 proof -
   let ?X = "(path_borel r :: ('n pairpath) measure)"
   let ?S = "T - r"
   let ?Y = "(path_borel ?S :: ('n pairpath) measure)"
-  let ?Q = "pair_law_of r (pcut r) P"
+  let ?Q = "process_law r (pcut r) P"
   have Tr: "0 \<le> ?S" using rT by simp
   interpret PP: prob_space P by (rule PS)
   have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
   have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
   have PQ: "prob_space ?Q"
-    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
-  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+    unfolding process_law_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_process_law)
   have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   have spQ: "space ?Q = space ?X" by (rule sets_eq_imp_space_eq[OF setsQ])
   have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
@@ -386,15 +386,15 @@ theorem covariation_class_rcd_member:
           ((path_borel r :: ('n pairpath) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: ('n pairpath) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: ('n pairpath) measure)) \<kappa>"
-  shows "AE p' in pair_law_of r (pcut r) P.
+  shows "AE p' in process_law r (pcut r) P.
       \<kappa> p' \<in> covariation_class S (T - r) 0"
 proof -
   let ?X = "(path_borel r :: ('n pairpath) measure)"
   let ?S = "T - r"
   let ?Y = "(path_borel ?S :: ('n pairpath) measure)"
-  let ?Q = "pair_law_of r (pcut r) P"
+  let ?Q = "process_law r (pcut r) P"
   have Tr: "0 \<le> ?S" using rT by simp
   have setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
     by (rule covariation_class_sets[OF P])
@@ -402,8 +402,8 @@ proof -
   interpret PP: prob_space P by (rule PS)
   have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
   have PQ: "prob_space ?Q"
-    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
-  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+    unfolding process_law_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_process_law)
   have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
     using K measurable_cong_sets[OF setsQ refl] by blast
   have cov: "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
@@ -509,7 +509,7 @@ proof -
   let ?X = "(path_borel r :: ('n pairpath) measure)"
   let ?S = "T - r"
   let ?Y = "(path_borel ?S :: ('n pairpath) measure)"
-  let ?Q = "pair_law_of r (pcut r) P"
+  let ?Q = "process_law r (pcut r) P"
   let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
   let ?Surv = "\<lambda>p' :: 'n pairpath. pexit r K (\<lambda>t. fst (p' t)) = r \<and> fst (p' r) \<in> K"
   let ?\<Phi> = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). ?Surv (fst p)
@@ -525,8 +525,8 @@ proof -
   have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
   have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
   have PQ: "prob_space ?Q"
-    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
-  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+    unfolding process_law_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_process_law)
   have spQ: "space ?Q = space ?X" by (rule sets_eq_imp_space_eq[OF setsQ])
   have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   obtain \<kappa> where Km: "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y"
@@ -666,7 +666,7 @@ proof -
   \<comment> \<open>and back to \<open>P\<close>, where the statement only ever mentioned the past\<close>
   have "AE \<omega> in P. ?Surv (pcut r \<omega>)
       \<longrightarrow> c \<le> r + enn2real (covariation_val S ?S K (fst (pcut r \<omega> r)))"
-    using main unfolding pair_law_of_def by (rule AE_distrD[OF mcut])
+    using main unfolding process_law_def by (rule AE_distrD[OF mcut])
   then show ?thesis
   proof (rule eventually_mono)
     fix \<omega> :: "'n pairpath"

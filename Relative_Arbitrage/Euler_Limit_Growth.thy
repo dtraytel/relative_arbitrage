@@ -481,7 +481,7 @@ theorem eulerp_orth_increments_cond:
 proof (induction N)
   case 0
   have h0': "(0::real) \<le> h" using h0 by simp
-  let ?\<mu>0 = "pair_law_of h (sbmpair (SF x) h)
+  let ?\<mu>0 = "process_law h (sbmpair (SF x) h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
   have E0: "eulerp SF x h 0 = pshift_law h x ?\<mu>0" by simp
   have sets\<mu>: "sets ?\<mu>0 = sets (path_borel h :: ('n pairpath) measure)" by simp
@@ -523,7 +523,7 @@ next
   let ?Br = "(path_borel r :: ('n pairpath) measure)"
   let ?MR = "(path_borel (T' - r) :: ('n pairpath) measure)"
   let ?K = "\<lambda>\<omega> :: 'n pairpath.
-      pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
+      process_law h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
   have hT: "T' - r = h" unfolding r_def T'_def by (simp add: algebra_simps)
   have r0: "0 \<le> r" unfolding r_def using h0' by simp
   have rleT: "r \<le> T'" unfolding r_def T'_def
@@ -537,7 +537,7 @@ next
     using measurable_fst[of "borel :: (real^'n) measure"
         "borel :: (real^'n^'n) measure"] by (simp add: borel_prod)
   have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?Q"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] mfst])
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF setsQ] mfst])
   have Kp: "?K \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?MR"
     unfolding hT by (rule measurable_compose[OF eQ sbm_kernel_package(1)[OF h0 B0 B D0 D Sc SFc SFs]])
   have Ee: "eulerp SF x h (Suc N) = kglue_law' r T' ?K ?Q"
@@ -954,10 +954,10 @@ proof -
       have sE2: "E2 \<in> sets ?Q"
       proof -
         have e1: "(\<lambda>\<omega> :: 'n pairpath. \<omega> t) \<in> borel_measurable ?Q"
-          using pair_law_eval_measurable[OF setsQ] by blast
+          using path_law_evaluation_measurable[OF setsQ] by blast
         have e2: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (real m * h))
             \<in> borel_measurable ?Q"
-          using pair_law_eval_measurable[OF setsQ] by blast
+          using path_law_evaluation_measurable[OF setsQ] by blast
         have fm: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
             \<in> borel_measurable borel"
           by (rule borel_measurable_continuous_onI[OF

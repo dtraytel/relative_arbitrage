@@ -195,7 +195,7 @@ proof (intro CollectI conjI)
   show "prob_space (aglue_law T \<kappa> Q)"
     by (rule prob_space_aglue_law[OF T0 PQ setsQ Kp])
   show "sets (aglue_law T \<kappa> Q) = sets (path_borel T :: ('n pairpath) measure)"
-    by (rule sets_pair_law_of)
+    by (rule sets_process_law)
   show "AE \<omega> in aglue_law T \<kappa> Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
     by (rule aglue_law_start[OF T0 PQ setsQ Kp Q0 K0])
   show "AE \<omega> in aglue_law T \<kappa> Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T

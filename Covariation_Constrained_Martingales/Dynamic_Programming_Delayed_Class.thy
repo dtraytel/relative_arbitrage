@@ -136,15 +136,15 @@ proof (rule order.antisym)
       by (auto simp: less_Sup_iff)
     have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
       by (rule covariation_class_sets[OF Q])
-    have val: "ess_inf_time (pair_law_of U (pcut U) Q)
+    have val: "ess_inf_time (process_law U (pcut U) Q)
           (\<lambda>\<omega>. pexit U K (\<lambda>t. fst (\<omega> t)))
         = min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal U)"
       by (rule ess_inf_pexit_pair_law_pcut[OF U0 UT covariation_class_prob[OF Q] setsQ K])
-    have inS: "pair_law_of U (pcut U) Q \<in> covariation_class S U x"
+    have inS: "process_law U (pcut U) Q \<in> covariation_class S U x"
       by (rule covariation_class_pcut[OF U0 UT Sc Q])
     have "b < min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal U)"
       using bQ bS by simp
-    also have "\<dots> = ess_inf_time (pair_law_of U (pcut U) Q)
+    also have "\<dots> = ess_inf_time (process_law U (pcut U) Q)
         (\<lambda>\<omega>. pexit U K (\<lambda>t. fst (\<omega> t)))" using val ..
     also have "\<dots> \<le> covariation_val S U K x"
       unfolding covariation_val_def using inS by (intro Sup_upper imageI)
@@ -250,10 +250,10 @@ proof -
   qed
 
   \<comment> \<open>the cut law, and the two identifications it produces\<close>
-  have main: "Sel (s, y) = distr (pair_law_of (T - s) (pcut (T - s)) (S0 y))
+  have main: "Sel (s, y) = distr (process_law (T - s) (pcut (T - s)) (S0 y))
         ?B (pembed s T)
       \<and> distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)
-        = pair_law_of (T - s) (pcut (T - s)) (S0 y)"
+        = process_law (T - s) (pcut (T - s)) (S0 y)"
     if s0: "0 \<le> s" and sT: "s \<le> T" for s y
   proof -
     let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
@@ -270,17 +270,17 @@ proof -
     have comp: "pembed s T \<circ> pcut (T - s) = pembed s T"
       by (rule ext) (simp add: pembed_pcut[OF s0 sT])
     have first: "Sel (s, y)
-        = distr (pair_law_of (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)"
+        = distr (process_law (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)"
     proof -
-      have "distr (pair_law_of (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)
+      have "distr (process_law (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)
           = distr (S0 y) ?B (pembed s T \<circ> pcut (T - s))"
-        unfolding pair_law_of_def by (rule distr_distr[OF emb cutm])
+        unfolding process_law_def by (rule distr_distr[OF emb cutm])
       also have "\<dots> = distr (S0 y) ?B (pembed s T)" unfolding comp ..
       finally show ?thesis
         unfolding Sel_def fst_conv snd_conv pdel_eq_pembed[OF s0 sT] ..
     qed
     have second: "distr (Sel (s, y)) ?Bs (prebase s T)
-        = pair_law_of (T - s) (pcut (T - s)) (S0 y)"
+        = process_law (T - s) (pcut (T - s)) (S0 y)"
     proof -
       have "distr (Sel (s, y)) ?Bs (prebase s T)
           = distr (distr (S0 y) ?B (pembed s T)) ?Bs (prebase s T)"
@@ -301,7 +301,7 @@ proof -
         also have "\<dots> = pcut (T - s) \<omega>" by (rule prebase_pembed[OF s0 sT cm])
         finally show "(prebase s T \<circ> pembed s T) \<omega> = pcut (T - s) \<omega>" .
       qed
-      finally show ?thesis unfolding pair_law_of_def .
+      finally show ?thesis unfolding process_law_def .
     qed
     show ?thesis using first second by blast
   qed
@@ -315,11 +315,11 @@ proof -
     proof -
       have a: "0 \<le> T - s" using sT by simp
       have b: "T - s \<le> T" using s0 by simp
-      have cutC: "pair_law_of (T - s) (pcut (T - s)) (S0 y)
+      have cutC: "process_law (T - s) (pcut (T - s)) (S0 y)
           \<in> covariation_class S (T - s) (0 :: real^'n)"
         by (rule covariation_class_pcut[OF a b Sc S0C])
       have m1: "Sel (s, y)
-          = distr (pair_law_of (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)"
+          = distr (process_law (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)"
         using main[OF s0 sT, of y] by blast
       show ?thesis unfolding pdelclass_def m1 using cutC by (rule imageI)
     qed
@@ -331,7 +331,7 @@ proof -
       have a: "0 \<le> T - s" using sT by simp
       have b: "T - s \<le> T" using s0 by simp
       have m2: "distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)
-          = pair_law_of (T - s) (pcut (T - s)) (S0 y)"
+          = process_law (T - s) (pcut (T - s)) (S0 y)"
         using main[OF s0 sT, of y] by blast
       show ?thesis unfolding m2 by (rule covariation_class_pcut[OF a b Sc S0C])
     qed
@@ -344,10 +344,10 @@ proof -
       have a: "0 \<le> T - s" using sT by simp
       have b: "T - s \<le> T" using s0 by simp
       have m2: "distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)
-          = pair_law_of (T - s) (pcut (T - s)) (S0 y)"
+          = process_law (T - s) (pcut (T - s)) (S0 y)"
         using main[OF s0 sT, of y] by blast
       have "ess_inf_time (pshift_law (T - s) y
-            (pair_law_of (T - s) (pcut (T - s)) (S0 y)))
+            (process_law (T - s) (pcut (T - s)) (S0 y)))
           (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t)))
           = min (ess_inf_time (pshift_law T y (S0 y))
               (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal (T - s))"
@@ -375,7 +375,7 @@ text \<open>@{thm [source] covariation_class_aglue} asks its continuation kernel
   at \<open>u\<close> is the base path evaluated at \<open>\<rho> u = (u - s) \<or> 0 \<and> (T - s)\<close>,
   which is nondecreasing, so @{thm [source] martingale_time_change} turns
   the base martingale into a martingale for the time-changed filtration
-  \<open>\<F>\<^sup>\<mu>\<^sub>(\<rho> u)\<close> --- exactly what @{thm [source] martingale_pair_law}
+  \<open>\<F>\<^sup>\<mu>\<^sub>(\<rho> u)\<close> --- exactly what @{thm [source] martingale_process_law}
   needs to push the martingale forward along \<^const>\<open>pembed\<close>.  A delayed
   path carries no extra information at time \<open>u\<close>, which is why the
   martingale property survives the delay; taking the base's own filtration
@@ -413,11 +413,11 @@ proof -
         = (\<lambda>w. f (w (min (?rho u) (T - s))))" if u: "0 \<le> u" for u :: real
       by (rule ext) (subst pembed_eval_min[OF u s0 sT], simp)
   qed
-  have nu': "\<nu> = pair_law_of T (pembed s T) \<mu>"
-    unfolding nu pair_law_of_def ..
+  have nu': "\<nu> = process_law T (pembed s T) \<mu>"
+    unfolding nu process_law_def ..
   show ?thesis
     unfolding nu'
-  proof (rule martingale_pair_law[where T = T and FF = "\<lambda>u. ?F (?rho u)"])
+  proof (rule martingale_process_law[where T = T and FF = "\<lambda>u. ?F (?rho u)"])
     show "prob_space \<mu>" by (rule covariation_class_prob[OF mu])
     show "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B" by (rule pm)
     show "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0 (\<lambda>u w. f (pembed s T w (min u T)))"
@@ -426,7 +426,7 @@ proof -
       if "0 \<le> r" "r \<le> u" for u r :: real
       by (rule pembed_eval_le[OF that s0 sT])
     show "(\<lambda>w :: 'n pairpath. f (w (min u T))) \<in> borel_measurable
-        (natural_filtration (pair_law_of T (pembed s T) \<mu>) 0 (\<lambda>v w. w v) u)"
+        (natural_filtration (process_law T (pembed s T) \<mu>) 0 (\<lambda>v w. w v) u)"
       if u: "0 \<le> u" for u :: real
       by (rule measurable_compose[OF natural_filtration_eval f]) (use u T0 in simp_all)
   qed
@@ -659,12 +659,12 @@ theorem pstopped_law_diffquot:
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Pcov: "AE \<omega> in P. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T \<longrightarrow>
         (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> S"
-  shows "AE p' in pair_law_of T (pstopped T \<theta>) P.
+  shows "AE p' in process_law T (pstopped T \<theta>) P.
       \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p' \<longrightarrow>
         (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  let ?Q = "process_law T (pstopped T \<theta>) P"
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
@@ -672,7 +672,7 @@ proof -
   have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
     unfolding measurable_cong_sets[OF setsP refl]
     by (rule pstopped_measurable[OF T0 thM th0 thT])
-  have setsQ: "sets ?Q = sets ?B" by (rule sets_pair_law_of)
+  have setsQ: "sets ?Q = sets ?B" by (rule sets_process_law)
   have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
     by (simp add: space_borel_of)
   have one: "AE p' in ?Q. q \<le> \<theta> p' \<longrightarrow>
@@ -728,7 +728,7 @@ proof -
       qed
     qed
     then show ?thesis
-      unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
+      unfolding process_law_def AE_distr_iff[OF m1 mset] .
   qed
   have rat: "AE p' in ?Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
       p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> q \<le> \<theta> p' \<longrightarrow>
@@ -743,7 +743,7 @@ proof -
           (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> S"
       and W: "p' \<in> space ?Q" by blast+
     have mw: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
-      using W by (simp add: space_pair_law_of)
+      using W by (simp add: space_process_law)
     have cT: "continuous_on {0..T} (\<lambda>u. snd (p' u))"
       using mspace_path_metricD[OF mw] by (intro continuous_intros)
     have sub: "{0..\<theta> p'} \<subseteq> {0..T}" using thT[of p'] by auto
@@ -788,12 +788,12 @@ lemma pstopped_law_horizon_of:
     and fc: "continuous_on UNIV f"
     and HZ: "horizon_sq_int_martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>u \<omega>. f (\<omega> (min u T))) T"
-  shows "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
-      (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
+  shows "horizon_sq_int_martingale (process_law T (pstopped T \<theta>) P)
+      (natural_filtration (process_law T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>u p'. f (p' (min u T))) T"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  let ?Q = "process_law T (pstopped T \<theta>) P"
   let ?F = "natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?Z = "\<lambda>u \<omega> :: 'n pairpath. f (\<omega> (min u T))"
@@ -828,14 +828,14 @@ proof -
     using pstopped_eval_min_T[OF T0' u, of \<theta> \<omega>] by simp
   \<comment> \<open>push the stopped martingale forward\<close>
   have mgQ: "martingale ?Q ?G 0 ?Z"
-  proof (rule martingale_pair_law[where T = T and FF = ?F])
+  proof (rule martingale_process_law[where T = T and FF = ?F])
     show "prob_space P" by (rule PS)
     show "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B" by (rule m1)
     show "(\<lambda>\<omega>. pstopped T \<theta> \<omega> r) \<in> borel_measurable (?F u)"
       if "0 \<le> r" "r \<le> u" for u r :: real
       by (rule pstopped_eval_filtration[OF T0' setsP st thM that])
     show "?Z u \<in> borel_measurable
-        (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
+        (natural_filtration (process_law T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
       if u: "0 \<le> u" for u
       by (rule measurable_compose[OF natural_filtration_eval fB]) (use u T0' in simp_all)
     show "martingale P ?F 0 (\<lambda>u \<omega>. ?Z u (pstopped T \<theta> \<omega>))"
@@ -845,12 +845,12 @@ proof -
   have sqQ: "integrable ?Q (\<lambda>p'. (?Z s p')\<^sup>2)" if s: "0 \<le> s" for s
   proof -
     have "(\<lambda>p' :: 'n pairpath. ?Z s p') \<in> borel_measurable ?B"
-      by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] fB])
+      by (rule measurable_compose[OF path_law_evaluation_measurable[OF refl] fB])
     then have zb: "(\<lambda>p' :: 'n pairpath. (?Z s p')\<^sup>2) \<in> borel_measurable ?B"
       by (rule borel_measurable_power)
     have "integrable ?Q (\<lambda>p'. (?Z s p')\<^sup>2)
         = integrable P (\<lambda>\<omega>. (?Z s (pstopped T \<theta> \<omega>))\<^sup>2)"
-      unfolding pair_law_of_def by (rule integrable_distr_eq[OF m1 zb])
+      unfolding process_law_def by (rule integrable_distr_eq[OF m1 zb])
     then show ?thesis using sqs[OF s] by (simp add: stopZ[OF s])
   qed
   show ?thesis
@@ -864,8 +864,8 @@ theorem pstopped_law_horizon_component:
     and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B" and P: "P \<in> covariation_class S T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
-  shows "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
-      (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
+  shows "horizon_sq_int_martingale (process_law T (pstopped T \<theta>) P)
+      (natural_filtration (process_law T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>u p'. fst (p' (min u T)) $ c) T"
   by (rule pstopped_law_horizon_of[where f = "\<lambda>z. fst z $ c",
         OF T0 P st thM _ covariation_class_horizon_component[OF T0 B0 B P]])
@@ -879,8 +879,8 @@ theorem pstopped_law_horizon_compensated:
     and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D" and P: "P \<in> covariation_class S T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
-  shows "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
-      (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
+  shows "horizon_sq_int_martingale (process_law T (pstopped T \<theta>) P)
+      (natural_filtration (process_law T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
   by (rule pstopped_law_horizon_of[where f = "\<lambda>z. (outerp (fst z) - snd z) $ c $ d",
         OF T0 P st thM _ covariation_class_horizon_compensated[OF T0 B0 B D0 D P]])
@@ -911,7 +911,7 @@ proof -
     and nu: "\<nu> = distr \<mu> ?B (pembed s T)" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
     by (rule pdelclassE[OF s0 sT m])
   have nb: "(\<lambda>w :: 'n pairpath. g (w u)) \<in> borel_measurable ?B"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl]
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF refl]
           borel_measurable_continuous_onI[OF g]])
   have "(\<integral>w. g (w u) \<partial>\<nu>) = (\<integral>w'. g (pembed s T w' u) \<partial>\<mu>)"
     unfolding nu by (rule integral_distr[OF pm nb])

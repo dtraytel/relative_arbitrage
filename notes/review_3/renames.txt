@@ -1,0 +1,24 @@
+# Renames of phase 8 (notes/PLAN_RESTRUCTURING_3.md), for the fingerprint check:
+# one "old new" pair per line, by the name without its theory qualifier (the
+# key of fingerprints.tsv).  fp_compare.py maps old fact keys through it.  A
+# line whose old name was a constant (pair_law_of) also renames that constant:
+# Review_Analysis.thy reads this file and fingerprints statements with the old
+# constant name, so the facts that mention it compare equal.
+pair_law_of process_law
+pair_law_of_def process_law_def
+sets_pair_law_of sets_process_law
+space_pair_law_of space_process_law
+pair_law_of_pcut_ibm_law process_law_pcut_ibm_law
+pair_law_of_pcut_iextend process_law_pcut_iextend
+martingale_pair_law martingale_process_law
+pair_law_eval_measurable path_law_evaluation_measurable
+pair_eval_F_cont path_value_continuous_map
+pair_eval_F_sq_cont path_value_square_continuous_map
+pair_test_F_functional_cont path_increment_test_continuous_map
+pair_law_F_measurable path_law_value_measurable
+pair_law_F_sq_measurable path_law_value_square_measurable
+pair_law_F_sq_integrable_of_nn_bound path_law_value_square_integrable
+pair_law_F_sq_mean_of_nn_bound path_law_value_square_integral_le
+pair_test_F_measurable path_law_increment_test_measurable
+pair_test_F_sq_bound path_law_increment_test_square_bound
+pair_test_F_integrable path_law_increment_test_integrable

@@ -57,8 +57,8 @@ lemma martingale_pcut_law:
     and f: "f \<in> borel_measurable borel"
     and mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) 0
         (\<lambda>u \<omega>. f (\<omega> (min u S)))"
-  shows "martingale (pair_law_of S (pcut S) P)
-      (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+  shows "martingale (process_law S (pcut S) P)
+      (natural_filtration (process_law S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
       (\<lambda>u \<omega>. f (\<omega> (min u S)))"
 proof -
   have adap: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'x). pcut S \<omega> r)
@@ -66,13 +66,13 @@ proof -
     if "0 \<le> r" "r \<le> u" for r u
     by (rule pcut_adapted[OF S that])
   show ?thesis
-  proof (rule martingale_pair_law[OF prob phim adap])
+  proof (rule martingale_process_law[OF prob phim adap])
     fix u :: real assume u: "0 \<le> u"
     have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'x). \<omega> (min u S)) \<in> borel_measurable
-        (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
+        (natural_filtration (process_law S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
       by (rule natural_filtration_eval) (use u S in auto)
     then show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'x). f (\<omega> (min u S))) \<in> borel_measurable
-        (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
+        (natural_filtration (process_law S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v) u)"
       by (rule measurable_compose[OF _ f])
   next
     show "martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) 0
@@ -86,15 +86,15 @@ text \<open>A member of the class at horizon \<open>T\<close>, cut back to \<ope
   is the identity on \<open>[0,U]\<close> (the constraint clause needs \<open>S\<close> closed, to
   be measurable), the martingale clauses because stopping at
   \<open>U\<close> is harmless (\<open>martingale_stopped_const\<close>) and transports along
-  \<open>pcut\<close> (\<open>martingale_pair_law\<close>).\<close>
+  \<open>pcut\<close> (\<open>martingale_process_law\<close>).\<close>
 
 theorem covariation_class_pcut:
   fixes Q :: "('n::finite pairpath) measure"
   assumes U: "0 \<le> U" and UT: "U \<le> T" and Sc: "closed S"
     and Q: "Q \<in> covariation_class S T x"
-  shows "pair_law_of U (pcut U) Q \<in> covariation_class S U x"
+  shows "process_law U (pcut U) Q \<in> covariation_class S U x"
 proof -
-  let ?Q = "pair_law_of U (pcut U) Q"
+  let ?Q = "process_law U (pcut U) Q"
   let ?B = "(path_borel U :: ('n pairpath) measure)"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
@@ -102,7 +102,7 @@ proof -
   interpret P: prob_space Q by (rule covariation_class_prob[OF Q])
   have phim: "pcut U \<in> Q \<rightarrow>\<^sub>M ?B" by (rule pcut_measurable[OF U UT setsQ])
   have prob': "prob_space ?Q"
-    unfolding pair_law_of_def by (rule P.prob_space_distr[OF phim])
+    unfolding process_law_def by (rule P.prob_space_distr[OF phim])
   have mT: "min u U \<le> T" for u
     using min.cobounded2[of u U] UT by linarith
 
@@ -113,7 +113,7 @@ proof -
       by (rule start_set_sets[OF refl])
     have iff: "(AE \<omega> in ?Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0)
         = (AE \<omega> in Q. fst (pcut U \<omega> 0) = x \<and> snd (pcut U \<omega> 0) = 0)"
-      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
+      unfolding process_law_def by (rule AE_distr_iff[OF phim mset])
     have z: "(0::real) \<in> {0..U}" using U by simp
     have "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
       using Q unfolding covariation_class_def by blast
@@ -132,7 +132,7 @@ proof -
     then have "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> U \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (pcut U \<omega> t) - snd (pcut U \<omega> s)) \<in> S"
       by eventually_elim (use UT in \<open>auto simp: pcut_apply\<close>)
-    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets[OF Sc]] .
+    then show ?thesis unfolding process_law_def AE_distr_iff[OF phim diffquot_all_sets[OF Sc]] .
   qed
 
   \<comment> \<open>clauses (iii) and (iv): the martingales\<close>
@@ -149,7 +149,7 @@ proof -
 
   show ?thesis
     unfolding covariation_class_def mem_Collect_eq
-    using prob' sets_pair_law_of start' cov' mgX' mgC' by blast
+    using prob' sets_process_law start' cov' mgX' mgC' by blast
 qed
 
 section \<open>Concatenation of pair paths\<close>
@@ -429,7 +429,7 @@ proof -
       by (simp add: pair_prob_space_def pair_sigma_finite_def PQ PR
           prob_space_imp_sigma_finite)
     have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable R"
-      by (rule pair_law_eval_measurable[OF setsR])
+      by (rule path_law_evaluation_measurable[OF setsR])
     have sm: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p 0) \<in> borel_measurable ?M"
       by (rule measurable_compose[OF measurable_snd ev])
     have "{q :: (real^'n) \<times> (real^'n^'n). fst q = 0}
@@ -503,7 +503,7 @@ proof -
   qed
   show ?thesis
     unfolding pglue_law_def
-    by (rule martingale_pair_law[OF prob_space_pair[OF PQ PR]
+    by (rule martingale_process_law[OF prob_space_pair[OF PQ PR]
         pglue_measurable[OF r rT setsQ setsR] gadap Zm[unfolded pglue_law_def]
         mgl])
 qed
@@ -675,7 +675,7 @@ proof -
       by (simp add: pair_prob_space_def pair_sigma_finite_def PQ PR
           prob_space_imp_sigma_finite)
     have ev: "(\<lambda>\<omega> :: 'n pairpath. \<omega> 0) \<in> borel_measurable R"
-      by (rule pair_law_eval_measurable[OF setsR])
+      by (rule path_law_evaluation_measurable[OF setsR])
     have sm: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. snd p 0) \<in> borel_measurable ?M"
       by (rule measurable_compose[OF measurable_snd ev])
     have "{p \<in> space ?M. snd p 0 = ((0::real^'n), (0::real^'n^'n))}
@@ -752,7 +752,7 @@ proof -
   qed
   show ?thesis
     unfolding pglue_law_def
-    by (rule martingale_pair_law[OF prob_space_pair[OF PQ PR]
+    by (rule martingale_process_law[OF prob_space_pair[OF PQ PR]
         pglue_measurable[OF r rT setsQ setsR] gadap Zm[unfolded pglue_law_def]
         mgl])
 qed
@@ -802,7 +802,7 @@ proof -
     then obtain Q :: "('n pairpath) measure"
       where Q: "Q \<in> covariation_class S U x"
         and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit U K (\<lambda>t. fst (\<omega> t)))" by blast
-    define R where "R = pair_law_of (T - U) (sbmpair \<sigma> (T - U))
+    define R where "R = process_law (T - U) (sbmpair \<sigma> (T - U))
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
     have R: "R \<in> covariation_class S (T - U) (0 :: real^'n)"
       unfolding R_def by (rule sbmpair_law_in_covariation_class[OF TU Sc SST])
@@ -855,7 +855,7 @@ proof -
           e \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?BT"
         using tauT by measurable
       show ?thesis
-        unfolding pglue_law_def pair_law_of_def
+        unfolding pglue_law_def process_law_def
         by (rule AE_distr_iff[OF pglue_measurable[OF U UT setsQ setsR] mset])
     qed
     have "e \<le> ess_inf_time (pglue_law U T Q R)
@@ -1031,7 +1031,7 @@ proof -
   proof -
     have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable Q"
       by (rule measurable_compose
-          [OF pair_law_eval_measurable[OF covariation_class_sets[OF Q]] pair_fst_borel])
+          [OF path_law_evaluation_measurable[OF covariation_class_sets[OF Q]] pair_fst_borel])
     then show ?thesis by measurable
   qed
   have le: "norm (fst (\<omega> t)) \<le> 1 + fst (\<omega> t) \<bullet> fst (\<omega> t)" for \<omega> :: "'n pairpath"
@@ -1193,7 +1193,7 @@ proof -
     by (rule distr_PiM_component) (rule PRj, simp)
   have hX: "(\<lambda>\<omega>' :: 'n pairpath. fst (\<omega>' v) :: real^'n)
       \<in> borel_measurable (RR j)" for j v
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsR] pair_fst_borel])
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF setsR] pair_fst_borel])
   have intRj: "integrable (RR j) (\<lambda>\<omega>' :: 'n pairpath. fst (\<omega>' v) :: real^'n)"
     if v: "v \<in> {0..T - r}" for j v
   proof -
@@ -1381,7 +1381,7 @@ proof -
   qed
   show ?thesis
     unfolding kglue_law_def
-    by (rule martingale_pair_law[OF prob_space_pair[OF PQ PS]
+    by (rule martingale_process_law[OF prob_space_pair[OF PQ PS]
         kglue_measurable[OF r rT setsQ setsR NmQ] gadap
         Zm[unfolded kglue_law_def] mgl])
 qed
@@ -1506,7 +1506,7 @@ proof -
   proof -
     have "(\<lambda>\<omega> :: 'n pairpath. snd (\<omega> t)) \<in> borel_measurable Q"
       by (rule measurable_compose
-          [OF pair_law_eval_measurable[OF covariation_class_sets[OF Q]] pair_snd_borel])
+          [OF path_law_evaluation_measurable[OF covariation_class_sets[OF Q]] pair_snd_borel])
     then show ?thesis by measurable
   qed
   have Yb: "AE \<omega> in Q. norm (snd (\<omega> t)) \<le> B * T"
@@ -1775,7 +1775,7 @@ proof -
   have startj: "AE \<omega>' in RR j. fst (\<omega>' 0) = (0::real^'n) \<and> snd (\<omega>' 0) = 0" for j
     using R unfolding covariation_class_def by blast
   have evR: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' v) \<in> borel_measurable (RR j)" for j v
-    by (rule pair_law_eval_measurable[OF setsR])
+    by (rule path_law_evaluation_measurable[OF setsR])
   have iCS: "integrable ?S (\<lambda>f. outerp (fst (f j (?t u)) - fst (f j 0) :: real^'n)
       - (snd (f j (?t u)) - snd (f j 0)))" if u: "0 \<le> u" for j u
   proof -
@@ -2127,7 +2127,7 @@ proof -
   qed
   show ?thesis
     unfolding kglue_law_def
-    by (rule martingale_pair_law[OF prob_space_pair[OF PQ PS]
+    by (rule martingale_process_law[OF prob_space_pair[OF PQ PS]
         kglue_measurable[OF r rT setsQ setsR NmQ] gadap
         Zm[unfolded kglue_law_def] mgl])
 qed

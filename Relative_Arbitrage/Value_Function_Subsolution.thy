@@ -173,7 +173,7 @@ text \<open>The optional-sampling content follows from the DPP:
   @{thm [source] pstopped_law_horizon_compensated} say the two martingale
   clauses of (1.7) survive stopping.  Reading those martingales' means at
   the horizon \<open>T\<close>, where the stopped path is the path at \<open>\<theta>\<close>, and
-  transporting along \<open>pair_law_of\<close> (a \<open>distr\<close>) yields the sampled means.\<close>
+  transporting along \<open>process_law\<close> (a \<open>distr\<close>) yields the sampled means.\<close>
 
 
 lemma covariation_class_entry_stopped:
@@ -183,14 +183,14 @@ lemma covariation_class_entry_stopped:
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Fm: "F \<in> borel_measurable borel"
-    and H: "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
-      (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v))
+    and H: "horizon_sq_int_martingale (process_law T (pstopped T \<theta>) P)
+      (natural_filtration (process_law T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v))
       (\<lambda>u p'. F (p' (min u T))) T"
   shows "integrable P (\<lambda>\<omega>. F (\<omega> (\<theta> \<omega>)))"
     and "(\<integral>\<omega>. F (\<omega> (\<theta> \<omega>)) \<partial>P) = F (x, 0)"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  let ?Q = "process_law T (pstopped T \<theta>) P"
   have T0: "0 \<le> T" using T by simp
   have setsP: "sets P = sets ?B" by (rule covariation_class_sets[OF P])
   have P0: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
@@ -203,7 +203,7 @@ proof -
     by (rule pstopped_measurable[OF T0 thM path_stopping_time_nonneg[OF st]
           path_stopping_time_le[OF st]])
   have fm: "(\<lambda>p' :: 'n pairpath. F (p' T)) \<in> borel_measurable ?B"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] Fm])
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF refl] Fm])
   have iT: "integrable ?Q (\<lambda>p'. F (p' T))"
     using H.integrable[OF T0] by simp
   have i0: "integrable ?Q (\<lambda>p'. F (p' 0))"
@@ -219,9 +219,9 @@ proof -
   have peq: "(\<lambda>\<omega> :: 'n pairpath. F (pstopped T \<theta> \<omega> T)) = (\<lambda>\<omega>. F (\<omega> (\<theta> \<omega>)))"
     using path_stopping_time_le[OF st] T0 by (simp add: pstopped_apply min_absorb2 fun_eq_iff)
   show "integrable P (\<lambda>\<omega>. F (\<omega> (\<theta> \<omega>)))"
-    using iT unfolding pair_law_of_def integrable_distr_eq[OF m1 fm] peq .
+    using iT unfolding process_law_def integrable_distr_eq[OF m1 fm] peq .
   show "(\<integral>\<omega>. F (\<omega> (\<theta> \<omega>)) \<partial>P) = F (x, 0)"
-    using start unfolding pair_law_of_def integral_distr[OF m1 fm] peq .
+    using start unfolding process_law_def integral_distr[OF m1 fm] peq .
 qed
 
 lemma covariation_class_X_entry_stopped:

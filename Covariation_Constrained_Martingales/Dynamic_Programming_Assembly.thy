@@ -795,7 +795,7 @@ theorem covariation_val_dpp_ge_const_time:
   shows "ennreal c \<le> covariation_val S T K x"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
-  let ?Q = "pair_law_of T (pstopped T \<theta>) P"
+  let ?Q = "process_law T (pstopped T \<theta>) P"
   have T0': "0 \<le> T" using T0 by simp
   have PS: "prob_space P" by (rule covariation_class_prob[OF P])
   have setsP: "sets P = sets ?B" by (rule covariation_class_sets[OF P])
@@ -840,11 +840,11 @@ proof -
       qed
     qed
     then show ?thesis
-      unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
+      unfolding process_law_def AE_distr_iff[OF m1 mset] .
   qed
   show ?thesis
   proof (rule covariation_val_ge_of_stopped_bound
-      [OF T0 B0 B D0 D Sc Sv SST Kc pstopped_law_prob[OF T0' PS setsP st thM] sets_pair_law_of
+      [OF T0 B0 B D0 D Sc Sv SST Kc pstopped_law_prob[OF T0' PS setsP st thM] sets_process_law
         st thM pstopped_law_start[OF T0' setsP st thM P0]
         pstopped_law_idem[OF T0' setsP st thM]
         pstopped_law_diffquot[OF T0' Sc setsP st thM Pcov]])

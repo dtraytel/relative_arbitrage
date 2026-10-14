@@ -122,7 +122,7 @@ proof -
   have coordm: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> u) $ i) \<in> borel_measurable Q"
     for u i
     by (rule measurable_compose
-        [OF pair_law_eval_measurable[OF setsQ] fst_coord_borel])
+        [OF path_law_evaluation_measurable[OF setsQ] fst_coord_borel])
   define Bad where "Bad = (\<lambda>i. {\<omega> \<in> space Q. \<exists>j\<ge>n. \<exists>kk\<in>{1..\<lfloor>2^j * T\<rfloor>}.
       2 powr (-ga*real j)
         \<le> \<bar>fst (\<omega> (real_of_int kk / 2^j)) $ i

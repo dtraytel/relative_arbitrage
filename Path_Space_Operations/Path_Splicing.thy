@@ -20,7 +20,7 @@ definition pfut :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b
 
 text \<open>The conditioning-free half of the closure the weak DPP needs: a
   member on \<open>[0,T]\<close> restricted to \<open>[0,S]\<close> is a member on \<open>[0,S]\<close>.  Both
-  martingale clauses follow from \<open>martingale_pair_law\<close> with the restriction
+  martingale clauses follow from \<open>martingale_process_law\<close> with the restriction
   as path map, adapted for free since \<open>pcut S \<omega> r = \<omega> r\<close> on \<open>{0..S}\<close>, and
   \<open>martingale_stopped_const\<close> turns the \<open>T\<close>-clause into the \<open>S\<close>-clause.\<close>
 
@@ -207,7 +207,7 @@ proof -
   proof -
     have "(\<lambda>w :: (real \<Rightarrow> 'p). p' t + w t) \<in> borel_measurable ?B"
       by (intro borel_measurable_add borel_measurable_const
-          pair_law_eval_measurable[OF refl])
+          path_law_evaluation_measurable[OF refl])
     then show ?thesis by (simp add: padd_apply[OF True])
   qed
   show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
@@ -276,10 +276,10 @@ proof -
   proof -
     have e1: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). fst p t) \<in> borel_measurable ?M"
       by (rule measurable_compose[OF measurable_fst
-            pair_law_eval_measurable[OF refl]])
+            path_law_evaluation_measurable[OF refl]])
     have e2: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). snd p t) \<in> borel_measurable ?M"
       by (rule measurable_compose[OF measurable_snd
-            pair_law_eval_measurable[OF refl]])
+            path_law_evaluation_measurable[OF refl]])
     have "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). fst p t + snd p t)
         \<in> borel_measurable ?M"
       using e1 e2 by simp
@@ -498,8 +498,8 @@ proof -
 qed
 
 text \<open>The almost-sure transfer through a glue, with the underlying measure
-  \<open>Q\<close> left free, so that unfolding \<open>pair_law_of_def\<close> cannot
-  also unfold a \<open>pair_law_of\<close> hiding inside \<open>Q\<close> itself.\<close>
+  \<open>Q\<close> left free, so that unfolding \<open>process_law_def\<close> cannot
+  also unfold a \<open>process_law\<close> hiding inside \<open>Q\<close> itself.\<close>
 
 lemma padd_measurable_ksemi:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -545,11 +545,11 @@ proof -
   have eQ: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). fst p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
     for v
     by (rule measurable_compose[OF measurable_fst
-          pair_law_eval_measurable[OF setsQ]])
+          path_law_evaluation_measurable[OF setsQ]])
   have eR: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). snd p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
     for v
     by (rule measurable_compose[OF measurable_snd
-          pair_law_eval_measurable[OF setsR]])
+          path_law_evaluation_measurable[OF setsR]])
   have Xm: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p).
         if t \<le> r then fst p t else fst p r + (snd p (t - r) - snd p 0))
       \<in> borel_measurable (Q \<Otimes>\<^sub>M R)" for t
@@ -620,7 +620,7 @@ proof -
   have eQ: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). fst p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
     for v
     by (rule measurable_compose[OF measurable_fst
-          pair_law_eval_measurable[OF setsQ]])
+          path_law_evaluation_measurable[OF setsQ]])
   have eR: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). snd p v) \<in> borel_measurable (Q \<Otimes>\<^sub>M R)"
     if v: "0 \<le> v" for v
   proof -
@@ -793,7 +793,7 @@ lemma pfst_measurable:
 proof (rule pathify_measurable[OF S])
   fix t :: real assume "t \<in> {0..S}"
   show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). fst (\<omega> t)) \<in> borel_measurable N"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsN] pair_fst_borel])
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF setsN] pair_fst_borel])
 next
   fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" assume "\<omega> \<in> space N"
   then have "\<omega> \<in> mspace (path_metric S :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
@@ -1005,7 +1005,7 @@ proof -
     by (rule pexit_path_measurable[OF r Kc refl])
   have em: "(\<lambda>p' :: (real \<Rightarrow> 'a \<times> 'b). fst (p' r)) \<in> borel_measurable ?X"
     by (rule measurable_compose
-        [OF pair_law_eval_measurable[OF refl] pair_fst_borel])
+        [OF path_law_evaluation_measurable[OF refl] pair_fst_borel])
   have s1: "{p' \<in> space ?X. pexit r K (\<lambda>t. fst (p' t)) = r} \<in> sets ?X"
     using pm by measurable
   have s2: "{p' \<in> space ?X. fst (p' r) \<in> K} \<in> sets ?X"
@@ -1176,7 +1176,7 @@ proof -
     if True: "t \<in> {0..T}" for t
   proof -
     have "(\<lambda>w :: (real \<Rightarrow> 'p). w (max (t - s) 0)) \<in> borel_measurable ?Bs"
-      by (rule pair_law_eval_measurable[OF refl])
+      by (rule path_law_evaluation_measurable[OF refl])
     then show ?thesis by (simp add: pembed_apply[OF True])
   qed
   show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
@@ -1390,7 +1390,7 @@ proof -
     if True: "u \<in> {0..T - s}" for u
   proof -
     have "(\<lambda>w :: (real \<Rightarrow> 'p). w (s + u)) \<in> borel_measurable ?B"
-      by (rule pair_law_eval_measurable[OF refl])
+      by (rule path_law_evaluation_measurable[OF refl])
     then show ?thesis by (simp add: prebase_apply[OF True])
   qed
   show ?thesis by (rule path_measurable_of_eval[OF Ts into ev])

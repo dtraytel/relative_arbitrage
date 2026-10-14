@@ -534,7 +534,7 @@ proof -
       (kglue_law' r T Kr Q) sequentially
       (mtopology_of (path_metric T :: ('n pairpath) metric))"
     using weak_conv_on_pushforward[OF cglue swc]
-    unfolding kglue_law'_def pair_law_of_def by simp
+    unfolding kglue_law'_def process_law_def by simp
   \<comment> \<open>weak closedness finishes\<close>
   have pl: "prob_space (kglue_law' r T Kr Q)"
     by (rule prob_space_kglue_law'[OF r rT' PQ setsQ Kp])

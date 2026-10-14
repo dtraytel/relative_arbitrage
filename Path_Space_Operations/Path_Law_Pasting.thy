@@ -8,13 +8,13 @@ begin
 (*>*)
 
 text \<open>What the surgery does to laws rather than to paths: the law of a
-  concrete process (\<open>pair_law_of\<close>), the glued law \<open>pglue_law\<close>, the shifted
+  concrete process (\<open>process_law\<close>), the glued law \<open>pglue_law\<close>, the shifted
   law, the kernel glue \<open>kglue_law\<close> that continues a law by a kernel of
   continuations, and the additive glue \<open>aglue_law\<close> that splits a law at a
   stopping time and reassembles it by addition.\<close>
 
-text \<open>A pair process on some filtered probability space pushes forward to
-  a pair law, and a martingale for the process's own filtration is a
+text \<open>A process with continuous paths on some filtered probability space
+  pushes forward to its law on the path space, and a martingale for the process's own filtration is a
   martingale for the law's natural filtration --- the tower property, in
   the set-integral form: the natural filtration of the law pulls back into
   the process's filtration, because the process is adapted, and the
@@ -22,33 +22,33 @@ text \<open>A pair process on some filtered probability space pushes forward to
   the pulled-back event.  Both steps are in the martingale library:
   @{thm [source] natural_filtration_pull} and @{thm [source] martingale_distr}.\<close>
 
-definition pair_law_of ::
+definition process_law ::
   "real \<Rightarrow> ('a \<Rightarrow> (real \<Rightarrow> 'p::{polish_space,banach})) \<Rightarrow> 'a measure \<Rightarrow> (real \<Rightarrow> 'p) measure"
-  where "pair_law_of T \<phi> M =
+  where "process_law T \<phi> M =
      distr M (path_borel T :: (real \<Rightarrow> 'p) measure) \<phi>"
 
-lemma sets_pair_law_of[simp]:
-  "sets (pair_law_of T \<phi> M)
+lemma sets_process_law[simp]:
+  "sets (process_law T \<phi> M)
      = sets (path_borel T :: (real \<Rightarrow> 'p::{polish_space,banach}) measure)"
-  unfolding pair_law_of_def by simp
+  unfolding process_law_def by simp
 
-lemma space_pair_law_of:
-  "space (pair_law_of T \<phi> M)
+lemma space_process_law:
+  "space (process_law T \<phi> M)
      = mspace (path_metric T :: (real \<Rightarrow> 'p::{polish_space,banach}) metric)"
-  unfolding pair_law_of_def by (simp add: space_borel_of)
+  unfolding process_law_def by (simp add: space_borel_of)
 
 lemma phi_filtration_measurable:
   fixes M :: "'a measure" and \<phi> :: "'a \<Rightarrow> (real \<Rightarrow> 'p::{polish_space,banach})"
   assumes phim: "\<phi> \<in> M \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and adap: "\<And>r. 0 \<le> r \<Longrightarrow> r \<le> u \<Longrightarrow> (\<lambda>\<omega>. \<phi> \<omega> r) \<in> borel_measurable (FF u)"
     and spF: "space (FF u) = space M"
-  shows "\<phi> \<in> FF u \<rightarrow>\<^sub>M natural_filtration (pair_law_of T \<phi> M) 0 (\<lambda>v \<omega>. \<omega> v) u"
+  shows "\<phi> \<in> FF u \<rightarrow>\<^sub>M natural_filtration (process_law T \<phi> M) 0 (\<lambda>v \<omega>. \<omega> v) u"
 proof (rule natural_filtration_pull)
-  show "\<phi> \<omega> \<in> space (pair_law_of T \<phi> M)" if "\<omega> \<in> space (FF u)" for \<omega>
-    using measurable_space[OF phim] that spF by (simp add: pair_law_of_def)
+  show "\<phi> \<omega> \<in> space (process_law T \<phi> M)" if "\<omega> \<in> space (FF u)" for \<omega>
+    using measurable_space[OF phim] that spF by (simp add: process_law_def)
 qed (rule adap)
 
-theorem martingale_pair_law:
+theorem martingale_process_law:
   fixes M :: "'a measure" and \<phi> :: "'a \<Rightarrow> (real \<Rightarrow> 'p::{polish_space,banach})"
     and Z :: "real \<Rightarrow> (real \<Rightarrow> 'p) \<Rightarrow> 'b::{banach,second_countable_topology}"
   assumes prob: "prob_space M"
@@ -56,22 +56,22 @@ theorem martingale_pair_law:
     and adap: "\<And>u r. 0 \<le> r \<Longrightarrow> r \<le> u \<Longrightarrow>
         (\<lambda>\<omega>. \<phi> \<omega> r) \<in> borel_measurable (FF u)"
     and Zm: "\<And>u. 0 \<le> u \<Longrightarrow> Z u \<in> borel_measurable
-        (natural_filtration (pair_law_of T \<phi> M) 0 (\<lambda>v \<omega>. \<omega> v) u)"
+        (natural_filtration (process_law T \<phi> M) 0 (\<lambda>v \<omega>. \<omega> v) u)"
     and mg: "martingale M FF 0 (\<lambda>u \<omega>. Z u (\<phi> \<omega>))"
-  shows "martingale (pair_law_of T \<phi> M)
-      (natural_filtration (pair_law_of T \<phi> M) 0 (\<lambda>v \<omega>. \<omega> v)) 0 Z"
+  shows "martingale (process_law T \<phi> M)
+      (natural_filtration (process_law T \<phi> M) 0 (\<lambda>v \<omega>. \<omega> v)) 0 Z"
 proof -
-  let ?G = "natural_filtration (pair_law_of T \<phi> M) 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v)"
+  let ?G = "natural_filtration (process_law T \<phi> M) 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v)"
   interpret MG: martingale M FF 0 "\<lambda>u \<omega>. Z u (\<phi> \<omega>)" by (rule mg)
   interpret P: prob_space M by (rule prob)
-  have fin': "finite_measure (pair_law_of T \<phi> M)"
-    using P.prob_space_distr[OF phim] by (simp add: prob_space_def pair_law_of_def)
-  have SP: "Stochastic_Process.stochastic_process (pair_law_of T \<phi> M) (0::real)
+  have fin': "finite_measure (process_law T \<phi> M)"
+    using P.prob_space_distr[OF phim] by (simp add: prob_space_def process_law_def)
+  have SP: "Stochastic_Process.stochastic_process (process_law T \<phi> M) (0::real)
       (\<lambda>u \<omega> :: (real \<Rightarrow> 'p). \<omega> u)"
-    by unfold_locales (rule pair_law_eval_measurable[OF sets_pair_law_of])
+    by unfold_locales (rule path_law_evaluation_measurable[OF sets_process_law])
   have GG: "filtered_measure (distr M (path_borel T) \<phi>) ?G 0"
     using Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration
-      [OF SP fin'] by (simp add: finite_filtered_measure_def pair_law_of_def)
+      [OF SP fin'] by (simp add: finite_filtered_measure_def process_law_def)
   have pull: "\<phi> \<in> FF u \<rightarrow>\<^sub>M ?G u" if u: "0 \<le> u" for u
   proof (rule phi_filtration_measurable[OF phim])
     show "(\<lambda>\<omega>. \<phi> \<omega> r) \<in> borel_measurable (FF u)" if "0 \<le> r" "r \<le> u" for r
@@ -84,7 +84,7 @@ proof -
     show "\<phi> \<in> FF u \<rightarrow>\<^sub>M ?G u" if "0 \<le> u" for u by (rule pull[OF that])
     show "Z u \<in> borel_measurable (?G u)" if "0 \<le> u" for u by (rule Zm[OF that])
   qed (rule mg)
-  then show ?thesis unfolding pair_law_of_def .
+  then show ?thesis unfolding process_law_def .
 qed
 
 text \<open>The other plumbing piece the witness needs: the class stops its
@@ -113,9 +113,9 @@ text \<open>Clause (ii) is inheritance: the future's increment over \<open>[p,q]
 
 abbreviation pshift_law ::
   "real \<Rightarrow> 'a::{polish_space,banach} \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b)) measure"
-  where "pshift_law T x Q \<equiv> pair_law_of T (pshift T x) Q"
+  where "pshift_law T x Q \<equiv> process_law T (pshift T x) Q"
 
-lemmas pshift_law_def = pair_law_of_def[where \<phi> = "pshift T x" for T x]
+lemmas pshift_law_def = process_law_def[where \<phi> = "pshift T x" for T x]
 
 lemma prob_space_pshift_law:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and x :: "'a"
@@ -135,7 +135,7 @@ lemma natural_filtration_pshift_law:
   shows "natural_filtration (pshift_law T x Q) 0 (\<lambda>v \<omega>. \<omega> v)
        = natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v)"
   unfolding natural_filtration_def
-  using space_of_path_sets[OF setsQ] space_pair_law_of[of T "pshift T x" Q] by simp
+  using space_of_path_sets[OF setsQ] space_process_law[of T "pshift T x" Q] by simp
 
 text \<open>The martingale property transports.  Everything is arranged so that
   the filtration does not move (\<open>natural_filtration_pshift_law\<close>): only the
@@ -165,7 +165,7 @@ proof -
     using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
   have SP: "Stochastic_Process.stochastic_process (pshift_law T x Q) (0::real)
       (\<lambda>u \<omega> :: (real \<Rightarrow> 'a \<times> 'x). \<omega> u)"
-    by unfold_locales (rule pair_law_eval_measurable[OF sets_pair_law_of])
+    by unfold_locales (rule path_law_evaluation_measurable[OF sets_process_law])
   have GG: "filtered_measure (distr Q ?B (pshift T x)) ?F 0"
     using Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration
       [OF SP fin'] unfolding FF by (simp add: finite_filtered_measure_def pshift_law_def)
@@ -192,11 +192,11 @@ text \<open>The shift is a bijection of the path space with measurable inverse,
 
 abbreviation aglue_law :: "real \<Rightarrow> ((real \<Rightarrow> 'p::{polish_space,banach}) \<Rightarrow> (real \<Rightarrow> 'p) measure)
     \<Rightarrow> (real \<Rightarrow> 'p) measure \<Rightarrow> (real \<Rightarrow> 'p) measure"
-  where "aglue_law T \<kappa> Q \<equiv> pair_law_of T (\<lambda>p. padd T (fst p) (snd p))
+  where "aglue_law T \<kappa> Q \<equiv> process_law T (\<lambda>p. padd T (fst p) (snd p))
       (ksemi Q (path_borel T :: (real \<Rightarrow> 'p) measure) \<kappa>)"
 
 lemmas aglue_law_def =
-  pair_law_of_def[where \<phi> = "\<lambda>p. padd T (fst p) (snd p)" and M = "ksemi Q B \<kappa>" for T Q B \<kappa>]
+  process_law_def[where \<phi> = "\<lambda>p. padd T (fst p) (snd p)" and M = "ksemi Q B \<kappa>" for T Q B \<kappa>]
 
 lemma pshift_law_weak_conv_joint:
   fixes ym :: "nat \<Rightarrow> 'a::{polish_space,banach}" and Rm :: "nat \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure"
@@ -320,7 +320,7 @@ proof -
   have spQ: "space Q = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have spQ': "space (pshift_law T x Q) = space Q"
-    using spQ by (simp add: space_pair_law_of)
+    using spQ by (simp add: space_process_law)
   have shm: "pshift T x \<in> Q \<rightarrow>\<^sub>M ?B"
     using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
   have shmQ: "pshift T (- x) \<in> Q \<rightarrow>\<^sub>M Q"
@@ -426,12 +426,12 @@ text \<open>Clause (iii) for the glue, pathwise.  Exactly the three-case argumen
 definition pglue_law :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'p::{polish_space,banach}) measure
     \<Rightarrow> (real \<Rightarrow> 'p) measure \<Rightarrow> (real \<Rightarrow> 'p) measure"
   where "pglue_law r T Q R
-     = pair_law_of T (\<lambda>p. pglue r T (fst p) (snd p)) (Q \<Otimes>\<^sub>M R)"
+     = process_law T (\<lambda>p. pglue r T (fst p) (snd p)) (Q \<Otimes>\<^sub>M R)"
 
 lemma sets_pglue_law[simp]:
   "sets (pglue_law r T Q R)
      = sets (path_borel T :: (real \<Rightarrow> 'p::{polish_space,banach}) measure)"
-  unfolding pglue_law_def by (rule sets_pair_law_of)
+  unfolding pglue_law_def by (rule sets_process_law)
 
 lemma prob_space_pglue_law:
   fixes Q R :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -444,7 +444,7 @@ proof -
   interpret PP: prob_space "Q \<Otimes>\<^sub>M R"
     by (rule prob_space_pair[OF PQ PR])
   show ?thesis
-    unfolding pglue_law_def pair_law_of_def
+    unfolding pglue_law_def process_law_def
     by (rule PP.prob_space_distr[OF pglue_measurable[OF r rT setsQ setsR]])
 qed
 
@@ -467,7 +467,7 @@ lemma AE_pglue_law:
         \<omega>' \<in> mspace (path_metric (T - r) :: (real \<Rightarrow> 'p) metric) \<Longrightarrow>
         A \<omega> \<Longrightarrow> B \<omega>' \<Longrightarrow> P (pglue r T \<omega> \<omega>')"
   shows "AE \<omega> in pglue_law r T Q R. P \<omega>"
-  unfolding pglue_law_def pair_law_of_def
+  unfolding pglue_law_def process_law_def
 proof (rule AE_distr_pair_imp[OF PQ PR pglue_measurable[OF r rT setsQ setsR] _ A B])
   show "{\<omega> \<in> space (path_borel T). P \<omega>} \<in> sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
     using mset by (simp add: space_borel_of)
@@ -534,8 +534,8 @@ lemma pshift_law_pcut:
   fixes R :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes S0: "0 \<le> S" and ST: "S \<le> T"
     and setsR: "sets R = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  shows "pshift_law S y (pair_law_of S (pcut S) R)
-       = pair_law_of S (pcut S) (pshift_law T y R)"
+  shows "pshift_law S y (process_law S (pcut S) R)
+       = process_law S (pcut S) (pshift_law T y R)"
 proof -
   let ?BS = "(path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   let ?BT = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -545,9 +545,9 @@ proof -
   have shS: "pshift S y \<in> ?BS \<rightarrow>\<^sub>M ?BS" by (rule pshift_measurable[OF S0])
   have shR: "pshift T y \<in> R \<rightarrow>\<^sub>M ?BT"
     unfolding measurable_cong_sets[OF setsR refl] by (rule pshift_measurable[OF T0])
-  have "pshift_law S y (pair_law_of S (pcut S) R)
+  have "pshift_law S y (process_law S (pcut S) R)
       = distr (distr R ?BS (pcut S)) ?BS (pshift S y)"
-    unfolding pshift_law_def pair_law_of_def ..
+    unfolding pshift_law_def process_law_def ..
   also have "\<dots> = distr R ?BS (pshift S y \<circ> pcut S)"
     by (rule distr_distr[OF shS cutR])
   also have "pshift S y \<circ> pcut S = pcut S \<circ> pshift T y"
@@ -555,8 +555,8 @@ proof -
   also have "distr R ?BS (pcut S \<circ> pshift T y)
       = distr (distr R ?BT (pshift T y)) ?BS (pcut S)"
     by (rule distr_distr[OF cutT shR, symmetric])
-  also have "\<dots> = pair_law_of S (pcut S) (pshift_law T y R)"
-    unfolding pshift_law_def pair_law_of_def ..
+  also have "\<dots> = process_law S (pcut S) (pshift_law T y R)"
+    unfolding pshift_law_def process_law_def ..
   finally show ?thesis .
 qed
 
@@ -597,7 +597,7 @@ next
   assume h: "AE \<omega> in ?Q'. P \<omega>"
   have setsQ': "sets ?Q' = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)" by simp
   have spQ': "space ?Q' = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    by (rule space_pair_law_of)
+    by (rule space_process_law)
   have id': "AE \<omega> in ?Q'. pshift T x (pshift T (- x) \<omega>) = \<omega>"
   proof (rule AE_I2)
     fix \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)" assume "\<omega> \<in> space ?Q'"
@@ -627,7 +627,7 @@ lemma ess_inf_pexit_pair_law_pcut:
   assumes S0: "0 \<le> S" and ST: "S \<le> T" and PR: "prob_space R"
     and setsR: "sets R = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and K: "closed K"
-  shows "ess_inf_time (pair_law_of S (pcut S) R) (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
+  shows "ess_inf_time (process_law S (pcut S) R) (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
       = min (ess_inf_time R (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
 proof -
   let ?BS = "(path_borel S :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -635,9 +635,9 @@ proof -
   have mset: "{\<omega> \<in> space ?BS. c \<le> ennreal (pexit S K (\<lambda>t. fst (\<omega> t)))}
       \<in> sets ?BS" for c :: ennreal
     using pexit_path_measurable[OF S0 K refl] by measurable
-  have "ess_inf_time (pair_law_of S (pcut S) R) (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
+  have "ess_inf_time (process_law S (pcut S) R) (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
       = ess_inf_time R (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (pcut S \<omega> t)))"
-    unfolding pair_law_of_def by (rule ess_inf_time_distr[OF cutm mset])
+    unfolding process_law_def by (rule ess_inf_time_distr[OF cutm mset])
   also have "\<dots> = ess_inf_time R (\<lambda>\<omega>. min (pexit T K (\<lambda>t. fst (\<omega> t))) S)"
     unfolding pexit_pcut pexit_min_horizon[OF S0 ST] ..
   also have "\<dots> = min (ess_inf_time R (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
@@ -650,7 +650,7 @@ lemma ess_inf_pexit_pcut_law:
   assumes S0: "0 \<le> S" and ST: "S \<le> T" and PR: "prob_space R"
     and setsR: "sets R = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and K: "closed K"
-  shows "ess_inf_time (pshift_law S y (pair_law_of S (pcut S) R))
+  shows "ess_inf_time (pshift_law S y (process_law S (pcut S) R))
         (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
       = min (ess_inf_time (pshift_law T y R)
           (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
@@ -694,16 +694,16 @@ lemma natural_filtration_pcut:
   assumes u: "0 \<le> u" and uS: "u \<le> S"
     and setsP: "sets P = sets (ipath_space :: (real \<Rightarrow> 'p) measure)"
   shows "{pcut S -` A \<inter> space P | A.
-        A \<in> sets (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v) u)}
+        A \<in> sets (natural_filtration (process_law S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v) u)}
       = sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) u)"
 proof -
-  let ?Q = "pair_law_of S (pcut S) P"
+  let ?Q = "process_law S (pcut S) P"
   let ?g = "\<lambda>N. (\<Union>i\<in>{0..u}. {(\<lambda>\<omega> :: (real \<Rightarrow> 'p). \<omega> i) -` B \<inter> N | B. B \<in> sets borel})"
   have S0: "0 \<le> S" using u uS by simp
   have spP: "space P = ipath"
     using setsP by (metis sets_eq_imp_space_eq space_ipath_space)
   have spQ: "space ?Q = mspace (path_metric S :: (real \<Rightarrow> 'p) metric)"
-    by (rule space_pair_law_of)
+    by (rule space_process_law)
   have into': "pcut S \<omega> \<in> space ?Q" if "\<omega> \<in> space P" for \<omega>
     using that spP spQ restrict_ipath_mspace[OF S0] by (simp add: pcut_def)
   then have into: "pcut S \<in> space P \<rightarrow> space ?Q" by blast
@@ -748,7 +748,7 @@ text \<open>Hence a process whose restrictions are martingales at every horizon 
 definition kglue_law' :: "real \<Rightarrow> real \<Rightarrow> ((real \<Rightarrow> 'p::{polish_space,banach}) \<Rightarrow> (real \<Rightarrow> 'p) measure)
     \<Rightarrow> (real \<Rightarrow> 'p) measure \<Rightarrow> (real \<Rightarrow> 'p) measure"
   where "kglue_law' r T Kr Q
-     = pair_law_of T (\<lambda>p. pglue r T (fst p) (snd p))
+     = process_law T (\<lambda>p. pglue r T (fst p) (snd p))
          (ksemi Q ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) Kr)"
 
 theorem kglue_law'_rcd_eq:
@@ -759,14 +759,14 @@ theorem kglue_law'_rcd_eq:
           ((path_borel r :: (real \<Rightarrow> 'p) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: (real \<Rightarrow> 'p) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) \<kappa>"
-  shows "kglue_law' r T \<kappa> (pair_law_of r (pcut r) P) = P"
+  shows "kglue_law' r T \<kappa> (process_law r (pcut r) P) = P"
 proof -
   let ?X = "(path_borel r :: (real \<Rightarrow> 'p) measure)"
   let ?Y = "(path_borel (T - r) :: (real \<Rightarrow> 'p) measure)"
   let ?B = "(path_borel T :: (real \<Rightarrow> 'p) measure)"
-  let ?Q = "pair_law_of r (pcut r) P"
+  let ?Q = "process_law r (pcut r) P"
   let ?\<phi> = "\<lambda>\<omega> :: (real \<Rightarrow> 'p). (pcut r \<omega>, pfut r T \<omega>)"
   let ?g = "\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). pglue r T (fst p) (snd p)"
   have spP: "space P = mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
@@ -777,7 +777,7 @@ proof -
   have gm: "?g \<in> ?X \<Otimes>\<^sub>M ?Y \<rightarrow>\<^sub>M ?B"
     by (rule pglue_measurable[OF r rT refl refl])
   have "kglue_law' r T \<kappa> ?Q = distr (ksemi ?Q ?Y \<kappa>) ?B ?g"
-    unfolding kglue_law'_def pair_law_of_def ..
+    unfolding kglue_law'_def process_law_def ..
   also have "\<dots> = distr (distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>) ?B ?g" unfolding eq ..
   also have "\<dots> = distr P ?B (?g \<circ> ?\<phi>)" by (rule distr_distr[OF gm mphi])
   also have "\<dots> = distr P ?B (\<lambda>\<omega>. \<omega>)"
@@ -802,7 +802,7 @@ text \<open>The other branch needs a repair, and the repair needs the class to b
 lemma sets_kglue_law'[simp]:
   "sets (kglue_law' r T Kr Q)
      = sets (path_borel T :: (real \<Rightarrow> 'p::{polish_space,banach}) measure)"
-  unfolding kglue_law'_def by (rule sets_pair_law_of)
+  unfolding kglue_law'_def by (rule sets_process_law)
 
 lemma kglue_law'_measurable:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -833,7 +833,7 @@ lemma AE_kglue_law_of_kernel:
   shows "(AE \<omega> in kglue_law' r T Kr Q. \<Phi> \<omega>)
       = (AE p in ksemi Q ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) Kr.
           \<Phi> (pglue r T (fst p) (snd p)))"
-  unfolding kglue_law'_def pair_law_of_def
+  unfolding kglue_law'_def process_law_def
   by (rule AE_distr_iff[OF kglue_law'_measurable[OF r rT setsQ Kp ne] mset])
 
 lemma martingale_of_cuts:
@@ -844,14 +844,14 @@ lemma martingale_of_cuts:
     and Zm: "\<And>u. 0 \<le> u \<Longrightarrow> Z u \<in> borel_measurable
         (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u)"
     and Zloc: "\<And>u S \<omega>. 0 \<le> u \<Longrightarrow> u \<le> S \<Longrightarrow> Z u (pcut S \<omega>) = Z u \<omega>"
-    and mg: "\<And>S. 0 \<le> S \<Longrightarrow> martingale (pair_law_of S (pcut S) P)
-        (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+    and mg: "\<And>S. 0 \<le> S \<Longrightarrow> martingale (process_law S (pcut S) P)
+        (natural_filtration (process_law S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
         (\<lambda>u \<omega>. Z (min u S) \<omega>)"
   shows "martingale P (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v)) 0 Z"
 proof -
   let ?G = "natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v)"
   let ?B = "\<lambda>S. (path_borel S :: (real \<Rightarrow> 'p) measure)"
-  let ?Q = "\<lambda>S. pair_law_of S (pcut S) P"
+  let ?Q = "\<lambda>S. process_law S (pcut S) P"
   let ?H = "\<lambda>S. natural_filtration (?Q S) 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v)"
   interpret PP: prob_space P by (rule prob)
   have SP: "Stochastic_Process.stochastic_process P (0::real)
@@ -877,7 +877,7 @@ proof -
     then have "Z w \<in> borel_measurable (?H S w)" using wS by simp
     then have "Z w \<in> borel_measurable (?Q S)"
       by (rule measurable_from_subalg[OF MS.subalgebras[OF w]])
-    then show ?thesis using measurable_cong_sets[OF sets_pair_law_of refl] by blast
+    then show ?thesis using measurable_cong_sets[OF sets_process_law refl] by blast
   qed
   have integ: "integrable P (Z w)" if w: "0 \<le> w" for w
   proof -
@@ -885,7 +885,7 @@ proof -
     have "integrable (?Q w) (\<lambda>\<omega>. Z (min w w) \<omega>)" by (rule MS.integrable[OF w])
     then have "integrable (?Q w) (Z w)" by simp
     then have "integrable P (\<lambda>\<omega>. Z w (pcut w \<omega>))"
-      unfolding pair_law_of_def
+      unfolding process_law_def
       using integrable_distr_eq[OF cutm[OF w] ZB[OF w order.refl]] by simp
     then show ?thesis using Zloc[OF w order.refl] by simp
   qed
@@ -916,7 +916,7 @@ proof -
           = (\<integral>\<omega>. indicat_real A' \<omega> *\<^sub>R Z w \<omega> \<partial>(?Q v))"
         unfolding set_lebesgue_integral_def using wv by simp
       also have "\<dots> = (\<integral>\<omega>. indicat_real A' (pcut v \<omega>) *\<^sub>R Z w (pcut v \<omega>) \<partial>P)"
-        unfolding pair_law_of_def by (rule integral_distr[OF cutm[OF v0] gb])
+        unfolding process_law_def by (rule integral_distr[OF cutm[OF v0] gb])
       also have "\<dots> = (\<integral>\<omega>. indicat_real A \<omega> *\<^sub>R Z w \<omega> \<partial>P)"
         using AA Zloc[OF w wv]
         by (intro Bochner_Integration.integral_cong) (auto simp: indicator_def)
@@ -950,7 +950,7 @@ proof -
   interpret PK: prob_space "ksemi Q ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) Kr"
     by (rule prob_space_ksemi[OF PQ K])
   show ?thesis
-    unfolding kglue_law'_def pair_law_of_def
+    unfolding kglue_law'_def process_law_def
     by (rule PK.prob_space_distr[OF kglue_law'_measurable[OF r rT setsQ K ne]])
 qed
 
@@ -973,7 +973,7 @@ lemma AE_kglue_law':
         \<omega>' \<in> mspace (path_metric (T - r) :: (real \<Rightarrow> 'p) metric) \<Longrightarrow>
         A \<omega> \<Longrightarrow> B \<omega> \<omega>' \<Longrightarrow> P (pglue r T \<omega> \<omega>')"
   shows "AE \<omega> in kglue_law' r T Kr Q. P \<omega>"
-  unfolding kglue_law'_def pair_law_of_def
+  unfolding kglue_law'_def process_law_def
 proof (rule AE_distr_ksemi_imp[OF K prob_space.not_empty[OF PQ]
       pglue_measurable[OF r rT setsQ refl] _ A B])
   show "{\<omega> \<in> space (path_borel T). P \<omega>} \<in> sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
@@ -1066,16 +1066,16 @@ lemma pfut_rcd_start:
           ((path_borel r :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)) \<kappa>"
-  shows "AE p in pair_law_of r (pcut r) P.
+  shows "AE p in process_law r (pcut r) P.
       emeasure (\<kappa> p) {w \<in> space ((path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)).
         fst (w 0) = 0 \<and> snd (w 0) = 0} = 1"
 proof -
   let ?X = "(path_borel r :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   let ?Y = "(path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   let ?\<phi> = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (pcut r \<omega>, pfut r T \<omega>)"
-  let ?Q = "pair_law_of r (pcut r) P"
+  let ?Q = "process_law r (pcut r) P"
   let ?C = "{w :: (real \<Rightarrow> 'a \<times> 'b) \<in> space ?Y. fst (w 0) = 0 \<and> snd (w 0) = 0}"
   have Tr: "0 \<le> T - r" using rT by simp
   interpret PP: prob_space P by (rule PS)
@@ -1083,8 +1083,8 @@ proof -
   have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
   have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
   have PQ: "prob_space ?Q"
-    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
-  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+    unfolding process_law_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_process_law)
   have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
     using K measurable_cong_sets[OF setsQ refl] by blast
@@ -1302,11 +1302,11 @@ lemma ksemi_rect_null_of_AE:
           ((path_borel r :: (real \<Rightarrow> 'p) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: (real \<Rightarrow> 'p) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) \<kappa>"
     and C: "C \<in> sets ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure))"
     and ae: "AE \<omega> in P. pfut r T \<omega> \<in> C"
-  shows "emeasure (ksemi (pair_law_of r (pcut r) P)
+  shows "emeasure (ksemi (process_law r (pcut r) P)
         ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) \<kappa>)
       (space (path_borel r :: (real \<Rightarrow> 'p) measure)
         \<times> (space ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) - C)) = 0"
@@ -1333,7 +1333,7 @@ proof -
         = pfut r T -` (space ?Y - C) \<inter> space P" by auto
     show ?thesis using aeS AE_iff_measurable[OF mset setseq] by blast
   qed
-  have "emeasure (ksemi (pair_law_of r (pcut r) P) ?Y \<kappa>)
+  have "emeasure (ksemi (process_law r (pcut r) P) ?Y \<kappa>)
         (space ?X \<times> (space ?Y - C))
       = emeasure (distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>) (space ?X \<times> (space ?Y - C))"
     unfolding eq ..
@@ -1356,7 +1356,7 @@ lemma pstopped_law_prob:
     and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  shows "prob_space (pair_law_of T (pstopped T \<theta>) P)"
+  shows "prob_space (process_law T (pstopped T \<theta>) P)"
 proof -
   let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   interpret PP: prob_space P by (rule PS)
@@ -1367,7 +1367,7 @@ proof -
   have m1: "pstopped T \<theta> \<in> P \<rightarrow>\<^sub>M ?B"
     unfolding measurable_cong_sets[OF setsP refl]
     by (rule pstopped_measurable[OF T0 thM th0 thT])
-  show ?thesis unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
+  show ?thesis unfolding process_law_def by (rule PP.prob_space_distr[OF m1])
 qed
 
 lemma pstopped_law_idem:
@@ -1376,7 +1376,7 @@ lemma pstopped_law_idem:
     and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  shows "AE p' in pair_law_of T (pstopped T \<theta>) P. pstopped T \<theta> p' = p'"
+  shows "AE p' in process_law T (pstopped T \<theta>) P. pstopped T \<theta> p' = p'"
 proof -
   let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
@@ -1400,7 +1400,7 @@ proof -
     qed
   qed
   then show ?thesis
-    unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
+    unfolding process_law_def AE_distr_iff[OF m1 mset] .
 qed
 
 lemma integral_ksemi_real:
@@ -1548,7 +1548,7 @@ lemma pstopped_law_start:
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
     and P0: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-  shows "AE p' in pair_law_of T (pstopped T \<theta>) P.
+  shows "AE p' in process_law T (pstopped T \<theta>) P.
       fst (p' 0) = x \<and> snd (p' 0) = 0"
 proof -
   let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -1570,16 +1570,16 @@ proof -
     also have "min 0 (\<theta> \<omega>) = 0" using th0[of \<omega>] by simp
     finally show ?case using elim by simp
   qed
-  then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
+  then show ?thesis unfolding process_law_def AE_distr_iff[OF m1 mset] .
 qed
 
 lemma pstopped_law_cont:
   fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
-  assumes p: "p' \<in> space (pair_law_of T (pstopped T \<theta>) P)"
+  assumes p: "p' \<in> space (process_law T (pstopped T \<theta>) P)"
   shows "continuous_on {0..T} p'"
 proof -
   have "p' \<in> mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
-    using p by (simp add: space_pair_law_of)
+    using p by (simp add: space_process_law)
   then show ?thesis by (rule mspace_path_metricD)
 qed
 
@@ -1648,7 +1648,7 @@ definition kglue_law :: "real \<Rightarrow> real \<Rightarrow> ((real \<Rightarr
     \<Rightarrow> (real \<Rightarrow> 'p) measure \<Rightarrow> (nat \<Rightarrow> (real \<Rightarrow> 'p) measure)
     \<Rightarrow> (real \<Rightarrow> 'p) measure"
   where "kglue_law r T N Q RR
-     = pair_law_of T (kglue r T N) (Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR)"
+     = process_law T (kglue r T N) (Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR)"
 
 theorem path_rcd:
   fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -1664,7 +1664,7 @@ theorem path_rcd:
               ((path_borel u :: (real \<Rightarrow> 'p) measure)
                 \<Otimes>\<^sub>M (path_borel v :: (real \<Rightarrow> 'p) measure))
               (\<lambda>\<omega>. (\<phi>1 \<omega>, \<phi>2 \<omega>))) (A \<times> B)
-          = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(pair_law_of u \<phi>1 P))"
+          = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(process_law u \<phi>1 P))"
 proof -
   let ?X = "(path_borel u :: (real \<Rightarrow> 'p) measure)"
   let ?Y = "(path_borel v :: (real \<Rightarrow> 'p) measure)"
@@ -1674,9 +1674,9 @@ proof -
   have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using m1 m2 by simp
   have setsnu: "sets ?\<nu> = sets (?X \<Otimes>\<^sub>M ?Y)" by simp
 
-  have marg: "marginal_measure ?X ?Y ?\<nu> = pair_law_of u \<phi>1 P"
+  have marg: "marginal_measure ?X ?Y ?\<nu> = process_law u \<phi>1 P"
   proof (rule measure_eqI)
-    show "sets (marginal_measure ?X ?Y ?\<nu>) = sets (pair_law_of u \<phi>1 P)"
+    show "sets (marginal_measure ?X ?Y ?\<nu>) = sets (process_law u \<phi>1 P)"
       by (simp add: sets_marginal_measure)
     fix A assume "A \<in> sets (marginal_measure ?X ?Y ?\<nu>)"
     then have AX: "A \<in> sets ?X" by (simp add: sets_marginal_measure)
@@ -1691,18 +1691,18 @@ proof -
         using measurable_space[OF m2] by auto
       then show ?thesis by simp
     qed
-    also have "\<dots> = emeasure (pair_law_of u \<phi>1 P) A"
-      unfolding pair_law_of_def by (rule emeasure_distr[OF m1 AX, symmetric])
+    also have "\<dots> = emeasure (process_law u \<phi>1 P) A"
+      unfolding process_law_def by (rule emeasure_distr[OF m1 AX, symmetric])
     finally show "emeasure (marginal_measure ?X ?Y ?\<nu>) A
-        = emeasure (pair_law_of u \<phi>1 P) A" .
+        = emeasure (process_law u \<phi>1 P) A" .
   qed
 
   have PSF: "projection_sigma_finite ?X ?Y ?\<nu>"
     unfolding projection_sigma_finite_def
   proof (intro conjI)
     show "sets ?\<nu> = sets (?X \<Otimes>\<^sub>M ?Y)" by (rule setsnu)
-    have "prob_space (pair_law_of u \<phi>1 P)"
-      unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
+    have "prob_space (process_law u \<phi>1 P)"
+      unfolding process_law_def by (rule PP.prob_space_distr[OF m1])
     then show "sigma_finite_measure (marginal_measure ?X ?Y ?\<nu>)"
       unfolding marg by (rule prob_space_imp_sigma_finite)
   qed
@@ -1721,7 +1721,7 @@ proof -
   proof (rule that)
     show "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y" by (rule Km)
     show "emeasure ?\<nu> (A \<times> B)
-        = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(pair_law_of u \<phi>1 P))"
+        = (\<integral>\<^sup>+p\<in>A. emeasure (\<kappa> p) B \<partial>(process_law u \<phi>1 P))"
       if A: "A \<in> sets ?X" and B: "B \<in> sets ?Y" for A B
     proof -
       have "emeasure ?\<nu> (A \<times> B)
@@ -1735,7 +1735,7 @@ qed
 lemma sets_kglue_law[simp]:
   "sets (kglue_law r T N Q RR)
      = sets (path_borel T :: (real \<Rightarrow> 'p::{polish_space,banach}) measure)"
-  unfolding kglue_law_def by (rule sets_pair_law_of)
+  unfolding kglue_law_def by (rule sets_process_law)
 
 lemma kglue_measurable:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -1752,7 +1752,7 @@ proof -
   have eQ: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (nat \<Rightarrow> (real \<Rightarrow> 'p)). fst p v)
       \<in> borel_measurable ?M" for v
     by (rule measurable_compose[OF measurable_fst
-          pair_law_eval_measurable[OF setsQ]])
+          path_law_evaluation_measurable[OF setsQ]])
   have Nfst: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (nat \<Rightarrow> (real \<Rightarrow> 'p)). N (fst p))
       \<in> ?M \<rightarrow>\<^sub>M count_space UNIV"
     by (rule measurable_compose[OF measurable_fst Nm])
@@ -1764,7 +1764,7 @@ proof -
       by (rule measurable_component_singleton) simp
     from measurable_compose[OF measurable_snd this]
     have "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (nat \<Rightarrow> (real \<Rightarrow> 'p)). snd p j) \<in> ?M \<rightarrow>\<^sub>M RR j" .
-    from measurable_compose[OF this pair_law_eval_measurable[OF setsR]]
+    from measurable_compose[OF this path_law_evaluation_measurable[OF setsR]]
     show "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (nat \<Rightarrow> (real \<Rightarrow> 'p)). snd p j v)
         \<in> borel_measurable ?M" .
   qed
@@ -1861,7 +1861,7 @@ proof (rule measure_eqI)
   proof -
     have "emeasure (kglue_law r T N Q RR) A
         = emeasure ?P (kglue r T N -` A \<inter> space ?P)"
-      unfolding kglue_law_def pair_law_of_def by (rule emeasure_distr[OF gm AB])
+      unfolding kglue_law_def process_law_def by (rule emeasure_distr[OF gm AB])
     also have "\<dots> = (\<integral>\<^sup>+\<omega>. emeasure ?S (Pair \<omega> -` (kglue r T N -` A \<inter> space ?P)) \<partial>Q)"
       by (rule PS.emeasure_pair_measure_alt) (rule measurable_sets[OF gm AB])
     also have "\<dots> = (\<integral>\<^sup>+\<omega>. emeasure (RR (N \<omega>))
@@ -1880,7 +1880,7 @@ proof (rule measure_eqI)
     have Csp: "C \<in> sets (Q \<Otimes>\<^sub>M ?MR)" using Cs sets_ksemi[OF K ne] by simp
     have "emeasure (kglue_law' r T (\<lambda>\<omega>. RR (N \<omega>)) Q) A
         = emeasure (ksemi Q ?MR (\<lambda>\<omega>. RR (N \<omega>))) C"
-      unfolding kglue_law'_def pair_law_of_def C_def
+      unfolding kglue_law'_def process_law_def C_def
       by (rule emeasure_distr[OF pm AB])
     also have "\<dots> = (\<integral>\<^sup>+\<omega>. emeasure (distr (RR (N \<omega>)) (Q \<Otimes>\<^sub>M ?MR) (Pair \<omega>)) C \<partial>Q)"
       unfolding ksemi_def
@@ -1981,7 +1981,7 @@ proof -
   interpret PP: prob_space "Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR"
     by (rule prob_space_pair[OF PQ prob_space_PiM]) (rule PR)
   show ?thesis
-    unfolding kglue_law_def pair_law_of_def
+    unfolding kglue_law_def process_law_def
     by (rule PP.prob_space_distr
         [OF kglue_measurable[OF r rT setsQ setsR Nm]])
 qed
@@ -1993,7 +1993,7 @@ lemma pfut_filtration_measurable:
   shows "pfut r T
       \<in> natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + min u (T - r))
         \<rightarrow>\<^sub>M natural_filtration
-            (pair_law_of (T - r) (pfut r T) P) 0 (\<lambda>v w. w v) u"
+            (process_law (T - r) (pfut r T) P) 0 (\<lambda>v w. w v) u"
 proof -
   let ?S = "T - r"
   let ?FF = "\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v)
@@ -2047,7 +2047,7 @@ lemma AE_kglue_law:
     and imp: "\<And>\<omega> f. \<omega> \<in> mspace (path_metric r :: (real \<Rightarrow> 'p) metric) \<Longrightarrow>
         f \<in> space (Pi\<^sub>M UNIV RR) \<Longrightarrow> A \<omega> \<Longrightarrow> B f \<Longrightarrow> P (kglue r T N (\<omega>, f))"
   shows "AE \<omega> in kglue_law r T N Q RR. P \<omega>"
-  unfolding kglue_law_def pair_law_of_def
+  unfolding kglue_law_def process_law_def
 proof (rule AE_distr_pair_imp[OF PQ prob_space_PiM[OF PR] kglue_measurable[OF r rT setsQ setsR Nm]
       _ A B])
   show "{\<omega> \<in> space (path_borel T). P \<omega>} \<in> sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
@@ -2072,21 +2072,21 @@ theorem path_rcd_ksemi:
           ((path_borel u :: (real \<Rightarrow> 'p) measure)
             \<Otimes>\<^sub>M (path_borel v :: (real \<Rightarrow> 'p) measure))
           (\<lambda>\<omega>. (\<phi>1 \<omega>, \<phi>2 \<omega>))
-        = ksemi (pair_law_of u \<phi>1 P)
+        = ksemi (process_law u \<phi>1 P)
             (path_borel v :: (real \<Rightarrow> 'p) measure) \<kappa>"
 proof -
   let ?X = "(path_borel u :: (real \<Rightarrow> 'p) measure)"
   let ?Y = "(path_borel v :: (real \<Rightarrow> 'p) measure)"
   let ?\<phi> = "\<lambda>\<omega> :: (real \<Rightarrow> 'p). (\<phi>1 \<omega>, \<phi>2 \<omega>)"
   let ?\<nu> = "distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi>"
-  let ?Q = "pair_law_of u \<phi>1 P"
+  let ?Q = "process_law u \<phi>1 P"
   let ?E = "{a \<times> b | a b. a \<in> sets ?X \<and> b \<in> sets ?Y}"
   interpret PP: prob_space P by (rule PS)
   have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using m1 m2 by simp
   interpret Pnu: prob_space ?\<nu> by (rule PP.prob_space_distr[OF mphi])
   have PQ: "prob_space ?Q"
-    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF m1])
-  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+    unfolding process_law_def by (rule PP.prob_space_distr[OF m1])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_process_law)
   have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   obtain \<kappa> where Km: "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y"
     and REC: "\<And>A B. A \<in> sets ?X \<Longrightarrow> B \<in> sets ?Y \<Longrightarrow>
@@ -2146,7 +2146,7 @@ theorem exit_class_rcd_ksemi:
           ((path_borel r :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)) \<kappa>"
 proof -
   have Tr: "0 \<le> T - r" using rT by simp
@@ -2183,7 +2183,7 @@ lemma pcut_filtration_measurable:
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and setsP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
   shows "pcut r \<in> natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) u
-      \<rightarrow>\<^sub>M natural_filtration (pair_law_of r (pcut r) P) 0 (\<lambda>v w. w v) u"
+      \<rightarrow>\<^sub>M natural_filtration (process_law r (pcut r) P) 0 (\<lambda>v w. w v) u"
 proof -
   have phim: "pcut r \<in> P \<rightarrow>\<^sub>M (path_borel r :: (real \<Rightarrow> 'p) measure)"
     by (rule pcut_measurable[OF r rT setsP])
@@ -2253,17 +2253,17 @@ lemma pcut_vimage_natural_filtration:
       \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) r)"
 proof -
   let ?X = "(path_borel r :: (real \<Rightarrow> 'p) measure)"
-  have sp: "space (pair_law_of r (pcut r) P) = space ?X"
-    by (simp add: space_pair_law_of space_borel_of)
-  have nfeq: "natural_filtration (pair_law_of r (pcut r) P) 0
+  have sp: "space (process_law r (pcut r) P) = space ?X"
+    by (simp add: space_process_law space_borel_of)
+  have nfeq: "natural_filtration (process_law r (pcut r) P) 0
         (\<lambda>v w :: (real \<Rightarrow> 'p). w v) r
       = natural_filtration ?X 0 (\<lambda>v w. w v) r"
     by (rule natural_filtration_cong_space[OF sp])
-  have AQ: "A \<in> sets (natural_filtration (pair_law_of r (pcut r) P) 0
+  have AQ: "A \<in> sets (natural_filtration (process_law r (pcut r) P) 0
       (\<lambda>v w :: (real \<Rightarrow> 'p). w v) r)"
     unfolding nfeq sets_natural_filtration_path[OF r] using A .
   have m: "pcut r \<in> natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) r
-      \<rightarrow>\<^sub>M natural_filtration (pair_law_of r (pcut r) P) 0 (\<lambda>v w. w v) r"
+      \<rightarrow>\<^sub>M natural_filtration (process_law r (pcut r) P) 0 (\<lambda>v w. w v) r"
     by (rule pcut_filtration_measurable[OF r rT setsP])
   have "pcut r -` A \<inter> space (natural_filtration P 0
       (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) r)

@@ -51,7 +51,7 @@ proof -
   proof -
     have "sets (?F i) \<subseteq> sets Q"
       by (rule sets_natural_filtration_subset)
-         (rule pair_law_eval_measurable[OF setsQ])
+         (rule path_law_evaluation_measurable[OF setsQ])
     moreover have "?C = (pcut i -` B \<inter> space Q)
         - ((pcut i -` B \<inter> space Q) \<inter> {p' \<in> space Q. \<theta> p' \<le> i})" by auto
     ultimately show ?thesis
@@ -265,7 +265,7 @@ proof -
   have fcB: "F \<in> borel_measurable borel"
     by (rule borel_measurable_continuous_onI[OF Fc])
   have Fm: "(\<lambda>\<omega> :: 'n pairpath. F (\<omega> t)) \<in> borel_measurable ?B" for t
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] fcB])
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF refl] fcB])
 
   \<comment> \<open>the two pointwise halves\<close>
   have after: "?g u p' = indicator B (pcut i p') * ?Y u p'"
@@ -327,7 +327,7 @@ proof -
       have "sets (natural_filtration (\<kappa> p') 0 (\<lambda>s w :: 'n pairpath. w s) i)
           \<subseteq> sets (\<kappa> p')"
         by (rule sets_natural_filtration_subset)
-           (rule pair_law_eval_measurable[OF setsK])
+           (rule path_law_evaluation_measurable[OF setsK])
       then show ?thesis using Cf by blast
     qed
     have same: "?Y j p' = ?Y i p'"
@@ -473,7 +473,7 @@ proof -
     have Yfix: "?Y v \<in> borel_measurable Q" for v
     proof -
       have "(\<lambda>p' :: 'n pairpath. p' (min v T)) \<in> borel_measurable Q"
-        by (rule pair_law_eval_measurable[OF setsQ])
+        by (rule path_law_evaluation_measurable[OF setsQ])
       then show ?thesis by (rule measurable_compose[OF _ fcB])
     qed
     have Ym: "(\<lambda>p' :: 'n pairpath. ?Y (min v (\<theta> p')) p') \<in> borel_measurable Q"
@@ -599,19 +599,19 @@ proof -
   let ?X = "\<lambda>u \<omega> :: 'n pairpath. F (\<omega> (min u T))"
   have T0': "0 \<le> T" using T0 by simp
   have spQ: "space Q = space ?B" by (rule sets_eq_imp_space_eq[OF setsQ])
-  have setsR: "sets ?R = sets ?B" by (rule sets_pair_law_of)
+  have setsR: "sets ?R = sets ?B" by (rule sets_process_law)
   have spR: "space ?R = space ?B" by (rule sets_eq_imp_space_eq[OF setsR])
   have PR: "prob_space ?R" by (rule prob_space_aglue_law[OF T0' PQ setsQ Kp])
   have fin: "finite_measure ?R" using PR by (simp add: prob_space_def)
   have SP: "Stochastic_Process.stochastic_process ?R (0::real)
       (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
-    by unfold_locales (rule pair_law_eval_measurable[OF setsR])
+    by unfold_locales (rule path_law_evaluation_measurable[OF setsR])
   interpret SF: finite_filtered_measure ?R ?G 0
     by (rule Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration[OF SP fin])
   have fcB: "F \<in> borel_measurable borel"
     by (rule borel_measurable_continuous_onI[OF Fc])
   have Xm: "?X u \<in> borel_measurable ?B" for u
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] fcB])
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF refl] fcB])
   have Xad: "?X u \<in> borel_measurable (?G u)" if u: "0 \<le> u" for u
   proof -
     have "(\<lambda>\<omega> :: 'n pairpath. \<omega> (min u T)) \<in> borel_measurable (?G u)"
@@ -833,7 +833,7 @@ proof (rule martingale_matI)
       by (rule ksemi_sets_kernel(1)[OF Kp sp])
     have "sets (natural_filtration (\<kappa> p') 0 (\<lambda>s w :: 'n pairpath. w s) i)
         \<subseteq> sets (\<kappa> p')"
-      by (rule sets_natural_filtration_subset) (rule pair_law_eval_measurable[OF sK])
+      by (rule sets_natural_filtration_subset) (rule path_law_evaluation_measurable[OF sK])
     then have CK: "C \<in> sets (\<kappa> p')" using C by blast
     have same: "p' (min j T) = p' (min i T)"
     proof -
@@ -885,18 +885,18 @@ lemma pfut_vimage_natural_filtration:
       \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + i))"
 proof -
   let ?Y = "(path_borel (T - r) :: (real \<Rightarrow> 'p) measure)"
-  have sp: "space (pair_law_of (T - r) (pfut r T) P) = space ?Y"
-    by (simp add: space_pair_law_of space_borel_of)
-  have nfeq: "natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
+  have sp: "space (process_law (T - r) (pfut r T) P) = space ?Y"
+    by (simp add: space_process_law space_borel_of)
+  have nfeq: "natural_filtration (process_law (T - r) (pfut r T) P) 0
         (\<lambda>v w :: (real \<Rightarrow> 'p). w v) i
       = natural_filtration ?Y 0 (\<lambda>v w. w v) i"
     by (rule natural_filtration_cong_space[OF sp])
-  have AQ: "A' \<in> sets (natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
+  have AQ: "A' \<in> sets (natural_filtration (process_law (T - r) (pfut r T) P) 0
       (\<lambda>v w :: (real \<Rightarrow> 'p). w v) i)"
     unfolding nfeq using A' .
   have m: "pfut r T
       \<in> natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) (r + min i (T - r))
-        \<rightarrow>\<^sub>M natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
+        \<rightarrow>\<^sub>M natural_filtration (process_law (T - r) (pfut r T) P) 0
             (\<lambda>v w. w v) i"
     by (rule pfut_filtration_measurable[OF r rT setsP])
   have mm: "min i (T - r) = i" using iS by simp
@@ -959,7 +959,7 @@ lemma pfut_rcd_F_increment_zero:
           ((path_borel r :: (real \<Rightarrow> 'p) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: (real \<Rightarrow> 'p) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) \<kappa>"
     and Fb: "F \<in> borel_measurable borel"
     and Pint: "\<And>u. u \<in> {0..T - r} \<Longrightarrow> integrable P (\<lambda>\<omega>. F (pfut r T \<omega> u))"
@@ -969,13 +969,13 @@ lemma pfut_rcd_F_increment_zero:
         = set_lebesgue_integral P C (\<lambda>\<omega>. F (pfut r T \<omega> v))"
     and i0: "0 \<le> i" and ij: "i \<le> j" and jS: "j \<le> T - r"
     and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) 0 (\<lambda>v w. w v) i)"
-  shows "AE p' in pair_law_of r (pcut r) P.
+  shows "AE p' in process_law r (pcut r) P.
       (\<integral>w. indicator A' w * (F (w j) - F (w i)) \<partial>(\<kappa> p')) = 0"
 proof -
   let ?X = "(path_borel r :: (real \<Rightarrow> 'p) measure)"
   let ?S = "T - r"
   let ?Y = "(path_borel ?S :: (real \<Rightarrow> 'p) measure)"
-  let ?Q = "pair_law_of r (pcut r) P"
+  let ?Q = "process_law r (pcut r) P"
   let ?\<phi> = "\<lambda>\<omega> :: (real \<Rightarrow> 'p). (pcut r \<omega>, pfut r T \<omega>)"
   let ?h = "\<lambda>w :: (real \<Rightarrow> 'p). F (w j) - F (w i)"
   have iS: "i \<le> ?S" using ij jS by simp
@@ -986,8 +986,8 @@ proof -
   have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
   have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
   have PQ: "prob_space ?Q"
-    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
-  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+    unfolding process_law_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_process_law)
   have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
     using K measurable_cong_sets[OF setsQ refl] by blast
@@ -1009,7 +1009,7 @@ proof -
 
   \<comment> \<open>the integrand and its integrability under \<open>P\<close>\<close>
   have Fm: "(\<lambda>w :: (real \<Rightarrow> 'p). F (w u)) \<in> borel_measurable ?Y" for u
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] Fb])
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF refl] Fb])
   have hm: "?h \<in> borel_measurable ?Y" using Fm by measurable
   have hi: "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'p). ?h (snd (?\<phi> \<omega>)))"
     using Bochner_Integration.integrable_diff[OF Pint[OF j0S] Pint[OF i0S]] by simp
@@ -1041,7 +1041,7 @@ proof -
       by (rule rect_vimage_natural_filtration[OF r rT setsP i0 iS AX A'])
     have "sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) (r + i))
         \<subseteq> sets P"
-      by (rule sets_natural_filtration_subset) (rule pair_law_eval_measurable[OF setsP])
+      by (rule sets_natural_filtration_subset) (rule path_law_evaluation_measurable[OF setsP])
     then have SP: "?S' \<in> sets P" using Sfilt by blast
     have si: "set_integrable P ?S' (\<lambda>\<omega> :: (real \<Rightarrow> 'p). F (pfut r T \<omega> u))"
       if u: "u \<in> {0..?S}" for u
@@ -1080,17 +1080,17 @@ lemma pfut_rcd_F_integrable:
           ((path_borel r :: (real \<Rightarrow> 'p) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: (real \<Rightarrow> 'p) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) \<kappa>"
     and Fb: "F \<in> borel_measurable borel"
     and Pint: "integrable P (\<lambda>\<omega>. F (pfut r T \<omega> u))"
-  shows "AE p' in pair_law_of r (pcut r) P.
+  shows "AE p' in process_law r (pcut r) P.
       integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w u))"
 proof -
   let ?X = "(path_borel r :: (real \<Rightarrow> 'p) measure)"
   let ?S = "T - r"
   let ?Y = "(path_borel ?S :: (real \<Rightarrow> 'p) measure)"
-  let ?Q = "pair_law_of r (pcut r) P"
+  let ?Q = "process_law r (pcut r) P"
   let ?\<phi> = "\<lambda>\<omega> :: (real \<Rightarrow> 'p). (pcut r \<omega>, pfut r T \<omega>)"
   let ?g = "\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). F (snd p u)"
   interpret PP: prob_space P by (rule PS)
@@ -1098,8 +1098,8 @@ proof -
   have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
   have mphi: "?\<phi> \<in> P \<rightarrow>\<^sub>M ?X \<Otimes>\<^sub>M ?Y" using mcut mfut by simp
   have PQ: "prob_space ?Q"
-    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
-  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+    unfolding process_law_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_process_law)
   have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
     using K measurable_cong_sets[OF setsQ refl] by blast
@@ -1115,7 +1115,7 @@ proof -
     using mphi measurable_cong_sets[OF refl SQY[symmetric]] by blast
   have gm: "?g \<in> borel_measurable (?Q \<Otimes>\<^sub>M ?Y)"
     by (rule measurable_compose[OF measurable_snd
-        measurable_compose[OF pair_law_eval_measurable[OF refl] Fb]])
+        measurable_compose[OF path_law_evaluation_measurable[OF refl] Fb]])
   have gi: "integrable (ksemi ?Q ?Y \<kappa>) ?g"
   proof -
     have "integrable (distr P (?Q \<Otimes>\<^sub>M ?Y) ?\<phi>) ?g"
@@ -1165,7 +1165,7 @@ proof -
       \<in> ?S \<rightarrow>\<^sub>M ?B"
     using pmP measurable_cong_sets[OF setsS refl] by blast
   have hb: "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). H (\<omega> t)) \<in> borel_measurable ?B"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] Hb])
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF refl] Hb])
   have gm: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p).
       H (padd T (fst p) (snd p) t)) \<in> borel_measurable (Q \<Otimes>\<^sub>M ?B)"
     by (rule measurable_compose[OF pmP hb])
@@ -1363,7 +1363,7 @@ corollary aglue_msec_X:
       * (fst (padd T p' w (min u T)) $ e) \<partial>(\<kappa> p')) \<in> borel_measurable Q"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have AB: "A \<in> sets ?B" using A by (simp add: sets_pair_law_of)
+  have AB: "A \<in> sets ?B" using A by (simp add: sets_process_law)
   have cb: "(\<lambda>\<omega> :: 'n pairpath. indicator A \<omega> :: real) \<in> borel_measurable ?B"
     using AB by (rule borel_measurable_indicator)
   have c1: "\<bar>(indicator A \<omega> :: real)\<bar> \<le> 1" for \<omega> :: "'n pairpath"
@@ -1443,7 +1443,7 @@ corollary aglue_msec_C:
       \<in> borel_measurable Q"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
-  have AB: "A \<in> sets ?B" using A by (simp add: sets_pair_law_of)
+  have AB: "A \<in> sets ?B" using A by (simp add: sets_process_law)
   have cb: "(\<lambda>\<omega> :: 'n pairpath. indicator A \<omega> :: real) \<in> borel_measurable ?B"
     using AB by (rule borel_measurable_indicator)
   have c1: "\<bar>(indicator A \<omega> :: real)\<bar> \<le> 1" for \<omega> :: "'n pairpath"
@@ -1569,7 +1569,7 @@ theorem pfut_rcd_F_martingale:
           ((path_borel r :: (real \<Rightarrow> 'p) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: (real \<Rightarrow> 'p) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) \<kappa>"
     and Fc: "continuous_on UNIV F"
     and Pint: "\<And>u. u \<in> {0..T - r} \<Longrightarrow> integrable P (\<lambda>\<omega>. F (pfut r T \<omega> u))"
@@ -1577,14 +1577,14 @@ theorem pfut_rcd_F_martingale:
       \<Longrightarrow> 0 \<le> u \<Longrightarrow> u \<le> v \<Longrightarrow> v \<le> T - r
       \<Longrightarrow> set_lebesgue_integral P C (\<lambda>\<omega>. F (pfut r T \<omega> u))
         = set_lebesgue_integral P C (\<lambda>\<omega>. F (pfut r T \<omega> v))"
-  shows "AE p' in pair_law_of r (pcut r) P.
+  shows "AE p' in process_law r (pcut r) P.
       martingale (\<kappa> p') (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v)) 0
         (\<lambda>u w. F (w (min u (T - r))))"
 proof -
   let ?X = "(path_borel r :: (real \<Rightarrow> 'p) measure)"
   let ?S = "T - r"
   let ?Y = "(path_borel ?S :: (real \<Rightarrow> 'p) measure)"
-  let ?Q = "pair_law_of r (pcut r) P"
+  let ?Q = "process_law r (pcut r) P"
   let ?G = "\<lambda>q. natural_filtration ?Y 0 (\<lambda>v w :: (real \<Rightarrow> 'p). w v) q"
   have Tr: "0 \<le> ?S" using rT by simp
   have SS: "?S \<in> {0..?S}" using Tr by simp
@@ -1593,8 +1593,8 @@ proof -
   interpret PP: prob_space P by (rule PS)
   have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
   have PQ: "prob_space ?Q"
-    unfolding pair_law_of_def by (rule PP.prob_space_distr[OF mcut])
-  have setsQ: "sets ?Q = sets ?X" by (rule sets_pair_law_of)
+    unfolding process_law_def by (rule PP.prob_space_distr[OF mcut])
+  have setsQ: "sets ?Q = sets ?X" by (rule sets_process_law)
   have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
     using K measurable_cong_sets[OF setsQ refl] by blast
 
@@ -1758,11 +1758,11 @@ theorem pfut_rcd_X_martingale:
           ((path_borel r :: ('n pairpath) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: ('n pairpath) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: ('n pairpath) measure)) \<kappa>"
     and mg: "martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) 0
         (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
-  shows "AE p' in pair_law_of r (pcut r) P.
+  shows "AE p' in process_law r (pcut r) P.
       martingale (\<kappa> p') (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v)) 0
         (\<lambda>u w. fst (w (min u (T - r))))"
 proof -
@@ -1787,7 +1787,7 @@ proof -
   proof -
     have "sets (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + u))
         \<subseteq> sets P"
-      by (rule sets_natural_filtration_subset) (rule pair_law_eval_measurable[OF setsP])
+      by (rule sets_natural_filtration_subset) (rule path_law_evaluation_measurable[OF setsP])
     then have CP: "C \<in> sets P" using C by blast
     have mem: "u \<in> {0..T - r}" "v \<in> {0..T - r}" "0 \<in> {0..T - r}" using u by auto
     have si: "set_integrable P C (\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (r + s)) $ c)"
@@ -1808,12 +1808,12 @@ proof -
         set_integral_diff(2)[OF si[OF mem(1)] si[OF mem(3)]]
         set_integral_diff(2)[OF si[OF mem(2)] si[OF mem(3)]] by simp
   qed
-  have mc: "AE p' in pair_law_of r (pcut r) P.
+  have mc: "AE p' in process_law r (pcut r) P.
       martingale (\<kappa> p') (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v)) 0
         (\<lambda>u w. fst (w (min u (T - r))) $ c)" for c
     by (rule pfut_rcd_F_martingale[where F = "\<lambda>z. fst z $ c",
           OF r rT setsP PS K eq _ Pint Pinc]) (intro continuous_intros)
-  have "AE p' in pair_law_of r (pcut r) P. \<forall>c.
+  have "AE p' in process_law r (pcut r) P. \<forall>c.
       martingale (\<kappa> p') (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v)) 0
         (\<lambda>u w. fst (w (min u (T - r))) $ c)"
     by (intro eventually_all_finite mc)
@@ -1831,13 +1831,13 @@ theorem pfut_rcd_comp_martingale:
           ((path_borel r :: ('n pairpath) measure)
             \<Otimes>\<^sub>M (path_borel (T - r) :: ('n pairpath) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
-        = ksemi (pair_law_of r (pcut r) P)
+        = ksemi (process_law r (pcut r) P)
             ((path_borel (T - r) :: ('n pairpath) measure)) \<kappa>"
     and mg: "martingale P
         (\<lambda>u. natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + min u (T - r))) 0
         (\<lambda>u \<omega>. outerp (fst (pfut r T \<omega> (min u (T - r))))
             - snd (pfut r T \<omega> (min u (T - r))))"
-  shows "AE p' in pair_law_of r (pcut r) P.
+  shows "AE p' in process_law r (pcut r) P.
       martingale (\<kappa> p') (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v)) 0
         (\<lambda>u w. outerp (fst (w (min u (T - r)))) - snd (w (min u (T - r))))"
 proof -
@@ -1873,13 +1873,13 @@ proof -
       using mem unfolding set_integral_mat_component[OF CP Cint[OF mem(1)]]
         set_integral_mat_component[OF CP Cint[OF mem(2)]] by (simp add: min_absorb1)
   qed
-  have mc: "AE p' in pair_law_of r (pcut r) P.
+  have mc: "AE p' in process_law r (pcut r) P.
       martingale (\<kappa> p') (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v)) 0
         (\<lambda>u w. (outerp (fst (w (min u (T - r)))) - snd (w (min u (T - r)))) $ c $ d)"
     for c d
     by (rule pfut_rcd_F_martingale[where F = "\<lambda>z. (outerp (fst z) - snd z) $ c $ d",
           OF r rT setsP PS K eq comp_entry_cont Pint Pinc])
-  have "AE p' in pair_law_of r (pcut r) P. \<forall>c d.
+  have "AE p' in process_law r (pcut r) P. \<forall>c d.
       martingale (\<kappa> p') (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v)) 0
         (\<lambda>u w. (outerp (fst (w (min u (T - r)))) - snd (w (min u (T - r)))) $ c $ d)"
     by (intro eventually_all_finite mc)

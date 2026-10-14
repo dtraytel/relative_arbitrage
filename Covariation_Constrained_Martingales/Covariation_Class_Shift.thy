@@ -45,7 +45,7 @@ proof -
   have finQ: "finite_measure Q" using prob by (simp add: prob_space_def)
   have SP: "Stochastic_Process.stochastic_process Q (0::real)
       (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
-    by unfold_locales (rule pair_law_eval_measurable[OF setsQ])
+    by unfold_locales (rule path_law_evaluation_measurable[OF setsQ])
   have ffm: "finite_filtered_measure Q ?F 0"
     by (rule Stochastic_Process.stochastic_process.finite_filtered_measure_natural_filtration
         [OF SP finQ])

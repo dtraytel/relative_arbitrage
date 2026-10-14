@@ -199,9 +199,9 @@ proof -
   have single: "{p' \<in> space ?B. pstopped T \<theta> p' q = p' q} \<in> sets ?B" for q
   proof -
     have m1: "(\<lambda>p' :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> p' q) \<in> borel_measurable ?B"
-      by (rule measurable_compose[OF pm pair_law_eval_measurable[OF refl]])
+      by (rule measurable_compose[OF pm path_law_evaluation_measurable[OF refl]])
     have m2: "(\<lambda>p' :: (real \<Rightarrow> 'a \<times> 'b). p' q) \<in> borel_measurable ?B"
-      by (rule pair_law_eval_measurable[OF refl])
+      by (rule path_law_evaluation_measurable[OF refl])
     show ?thesis using m1 m2 by measurable
   qed
   have cnt: "countable ?D" by (simp add: countable_rat)

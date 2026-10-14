@@ -117,12 +117,21 @@ val _ =
     (* statement fingerprints, modulo the theory qualifiers of constants, types and
        classes, so that they survive moves and renames of theories (phases 5, 6, 8) *)
     val base = Long_Name.base_name
+    (* constants renamed in phase 8: renames.txt beside roots.txt holds "old new"
+       pairs; a renamed constant is fingerprinted under its old name *)
+    val renamesfile = Path.append (Path.dir (Path.explode rootsfile)) (Path.basic "renames.txt")
+    val const_back =
+      (if File.exists renamesfile then File.read_lines renamesfile else [])
+      |> filter (fn l => l <> "" andalso not (String.isPrefix "#" l))
+      |> map_filter (fn l => (case space_explode " " (Symbol.trim_blanks l)
+           |> filter (fn w => w <> "") of [a, b] => SOME (b, a) | _ => NONE))
+    fun cbase c = let val b = base c in the_default b (AList.lookup (op =) const_back b) end
     fun nS S = map base S
     fun nT (Type (a, Ts)) = Type (base a, map nT Ts)
       | nT (TFree (a, S)) = TFree (a, nS S)
       | nT (TVar (a, S)) = TVar (a, nS S)
     fun fp th = Thm.prop_of th |> Term.map_types nT
-      |> Term.map_aterms (fn Const (c, T) => Const (base c, T) | a => a)
+      |> Term.map_aterms (fn Const (c, T) => Const (cbase c, T) | a => a)
       |> ML_Syntax.print_term |> SHA1.digest |> Message_Digest.rep
     val fps = proper_user |> maps (fn (n, ths) =>
       map_index (fn (i, th) => space_implode "\t"

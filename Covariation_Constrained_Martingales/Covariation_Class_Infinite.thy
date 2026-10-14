@@ -91,16 +91,16 @@ text \<open>The cut of a member of the uncapped class is a member of the capped 
 theorem icovariation_class_pcut:
   fixes P :: "('n::finite pairpath) measure"
   assumes U: "0 \<le> U" and Sc: "closed S" and P: "P \<in> icovariation_class S x"
-  shows "pair_law_of U (pcut U) P \<in> covariation_class S U x"
+  shows "process_law U (pcut U) P \<in> covariation_class S U x"
 proof -
-  let ?Q = "pair_law_of U (pcut U) P"
+  let ?Q = "process_law U (pcut U) P"
   let ?B = "(path_borel U :: ('n pairpath) measure)"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   interpret P: prob_space P by (rule icovariation_class_prob[OF P])
   have phim: "pcut U \<in> P \<rightarrow>\<^sub>M ?B"
     by (rule ipcut_measurable[OF U icovariation_class_sets[OF P]])
   have prob': "prob_space ?Q"
-    unfolding pair_law_of_def by (rule P.prob_space_distr[OF phim])
+    unfolding process_law_def by (rule P.prob_space_distr[OF phim])
 
   \<comment> \<open>clause (i): the initial condition\<close>
   have start': "AE \<omega> in ?Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
@@ -109,7 +109,7 @@ proof -
       by (rule start_set_sets[OF refl])
     have iff: "(AE \<omega> in ?Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0)
         = (AE \<omega> in P. fst (pcut U \<omega> 0) = x \<and> snd (pcut U \<omega> 0) = 0)"
-      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
+      unfolding process_law_def by (rule AE_distr_iff[OF phim mset])
     have z: "(0::real) \<in> {0..U}" using U by simp
     have "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
       by (rule icovariation_class_start[OF P])
@@ -128,7 +128,7 @@ proof -
     then have "AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> U \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (pcut U \<omega> t) - snd (pcut U \<omega> s)) \<in> S"
       by eventually_elim (auto simp: pcut_apply)
-    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets[OF Sc]] .
+    then show ?thesis unfolding process_law_def AE_distr_iff[OF phim diffquot_all_sets[OF Sc]] .
   qed
 
   \<comment> \<open>clauses (iii) and (iv): the martingales\<close>
@@ -142,7 +142,7 @@ proof -
 
   show ?thesis
     unfolding covariation_class_def mem_Collect_eq
-    using prob' sets_pair_law_of start' cov' mgX' mgC' by blast
+    using prob' sets_process_law start' cov' mgX' mgC' by blast
 qed
 
 subsection \<open>The capped value dominates the capped uncapped value\<close>
@@ -154,16 +154,16 @@ lemma ess_inf_pexit_cut:
   fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
   assumes T: "0 \<le> T" and Kc: "closed K"
     and setsP: "sets P = sets (ipath_space :: ('n pairpath) measure)"
-  shows "ess_inf_time (pair_law_of T (pcut T) P) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+  shows "ess_inf_time (process_law T (pcut T) P) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
       = ess_inf P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have phim: "pcut T \<in> P \<rightarrow>\<^sub>M ?B" by (rule ipcut_measurable[OF T setsP])
   have taum: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))) \<in> borel_measurable ?B"
     by (rule pexit_path_measurable[OF T Kc refl])
-  have "ess_inf_time (pair_law_of T (pcut T) P) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
+  have "ess_inf_time (process_law T (pcut T) P) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
       = ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (pcut T \<omega> t)))"
-    unfolding pair_law_of_def
+    unfolding process_law_def
   proof (rule ess_inf_time_distr[OF phim])
     fix c :: ennreal
     show "{\<omega> \<in> space ?B. c \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t)))} \<in> sets ?B"
@@ -195,7 +195,7 @@ proof -
     have "min (ess_inf P (\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t)))) (ennreal T)
         \<le> ess_inf P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
       by (rule ess_inf_min_const)
-    also have "\<dots> = ess_inf_time (pair_law_of T (pcut T) P)
+    also have "\<dots> = ess_inf_time (process_law T (pcut T) P)
         (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
       by (rule ess_inf_pexit_cut[OF T Kc icovariation_class_sets[OF P], symmetric])
     also have "\<dots> \<le> covariation_val S T K x"
@@ -238,7 +238,7 @@ theorem icovariation_val_ge_of_extension:
   fixes K :: "(real^'n::finite) set"
   assumes T: "0 \<le> T" and Kc: "closed K"
     and ext: "\<And>Q :: ('n pairpath) measure. Q \<in> covariation_class S T x \<Longrightarrow>
-      \<exists>P \<in> icovariation_class S x. pair_law_of T (pcut T) P = Q"
+      \<exists>P \<in> icovariation_class S x. process_law T (pcut T) P = Q"
   shows "covariation_val S T K x \<le> icovariation_val S K x"
   unfolding covariation_val_def
 proof (rule Sup_least)
@@ -248,7 +248,7 @@ proof (rule Sup_least)
     where Q: "Q \<in> covariation_class S T x"
       and w: "w = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
   obtain P :: "('n pairpath) measure"
-    where P: "P \<in> icovariation_class S x" and cut: "pair_law_of T (pcut T) P = Q"
+    where P: "P \<in> icovariation_class S x" and cut: "process_law T (pcut T) P = Q"
     using ext[OF Q] by blast
   have "w = ess_inf P (\<lambda>\<omega>. min (iexit K (\<lambda>t. fst (\<omega> t))) (ennreal T))"
     unfolding w cut[symmetric] by (rule ess_inf_pexit_cut[OF T Kc icovariation_class_sets[OF P]])
@@ -273,7 +273,7 @@ theorem icovariation_val_eq_of_extension:
   assumes T: "0 \<le> T" and Sc: "closed S" and Kc: "closed K"
     and nobind: "covariation_val S T K x < ennreal T"
     and ext: "\<And>Q :: ('n pairpath) measure. Q \<in> covariation_class S T x \<Longrightarrow>
-      \<exists>P \<in> icovariation_class S x. pair_law_of T (pcut T) P = Q"
+      \<exists>P \<in> icovariation_class S x. process_law T (pcut T) P = Q"
   shows "icovariation_val S K x = covariation_val S T K x"
 proof (rule antisym)
   have le: "min (icovariation_val S K x) (ennreal T) \<le> covariation_val S T K x"
@@ -349,25 +349,25 @@ lemma prob_space_ibm_law: "prob_space (ibm_law \<sigma> :: ('n::finite pairpath)
   unfolding ibm_law_def
   by (rule BMP.prob_space_distr[OF ibmpair_measurable])
 
-lemma pair_law_of_pcut_ibm_law:
+lemma process_law_pcut_ibm_law:
   assumes U: "0 \<le> U"
-  shows "pair_law_of U (pcut U) (ibm_law \<sigma> :: ('n::finite pairpath) measure)
-      = pair_law_of U (sbmpair \<sigma> U) bm_paths"
+  shows "process_law U (pcut U) (ibm_law \<sigma> :: ('n::finite pairpath) measure)
+      = process_law U (sbmpair \<sigma> U) bm_paths"
 proof -
-  have "pair_law_of U (pcut U) (ibm_law \<sigma> :: ('n pairpath) measure)
+  have "process_law U (pcut U) (ibm_law \<sigma> :: ('n pairpath) measure)
       = distr bm_paths (path_borel U :: ('n pairpath) measure) (pcut U \<circ> ibmpair \<sigma>)"
-    unfolding ibm_law_def pair_law_of_def
+    unfolding ibm_law_def process_law_def
     by (rule distr_distr[OF ipcut_measurable[OF U refl] ibmpair_measurable])
-  also have "\<dots> = pair_law_of U (sbmpair \<sigma> U) bm_paths"
-    unfolding pair_law_of_def by (simp add: comp_def pcut_ibmpair)
+  also have "\<dots> = process_law U (sbmpair \<sigma> U) bm_paths"
+    unfolding process_law_def by (simp add: comp_def pcut_ibmpair)
   finally show ?thesis .
 qed
 
 theorem ibm_law_cut_in_covariation_class:
   assumes U: "0 \<le> U" and Sc: "closed S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
-  shows "pair_law_of U (pcut U) (ibm_law \<sigma> :: ('n::finite pairpath) measure)
+  shows "process_law U (pcut U) (ibm_law \<sigma> :: ('n::finite pairpath) measure)
       \<in> covariation_class S U (0 :: real^'n)"
-  unfolding pair_law_of_pcut_ibm_law[OF U]
+  unfolding process_law_pcut_ibm_law[OF U]
   by (rule sbmpair_law_in_covariation_class[OF U Sc SST])
 
 subsection \<open>The extension of a horizon law to the half-line\<close>
@@ -414,11 +414,11 @@ text \<open>Cutting the extension at a horizon beyond the glue point returns the
   compact concatenation, so @{thm [source] covariation_class_pglue_law} places every
   restriction of the extension in the class.\<close>
 
-lemma pair_law_of_pcut_iextend:
+lemma process_law_pcut_iextend:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T" and TU: "T \<le> U" and Q: "Q \<in> covariation_class S T x"
-  shows "pair_law_of U (pcut U) (iextend \<sigma> T Q)
-      = pglue_law T U Q (pair_law_of (U - T) (pcut (U - T)) (ibm_law \<sigma>))"
+  shows "process_law U (pcut U) (iextend \<sigma> T Q)
+      = pglue_law T U Q (process_law (U - T) (pcut (U - T)) (ibm_law \<sigma>))"
 proof -
   let ?B = "\<lambda>r. (path_borel r :: ('n pairpath) measure)"
   let ?R = "ibm_law \<sigma> :: ('n pairpath) measure"
@@ -432,12 +432,12 @@ proof -
     by (rule iextend_measurable[OF T setsQ])
   have cm: "pcut U \<in> (ipath_space :: ('n pairpath) measure) \<rightarrow>\<^sub>M ?B U"
     by (rule ipcut_measurable[OF U0 refl])
-  have step1: "pair_law_of U (pcut U) (iextend \<sigma> T Q)
+  have step1: "process_law U (pcut U) (iextend \<sigma> T Q)
       = distr (Q \<Otimes>\<^sub>M ?R) (?B U) ?g"
   proof -
-    have "pair_law_of U (pcut U) (iextend \<sigma> T Q)
+    have "process_law U (pcut U) (iextend \<sigma> T Q)
         = distr (Q \<Otimes>\<^sub>M ?R) (?B U) (pcut U \<circ> (\<lambda>p. iglue T (fst p) (snd p)))"
-      unfolding pair_law_of_def iextend_def by (rule distr_distr[OF cm gm])
+      unfolding process_law_def iextend_def by (rule distr_distr[OF cm gm])
     also have "\<dots> = distr (Q \<Otimes>\<^sub>M ?R) (?B U) ?g"
       by (simp add: comp_def pcut_iglue[OF U0])
     finally show ?thesis .
@@ -447,13 +447,13 @@ proof -
   have sf: "sigma_finite_measure (distr ?R (?B (U - T)) (pcut (U - T)))"
     using PR.prob_space_distr[OF cutm]
     by (simp add: prob_space_imp_sigma_finite)
-  have prodeq: "Q \<Otimes>\<^sub>M (pair_law_of (U - T) (pcut (U - T)) ?R)
+  have prodeq: "Q \<Otimes>\<^sub>M (process_law (U - T) (pcut (U - T)) ?R)
       = distr (Q \<Otimes>\<^sub>M ?R) (?B T \<Otimes>\<^sub>M ?B (U - T))
           (\<lambda>p. (fst p, pcut (U - T) (snd p)))"
   proof -
-    have "Q \<Otimes>\<^sub>M (pair_law_of (U - T) (pcut (U - T)) ?R)
+    have "Q \<Otimes>\<^sub>M (process_law (U - T) (pcut (U - T)) ?R)
         = distr Q (?B T) (\<lambda>u. u) \<Otimes>\<^sub>M distr ?R (?B (U - T)) (pcut (U - T))"
-      unfolding pair_law_of_def by (simp add: distr_id2[OF setsQ[symmetric]])
+      unfolding process_law_def by (simp add: distr_id2[OF setsQ[symmetric]])
     also have "\<dots> = distr (Q \<Otimes>\<^sub>M ?R) (?B T \<Otimes>\<^sub>M ?B (U - T))
         (\<lambda>(u, v). (u, pcut (U - T) v))"
       by (rule pair_measure_distr[OF measurable_ident_sets[OF setsQ] cutm sf])
@@ -473,9 +473,9 @@ proof -
       \<in> Q \<Otimes>\<^sub>M ?R \<rightarrow>\<^sub>M ?B T \<Otimes>\<^sub>M ?B (U - T)"
     by (intro measurable_Pair measurable_compose[OF measurable_snd cutm]
         measurable_compose[OF measurable_fst measurable_ident_sets[OF setsQ]])
-  have "pglue_law T U Q (pair_law_of (U - T) (pcut (U - T)) ?R)
-      = distr (Q \<Otimes>\<^sub>M (pair_law_of (U - T) (pcut (U - T)) ?R)) (?B U) ?g"
-    unfolding pglue_law_def pair_law_of_def ..
+  have "pglue_law T U Q (process_law (U - T) (pcut (U - T)) ?R)
+      = distr (Q \<Otimes>\<^sub>M (process_law (U - T) (pcut (U - T)) ?R)) (?B U) ?g"
+    unfolding pglue_law_def process_law_def ..
   also have "\<dots> = distr (Q \<Otimes>\<^sub>M ?R) (?B U)
       (?g \<circ> (\<lambda>p. (fst p, pcut (U - T) (snd p))))"
     unfolding prodeq by (rule distr_distr[OF pgm pairm])
@@ -488,11 +488,11 @@ theorem iextend_cut_in_covariation_class:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T" and TU: "T \<le> U" and Sc: "closed S" and Sv: "convex S"
     and SST: "\<sigma> ** transpose \<sigma> \<in> S" and Q: "Q \<in> covariation_class S T x"
-  shows "pair_law_of U (pcut U) (iextend \<sigma> T Q) \<in> covariation_class S U x"
+  shows "process_law U (pcut U) (iextend \<sigma> T Q) \<in> covariation_class S U x"
 proof -
   have UT0: "0 \<le> U - T" using TU by simp
   show ?thesis
-    unfolding pair_law_of_pcut_iextend[OF T TU Q]
+    unfolding process_law_pcut_iextend[OF T TU Q]
     by (rule covariation_class_pglue_law[OF T TU Sc Sv Q
           ibm_law_cut_in_covariation_class[OF UT0 Sc SST]])
 qed
@@ -503,7 +503,7 @@ text \<open>At the glue point itself the extension restricts to the law it
 theorem pcut_law_iextend:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T" and Q: "Q \<in> covariation_class S T x"
-  shows "pair_law_of T (pcut T) (iextend \<sigma> T Q) = Q"
+  shows "process_law T (pcut T) (iextend \<sigma> T Q) = Q"
 proof -
   let ?B = "\<lambda>r. (path_borel r :: ('n pairpath) measure)"
   let ?R = "ibm_law \<sigma> :: ('n pairpath) measure"
@@ -514,9 +514,9 @@ proof -
     by (rule iextend_measurable[OF T setsQ])
   have cm: "pcut T \<in> (ipath_space :: ('n pairpath) measure) \<rightarrow>\<^sub>M ?B T"
     by (rule ipcut_measurable[OF T refl])
-  have "pair_law_of T (pcut T) (iextend \<sigma> T Q)
+  have "process_law T (pcut T) (iextend \<sigma> T Q)
       = distr (Q \<Otimes>\<^sub>M ?R) (?B T) (pcut T \<circ> (\<lambda>p. iglue T (fst p) (snd p)))"
-    unfolding pair_law_of_def iextend_def by (rule distr_distr[OF cm gm])
+    unfolding process_law_def iextend_def by (rule distr_distr[OF cm gm])
   also have "\<dots> = distr (Q \<Otimes>\<^sub>M ?R) (?B T) (\<lambda>p. pcut T (fst p))"
     by (simp add: comp_def pcut_iglue[OF T] pglue_self)
   also have "\<dots> = distr (Q \<Otimes>\<^sub>M ?R) Q fst"
@@ -545,7 +545,7 @@ lemma iextend_pcut_in_covariation_class:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T" and U: "0 \<le> U" and Sc: "closed S" and Sv: "convex S"
     and SST: "\<sigma> ** transpose \<sigma> \<in> S" and Q: "Q \<in> covariation_class S T x"
-  shows "pair_law_of U (pcut U) (iextend \<sigma> T Q) \<in> covariation_class S U x"
+  shows "process_law U (pcut U) (iextend \<sigma> T Q) \<in> covariation_class S U x"
 proof (cases "T \<le> U")
   case True
   then show ?thesis by (rule iextend_cut_in_covariation_class[OF T _ Sc Sv SST Q])
@@ -553,15 +553,15 @@ next
   case False
   let ?B = "\<lambda>r. (path_borel r :: ('n pairpath) measure)"
   have UT: "U \<le> T" using False by simp
-  have "pair_law_of U (pcut U) Q
-      = pair_law_of U (pcut U) (pair_law_of T (pcut T) (iextend \<sigma> T Q))"
+  have "process_law U (pcut U) Q
+      = process_law U (pcut U) (process_law T (pcut T) (iextend \<sigma> T Q))"
     unfolding pcut_law_iextend[OF T Q] ..
   also have "\<dots> = distr (iextend \<sigma> T Q) (?B U) (pcut U \<circ> pcut T)"
-    unfolding pair_law_of_def
+    unfolding process_law_def
     by (rule distr_distr[OF pcut_measurable[OF U UT refl]
           ipcut_measurable[OF T sets_iextend]])
-  also have "\<dots> = pair_law_of U (pcut U) (iextend \<sigma> T Q)"
-    unfolding pair_law_of_def by (simp add: comp_def pcut_pcut[OF UT])
+  also have "\<dots> = process_law U (pcut U) (iextend \<sigma> T Q)"
+    unfolding process_law_def by (simp add: comp_def pcut_pcut[OF UT])
   finally show ?thesis using covariation_class_pcut[OF U UT Sc Q] by simp
 qed
 
@@ -571,8 +571,8 @@ lemma martingale_of_cut_laws:
   assumes prob: "prob_space P"
     and setsP: "sets P = sets (ipath_space :: ((real \<Rightarrow> 'a \<times> 'x)) measure)"
     and f: "f \<in> borel_measurable borel"
-    and mg: "\<And>S. 0 \<le> S \<Longrightarrow> martingale (pair_law_of S (pcut S) P)
-        (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+    and mg: "\<And>S. 0 \<le> S \<Longrightarrow> martingale (process_law S (pcut S) P)
+        (natural_filtration (process_law S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
         (\<lambda>u \<omega>. f (\<omega> (min u S)))"
   shows "martingale P (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v)) 0 (\<lambda>u \<omega>. f (\<omega> u))"
 proof (rule martingale_of_cuts[OF prob setsP])
@@ -589,8 +589,8 @@ next
   then show "f (pcut S \<omega> u) = f (\<omega> u)" by (simp add: pcut_def)
 next
   fix S :: real assume "0 \<le> S"
-  then show "martingale (pair_law_of S (pcut S) P)
-      (natural_filtration (pair_law_of S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
+  then show "martingale (process_law S (pcut S) P)
+      (natural_filtration (process_law S (pcut S) P) 0 (\<lambda>v \<omega>. \<omega> v)) 0
       (\<lambda>u \<omega>. f (\<omega> (min u S)))"
     by (rule mg)
 qed
@@ -606,16 +606,16 @@ proof -
   have prob: "prob_space ?P" by (rule prob_space_iextend[OF T Q])
   have cutm: "pcut U \<in> ?P \<rightarrow>\<^sub>M (path_borel U :: ('n pairpath) measure)" if U: "0 \<le> U" for U
     by (rule ipcut_measurable[OF U sets_iextend])
-  have cls: "pair_law_of U (pcut U) ?P \<in> covariation_class S U x" if U: "0 \<le> U" for U
+  have cls: "process_law U (pcut U) ?P \<in> covariation_class S U x" if U: "0 \<le> U" for U
     by (rule iextend_pcut_in_covariation_class[OF T U Sc Sv SST Q])
 
   \<comment> \<open>clause (i): the initial condition\<close>
   have start: "AE \<omega> in ?P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
   proof -
-    have "AE \<omega> in pair_law_of T (pcut T) ?P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+    have "AE \<omega> in process_law T (pcut T) ?P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
       by (rule covariation_class_start[OF cls[OF T]])
     then have "AE \<omega> in ?P. fst (pcut T \<omega> 0) = x \<and> snd (pcut T \<omega> 0) = 0"
-      unfolding pair_law_of_def by (rule AE_distrD[OF cutm[OF T]])
+      unfolding process_law_def by (rule AE_distrD[OF cutm[OF T]])
     then show ?thesis using T by (simp add: pcut_def)
   qed
 
@@ -627,14 +627,14 @@ proof -
         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S" for n :: nat
     proof -
       have U: "0 \<le> T + real n" using T by simp
-      have "AE \<omega> in pair_law_of (T + real n) (pcut (T + real n)) ?P.
+      have "AE \<omega> in process_law (T + real n) (pcut (T + real n)) ?P.
           \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T + real n \<longrightarrow>
             (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
         by (rule covariation_class_diffquot[OF cls[OF U]])
       then have "AE \<omega> in ?P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T + real n \<longrightarrow>
           (1 / (t - s)) *\<^sub>R (snd (pcut (T + real n) \<omega> t)
             - snd (pcut (T + real n) \<omega> s)) \<in> S"
-        unfolding pair_law_of_def by (rule AE_distrD[OF cutm[OF U]])
+        unfolding process_law_def by (rule AE_distrD[OF cutm[OF U]])
       then show ?thesis by eventually_elim (auto simp: pcut_def)
     qed
     have "AE \<omega> in ?P. \<forall>n :: nat. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T + real n \<longrightarrow>
@@ -676,7 +676,7 @@ theorem covariation_class_has_extension:
   fixes Q :: "('n::finite pairpath) measure" and \<sigma> :: "real^'n^'n"
   assumes T: "0 \<le> T" and Sc: "closed S" and Sv: "convex S"
     and SST: "\<sigma> ** transpose \<sigma> \<in> S" and Q: "Q \<in> covariation_class S T x"
-  shows "\<exists>P \<in> icovariation_class S x. pair_law_of T (pcut T) P = Q"
+  shows "\<exists>P \<in> icovariation_class S x. process_law T (pcut T) P = Q"
   using iextend_in_icovariation_class[OF T Sc Sv SST Q] pcut_law_iextend[OF T Q] by blast
 
 subsection \<open>The two value functions, unconditionally\<close>

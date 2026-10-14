@@ -189,16 +189,16 @@ theorem sbm_law_weak_conv:
   fixes Sm :: "nat \<Rightarrow> real^'n::finite^'n" and S :: "real^'n^'n"
   assumes T: "0 \<le> T" and Sc: "Sm \<longlonglongrightarrow> S"
   shows "weak_conv_on
-      (\<lambda>m. pair_law_of T (sbmpair (Sm m) T)
+      (\<lambda>m. process_law T (sbmpair (Sm m) T)
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
-      (pair_law_of T (sbmpair S T) bm_paths)
+      (process_law T (sbmpair S T) bm_paths)
       sequentially (mtopology_of (path_metric T :: ('n pairpath) metric))"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
   let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?S = "mspace (path_metric T :: ('n pairpath) metric)"
-  let ?law = "\<lambda>S'. pair_law_of T (sbmpair S' T) ?M"
+  let ?law = "\<lambda>S'. process_law T (sbmpair S' T) ?M"
   have fmS: "finite_measure (?law S')" for S' :: "real^'n^'n"
     using prob_space_sbmpair_law[OF T, where S = S']
     by (simp add: prob_space.emeasure_space_1 finite_measureI)
@@ -225,7 +225,7 @@ proof -
       using continuous_map_measurable[OF cf] by (simp add: borel_of_euclidean)
     have distr_int: "(\<integral>\<omega>. f \<omega> \<partial>(?law S')) = (\<integral>\<omega>. f (sbmpair S' T \<omega>) \<partial>?M)"
       for S' :: "real^'n^'n"
-      unfolding pair_law_of_def
+      unfolding process_law_def
       by (rule integral_distr[OF sbmpair_measurable[OF T] fm])
     have ptw: "(\<lambda>m. f (sbmpair (Sm m) T \<omega>)) \<longlonglongrightarrow> f (sbmpair S T \<omega>)"
       for \<omega> :: "'n \<Rightarrow> real \<Rightarrow> real"
@@ -281,10 +281,10 @@ theorem sbm_kernel_package:
     and Sc: "closed S"
     and SFc: "continuous_on UNIV SF"
     and SFs: "\<And>z. SF z ** transpose (SF z) \<in> S"
-  shows "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T')
+  shows "(\<lambda>z. process_law T' (sbmpair (SF z) T')
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
       \<in> borel \<rightarrow>\<^sub>M prob_algebra (path_borel T' :: ('n pairpath) measure)"
-    and "\<And>z. pair_law_of T' (sbmpair (SF z) T')
+    and "\<And>z. process_law T' (sbmpair (SF z) T')
         (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)
       \<in> covariation_class S T' (0 :: real^'n)"
 proof -
@@ -297,13 +297,13 @@ proof -
   let ?dd = "Levy_Prokhorov.LPm
       (mspace (path_metric T' :: ('n pairpath) metric))
       (mdist (path_metric T' :: ('n pairpath) metric))"
-  define KK where "KK = (\<lambda>z. pair_law_of T' (sbmpair (SF z) T') ?M)"
+  define KK where "KK = (\<lambda>z. process_law T' (sbmpair (SF z) T') ?M)"
   have T0': "0 \<le> T'" using T by simp
   interpret MC: Metric_space ?C ?dd
     by (rule covariation_class_compact_metric_space(1)[OF T B0 B D0 D Sc])
   have Ctop: "MC.mtopology = subtopology ?W ?C"
     by (rule covariation_class_compact_metric_space(2)[OF T B0 B D0 D Sc])
-  show KC: "\<And>z. pair_law_of T' (sbmpair (SF z) T') ?M
+  show KC: "\<And>z. process_law T' (sbmpair (SF z) T') ?M
       \<in> covariation_class S T' (0 :: real^'n)"
     by (rule sbmpair_law_in_covariation_class[OF T0' Sc SFs])
   have KCk: "KK z \<in> ?C" for z unfolding KK_def by (rule KC)
@@ -353,7 +353,7 @@ proof -
   have "KK \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
     by (rule measurable_prob_algebra_weak_conv[OF Polish_space_path_metric SmB])
       (use covariation_class_prob[OF KCk] covariation_class_sets[OF KCk] in simp)
-  then show "(\<lambda>z. pair_law_of T' (sbmpair (SF z) T') ?M)
+  then show "(\<lambda>z. process_law T' (sbmpair (SF z) T') ?M)
       \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B" unfolding KK_def .
 qed
 
@@ -370,10 +370,10 @@ fun eulerp ::
      \<Rightarrow> ('n pairpath) measure"
   where
     "eulerp SF x h 0 = pshift_law h x
-        (pair_law_of h (sbmpair (SF x) h) bm_paths)"
+        (process_law h (sbmpair (SF x) h) bm_paths)"
   | "eulerp SF x h (Suc j) = kglue_law' (real (Suc j) * h)
         (real (Suc (Suc j)) * h)
-        (\<lambda>\<omega>. pair_law_of h (sbmpair (SF (fst (\<omega> (real (Suc j) * h)))) h)
+        (\<lambda>\<omega>. process_law h (sbmpair (SF (fst (\<omega> (real (Suc j) * h)))) h)
              bm_paths)
         (eulerp SF x h j)"
 
@@ -389,7 +389,7 @@ theorem eulerp_in_class:
   shows "eulerp SF x h j \<in> covariation_class S (real (Suc j) * h) x"
 proof (induction j)
   case 0
-  have "pshift_law h x (pair_law_of h (sbmpair (SF x) h)
+  have "pshift_law h x (process_law h (sbmpair (SF x) h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
       \<in> covariation_class S h x"
     by (rule sbmpair_pshift_law_in_covariation_class[OF _ Sc])
@@ -410,16 +410,16 @@ next
   have hpos: "0 < (h :: real)" by (rule h0)
   have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r))
       \<in> borel_measurable (eulerp SF x h j)"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] pair_fst_borel])
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF setsQ] pair_fst_borel])
   have Kp: "(\<lambda>\<omega> :: 'n pairpath.
-      pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
+      process_law h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
       \<in> eulerp SF x h j \<rightarrow>\<^sub>M prob_algebra ((path_borel (T' - r) :: ('n pairpath) measure))"
     unfolding hT by (rule measurable_compose[OF eQ sbm_kernel_package(1)[OF hpos B0 B D0 D Sc SFc SFs]])
-  have Kc: "pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths
+  have Kc: "process_law h (sbmpair (SF (fst (\<omega> r))) h) bm_paths
       \<in> covariation_class S (T' - r) 0" for \<omega> :: "'n pairpath"
     unfolding hT by (rule sbm_kernel_package(2)[OF hpos B0 B D0 D Sc SFc SFs])
   have "kglue_law' r T'
-      (\<lambda>\<omega>. pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
+      (\<lambda>\<omega>. process_law h (sbmpair (SF (fst (\<omega> r))) h) bm_paths)
       (eulerp SF x h j) \<in> covariation_class S T' x"
     by (rule covariation_class_kglue_law'[OF r0 rT B0 B D0 D Sc Sv SFs[of x] T0 Q Kp])
       (assumption | rule Kc)+
@@ -454,18 +454,18 @@ theorem sbm_xi_mean0:
   fixes S :: "real^'n::finite^'n" and M :: "real^'n^'n" and h :: real
   assumes h0: "0 < h"
   shows sbm_xi_integrable:
-    "integrable (pair_law_of h (sbmpair S h)
+    "integrable (process_law h (sbmpair S h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
       (\<lambda>\<omega>'. trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
         - h *\<^sub>R (S ** transpose S))))"
     and sbm_xi_mean:
     "(\<integral>\<omega>'. trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
         - h *\<^sub>R (S ** transpose S)))
-      \<partial>(pair_law_of h (sbmpair S h)
+      \<partial>(process_law h (sbmpair S h)
           (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))) = 0"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?\<mu> = "pair_law_of h (sbmpair S h) ?M"
+  let ?\<mu> = "process_law h (sbmpair S h) ?M"
   let ?B = "(path_borel h :: ('n pairpath) measure)"
   let ?\<xi> = "\<lambda>\<omega>' :: 'n pairpath. trace (M ** (outerp
       (fst (\<omega>' h) - fst (\<omega>' 0)) - h *\<^sub>R (S ** transpose S)))"
@@ -477,9 +477,9 @@ proof -
     by (rule sbmpair_law_in_covariation_class[OF h0' closed_singleton singletonI])
   have sets\<mu>: "sets ?\<mu> = sets ?B" by simp
   have evh: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' h) \<in> ?B \<rightarrow>\<^sub>M borel"
-    by (rule pair_law_eval_measurable[OF refl])
+    by (rule path_law_evaluation_measurable[OF refl])
   have ev0: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' 0) \<in> ?B \<rightarrow>\<^sub>M borel"
-    by (rule pair_law_eval_measurable[OF refl])
+    by (rule path_law_evaluation_measurable[OF refl])
   have pairm: "(\<lambda>\<omega>' :: 'n pairpath. (\<omega>' h, \<omega>' 0)) \<in> ?B \<rightarrow>\<^sub>M borel"
     using evh ev0 by (simp add: borel_prod[symmetric])
   have contxi: "(\<lambda>p :: ((real^'n) \<times> (real^'n^'n))
@@ -547,7 +547,7 @@ proof -
     qed
     have iff: "(AE \<omega>' in ?\<mu>. snd (\<omega>' h) = h *\<^sub>R (S ** transpose S))
         = (AE \<omega> in ?M. snd (sbmpair S h \<omega> h) = h *\<^sub>R (S ** transpose S))"
-      unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
+      unfolding process_law_def by (rule AE_distr_iff[OF phim mset])
     have "AE \<omega> in ?M. snd (sbmpair S h \<omega> h) = h *\<^sub>R (S ** transpose S)"
       by (intro AE_I2) (simp add: sbmpair_apply[OF hI])
     then show ?thesis unfolding iff .
@@ -587,19 +587,19 @@ theorem sbm_xi_sq_bound:
   defines "n' \<equiv> real (CARD('n))"
   assumes h0: "0 < h" and Sd: "\<And>i. (S ** transpose S) $ i $ i \<le> D"
   shows sbm_xi_sq_integrable:
-    "integrable (pair_law_of h (sbmpair S h)
+    "integrable (process_law h (sbmpair S h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
       (\<lambda>\<omega>'. (trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
         - h *\<^sub>R (S ** transpose S))))\<^sup>2)"
     and sbm_xi_sq_integral:
     "(\<integral>\<omega>'. (trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
         - h *\<^sub>R (S ** transpose S))))\<^sup>2
-      \<partial>(pair_law_of h (sbmpair S h)
+      \<partial>(process_law h (sbmpair S h)
           (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)))
       \<le> (6 * (Cmm * Cs\<^sup>2)\<^sup>2 * n'\<^sup>2 + 2 * (n'\<^sup>2 * Cmm * D)\<^sup>2) * h\<^sup>2"
 proof -
   let ?M = "bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure"
-  let ?\<mu> = "pair_law_of h (sbmpair S h) ?M"
+  let ?\<mu> = "process_law h (sbmpair S h) ?M"
   let ?B = "(path_borel h :: ('n pairpath) measure)"
   let ?\<xi> = "\<lambda>\<omega>' :: 'n pairpath. trace (M ** (outerp
       (fst (\<omega>' h) - fst (\<omega>' 0)) - h *\<^sub>R (S ** transpose S)))"
@@ -792,11 +792,11 @@ proof -
     qed
   qed
   show "integrable ?\<mu> (\<lambda>\<omega>'. (?\<xi> \<omega>')\<^sup>2)"
-    unfolding pair_law_of_def
+    unfolding process_law_def
     by (subst integrable_distr_eq[OF phim xi2meas]) (rule int2M)
   \<comment> \<open>the integral bound\<close>
   have "(\<integral>\<omega>'. (?\<xi> \<omega>')\<^sup>2 \<partial>?\<mu>) = (\<integral>\<omega>. (?\<xi> (sbmpair S h \<omega>))\<^sup>2 \<partial>?M)"
-    unfolding pair_law_of_def by (rule integral_distr[OF phim xi2meas])
+    unfolding process_law_def by (rule integral_distr[OF phim xi2meas])
   also have "\<dots> \<le> (\<integral>\<omega>. CA * (?R \<omega>)\<^sup>2 + CB * h\<^sup>2 \<partial>?M)"
     by (rule integral_mono_AE[OF int2M domint ptw])
   also have "\<dots> = CA * (\<integral>\<omega>. (?R \<omega>)\<^sup>2 \<partial>?M) + CB * h\<^sup>2"
@@ -849,7 +849,7 @@ corollary sbm_xi_sq_bound_uniform:
   assumes h0: "0 < h" and Sd: "\<And>i. (S ** transpose S) $ i $ i \<le> D"
   shows "(\<integral>\<omega>'. (trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
         - h *\<^sub>R (S ** transpose S))))\<^sup>2
-      \<partial>(pair_law_of h (sbmpair S h)
+      \<partial>(process_law h (sbmpair S h)
           (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)))
       \<le> xiC M D * h\<^sup>2"
 proof -
@@ -868,7 +868,7 @@ proof -
   qed
   have base: "(\<integral>\<omega>'. (trace (M ** (outerp (fst (\<omega>' h) - fst (\<omega>' 0))
         - h *\<^sub>R (S ** transpose S))))\<^sup>2
-      \<partial>(pair_law_of h (sbmpair S h)
+      \<partial>(process_law h (sbmpair S h)
           (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)))
       \<le> (6 * (Cmm * Cs\<^sup>2)\<^sup>2 * n'\<^sup>2 + 2 * (n'\<^sup>2 * Cmm * D)\<^sup>2) * h\<^sup>2"
     unfolding Cmm_def Cs_def n'_def by (rule sbm_xi_sq_bound[OF h0 Sd])
@@ -912,9 +912,9 @@ proof -
       \<in> borel_measurable ?B" for j
   proof -
     have evu: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (real (Suc j) * h)) \<in> ?B \<rightarrow>\<^sub>M borel"
-      by (rule pair_law_eval_measurable[OF refl])
+      by (rule path_law_evaluation_measurable[OF refl])
     have evv: "(\<lambda>\<omega> :: 'n pairpath. \<omega> (real j * h)) \<in> ?B \<rightarrow>\<^sub>M borel"
-      by (rule pair_law_eval_measurable[OF refl])
+      by (rule path_law_evaluation_measurable[OF refl])
     have pairm: "(\<lambda>\<omega> :: 'n pairpath.
         (\<omega> (real (Suc j) * h), \<omega> (real j * h))) \<in> ?B \<rightarrow>\<^sub>M borel"
       using evu evv by (simp add: borel_prod[symmetric])
@@ -1026,7 +1026,7 @@ theorem eulerp_Xi_sq_bound:
 proof (induction N)
   case 0
   have h0': "(0::real) \<le> h" using h0 by simp
-  let ?\<mu>0 = "pair_law_of h (sbmpair (SF x) h)
+  let ?\<mu>0 = "process_law h (sbmpair (SF x) h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
   let ?Bh = "(path_borel h :: ('n pairpath) measure)"
   have SFsx: "(SF x ** transpose (SF x)) $ i $ i \<le> D" for i using D[OF SFs[of x]] by blast
@@ -1102,7 +1102,7 @@ next
   let ?Bt = "(path_borel T' :: ('n pairpath) measure)"
   let ?MR = "(path_borel (T' - r) :: ('n pairpath) measure)"
   let ?K = "\<lambda>\<omega> :: 'n pairpath.
-      pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
+      process_law h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
   let ?A = "euXi SF M h (Suc N)"
   let ?xi = "\<lambda>\<omega> \<omega>' :: 'n pairpath. trace (M ** (outerp
       (fst (\<omega>' h) - fst (\<omega>' 0))
@@ -1117,7 +1117,7 @@ next
   have setsQ: "sets ?Q = sets ?Br" by (rule covariation_class_sets[OF Qc])
   have ne: "space ?Q \<noteq> {}" by (rule PQ.not_empty)
   have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?Q"
-    by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] pair_fst_borel])
+    by (rule measurable_compose[OF path_law_evaluation_measurable[OF setsQ] pair_fst_borel])
   have Kp: "?K \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?MR"
     unfolding hT by (rule measurable_compose[OF eQ sbm_kernel_package(1)[OF h0 B0 B D0 D Sc SFc SFs]])
   have Ee: "eulerp SF x h (Suc N) = kglue_law' r T' ?K ?Q"
@@ -1243,7 +1243,7 @@ next
   proof -
     have kd: "kglue_law' r T' ?K ?Q = distr (ksemi ?Q ?MR ?K) ?Bt
         (\<lambda>p. pglue r T' (fst p) (snd p))"
-      unfolding kglue_law'_def pair_law_of_def by (rule refl)
+      unfolding kglue_law'_def process_law_def by (rule refl)
     have "(\<integral>\<^sup>+\<omega>. ennreal ((euXi SF M h (Suc (Suc N)) \<omega>)\<^sup>2)
         \<partial>(eulerp SF x h (Suc N)))
         = (\<integral>\<^sup>+p. ennreal ((euXi SF M h (Suc (Suc N))
@@ -1307,7 +1307,7 @@ subsection \<open>The increments are almost surely orthogonal to a killed field\
 lemma sbm_orth_increment:
   fixes S :: "real^'n::finite^'n" and w :: "real^'n"
   assumes h0: "0 \<le> h" and orth: "transpose S *v w = 0"
-  shows "AE \<omega>' in pair_law_of h (sbmpair S h)
+  shows "AE \<omega>' in process_law h (sbmpair S h)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure).
     w \<bullet> (fst (\<omega>' h) - fst (\<omega>' 0)) = 0"
 proof -
@@ -1315,9 +1315,9 @@ proof -
   let ?B = "(path_borel h :: ('n pairpath) measure)"
   have phim: "sbmpair S h \<in> ?M \<rightarrow>\<^sub>M ?B" by (rule sbmpair_measurable[OF h0])
   have evh: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' h) \<in> ?B \<rightarrow>\<^sub>M borel"
-    by (rule pair_law_eval_measurable[OF refl])
+    by (rule path_law_evaluation_measurable[OF refl])
   have ev0: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' 0) \<in> ?B \<rightarrow>\<^sub>M borel"
-    by (rule pair_law_eval_measurable[OF refl])
+    by (rule path_law_evaluation_measurable[OF refl])
   have pairm: "(\<lambda>\<omega>' :: 'n pairpath. (\<omega>' h, \<omega>' 0)) \<in> ?B \<rightarrow>\<^sub>M borel"
     using evh ev0 by (simp add: borel_prod[symmetric])
   have contf: "(\<lambda>ab :: ((real^'n) \<times> (real^'n^'n))
@@ -1363,7 +1363,7 @@ proof -
     then show ?thesis using orth by simp
   qed
   show ?thesis
-    unfolding pair_law_of_def
+    unfolding process_law_def
     by (subst AE_distr_iff[OF phim mset]) (simp add: ptw)
 qed
 
@@ -1457,7 +1457,7 @@ next
     let ?Bt = "(path_borel T' :: ('n pairpath) measure)"
     let ?MR = "(path_borel (T' - r) :: ('n pairpath) measure)"
     let ?K = "\<lambda>\<omega> :: 'n pairpath.
-        pair_law_of h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
+        process_law h (sbmpair (SF (fst (\<omega> r))) h) bm_paths"
     have hT: "T' - r = h" unfolding r_def T'_def by (simp add: algebra_simps)
     have r0: "0 \<le> r" unfolding r_def using h0' by simp
     have rleT: "r \<le> T'" unfolding r_def T'_def
@@ -1468,7 +1468,7 @@ next
     have setsQ: "sets ?Q = sets ?Br" by (rule covariation_class_sets[OF Qc])
     have ne: "space ?Q \<noteq> {}" by (rule PQ.not_empty)
     have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?Q"
-      by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] pair_fst_borel])
+      by (rule measurable_compose[OF path_law_evaluation_measurable[OF setsQ] pair_fst_borel])
     have Kp: "?K \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?MR"
       unfolding hT by (rule measurable_compose[OF eQ sbm_kernel_package(1)[OF h0 B0 B D0 D Sc SFc SFs]])
     have Ee: "eulerp SF x h (Suc N) = kglue_law' r T' ?K ?Q"
@@ -1499,9 +1499,9 @@ next
       by (simp only: euXi_pglue_prefix[OF h0' mle])
     have kd: "kglue_law' r T' ?K ?Q = distr (ksemi ?Q ?MR ?K) ?Bt
         (\<lambda>p. pglue r T' (fst p) (snd p))"
-      unfolding kglue_law'_def pair_law_of_def by (rule refl)
-    have KP1: "emeasure (pair_law_of h (sbmpair (SF (fst (\<omega> r))) h)
-        bm_paths) (space (pair_law_of h (sbmpair (SF (fst (\<omega> r))) h)
+      unfolding kglue_law'_def process_law_def by (rule refl)
+    have KP1: "emeasure (process_law h (sbmpair (SF (fst (\<omega> r))) h)
+        bm_paths) (space (process_law h (sbmpair (SF (fst (\<omega> r))) h)
           bm_paths)) = 1" for \<omega> :: "'n pairpath"
       by (rule prob_space.emeasure_space_1[OF prob_space_sbmpair_law[OF h0']])
     have nnA: "(\<integral>\<^sup>+\<omega>. ennreal ((euXi SF M h m \<omega>)\<^sup>2)
