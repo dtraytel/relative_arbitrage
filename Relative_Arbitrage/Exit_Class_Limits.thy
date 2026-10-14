@@ -11,7 +11,9 @@ begin
 section \<open>The martingale clauses of Lemma 2.3\<close>
 
 text \<open>This section proves the martingale clauses of Lemma 2.3 for a weak
-  limit of the paper's class, combining the class machinery of
+  limit of members of \<open>covariation_class S\<close>, for any constraint set \<open>S\<close>
+  with a norm bound and a bounded diagonal (the paper's class is the case
+  \<open>S = sconstraint k L\<close>), combining the class machinery of
   @{theory Relative_Arbitrage.Exit_Class} with the generic weak-limit
   martingale theorem @{thm [source] martingale_F_limit} of
   @{theory Path_Space_Operations.Pair_Path_Laws}.
@@ -24,8 +26,8 @@ text \<open>This section proves the martingale clauses of Lemma 2.3 for a weak
   carries the martingale property of a continuous functional \<open>F\<close> of the
   path through a weak limit, given a uniform \<open>L\<^sup>2\<close> bound on \<open>F\<close>; the
   coordinate clause is the case \<open>F = (\<lambda>p. fst p $ i)\<close>, and the compensated
-  clause below is the case of an entry of \<open>outerp X - Y\<close>.  The paper's class
-  admits no clamp: its processes are neither stopped nor bounded, so the
+  clause below is the case of an entry of \<open>outerp X - Y\<close>.  The class admits
+  no clamp: its processes are neither stopped nor bounded, so the
   test functional is continuous but unbounded, and the transfer runs through
   the uniform \<open>L\<^sup>2\<close> bound (@{thm [source] covariation_class_sq_mean_le}).\<close>
 
