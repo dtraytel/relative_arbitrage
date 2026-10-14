@@ -1,4 +1,4 @@
-session Relative_Arbitrage = Continuous_Path_Spaces +
+session Relative_Arbitrage = Path_Space_Operations +
   description "
     Theorem 1.1 of Lai, Shkolnikov and Soner, Relative arbitrage problem under
     eigenvalue lower bounds (arXiv:2512.17702): the value function of the
@@ -8,27 +8,18 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
 
     The operator of Eq. (1.9), its envelopes, the subspace-tangential field
     and the comparison principle (Theorem 4.2(a)) are in the probability-free
-    session Relative_Arbitrage_Equation.  This session is layered: the path
-    toolkit (Pair_Path_Space through Path_Law_Sampling) knows nothing of the
-    constraint set or the value function; the class and dynamic programming
-    layer builds the class of Eq. (1.7); and the value-function layer proves
-    the five clauses.
+    session Relative_Arbitrage_Equation; the operations on path laws (cutting,
+    glueing, shifting, sampling at a stopping time) and the class of laws
+    with constrained covariation, for an arbitrary constraint set, are in
+    Path_Space_Operations.  This session instantiates that class at the
+    eigenvalue constraint set of Eq. (1.7), proves the dynamic programming
+    principle for it, and proves the five clauses for its value function.
   "
   options [document = pdf, document_output = "output"]
   sessions
-    Symmetric_Matrix_Spectra
-    Semicontinuous_Analysis
-    Second_Order_Viscosity_Analysis
     Wiener_Measure
-    Disintegration
     Relative_Arbitrage_Equation
   theories
-    Pair_Path_Space
-    Pair_Path_Laws
-    Path_Splicing
-    Path_Stopping_Times
-    Path_Law_Pasting
-    Path_Law_Sampling
     Exit_Class
     Covariation_Density
     Exit_Class_Limits

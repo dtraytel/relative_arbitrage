@@ -3,7 +3,7 @@ section \<open>Lemma 2.3: the class is closed under weak limits\<close>
 (*<*)
 theory Exit_Class_Limits
   imports
-    "Levy_Prokhorov_Metric.Space_of_Finite_Measures" Exit_Class Path_Splicing
+    "Levy_Prokhorov_Metric.Space_of_Finite_Measures" Exit_Class "Path_Space_Operations.Path_Splicing"
 begin
 
 (*>*)
@@ -14,7 +14,7 @@ text \<open>This section proves the martingale clauses of Lemma 2.3 for a weak
   limit of the paper's class, combining the class machinery of
   @{theory Relative_Arbitrage.Exit_Class} with the generic weak-limit
   martingale theorem @{thm [source] martingale_F_limit} of
-  @{theory Relative_Arbitrage.Pair_Path_Laws}.
+  @{theory Path_Space_Operations.Pair_Path_Laws}.
 
   Unlike the two closed path conditions of (1.7), which pass to a weak
   limit directly (\<open>Exit_Class.exit_class_start_limit\<close>,

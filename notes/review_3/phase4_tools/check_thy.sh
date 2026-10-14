@@ -25,7 +25,7 @@ session "$SESS" = "$BASE" +
   options [document = false, timeout = 600]
   sessions
     Second_Order_Viscosity_Analysis Continuous_Time_Martingales Wiener_Measure
-    Continuous_Path_Spaces Relative_Arbitrage_Equation Relative_Arbitrage Symmetric_Matrix_Spectra
+    Continuous_Path_Spaces Path_Space_Operations Relative_Arbitrage_Equation Relative_Arbitrage Symmetric_Matrix_Spectra
     Semicontinuous_Analysis
   theories
     "$NAME"

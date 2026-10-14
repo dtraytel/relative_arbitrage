@@ -3,7 +3,7 @@ section \<open>Shift equivariance, and upper semicontinuity of the value functio
 (*<*)
 theory Exit_Class_Shift
   imports
-    Exit_Class_Tightness Path_Law_Pasting
+    Exit_Class_Tightness "Path_Space_Operations.Path_Law_Pasting"
 begin
 
 (*>*)

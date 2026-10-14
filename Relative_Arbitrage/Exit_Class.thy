@@ -2,7 +2,7 @@
 (*<*)
 theory Exit_Class
   imports
-    "Relative_Arbitrage_Equation.Constraint_Set_Convexity" "Relative_Arbitrage_Equation.Operator_Formula" Pair_Path_Laws
+    "Relative_Arbitrage_Equation.Constraint_Set_Convexity" "Relative_Arbitrage_Equation.Operator_Formula" "Path_Space_Operations.Pair_Path_Laws"
 begin
 
 (*>*)
@@ -165,7 +165,7 @@ definition exit_class ::
        (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))}"
 
 text \<open>The class is the constrained-covariation class of
-  @{theory Relative_Arbitrage.Pair_Path_Laws} at the constraint set of
+  @{theory Path_Space_Operations.Pair_Path_Laws} at the constraint set of
   Eq. (1.5): the paper contributes \<open>sconstraint k L\<close> and nothing else to the
   definition.  Everything below that reads only one clause of the class is
   the generic statement specialised through this equation.\<close>

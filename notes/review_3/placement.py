@@ -94,7 +94,7 @@ for src,tgt in [("Continuous_Path_Spaces","Continuous_Time_Martingales"),("Secon
 json.dump({k:sorted(v) for k,v in res.items()}, open(OUT+'/movable.json','w'))
 
 print("\n==== strict modes: only Relative_Arbitrage facts may move ====")
-RA_SESS={'Relative_Arbitrage','Relative_Arbitrage_Equation'}
+RA_SESS={'Relative_Arbitrage','Relative_Arbitrage_Equation','Path_Space_Operations'}
 ra_consts={c for c,t in const_thy.items() if sess(t) in RA_SESS}
 def movable2(A, library_ready):
     cand={n for n,f in facts.items() if f['sess'] in RA_SESS and f['thy'] not in A}

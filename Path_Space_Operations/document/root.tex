@@ -1,0 +1,56 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+\urlstyle{rm}
+\isabellestyle{it}
+
+\begin{document}
+
+\title{Operations on Laws of Continuous Paths}
+\author{Dmitriy Traytel}
+\maketitle
+
+\begin{abstract}
+  Arguments about controlled martingales on a space of continuous paths
+  repeatedly cut a path at a time, continue it by another, or split it at a
+  stopping time, and they need each of these operations not only on paths
+  but on laws of paths.  This entry provides them for paths that carry a
+  state in $\mathbb{R}^n$ together with its running covariation, on top of
+  the path space $C([0,T])$ of the Archive entry
+  \texttt{Continuous\_Path\_Spaces}.  Cutting, glueing, shifting, delaying
+  and re-basing a path are continuous and Borel measurable for the
+  supremum metric.  On laws, we construct the law of a concrete process,
+  the glueing of a law with a measurable kernel of continuations chosen by
+  the endpoint, and the additive glueing that splits a law at a stopping
+  time and reassembles it; stopping times are treated as path functionals,
+  with the regular conditional distribution of the future given the
+  stopped past and optional sampling on the path space.  Generic lemmas
+  carry the martingale identities, and the closed clauses of a constraint
+  on the covariation, through weak limits of laws.  Finally, we define the
+  class of martingale laws started at a point whose covariation has its
+  density in a given set $S$ of matrices, derive its elementary properties
+  under norm or diagonal bounds on $S$ (Lipschitz covariation paths, square
+  integrability, second-moment bounds), and define the value of the
+  minimum-exit-time problem over it, the supremum over the laws of the
+  essential infimum of the exit time from a set $K$, with $S$ and $K$ as
+  parameters.
+\end{abstract}
+
+\tableofcontents
+
+\parindent 0pt\parskip 0.5ex
+
+\input{session}
+
+\bibliographystyle{abbrv}
+\bibliography{root}
+
+\end{document}

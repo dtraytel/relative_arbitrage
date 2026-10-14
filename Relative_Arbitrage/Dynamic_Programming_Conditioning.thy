@@ -3,7 +3,7 @@ section \<open>Conditioning on the past, and the conditional law\<close>
 (*<*)
 theory Dynamic_Programming_Conditioning
   imports
-    Dynamic_Programming_Pasting Path_Law_Sampling
+    Dynamic_Programming_Pasting "Path_Space_Operations.Path_Law_Sampling"
 begin
 
 (*>*)
