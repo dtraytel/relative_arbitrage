@@ -504,27 +504,6 @@ proof -
           path_stopping_time_const[OF cc0' less_imp_le[OF ccT]] borel_measurable_const P AEfun])
 qed
 
-text \<open>The paper's constraint set contains every subspace-tangential rate of
-  a subspace of dimension \<open>m \<ge> n - k + 1\<close> (@{thm [source] tanpU_sq_sconstraint}).\<close>
-
-theorem exit_val_ball_lower_gen:
-  fixes K :: "(real^'n::finite) set" and x y\<^sub>0 :: "real^'n"
-    and b :: "nat \<Rightarrow> real^'n" and rB T cc \<beta> :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L"
-    and Kc: "closed K" and sub: "cball y\<^sub>0 rB \<subseteq> K"
-    and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
-    and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and mk: "CARD('n) - k \<le> m - 1" and m2: "2 \<le> m"
-    and xfix: "projmat b m *v (x - y\<^sub>0) = x - y\<^sub>0"
-    and cc0: "0 < cc" and ccT: "cc < T"
-    and ccdf: "cc < (rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (real m - 1)"
-    and vlow: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow> \<beta> \<le> enn2real (exit_val k L T K w)"
-  shows "ennreal (cc + min \<beta> (T - cc)) \<le> exit_val k L T K x"
-  unfolding exit_val_eq_covariation_val
-  by (rule covariation_val_ball_lower_gen[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
-        closed_sconstraint sconstraint_convex tanpU_sq_sconstraint[OF orth _ _ mk L1] Kc sub xy xin
-        orth m2 xfix cc0 ccT ccdf vlow[unfolded exit_val_eq_covariation_val]])
-
 text \<open>With \<open>m = CARD('n)\<close> the projector is the identity, the field is
   sphere-tangential and the rate is \<open>CARD('n) - 1\<close>; at
   \<open>cc = min (T/2) (\<delta>/2)\<close> this is the (non-sharp) ball bound that the

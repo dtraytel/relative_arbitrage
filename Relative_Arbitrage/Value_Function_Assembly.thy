@@ -24,23 +24,37 @@ text \<open>\<open>enn2real \<circ> exit_val k L T K\<close> is a viscosity solu
 
 subsection \<open>The sharp ball lower bound at rate \<open>m - 1\<close>\<close>
 
-theorem exit_val_ball_lower_subspace:
+text \<open>For any closed convex \<open>S\<close> with bounds \<open>B\<close>, \<open>D\<close> that contains the
+  tangential rates of the subspace \<open>span (b ` {..<m})\<close>, the value at a point
+  of that subspace is at least the deterministic time the tangential member
+  needs to reach the sphere.  The paper's set contains them for
+  \<open>m \<ge> n - k + 1\<close> (@{thm [source] tanpU_sq_sconstraint}).\<close>
+
+theorem covariation_val_ball_lower_subspace:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and b :: "nat \<Rightarrow> real^'n" and rB T cc :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
+    and tan: "\<And>u. norm u \<le> 1 \<Longrightarrow> projmat b m *v u = u \<Longrightarrow>
+      tanpU (projmat b m) u ** transpose (tanpU (projmat b m) u) \<in> S"
     and Kc: "closed K" and sub: "cball 0 rB \<subseteq> K"
     and xnz: "x \<noteq> 0" and xin: "norm x < rB"
     and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and mk: "CARD('n) - k \<le> m - 1" and m2: "2 \<le> m"
+    and m2: "2 \<le> m"
     and xfix: "projmat b m *v x = x"
     and cc0: "0 < cc" and ccT: "cc < T"
     and ccdf: "cc < (rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)"
-  shows "ennreal cc \<le> exit_val k L T K x"
+  shows "ennreal cc \<le> covariation_val S T K x"
 proof -
-  have "ennreal (cc + min 0 (T - cc)) \<le> exit_val k L T K x"
-    by (rule exit_val_ball_lower_gen[where y\<^sub>0 = 0 and \<beta> = 0,
-          OF T0 L1 Kc sub xnz _ orth mk m2 _ cc0 ccT])
-      (use xin xfix ccdf in simp_all)
+  have xin': "norm (x - 0) < rB" and xfix': "projmat b m *v (x - 0) = x - 0"
+    and ccdf': "cc < (rB\<^sup>2 - (norm (x - 0))\<^sup>2) / (real m - 1)"
+    using xin xfix ccdf by simp_all
+  have "ennreal (cc + min 0 (T - cc)) \<le> covariation_val S T K x"
+    by (rule covariation_val_ball_lower_gen[where y\<^sub>0 = 0 and \<beta> = 0,
+          OF T0 B0 B D0 D Sc Sv tan Kc sub xnz xin' orth m2 xfix' cc0 ccT ccdf' enn2real_nonneg])
   then show ?thesis using ccT by simp
 qed
 
@@ -48,17 +62,23 @@ text \<open>Letting \<open>cc \<longrightarrow> min T \<delta>\<close> removes t
   interior lower bound Example 3.1 asks for: at rate \<open>m - 1\<close>, with no factor
   \<open>2\<close> and no \<open>T/2\<close> cap.\<close>
 
-corollary exit_val_ball_lower_sharp:
+corollary covariation_val_ball_lower_sharp:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and b :: "nat \<Rightarrow> real^'n" and rB T :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
+    and tan: "\<And>u. norm u \<le> 1 \<Longrightarrow> projmat b m *v u = u \<Longrightarrow>
+      tanpU (projmat b m) u ** transpose (tanpU (projmat b m) u) \<in> S"
     and Kc: "closed K" and sub: "cball 0 rB \<subseteq> K"
     and xnz: "x \<noteq> 0" and xin: "norm x < rB"
     and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and mk: "CARD('n) - k \<le> m - 1" and m2: "2 \<le> m"
+    and m2: "2 \<le> m"
     and xfix: "projmat b m *v x = x"
   shows "ennreal (min T ((rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)))
-      \<le> exit_val k L T K x"
+      \<le> covariation_val S T K x"
 proof -
   define \<delta>f where "\<delta>f = (rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)"
   define c0 where "c0 = min T \<delta>f"
@@ -103,21 +123,37 @@ proof -
       by (intro tendsto_diff tendsto_const)
     then show ?thesis unfolding ccs_def by simp
   qed
-  have le: "ennreal (ccs j) \<le> exit_val k L T K x" for j
-  proof (rule exit_val_ball_lower_subspace[OF T0 L1 Kc sub xnz xin orth
-        mk m2 xfix])
-    show "0 < ccs j" by (rule ccl)
-    show "ccs j < T" using ccu[of j] unfolding c0_def by simp
-    show "ccs j < (rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)"
+  have le: "ennreal (ccs j) \<le> covariation_val S T K x" for j
+  proof -
+    have cT: "ccs j < T" using ccu[of j] unfolding c0_def by simp
+    have cd: "ccs j < (rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)"
       using ccu[of j] unfolding c0_def \<delta>f_def[symmetric] by simp
+    show ?thesis
+      by (rule covariation_val_ball_lower_subspace[OF T0 B0 B D0 D Sc Sv tan Kc sub xnz xin orth
+            m2 xfix ccl cT cd])
   qed
   have "(\<lambda>j. ennreal (ccs j)) \<longlonglongrightarrow> ennreal c0"
     by (rule tendsto_ennrealI[OF lim])
-  then have "ennreal c0 \<le> exit_val k L T K x"
+  then have "ennreal c0 \<le> covariation_val S T K x"
     by (rule tendsto_upperbound) (use le in auto)
   then show ?thesis unfolding c0_def \<delta>f_def .
 qed
 
+corollary exit_val_ball_lower_sharp:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and b :: "nat \<Rightarrow> real^'n" and rB T :: real
+  assumes T0: "0 < T" and L1: "1 \<le> L"
+    and Kc: "closed K" and sub: "cball 0 rB \<subseteq> K"
+    and xnz: "x \<noteq> 0" and xin: "norm x < rB"
+    and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and mk: "CARD('n) - k \<le> m - 1" and m2: "2 \<le> m"
+    and xfix: "projmat b m *v x = x"
+  shows "ennreal (min T ((rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)))
+      \<le> exit_val k L T K x"
+  unfolding exit_val_eq_covariation_val
+  by (rule covariation_val_ball_lower_sharp[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+        closed_sconstraint sconstraint_convex tanpU_sq_sconstraint[OF orth _ _ mk L1] Kc sub xnz xin
+        orth m2 xfix])
 
 (*<*)
 end
