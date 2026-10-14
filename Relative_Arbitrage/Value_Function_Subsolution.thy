@@ -743,41 +743,6 @@ qed
 text \<open>For the paper's constraint set, as the near-orthogonal argument below
   uses it.\<close>
 
-lemma exit_val_subsol_quadratic_stopped:
-  fixes K :: "(real^'n::finite) set" and x q :: "real^'n" and M :: "real^'n^'n"
-    and P :: "('n pairpath) measure"
-  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and e0: "0 < \<epsilon>"
-    and touch: "\<forall>z. dist z x \<le> \<epsilon> \<longrightarrow>
-        enn2real (exit_val k L T K z)
-          \<le> enn2real (exit_val k L T K x) + q \<bullet> (z - x)
-            + ((z - x) \<bullet> (M *v (z - x))) / 2"
-    and P: "P \<in> exit_class k L T x"
-    and Pv: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K x"
-    and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
-    and thle: "\<And>\<omega>. \<theta> \<omega> \<le> pball_exit T x \<epsilon> \<omega>"
-    and pos: "AE \<omega> in P. 0 < \<theta> \<omega>"
-  shows "AE \<omega> in P. dist (fst (\<omega> (\<theta> \<omega>))) x \<le> \<epsilon>"
-    and "AE \<omega> in P. 0 \<le> \<theta> \<omega> + q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x)
-      + ((fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (M *v (fst (\<omega> (\<theta> \<omega>)) - x))) / 2"
-    and "(1 / (\<integral>\<omega>. \<theta> \<omega> \<partial>P)) *\<^sub>R (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P) \<in> sconstraint k L"
-    and "- trace (M ** ((1 / (\<integral>\<omega>. \<theta> \<omega> \<partial>P)) *\<^sub>R (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P))) / 2
-      \<le> 1"
-proof -
-  have L0: "0 \<le> L" using L1 by simp
-  note G = covariation_val_subsol_quadratic_stopped[OF T sconstraint_bounds[OF L0]
-      closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1] Kc e0
-      touch[unfolded exit_val_eq_covariation_val] P[unfolded exit_class_eq_covariation]
-      Pv[unfolded exit_val_eq_covariation_val] st thM thle pos]
-  show "AE \<omega> in P. dist (fst (\<omega> (\<theta> \<omega>))) x \<le> \<epsilon>" by (rule G(1))
-  show "AE \<omega> in P. 0 \<le> \<theta> \<omega> + q \<bullet> (fst (\<omega> (\<theta> \<omega>)) - x)
-      + ((fst (\<omega> (\<theta> \<omega>)) - x) \<bullet> (M *v (fst (\<omega> (\<theta> \<omega>)) - x))) / 2" by (rule G(2))
-  show "(1 / (\<integral>\<omega>. \<theta> \<omega> \<partial>P)) *\<^sub>R (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P) \<in> sconstraint k L"
-    by (rule G(3))
-  show "- trace (M ** ((1 / (\<integral>\<omega>. \<theta> \<omega> \<partial>P)) *\<^sub>R (\<integral>\<omega>. snd (\<omega> (\<theta> \<omega>)) \<partial>P))) / 2
-      \<le> 1" by (rule G(4))
-qed
-
 section \<open>From quadratics to arbitrary test functions\<close>
 
 text \<open>The classical reduction: a \<open>C\<^sup>1\<close> function whose gradient is
@@ -785,6 +750,12 @@ text \<open>The classical reduction: a \<open>C\<^sup>1\<close> function whose g
   expansion with the Hessian bumped by \<open>\<delta>\<close>.  One-dimensional along each
   ray: the difference has nonpositive derivative, by the \<open>\<epsilon>\<close>-\<open>\<delta>\<close> form of
   differentiability of the gradient with \<open>\<epsilon> := \<delta>/2\<close>.\<close>
+
+lemma trace_le_diag_bound:
+  fixes b :: "real^'n::finite^'n"
+  assumes "\<And>i. b $ i $ i \<le> D"
+  shows "trace b \<le> real CARD('n) * D"
+  unfolding trace_def using sum_mono[of UNIV "\<lambda>i. b $ i $ i" "\<lambda>_. D"] assms by simp
 
 lemma sconstraint_trace_le:
   fixes b :: "real^'n::finite^'n"
@@ -1077,31 +1048,33 @@ text \<open>The Girsanov-free replacement for the paper's exponential martingale
   indicator split gives the anti-concentration, and the scaling
   \<open>t := \<epsilon>\<^sup>2/(2nL)\<close> closes the loop.\<close>
 
-theorem exit_val_touch_near_orth:
+theorem covariation_val_touch_near_orth:
   fixes K :: "(real^'n::finite) set" and x q :: "real^'n" and M :: "real^'n^'n"
-  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and eb: "0 < ebar"
+    and \<sigma> :: "real^'n^'n"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and Kc: "closed K" and eb: "0 < ebar"
     and touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
-        enn2real (exit_val k L T K z)
-          \<le> enn2real (exit_val k L T K x) + q \<bullet> (z - x)
+        enn2real (covariation_val S T K z)
+          \<le> enn2real (covariation_val S T K x) + q \<bullet> (z - x)
             + ((z - x) \<bullet> (M *v (z - x))) / 2"
     and e0: "0 < \<epsilon>\<^sub>0"
-  obtains b where "b \<in> sconstraint k L" and "- trace (M ** b) / 2 \<le> 1"
+  obtains b where "b \<in> S" and "- trace (M ** b) / 2 \<le> 1"
     and "q \<bullet> (b *v q) < \<epsilon>\<^sub>0"
 proof (cases "q = 0")
   case True
-  have L0: "0 \<le> L" using L1 by simp
-  obtain b where bmem: "b \<in> sconstraint k L"
+  obtain b where bmem: "b \<in> S"
     and w: "- trace (M ** b) / 2 \<le> 1"
-    by (rule covariation_val_subsol_quadratic_ball[OF T sconstraint_bounds[OF L0] closed_sconstraint
-          sconstraint_convex mat_1_rate_in_sconstraint[OF L1] Kc eb
-          touch[unfolded exit_val_eq_covariation_val]])
+    by (rule covariation_val_subsol_quadratic_ball[OF T B0 B D0 D Sc Sv SST Kc eb touch])
   have "q \<bullet> (b *v q) < \<epsilon>\<^sub>0" using True e0 by simp
   then show ?thesis using that bmem w by blast
 next
   case False
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using T by simp
-  have L0: "0 \<le> L" using L1 by simp
   define nq where "nq = norm q"
   have nq0: "0 < nq" using False by (simp add: nq_def)
   define n' where "n' = real CARD('n)"
@@ -1110,8 +1083,10 @@ next
     by (simp add: Suc_leI of_nat_le_iff [symmetric])
   define Cm where "Cm = (\<Sum>i\<in>UNIV. \<Sum>j\<in>UNIV. \<bar>M $ i $ j\<bar>)"
   have Cm0: "0 \<le> Cm" unfolding Cm_def by (intro sum_nonneg) auto
-  define \<beta> where "\<beta> = 1 / (2 * n' * n' * L)"
-  have b0: "0 < \<beta>" unfolding \<beta>_def using n'1 L1 by simp
+  define Dp where "Dp = D + 1"
+  have Dp: "0 < Dp" "D \<le> Dp" unfolding Dp_def using D0 by simp_all
+  define \<beta> where "\<beta> = 1 / (2 * n' * Dp)"
+  have b0: "0 < \<beta>" unfolding \<beta>_def using n'1 Dp by simp
   define \<epsilon>K where "\<epsilon>K = sqrt \<epsilon>\<^sub>0 * sqrt \<beta> * \<epsilon>\<^sub>0 * \<beta>
       / (16 * nq\<^sup>2 * (\<beta> + Cm / 2))"
   have den0: "0 < 16 * nq\<^sup>2 * (\<beta> + Cm / 2)"
@@ -1150,19 +1125,15 @@ next
     unfolding \<theta>'_def by (rule min.cobounded2)
   have tht: "\<theta>' \<omega> \<le> t" for \<omega> :: "'n pairpath"
     unfolding \<theta>'_def by (rule min.cobounded1)
-  have att: "\<exists>P \<in> exit_class k L T x.
-        ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K x"
-    unfolding exit_class_eq_covariation exit_val_eq_covariation_val
-    by (rule covariation_val_attained[OF T sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
-          closed_sconstraint mat_1_rate_in_sconstraint[OF L1] Kc])
-  then obtain P where P: "P \<in> exit_class k L T x"
+  have att: "\<exists>P \<in> covariation_class S T x.
+        ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = covariation_val S T K x"
+    by (rule covariation_val_attained[OF T B0 B D0 D Sc SST Kc])
+  then obtain P where P: "P \<in> covariation_class S T x"
     and Pv: "ess_inf_time P (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))
-        = exit_val k L T K x"
+        = covariation_val S T K x"
     by blast
-  interpret PP: prob_space P by (rule exit_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
-  have P': "P \<in> covariation_class (sconstraint k L) T x"
-    using P unfolding exit_class_eq_covariation .
+  interpret PP: prob_space P by (rule covariation_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule covariation_class_sets[OF P])
   have thP': "\<theta>' \<in> borel_measurable P"
     unfolding measurable_cong_sets[OF setsP refl] by (rule thM')
   let ?Xf = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (\<theta>' \<omega>))"
@@ -1170,7 +1141,7 @@ next
   let ?V = "\<lambda>\<omega> :: 'n pairpath. fst (\<omega> (\<theta>' \<omega>)) - x"
   \<comment> \<open>the almost-sure facts\<close>
   have stc: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    by (rule exit_class_start[OF P])
+    by (rule covariation_class_start[OF P])
   have cwAE: "AE \<omega> in P. continuous_on {0..T} (\<lambda>s. fst (\<omega> s))"
     using AE_space by (rule eventually_mono) (rule path_sets_fst_continuous[OF setsP])
   have posAE: "AE \<omega> in P. 0 < \<theta>' \<omega>"
@@ -1182,10 +1153,11 @@ next
       using elim by (intro pball_exit_pos[OF T]) auto
     then show ?case unfolding \<theta>'_def using t0 by simp
   qed
-  have touch': "\<forall>z. dist z x \<le> \<epsilon> \<longrightarrow> enn2real (exit_val k L T K z)
-      \<le> enn2real (exit_val k L T K x) + q \<bullet> (z - x) + ((z - x) \<bullet> (M *v (z - x))) / 2"
+  have touch': "\<forall>z. dist z x \<le> \<epsilon> \<longrightarrow> enn2real (covariation_val S T K z)
+      \<le> enn2real (covariation_val S T K x) + q \<bullet> (z - x) + ((z - x) \<bullet> (M *v (z - x))) / 2"
     using touch epseb by (meson order_trans)
-  note SQ = exit_val_subsol_quadratic_stopped[OF T L1 Kc eps0 touch' P Pv st' thM' thle posAE]
+  note SQ = covariation_val_subsol_quadratic_stopped[OF T B0 B D0 D Sc Sv SST Kc eps0 touch' P Pv
+      st' thM' thle posAE, simplified trivial_premise_simps]
   note inball = SQ(1) and key = SQ(2)
   \<comment> \<open>moments at the stopping time\<close>
   define EY where "EY = (\<integral>\<omega>. ?Yf \<omega> \<partial>P)"
@@ -1201,17 +1173,17 @@ next
     using integral_mono_AE[OF ith PP.integrable_const, of t] tht
     by (simp add: PP.prob_space)
   have iY: "integrable P ?Yf"
-    by (rule covariation_class_Y_stopped_integrable[OF T0 sconstraint_bounds(1,2)[OF L0] P' st' thM'])
-  have bmem: "(1 / et) *\<^sub>R EY \<in> sconstraint k L"
+    by (rule covariation_class_Y_stopped_integrable[OF T0 B0 B P st' thM'])
+  have bmem: "(1 / et) *\<^sub>R EY \<in> S"
     unfolding et_def EY_def by (rule SQ(3))
   define b where "b = (1 / et) *\<^sub>R EY"
   have w: "- trace (M ** b) / 2 \<le> 1"
     unfolding b_def et_def EY_def by (rule SQ(4))
   have EYb: "EY = et *\<^sub>R b" unfolding b_def using et0 by simp
   have ilin: "integrable P (\<lambda>\<omega>. q \<bullet> (?V \<omega>))"
-    by (rule covariation_class_stopped_moments(3)[OF T sconstraint_bounds[OF L0] P' st' thM'])
+    by (rule covariation_class_stopped_moments(3)[OF T B0 B D0 D P st' thM'])
   have Elin: "(\<integral>\<omega>. q \<bullet> (?V \<omega>) \<partial>P) = 0"
-    by (rule covariation_class_stopped_moments(4)[OF T sconstraint_bounds[OF L0] P' st' thM'])
+    by (rule covariation_class_stopped_moments(4)[OF T B0 B D0 D P st' thM'])
   \<comment> \<open>the martingale increment and its moments\<close>
   define W where "W = (\<lambda>\<omega> :: 'n pairpath. q \<bullet> (?V \<omega>))"
   have Wint: "integrable P W" unfolding W_def by (rule ilin)
@@ -1220,11 +1192,11 @@ next
     by (rule borel_measurable_integrable[OF Wint])
   have W2int: "integrable P (\<lambda>\<omega>. (W \<omega>)\<^sup>2)"
     unfolding W_def
-    by (rule covariation_class_stopped_var(1)[OF T sconstraint_bounds[OF L0] P' st' thM'])
+    by (rule covariation_class_stopped_var(1)[OF T B0 B D0 D P st' thM'])
   define s where "s = (\<integral>\<omega>. (W \<omega>)\<^sup>2 \<partial>P)"
   have svar: "s = q \<bullet> (EY *v q)"
     unfolding s_def W_def EY_def
-    by (rule covariation_class_stopped_var(2)[OF T sconstraint_bounds[OF L0] P' st' thM'])
+    by (rule covariation_class_stopped_var(2)[OF T B0 B D0 D P st' thM'])
   have s0: "0 \<le> s"
     unfolding s_def by (rule integral_nonneg_AE) auto
   have Wabs: "AE \<omega> in P. \<bar>W \<omega>\<bar> \<le> nq * \<epsilon>"
@@ -1419,21 +1391,21 @@ next
     qed
     \<comment> \<open>the exit before \<open>t\<close> has probability at most \<open>1/2\<close>\<close>
     have dq: "AE \<omega> in P. \<forall>s' t'. 0 \<le> s' \<longrightarrow> s' < t' \<longrightarrow> t' \<le> T \<longrightarrow>
-        (1 / (t' - s')) *\<^sub>R (snd (\<omega> t') - snd (\<omega> s')) \<in> sconstraint k L"
-      using P unfolding exit_class_def by blast
-    have trYbnd: "AE \<omega> in P. trace (?Yf \<omega>) \<le> n' * n' * L * \<theta>' \<omega>"
+        (1 / (t' - s')) *\<^sub>R (snd (\<omega> t') - snd (\<omega> s')) \<in> S"
+      using P unfolding covariation_class_def by blast
+    have trYbnd: "AE \<omega> in P. trace (?Yf \<omega>) \<le> n' * D * \<theta>' \<omega>"
       using stc dq posAE
     proof eventually_elim
       case (elim \<omega>)
-      have mem: "(1 / \<theta>' \<omega>) *\<^sub>R ?Yf \<omega> \<in> sconstraint k L"
+      have mem: "(1 / \<theta>' \<omega>) *\<^sub>R ?Yf \<omega> \<in> S"
       proof -
         have "(1 / (\<theta>' \<omega> - 0)) *\<^sub>R (snd (\<omega> (\<theta>' \<omega>)) - snd (\<omega> 0))
-            \<in> sconstraint k L"
+            \<in> S"
           using elim thT'[of \<omega>] by blast
         then show ?thesis using elim by simp
       qed
-      have trsc: "trace ((1 / \<theta>' \<omega>) *\<^sub>R ?Yf \<omega>) \<le> n' * (n' * L)"
-        using sconstraint_trace_le[OF L0 mem] by (simp add: n'_def)
+      have trsc: "trace ((1 / \<theta>' \<omega>) *\<^sub>R ?Yf \<omega>) \<le> n' * D"
+        unfolding n'_def by (rule trace_le_diag_bound) (use D[OF mem] in blast)
       have t0': "0 < \<theta>' \<omega>" using elim by simp
       have "trace (?Yf \<omega>) = \<theta>' \<omega> * trace ((1 / \<theta>' \<omega>) *\<^sub>R ?Yf \<omega>)"
       proof -
@@ -1442,27 +1414,27 @@ next
         then show ?thesis
           by (metis trace_scaleR)
       qed
-      also have "\<dots> \<le> \<theta>' \<omega> * (n' * (n' * L))"
+      also have "\<dots> \<le> \<theta>' \<omega> * (n' * D)"
         using trsc t0' by (intro mult_left_mono) auto
       finally show ?case by (simp add: algebra_simps)
     qed
     have itrY: "integrable P (\<lambda>\<omega>. trace (?Yf \<omega>))"
       by (rule integrable_bounded_linear[OF bounded_linear_trace iY])
-    have EtrY: "trace EY \<le> n' * n' * L * et"
+    have EtrY: "trace EY \<le> n' * D * et"
     proof -
       have "trace EY = (\<integral>\<omega>. trace (?Yf \<omega>) \<partial>P)"
         unfolding EY_def
         by (rule integral_bounded_linear[OF bounded_linear_trace iY,
               symmetric])
-      also have "\<dots> \<le> (\<integral>\<omega>. n' * n' * L * \<theta>' \<omega> \<partial>P)"
+      also have "\<dots> \<le> (\<integral>\<omega>. n' * D * \<theta>' \<omega> \<partial>P)"
         by (rule integral_mono_AE[OF itrY integrable_mult_right[OF ith] trYbnd])
-      also have "\<dots> = n' * n' * L * et"
+      also have "\<dots> = n' * D * et"
         using integral_mult_right_zero by (simp add: et_def)
       finally show ?thesis .
     qed
     have normsqE: "(\<integral>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>) \<partial>P) = trace EY"
       unfolding EY_def
-      by (rule covariation_class_stopped_normsq[OF T sconstraint_bounds[OF L0] P' st' thM'])
+      by (rule covariation_class_stopped_normsq[OF T B0 B D0 D P st' thM'])
     have inormsq: "integrable P (\<lambda>\<omega>. (?V \<omega>) \<bullet> (?V \<omega>))"
     proof -
       have e: "(\<lambda>\<omega> :: 'n pairpath. (?V \<omega>) \<bullet> (?V \<omega>))
@@ -1470,7 +1442,7 @@ next
         by (simp add: fun_eq_iff)
       show ?thesis
         unfolding e
-        by (rule covariation_class_stopped_moments(5)[OF T sconstraint_bounds[OF L0] P' st' thM'])
+        by (rule covariation_class_stopped_moments(5)[OF T B0 B D0 D P st' thM'])
     qed
     define Ev where "Ev = {\<omega> \<in> space P. pball_exit T x \<epsilon> \<omega> < t}"
     have tauP: "pball_exit T x \<epsilon> \<in> borel_measurable P"
@@ -1520,13 +1492,13 @@ next
     qed
     have probEv: "PP.prob Ev \<le> 1 / 2"
     proof -
-      have nL0: "0 < n' * n' * L" using n'1 L1 by simp
-      have "n' * n' * L * et \<le> n' * n' * L * t"
-        using ett nL0 by (intro mult_left_mono) auto
-      with EtrY have h1: "trace EY \<le> n' * n' * L * t" by linarith
+      have nL0: "n' * D \<le> n' * Dp" using n'1 Dp by simp
+      have "n' * D * et \<le> n' * Dp * t"
+        using ett nL0 n'1 D0 et0 by (intro mult_mono) auto
+      with EtrY have h1: "trace EY \<le> n' * Dp * t" by linarith
       have n'ne: "n' \<noteq> 0" using n'1 by simp
-      have Lne: "L \<noteq> 0" using L1 by simp
-      have "n' * n' * L * t = \<epsilon>\<^sup>2 / 2"
+      have Lne: "Dp \<noteq> 0" using Dp by simp
+      have "n' * Dp * t = \<epsilon>\<^sup>2 / 2"
         unfolding t_def \<beta>_def using n'ne Lne by (simp add: field_simps)
       with h1 chexit have h2: "\<epsilon>\<^sup>2 * PP.prob Ev \<le> \<epsilon>\<^sup>2 * (1 / 2)" by linarith
       have e20: "0 < \<epsilon>\<^sup>2" using eps0 by simp
@@ -1687,78 +1659,83 @@ qed
 
 section \<open>Compactness: an exactly orthogonal direction\<close>
 
-theorem exit_val_touch_orth:
+theorem covariation_val_touch_orth:
   fixes K :: "(real^'n::finite) set" and x q :: "real^'n" and M :: "real^'n^'n"
-  assumes T: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and eb: "0 < ebar"
+    and \<sigma> :: "real^'n^'n"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and Kc: "closed K" and eb: "0 < ebar"
     and touch: "\<And>z. dist z x \<le> ebar \<Longrightarrow>
-        enn2real (exit_val k L T K z)
-          \<le> enn2real (exit_val k L T K x) + q \<bullet> (z - x)
+        enn2real (covariation_val S T K z)
+          \<le> enn2real (covariation_val S T K x) + q \<bullet> (z - x)
             + ((z - x) \<bullet> (M *v (z - x))) / 2"
-  obtains b where "b \<in> sconstraint k L" and "- trace (M ** b) / 2 \<le> 1"
+  obtains b where "b \<in> S" and "- trace (M ** b) / 2 \<le> 1"
     and "b *v q = 0"
 proof -
-  have L0: "0 \<le> L" using L1 by simp
-  have ex: "\<exists>b. b \<in> sconstraint k L \<and> - trace (M ** b) / 2 \<le> 1
+  have ex: "\<exists>b. b \<in> S \<and> - trace (M ** b) / 2 \<le> 1
       \<and> q \<bullet> (b *v q) < 1 / real (Suc n)" for n :: nat
   proof -
-    obtain b where "b \<in> sconstraint k L" "- trace (M ** b) / 2 \<le> 1"
+    obtain b where "b \<in> S" "- trace (M ** b) / 2 \<le> 1"
       "q \<bullet> (b *v q) < 1 / real (Suc n)"
-      using exit_val_touch_near_orth[OF T L1 Kc eb touch,
-          where \<epsilon>\<^sub>0 = "1 / real (Suc n)"] by auto
+      using covariation_val_touch_near_orth[OF T B0 B D0 D Sc Sv SST Kc eb touch,
+          where \<epsilon>\<^sub>0 = "1 / real (Suc n)", simplified trivial_premise_simps] by auto
     then show ?thesis by blast
   qed
-  then obtain bs where bs: "\<And>n :: nat. bs n \<in> sconstraint k L
+  then obtain bs where bs: "\<And>n :: nat. bs n \<in> S
       \<and> - trace (M ** bs n) / 2 \<le> 1
       \<and> q \<bullet> (bs n *v q) < 1 / real (Suc n)"
     by metis
-  have rng: "range bs \<subseteq> sconstraint k L" using bs by blast
+  have rng: "range bs \<subseteq> S" using bs by blast
   have bdd: "bounded (range bs)"
-    by (rule bounded_subset[OF bounded_sconstraint[OF L0] rng])
-  obtain l \<sigma> where sm: "strict_mono \<sigma>" and lim: "(bs \<circ> \<sigma>) \<longlonglongrightarrow> l"
+    by (rule bounded_subset[OF _ rng]) (use B in \<open>auto simp: bounded_iff\<close>)
+  obtain l \<sigma>' where sm: "strict_mono \<sigma>'" and lim: "(bs \<circ> \<sigma>') \<longlonglongrightarrow> l"
     using bounded_imp_convergent_subsequence[OF bdd] by blast
-  have inS: "(bs \<circ> \<sigma>) n \<in> sconstraint k L" for n
+  have inS: "(bs \<circ> \<sigma>') n \<in> S" for n
     using rng by (auto simp: o_def)
-  have lmem: "l \<in> sconstraint k L"
-    by (rule closed_sequentially[OF closed_sconstraint inS lim])
-  have psd_l: "psd l"
-    using lmem unfolding sconstraint_def Pi_constraint_def by auto
+  have lmem: "l \<in> S"
+    by (rule closed_sequentially[OF Sc inS lim])
+  have psd_l: "psd l" by (rule Spsd[OF lmem])
   \<comment> \<open>the value passes to the limit\<close>
-  have trlim: "(\<lambda>n. trace (M ** bs (\<sigma> n))) \<longlonglongrightarrow> trace (M ** l)"
+  have trlim: "(\<lambda>n. trace (M ** bs (\<sigma>' n))) \<longlonglongrightarrow> trace (M ** l)"
   proof -
-    have "(\<lambda>n. trace (M ** (bs \<circ> \<sigma>) n)) \<longlonglongrightarrow> trace (M ** l)"
+    have "(\<lambda>n. trace (M ** (bs \<circ> \<sigma>') n)) \<longlonglongrightarrow> trace (M ** l)"
       by (rule bounded_linear.tendsto[OF bounded_linear_trace_mult_left lim])    then show ?thesis by (simp add: o_def)
   qed
   have w: "- trace (M ** l) / 2 \<le> 1"
   proof -
-    have h1: "(\<lambda>n. - trace (M ** bs (\<sigma> n)) / 2) \<longlonglongrightarrow> - trace (M ** l) / 2"      by (intro tendsto_intros trlim) simp
-    have h2: "\<exists>N. \<forall>n\<ge>N. - trace (M ** bs (\<sigma> n)) / 2 \<le> 1"
+    have h1: "(\<lambda>n. - trace (M ** bs (\<sigma>' n)) / 2) \<longlonglongrightarrow> - trace (M ** l) / 2"      by (intro tendsto_intros trlim) simp
+    have h2: "\<exists>N. \<forall>n\<ge>N. - trace (M ** bs (\<sigma>' n)) / 2 \<le> 1"
       using bs by blast
     show ?thesis by (rule LIMSEQ_le_const2[OF h1 h2])
-  qed  have qlim: "(\<lambda>n. q \<bullet> (bs (\<sigma> n) *v q)) \<longlonglongrightarrow> q \<bullet> (l *v q)"
+  qed  have qlim: "(\<lambda>n. q \<bullet> (bs (\<sigma>' n) *v q)) \<longlonglongrightarrow> q \<bullet> (l *v q)"
   proof -
-    have "(\<lambda>n. q \<bullet> ((bs \<circ> \<sigma>) n *v q)) \<longlonglongrightarrow> q \<bullet> (l *v q)"
+    have "(\<lambda>n. q \<bullet> ((bs \<circ> \<sigma>') n *v q)) \<longlonglongrightarrow> q \<bullet> (l *v q)"
       by (rule bounded_linear.tendsto[OF bounded_linear_quadform lim])    then show ?thesis by (simp add: o_def)
   qed
   have qge: "0 \<le> q \<bullet> (l *v q)"
   proof (rule LIMSEQ_le_const[OF qlim])
-    have "psd (bs (\<sigma> n))" for n
-      using bs[of "\<sigma> n"] unfolding sconstraint_def Pi_constraint_def by auto
-    then show "\<exists>N. \<forall>n\<ge>N. 0 \<le> q \<bullet> (bs (\<sigma> n) *v q)"
+    have "psd (bs (\<sigma>' n))" for n
+      using bs[of "\<sigma>' n"] Spsd by blast
+    then show "\<exists>N. \<forall>n\<ge>N. 0 \<le> q \<bullet> (bs (\<sigma>' n) *v q)"
       unfolding psd_def by blast
   qed
   have qle: "q \<bullet> (l *v q) \<le> 0"
   proof (rule LIMSEQ_le[OF qlim])
     show "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
       using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
-    have "q \<bullet> (bs (\<sigma> n) *v q) \<le> 1 / real (Suc n)" for n
+    have "q \<bullet> (bs (\<sigma>' n) *v q) \<le> 1 / real (Suc n)" for n
     proof -
-      have "q \<bullet> (bs (\<sigma> n) *v q) < 1 / real (Suc (\<sigma> n))"
-        using bs[of "\<sigma> n"] by blast
-      also have "1 / real (Suc (\<sigma> n)) \<le> 1 / real (Suc n)"
+      have "q \<bullet> (bs (\<sigma>' n) *v q) < 1 / real (Suc (\<sigma>' n))"
+        using bs[of "\<sigma>' n"] by blast
+      also have "1 / real (Suc (\<sigma>' n)) \<le> 1 / real (Suc n)"
         using seq_suble[OF sm, of n] by (simp add: frac_le)
       finally show ?thesis by simp
     qed
-    then show "\<exists>N. \<forall>n\<ge>N. q \<bullet> (bs (\<sigma> n) *v q) \<le> 1 / real (Suc n)" by blast
+    then show "\<exists>N. \<forall>n\<ge>N. q \<bullet> (bs (\<sigma>' n) *v q) \<le> 1 / real (Suc n)" by blast
   qed
   have "q \<bullet> (l *v q) = 0" using qge qle by simp
   then have "l *v q = 0" by (rule psd_kernel_eq[OF psd_l])
@@ -1780,14 +1757,14 @@ text \<open>The subsolution half of clause (2), for the operator of Eq. (1.9)
   itself, orthogonality constraint included.  For each test function and
   each Hessian bump \<open>\<delta>\<close>, an anti-concentration argument together with
   compactness produces a direction that kills the gradient
-  (@{thm [source] exit_val_touch_orth}); the capped spectral split converts
+  (@{thm [source] covariation_val_touch_orth}); the capped spectral split converts
   it into a feasible witness (@{thm [source] sconstraint_orth_feasible}),
   and \<open>\<delta> \<rightarrow> 0\<close> concludes as in the relaxed case.\<close>
 
 section \<open>The boundary subsolution clause for \<open>exit_val\<close>\<close>
 
 text \<open>The subsolution proof does not use \<open>x \<in> interior K\<close>: it
-  is driven by the local touching, and \<open>exit_val_touch_orth\<close> is indifferent
+  is driven by the local touching, and \<open>covariation_val_touch_orth\<close> is indifferent
   to where \<open>x\<close> sits.  So the subsolution property holds locally on any \<open>\<Omega>\<close>.\<close>
 
 theorem exit_val_visc_subsol_any:
@@ -1845,7 +1822,9 @@ proof (intro ballI allI impI)
     obtain b where bmem: "b \<in> sconstraint k L"
       and wb: "- trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2 \<le> 1"
       and borth: "b *v (g x) = 0"
-      by (rule exit_val_touch_orth[OF T L1 Kc eb0 touch])
+      by (rule covariation_val_touch_orth[OF T sconstraint_bounds[OF L0] closed_sconstraint
+            sconstraint_convex mat_1_rate_in_sconstraint[OF L1] sconstraint_psd_entry(1) Kc eb0
+            touch[unfolded exit_val_eq_covariation_val]])
     obtain a where afeas: "a \<in> feasible k L (g x)"
       and aval: "- trace ((H + \<delta> *\<^sub>R mat 1) ** a) / 2
           \<le> - trace ((H + \<delta> *\<^sub>R mat 1) ** b) / 2"
@@ -1888,22 +1867,22 @@ qed
 text \<open>Outside \<open>K\<close> the exit time is already zero, so the value vanishes.  This
   is what makes the gate \<open>v x > 0\<close> do its work below.\<close>
 
-lemma exit_val_zero_outside:
+lemma covariation_val_zero_outside:
   fixes K :: "(real^'n::finite) set" and z :: "real^'n"
   assumes T0: "0 \<le> T" and z: "z \<notin> K"
-  shows "exit_val k L T K z = 0"
+  shows "covariation_val S T K z = 0"
 proof -
-  have "exit_val k L T K z \<le> 0"
-    unfolding exit_val_def
+  have "covariation_val S T K z \<le> 0"
+    unfolding covariation_val_def
   proof (rule Sup_least)
     fix e :: ennreal
     assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
-        ` exit_class k L T z"
-    then obtain Q where Q: "Q \<in> exit_class k L T z"
+        ` covariation_class S T z"
+    then obtain Q where Q: "Q \<in> covariation_class S T z"
       and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))" by blast
-    have prob: "prob_space Q" by (rule exit_class_prob[OF Q])
+    have prob: "prob_space Q" by (rule covariation_class_prob[OF Q])
     have st: "AE \<omega> in Q. fst (\<omega> 0) = z \<and> snd (\<omega> 0) = 0"
-      by (rule exit_class_start[OF Q])
+      by (rule covariation_class_start[OF Q])
     have zero: "AE \<omega> in Q. ennreal (pexit T K (\<lambda>t. fst (\<omega> t))) = 0"
     proof (rule eventually_mono[OF st])
       fix \<omega> :: "'n pairpath"
@@ -1928,7 +1907,7 @@ qed
 text \<open>Definition 3.1(a) for \<open>exit_val\<close>, including the boundary clause.  At a
   boundary point where the value is strictly positive, a touching that is
   only global over \<open>K\<close> upgrades to a local one: off \<open>K\<close> the value is \<open>0\<close>
-  (\<open>exit_val_zero_outside\<close>) while the test function is continuous, so for
+  (\<open>covariation_val_zero_outside\<close>) while the test function is continuous, so for
   \<open>z\<close> close enough to \<open>x\<close> the required inequality \<open>0 - \<phi> z \<le> v x - \<phi> x\<close>
   follows from \<open>\<phi> x - \<phi> z < v x\<close>.\<close>
 
@@ -1994,7 +1973,7 @@ proof -
       next
         case False
         have "v z = 0" unfolding v_def
-          using exit_val_zero_outside[OF T0 False] by simp
+          using covariation_val_zero_outside[OF T0 False] by (simp add: exit_val_eq_covariation_val)
         moreover have "\<phi> x - \<phi> z < v x" using eb[OF dzx] by linarith
         ultimately show ?thesis by linarith
       qed

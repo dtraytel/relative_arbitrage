@@ -202,7 +202,7 @@ section \<open>Example 3.1 from the interior lower bound\<close>
 
 text \<open>Everything of Example 3.1 except the interior lower bound at nonzero
   points.  Four cases: outside the ball the value is \<open>0\<close>, since a path starting
-  outside \<open>K\<close> has exit time \<open>0\<close> (\<open>exit_val_zero_outside\<close>); on the sphere,
+  outside \<open>K\<close> has exit time \<open>0\<close> (\<open>covariation_val_zero_outside\<close>); on the sphere,
   \<open>exit_val_boundary_zero\<close>; strictly inside and nonzero, the hypothesis against
   \<open>exit_val_le_ball_bound\<close>; and at the centre by upper semicontinuity, rather
   than by running the tangential field from \<open>0\<close>, where the clamp sits.\<close>
@@ -263,7 +263,7 @@ proof -
     case out
     then have "x \<notin> cball (0 :: real^'n) r" by simp
     then have z: "exit_val k L T (cball 0 r) x = 0"
-      by (rule exit_val_zero_outside[OF T0'])
+      unfolding exit_val_eq_covariation_val by (rule covariation_val_zero_outside[OF T0'])
     have "r * r < norm x * norm x"
       by (rule mult_strict_mono) (use out r0 in auto)
     then have "(r * r - x \<bullet> x) / real (CARD('n) - k) < 0"
