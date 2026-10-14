@@ -576,7 +576,7 @@ text \<open>A scaled subsolution and a supersolution touching an ordered jet pai
   at a common \<open>p\<close> are inconsistent: scaling supplies strictness
   (\<open>visc_subsol_scaled_uniform\<close>), the ordering supplies \<open>psd\<close>
   (\<open>psd_of_abstract_le\<close>), and degenerate ellipticity closes
-  (\<open>ell_op_strict_contradiction\<close>). This is Theorem 4.2(a) modulo the
+  (\<open>env_strict_contradiction\<close>). This is Theorem 4.2(a) modulo the
   ordered jet pair and the two touchings, supplied by the
   development in \<open>Rademacher\<close>,
   \<open>Alexandrov\<close>,

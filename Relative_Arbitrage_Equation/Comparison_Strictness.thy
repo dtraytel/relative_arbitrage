@@ -277,16 +277,18 @@ qed
 
 subsection \<open>Where the strictness comes from\<close>
 
-text \<open>\<open>F(p, M) = Inf {- tr(M a)/2 | a feasible}\<close> has no zeroth-order term, so
-  a subsolution cannot be made strict by subtracting a constant. But \<open>F\<close> is
-  positively homogeneous in \<open>M\<close>, and the feasible set depends on \<open>p\<close> only
-  through \<open>a *v p = 0\<close>: scaling a subsolution by \<open>\<theta> \<in> (0,1)\<close> sends
-  \<open>(p, X)\<close> to \<open>(\<theta> p, \<theta> X)\<close> and \<open>F(p,X) \<le> 1\<close> to the strict
-  \<open>F(\<theta> p, \<theta> X) \<le> \<theta> < 1\<close>.\<close>
+text \<open>\<open>F\<close> has no zeroth-order term, so a subsolution cannot be made strict
+  by subtracting a constant. But \<open>F\<close> is positively homogeneous in \<open>M\<close>
+  (\<open>homogeneous\<close>) and invariant under positive dilations of \<open>p\<close>
+  (\<open>dilation\<close>): scaling a subsolution by \<open>\<theta> \<in> (0,1)\<close> sends \<open>(p, X)\<close> to
+  \<open>(\<theta> p, \<theta> X)\<close> and \<open>F(p,X) \<le> 1\<close> to the strict
+  \<open>F(\<theta> p, \<theta> X) \<le> \<theta> < 1\<close>.  For the operator of Eq. (1.9),
+  \<open>F(p, M) = Inf {- tr(M a)/2 | a feasible}\<close>, the dilation invariance holds
+  because the feasible set depends on \<open>p\<close> only through \<open>a *v p = 0\<close>.\<close>
 
 text \<open>Scaling a subsolution by \<open>\<theta> \<in> (0,1)\<close> makes its operator inequality
-  strict, since \<open>F\<close> has no zeroth-order term. With
-  \<open>strict_contradiction\<close>, a scaled subsolution and an unscaled
+  strict, since \<open>F\<close> has no zeroth-order term. With degenerate
+  ellipticity (\<open>elliptic\<close>), a scaled subsolution and an unscaled
   supersolution sharing a jet pair \<open>X \<preceq> Y\<close> are inconsistent -- the
   contradiction underlying Theorem 4.2(a).\<close>
 
@@ -356,9 +358,10 @@ text \<open>Ellipticity of the envelopes alone gives \<open>F\<^sup>*(p, Y) \<le
   combined with \<open>F\<^sub>*(p, X) < 1\<close> this is consistent wherever the two
   envelopes separate at \<open>(p, X)\<close>, i.e. wherever \<open>F\<close> is discontinuous. The
   mixed-envelope inequalities close only where the envelopes coincide with
-  \<open>F\<close>, which by Lemma 3.1's last clause is everywhere off the origin
-  (\<open>ell_op_lsc_off_zero\<close>, \<open>ell_op_usc_off_zero\<close>), reducing the envelope
-  contradiction to the envelope-free one.\<close>
+  \<open>F\<close>, which the locale assumes at symmetric matrices off the origin
+  (\<open>lsc_off_zero\<close>, \<open>usc_off_zero\<close>; for the operator of Eq. (1.9) this is
+  Lemma 3.1's last clause), reducing the envelope contradiction to the
+  envelope-free one.\<close>
 
 theorem env_strict_contradiction:
   fixes X Y :: "real^'n::finite^'n"
@@ -384,8 +387,9 @@ end
 text \<open>The same for the non-strict sandwich, the form in which the envelope
   inequalities first arrive from the doubling.\<close>
 
-text \<open>At \<open>p = 0\<close> the two envelopes disagree: \<open>ell_op_lsc_at_zero\<close> gives
-  \<open>F\<^sub>*(0, M) = F(0, M)\<close>, while \<open>eq36\<close> gives \<open>F\<^sup>*(0, M) = eq36_rhs k L M\<close>,
+text \<open>At \<open>p = 0\<close> the two envelopes may disagree: \<open>lsc_at_zero\<close> gives
+  \<open>F\<^sub>*(0, M) = F(0, M)\<close>, while for the operator of Eq. (1.9) \<open>eq36\<close>
+  gives \<open>F\<^sup>*(0, M) = eq36_rhs k L M\<close>,
   whose index range omits the eigenvalue \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(M)\<close> of Eq. (3.5). So
   \<open>1 \<le> F\<^sup>*(0, Y)\<close> is strictly weaker than \<open>1 \<le> F(0, Y)\<close>, and envelope
   ellipticity cannot close the gap -- the degeneracy Lemma 3.1 isolates, and
@@ -424,8 +428,9 @@ text \<open>Because \<open>doubling_dist_bound\<close> comes with an explicit co
 
 subsection \<open>The diagonal branch \<open>p = 0\<close>\<close>
 
-text \<open>The dichotomy leaves the diagonal branch \<open>p = 0\<close>. Since \<open>eq36\<close>
-  identifies \<open>F\<^sup>*(0, M)\<close> with \<open>eq36_rhs k L M\<close>, ellipticity of \<open>F\<^sup>*\<close>
+text \<open>The dichotomy leaves the diagonal branch \<open>p = 0\<close>. For the operator
+  of Eq. (1.9), since \<open>eq36\<close> identifies \<open>F\<^sup>*(0, M)\<close> with
+  \<open>eq36_rhs k L M\<close>, ellipticity of \<open>F\<^sup>*\<close>
   transfers to \<open>eq36_rhs\<close>, a statement about the eigenvalue expression of
   Eq. (3.6).\<close>
 
@@ -433,7 +438,8 @@ text \<open>The gap between the two envelopes at the origin,
   \<open>eq36_rhs k L M - F(0, M)\<close>, is nonnegative: \<open>ell_op_le_eq36\<close> specialised
   to \<open>p = 0\<close>, combined with \<open>ell_op_lsc_at_zero\<close>.\<close>
 
-text \<open>At \<open>p = 0\<close>, \<open>F\<^sub>*(0,X) = F(0,X)\<close> and \<open>F\<^sup>*(0,Y) = eq36_rhs k L Y\<close>, with
+text \<open>For that operator, at \<open>p = 0\<close>, \<open>F\<^sub>*(0,X) = F(0,X)\<close> and
+  \<open>F\<^sup>*(0,Y) = eq36_rhs k L Y\<close>, with
   \<open>eq36_rhs\<close> antitone; the supersolution gives \<open>1 \<le> eq36_rhs k L X\<close> and
   the subsolution \<open>F(0,X) < 1\<close>. These are consistent because
   \<open>F(0,X) \<le> eq36_rhs k L X\<close> with room to spare, so the envelope gap at
