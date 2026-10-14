@@ -2,7 +2,7 @@ section \<open>Proposition 2.4: the dynamic programming equality, with attainmen
 
 (*<*)
 theory Proposition_2_4
-  imports "Covariation_Constrained_Martingales.Dynamic_Programming_Principle" Exit_Class
+  imports "Covariation_Constrained_Martingales.Dynamic_Programming_Principle" Control_Problem
 begin
 (*>*)
 

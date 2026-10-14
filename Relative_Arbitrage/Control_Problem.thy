@@ -1,6 +1,7 @@
+section \<open>The control problem of Eqs. (1.5)--(1.7)\<close>
 
 (*<*)
-theory Exit_Class
+theory Control_Problem
   imports
     "Relative_Arbitrage_Equation.Constraint_Set_Convexity" "Relative_Arbitrage_Equation.Operator_Formula"
     "Covariation_Constrained_Martingales.Covariation_Class_Optimizer"
@@ -9,7 +10,9 @@ begin
 (*>*)
 
 text \<open>
-  Encodes the class \<open>P\<^sub>x\<close> of Eq. (1.7) as laws of the pair
+  The constraint set of Eq. (1.5), the class of Eq. (1.7) and the value
+  function of Eq. (1.6), at a finite horizon, with the compactness of the
+  class.  The class \<open>P\<^sub>x\<close> of Eq. (1.7) is encoded as laws of the pair
   \<open>(X, \<langle>X\<rangle>)\<close> on the path space, following the paper's own proof of
   Lemma 2.3. The covariation is carried as a second, uniformly Lipschitz
   path component whose difference quotients lie in the compact convex

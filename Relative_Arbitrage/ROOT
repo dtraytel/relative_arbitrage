@@ -22,7 +22,7 @@ session Relative_Arbitrage = Covariation_Constrained_Martingales +
   sessions
     Relative_Arbitrage_Equation
   theories
-    Exit_Class
+    Control_Problem
     Proposition_2_4
     Value_Function_Subsolution
     Euler_Limit_Growth

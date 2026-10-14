@@ -3,7 +3,7 @@ section \<open>The paper's class and value function on the half-line\<close>
 (*<*)
 theory Exit_Class_Infinite
   imports
-    "Covariation_Constrained_Martingales.Covariation_Class_Infinite" Exit_Class
+    "Covariation_Constrained_Martingales.Covariation_Class_Infinite" Control_Problem
 begin
 (*>*)
 

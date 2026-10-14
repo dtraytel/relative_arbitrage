@@ -613,7 +613,7 @@ Path_Space.path_law_restrict    # KEEP_API
 Path_Space_Infinite.sets_ipath_law    # KEEP_API
 
 # --- COROLLARY verdicts that keep their name (shortened in phase 4) ------------
-Exit_Class.exit_val_eq_covariation_val    # COROLLARY
+Control_Problem.exit_val_eq_covariation_val    # COROLLARY
 Maximum_Principle.geometric_operator.viscosity_uniqueness_compact    # COROLLARY; in the locale since G-C
 Adapted_Quadratic_Variation.qvps_mono_lip    # COROLLARY
 Adapted_Quadratic_Variation.qvps_continuous    # COROLLARY
