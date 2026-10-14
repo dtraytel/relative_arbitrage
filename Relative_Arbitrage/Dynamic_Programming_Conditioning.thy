@@ -642,7 +642,7 @@ proof -
       have vge: "ennreal (c - r) \<le> exit_val k L ?S K (fst (p' r))"
         by (rule exit_val_ge_of_AE_pshift[OF Tr RC step])
       have vfin: "exit_val k L ?S K (fst (p' r)) < \<top>"
-        using exit_val_neq_top[OF Tr] by (simp add: less_top)
+        using covariation_val_neq_top[OF Tr] by (simp add: less_top exit_val_eq_covariation_val)
       have "c - r \<le> enn2real (exit_val k L ?S K (fst (p' r)))"
       proof (cases "0 \<le> c - r")
         case True
@@ -734,7 +734,7 @@ proof -
     have sT': "s < T" using sc clt cT by simp
     have Ts: "0 < T - s" using sT' by simp
     have Tsn: "exit_val k L (T - s) K y \<noteq> \<top>" for y
-      by (rule exit_val_neq_top) (use Ts in simp)
+      unfolding exit_val_eq_covariation_val by (rule covariation_val_neq_top) (use Ts in simp)
 
     \<comment> \<open>rationals decreasing to \<open>s\<close> from above, all below \<open>c'\<close>\<close>
     have ex: "\<exists>q\<in>(\<rat> :: real set). s < q \<and> q < min c' (s + inverse (real (Suc n)))"

@@ -212,7 +212,9 @@ proof -
     and S0C: "\<And>y. S0 y \<in> exit_class k L T (0 :: real^'n)"
     and S0val: "\<And>y. ess_inf_time (pshift_law T y (S0 y))
         (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K y"
-    by (rule exit_val_measurable_selector_kernel'[where k = k, OF T L K]) blast
+    by (rule covariation_val_measurable_selector_kernel'[where S = "sconstraint k L",
+          OF T sconstraint_bounds[OF order_trans[OF zero_le_one L]] closed_sconstraint
+          mat_1_rate_in_sconstraint[OF L] K, folded exit_class_eq_covariation exit_val_eq_covariation_val]) blast+
   have setsS0: "sets (S0 y) = sets ?B" for y by (rule exit_class_sets[OF S0C])
   have PS0: "prob_space (S0 y)" for y by (rule exit_class_prob[OF S0C])
   define Sel where "Sel = (\<lambda>p :: real \<times> (real^'n).

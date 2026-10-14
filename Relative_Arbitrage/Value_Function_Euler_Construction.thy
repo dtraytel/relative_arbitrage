@@ -275,7 +275,7 @@ text \<open>A continuous matrix field with admissible squares induces, through
   @{thm [source] sbm_law_weak_conv}; it upgrades to topological continuity
   by the closed-preimage criterion (both sides are metric), and the
   prob-algebra form follows by the same bridge as
-  @{thm [source] exit_val_measurable_selector_kernel'}.\<close>
+  @{thm [source] covariation_val_measurable_selector_kernel'}.\<close>
 
 theorem sbm_kernel_package:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and T' :: real

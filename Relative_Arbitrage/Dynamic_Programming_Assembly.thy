@@ -104,7 +104,7 @@ proof -
 qed
 
 text \<open>What the selector delivers, in the form @{thm [source] aglue_law_pexit_ge}
-  consumes: @{thm [source] exit_val_le_pexit_AE}, pulled back through
+  consumes: @{thm [source] covariation_val_le_pexit_AE}, pulled back through
   \<^const>\<open>prebase\<close>.\<close>
 
 lemma selector_value_AE:
@@ -133,7 +133,8 @@ proof -
   have mset: "{\<omega> \<in> space ?Bs. ?v \<le> pexit (T - s) K (\<lambda>t. y + fst (\<omega> t))}
       \<in> sets ?Bs" using sh by measurable
   have "AE \<omega> in distr \<nu> ?Bs (prebase s T). ?v \<le> pexit (T - s) K (\<lambda>t. y + fst (\<omega> t))"
-    by (rule exit_val_le_pexit_AE[OF Ts _ val]) simp
+    by (rule covariation_val_le_pexit_AE[OF Ts _ val[unfolded exit_val_eq_covariation_val],
+          folded exit_val_eq_covariation_val]) simp
   then show ?thesis unfolding AE_distr_iff[OF reb mset] .
 qed
 
@@ -628,7 +629,7 @@ lemma enn2real_paper_v_horizon_cap:
 proof -
   have T0: "0 \<le> T" using S0 ST by simp
   have a: "ennreal (enn2real (exit_val k L S K y)) = exit_val k L S K y"
-    using exit_val_neq_top[OF S0, of k L K y]
+    using covariation_val_neq_top[OF S0, of "sconstraint k L" K y, folded exit_val_eq_covariation_val]
     by (simp add: less_top)
   have b: "ennreal (min (enn2real (exit_val k L T K y)) S)
       = min (exit_val k L T K y) (ennreal S)"
@@ -637,7 +638,7 @@ proof -
         = min (ennreal (enn2real (exit_val k L T K y))) (ennreal S)"
       using S0 by (simp add: min_ennreal)
     also have "\<dots> = min (exit_val k L T K y) (ennreal S)"
-      using exit_val_neq_top[OF T0, of k L K y]
+      using covariation_val_neq_top[OF T0, of "sconstraint k L" K y, folded exit_val_eq_covariation_val]
       by (simp add: less_top)
     finally show ?thesis .
   qed
@@ -700,7 +701,9 @@ proof -
   proof -
     have pv: "(\<lambda>y :: real^'n. enn2real (exit_val k L T K y))
         \<in> borel_measurable borel"
-      by (rule exit_val_borel_measurable[OF T0 L1 Kc])
+      unfolding exit_val_eq_covariation_val
+      by (rule covariation_val_borel_measurable[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+            closed_sconstraint mat_1_rate_in_sconstraint[OF L1] Kc])
     have c1: "(\<lambda>p' :: 'n pairpath. enn2real (exit_val k L T K (fst (p' (\<theta> p')))))
         \<in> borel_measurable ?B" by (rule measurable_compose[OF xm pv])
     show ?thesis unfolding vv using c1 thM by measurable

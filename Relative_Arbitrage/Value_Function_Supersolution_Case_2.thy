@@ -551,7 +551,7 @@ proof -
         by (rule exit_val_dpp_ge_const_time[OF T0 L1' Kc st thM Pc AEfun[unfolded FN_def]])
       have vfin: "ennreal (tv y) = exit_val k L T K y"
         unfolding tv_def
-        using exit_val_neq_top[OF T0', of k L K y]
+        using covariation_val_neq_top[OF T0', of "sconstraint k L" K y, folded exit_val_eq_covariation_val]
         by (simp add: less_top)
       have chain: "ennreal (vs x + mg + psiY) \<le> ennreal (tv y)"
         using dpp by (simp add: vfin)
@@ -800,7 +800,7 @@ proof -
     unfolding \<theta>_def mc using B by linarith
   have T0': "0 \<le> T" using T0 by linarith
   have ltop: "exit_val k L T K z < \<top>"
-    using exit_val_neq_top[OF T0'] by (simp add: less_top)
+    using covariation_val_neq_top[OF T0'] by (simp add: less_top exit_val_eq_covariation_val)
   have eq: "ennreal (tv z) = exit_val k L T K z"
     unfolding tvdef using ltop by simp
   have "ennreal (\<theta> + lsc_env tv x) \<le> exit_val k L T K z"

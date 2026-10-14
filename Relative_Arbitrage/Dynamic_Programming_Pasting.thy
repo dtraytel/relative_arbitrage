@@ -33,28 +33,29 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-theorem exit_val_measurable_selector_kernel':
-  fixes K :: "(real^'n::finite) set"
-  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
-  obtains S where
-    "S \<in> borel \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
-    and "\<And>y. S y \<in> exit_class k L T 0"
-    and "\<And>y. ess_inf_time (pshift_law T y (S y))
-        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K y"
+theorem covariation_val_measurable_selector_kernel':
+  fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and SST: "\<sigma> ** transpose \<sigma> \<in> S" and K: "closed K"
+  obtains Sel where
+    "Sel \<in> borel \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
+    and "\<And>y. Sel y \<in> covariation_class S T 0"
+    and "\<And>y. ess_inf_time (pshift_law T y (Sel y))
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = covariation_val S T K y"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?W = "weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))"
-  obtain S where Sm: "S \<in> borel \<rightarrow>\<^sub>M borel_of ?W"
-    and SC: "\<And>y. S y \<in> exit_class k L T 0"
-    and Sval: "\<And>y. ess_inf_time (pshift_law T y (S y))
-        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K y"
-    by (rule covariation_val_measurable_selector[where S = "sconstraint k L",
-          OF T sconstraint_bounds[OF order_trans[OF zero_le_one L]]
-          closed_sconstraint mat_1_rate_in_sconstraint[OF L] K,
-          folded exit_class_eq_covariation exit_val_eq_covariation_val]) blast+
-  have Sk: "S \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
+  obtain Sel where Sm: "Sel \<in> borel \<rightarrow>\<^sub>M borel_of ?W"
+    and SC: "\<And>y. Sel y \<in> covariation_class S T 0"
+    and Sval: "\<And>y. ess_inf_time (pshift_law T y (Sel y))
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = covariation_val S T K y"
+    by (rule covariation_val_measurable_selector[OF T B0 B D0 D Sc SST K]) blast+
+  have Sk: "Sel \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
     by (rule measurable_prob_algebra_weak_conv[OF Polish_space_path_metric Sm])
-      (use exit_class_prob[OF SC] exit_class_sets[OF SC] in simp)
+      (use covariation_class_prob[OF SC] covariation_class_sets[OF SC] in simp)
   show ?thesis by (rule that[OF Sk SC Sval])
 qed
 
@@ -65,21 +66,21 @@ text \<open>What a selector's optimality gives, in the form the pasting argument
   by @{thm [source] ess_inf_time_AE} into the almost-sure bound
   \<open>v(y) \<le> \<tau>\<^sub>K\<close> on the unshifted paths.\<close>
 
-lemma exit_val_le_pexit_AE:
+lemma covariation_val_le_pexit_AE:
   fixes \<mu> :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
-  assumes S0: "0 \<le> S"
-    and setsmu: "sets \<mu> = sets (path_borel S :: ('n pairpath) measure)"
-    and val: "ess_inf_time (pshift_law S y \<mu>) (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
-        = exit_val k L S K y"
-  shows "AE \<omega> in \<mu>. enn2real (exit_val k L S K y) \<le> pexit S K (\<lambda>t. y + fst (\<omega> t))"
+  assumes U0: "0 \<le> U"
+    and setsmu: "sets \<mu> = sets (path_borel U :: ('n pairpath) measure)"
+    and val: "ess_inf_time (pshift_law U y \<mu>) (\<lambda>\<omega>. pexit U K (\<lambda>t. fst (\<omega> t)))
+        = covariation_val S U K y"
+  shows "AE \<omega> in \<mu>. enn2real (covariation_val S U K y) \<le> pexit U K (\<lambda>t. y + fst (\<omega> t))"
 proof -
-  have "AE \<omega> in pshift_law S y \<mu>.
-      exit_val k L S K y \<le> ennreal (pexit S K (\<lambda>t. fst (\<omega> t)))"
+  have "AE \<omega> in pshift_law U y \<mu>.
+      covariation_val S U K y \<le> ennreal (pexit U K (\<lambda>t. fst (\<omega> t)))"
     unfolding val[symmetric] by (rule ess_inf_time_AE)
-  then have "AE \<omega> in \<mu>. exit_val k L S K y \<le> ennreal (pexit S K (\<lambda>t. y + fst (\<omega> t)))"
-    unfolding AE_pshift_law_iff[OF S0 setsmu] pexit_pshift .
+  then have "AE \<omega> in \<mu>. covariation_val S U K y \<le> ennreal (pexit U K (\<lambda>t. y + fst (\<omega> t)))"
+    unfolding AE_pshift_law_iff[OF U0 setsmu] pexit_pshift .
   then show ?thesis
-    by (rule eventually_mono) (rule enn2real_leI[OF pexit_nonneg[OF S0]])
+    by (rule eventually_mono) (rule enn2real_leI[OF pexit_nonneg[OF U0]])
 qed
 
 subsection \<open>The value function is Borel measurable\<close>
@@ -89,36 +90,44 @@ text \<open>Clause (1) --- upper semicontinuity --- makes every sublevel set
   Borel measurable, as needed to state the dynamic programming principle's
   integrand as a random variable.\<close>
 
-lemma exit_val_open_less:
-  fixes K :: "(real^'n::finite) set" and b :: ennreal
-  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
-  shows "open {y :: real^'n. exit_val k L T K y < b}"
+lemma covariation_val_open_less:
+  fixes K :: "(real^'n::finite) set" and b :: ennreal and \<sigma> :: "real^'n^'n"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and SST: "\<sigma> ** transpose \<sigma> \<in> S" and K: "closed K"
+  shows "open {y :: real^'n. covariation_val S T K y < b}"
 proof (subst open_subopen, safe)
-  fix y :: "real^'n" assume "exit_val k L T K y < b"
-  then have "eventually (\<lambda>z. exit_val k L T K z < b) (nhds y)"
-    by (rule exit_val_usc_unconditional[OF T L K])
-  then obtain U where "open U" "y \<in> U" "\<forall>z\<in>U. exit_val k L T K z < b"
+  fix y :: "real^'n" assume lt: "covariation_val S T K y < b"
+  have "eventually (\<lambda>z. covariation_val S T K z < b) (nhds y)"
+    by (rule covariation_val_usc[OF T B0 B D0 D Sc K
+          covariation_class_nonempty[OF less_imp_le[OF T] Sc SST] lt])
+  then obtain U where "open U" "y \<in> U" "\<forall>z\<in>U. covariation_val S T K z < b"
     unfolding eventually_nhds by blast
-  then show "\<exists>U. open U \<and> y \<in> U \<and> U \<subseteq> {y. exit_val k L T K y < b}" by blast
+  then show "\<exists>U. open U \<and> y \<in> U \<and> U \<subseteq> {y. covariation_val S T K y < b}" by blast
 qed
 
-lemma exit_val_neq_top:
+lemma covariation_val_neq_top:
   fixes K :: "(real^'n::finite) set" and y :: "real^'n"
   assumes T: "0 \<le> T"
-  shows "exit_val k L T K y \<noteq> \<top>"
+  shows "covariation_val S T K y \<noteq> \<top>"
 proof -
-  have "exit_val k L T K y \<le> ennreal T"
-    unfolding exit_val_eq_covariation_val by (rule covariation_val_le_T[OF T])
+  have "covariation_val S T K y \<le> ennreal T" by (rule covariation_val_le_T[OF T])
   moreover have "(ennreal T :: ennreal) \<noteq> \<top>" by simp
   ultimately show ?thesis by (auto simp: top_unique)
 qed
 
-lemma exit_val_borel_measurable:
-  fixes K :: "(real^'n::finite) set"
-  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
-  shows "(\<lambda>y :: real^'n. enn2real (exit_val k L T K y)) \<in> borel_measurable borel"
+lemma covariation_val_borel_measurable:
+  fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and SST: "\<sigma> ** transpose \<sigma> \<in> S" and K: "closed K"
+  shows "(\<lambda>y :: real^'n. enn2real (covariation_val S T K y)) \<in> borel_measurable borel"
   by (intro borel_measurable_enn2real borel_measurableI_less)
-    (simp add: borel_open exit_val_open_less[OF T L K])
+    (simp add: borel_open covariation_val_open_less[OF T B0 B D0 D Sc SST K])
 
 (*<*)
 end
