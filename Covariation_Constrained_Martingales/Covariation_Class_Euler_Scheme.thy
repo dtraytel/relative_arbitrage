@@ -1,32 +1,27 @@
 section \<open>The Euler scheme, its weak limit, and the exact quadratic lower bound\<close>
 
 (*<*)
-theory Value_Function_Euler_Construction
+theory Covariation_Class_Euler_Scheme
   imports
-    "Lower_Semicontinuous.Lower_Semicontinuous" "Covariation_Constrained_Martingales.Dynamic_Programming_Pasting"
-    "Second_Order_Viscosity_Analysis.Doubling_Of_Variables" Exit_Class
+    "Lower_Semicontinuous.Lower_Semicontinuous" Dynamic_Programming_Pasting
 begin
 
 (*>*)
 
-section \<open>The supersolution half: a rotating covariance field\<close>
+section \<open>A continuous field of rates\<close>
 
-text \<open>The supersolution inequality is an essential-infimum statement, so it
-  needs pathwise control.  The paper (\<open>\<section>\<close>3.2, Case 1) gets it from a
-  covariance field that annihilates the gradient of the test function along
-  the path, so that no stochastic integral appears: its columns are
-  \<open>S\<^sub>i \<nabla>\<phi>(y)\<close> with \<open>S\<^sub>i\<close> skew-symmetric.  The field used here annihilates the
-  gradient for the same reason, but is built differently --- it is the
-  feasible witness conjugated by the rotation carrying the frozen gradient to
-  the current one.  Conjugation does not move the spectrum, so no eigenvalue
-  margin is needed anywhere and the construction runs at \<open>L = 1\<close> as well; see
-  the subsection \<open>Exact rotations\<close> below.
-
-  Either way the field is fed to an Euler scheme glued by
-  @{thm [source] covariation_class_kglue_law'} and passed to a weak limit.  The
-  constant-volatility Gaussian member the Euler kernels are made of,
-  \<open>sbmpair\<close>, is in @{theory Covariation_Constrained_Martingales.Covariation_Class_Witness}; this
-  section writes the field as a square and builds the limit.\<close>
+text \<open>Given a continuous field \<open>SF\<close> of rates with \<open>SF z (SF z)\<^sup>T \<in> S\<close>, an
+  Euler scheme freezes the field at the grid points, runs the
+  constant-volatility Gaussian member \<open>sbmpair\<close> of
+  @{theory Covariation_Constrained_Martingales.Covariation_Class_Witness} on each
+  step, glues the steps by @{thm [source] covariation_class_kglue_law'}, and
+  passes the Euler laws to a weak limit, which lies in the class.  A field that
+  annihilates a given vector field along the path, such as the gradient of a
+  test function, makes the increments orthogonal to it almost surely, so the
+  limit gives pathwise control of that test function --- what an
+  essential-infimum (supersolution) inequality needs, with no stochastic
+  integral.  This section writes the field as a square and builds the
+  limit.\<close>
 
 subsection \<open>A crude operator bound for matrices\<close>
 
@@ -162,7 +157,7 @@ proof -
           (S *v cbmX (0 :: real^'n) t \<omega>)
         + dist (t *\<^sub>R (Sm m ** transpose (Sm m)))
             (t *\<^sub>R (S ** transpose S))"
-      by (rule dist_pair_le)
+      unfolding dist_Pair_Pair by (rule sqrt_sum_squares_le_sum) simp_all
     also have "\<dots> \<le> cs m * BW + T * ds m"
       using fst_b snd_b by linarith
     finally show "dist (sbmpair (Sm m) T \<omega> t) (sbmpair S T \<omega> t) \<le> D m"

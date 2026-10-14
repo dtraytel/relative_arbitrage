@@ -3,7 +3,7 @@ section \<open>The supersolution, case 1: a nonzero gradient\<close>
 (*<*)
 theory Value_Function_Supersolution_Case_1
   imports
-    Value_Function_Euler_Construction Value_Function_Subsolution
+    "Covariation_Constrained_Martingales.Covariation_Class_Euler_Scheme" Value_Function_Subsolution
 begin
 
 (*>*)

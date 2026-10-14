@@ -13,7 +13,10 @@ session Covariation_Constrained_Martingales = Path_Space_Operations +
     measurable optimizer.  Conditioning on the past at a stopping time and
     the additive glue at a stopping time give the dynamic programming
     principle for the value, with attainment, at a deterministic time and at
-    a stopping time.  On the half-line, the class without a horizon has the
+    a stopping time.  An Euler scheme along a continuous field of rates in a
+    closed convex S converges weakly to a member of the class whose
+    increments are orthogonal to any vector field the rates annihilate.
+    On the half-line, the class without a horizon has the
     same value as the class at any horizon beyond the natural exit-time
     scale, and for a closed convex bounded set of positive semidefinite
     matrices its laws of the process alone are exactly the laws whose
@@ -37,6 +40,7 @@ session Covariation_Constrained_Martingales = Path_Space_Operations +
     Dynamic_Programming_Delayed_Class
     Dynamic_Programming_Assembly
     Dynamic_Programming_Principle
+    Covariation_Class_Euler_Scheme
     Covariation_Class_Infinite
     Covariation_Class_Marginals
   theories [document = false]
