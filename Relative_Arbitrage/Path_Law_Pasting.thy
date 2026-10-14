@@ -997,7 +997,7 @@ text \<open>Clause (ii): the covariation difference quotient.  The kernel's
   place where that is used, and it is where the almost-sure statement of
   the continuation enters, one \<open>\<omega>\<close> at a time.\<close>
 
-subsection \<open>The glue is continuous, and the product is a Polish product\<close>
+subsection \<open>The almost-sure clauses pass to the kernel\<close>
 
 text \<open>Proving clauses (iii) and (iv) directly for \<open>ksemi\<close> runs into
   two obstructions: the distribution's \<open>integral_bind\<close> covers only
@@ -1015,9 +1015,6 @@ text \<open>Proving clauses (iii) and (iv) directly for \<open>ksemi\<close> run
   the semidirect products converge weakly, the glued laws do too, and weak
   closedness finishes --- which needs continuity of the glue and the
   identity of the two \<open>\<sigma>\<close>-algebras on the product.\<close>
-
-
-subsection \<open>The almost-sure clauses pass to the kernel\<close>
 
 text \<open>Clauses (i) and (ii) of (1.7) both say "\<open>\<mu> C = 1\<close> for a fixed
   measurable \<open>C\<close>", linear in \<open>\<mu>\<close>, so each transfers to the kernel by a

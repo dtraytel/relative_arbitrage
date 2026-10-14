@@ -21,8 +21,8 @@ text \<open>The path space this development works on carries a pair: the state
   and its covariation, \<open>real \<Rightarrow> (real^'n) \<times> (real^'n^'n)\<close>.  This theory fixes
   that type and collects what is true of paths, and of laws of paths, before
   any constraint on the covariation is imposed -- measurability of the
-  coordinates, continuity of evaluation, martingale clauses for a general
-  law, and the localisation facts the tightness argument runs on.\<close>
+  coordinates, continuity of evaluation, and martingale clauses for a
+  general law.\<close>
 
 
 section \<open>Diagonal entries under the eigenvalue constraints\<close>

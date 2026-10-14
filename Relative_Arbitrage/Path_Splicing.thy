@@ -317,7 +317,7 @@ text \<open>Conditioning on an event of the past keeps martingales martingales:
   \<open>martingale_uniform_measure\<close> live in
   @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
 
-text \<open>\<open>pair_fst_borel\<close> lives in \<open>Exit_Class_Pasting\<close>.\<close>
+text \<open>\<open>pair_fst_borel\<close> lives in @{theory Relative_Arbitrage.Pair_Path_Laws}.\<close>
 
 lemma pshift_measurable:
   fixes x :: "'a::{polish_space,banach}"

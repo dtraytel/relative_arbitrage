@@ -7,8 +7,13 @@ begin
 
 (*>*)
 
-text \<open>The weak limit gives the constraint only for the countably many
-  rational pairs \<open>s < t\<close> (one closed set each, all of full mass,
+text \<open>A continuous path whose difference quotients over pairs of rational
+  times lie in a closed set has all its difference quotients there;
+  difference quotients in a bounded set give a Lipschitz bound; and a
+  continuous path vanishing at the rational times vanishes.
+
+  In applications a weak limit gives the constraint only for the countably
+  many rational pairs \<open>s < t\<close> (one closed set each, all of full mass,
   intersected). Path continuity and closedness upgrade this to all real
   \<open>s < t\<close>: squeeze rationals \<open>p\<^sub>n \<down> s\<close>, \<open>q\<^sub>n \<up> t\<close> strictly inside
   \<open>(s,t)\<close> and pass to the limit.  A lower guard \<open>r \<le> p\<close> on the rational
