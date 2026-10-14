@@ -375,6 +375,17 @@ proof -
   show "a $ i $ i \<le> L" by (rule psd_eigen_ub_diag(2)[OF p u])
 qed
 
+lemma sconstraint_psd_entry:
+  fixes a :: "real^'n::finite^'n"
+  assumes a: "a \<in> sconstraint k L"
+  shows "psd a" and "\<bar>a $ i $ j\<bar> \<le> L"
+proof -
+  have p: "psd a" and u: "eigen_ub a L"
+    using a unfolding sconstraint_def Pi_constraint_def by auto
+  show "psd a" by (rule p)
+  show "\<bar>a $ i $ j\<bar> \<le> L" by (rule psd_eigen_ub_entry_abs_le[OF p u])
+qed
+
 text \<open>The two numbers of \<open>sconstraint k L\<close> that the generic class lemmas
   read: a norm bound \<open>CARD('n) \<sqdot> L\<close> and a two-sided bound \<open>[0, L]\<close> on the
   diagonal, in the order those lemmas take them.\<close>

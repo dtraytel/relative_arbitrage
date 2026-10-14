@@ -100,42 +100,12 @@ theorem iexit_val_eq_icovariation_val:
   "iexit_val k L K x = icovariation_val (sconstraint k L) K x"
   by (simp add: iexit_val_def icovariation_val_def iexit_class_eq_icovariation)
 
-lemma iexit_class_prob:
-  "P \<in> iexit_class k L x \<Longrightarrow> prob_space P"
-  unfolding iexit_class_def by blast
-
-lemma iexit_class_sets:
-  "P \<in> iexit_class k L x \<Longrightarrow> sets P = sets (ipath_space :: ('n::finite pairpath) measure)"
-  unfolding iexit_class_def by blast
-
-lemma iexit_class_start:
-  "P \<in> iexit_class k L x \<Longrightarrow> AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-  unfolding iexit_class_def by blast
-
 subsection \<open>Restriction to a compact horizon\<close>
 
 text \<open>The cut of a law on the half-line is a law on the horizon-\<open>U\<close> path
   space.  @{thm [source] pcut_adapted} needs nothing of the underlying space,
   so the adaptedness of the cut coordinates carries over unchanged.\<close>
 
-
-lemma iexit_class_diffquot:
-  "P \<in> iexit_class k L x \<Longrightarrow>
-     AE \<omega> in P. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
-       (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-  unfolding iexit_class_def by blast
-
-lemma iexit_class_X_martingale:
-  "P \<in> iexit_class k L x \<Longrightarrow>
-     martingale P (natural_filtration P 0 (\<lambda>t \<omega>. \<omega> t)) 0
-       (\<lambda>t \<omega>. fst (\<omega> t) :: real^'n::finite)"
-  unfolding iexit_class_def by blast
-
-lemma iexit_class_comp_martingale:
-  "P \<in> iexit_class k L x \<Longrightarrow>
-     martingale P (natural_filtration P 0 (\<lambda>t \<omega>. \<omega> t)) 0
-       (\<lambda>t \<omega>. outerp (fst (\<omega> t) :: real^'n::finite) - snd (\<omega> t))"
-  unfolding iexit_class_def by blast
 
 text \<open>The class is a set of laws of the pair \<open>(X, \<langle>X\<rangle>)\<close>, and the martingale
   clauses above are stated for the natural filtration of that pair, which is a

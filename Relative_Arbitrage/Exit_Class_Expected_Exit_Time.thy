@@ -8,78 +8,84 @@ begin
 (*>*)
 
 text \<open>Pointwise consequences of the covariation constraint for a member of the
-  uncapped pair class, from the difference quotients at time \<open>0\<close>.\<close>
+  uncapped pair class, from the difference quotients at time \<open>0\<close>: a lower
+  bound \<open>\<theta>\<close> for the trace on \<open>S\<close> and a bound \<open>D\<close> on the entries.\<close>
 
-lemma iexit_class_trace_lb:
+lemma icovariation_class_trace_lb:
   fixes P :: "('n::finite pairpath) measure"
-  assumes P: "P \<in> iexit_class k L x" and k: "k < CARD('n)"
-  shows "AE \<omega> in P. \<forall>t. 0 \<le> t \<longrightarrow> real (CARD('n) - k) * t \<le> trace (snd (\<omega> t))"
-  using iexit_class_start[OF P] iexit_class_diffquot[OF P]
+  assumes th: "\<And>a. a \<in> S \<Longrightarrow> \<theta> \<le> trace a" and P: "P \<in> icovariation_class S x"
+  shows "AE \<omega> in P. \<forall>t. 0 \<le> t \<longrightarrow> \<theta> * t \<le> trace (snd (\<omega> t))"
+  using icovariation_class_start[OF P] icovariation_class_diffquot[OF P]
 proof eventually_elim
   case (elim \<omega>)
   show ?case
   proof (intro allI impI)
     fix t :: real assume t: "0 \<le> t"
-    show "real (CARD('n) - k) * t \<le> trace (snd (\<omega> t))"
+    show "\<theta> * t \<le> trace (snd (\<omega> t))"
     proof (cases "t = 0")
       case True
       then show ?thesis using elim by (simp add: trace_def)
     next
       case False
       with t have tp: "0 < t" by simp
-      have "(1 / (t - 0)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> 0)) \<in> sconstraint k L"
+      have "(1 / (t - 0)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> 0)) \<in> S"
         using elim tp by blast
-      then have mem: "(1 / t) *\<^sub>R snd (\<omega> t) \<in> sconstraint k L"
+      then have mem: "(1 / t) *\<^sub>R snd (\<omega> t) \<in> S"
         using elim by simp
-      have "real (CARD('n) - k) \<le> trace ((1 / t) *\<^sub>R snd (\<omega> t))"
-        by (rule sconstraint_trace_ge[OF k mem])
+      have "\<theta> \<le> trace ((1 / t) *\<^sub>R snd (\<omega> t))"
+        by (rule th[OF mem])
       with tp show ?thesis by (simp add: trace_scaleR pos_le_divide_eq)
     qed
   qed
 qed
 
-lemma iexit_class_entry_bound:
+lemma icovariation_class_entry_bound:
   fixes P :: "('n::finite pairpath) measure"
-  assumes P: "P \<in> iexit_class k L x"
-  shows "AE \<omega> in P. \<forall>t. 0 \<le> t \<longrightarrow> \<bar>snd (\<omega> t) $ i $ j\<bar> \<le> L * t"
-  using iexit_class_start[OF P] iexit_class_diffquot[OF P]
+  assumes D: "\<And>a i j. a \<in> S \<Longrightarrow> \<bar>a $ i $ j\<bar> \<le> D" and P: "P \<in> icovariation_class S x"
+  shows "AE \<omega> in P. \<forall>t. 0 \<le> t \<longrightarrow> \<bar>snd (\<omega> t) $ i $ j\<bar> \<le> D * t"
+  using icovariation_class_start[OF P] icovariation_class_diffquot[OF P]
 proof eventually_elim
   case (elim \<omega>)
   show ?case
   proof (intro allI impI)
     fix t :: real assume t: "0 \<le> t"
-    have "\<bar>snd (\<omega> t) $ i $ j - snd (\<omega> 0) $ i $ j\<bar> \<le> L * (t - 0)"
-      by (rule diffquot_entry[where A = "\<lambda>s. snd (\<omega> s)" and k = k and L = L]) (use elim t in auto)
-    then show "\<bar>snd (\<omega> t) $ i $ j\<bar> \<le> L * t" using elim by simp
+    have dq: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S" using elim by blast
+    have "\<bar>snd (\<omega> t) $ i $ j - snd (\<omega> 0) $ i $ j\<bar> \<le> D * (t - 0)"
+      by (rule diffquot_entry[OF D dq order_refl t])
+    then show "\<bar>snd (\<omega> t) $ i $ j\<bar> \<le> D * t" using elim by simp
   qed
 qed
 
-lemma iexit_class_coord_sq_integrable:
+lemma icovariation_class_coord_sq_integrable:
   fixes P :: "('n::finite pairpath) measure"
-  assumes P: "P \<in> iexit_class k L x" and s: "0 \<le> s"
+  assumes D: "\<And>a i j. a \<in> S \<Longrightarrow> \<bar>a $ i $ j\<bar> \<le> D"
+    and P: "P \<in> icovariation_class S x" and s: "0 \<le> s"
   shows "integrable P (\<lambda>\<omega>. (fst (\<omega> s) $ i)\<^sup>2)"
 proof -
-  interpret PP: prob_space P by (rule iexit_class_prob[OF P])
+  interpret PP: prob_space P by (rule icovariation_class_prob[OF P])
   have evP: "(\<lambda>\<omega> :: 'n pairpath. \<omega> s) \<in> borel_measurable P"
-    unfolding measurable_cong_sets[OF iexit_class_sets[OF P] refl]
+    unfolding measurable_cong_sets[OF icovariation_class_sets[OF P] refl]
     by (rule ipath_eval_measurable[OF s])
   have g: "(\<lambda>p :: (real^'n) \<times> (real^'n^'n). snd p $ i $ i) \<in> borel_measurable borel"
     by (intro borel_measurable_continuous_onI continuous_intros)
   have Aint: "integrable P (\<lambda>\<omega>. snd (\<omega> s) $ i $ i)"
-  proof (rule PP.integrable_const_bound[of _ "\<bar>L\<bar> * s"])
-    show "AE \<omega> in P. norm (snd (\<omega> s) $ i $ i) \<le> \<bar>L\<bar> * s"
-      using iexit_class_entry_bound[OF P, of i i]
+  proof (rule PP.integrable_const_bound[of _ "\<bar>D\<bar> * s"])
+    have eb: "AE \<omega> in P. \<forall>t. 0 \<le> t \<longrightarrow> \<bar>snd (\<omega> t) $ i $ i\<bar> \<le> D * t"
+      by (rule icovariation_class_entry_bound[OF D P])
+    show "AE \<omega> in P. norm (snd (\<omega> s) $ i $ i) \<le> \<bar>D\<bar> * s"
+      using eb
     proof eventually_elim
       case (elim \<omega>)
-      then have "\<bar>snd (\<omega> s) $ i $ i\<bar> \<le> L * s" using s by blast
-      also have "\<dots> \<le> \<bar>L\<bar> * s" using s by (intro mult_right_mono) auto
+      then have "\<bar>snd (\<omega> s) $ i $ i\<bar> \<le> D * s" using s by blast
+      also have "\<dots> \<le> \<bar>D\<bar> * s" using s by (intro mult_right_mono) auto
       finally show ?case by simp
     qed
     show "(\<lambda>\<omega>. snd (\<omega> s) $ i $ i) \<in> borel_measurable P"
       by (rule measurable_compose[OF evP g])
   qed
   have Cint: "integrable P (\<lambda>\<omega>. (outerp (fst (\<omega> s)) - snd (\<omega> s)) $ i $ i)"
-    by (rule martingale.integrable[OF martingale_mat_nth[OF iexit_class_comp_martingale[OF P]] s])
+    by (rule martingale.integrable[OF martingale_mat_nth[OF icovariation_class_comp_martingale[OF P]] s])
   have "integrable P (\<lambda>\<omega>. (outerp (fst (\<omega> s)) - snd (\<omega> s)) $ i $ i + snd (\<omega> s) $ i $ i)"
     by (rule Bochner_Integration.integrable_add[OF Cint Aint])
   then show ?thesis by (simp add: outerp_def power2_eq_square)
@@ -88,24 +94,25 @@ qed
 text \<open>The estimate on the pair class.  \<open>Z = |X|\<^sup>2 - tr A\<close> is the trace of the
   compensated martingale, \<open>|X|\<^sup>2 \<le> r'\<^sup>2\<close> up to the hitting time of
   \<open>{|y| \<ge> r'}\<close> (a stopping time, the hitting time of a closed set), and
-  \<open>tr A\<close> grows at rate \<open>n - k\<close>.  The exit time from the closed \<open>K\<close> is below
+  \<open>tr A\<close> grows at rate \<open>\<theta>\<close>.  The exit time from the closed \<open>K\<close> is below
   that hitting time for every \<open>r' > r\<close>; letting \<open>r' \<down> r\<close> and the horizon
   \<open>T \<up> \<infinity>\<close> gives the bound.\<close>
 
-theorem iexit_class_expected_exit_time:
+theorem icovariation_class_expected_exit_time:
   fixes P :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
-  assumes P: "P \<in> iexit_class k L x" and k: "k < CARD('n)"
+  assumes th0: "0 < \<theta>" and th: "\<And>a. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and D: "\<And>a i j. a \<in> S \<Longrightarrow> \<bar>a $ i $ j\<bar> \<le> D"
+    and P: "P \<in> icovariation_class S x"
     and K: "closed K" and KB: "K \<subseteq> cball 0 r"
-  shows "(\<integral>\<^sup>+\<omega>. iexit K (\<lambda>t. fst (\<omega> t)) \<partial>P)
-      \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
+  shows "(\<integral>\<^sup>+\<omega>. iexit K (\<lambda>t. fst (\<omega> t)) \<partial>P) \<le> ennreal ((r * r - x \<bullet> x) / \<theta>)"
 proof -
-  interpret PP: prob_space P by (rule iexit_class_prob[OF P])
+  interpret PP: prob_space P by (rule icovariation_class_prob[OF P])
   let ?F = "natural_filtration P 0 (\<lambda>t \<omega> :: 'n pairpath. \<omega> t)"
   let ?X = "\<lambda>t \<omega> :: 'n pairpath. fst (\<omega> t)"
-  define c where "c = real (CARD('n) - k)"
-  have c: "0 < c" using k by (simp add: c_def)
+  define c where "c = \<theta>"
+  have c: "0 < c" using th0 by (simp add: c_def)
   define Z where "Z = (\<lambda>t \<omega> :: 'n pairpath. trace (outerp (fst (\<omega> t)) - snd (\<omega> t)))"
-  have spP: "space P = ipath" using iexit_class_sets[OF P] by (simp add: sets_eq_imp_space_eq)
+  have spP: "space P = ipath" using icovariation_class_sets[OF P] by (simp add: sets_eq_imp_space_eq)
   have contw: "continuous_on {0..} \<omega>" if "\<omega> \<in> space P" for \<omega>
     using that spP by (intro ipath_continuous_on) auto
   have g1: "continuous_on UNIV (fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)"
@@ -119,10 +126,10 @@ proof -
     by (rule continuous_on_compose2[OF g1 contw[OF that]]) auto
   have contXi: "continuous_on {0..} (\<lambda>s. fst (\<omega> s) $ i)" if "\<omega> \<in> space P" for \<omega> i
     by (rule continuous_on_compose2[OF g2 contw[OF that]]) auto
-  have mgX: "martingale P ?F 0 ?X" by (rule iexit_class_X_martingale[OF P])
+  have mgX: "martingale P ?F 0 ?X" by (rule icovariation_class_X_martingale[OF P])
   have mgZ: "martingale P ?F 0 Z"
     unfolding Z_def
-    by (rule martingale_bounded_linear_image[OF bounded_linear_trace iexit_class_comp_martingale[OF P]])
+    by (rule martingale_bounded_linear_image[OF bounded_linear_trace icovariation_class_comp_martingale[OF P]])
   have Zsum: "Z t \<omega> = (\<Sum>i\<in>UNIV. (fst (\<omega> t) $ i)\<^sup>2 - snd (\<omega> t) $ i $ i)" for t \<omega>
     by (simp add: Z_def trace_def outerp_def power2_eq_square sum_subtractf)
   have Zdot: "Z t \<omega> = fst (\<omega> t) \<bullet> fst (\<omega> t) - trace (snd (\<omega> t))" for t \<omega>
@@ -136,26 +143,30 @@ proof -
 
   text \<open>Domination of \<open>Z\<close> on bounded intervals, by Doob's inequality for the
     coordinates and the Lipschitz bound on the compensator.\<close>
-  have env: "\<exists>D. (AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> (fst (\<omega> s) $ i)\<^sup>2 \<le> D \<omega>)
-      \<and> integrable P D" if u: "0 < u" for u i
+  have csq: "integrable P (\<lambda>\<omega>. (fst (\<omega> s) $ i)\<^sup>2)" if "0 \<le> s" for s i
+    by (rule icovariation_class_coord_sq_integrable[OF D P that])
+  have env: "\<exists>E. (AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> (fst (\<omega> s) $ i)\<^sup>2 \<le> E \<omega>)
+      \<and> integrable P E" if u: "0 < u" for u i
     by (rule sq_martingale_envelope[OF PP.prob_space_axioms martingale_vec_nth[OF mgX]
-          iexit_class_coord_sq_integrable[OF P] contXi u])
-  define Dd where "Dd u i = (SOME D. (AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
-      (fst (\<omega> s) $ i)\<^sup>2 \<le> D \<omega>) \<and> integrable P D)" for u i
+          csq contXi u])
+  define Dd where "Dd u i = (SOME E. (AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow>
+      (fst (\<omega> s) $ i)\<^sup>2 \<le> E \<omega>) \<and> integrable P E)" for u i
   have DdP: "(AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> (fst (\<omega> s) $ i)\<^sup>2 \<le> Dd u i \<omega>)
       \<and> integrable P (Dd u i)" if u: "0 < u" for u i
     unfolding Dd_def by (rule someI_ex[OF env[OF u]])
-  define D where "D u \<omega> = (\<Sum>i\<in>UNIV. Dd u i \<omega> + \<bar>L\<bar> * u)" for u \<omega>
-  have Dint: "integrable P (D u)" if u: "0 < u" for u
-    unfolding D_def using DdP[OF u]
+  define Dom where "Dom u \<omega> = (\<Sum>i\<in>UNIV. Dd u i \<omega> + \<bar>D\<bar> * u)" for u \<omega>
+  have Dint: "integrable P (Dom u)" if u: "0 < u" for u
+    unfolding Dom_def using DdP[OF u]
     by (intro Bochner_Integration.integrable_sum Bochner_Integration.integrable_add
         PP.integrable_const) auto
-  have dom: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> D u \<omega>" if u: "0 < u" for u
+  have dom: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> \<bar>Z s \<omega>\<bar> \<le> Dom u \<omega>" if u: "0 < u" for u
   proof -
     have e1: "AE \<omega> in P. \<forall>i s. 0 \<le> s \<longrightarrow> s \<le> u \<longrightarrow> (fst (\<omega> s) $ i)\<^sup>2 \<le> Dd u i \<omega>"
       by (intro eventually_all_finite) (use DdP[OF u] in blast)
-    have e2: "AE \<omega> in P. \<forall>i t. 0 \<le> t \<longrightarrow> \<bar>snd (\<omega> t) $ i $ i\<bar> \<le> L * t"
-      by (intro eventually_all_finite iexit_class_entry_bound[OF P])
+    have eb: "AE \<omega> in P. \<forall>t. 0 \<le> t \<longrightarrow> \<bar>snd (\<omega> t) $ i $ i\<bar> \<le> D * t" for i
+      by (rule icovariation_class_entry_bound[OF D P])
+    have e2: "AE \<omega> in P. \<forall>i t. 0 \<le> t \<longrightarrow> \<bar>snd (\<omega> t) $ i $ i\<bar> \<le> D * t"
+      by (intro eventually_all_finite eb)
     show ?thesis
       using e1 e2
     proof eventually_elim
@@ -163,13 +174,13 @@ proof -
       show ?case
       proof (intro allI impI)
         fix s :: real assume s: "0 \<le> s" "s \<le> u"
-        have tm: "\<bar>(fst (\<omega> s) $ i)\<^sup>2 - snd (\<omega> s) $ i $ i\<bar> \<le> Dd u i \<omega> + \<bar>L\<bar> * u" for i
+        have tm: "\<bar>(fst (\<omega> s) $ i)\<^sup>2 - snd (\<omega> s) $ i $ i\<bar> \<le> Dd u i \<omega> + \<bar>D\<bar> * u" for i
         proof -
           have a: "(fst (\<omega> s) $ i)\<^sup>2 \<le> Dd u i \<omega>" using elim(1) s by blast
-          have "\<bar>snd (\<omega> s) $ i $ i\<bar> \<le> L * s" using elim(2) s by blast
-          also have "\<dots> \<le> \<bar>L\<bar> * u"
+          have "\<bar>snd (\<omega> s) $ i $ i\<bar> \<le> D * s" using elim(2) s by blast
+          also have "\<dots> \<le> \<bar>D\<bar> * u"
             using s by (intro mult_mono) auto
-          finally have b: "\<bar>snd (\<omega> s) $ i $ i\<bar> \<le> \<bar>L\<bar> * u" .
+          finally have b: "\<bar>snd (\<omega> s) $ i $ i\<bar> \<le> \<bar>D\<bar> * u" .
           have "\<bar>(fst (\<omega> s) $ i)\<^sup>2 - snd (\<omega> s) $ i $ i\<bar>
               \<le> (fst (\<omega> s) $ i)\<^sup>2 + \<bar>snd (\<omega> s) $ i $ i\<bar>"
             using abs_triangle_ineq4[of "(fst (\<omega> s) $ i)\<^sup>2" "snd (\<omega> s) $ i $ i"] by simp
@@ -177,9 +188,9 @@ proof -
         qed
         have "\<bar>Z s \<omega>\<bar> \<le> (\<Sum>i\<in>UNIV. \<bar>(fst (\<omega> s) $ i)\<^sup>2 - snd (\<omega> s) $ i $ i\<bar>)"
           unfolding Zsum by (rule sum_abs)
-        also have "\<dots> \<le> D u \<omega>"
-          unfolding D_def by (intro sum_mono tm)
-        finally show "\<bar>Z s \<omega>\<bar> \<le> D u \<omega>" .
+        also have "\<dots> \<le> Dom u \<omega>"
+          unfolding Dom_def by (intro sum_mono tm)
+        finally show "\<bar>Z s \<omega>\<bar> \<le> Dom u \<omega>" .
       qed
     qed
   qed
@@ -188,7 +199,7 @@ proof -
     have m: "Z 0 \<in> borel_measurable P"
       using martingale.integrable[OF mgZ order_refl] by (rule borel_measurable_integrable)
     have ae: "AE \<omega> in P. Z 0 \<omega> = x \<bullet> x"
-      using iexit_class_start[OF P] by eventually_elim (simp add: Zdot trace_def)
+      using icovariation_class_start[OF P] by eventually_elim (simp add: Zdot trace_def)
     have "(\<integral>\<omega>. Z 0 \<omega> \<partial>P) = (\<integral>\<omega>. x \<bullet> x \<partial>P)"
       by (rule integral_cong_AE[OF m _ ae]) simp
     then show ?thesis by (simp add: PP.prob_space)
@@ -217,8 +228,10 @@ proof -
       unfolding tau_def by (rule CA.etime_stopping_time[OF Aclosed Ane that])
     have tau_nonneg: "0 \<le> tau \<omega>" for \<omega>
       unfolding tau_def by (rule etime_nonneg[OF T])
+    have tlb: "AE \<omega> in P. \<forall>t. 0 \<le> t \<longrightarrow> \<theta> * t \<le> trace (snd (\<omega> t))"
+      by (rule icovariation_class_trace_lb[OF th P])
     have bound: "AE \<omega> in P. \<forall>s. 0 \<le> s \<longrightarrow> s \<le> tau \<omega> \<longrightarrow> Z s \<omega> + c * s \<le> r' * r'"
-      using iexit_class_start[OF P] iexit_class_trace_lb[OF P k] AE_space
+      using icovariation_class_start[OF P] tlb AE_space
     proof eventually_elim
       case (elim \<omega>)
       show ?case
@@ -262,7 +275,7 @@ proof -
   proof (cases "x \<in> K")
     case False
     have "AE \<omega> in P. iexit K (\<lambda>t. fst (\<omega> t)) = 0"
-      using iexit_class_start[OF P]
+      using icovariation_class_start[OF P]
     proof eventually_elim
       case (elim \<omega>)
       have pe: "pexit T K (\<lambda>t. fst (\<omega> t)) = 0" if T: "0 \<le> T" for T
@@ -285,7 +298,7 @@ proof -
     have r0: "0 \<le> r" using xr norm_ge_zero[of x] by linarith
     have meas_i: "(\<lambda>\<omega>. iexit K (\<lambda>t. fst (\<omega> t))) \<in> borel_measurable P"
       using iexit_fst_measurable_ipath[OF K]
-      by (simp add: measurable_cong_sets[OF iexit_class_sets[OF P] refl])
+      by (simp add: measurable_cong_sets[OF icovariation_class_sets[OF P] refl])
     have meas_n: "(\<lambda>\<omega>. ennreal (pexit (real n) K (\<lambda>t. fst (\<omega> t)))) \<in> borel_measurable P"
       for n :: nat
     proof -
@@ -338,9 +351,36 @@ proof -
   qed
 qed
 
-text \<open>The paper's class \<open>P\<^sub>x\<close> (laws of \<open>X\<close> alone): lift to the pair class
-  along the adapted quadratic-variation functional and transport the
-  integral.\<close>
+text \<open>The class of laws of \<open>X\<close> alone: lift to the pair class along the
+  adapted quadratic-variation functional and transport the integral.\<close>
+
+theorem xcovariation_class_expected_exit_time:
+  fixes Q :: "((real \<Rightarrow> real^'n::finite) measure)" and K :: "(real^'n) set"
+  assumes Sc: "closed S" and Sv: "convex S" and psd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and D0: "0 \<le> D" and D: "\<And>a i j. a \<in> S \<Longrightarrow> \<bar>a $ i $ j\<bar> \<le> D"
+    and th0: "0 < \<theta>" and th: "\<And>a. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and Q: "Q \<in> xcovariation_class S x" and K: "closed K" and KB: "K \<subseteq> cball 0 r"
+  shows "(\<integral>\<^sup>+w. iexit K w \<partial>Q) \<le> ennreal ((r * r - x \<bullet> x) / \<theta>)"
+proof -
+  let ?\<psi> = "\<lambda>w :: real \<Rightarrow> real^'n. restrict (\<lambda>t. (w t, qvmata (4 * D) w t)) {0..}"
+  have L4: "0 \<le> 4 * D" using D0 by simp
+  have Pi: "ipath_law Q (\<lambda>t w. (w t, qvmata (4 * D) w t)) \<in> icovariation_class S x"
+    by (rule xcovariation_class_lift_in_icovariation_class[OF Sc Sv psd D0 D Q])
+  have "(\<integral>\<^sup>+w. iexit K w \<partial>Q) = (\<integral>\<^sup>+w. iexit K (\<lambda>t. fst (?\<psi> w t)) \<partial>Q)"
+    by (intro nn_integral_cong iexit_cong_nonneg) simp
+  also have "\<dots> = (\<integral>\<^sup>+\<omega>. iexit K (\<lambda>t. fst (\<omega> t))
+      \<partial>ipath_law Q (\<lambda>t w. (w t, qvmata (4 * D) w t)))"
+    unfolding ipath_law_def
+    by (rule nn_integral_distr[symmetric, OF xcovariation_class_liftify_measurable[OF Q L4]])
+      (simp add: iexit_fst_measurable_ipath[OF K])
+  also have "\<dots> \<le> ennreal ((r * r - x \<bullet> x) / \<theta>)"
+    by (rule icovariation_class_expected_exit_time[OF th0 th D Pi K KB])
+  finally show ?thesis .
+qed
+
+text \<open>The paper's class \<open>P\<^sub>x\<close>: the trace on \<open>sconstraint k L\<close> is at least
+  \<open>n - k\<close> (@{thm [source] sconstraint_trace_ge}) and its entries are at most
+  \<open>L\<close> in absolute value.\<close>
 
 theorem xclass_expected_exit_time:
   fixes Q :: "((real \<Rightarrow> real^'n::finite) measure)" and K :: "(real^'n) set"
@@ -348,18 +388,11 @@ theorem xclass_expected_exit_time:
     and K: "closed K" and KB: "K \<subseteq> cball 0 r"
   shows "(\<integral>\<^sup>+w. iexit K w \<partial>Q) \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
 proof -
-  let ?\<psi> = "\<lambda>w :: real \<Rightarrow> real^'n. restrict (\<lambda>t. (w t, qvmata (4 * L) w t)) {0..}"
-  have L4: "0 \<le> 4 * L" using L by simp
-  have "(\<integral>\<^sup>+w. iexit K w \<partial>Q) = (\<integral>\<^sup>+w. iexit K (\<lambda>t. fst (?\<psi> w t)) \<partial>Q)"
-    by (intro nn_integral_cong iexit_cong_nonneg) simp
-  also have "\<dots> = (\<integral>\<^sup>+\<omega>. iexit K (\<lambda>t. fst (\<omega> t))
-      \<partial>ipath_law Q (\<lambda>t w. (w t, qvmata (4 * L) w t)))"
-    unfolding ipath_law_def
-    by (rule nn_integral_distr[symmetric, OF xclass_liftify_measurable[OF Q L4]])
-      (simp add: iexit_fst_measurable_ipath[OF K])
-  also have "\<dots> \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
-    by (rule iexit_class_expected_exit_time[OF xclass_lift_in_iexit_class[OF Q L] k K KB])
-  finally show ?thesis .
+  have nk: "0 < real (CARD('n) - k)" using k by simp
+  show ?thesis
+    by (rule xcovariation_class_expected_exit_time[OF closed_sconstraint sconstraint_convex
+          sconstraint_psd_entry(1) L sconstraint_psd_entry(2) nk sconstraint_trace_ge[OF k]
+          Q[unfolded xclass_eq_xcovariation] K KB])
 qed
 
 (*<*)
