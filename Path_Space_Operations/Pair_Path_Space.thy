@@ -22,7 +22,14 @@ text \<open>The path space this development works on carries a pair: the state
   that type and collects what is true of paths, and of laws of paths, before
   any constraint on the covariation is imposed -- measurability of the
   coordinates, continuity of evaluation, and martingale clauses for a
-  general law.\<close>
+  general law.
+
+  A fact that never looks inside the pair is stated for paths with values
+  in any Polish Banach space \<open>'p\<close>, here and in the theories that follow;
+  the pair is the instance \<open>'p = 'a \<times> 'b\<close>.  Only the facts that read a
+  component (the shift \<open>pshift\<close> of the first component, \<open>pfst\<close>, exit
+  times of the first component, path stopping times, the covariation
+  constraint) are stated at a product.\<close>
 
 
 section \<open>Diagonal entries under the eigenvalue constraints\<close>
