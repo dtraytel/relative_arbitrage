@@ -584,30 +584,6 @@ proof -
   show ?thesis using order_trans[OF le main] unfolding cc_def Dr_def .
 qed
 
-theorem exit_val_ball_lower_plus:
-  fixes K :: "(real^'n::finite) set" and y\<^sub>0 x :: "real^'n"
-    and rB T \<beta> :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
-    and kn: "k < CARD('n)"
-    and Kc: "closed K" and sub: "cball y\<^sub>0 rB \<subseteq> K"
-    and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
-    and b0: "0 \<le> \<beta>"
-    and vlow: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow>
-      \<beta> \<le> enn2real (exit_val k L T K w)"
-  shows "ennreal (min (T / 2)
-      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
-      + min \<beta> (T / 2))
-      \<le> exit_val k L T K x"
-proof -
-  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
-  show ?thesis
-    unfolding exit_val_eq_covariation_val
-    by (rule covariation_val_ball_lower_plus[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
-          closed_sconstraint sconstraint_convex tanpU_id_sq_sconstraint[OF _ k1 L1] n2 Kc sub xy xin b0
-          vlow[unfolded exit_val_eq_covariation_val]])
-qed
-
-
 (*<*)
 end
 (*>*)

@@ -682,12 +682,19 @@ subsection \<open>Case 2, second horn: quadratic pinching forces local constancy
 text \<open>\<open>pinch_segment_bound\<close>, \<open>pinch_implies_constant\<close>, \<open>quad_form_bounded_below\<close>, \<open>quad_minimality_pinch\<close>, \<open>singular_matrix_avoids_range\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
-theorem exit_val_not_locally_constant:
+theorem covariation_val_not_locally_constant:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and tv :: "real^'n \<Rightarrow> real" and r T :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
     and Kc: "closed K"
-    and tvdef: "tv = (\<lambda>u. enn2real (exit_val k L T K u))"
+    and tvdef: "tv = (\<lambda>u. enn2real (covariation_val S T K u))"
     and r0: "0 < r" and sub: "cball x r \<subseteq> K"
     and cap: "lsc_env tv x < T / 2"
     and const: "\<And>y. dist x y < r \<Longrightarrow> lsc_env tv y = lsc_env tv x"
@@ -722,8 +729,7 @@ proof -
   qed
   have cn0: "0 < real CARD('n) - 1"
   proof -
-    have "2 \<le> CARD('n)" using k1 kn by linarith
-    then have "(2 :: real) \<le> real CARD('n)"
+    from n2 have "(2 :: real) \<le> real CARD('n)"
       by (simp add: of_nat_le_iff [where m = 2, symmetric])
     then show ?thesis by linarith
   qed
@@ -761,16 +767,14 @@ proof -
   have nzy: "norm (z - y\<^sub>0) = dist z y\<^sub>0" by (simp add: dist_norm)
   have zy: "z \<noteq> y\<^sub>0" using dzy' rB0 by auto
   have zin: "norm (z - y\<^sub>0) < rB" unfolding nzy using dzy rB0 by linarith
+  have vlow': "lsc_env tv x \<le> enn2real (covariation_val S T K w)"
+    if "w \<in> ball y\<^sub>0 rB" for w
+    using vlow[OF that] tvdef by simp
   have pv: "ennreal (min (T / 2)
       ((rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
       + min (lsc_env tv x) (T / 2))
-      \<le> exit_val k L T K z"
-  proof (rule exit_val_ball_lower_plus[OF T0 L1 k1 kn Kc subB zy zin c0])
-    fix w :: "real^'n" assume "w \<in> ball y\<^sub>0 rB"
-    then have "lsc_env tv x \<le> tv w" by (rule vlow)
-    then show "lsc_env tv x \<le> enn2real (exit_val k L T K w)"
-      using tvdef by simp
-  qed
+      \<le> covariation_val S T K z"
+    by (rule covariation_val_ball_lower_plus[OF T0 B0 B D0 D Sc Sv tan1 n2 Kc subB zy zin c0 vlow'])
   have sq: "(norm (z - y\<^sub>0))\<^sup>2 \<le> rB\<^sup>2 / 2"
   proof -
     have n0: "0 \<le> norm (z - y\<^sub>0)" by simp
@@ -784,7 +788,7 @@ proof -
     also have "\<dots> = rB\<^sup>2 / 2" by simp
     finally show ?thesis .
   qed
-  have B: "rB\<^sup>2 / (4 * (real CARD('n) - 1))
+  have Bq: "rB\<^sup>2 / (4 * (real CARD('n) - 1))
       \<le> (rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1))"
   proof -
     have m0: "0 \<le> 2 * (real CARD('n) - 1)" using cn0 by auto
@@ -801,13 +805,13 @@ proof -
   have fin: "\<theta> + lsc_env tv x \<le> min (T / 2)
       ((rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
       + min (lsc_env tv x) (T / 2)"
-    unfolding \<theta>_def mc using B by linarith
+    unfolding \<theta>_def mc using Bq by linarith
   have T0': "0 \<le> T" using T0 by linarith
-  have ltop: "exit_val k L T K z < \<top>"
-    using covariation_val_neq_top[OF T0'] by (simp add: less_top exit_val_eq_covariation_val)
-  have eq: "ennreal (tv z) = exit_val k L T K z"
+  have ltop: "covariation_val S T K z < \<top>"
+    using covariation_val_neq_top[OF T0'] by (simp add: less_top)
+  have eq: "ennreal (tv z) = covariation_val S T K z"
     unfolding tvdef using ltop by simp
-  have "ennreal (\<theta> + lsc_env tv x) \<le> exit_val k L T K z"
+  have "ennreal (\<theta> + lsc_env tv x) \<le> covariation_val S T K z"
   proof -
     have "ennreal (\<theta> + lsc_env tv x) \<le> ennreal (min (T / 2)
         ((rB\<^sup>2 - (norm (z - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
@@ -820,6 +824,24 @@ proof -
   then have ge: "\<theta> + lsc_env tv x \<le> tv z"
     using tv0[of z] by simp
   show False using ge vz th0 by linarith
+qed
+
+theorem exit_val_not_locally_constant:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+    and tv :: "real^'n \<Rightarrow> real" and r T :: real
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K"
+    and tvdef: "tv = (\<lambda>u. enn2real (exit_val k L T K u))"
+    and r0: "0 < r" and sub: "cball x r \<subseteq> K"
+    and cap: "lsc_env tv x < T / 2"
+    and const: "\<And>y. dist x y < r \<Longrightarrow> lsc_env tv y = lsc_env tv x"
+  shows False
+proof -
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  show False
+    by (rule covariation_val_not_locally_constant[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint sconstraint_convex tanpU_id_sq_sconstraint[OF _ k1 L1] n2 Kc
+          tvdef[unfolded exit_val_eq_covariation_val] r0 sub cap const])
 qed
 
 text \<open>Horn A at a local minimiser handed over by the case split of the

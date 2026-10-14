@@ -815,7 +815,7 @@ text \<open>The second horn dies here.  Suppose \<open>v\<^sub>*\<close> were co
   itself is within \<open>\<theta>/2\<close> of \<open>c\<close>.  But the deterministic-radius member
   started at such a \<open>z\<close> stays inside the ball for a time \<open>\<theta>\<close> that does
   not shrink with \<open>z\<close>, and its endpoint is again in the ball where
-  \<open>v \<ge> c\<close>; so \<open>exit_val_ball_lower_plus\<close> gives \<open>v z \<ge> \<theta> + c\<close>.  Those two
+  \<open>v \<ge> c\<close>; so \<open>covariation_val_ball_lower_plus\<close> gives \<open>v z \<ge> \<theta> + c\<close>.  Those two
   are incompatible.
 
   The hypothesis \<open>c < T/2\<close> is what keeps the horizon cap inert.  It
