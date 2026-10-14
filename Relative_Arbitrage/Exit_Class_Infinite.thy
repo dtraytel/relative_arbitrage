@@ -810,15 +810,10 @@ corollary iexit_val_eq_exit_val_ball:
     and KB: "K \<subseteq> cball 0 rK"
     and big: "rK * rK / real (CARD('n) - k) < T"
   shows "iexit_val k L K x = exit_val k L T K x"
-proof -
-  have L0: "0 \<le> L" using L by simp
-  have nk: "0 < real (CARD('n) - k)" using k by simp
-  show ?thesis
-    unfolding iexit_val_eq_icovariation_val exit_val_eq_covariation_val
-    by (rule icovariation_val_eq_covariation_val_ball[OF closed_sconstraint sconstraint_convex
-          mat_1_rate_in_sconstraint[OF L] sconstraint_bounds(1,2)[OF L0] nk
-          sconstraint_trace_ge[OF k] Kc KB big])
-qed
+  unfolding iexit_val_eq_icovariation_val exit_val_eq_covariation_val
+  by (rule icovariation_val_eq_covariation_val_ball[OF closed_sconstraint sconstraint_convex
+        mat_1_rate_in_sconstraint[OF L] sconstraint_trace_bounds[OF k order_trans[OF zero_le_one L]]
+        Kc KB big])
 
 corollary iexit_val_eq_exit_val_horizon:
   fixes K :: "(real^'n::finite) set" and rK :: real
@@ -828,14 +823,12 @@ corollary iexit_val_eq_exit_val_horizon:
     and "2 * (rK * rK) / real (CARD('n) - k) < T"
     and "iexit_val k L K = exit_val k L T K"
 proof -
-  have L0: "0 \<le> L" using L by simp
-  have nk: "0 < real (CARD('n) - k)" using k by simp
   obtain T where T: "0 < T" "rK * rK / real (CARD('n) - k) < T"
       "2 * (rK * rK) / real (CARD('n) - k) < T"
     and eq: "icovariation_val (sconstraint k L) K = covariation_val (sconstraint k L) T K"
     by (rule icovariation_val_eq_covariation_val_horizon[OF closed_sconstraint
-          sconstraint_convex mat_1_rate_in_sconstraint[OF L] sconstraint_bounds(1,2)[OF L0] nk
-          sconstraint_trace_ge[OF k] Kc KB])
+          sconstraint_convex mat_1_rate_in_sconstraint[OF L]
+          sconstraint_trace_bounds[OF k order_trans[OF zero_le_one L]] Kc KB])
   have "iexit_val k L K = exit_val k L T K"
     using eq by (simp add: fun_eq_iff iexit_val_eq_icovariation_val exit_val_eq_covariation_val)
   then show ?thesis by (rule that[OF T])

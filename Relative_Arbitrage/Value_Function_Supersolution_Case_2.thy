@@ -96,9 +96,9 @@ proof -
     unfolding \<eta>\<^sub>0_def by simp
   have aS: "a \<in> sconstraint k L"
     using aF feasible_subset_sconstraint by blast
-  define TB where "TB = real CARD('n) * (real CARD('n) * L)"
+  define TB where "TB = real CARD('n) * L"
   have trab: "trace a \<le> TB"
-    unfolding TB_def by (rule sconstraint_trace_le[OF L0 aS])
+    unfolding TB_def by (rule sconstraint_trace_le[OF aS])
   have tra0: "0 \<le> trace a"
     using sconstraint_trace_ge[OF kn aS] by linarith
   have TB1: "0 < TB + 1"

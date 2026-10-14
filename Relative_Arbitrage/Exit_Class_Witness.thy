@@ -734,13 +734,8 @@ theorem exit_val_le_ball_bound:
     and KB: "K \<subseteq> cball 0 r"
   shows "exit_val k L T K x
       \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
-proof -
-  have nk: "0 < real (CARD('n) - k)" using k by simp
-  show ?thesis
-    unfolding exit_val_eq_covariation_val
-    by (rule covariation_val_le_ball_bound[OF T sconstraint_bounds(1,2)[OF L] nk
-          sconstraint_trace_ge[OF k] KB])
-qed
+  unfolding exit_val_eq_covariation_val
+  by (rule covariation_val_le_ball_bound[OF T sconstraint_trace_bounds[OF k L] KB])
 
 text \<open>Clause (3) on the ball: a member starting on the boundary
   \<open>|x| = r\<close> has exit value \<open>0\<close>, the case \<open>x \<bullet> x = r\<^sup>2\<close> of the
@@ -758,18 +753,6 @@ proof -
     using x by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
   then show ?thesis using T
     covariation_val_le_ball_bound[OF _ B0 B th0 th order_refl, where r = r and x = x] by simp
-qed
-
-theorem exit_val_boundary_zero:
-  fixes r :: real and x :: "real^'n::finite"
-  assumes k: "k < CARD('n)" and T: "0 < T" and L: "0 \<le> L"
-    and x: "norm x = r"
-  shows "exit_val k L T (cball 0 r) x = 0"
-proof -
-  have "x \<bullet> x = r * r"
-    using x by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
-  then show ?thesis
-    using exit_val_le_ball_bound[OF k _ L order_refl, of T r x] T by simp
 qed
 
 (*<*)

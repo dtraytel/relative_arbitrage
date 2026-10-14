@@ -759,16 +759,9 @@ lemma trace_le_diag_bound:
 
 lemma sconstraint_trace_le:
   fixes b :: "real^'n::finite^'n"
-  assumes L0: "0 \<le> L" and b: "b \<in> sconstraint k L"
-  shows "trace b \<le> real CARD('n) * (real CARD('n) * L)"
-proof -
-  have "trace b \<le> real CARD('n) * L"
-    unfolding trace_def using sum_mono[of UNIV "\<lambda>i. b $ i $ i" "\<lambda>_. L"] sconstraint_diag(2)[OF b]
-    by simp
-  also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L)"
-    using L0 mult_right_mono[of 1 "real CARD('n)" L] by (intro mult_left_mono) auto
-  finally show ?thesis .
-qed
+  assumes b: "b \<in> sconstraint k L"
+  shows "trace b \<le> real CARD('n) * L"
+  by (rule trace_le_diag_bound) (rule sconstraint_diag(2)[OF b])
 
 section \<open>Positive semidefinite forms kill their null directions\<close>
 
