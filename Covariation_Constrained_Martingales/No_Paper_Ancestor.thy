@@ -2,6 +2,7 @@
 theory No_Paper_Ancestor
   imports
     Covariation_Class_Euler_Scheme Covariation_Class_Marginals
+    Dynamic_Programming_Principle
 begin
 
 text \<open>Fails the build if a theory of the viscosity library, of the equation
