@@ -6,7 +6,8 @@ session Second_Order_Viscosity_Analysis = Symmetric_Matrix_Spectra +
     the doubling-of-variables and soft-penalty toolboxes they exist to
     serve -- and, on top of them, the test-function class and the definition
     of a viscosity sub- and supersolution for an arbitrary second-order
-    operator.
+    operator.  Built on Symmetric_Matrix_Spectra for the matrix calculus,
+    and on Semicontinuous_Analysis for semicontinuity and attainment.
   "
   options [document = pdf, document_output = "output"]
   sessions

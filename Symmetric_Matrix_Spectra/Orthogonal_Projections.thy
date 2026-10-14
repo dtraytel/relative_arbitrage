@@ -92,7 +92,7 @@ proof -
   also have "\<dots> = trace (outer_prod (a *v p) p)"
     by (simp add: mult_outer_prod)
   also have "\<dots> = 0"
-    by (simp add: ap)
+    by (simp add: ap trace_def)
   finally have z: "trace (outer_prod p p ** a) = 0" .
   show ?thesis
     by (simp add: rank1proj_def scalar_matrix_assoc[symmetric] trace_scaleR z)
@@ -106,7 +106,7 @@ proof -
   have nz: "p \<bullet> p \<noteq> 0"
     using p by simp
   have mv: "outer_prod p p *v p = (p \<bullet> p) *\<^sub>R p"
-    by (rule outer_prod_mv)
+    by (rule outer_prod_mult_vec)
   have "rank1proj p *v p = inverse (p \<bullet> p) *\<^sub>R (outer_prod p p *v p)"
     unfolding rank1proj_def by (rule scaleR_matrix_vector_assoc[symmetric])
   also have "\<dots> = inverse (p \<bullet> p) *\<^sub>R ((p \<bullet> p) *\<^sub>R p)"

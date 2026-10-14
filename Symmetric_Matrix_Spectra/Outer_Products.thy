@@ -7,25 +7,25 @@ begin
 (*>*)
 
 text \<open>
-  The outer product \<open>u v\<^sup>T\<close> of two vectors, as a rank-one matrix: the basic
-  algebra of forming it, applying it, and summing it against an orthonormal
-  family, and its Frobenius norm.  Last, the outer square \<open>x x\<^sup>T\<close> as a
-  constant of its own, with its algebra, traces and norm.
+  The outer product \<open>u v\<^sup>T\<close> of two vectors, as a rank-one matrix, is
+  HOL-Analysis's @{const outer_prod}.  This theory adds the algebra HOL
+  lacks: its trace, products and differences of outer products, summing it
+  against an orthonormal family, and its Frobenius norm.  Last, the outer
+  square \<open>x x\<^sup>T\<close> as a constant of its own, with its algebra, traces and
+  norm.
 \<close>
 
 unbundle inner_syntax
 
 section \<open>Outer products\<close>
 
-definition outer_prod :: "real^'n \<Rightarrow> real^'n \<Rightarrow> real^'n^'n" where
-  "outer_prod u v = (\<chi> i j. u $ i * v $ j)"
+text \<open>The outer product is HOL-Analysis's @{const outer_prod}
+  (\<open>Higher_Differentiability_Multi\<close>), with its algebra there: components,
+  rows, transposition, linearity in each argument, and the action on a
+  vector.  The rules for its transpose and for its action on a vector are
+  made simplification rules here.\<close>
 
-lemma outer_prod_mv [simp]: "outer_prod u v *v x = (v \<bullet> x) *\<^sub>R u"
-  unfolding outer_prod_def matrix_vector_mult_def inner_vec_def
-  by (simp add: vec_eq_iff sum_distrib_left ac_simps)
-
-lemma transpose_outer_prod [simp]: "transpose (outer_prod u v) = outer_prod v u"
-  by (simp add: outer_prod_def transpose_def vec_eq_iff)
+declare outer_prod_mult_vec [simp] outer_prod_commute [simp]
 
 lemma trace_outer_prod [simp]: "trace (outer_prod u v) = u \<bullet> v"
   by (simp add: outer_prod_def trace_def inner_vec_def)
@@ -33,22 +33,6 @@ lemma trace_outer_prod [simp]: "trace (outer_prod u v) = u \<bullet> v"
 lemma mult_outer_prod: "A ** outer_prod u v = outer_prod (A *v u) v"
   unfolding outer_prod_def matrix_matrix_mult_def matrix_vector_mult_def
   by (simp add: vec_eq_iff sum_distrib_left sum_distrib_right ac_simps)
-
-lemma outer_prod_scaleR_left: "outer_prod (c *\<^sub>R u) v = c *\<^sub>R outer_prod u v"
-  by (simp add: outer_prod_def vec_eq_iff)
-
-lemma outer_prod_scaleR_right:
-  fixes u v :: "real^'n::finite"
-  shows "outer_prod u (c *\<^sub>R v) = c *\<^sub>R outer_prod u v"
-proof -
-  have "outer_prod u (c *\<^sub>R v) = transpose (outer_prod (c *\<^sub>R v) u)"
-    by simp
-  also have "\<dots> = transpose (c *\<^sub>R outer_prod v u)"
-    by (simp add: outer_prod_scaleR_left)
-  also have "\<dots> = c *\<^sub>R outer_prod u v"
-    by (simp add: transpose_scalar)
-  finally show ?thesis .
-qed
 
 lemma outer_prod_diff_left:
   fixes u v w :: "real^'n::finite"
@@ -233,12 +217,11 @@ section \<open>The outer square \<open>outerp\<close>\<close>
 definition outerp :: "real^'n::finite \<Rightarrow> real^'n^'n" where
   "outerp x = (\<chi> i j. x $ i * x $ j)"
 
-text \<open>\<open>outerp x\<close> is the outer square \<open>x x\<^sup>T\<close>: the \<open>outer_prod\<close> of this
-  theory at equal arguments (\<open>outerp_eq_outer_prod\<close> below).  This theory's
-  \<open>outer_prod\<close> shadows an identical constant of HOL-Analysis
-  (\<open>Higher_Differentiability_Multi\<close>).  \<open>outerp\<close> stays a definition of its own
-  because making it an abbreviation unfolds it in every simp set that
-  mentions it, and proofs that rely on it as a unit then diverge.\<close>
+text \<open>\<open>outerp x\<close> is the outer square \<open>x x\<^sup>T\<close>: HOL-Analysis's
+  \<open>outer_prod\<close> at equal arguments (\<open>outerp_eq_outer_prod\<close> below).
+  \<open>outerp\<close> stays a definition of its own because making it an abbreviation
+  unfolds it in every simp set that mentions it, and proofs that rely on it
+  as a unit then diverge.\<close>
 
 lemma outerp_eq_outer_prod:
   fixes v :: "real^'n::finite"
