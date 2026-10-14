@@ -8,20 +8,16 @@ begin
 
 (*>*)
 
-subsection \<open>Towards the theorem on sums: doubling of variables\<close>
-
-text \<open>The development of the theorem on sums below follows
-  Crandall--Ishii--Lions, \<^emph>\<open>User's guide to viscosity solutions\<close>, Bull.
-  AMS 27 (1992), Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>.  The quantitative core is purely algebraic:
-  writing \<open>\<Phi>\<^sub>\<alpha>(x,y) = u x - w y - (\<alpha>/2) * norm (x - y)\<^sup>2\<close> and
-  \<open>M\<^sub>\<alpha> = max \<Phi>\<^sub>\<alpha>\<close>, testing \<open>\<Phi>\<^sub>\<beta>\<close> at the maximizer of \<open>\<Phi>\<^sub>\<alpha>\<close> shows
-  \<open>M\<^sub>\<alpha>\<close> nonincreasing and squeezes the penalty term, forcing
-  \<open>\<alpha> * norm (x\<^sub>\<alpha> - y\<^sub>\<alpha>)\<^sup>2 \<longrightarrow> 0\<close> once \<open>M\<^sub>\<alpha>\<close> is known to converge.\<close>
-
-text \<open>The limit half of Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: once \<open>M\<^sub>\<alpha>\<close> converges, the squeeze with
-  \<open>\<beta> = \<alpha>/2\<close> traps \<open>(\<alpha>/4) * pen \<alpha>\<close> between \<open>0\<close> and
-  \<open>M\<^bsub>\<alpha>/2\<^esub> - M\<^sub>\<alpha>\<close>, both tending to \<open>0\<close>: the penalty term vanishes,
-  letting the two maximizers merge in the limit.\<close>
+text \<open>The second-order calculus of the doubled functional
+  \<open>\<Phi>\<^sub>\<alpha>(x,y) = u x - w y - (\<alpha>/2) * norm (x - y)\<^sup>2\<close> on which the theorem on
+  sums rests, following the User's Guide of Crandall, Ishii and Lions
+  \<^cite>\<open>CrandallIshiiLions\<close>: second-order expansions on the product
+  restricted to the two slices, semiconvexity of the doubled functional,
+  Jensen's lemma combined with Alexandrov's theorem, uniqueness of the
+  second-order form and block diagonality, the matrix inequality
+  \<open>X \<preceq> Y\<close>, the limit half of the doubling lemma (Lemma 3.1 of
+  \<^cite>\<open>CrandallIshiiLions\<close>), and the transfer of jets from a
+  sup-convolution back to the function.\<close>
 
 subsection \<open>Block structure on the product space\<close>
 
@@ -573,9 +569,11 @@ proof -
   thus ?thesis unfolding WP_def P_def by simp
 qed
 
-subsection \<open>The limit half of Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>\<close>
+subsection \<open>The limit half of the doubling lemma\<close>
 
-text \<open>The remaining half of Crandall--Ishii--Lions Lemma 3.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>: the common
+text \<open>The limit half of the doubling lemma of Crandall, Ishii and Lions
+  (Lemma 3.1 of \<^cite>\<open>CrandallIshiiLions\<close>): writing
+  \<open>M\<^sub>\<alpha> = max \<Phi>\<^sub>\<alpha>\<close>, once \<open>M\<^sub>\<alpha>\<close> converges, the common
   limit point of the two maximizers maximizes \<open>u - w\<close>.  Upper/lower
   semicontinuity of \<open>u\<close>/\<open>w\<close> enter only through two \<open>eventually\<close>
   statements below, so no semicontinuity predicate has to be fixed here.
@@ -657,22 +655,6 @@ proof -
   have nn: "0 \<le> (norm k)\<^sup>2" by simp
   show ?thesis using dom by (intro divide_right_mono nn) simp
 qed
-
-subsection \<open>From abstract forms to matrices\<close>
-
-text \<open>\<open>matrix_of_symmetric\<close>, \<open>has_derivative_quadratic_form\<close>, \<open>quadratic_test_derivative\<close>, \<open>quadratic_test_grad_derivative\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-subsection \<open>Sign flip: superjets of \<open>- w\<close> are subjets of \<open>w\<close>\<close>
-
-text \<open>The doubling regularises \<open>u\<close> and \<open>- w\<close> by sup-convolution, since
-  \<open>supconv\<close> is what produces semiconvexity, but a supersolution
-  condition speaks about \<open>w\<close> and needs a subjet.  The two are the same
-  statement with all signs reversed: the difference quotient for \<open>- w\<close>
-  with data \<open>(p, X)\<close> is exactly minus the one for \<open>w\<close> with data
-  \<open>(- p, - X)\<close>, so an upper bound on one is a lower bound on the other.\<close>
-
-text \<open>Hence the transferred jet, in the form the supersolution needs.\<close>
 
 subsection \<open>From a superjet to a genuine local maximum\<close>
 

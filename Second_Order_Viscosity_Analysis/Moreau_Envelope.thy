@@ -27,10 +27,6 @@ theorem prox_differentiable_AE:
   shows "AE x in lborel. (prox f) differentiable (at x)"
   by (rule rademacher_vec_AE[where B = 1]) (rule prox_lipschitz[OF cvx])
 
-text \<open>The resolvent is a globally defined, surjective, 1-Lipschitz map
-  differentiable a.e.; Alexandrov's theorem transports that derivative
-  back through \<open>prox_subdiff\<close>.\<close>
-
 subsection \<open>Firm nonexpansiveness and the derivative of the resolvent\<close>
 
 text \<open>The resolvent is firmly nonexpansive (\<open>prox_firm_nonexpansive\<close>);

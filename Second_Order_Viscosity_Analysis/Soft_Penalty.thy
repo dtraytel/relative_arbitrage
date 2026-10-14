@@ -288,8 +288,6 @@ lemma rem_split_aux:
   using R T b
   by (simp add: field_simps power2_eq_square power3_eq_cube)
 
-text \<open>\<open>outer_prod\<close> lives in @{theory Symmetric_Matrix_Spectra.Outer_Products}.\<close>
-
 text \<open>The penalties, the gradient \<open>soft_grad\<close> and every fact that does not
   mention a matrix hold in any Euclidean space \<open>'a\<close>.  Only the Hessian
   \<open>soft_hess\<close>, a matrix, and the facts about it are stated at \<open>real^'n\<close>.\<close>
@@ -297,13 +295,6 @@ text \<open>The penalties, the gradient \<open>soft_grad\<close> and every fact 
 definition soft_hess :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'n^'n" where
   "soft_hess \<kappa> d = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R mat 1
       + (\<kappa> / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) *\<^sub>R outer_prod d d"
-
-text \<open>the jet form below writes the Hessian as a quadratic expression,
-  matched to \<open>soft_hess\<close> by the quadratic-form reading of the Hessian, with the gradient
-  packaged as \<open>soft_grad\<close>. Writing \<open>R = \<surd>(\<parallel>d\<parallel>\<^sup>2+1) \<ge> 1\<close>: the first
-  summand lies in \<open>[0, \<kappa>\<parallel>z\<parallel>\<^sup>2]\<close>, and Cauchy-Schwarz bounds the second by
-  \<open>\<kappa>\<parallel>z\<parallel>\<^sup>2\<close>, so the quadratic form is bounded by \<open>2\<kappa>\<parallel>z\<parallel>\<^sup>2\<close>, uniformly in
-  \<open>d\<close>.\<close>
 
 definition soft_grad :: "real \<Rightarrow> 'a::euclidean_space \<Rightarrow> 'a" where
   "soft_grad \<kappa> d = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R d"
@@ -530,7 +521,7 @@ proof -
   show ?thesis using half unfolding e1 e2 by linarith
 qed
 
-text \<open>The quadratic penalty bounds \<open>norm(x̂-ŷ)\<close> by dividing
+text \<open>The quadratic penalty bounds \<open>norm(x\<^sup>h-y\<^sup>h)\<close> by dividing
   \<open>(\<alpha>/2)\<parallel>d\<parallel>\<^sup>2 \<le> C\<^sub>0\<close> through by \<open>\<alpha>\<close>; for a general penalty this needs
   coercivity instead (\<open>norm_lt_of_penalty_bound_gen\<close>).  \<open>soft_pen\<close> is
   linear in \<open>\<kappa>\<close>, so at fixed radius \<open>\<beta>\<close> its value eventually beats any
@@ -596,8 +587,7 @@ proof -
   from kpos final show ?thesis by blast
 qed
 
-
-section \<open>The soft penalty's jet, Hessian and gradient field\<close>
+subsection \<open>The soft penalty's jet, Hessian and gradient field\<close>
 
 lemma quartic_grad_derivative:
   fixes x y :: "real^'n::finite" and C :: real
@@ -665,8 +655,6 @@ proof -
   show ?thesis unfolding e by (rule convex_on_add[OF c2 c3])
 qed
 
-text \<open>\<open>div_mul_div_cancel_aux\<close> lives in \<open>Soft_Penalty\<close>.\<close>
-
 lemma soft_pen_quotient:
   fixes h :: "'a::euclidean_space"
   assumes h: "h \<noteq> 0"
@@ -729,10 +717,6 @@ proof -
     by (rule Lim_transform_eventually[OF lim[unfolded val] ev])
 qed
 
-subsection \<open>Second-order expansion of the square root\<close>
-
-text \<open>\<open>sqrt_diff_exact\<close>, \<open>sqrt_rhs_aux\<close>, \<open>sqrt_second_order_exact\<close> live in \<open>Soft_Penalty\<close>.\<close>
-
 text \<open>\<open>soft_pen\<close>'s increment expands exactly: the quadratic part expands
   exactly, and the square-root part follows from \<open>sqrt_second_order_exact\<close>
   at \<open>u = \<parallel>d\<parallel>\<^sup>2 + 1\<close>, \<open>\<Delta> = 2(d \<bullet> h) + h \<bullet> h\<close>. The gradient is
@@ -779,8 +763,6 @@ proof -
   show ?thesis unfolding split ex ..
 qed
 
-text \<open>\<open>soft_pen_rem_aux\<close> lives in \<open>Soft_Penalty\<close>.\<close>
-
 theorem soft_pen_rem:
   fixes d h :: "'a::euclidean_space"
   shows "soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
@@ -800,8 +782,6 @@ proof -
     unfolding soft_pen_expand
     by (rule soft_pen_rem_aux[OF R])
 qed
-
-text \<open>\<open>inner_sq_quotient_bounded\<close>, \<open>soft_pen_T_tendsto\<close>, \<open>soft_pen_bracket_tendsto\<close>, \<open>soft_pen_second_summand_tendsto\<close>, \<open>rem_split_aux\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 text \<open>The jet assembles the analysis above via \<open>soft_pen_rem\<close> and
   \<open>rem_split_aux\<close>, killing the first summand by \<open>Lim_null_comparison\<close> and
@@ -907,12 +887,10 @@ qed
 
 subsection \<open>The soft penalty's Hessian as a matrix\<close>
 
-text \<open>The chain consumes \<open>h \<bullet> (Z *v h)\<close> as a matrix,
-  \<open>Z = \<kappa>(1 - 1/R) I + (\<kappa>/R\<^sup>3) d d\<^sup>T\<close>; symmetry, needed by the general
-  \<open>psd\<close> chain but not by the quadratic case where \<open>Z = \<alpha> I\<close> is symmetric
-  for free, is an entrywise computation.\<close>
-
-text \<open>\<open>soft_hess\<close> lives in \<open>Soft_Penalty\<close>.\<close>
+text \<open>The general-penalty forms of the doubling lemmas take the penalty's
+  Hessian as a matrix, \<open>Z = \<kappa>(1 - 1/R) I + (\<kappa>/R\<^sup>3) d d\<^sup>T\<close>, and need it
+  symmetric (for the quadratic penalty \<open>Z = \<alpha> I\<close> is symmetric for free);
+  symmetry is an entrywise computation.\<close>
 
 lemma soft_hess_entry:
   fixes d :: "real^'n::finite"
@@ -998,8 +976,6 @@ qed
 
 subsection \<open>The gradient field of \<open>soft_pen\<close>, and the two uniform bounds\<close>
 
-text \<open>\<open>soft_grad\<close> lives in \<open>Soft_Penalty\<close>.\<close>
-
 lemma soft_grad_inner:
   fixes d h :: "'a::euclidean_space"
   shows "soft_grad \<kappa> d \<bullet> h = \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (d \<bullet> h)"
@@ -1013,7 +989,10 @@ theorem soft_pen_jet_field:
   using soft_pen_jet_form[where \<kappa> = \<kappa> and d = d]
   unfolding soft_grad_inner soft_hess_quadform .
 
-text \<open>\<open>sqrt_norm_sq_add_one_ge_one\<close> lives in \<open>Soft_Penalty\<close>.\<close>
+text \<open>The Hessian's quadratic form is bounded uniformly in \<open>d\<close>.  Writing
+  \<open>R = \<surd>(\<parallel>d\<parallel>\<^sup>2+1) \<ge> 1\<close>, the first summand of \<open>soft_hess\<close> contributes a
+  value in \<open>[0, \<kappa>\<parallel>z\<parallel>\<^sup>2]\<close>, and Cauchy-Schwarz bounds the second by
+  \<open>\<kappa>\<parallel>z\<parallel>\<^sup>2\<close>, so the quadratic form lies between \<open>0\<close> and \<open>2\<kappa>\<parallel>z\<parallel>\<^sup>2\<close>.\<close>
 
 lemma soft_hess_quadform_bounds:
   fixes d z :: "real^'n::finite"
@@ -1091,8 +1070,6 @@ lemma soft_hess_bound:
   using soft_hess_quadform_bounds[OF k, of z d] by linarith
 
 subsection \<open>\<open>soft_grad\<close> is Lipschitz, at a non-sharp elementary constant\<close>
-
-text \<open>\<open>soft_R_lipschitz\<close>, \<open>soft_shrink\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_grad_split:
   fixes d :: "'a::euclidean_space"
@@ -1202,12 +1179,10 @@ qed
 
 subsection \<open>The diagonal dichotomy for \<open>soft_pen\<close>\<close>
 
-text \<open>\<open>soft_R_gt_one\<close>, \<open>soft_grad_coeff_pos\<close>, \<open>soft_grad_nonzero\<close>, \<open>soft_grad_norm_pos\<close> live in \<open>Soft_Penalty\<close>.\<close>
-
 text \<open>Taking \<open>c\<close> to be the actual gradient norm at the maximiser cancels
   \<open>\<kappa>\<close> from \<open>(3\<kappa>)(2\<rho>) < \<parallel>soft_grad \<kappa> d\<parallel>\<close>, reducing to
-  \<open>6\<rho> < (1 - 1/R d) \<parallel>d\<parallel>\<close>. Since every other constraint on \<open>\<rho>\<close> in the
-  chain is an upper bound, such a \<open>\<rho>\<close> always exists.\<close>
+  \<open>6\<rho> < (1 - 1/R d) \<parallel>d\<parallel>\<close>, which every small enough \<open>\<rho> > 0\<close>
+  satisfies.\<close>
 
 lemma soft_grad_norm_eq:
   fixes d :: "'a::euclidean_space"
@@ -1239,18 +1214,10 @@ proof -
   ultimately show ?thesis unfolding eq by linarith
 qed
 
-text \<open>\<open>exists_small_rho_aux\<close>, \<open>soft_gap_pos\<close>, \<open>soft_rho_exists\<close> live in \<open>Soft_Penalty\<close>.\<close>
-
-subsection \<open>Jensen's semiconvexity input, for a general penalty\<close>
-
-text \<open>\<open>doubled_functional_semiconvex_gen\<close> takes the semiconvexity of
-  the penalty \<open>Pn\<close> as the hypothesis \<open>sc\<close>; the doubled constant is
-  \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>.\<close>
+subsection \<open>Elementary properties of \<open>soft_pen\<close>\<close>
 
 lemma soft_pen_zero: "soft_pen \<kappa> (0 :: 'a::euclidean_space) = 0"
   unfolding soft_pen_def by simp
-
-text \<open>\<open>sqrt_shift_diff_bound\<close>, \<open>soft_pen_radial_mono\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_pen_mono_norm:
   fixes x y :: "'a::euclidean_space"
@@ -1279,8 +1246,9 @@ lemma soft_pen_little_o:
   using soft_pen_vanishing_jet_at_zero[where \<kappa> = \<kappa>]
   unfolding soft_pen_zero by simp
 
-text \<open>A diagonal maximiser's increment bound is exactly the one-sided
-  hypothesis \<open>supersol_no_vanishing_jet_onesided\<close> consumes.\<close>
+text \<open>An increment dominated by \<open>soft_pen\<close>, as at a diagonal maximiser,
+  is \<open>o(\<parallel>h\<parallel>\<^sup>2)\<close> from above: the one-sided form of a vanishing
+  second-order superjet.\<close>
 
 lemma diagonal_increment_onesided:
   fixes B :: "'a::euclidean_space \<Rightarrow> real"
@@ -1293,8 +1261,6 @@ lemma soft_pen_neg:
   fixes d :: "'a::euclidean_space"
   shows "soft_pen \<kappa> (- d) = soft_pen \<kappa> d"
   unfolding soft_pen_def by simp
-
-text \<open>\<open>diagonal_max_increments\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 lemma diagonal_max_increment_soft:
   fixes A B :: "'a::euclidean_space \<Rightarrow> real"
@@ -1310,12 +1276,7 @@ proof -
   then show ?thesis unfolding soft_pen_neg .
 qed
 
-text \<open>\<open>gap_split_aux\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-
 subsection \<open>Coercivity of \<open>soft_pen\<close>: recovering the norm bound\<close>
-
-text \<open>\<open>sqrt_lt_half_plus_one\<close>, \<open>radial_profile_pos\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_pen_ge_radial:
   fixes x :: "'a::euclidean_space"
@@ -1341,13 +1302,11 @@ lemma soft_pen_coercive_outside:
   shows "C\<^sub>0 < soft_pen \<kappa> x"
   using big soft_pen_ge_radial[OF k bnn b] by linarith
 
-text \<open>\<open>soft_pen_kappa_exists\<close> lives in \<open>Soft_Penalty\<close>.\<close>
-
-text \<open>The \<open>y\<close>-side of the two-domain interface: at the maximiser the penalty
-  is bounded by the range, so a large enough \<open>\<kappa>\<^sub>P\<close> pins \<open>y^h\<close> to \<open>x^h\<close>;
-  \<open>x^h\<close> is near \<open>K\<close>, and \<open>two_domain_gap\<close> keeps \<open>K\<close> a positive distance
-  from \<open>\<partial>K'\<close>.  Composing the three gives the \<open>fary\<close> hypothesis, needed
-  only on the \<open>y\<close>-side.\<close>
+text \<open>Pinning the maximiser: at a doubled maximiser with nonnegative value
+  the penalty is bounded by the upper bound of the first summand, so a large
+  enough \<open>\<kappa>\<^sub>P\<close> puts \<open>y^h\<close> within \<open>\<beta>\<close> of \<open>x^h\<close>.  With \<open>fary_of_pin\<close> and
+  \<open>two_domain_gap\<close> of @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}
+  this keeps \<open>y^h\<close> away from the boundary of a larger domain \<open>K'\<close>.\<close>
 
 lemma pin_of_penalty_bound:
   fixes A Bfun :: "'a::euclidean_space \<Rightarrow> real" and xh yh :: "'a"
@@ -1366,8 +1325,6 @@ proof (rule ccontr)
     using mx Aub[of xh] Bnp[of yh] Mnn by linarith
   from lo hi show False by linarith
 qed
-
-text \<open>\<open>fary_of_pin\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 text \<open>Continuity of \<open>soft_pen\<close> is the single hypothesis
   \<open>doubling_maximiser_exists_gen\<close> needs about the penalty.  \<open>sqrt\<close> is
@@ -1451,10 +1408,9 @@ proof -
   show ?thesis using kpos xh yh mx near by blast
 qed
 
-text \<open>The \<open>\<kappa> \<rightarrow> \<infinity>\<close> step in the sup-convolution shape the assembly consumes,
-  with continuity of the two sup-convolutions free from
-  \<open>supconv_continuous\<close>: instantiate at \<open>u := supconv u \<epsilon>\<close> and
-  \<open>w := \<lambda>y. -supconv(-w)\<epsilon> y\<close>.  The assembly takes \<open>u := \<theta> ut\<close>.\<close>
+text \<open>The \<open>\<kappa> \<rightarrow> \<infinity>\<close> step for the doubled sup-convolutions, with
+  continuity of the two sup-convolutions free from \<open>supconv_continuous\<close>:
+  instantiate at \<open>u := supconv u \<epsilon>\<close> and \<open>w := \<lambda>y. -supconv(-w)\<epsilon> y\<close>.\<close>
 
 theorem doubling_close_maximiser_supconv_soft:
   fixes u w :: "'a::euclidean_space \<Rightarrow> real"
@@ -1491,10 +1447,6 @@ proof -
          OF cK neK cA cB z bnd' bpos])
   then show ?thesis by simp
 qed
-
-subsection \<open>The \<open>\<epsilon> \<rightarrow> 0\<close> step: the sup-convolution is uniformly close on \<open>K\<close>\<close>
-
-text \<open>\<open>exists_eps_aux\<close>, \<open>eps_mono_aux\<close> live in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 (*<*)
 end

@@ -401,18 +401,6 @@ corollary supconv_alexandrov:
           / (norm k)\<^sup>2) \<longlongrightarrow> 0) (at 0))}"
   by (rule semiconvex_alexandrov[OF supconv_semiconvex'[OF B e]])
 
-text \<open>Jensen's lemma applies verbatim: the set of points maximizing a
-  small linear perturbation of the sup-convolution is not negligible, so
-  it meets the full-measure set of the previous corollary --- exactly
-  where the theorem on sums reads off its matrices.\<close>
-
-text \<open>The engine of Crandall--Ishii: Jensen's lemma gives perturbed
-  maximizers positive measure, Alexandrov's gives twice differentiable
-  points full measure, so the two sets meet.  A single point is
-  simultaneously a perturbed maximizer and a point of genuine
-  second-order expansion, which is how the theorem on sums produces its
-  matrices.\<close>
-
 text \<open>Second-order conditions at an interior maximum: a second-order
   expansion with data \<open>(q, X)\<close> at an interior maximizer forces \<open>q = 0\<close>
   and \<open>X\<close> negative semidefinite, both from the same limit

@@ -28,20 +28,6 @@ text \<open>
   bodies with nonempty interior are expandable.
 \<close>
 
-text \<open>
-  Every notion of viscosity sub- and supersolution the development uses, and
-  the test-function predicates they quantify over.  They were spread over
-  five theories, each defined where it was first needed; the implications
-  between them stay where their proofs' machinery is, but the definitions
-  are collected here so that the five variants can be read against each
-  other.
-
-  The envelope operators \<open>ell_op_lsc\<close> and \<open>ell_op_usc\<close> come along because
-  three of the predicates are stated through them, and their definitions
-  need nothing beyond \<open>ell_op\<close>.  Their calculus is in
-  \<open>Operator_Envelopes\<close>.
-\<close>
-
 definition test_fun_at ::
   "(real^'n \<Rightarrow> real) \<Rightarrow> (real^'n \<Rightarrow> real^'n) \<Rightarrow> real^'n^'n \<Rightarrow> real^'n \<Rightarrow> bool"
   where
@@ -52,14 +38,14 @@ definition test_fun_at ::
 
 text \<open>\<^const>\<open>test_fun_at\<close> asks only that \<open>\<phi>\<close> be differentiable near \<open>x\<close> with
   gradient field \<open>g\<close>, and that \<open>g\<close> be differentiable at \<open>x\<close>; away from \<open>x\<close> it
-  constrains \<open>\<phi>\<close> not at all.  Definition 3.1 quantifies over \<open>\<phi> \<in> C\<^sup>2(\<real>\<^sup>n)\<close>,
-  a strictly smaller class.  For the assertions that the value function is a
-  sub- or supersolution the larger class is the stronger statement, so nothing
-  is lost there; but the uniqueness clause \<^emph>\<open>assumes\<close> the property of a
-  competitor, and there the larger class would make the hypothesis stronger
-  than the paper's and the theorem correspondingly weaker.  So the class is
-  spelled out here: a gradient field defined everywhere, together with a
-  \<^emph>\<open>continuous\<close> symmetric Hessian field.\<close>
+  constrains \<open>\<phi>\<close> not at all.  The classical definition quantifies over
+  \<open>\<phi> \<in> C\<^sup>2(\<real>\<^sup>n)\<close>, a strictly smaller class.  For an assertion that a
+  function is a sub- or supersolution the larger class is the stronger
+  statement, so nothing is lost there; but a comparison or uniqueness theorem
+  \<^emph>\<open>assumes\<close> the property of a competitor, and there the larger class would
+  make the hypothesis stronger and the theorem correspondingly weaker.  So the
+  smaller class is spelled out as well: a gradient field defined everywhere,
+  together with a \<^emph>\<open>continuous\<close> symmetric Hessian field.\<close>
 
 definition test_fun_C2 ::
   "(real^'n::finite \<Rightarrow> real) \<Rightarrow> (real^'n \<Rightarrow> real^'n) \<Rightarrow> real^'n^'n \<Rightarrow> real^'n \<Rightarrow> bool"
@@ -69,12 +55,6 @@ definition test_fun_C2 ::
           (\<forall>y. (g has_derivative (\<lambda>h. G y *v h)) (at y)) \<and>
           (\<forall>y. transpose (G y) = G y) \<and>
           continuous_on UNIV G \<and> G x = H)"
-
-text \<open>The paper's hypothesis on \<open>K\<close> for the uniqueness clause of Theorem 1.1:
-  a family \<open>T\<^sub>\<iota>\<close> of rotation-dilation-translations, \<open>\<iota> \<in> (1,2]\<close>, with
-  \<open>K \<subseteq> (T\<^sub>\<iota> \` K)^\<circ>\<close> and \<open>T\<^sub>\<iota> \<rightarrow> id\<close>, phrased as an \<open>\<epsilon>\<close>-statement with
-  the inverse map written out so no invertibility side condition is
-  carried.\<close>
 
 lemma test_fun_C2_imp_test_fun_at:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real"
@@ -95,8 +75,8 @@ proof -
   qed
 qed
 
-text \<open>The three functions the comparison proof ever hands to the paper's
-  hypothesis: the quadratic 2-jet, a constant, and a quartic shift of either.\<close>
+text \<open>The test functions a comparison proof needs in the smaller class: a
+  constant, the quadratic with a given 2-jet, and a quartic shift of either.\<close>
 
 lemma test_fun_C2_const:
   fixes x :: "real^'n::finite" and C :: real
@@ -250,8 +230,8 @@ proof -
   qed (use bounded_linear.continuous_on[OF matmul_sandwich_blin[of "transpose M"] GA] G(5) in auto)
 qed
 
-text \<open>The rotation-dilation form \<open>z \<mapsto> c \<cdot> Rz + b\<close> of Theorem 1.1's
-  expandability hypothesis is the instance \<open>M = c R\<close>: the gradient picks up
+text \<open>The rotation-dilation form \<open>z \<mapsto> c \<cdot> Rz + b\<close> of the maps in
+  \<open>expandable\<close> below is the instance \<open>M = c R\<close>: the gradient picks up
   \<open>c R\<^sup>T\<close> and the Hessian \<open>c\<^sup>2 R\<^sup>T H R\<close>.  (Neither the orthogonality of \<open>R\<close> nor
   \<open>c > 0\<close> is used.)\<close>
 
@@ -283,6 +263,8 @@ theorem test_fun_C2_affine:
       ((c\<^sup>2) *\<^sub>R (transpose R ** H ** R)) x"
   using test_fun_C2_affine_map[of \<phi> g H "c *\<^sub>R R"] tf unfolding affine_as_matrix by blast
 
+subsection \<open>Quadratic test functions and quartic shifts\<close>
+
 text \<open>For a symmetric \<open>H\<close> the quadratic
   \<open>\<phi> z = p \<cdot> (z - x) + ((z - x) \<cdot> (H *v (z - x)))/2\<close>
   with gradient field \<open>g z = p + H *v (z - x)\<close> is a test function at \<open>x\<close> in
@@ -312,28 +294,8 @@ next
     by (rule quadratic_test_grad_derivative)
 qed
 
-text \<open>The form used downstream has the jet matrix arrive as an abstract
-  symmetric bounded linear map, as produced throughout
-  @{theory Second_Order_Viscosity_Analysis.Doubled_Functional_Jets}.\<close>
-
-subsection \<open>The jet interface to Definition 3.1(b)\<close>
-
-text \<open>\<open>quad_bdd_above_on_bounded\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-section \<open>Definition 3.1 with genuine \<open>C\<^sup>2\<close> test functions\<close>
-
-text \<open>\<open>test_fun_C2\<close> lives in \<open>Viscosity_Definitions\<close>.\<close>
-
-subsection \<open>The closing step of Theorem 4.2\<close>
-
-text \<open>At the test point the gradient field of the jet test function is just
-  \<open>p\<close>, which is what \<open>visc_subsol\<close> and \<open>supersol_jet\<close> feed to \<open>ell_op\<close>.\<close>
-
-text \<open>The subsolution gives \<open>F(p, X) \<le> 1\<close>, the supersolution \<open>1 \<le> F(p, Y)\<close>,
-  and the theorem on sums gives \<open>X \<preceq> Y\<close>, so degenerate ellipticity
-  (\<open>ell_op_elliptic_le\<close>) sandwiches both values at \<open>1\<close>. Since \<open>F = 1\<close>
-  carries no zeroth-order term, closing the argument needs a strict
-  inequality, obtained by perturbing the subsolution.\<close>
+text \<open>The same quadratic is a test function in the smaller class
+  \<^const>\<open>test_fun_C2\<close>, its Hessian field being the constant \<open>H\<close>.\<close>
 
 lemma jet_test_fun_C2:
   fixes H :: "real^'n::finite^'n" and p x :: "real^'n"
@@ -399,11 +361,9 @@ proof -
   qed (auto simp: quartic_shift_derivative G(1) G(5) Q_def outer_prod_def vec_eq_iff)
 qed
 
-text \<open>\<open>visc_subsol_env2\<close>, \<open>visc_supersol_env2\<close> live in \<open>Viscosity_Definitions\<close>.\<close>
-
-text \<open>Fewer test functions means a weaker condition, so everything proved in the
-  \<^const>\<open>test_fun_at\<close> form still delivers Definition 3.1 as the paper states it.\<close>
-
+text \<open>The same quartic shift in the larger class \<^const>\<open>test_fun_at\<close>: the
+  quartic's gradient has derivative zero at \<open>x\<close>, so the Hessian at \<open>x\<close> is
+  unchanged.\<close>
 
 lemma test_fun_at_quartic_shift:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
@@ -462,18 +422,10 @@ proof -
   then show ?thesis by blast
 qed
 
-section \<open>The ball exit time along a continuous path\<close>
+subsection \<open>Quadratic bounds on a test function near its point\<close>
 
-text \<open>Three pathwise facts about \<open>pball_exit\<close>, all consumed by an
-  Ito-side supplier and none needing a law: they are statements about a
-  single continuous path.
-
-  The first is attainment.  With \<open>K\<close> open the target \<open>-K\<close> is closed, so
-  along a continuous path the infimum defining \<open>pexit\<close> is a minimum
-  whenever it is below the horizon: the path really is outside \<open>K\<close> at the
-  exit time.  This is the single fact that fails for a general
-  discontinuous function, and every other clause below is a consequence
-  of it.\<close>
+text \<open>A quadratic with symmetric \<open>M\<close>, centred at \<open>x\<close> and tilted by \<open>\<eta>\<close>,
+  is a test function at every point \<open>y\<close>, not only at its centre.\<close>
 
 lemma test_fun_at_shifted_quadratic:
   fixes M :: "real^'n::finite^'n" and x \<eta> y :: "real^'n" and b :: real
@@ -490,18 +442,10 @@ proof -
     by (auto intro!: exI[of _ 1] simp: add.commute)
 qed
 
-text \<open>The heart of Case 2.  Given a strict quadratic separation on a
-  closed ball --- which is what \<open>test_fun_strict_minorate_zero_grad\<close>
-  delivers once the gradient vanishes --- a tilt by \<open>\<eta>\<close> has a minimiser
-  \<open>y\<close>, and that minimiser is within \<open>\<bar>\<eta>\<bar>/c\<close> of the centre.  For
-  \<open>\<bar>\<eta>\<bar> < c\<rho>\<close> that puts \<open>y\<close> strictly inside the ball, so the minimality
-  is a genuine local touching at \<open>y\<close> --- exactly the hypothesis the
-  localised Case 1 consumes.
-
-  No properties of \<open>W\<close> are used beyond lower semicontinuity: the lower
-  bound needed for the infimum comes from the separation itself, since
-  \<open>W \<ge> W x + Q + c\<bar>z - x\<bar>\<^sup>2\<close> already forces \<open>W - Q - \<langle>\<eta>, \<cdot> - x\<rangle> \<ge> W x - \<bar>\<eta>\<bar>\<rho>\<close>
-  on the ball.\<close>
+text \<open>Near its point, a test function lies above its second-order Taylor
+  polynomial once the Hessian is lowered by \<open>\<delta>I\<close>, for any \<open>\<delta> > 0\<close>: along
+  each segment from \<open>x\<close> the difference has a nonpositive derivative, by
+  differentiability of the gradient field at \<open>x\<close>.\<close>
 
 lemma test_fun_quadratic_minorates:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
@@ -624,11 +568,6 @@ proof -
   show ?thesis by (rule that[OF r0 main])
 qed
 
-text \<open>\<open>quartic_coeff_assoc\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
-
-
-text \<open>\<open>transpose_shift_add\<close>, \<open>transpose_shift_diff\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 text \<open>Negation turns a test function at \<open>x\<close> into one, with the gradient
   field and the Hessian negated.\<close>
 
@@ -672,10 +611,8 @@ proof -
   qed
 qed
 
-text \<open>The mirror for subsolutions: adding a quartic deepens a local
-  maximum and, for a large enough coefficient, makes it global over \<open>K\<close>,
-  reusing @{thm [source] test_fun_at_quartic_shift} with a negative
-  coefficient.\<close>
+text \<open>At a point where the gradient vanishes the minorant becomes strict:
+  lowering the Hessian by \<open>\<epsilon>I\<close> leaves a margin \<open>(\<epsilon>/4)\<parallel>z - x\<parallel>\<^sup>2\<close>.\<close>
 
 lemma test_fun_strict_minorant_zero_grad:
   fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
@@ -719,14 +656,10 @@ proof -
   show ?thesis by (rule that[OF r0]) (use key in blast)
 qed
 
-text \<open>\<open>tilted_minimiser_close\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>The tilted test function of Case 2 is the quadratic
-  \<open>b + \<onehalf>(z - x)\<^sup>T M (z - x) + \<langle>\<eta>, z - x\<rangle>\<close>, centred at the touching point
-  \<open>x\<close> but examined at a nearby point \<open>y\<close>.  Recentring it into the normal
-  form \<open>c + \<langle>p, z\<rangle> + \<onehalf>z\<^sup>T M z\<close> uses only symmetry of \<open>M\<close>, which
-  \<open>test_fun_at\<close> supplies as part of its own definition.\<close>
+text \<open>A first-order consequence of touching from below: if \<open>W - \<phi>\<close> has a
+  minimum at an interior point \<open>x\<close> of \<open>K\<close> relative to \<open>K\<close>, \<open>W \<le> T\<close> on \<open>K\<close>,
+  and the gradient \<open>g x\<close> does not vanish, then \<open>W x < T\<close>: a short step from
+  \<open>x\<close> along \<open>g x\<close> increases \<open>\<phi>\<close>, and with it \<open>W\<close>.\<close>
 
 lemma touching_grad_lt_horizon_gen:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -825,16 +758,25 @@ proof -
   finally show ?thesis .
 qed
 
+subsection \<open>Expandable sets\<close>
+
+text \<open>A set \<open>K\<close> is expandable when it can be pushed strictly inside its own
+  image by a rotation-dilation-translation arbitrarily close to the identity:
+  for every \<open>\<epsilon> > 0\<close> there are an orthogonal \<open>R\<close>, a dilation factor
+  \<open>1 < c < 1 + \<epsilon>\<close> and a translation \<open>b\<close> such that \<open>T z = c \<cdot> Rz + b\<close>
+  satisfies \<open>K \<subseteq> interior (T ` K)\<close> and moves no point of \<open>K\<close> by more than
+  \<open>\<epsilon>\<close> under its inverse.  The inverse is written out, so that no
+  invertibility side condition is carried.\<close>
+
 definition expandable :: "(real^'n::finite) set \<Rightarrow> bool" where
   "expandable K \<longleftrightarrow>
      (\<forall>e > 0. \<exists>R b c. orthogonal_matrix R \<and> 1 < c \<and> c < 1 + e
         \<and> K \<subseteq> interior ((\<lambda>x. c *\<^sub>R (R *v x) + b) ` K)
         \<and> (\<forall>x \<in> K. dist ((1/c) *\<^sub>R (transpose R *v (x - b))) x \<le> e))"
 
-text \<open>The envelopes are taken in the pair \<open>(p, M)\<close> jointly, as in the
-  paper, so \<open>F\<close> is first packaged as a function on the product metric
-  space, with values in \<open>ereal\<close> so that the suprema and infima below are
-  unconditionally defined.\<close>
+text \<open>A compact convex set with nonempty interior is expandable: dilating
+  about an interior point by a factor slightly above \<open>1\<close> maps it into the
+  interior of its image.\<close>
 
 theorem convex_expandable:
   fixes K :: "(real^'n::finite) set"

@@ -15,15 +15,15 @@ text \<open>The machinery of @{theory Second_Order_Viscosity_Analysis.Doubled_Fu
   the standard vocabulary of the literature: second-order semijets, their
   closures, and two named theorems for the quadratic coupling
   \<open>(\<alpha>/2)\<parallel>x - y\<parallel>\<^sup>2\<close>, the coupling of the textbook uniqueness proofs.
-  (The paper couples by \<open>\<epsilon>\<^sup>-\<^sup>1\<parallel>x - y\<parallel>\<^sup>4\<close>, and the comparison proof of this
-  development by the soft penalty of \<open>Soft_Penalty\<close>; both rest on the
-  general-penalty forms of the doubling lemmas.)  The staged form
+  (Other couplings, such as the quartic \<open>\<epsilon>\<^sup>-\<^sup>1\<parallel>x - y\<parallel>\<^sup>4\<close> or the soft
+  penalty of \<open>Soft_Penalty\<close>, rest on the general-penalty forms of the
+  doubling lemmas.)  The staged form
   (\<open>theorem_on_sums_quadratic\<close>) exhibits genuine jets with quantitative
   control; the closed-jet form (\<open>theorem_on_sums_quadratic_closed\<close>) is the
   classical statement, with the two-sided bound \<open>-(1/\<lambda>) I \<preceq> X \<preceq> Y \<preceq> (1/\<lambda>) I\<close>
   for every regularisation scale \<open>\<lambda>\<close> with \<open>2\<lambda>\<alpha> < 1\<close>.\<close>
 
-section \<open>Second-order semijets\<close>
+subsection \<open>Second-order semijets\<close>
 
 definition superjet :: "('a::euclidean_space \<Rightarrow> real) \<Rightarrow> 'a \<Rightarrow> ('a \<times> ('a \<Rightarrow> 'a)) set"
   where
@@ -39,6 +39,12 @@ definition subjet :: "('a::euclidean_space \<Rightarrow> real) \<Rightarrow> 'a 
 
 lemma linear_neg_iff: "linear (\<lambda>k. - f k) \<longleftrightarrow> linear f"
   using linear_compose_neg[of "\<lambda>k. - f k"] linear_compose_neg[of f] by auto
+
+text \<open>A supersolution condition speaks about \<open>w\<close> and needs a subjet, while
+  sup-convolution regularises \<open>- w\<close> and produces superjets.  The two are the
+  same statement with all signs reversed: the difference quotient for \<open>- w\<close>
+  with data \<open>(- p, - X)\<close> is exactly minus the one for \<open>w\<close> with data
+  \<open>(p, X)\<close>.\<close>
 
 lemma subjet_neg_superjet:
   "(p, X) \<in> subjet w x \<longleftrightarrow> (- p, \<lambda>k. - X k) \<in> superjet (\<lambda>z. - w z) x"
@@ -67,7 +73,7 @@ proof -
 qed
 
 
-subsection \<open>Closed semijets\<close>
+subsubsection \<open>Closed semijets\<close>
 
 text \<open>The closure in the sense of Crandall--Ishii: limits of jets at nearby
   points along which the function values also converge.  Convergence of the
@@ -100,7 +106,7 @@ lemma subjet_subset_cl: "subjet w x \<subseteq> subjet_cl w x"
   by (auto intro!: exI[of _ "\<lambda>_. x"] exI[of _ "\<lambda>_. _"]
       simp: subjet_def)
 
-section \<open>Quantitative estimates for the doubled sup-convolution\<close>
+subsection \<open>Quantitative estimates for the doubled sup-convolution\<close>
 
 lemma quad_root_bound:
   fixes t b c :: real
@@ -243,7 +249,7 @@ proof -
   then show ?thesis unfolding K_def by (simp add: algebra_simps)
 qed
 
-section \<open>Squeeze helpers\<close>
+subsection \<open>Squeeze helpers\<close>
 
 lemma sum_squeeze_pair_fst:
   fixes an bn :: "nat \<Rightarrow> real"
@@ -278,7 +284,7 @@ proof (rule tendstoI)
   qed
 qed
 
-section \<open>From exact expansions to semijets\<close>
+subsection \<open>From exact expansions to semijets\<close>
 
 text \<open>A one-sided remainder comparison against an exactly expanded majorant
   is exactly membership in the superjet.\<close>
@@ -317,7 +323,7 @@ proof -
   show ?thesis by (rule superjet_of_transfer[OF tr exp lin sym])
 qed
 
-section \<open>Sequential limit utilities\<close>
+subsection \<open>Sequential limit utilities\<close>
 
 lemma tendsto_of_dist_bound:
   fixes zf :: "nat \<Rightarrow> 'a::metric_space"
@@ -326,7 +332,7 @@ lemma tendsto_of_dist_bound:
   by (rule metric_tendsto_imp_tendsto[OF r always_eventually])
     (use b in \<open>auto simp: dist_real_def intro: order_trans[OF _ abs_ge_self]\<close>)
 
-section \<open>Small algebraic helpers\<close>
+subsection \<open>Small algebraic helpers\<close>
 
 lemma sym_add_scaleR:
   fixes F :: "'a::euclidean_space \<Rightarrow> 'a"
@@ -344,7 +350,7 @@ lemma quad_pen_jet:
       - (\<alpha> *\<^sub>R d) \<bullet> h - (h \<bullet> ((\<alpha> *\<^sub>R mat 1) *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
   using quad_penalty_jet[of \<alpha> d] by (simp add: scaleR_matrix_vector_assoc[symmetric])
 
-section \<open>The theorem on sums at one regularisation stage\<close>
+subsection \<open>The theorem on sums at one regularisation stage\<close>
 
 text \<open>One pass of the sup-convolution/Jensen machinery at fixed
   regularisation \<open>\<epsilon>\<close>, strictness \<open>\<delta>\<close>, localisation \<open>\<rho>\<close> and tilt budget
@@ -844,6 +850,8 @@ proof -
 qed
 
 
+subsection \<open>The theorem on sums, quadratic-penalty form\<close>
+
 text \<open>The theorem on sums for the quadratic coupling, in the staged form the
   regularisation actually proves.  At a global maximum \<open>(xh, yh)\<close> of
   \<open>u x - w y - (\<alpha>/2)\<parallel>x - y\<parallel>\<^sup>2\<close> with \<open>u\<close> usc bounded above and \<open>w\<close> lsc
@@ -862,8 +870,6 @@ text \<open>The theorem on sums for the quadratic coupling, in the staged form t
   FIXED regularisation against a deconvolved penalty.  The staged form
   remains the sharper quantitative statement: each of its jets is genuine,
   not a closure element.\<close>
-
-section \<open>The theorem on sums, quadratic-penalty form\<close>
 
 theorem theorem_on_sums_quadratic:
   fixes u w :: "real^'n::finite \<Rightarrow> real" and \<alpha> :: real and xh yh :: "real^'n"
@@ -1152,7 +1158,7 @@ proof -
     using jetu jetw ordfin xst uxs yst wys pst qst by blast
 qed
 
-section \<open>Deconvolving the quadratic penalty\<close>
+subsection \<open>Deconvolving the quadratic penalty\<close>
 
 lemma deconv_sos_identity:
   fixes d r :: "'a::euclidean_space" and \<alpha> lam al :: real
@@ -1357,7 +1363,7 @@ proof -
   show ?thesis using low high by linarith
 qed
 
-section \<open>Semiconvexity bounds the forms of every superjet\<close>
+subsection \<open>Semiconvexity bounds the forms of every superjet\<close>
 
 lemma superjet_supconv_form_lower:
   fixes v :: "'a::euclidean_space \<Rightarrow> real" and h :: 'a
@@ -1450,7 +1456,7 @@ proof -
   show ?thesis by (intro exI[of _ d] conjI d allI impI main)
 qed
 
-section \<open>The optimizer of a sup-convolution superjet\<close>
+subsection \<open>The optimizer of a sup-convolution superjet\<close>
 
 text \<open>At a point where the sup-convolution carries a superjet \<open>(p, F)\<close>, the
   attainment point of the inner supremum is exactly \<open>x + \<lambda>p\<close>: the quadratic
@@ -1618,7 +1624,7 @@ proof -
   then show ?thesis using jet unfolding superjet_def by auto
 qed
 
-section \<open>Compactness for uniformly bounded symmetric forms\<close>
+subsection \<open>Compactness for uniformly bounded symmetric forms\<close>
 
 lemma bounded_symmetric_forms_subseq:
   fixes Fs :: "nat \<Rightarrow> real^'n::finite \<Rightarrow> real^'n" and c :: real
@@ -1666,6 +1672,8 @@ proof -
   show ?thesis using r linF symF pw by blast
 qed
 
+subsection \<open>The Crandall--Ishii theorem on sums, closed-jet form\<close>
+
 text \<open>The route to the closed jets fixes the sup-convolution scale \<open>\<lambda>\<close> once
   and for all and DECONVOLVES the penalty instead: for \<open>2\<lambda>\<alpha> < 1\<close> the
   Moreau identity above shows that
@@ -1680,8 +1688,6 @@ text \<open>The route to the closed jets fixes the sup-convolution scale \<open>
   the shift of the maximiser exactly, so the limit jets sit at
   \<open>(xh, yh)\<close> itself.  This is the classical Crandall--Ishii mechanism,
   specialised to the quadratic coupling.\<close>
-
-section \<open>The Crandall--Ishii theorem on sums, closed-jet form\<close>
 
 text \<open>The closed-jet form is the staged form applied to the \<open>lam\<close>-sup-convolutions
   of \<open>u\<close> and \<open>-w\<close> with the inflated penalty \<open>al = \<alpha>/(1 - 2lam\<alpha>)\<close>, whose

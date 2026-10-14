@@ -600,17 +600,11 @@ proof -
     by (rule tendsto_upperbound[OF _ ev]) simp
 qed
 
-subsection \<open>Fundamental theorem of calculus along a line\<close>
-
-text \<open>On a line, a Lipschitz function is absolutely continuous with a.e.
-  derivative \<open>ddir\<close>, so the fundamental theorem of calculus recovers
-  increments of \<open>f\<close> as integrals of \<open>ddir\<close>.\<close>
-
 subsection \<open>Structure of the direction map\<close>
 
-text \<open>The direction map \<open>v \<mapsto> D_v f x\<close> is positively homogeneous and
-  Lipschitz in \<open>v\<close> with the same constant as \<open>f\<close>, before linearity is
-  known.\<close>
+text \<open>The direction map \<open>v \<mapsto> D_v f x\<close> is homogeneous before linearity
+  is known: scaling the direction by \<open>c \<noteq> 0\<close> scales the derivative by
+  \<open>c\<close>.\<close>
 
 lemma dquot_scale:
   fixes f :: "'a::euclidean_space \<Rightarrow> 'b::banach"
@@ -653,9 +647,6 @@ proof -
   from tendsto_unique[OF at_neq_bot this lim]
   show "ddir f (c *\<^sub>R v) x = c *\<^sub>R ddir f v x" .
 qed
-
-text \<open>A countable family of directions is handled simultaneously, since a
-  countable union of negligible sets is negligible.\<close>
 
 subsection \<open>From directional to full differentiability\<close>
 
@@ -1124,10 +1115,6 @@ qed
 
 subsection \<open>The additivity identity at the level of box integrals\<close>
 
-text \<open>Integrating the algebraic split over a box gives an exact identity:
-  the \<open>(u+v)\<close>-quotient equals the \<open>v\<close>-quotient over the translated box
-  plus the \<open>u\<close>-quotient over the original.\<close>
-
 text \<open>Integrability on a finite-measure set of a function bounded almost
   everywhere, in particular of the difference quotients.\<close>
 
@@ -1156,6 +1143,10 @@ proof (rule integrable_bounded_indicator[where M = "B * norm v", OF _ _ S Sfin])
   show "AE x in lborel. \<bar>dquot f v x t\<bar> \<le> B * norm v"
     by (rule AE_I2) (use norm_dquot_le[OF lip t, of v] in simp)
 qed
+
+text \<open>Integrating the algebraic split over a box gives an exact identity:
+  the \<open>(u+v)\<close>-quotient equals the \<open>v\<close>-quotient over the translated box
+  plus the \<open>u\<close>-quotient over the original.\<close>
 
 theorem box_integral_add_split:
   fixes f :: "'a::euclidean_space \<Rightarrow> real"
@@ -1192,11 +1183,6 @@ proof -
     by (rule integral_translate_box) (rule borel_measurable_dquot[OF cf])
   ultimately show ?thesis by simp
 qed
-
-subsection \<open>L1 convergence of the quotients\<close>
-
-text \<open>The quotients converge to \<open>ddir\<close> in L1, not merely pointwise a.e.,
-  letting the domain wobble by \<open>t u\<close>.\<close>
 
 subsection \<open>The defect of a translated box vanishes\<close>
 
