@@ -458,11 +458,11 @@ Crandall_Ishii_Sums.superjet_mono    # KEEP_API
 Crandall_Ishii_Sums.superjet_subset_cl    # KEEP_API
 Crandall_Ishii_Sums.subjet_subset_cl    # KEEP_API
 Semicontinuity.open_usc_sublevel    # FIX_THEN_KEEP (replaces its twin Sup_Convolution.usc_open_lt in phase 5)
-Sup_Convolution.usc_attains_sup_compact    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
+Semicontinuity.usc_attains_sup_compact    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4, to Semicontinuity in phase 5)
 Sup_Convolution.supconv_attained_usc    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 4)
 Crandall_Ishii_Sums.quad_root_bound    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.doubled_supconv_pointwise_bound    # FIX_THEN_KEEP
-Crandall_Ishii_Sums.usc_eventually_lt    # FIX_THEN_KEEP
+Semicontinuity.usc_eventually_lt    # FIX_THEN_KEEP (moved from Crandall_Ishii_Sums in phase 5)
 Convex_Subgradients.norm_sq_add_expand    # FIX_THEN_KEEP (generalised to real_inner, moved from Crandall_Ishii_Sums in phase 4)
 Crandall_Ishii_Sums.superjet_of_transfer    # FIX_THEN_KEEP
 Crandall_Ishii_Sums.supconv_superjet_at_optimizer    # FIX_THEN_KEEP
