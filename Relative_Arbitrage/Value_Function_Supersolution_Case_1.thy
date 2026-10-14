@@ -142,20 +142,144 @@ proof -
   finally show ?thesis unfolding R_def .
 qed
 
-theorem rotSF_exists:
+subsection \<open>Orthogonal conjugation preserves the paper's constraint set\<close>
+
+lemma is_proj_conj:
+  fixes P R :: "real^'n::finite^'n"
+  assumes R: "R ** transpose R = mat 1" and P: "is_proj P"
+  shows "is_proj (transpose R ** P ** R)"
+proof -
+  have symP: "transpose P = P" and idP: "P ** P = P"
+    using P unfolding is_proj_def by blast+
+  have "transpose (transpose R ** P ** R) = transpose R ** P ** R"
+    by (simp add: matrix_transpose_mul matrix_mul_assoc symP)
+  moreover have "(transpose R ** P ** R) ** (transpose R ** P ** R) = transpose R ** P ** R"
+  proof -
+    have "(transpose R ** P ** R) ** (transpose R ** P ** R)
+        = transpose R ** P ** (R ** transpose R) ** P ** R"
+      by (simp add: matrix_mul_assoc)
+    also have "\<dots> = transpose R ** (P ** P) ** R"
+      unfolding R by (simp add: matrix_mul_assoc)
+    finally show ?thesis unfolding idP .
+  qed
+  ultimately show ?thesis unfolding is_proj_def ..
+qed
+
+lemma trace_conj_orth:
+  fixes P R :: "real^'n::finite^'n"
+  assumes R: "R ** transpose R = mat 1"
+  shows "trace (transpose R ** P ** R) = trace P"
+proof -
+  have "trace (transpose R ** P ** R) = trace (R ** (transpose R ** P))"
+    by (rule trace_mul_sym)
+  also have "R ** (transpose R ** P) = P"
+    by (metis matrix_mul_assoc R matrix_mul_lid)
+  finally show ?thesis .
+qed
+
+lemma Pi_proj_conj:
+  fixes a R :: "real^'n::finite^'n"
+  assumes R: "orthogonal_matrix R"
+  shows "Pi_proj (R ** a ** transpose R) m = Pi_proj a m"
+proof -
+  have o1: "transpose R ** R = mat 1" and o2: "R ** transpose R = mat 1"
+    using R unfolding orthogonal_matrix_def by blast+
+  have tr: "trace ((R ** a ** transpose R) ** P) = trace (a ** (transpose R ** P ** R))"
+    for P :: "real^'n^'n"
+    by (rule trace_conjugate[symmetric])
+  have "{trace ((R ** a ** transpose R) ** P) | P. is_proj P \<and> trace P = real m}
+      = {trace (a ** P) | P. is_proj P \<and> trace P = real m}"
+  proof (intro equalityI subsetI)
+    fix t assume "t \<in> {trace ((R ** a ** transpose R) ** P) | P. is_proj P \<and> trace P = real m}"
+    then obtain P where P: "is_proj P" "trace P = real m"
+      and t: "t = trace ((R ** a ** transpose R) ** P)" by blast
+    have "is_proj (transpose R ** P ** R)" by (rule is_proj_conj[OF o2 P(1)])
+    moreover have "trace (transpose R ** P ** R) = real m"
+      using trace_conj_orth[OF o2, of P] P(2) by simp
+    ultimately show "t \<in> {trace (a ** P) | P. is_proj P \<and> trace P = real m}"
+      unfolding t tr by blast
+  next
+    fix t assume "t \<in> {trace (a ** P) | P. is_proj P \<and> trace P = real m}"
+    then obtain P where P: "is_proj P" "trace P = real m"
+      and t: "t = trace (a ** P)" by blast
+    have o1': "transpose R ** transpose (transpose R) = mat 1"
+      unfolding transpose_transpose by (rule o1)
+    have pr: "is_proj (R ** P ** transpose R)"
+      using is_proj_conj[OF o1' P(1)] by simp
+    have trP: "trace (R ** P ** transpose R) = real m"
+      using trace_conj_orth[OF o1', of P] P(2) by simp
+    have "transpose R ** (R ** P ** transpose R) ** R
+        = (transpose R ** R) ** P ** (transpose R ** R)"
+      by (simp add: matrix_mul_assoc)
+    then have RPR: "transpose R ** (R ** P ** transpose R) ** R = P"
+      unfolding o1 by simp
+    have "t = trace ((R ** a ** transpose R) ** (R ** P ** transpose R))"
+      unfolding t tr RPR ..
+    then show "t \<in> {trace ((R ** a ** transpose R) ** P) | P. is_proj P \<and> trace P = real m}"
+      using pr trP by blast
+  qed
+  then show ?thesis unfolding Pi_proj_def by simp
+qed
+
+theorem sconstraint_conj:
+  fixes R a :: "real^'n::finite^'n"
+  assumes R: "orthogonal_matrix R" and a: "a \<in> sconstraint k L"
+  shows "R ** a ** transpose R \<in> sconstraint k L"
+proof -
+  have o2: "R ** transpose R = mat 1"
+    using R unfolding orthogonal_matrix_def by blast
+  have psda: "psd a" and uba: "eigen_ub a L"
+    and Pia: "\<And>m. k < m \<Longrightarrow> m \<le> CARD('n) \<Longrightarrow> real (m - k) \<le> Pi_proj a m"
+    using a unfolding sconstraint_def Pi_constraint_def by auto
+  have Amv: "(R ** a ** transpose R) *v z = R *v (a *v (transpose R *v z))" for z
+    by (metis matrix_vector_mul_assoc)
+  have quad: "z \<bullet> ((R ** a ** transpose R) *v z)
+      = (transpose R *v z) \<bullet> (a *v (transpose R *v z))" for z
+    unfolding Amv by (rule inner_transpose_matrix)
+  have normT: "(transpose R *v z) \<bullet> (transpose R *v z) = z \<bullet> z" for z
+    using orth_preserves_inner[of "transpose R" z z] o2 by simp
+  have sym: "transpose (R ** a ** transpose R) = R ** a ** transpose R"
+    using psda by (simp add: psd_def matrix_transpose_mul matrix_mul_assoc)
+  have psdA: "psd (R ** a ** transpose R)"
+    unfolding psd_def using sym quad psda unfolding psd_def by simp
+  have ubA: "eigen_ub (R ** a ** transpose R) L"
+    unfolding eigen_ub_def
+  proof
+    fix z :: "real^'n"
+    have "(transpose R *v z) \<bullet> (a *v (transpose R *v z))
+        \<le> L * ((transpose R *v z) \<bullet> (transpose R *v z))"
+      using uba unfolding eigen_ub_def by blast
+    then show "z \<bullet> ((R ** a ** transpose R) *v z) \<le> L * (z \<bullet> z)"
+      unfolding quad normT .
+  qed
+  have PiA: "real (m - k) \<le> Pi_proj (R ** a ** transpose R) m"
+    if "k < m" "m \<le> CARD('n)" for m
+    unfolding Pi_proj_conj[OF R] by (rule Pia[OF that])
+  show ?thesis
+    unfolding sconstraint_def Pi_constraint_def using psdA ubA PiA by simp
+qed
+
+text \<open>The field of Case 1, for any set of rates that is invariant under
+  orthogonal conjugation: a psd rate \<open>a \<in> S\<close> that annihilates \<open>q\<close> is
+  rotated, continuously in \<open>z\<close>, into a rate that annihilates the gradient
+  \<open>q + M (z - x)\<close> of the quadratic, at the cost of at most \<open>\<epsilon>\<close> in
+  \<open>tr(M a)\<close>.\<close>
+
+theorem covariation_rotSF_exists:
   fixes a M :: "real^'n::finite^'n" and q x :: "real^'n"
     and \<epsilon> r0 :: real
-  assumes aF: "a \<in> feasible k L q" and q0: "q \<noteq> 0"
+  assumes aS: "a \<in> S" and psda: "psd a" and aq: "a *v q = 0"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and q0: "q \<noteq> 0"
     and eps: "0 < \<epsilon>" and r00: "0 < r0"
   obtains SF :: "real^'n \<Rightarrow> real^'n^'n" and r :: real where
     "0 < r" and "r \<le> r0"
     and "continuous_on UNIV SF"
-    and "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and "\<And>z. SF z ** transpose (SF z) \<in> S"
     and "\<And>z. transpose (SF z)
           *v (q + M *v (closest_point (cball x r) z - x)) = 0"
     and "\<And>z. \<bar>trace (M ** (SF z ** transpose (SF z))) - trace (M ** a)\<bar> \<le> \<epsilon>"
 proof -
-  have psda: "psd a" using aF unfolding feasible_def by blast
   have syma: "transpose a = a" using psda unfolding psd_def by blast
   obtain B and f :: "'n \<Rightarrow> real^'n" where Bon: "onormal B" and sp: "span B = UNIV"
     and finB: "finite B" and cardB: "card B = CARD('n)"
@@ -252,19 +376,25 @@ proof -
   have cov: "SF z ** transpose (SF z)
       = rotm q (GG z) ** a ** transpose (rotm q (GG z))" for z
     unfolding SF_def GG_def by (rule rotSF_conj[OF sq])
-  have feas: "SF z ** transpose (SF z) \<in> feasible k L (GG z)" for z
+  have inS: "SF z ** transpose (SF z) \<in> S" for z
+    unfolding cov by (rule rot[OF rotm_orthogonal aS])
+  have kill0: "(SF z ** transpose (SF z)) *v GG z = 0" for z
   proof -
     have o1: "transpose (rotm q (GG z)) ** rotm q (GG z) = mat 1"
-      and o2: "rotm q (GG z) ** transpose (rotm q (GG z)) = mat 1"
-      using rotm_orthogonal unfolding orthogonal_matrix_def by blast+
-    have inF: "rotm q (GG z) ** a ** transpose (rotm q (GG z))
-        \<in> feasible k L (rotm q (GG z) *v q)"
-      by (rule feasible_conj[OF o1 o2 aF])
+      using rotm_orthogonal unfolding orthogonal_matrix_def by blast
     have rq: "rotm q (GG z) *v q = (norm q / norm (GG z)) *\<^sub>R GG z"
       by (rule rotm_apply[OF q0 Gnz okG])
     have cne: "norm q / norm (GG z) \<noteq> 0" using q0 Gnz by simp
-    show ?thesis
-      unfolding cov using inF[unfolded rq feasible_scale[OF cne]] .
+    have e1: "(SF z ** transpose (SF z)) *v (rotm q (GG z) *v q)
+        = rotm q (GG z) *v (a *v (transpose (rotm q (GG z)) *v (rotm q (GG z) *v q)))"
+      unfolding cov by (metis matrix_vector_mul_assoc)
+    have e2: "transpose (rotm q (GG z)) *v (rotm q (GG z) *v q) = q"
+      by (metis o1 matrix_vector_mul_assoc matrix_vector_mul_lid)
+    have "(SF z ** transpose (SF z)) *v (rotm q (GG z) *v q) = 0"
+      unfolding e1 e2 aq by simp
+    then have "(norm q / norm (GG z)) *\<^sub>R ((SF z ** transpose (SF z)) *v GG z) = 0"
+      unfolding rq by (simp add: matrix_vector_mult_scaleR)
+    then show ?thesis using cne by simp
   qed
   show ?thesis
   proof (rule that[of r SF])
@@ -272,13 +402,13 @@ proof -
     show "r \<le> r0" by (rule rr0)
     show "continuous_on UNIV SF"
       unfolding SF_def by (rule rotSF_cont[OF less_imp_le[OF rpos] q0 okr])
-    show "SF z ** transpose (SF z) \<in> sconstraint k L" for z
-      using feas[of z] feasible_subset_sconstraint by blast
+    show "SF z ** transpose (SF z) \<in> S" for z
+      by (rule inS)
     show "transpose (SF z) *v (q + M *v (closest_point (cball x r) z - x)) = 0"
       for z
     proof -
       have a0: "(SF z ** transpose (SF z)) *v GG z = 0"
-        using feas[of z] unfolding feasible_def by blast
+        by (rule kill0)
       have e1: "(transpose (SF z) *v GG z) \<bullet> (transpose (SF z) *v GG z)
           = (transpose (transpose (SF z)) *v (transpose (SF z) *v GG z)) \<bullet> GG z"
         by (rule inner_transpose_matrix)
@@ -311,6 +441,29 @@ proof -
       then show ?thesis unfolding teq TTx[symmetric] by simp
     qed
   qed
+qed
+
+
+text \<open>The paper's instance, from a feasible rate.\<close>
+
+theorem rotSF_exists:
+  fixes a M :: "real^'n::finite^'n" and q x :: "real^'n"
+    and \<epsilon> r0 :: real
+  assumes aF: "a \<in> feasible k L q" and q0: "q \<noteq> 0"
+    and eps: "0 < \<epsilon>" and r00: "0 < r0"
+  obtains SF :: "real^'n \<Rightarrow> real^'n^'n" and r :: real where
+    "0 < r" and "r \<le> r0"
+    and "continuous_on UNIV SF"
+    and "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and "\<And>z. transpose (SF z)
+          *v (q + M *v (closest_point (cball x r) z - x)) = 0"
+    and "\<And>z. \<bar>trace (M ** (SF z ** transpose (SF z))) - trace (M ** a)\<bar> \<le> \<epsilon>"
+proof -
+  have aS: "a \<in> sconstraint k L" using aF feasible_subset_sconstraint by blast
+  have psda: "psd a" and aq: "a *v q = 0" using aF unfolding feasible_def by blast+
+  show thesis
+    by (rule covariation_rotSF_exists[OF aS psda aq sconstraint_conj q0 eps r00])
+      (assumption | rule that)+
 qed
 
 subsection \<open>Case 1: a nonzero gradient contradicts a failed supersolution
