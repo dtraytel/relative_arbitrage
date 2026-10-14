@@ -32,8 +32,8 @@ text \<open>
     compensated clause, so the expansion is exact and elementary, also at a
     bounded stopping time.  \<open>covariation_val_subsol_quadratic_ball\<close> is the
     subsolution inequality it yields for a quadratic touching on a closed
-    ball, in witness form for the relaxed operator \<open>ell_op_s\<close>: some \<open>b\<close> in
-    the constraint set has \<open>- trace (M ** b) / 2 \<le> 1\<close>.\<close>
+    ball, in witness form for the relaxed operator (no orthogonality to the
+    gradient): some \<open>b\<close> in the constraint set has \<open>- trace (M ** b) / 2 \<le> 1\<close>.\<close>
 section \<open>The DPP capped at an arbitrary \<open>[0,T]\<close>-valued time\<close>
 
 text \<open>The \<open>\<le>\<close> half of the DPP, @{thm [source] covariation_val_cond_time}, needs its
@@ -134,9 +134,6 @@ text \<open>A direction annihilated by the averaged covariation is frozen: the
 text \<open>\<open>trace_mult_commute\<close> is HOL-Analysis's \<open>trace_mul_sym\<close>.\<close>
 
 
-definition ell_op_s :: "nat \<Rightarrow> real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
-  "ell_op_s k L M = Inf ((\<lambda>a. - trace (M ** a) / 2) ` sconstraint k L)"
-
 lemma feasible_subset_sconstraint:
   fixes p :: "real^'n::finite"
   shows "feasible k L p \<subseteq> sconstraint k L"
@@ -159,8 +156,9 @@ text \<open>@{thm [source] covariation_val_attained} supplies the optimizer, at 
 
   The test function here is quadratic and touches globally; turning a
   local touching into a global one is the Crandall--Ishii localisation
-  step, not used here, so \<open>ell_op_s\<close> rather than \<^const>\<open>ell_op\<close> is what
-  comes out.\<close>
+  step, not used here, so the relaxed operator, without the orthogonality
+  constraint, is what comes out; the orthogonality is recovered below
+  (\<open>covariation_val_touch_orth\<close> below).\<close>
 
 
 section \<open>Scalar multiples through the Bochner integral\<close>
@@ -1802,15 +1800,6 @@ proof (rule antisym[OF ell_op_le_covariation_op[OF kn L1]])
 qed
 
 section \<open>Clause (2): the subsolution property\<close>
-
-lemma feasible_trace_le:
-  fixes a :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes a: "a \<in> feasible k L p"
-  shows "trace a \<le> real CARD('n) * L"
-proof -
-  have "a $ i $ i \<le> L" for i using a eigen_ub_diag by (auto simp: feasible_def)
-  then show ?thesis unfolding trace_def using sum_mono[of UNIV "\<lambda>i. a $ i $ i" "\<lambda>_. L"] by simp
-qed
 
 text \<open>The subsolution half of clause (2), for the operator of Eq. (1.9),
   orthogonality constraint included, and for any closed convex set of

@@ -1233,7 +1233,7 @@ text \<open>Definition 3.1(b) for the paper's own value function.  Case 1
   is needed only by Case 2 --- Case 1 derives it from the nonvanishing
   gradient --- and it is faithful to the paper, which has no horizon at
   all.  For a bounded \<open>K\<close> it follows from
-  @{thm [source] exit_val_le_ball_bound}.\<close>
+  @{thm [source] covariation_val_le_ball_bound}.\<close>
 
 theorem covariation_val_supersol_lsc_local:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"

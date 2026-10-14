@@ -21,9 +21,9 @@ section \<open>The clauses of Theorem 1.1 and where they are proved\<close>
 text \<open>With \<open>v = enn2real \<circ> exit_val k L T K\<close>, Theorem 1.1 has five clauses.
 
   \<^item> Finiteness, \<open>exit_val k L T K x < \<top>\<close>: \<open>covariation_val_le_T\<close>, and sharply
-    \<open>exit_val_le_ball_bound\<close>.
-  \<^item> Upper semicontinuity: \<open>Exit_Class_Witness.exit_val_usc_unconditional\<close>.
-  \<^item> The viscosity property of Eq. (1.9): \<open>Value_Function_Subsolution.exit_val_visc_subsol\<close>
+    \<open>covariation_val_le_ball_bound\<close>.
+  \<^item> Upper semicontinuity: \<open>covariation_val_real_usc\<close> below.
+  \<^item> The viscosity property of Eq. (1.9): \<open>Value_Function_Subsolution.exit_val_visc_subsol_any\<close>
     for the subsolution half, with the operator of Eq. (1.9) itself, and
     \<open>Value_Function_Supersolution_Case_2.exit_val_supersol_lsc\<close> for the supersolution half.
   \<^item> The zero boundary condition, in the viscosity sense of

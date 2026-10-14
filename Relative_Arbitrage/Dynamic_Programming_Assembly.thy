@@ -654,14 +654,6 @@ proof -
   then show ?thesis by (subst (asm) ennreal_inj) (use U0 in auto)
 qed
 
-lemma enn2real_paper_v_horizon_cap:
-  fixes K :: "(real^'n::finite) set" and y :: "real^'n"
-  assumes S0: "0 \<le> S" and ST: "S \<le> T" and L1: "1 \<le> L" and Kc: "closed K"
-  shows "enn2real (exit_val k L S K y) = min (enn2real (exit_val k L T K y)) S"
-  unfolding exit_val_eq_covariation_val
-  by (rule enn2real_covariation_val_horizon_cap[OF S0 ST closed_sconstraint sconstraint_convex
-        mat_1_rate_in_sconstraint[OF L1] Kc])
-
 lemma dpp_integrand_measurable_stopping:
   fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"
   assumes T0: "0 < T" and B0: "0 \<le> B"
@@ -873,21 +865,6 @@ proof -
       by (rule Qbnd)
   qed
 qed
-
-theorem exit_val_dpp_ge_const_time:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and P :: "('n pairpath) measure"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
-    and st: "path_stopping_time T \<theta>"
-    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
-    and P: "P \<in> exit_class k L T x"
-    and bnd: "AE \<omega> in P. c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
-        + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-           then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
-  shows "ennreal c \<le> exit_val k L T K x"
-  unfolding exit_val_eq_covariation_val
-  by (rule covariation_val_dpp_ge_const_time[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
-        closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1] Kc st thM
-        P[unfolded exit_class_eq_covariation] bnd[unfolded exit_val_eq_covariation_val]])
 
 subsection \<open>The \<open>\<ge>\<close> half at a random time, reduced to a constant\<close>
 

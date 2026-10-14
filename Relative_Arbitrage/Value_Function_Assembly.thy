@@ -11,7 +11,7 @@ begin
 section \<open>Clause (2): the value function is a viscosity solution\<close>
 
 text \<open>\<open>enn2real \<circ> exit_val k L T K\<close> is a viscosity solution of Eq. (1.9) on
-  \<open>interior K\<close>: an ordinary subsolution (\<open>exit_val_visc_subsol_any\<close>)
+  \<open>interior K\<close>: an ordinary subsolution (@{thm [source] exit_val_visc_subsol_any})
   and, in the enveloped sense of Definition 3.1(b), a supersolution
   (@{thm [source] exit_val_supersol_lsc}), where the lower semicontinuous
   envelope replaces \<open>v\<close> because the plain supersolution property fails
@@ -20,7 +20,7 @@ text \<open>\<open>enn2real \<circ> exit_val k L T K\<close> is a viscosity solu
   stochastic integrals or SDE well-posedness.  The supersolution assumes
   the horizon does not bind on the interior, \<open>v\<^sub>*(x) < T/2\<close>, which for a
   bounded \<open>K\<close> holds automatically once \<open>T\<close> is large enough
-  (@{thm [source] exit_val_le_ball_bound}).\<close>
+  (@{thm [source] covariation_val_le_ball_bound}).\<close>
 
 subsection \<open>The sharp ball lower bound at rate \<open>m - 1\<close>\<close>
 

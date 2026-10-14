@@ -66,9 +66,9 @@ text \<open>Eq. (1.9) takes its infimum over \<open>feasible\<close>, which carr
     \<open>feasible\<close> \<open>k L p\<close> \<open>\<subseteq>\<close> \<open>sconstraint\<close> \<open>k L\<close>
 
   (\<open>suff_volatile_cap_in_sconstraint\<close>), so the infimum over
-  the larger set is smaller: \<open>ell_op_s \<le> ell_op\<close>.  Naming the relaxed
-  operator keeps the missing ingredient --- orthogonality of the optimal
-  direction to the gradient --- visible instead of buried.\<close>
+  the larger set is smaller.  The relaxed infimum, over the whole set,
+  leaves the missing ingredient --- orthogonality of the optimal direction to
+  the gradient --- visible instead of buried.\<close>
 
 definition Yint :: "(real \<Rightarrow> 'b::{polish_space,banach}) \<Rightarrow> real \<Rightarrow> 'b"
   where "Yint a t = set_lebesgue_integral lborel {0..t} a"
@@ -824,7 +824,7 @@ text \<open>The second horn dies here.  Suppose \<open>v\<^sub>*\<close> were co
   supersolution inequality itself fails at such a point, since a
   constant test function would demand \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.  For a
   bounded \<open>K\<close> the hypothesis is discharged by
-  \<open>exit_val_le_ball_bound\<close> once \<open>T\<close> exceeds twice the ball
+  \<open>covariation_val_le_ball_bound\<close> once \<open>T\<close> exceeds twice the ball
   bound.\<close>
 
 lemma path_eval_at_measurable_time:
@@ -2457,7 +2457,7 @@ qed
 subsection \<open>Case 1 for the lower envelope\<close>
 
 text \<open>The touching-point argument at the envelope, for
-  \<open>exit_val_supersol_contradiction_case1_lsc\<close>.  The horizon lemma is
+  \<open>covariation_val_supersol_contradiction_case1_lsc\<close>.  The horizon lemma is
   applied to the envelope, so it is stated for an arbitrary touching
   function with an explicit cap.  The value at the touching point need
   not be attained there, so the construction is run at an approximating

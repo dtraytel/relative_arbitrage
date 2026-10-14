@@ -394,27 +394,6 @@ corollary covariation_class_nonempty:
   shows "covariation_class S T (x :: real^'n) \<noteq> {}"
   using sbmpair_pshift_law_in_covariation_class[OF T S SST, of x] by blast
 
-text \<open>Hence clause (1) of Theorem 1.1 for the paper's value function, under
-  no hypothesis beyond the paper's own standing ones: \<open>0 < T\<close>, \<open>1 \<le> L\<close>
-  (Eq. (1.5)), and \<open>K\<close> closed.  The identity is admissible
-  (@{thm [source] mat_1_in_sconstraint}), so the class is nonempty.\<close>
-
-corollary exit_val_usc_unconditional:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and b :: ennreal
-  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
-    and lt: "exit_val k L T K x < b"
-  shows "eventually (\<lambda>y. exit_val k L T K y < b) (nhds x)"
-proof -
-  have L0: "0 \<le> L" using L by simp
-  have ne: "covariation_class (sconstraint k L) T (0 :: real^'n) \<noteq> {}"
-    using T mat_1_in_sconstraint[OF L]
-    by (intro covariation_class_nonempty[OF _ closed_sconstraint, of _ "mat 1"]) simp_all
-  show ?thesis
-    unfolding exit_val_eq_covariation_val
-    by (rule covariation_val_usc[OF T sconstraint_bounds[OF L0] closed_sconstraint K ne
-          lt[unfolded exit_val_eq_covariation_val]])
-qed
-
 section \<open>Bounds on the value\<close>
 
 text \<open>Lower bounds for the value: every member of the class bounds it
@@ -726,16 +705,7 @@ proof -
 qed
 
 text \<open>For the paper's constraint set the rate is \<open>n - k\<close>
-  (@{thm [source] sconstraint_trace_ge}), which is inequality (3.10).\<close>
-
-theorem exit_val_le_ball_bound:
-  fixes r :: real and x :: "real^'n::finite" and K :: "(real^'n) set"
-  assumes k: "k < CARD('n)" and T: "0 \<le> T" and L: "0 \<le> L"
-    and KB: "K \<subseteq> cball 0 r"
-  shows "exit_val k L T K x
-      \<le> ennreal ((r * r - x \<bullet> x) / real (CARD('n) - k))"
-  unfolding exit_val_eq_covariation_val
-  by (rule covariation_val_le_ball_bound[OF T sconstraint_trace_bounds[OF k L] KB])
+  (@{thm [source] sconstraint_trace_bounds}), which gives inequality (3.10).\<close>
 
 text \<open>Clause (3) on the ball: a member starting on the boundary
   \<open>|x| = r\<close> has exit value \<open>0\<close>, the case \<open>x \<bullet> x = r\<^sup>2\<close> of the
