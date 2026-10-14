@@ -945,7 +945,7 @@ proof (rule ccontr)
   have clS: "closed S" unfolding S_def by (intro closed_Diff clK open_interior)
   have bS: "bounded S" by (rule bounded_subset[OF Kb SK])
   have cpS: "compact S" using bS clS by (simp add: compact_eq_bounded_closed)
-  have neS: "S \<noteq> {}" unfolding S_def by (rule compact_frontier_nonempty[OF cK neK dim])
+  have neS: "S \<noteq> {}" unfolding S_def by (rule compact_frontier_nonempty[OF cK neK])
   have uscg: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> ut y + nw y < c" if "ut z + nw z < c" for c z
     by (rule usc_eps_add[OF uscut uscnw that])
   have gB: "ut y + nw y \<le> 2 * B" for y using utup[of y] nwup[of y] by linarith
