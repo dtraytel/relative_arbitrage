@@ -28,7 +28,7 @@ text \<open>The \<open>\<le>\<close> half, one class member at a time, at an arb
   function \<open>\<theta>\<close> with values in \<open>[0,T]\<close> (no stopping-time property and no
   measurability is needed): the essential infimum of the exit time under
   \<open>P\<close> is below the essential infimum of the DPP integrand under the same
-  \<open>P\<close>.  The conditioning step is @{thm [source] exit_val_cond_time}.\<close>
+  \<open>P\<close>.  The conditioning step is @{thm [source] covariation_val_cond_time}.\<close>
 
 lemma exit_val_dpp_ess_inf_mono_time:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -68,7 +68,10 @@ proof -
   \<comment> \<open>the conditioning statement at the time \<open>\<theta>\<close>\<close>
   have aeS: "AE \<omega> in P. c \<le> \<theta> \<omega>
       + enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))"
-    by (rule exit_val_cond_time[OF T0 L1 Kc P aeT th0 thT])
+    unfolding exit_val_eq_covariation_val
+    by (rule covariation_val_cond_time[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1] Kc
+          P[unfolded exit_class_eq_covariation] aeT th0 thT])
   have aeg: "AE \<omega> in P. ennreal c \<le> ennreal (pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
       + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
          then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0))"

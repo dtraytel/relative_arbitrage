@@ -36,7 +36,7 @@ text \<open>
     the constraint set has \<open>- trace (M ** b) / 2 \<le> 1\<close>.\<close>
 section \<open>The DPP capped at an arbitrary \<open>[0,T]\<close>-valued time\<close>
 
-text \<open>The \<open>\<le>\<close> half of the DPP, @{thm [source] exit_val_cond_time}, needs its
+text \<open>The \<open>\<le>\<close> half of the DPP, @{thm [source] covariation_val_cond_time}, needs its
   random time only to lie in \<open>[0,T]\<close>, so the subsolution argument can use
   the exit time of a ball (\<open>pball_exit\<close>) directly.
 
@@ -62,7 +62,10 @@ theorem exit_val_cond_at_time:
 proof -
   have "AE \<omega> in P. c \<le> \<theta> \<omega>
       + enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))"
-    by (rule exit_val_cond_time[OF T0 L1 Kc P c th0 thT])
+    unfolding exit_val_eq_covariation_val
+    by (rule covariation_val_cond_time[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1] Kc
+          P[unfolded exit_class_eq_covariation] c th0 thT])
   then show ?thesis
   proof (rule eventually_mono)
     fix \<omega> :: "'n pairpath"
