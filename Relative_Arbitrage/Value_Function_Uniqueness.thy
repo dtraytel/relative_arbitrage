@@ -44,8 +44,6 @@ section \<open>Theorem 1.1 assembled\<close>
 text \<open>\<open>exit_val\<close> as a real-valued function: nonnegative, globally bounded, and
   upper semicontinuous in the \<open>\<epsilon>\<close>-form the comparison machinery consumes.\<close>
 
-lemma exit_val_real_nonneg: "0 \<le> enn2real (exit_val k L T K x)"
-  by simp
 
 lemma covariation_val_real_bounded:
   fixes K :: "(real^'n::finite) set"
@@ -118,7 +116,7 @@ theorem exit_val_supersol_bc:
       (lsc_env (\<lambda>z. enn2real (exit_val k L T K z)))"
 proof -
   define v where "v = (\<lambda>z. enn2real (exit_val k L T K z))"
-  have v0: "0 \<le> v y" for y unfolding v_def by (rule exit_val_real_nonneg)
+  have v0: "0 \<le> v y" for y unfolding v_def by (rule enn2real_nonneg)
   have lsc0: "0 \<le> lsc_env v x" for x by (rule lsc_env_ge[OF v0])
   have gate: "interior K \<union> {x \<in> K - interior K. lsc_env v x < 0} = interior K"
   proof
@@ -207,8 +205,8 @@ section \<open>Example 3.1 from the interior lower bound\<close>
 text \<open>Everything of Example 3.1 except the interior lower bound at nonzero
   points.  Four cases: outside the ball the value is \<open>0\<close>, since a path starting
   outside \<open>K\<close> has exit time \<open>0\<close> (\<open>covariation_val_zero_outside\<close>); on the sphere,
-  \<open>exit_val_boundary_zero\<close>; strictly inside and nonzero, the hypothesis against
-  \<open>exit_val_le_ball_bound\<close>; and at the centre by upper semicontinuity, rather
+  \<open>covariation_val_boundary_zero\<close>; strictly inside and nonzero, the hypothesis against
+  \<open>covariation_val_le_ball_bound\<close>; and at the centre by upper semicontinuity, rather
   than by running the tangential field from \<open>0\<close>, where the clamp sits.\<close>
 
 lemma covariation_val_ball_upper:
@@ -230,26 +228,32 @@ proof -
 qed
 
 theorem example_3_1_from_lower:
-  fixes r :: real and x :: "real^'n::finite"
-  assumes kn: "k < CARD('n)" and L1: "1 \<le> L" and T0: "0 < T" and r0: "0 < r"
+  fixes r :: real and x :: "real^'n::finite" and \<sigma> :: "real^'n^'n"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and r0: "0 < r"
     and lower: "\<And>y :: real^'n. norm y < r \<Longrightarrow> y \<noteq> 0 \<Longrightarrow>
-        (r * r - y \<bullet> y) / real (CARD('n) - k)
-          \<le> enn2real (exit_val k L T (cball 0 r) y)"
-  shows "enn2real (exit_val k L T (cball 0 r) x)
-      = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
+        (r * r - y \<bullet> y) / \<theta>
+          \<le> enn2real (covariation_val S T (cball 0 r) y)"
+  shows "enn2real (covariation_val S T (cball 0 r) x)
+      = max ((r * r - x \<bullet> x) / \<theta>) 0"
 proof -
-  have nk0: "0 < real (CARD('n) - k)" using kn by simp
-  have L0: "0 \<le> L" using L1 by simp
+  have nk0: "0 < \<theta>" by (rule th0)
   have T0': "0 \<le> T" using T0 by simp
-  have fin: "exit_val k L T (cball 0 r) y < \<top>" for y
-    unfolding exit_val_eq_covariation_val using covariation_val_neq_top[OF T0'] by (simp add: less_top)
+  have ne: "covariation_class S T (0 :: real^'n) \<noteq> {}"
+    by (rule covariation_class_nonempty[OF T0' Sc SST])
+  have fin: "covariation_val S T (cball 0 r) y < \<top>" for y
+    using covariation_val_neq_top[OF T0'] by (simp add: less_top)
   have Kc: "closed (cball (0 :: real^'n) r)" by simp
   have sq: "y \<bullet> y = norm y * norm y" for y :: "real^'n"
     by (simp add: power2_norm_eq_inner[symmetric] power2_eq_square)
-  have upper: "enn2real (exit_val k L T (cball 0 r) y)
-      \<le> max ((r * r - y \<bullet> y) / real (CARD('n) - k)) 0" for y :: "real^'n"
-    unfolding exit_val_eq_covariation_val
-    by (rule covariation_val_ball_upper[OF T0' sconstraint_trace_bounds[OF kn L0]])
+  have upper: "enn2real (covariation_val S T (cball 0 r) y)
+      \<le> max ((r * r - y \<bullet> y) / \<theta>) 0" for y :: "real^'n"
+    by (rule covariation_val_ball_upper[OF T0' B0 B th0 th])
   consider (out) "r < norm x" | (sph) "norm x = r"
     | (inn) "norm x < r" "x \<noteq> 0" | (ctr) "x = 0"
     by (cases "r < norm x", simp) (cases "norm x = r", simp, cases "x = 0", auto)
@@ -257,64 +261,62 @@ proof -
   proof cases
     case out
     then have "x \<notin> cball (0 :: real^'n) r" by simp
-    then have z: "exit_val k L T (cball 0 r) x = 0"
-      unfolding exit_val_eq_covariation_val by (rule covariation_val_zero_outside[OF T0'])
+    then have z: "covariation_val S T (cball 0 r) x = 0"
+      by (rule covariation_val_zero_outside[OF T0'])
     have "r * r < norm x * norm x"
       by (rule mult_strict_mono) (use out r0 in auto)
-    then have "(r * r - x \<bullet> x) / real (CARD('n) - k) < 0"
+    then have "(r * r - x \<bullet> x) / \<theta> < 0"
       unfolding sq using nk0 by (simp add: divide_neg_pos)
     then show ?thesis unfolding z by simp
   next
     case sph
-    then have z: "exit_val k L T (cball 0 r) x = 0"
-      by (rule exit_val_boundary_zero[OF kn T0 L0])
+    have z: "covariation_val S T (cball 0 r) x = 0"
+      by (rule covariation_val_boundary_zero[OF T0 B0 B th0 th sph])
     have "x \<bullet> x = r * r" unfolding sq sph by (rule refl)
     then show ?thesis unfolding z by simp
   next
     case inn
-    have nn: "0 \<le> (r * r - x \<bullet> x) / real (CARD('n) - k)"
+    have nn: "0 \<le> (r * r - x \<bullet> x) / \<theta>"
     proof -
       have "norm x * norm x \<le> r * r"
         by (rule mult_mono) (use inn(1) r0 in auto)
       then show ?thesis unfolding sq using nk0 by simp
     qed
-    have "(r * r - x \<bullet> x) / real (CARD('n) - k)
-        \<le> enn2real (exit_val k L T (cball 0 r) x)"
+    have "(r * r - x \<bullet> x) / \<theta>
+        \<le> enn2real (covariation_val S T (cball 0 r) x)"
       by (rule lower[OF inn(1) inn(2)])
     with upper[of x] nn show ?thesis by simp
   next
     case ctr
-    text \<open>Abstract the nat subtraction: \<open>linarith\<close> cannot see through
-      \<open>real (CARD('n) - k)\<close>.\<close>
-    define nk where "nk = real (CARD('n) - k)"
-    have nkp: "0 < nk" unfolding nk_def using kn by simp
+    define nk where "nk = \<theta>"
+    have nkp: "0 < nk" unfolding nk_def by (rule th0)
     have lower': "\<And>y :: real^'n. norm y < r \<Longrightarrow> y \<noteq> 0 \<Longrightarrow>
-        (r * r - y \<bullet> y) / nk \<le> enn2real (exit_val k L T (cball 0 r) y)"
+        (r * r - y \<bullet> y) / nk \<le> enn2real (covariation_val S T (cball 0 r) y)"
       unfolding nk_def by (rule lower)
-    have upper': "enn2real (exit_val k L T (cball 0 r) y)
+    have upper': "enn2real (covariation_val S T (cball 0 r) y)
         \<le> max ((r * r - y \<bullet> y) / nk) 0" for y :: "real^'n"
       unfolding nk_def by (rule upper)
     have goalR: "max ((r * r - x \<bullet> x) / nk) 0 = r * r / nk"
       unfolding ctr using nkp r0 by simp
-    have le: "enn2real (exit_val k L T (cball 0 r) x) \<le> r * r / nk"
+    have le: "enn2real (covariation_val S T (cball 0 r) x) \<le> r * r / nk"
       using upper'[of x] goalR by simp
-    have ge: "r * r / nk \<le> enn2real (exit_val k L T (cball 0 r) x)"
+    have ge: "r * r / nk \<le> enn2real (covariation_val S T (cball 0 r) x)"
     proof (rule ccontr)
-      assume "\<not> r * r / nk \<le> enn2real (exit_val k L T (cball 0 r) x)"
-      then have lt0: "enn2real (exit_val k L T (cball 0 r) x) < r * r / nk"
+      assume "\<not> r * r / nk \<le> enn2real (covariation_val S T (cball 0 r) x)"
+      then have lt0: "enn2real (covariation_val S T (cball 0 r) x) < r * r / nk"
         by simp
-      define b where "b = (enn2real (exit_val k L T (cball 0 r) x)
+      define b where "b = (enn2real (covariation_val S T (cball 0 r) x)
           + r * r / nk) / 2"
-      have b2: "2 * b = enn2real (exit_val k L T (cball 0 r) x) + r * r / nk"
+      have b2: "2 * b = enn2real (covariation_val S T (cball 0 r) x) + r * r / nk"
         unfolding b_def by simp
-      have blo: "enn2real (exit_val k L T (cball 0 r) x) < b" using lt0 b2 by linarith
+      have blo: "enn2real (covariation_val S T (cball 0 r) x) < b" using lt0 b2 by linarith
       have bhi: "b < r * r / nk" using lt0 b2 by linarith
-      have "exit_val k L T (cball 0 r) x < ennreal b"
+      have ltb: "covariation_val S T (cball 0 r) x < ennreal b"
         using blo fin[of x] by simp
-      then have "eventually (\<lambda>y. exit_val k L T (cball 0 r) y < ennreal b) (nhds x)"
-        by (rule exit_val_usc_unconditional[OF T0 L1 Kc])
+      have "eventually (\<lambda>y. covariation_val S T (cball 0 r) y < ennreal b) (nhds x)"
+        by (rule covariation_val_usc[OF T0 B0 B D0 D Sc Kc ne ltb])
       then obtain U where opU: "open U" and xU: "x \<in> U"
-        and Uy: "\<And>y. y \<in> U \<Longrightarrow> exit_val k L T (cball 0 r) y < ennreal b"
+        and Uy: "\<And>y. y \<in> U \<Longrightarrow> covariation_val S T (cball 0 r) y < ennreal b"
         unfolding eventually_nhds by blast
       obtain e where e0: "0 < e" and eU: "ball x e \<subseteq> U"
         using opU xU unfolding open_contains_ball by blast
@@ -334,10 +336,10 @@ proof -
         then have "y \<in> ball x e" unfolding s_def using e0 by simp
         then show ?thesis using eU by blast
       qed
-      have vylt: "enn2real (exit_val k L T (cball 0 r) y) < b"
+      have vylt: "enn2real (covariation_val S T (cball 0 r) y) < b"
         using Uy[OF yU] fin[of y]
         by simp
-      have "(r * r - y \<bullet> y) / nk \<le> enn2real (exit_val k L T (cball 0 r) y)"
+      have "(r * r - y \<bullet> y) / nk \<le> enn2real (covariation_val S T (cball 0 r) y)"
         by (rule lower'[OF ylt ynz])
       then have vge: "(r * r - s * s) / nk < b"
         using vylt unfolding sq ny by simp
@@ -370,13 +372,118 @@ text \<open>The interior lower bound holds at the sharp rate \<open>CARD('n) - k
   \<open>y \<noteq> 0\<close> take the \<open>(CARD('n) - k + 1)\<close>-dimensional subspace \<open>V\<close> spanned by an
   orthonormal family whose first member is \<open>y / |y|\<close>
   (@{thm [source] orthonormal_family_containing}), so that \<open>y \<in> V\<close>, and run the
-  subspace-tangential member of @{thm [source] exit_val_ball_lower_sharp} inside
+  subspace-tangential member of @{thm [source] covariation_val_ball_lower_sharp} inside
   \<open>V\<close>.  Its growth rate is \<open>dim V - 1 = CARD('n) - k\<close>, the constant of (3.1).
 
   The hypothesis \<open>r\<^sup>2/(CARD('n) - k) \<le> T\<close> says only that the horizon does not
   bind: the value function of a finite-horizon problem is capped by its horizon
   (@{thm [source] enn2real_paper_v_horizon_cap}), so without it the identity
   would fail at the centre.\<close>
+
+theorem covariation_val_example_3_1:
+  fixes r :: real and x :: "real^'n::finite"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
+    and m2: "2 \<le> m" and mn: "m \<le> CARD('n)"
+    and tan: "\<And>b u. (\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)) \<Longrightarrow>
+      norm u \<le> 1 \<Longrightarrow> projmat b m *v u = u \<Longrightarrow>
+      tanpU (projmat b m) u ** transpose (tanpU (projmat b m) u) \<in> S"
+    and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> real m - 1 \<le> trace a"
+    and r0: "0 < r"
+    and Tbig: "r * r / (real m - 1) \<le> T"
+  shows "enn2real (covariation_val S T (cball 0 r) x)
+      = max ((r * r - x \<bullet> x) / (real m - 1)) 0"
+proof -
+  have m0: "0 < m" using m2 by simp
+  have cn0: "0 < real m - 1"
+  proof -
+    have "(2::real) \<le> real m" using m2 by simp
+    then show ?thesis by linarith
+  qed
+  obtain i :: 'n where True by blast
+  have u0: "axis i (1::real) \<bullet> axis i 1 = 1" by simp
+  obtain bb :: "nat \<Rightarrow> real^'n"
+    where orth0: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> bb i \<bullet> bb j = (if i = j then 1 else 0)"
+    using orthonormal_family_containing[OF u0 mn m0] by blast
+  have SST: "tanpU (projmat bb m) 0 ** transpose (tanpU (projmat bb m) 0) \<in> S"
+    by (rule tan[OF orth0]) simp_all
+  have lower: "(r * r - y \<bullet> y) / (real m - 1) \<le> enn2real (covariation_val S T (cball 0 r) y)"
+    if ylt: "norm y < r" and ynz: "y \<noteq> 0" for y :: "real^'n"
+  proof -
+    have ny0: "0 < norm y" using ynz by simp
+    define x0 where "x0 = (1 / norm y) *\<^sub>R y"
+    have u: "x0 \<bullet> x0 = 1"
+    proof -
+      have "x0 \<bullet> x0 = (1 / norm y) * ((1 / norm y) * (y \<bullet> y))"
+        unfolding x0_def by simp
+      also have "\<dots> = 1" using ny0 by (simp add: dot_square_norm power2_eq_square)
+      finally show ?thesis .
+    qed
+    obtain b :: "nat \<Rightarrow> real^'n" where b0: "b 0 = x0"
+      and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow>
+          b i \<bullet> b j = (if i = j then 1 else 0)"
+      using orthonormal_family_containing[OF u mn m0] by blast
+    have yfix: "projmat b m *v y = y"
+    proof -
+      have yb: "y = norm y *\<^sub>R b 0"
+        unfolding b0 x0_def using ny0 by simp
+      have "projmat b m *v y = projmat b m *v (norm y *\<^sub>R b 0)"
+        by (rule arg_cong[where f = "\<lambda>w. projmat b m *v w", OF yb])
+      also have "\<dots> = norm y *\<^sub>R (projmat b m *v b 0)"
+        by (rule matrix_vector_mult_scaleR)
+      also have "\<dots> = norm y *\<^sub>R b 0"
+        by (simp add: projmat_fix[OF orth m0])
+      also have "\<dots> = y" by (rule yb[symmetric])
+      finally show ?thesis .
+    qed
+    have Kc: "closed (cball (0 :: real^'n) r)" by simp
+    have sub: "cball (0 :: real^'n) r \<subseteq> cball 0 r" by simp
+    have tanb: "\<And>u. norm u \<le> 1 \<Longrightarrow> projmat b m *v u = u \<Longrightarrow>
+        tanpU (projmat b m) u ** transpose (tanpU (projmat b m) u) \<in> S"
+      by (rule tan[OF orth])
+    have bound: "ennreal (min T ((r\<^sup>2 - (norm y)\<^sup>2) / (real m - 1)))
+        \<le> covariation_val S T (cball 0 r) y"
+      by (rule covariation_val_ball_lower_sharp[OF T0 B0 B D0 D Sc Sv tanb Kc sub ynz ylt orth m2 yfix])
+    have sq: "(norm y)\<^sup>2 = y \<bullet> y" by (simp add: dot_square_norm)
+    have rsq: "r\<^sup>2 = r * r" by (simp add: power2_eq_square)
+    have nn: "0 \<le> (r * r - y \<bullet> y) / (real m - 1)"
+    proof -
+      have "norm y * norm y \<le> r * r"
+        by (rule mult_mono) (use ylt r0 in auto)
+      then have "y \<bullet> y \<le> r * r"
+        unfolding sq[symmetric] by (simp add: power2_eq_square)
+      then show ?thesis using cn0 by simp
+    qed
+    have dle: "(r * r - y \<bullet> y) / (real m - 1) \<le> T"
+    proof -
+      have "(r * r - y \<bullet> y) / (real m - 1)
+          \<le> (r * r) / (real m - 1)"
+        using cn0 by (intro divide_right_mono) simp_all
+      then show ?thesis using Tbig by (rule order_trans)  qed
+    have mineq: "min T ((r * r - y \<bullet> y) / (real m - 1))
+        = (r * r - y \<bullet> y) / (real m - 1)"
+      using dle by simp
+    have bound': "ennreal ((r * r - y \<bullet> y) / (real m - 1))
+        \<le> covariation_val S T (cball 0 r) y"
+      using bound unfolding sq rsq mineq .
+    have fin: "covariation_val S T (cball 0 r) y < \<top>"
+      using covariation_val_neq_top[of T] T0 by (simp add: less_top)
+    have "enn2real (ennreal ((r * r - y \<bullet> y) / (real m - 1)))
+        \<le> enn2real (covariation_val S T (cball 0 r) y)"
+      by (rule enn2real_mono[OF bound' fin])
+    then show ?thesis
+      unfolding enn2real_ennreal[OF nn] .
+  qed
+  show ?thesis
+    by (rule example_3_1_from_lower[OF T0 B0 B D0 D Sc SST cn0 th r0 lower])
+qed
+
+text \<open>The paper's set: \<open>m = n - k + 1\<close>, whose tangential rates lie in
+  \<open>sconstraint k L\<close> (@{thm [source] tanpU_sq_sconstraint}) and whose rate
+  \<open>m - 1 = n - k\<close> is the least trace there (@{thm [source] sconstraint_trace_ge}).\<close>
 
 theorem example_3_1:
   fixes r :: real and x :: "real^'n::finite"
@@ -385,77 +492,19 @@ theorem example_3_1:
     and Tbig: "r * r / real (CARD('n) - k) \<le> T"
   shows "enn2real (exit_val k L T (cball 0 r) x)
       = max ((r * r - x \<bullet> x) / real (CARD('n) - k)) 0"
-proof (rule example_3_1_from_lower[OF kn L1 T0 r0])
-  fix y :: "real^'n" assume ylt: "norm y < r" and ynz: "y \<noteq> 0"
+proof -
   define m where "m = CARD('n) - k + 1"
-  have nk0: "0 < real (CARD('n) - k)" using kn by simp
   have m2: "2 \<le> m" unfolding m_def using kn by simp
-  have m0: "0 < m" using m2 by simp
   have mn: "m \<le> CARD('n)" unfolding m_def using k1 kn by simp
   have mk: "CARD('n) - k \<le> m - 1" unfolding m_def by simp
   have cn: "real m - 1 = real (CARD('n) - k)" unfolding m_def by simp
-  have ny0: "0 < norm y" using ynz by simp
-  define x0 where "x0 = (1 / norm y) *\<^sub>R y"
-  have u: "x0 \<bullet> x0 = 1"
-  proof -
-    have "x0 \<bullet> x0 = (1 / norm y) * ((1 / norm y) * (y \<bullet> y))"
-      unfolding x0_def by simp
-    also have "\<dots> = 1" using ny0 by (simp add: dot_square_norm power2_eq_square)
-    finally show ?thesis .
-  qed
-  obtain b :: "nat \<Rightarrow> real^'n" where b0: "b 0 = x0"
-    and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow>
-        b i \<bullet> b j = (if i = j then 1 else 0)"
-    using orthonormal_family_containing[OF u mn m0] by blast
-  have yfix: "projmat b m *v y = y"
-  proof -
-    have yb: "y = norm y *\<^sub>R b 0"
-      unfolding b0 x0_def using ny0 by simp
-    have "projmat b m *v y = projmat b m *v (norm y *\<^sub>R b 0)"
-      by (rule arg_cong[where f = "\<lambda>w. projmat b m *v w", OF yb])
-    also have "\<dots> = norm y *\<^sub>R (projmat b m *v b 0)"
-      by (rule matrix_vector_mult_scaleR)
-    also have "\<dots> = norm y *\<^sub>R b 0"
-      by (simp add: projmat_fix[OF orth m0])
-    also have "\<dots> = y" by (rule yb[symmetric])
-    finally show ?thesis .
-  qed
-  have Kc: "closed (cball (0 :: real^'n) r)" by simp
-  have sub: "cball (0 :: real^'n) r \<subseteq> cball 0 r" by simp
-  have bound: "ennreal (min T ((r\<^sup>2 - (norm y)\<^sup>2) / (real m - 1)))
-      \<le> exit_val k L T (cball 0 r) y"
-    by (rule exit_val_ball_lower_sharp[OF T0 L1 Kc sub ynz ylt orth mk m2 yfix])
-  have sq: "(norm y)\<^sup>2 = y \<bullet> y" by (simp add: dot_square_norm)
-  have rsq: "r\<^sup>2 = r * r" by (simp add: power2_eq_square)
-  have nn: "0 \<le> (r * r - y \<bullet> y) / real (CARD('n) - k)"
-  proof -
-    have "norm y * norm y \<le> r * r"
-      by (rule mult_mono) (use ylt r0 in auto)
-    then have "y \<bullet> y \<le> r * r"
-      unfolding sq[symmetric] by (simp add: power2_eq_square)
-    then show ?thesis using nk0 by simp
-  qed
-  have dle: "(r * r - y \<bullet> y) / real (CARD('n) - k) \<le> T"
-  proof -
-    have "(r * r - y \<bullet> y) / real (CARD('n) - k)
-        \<le> (r * r) / real (CARD('n) - k)"
-      using nk0 by (intro divide_right_mono) simp_all
-    then show ?thesis using Tbig by (rule order_trans)  qed
-  have mineq: "min T ((r * r - y \<bullet> y) / real (CARD('n) - k))
-      = (r * r - y \<bullet> y) / real (CARD('n) - k)"
-    using dle by simp
-  have bound': "ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k))
-      \<le> exit_val k L T (cball 0 r) y"
-    using bound unfolding sq rsq cn mineq .
-  have fin: "exit_val k L T (cball 0 r) y < \<top>"
-    unfolding exit_val_eq_covariation_val using covariation_val_neq_top[of T] T0 by (simp add: less_top)
-  have ntop: "exit_val k L T (cball 0 r) y \<noteq> \<top>" using fin by simp
-  have "enn2real (ennreal ((r * r - y \<bullet> y) / real (CARD('n) - k)))
-      \<le> enn2real (exit_val k L T (cball 0 r) y)"
-    by (rule enn2real_mono[OF bound' fin])
-  then show "(r * r - y \<bullet> y) / real (CARD('n) - k)
-      \<le> enn2real (exit_val k L T (cball 0 r) y)"
-    unfolding enn2real_ennreal[OF nn] .
+  have th: "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> real m - 1 \<le> trace a"
+    unfolding cn by (rule sconstraint_trace_ge[OF kn])
+  have Tbig': "r * r / (real m - 1) \<le> T" unfolding cn by (rule Tbig)
+  show ?thesis
+    unfolding exit_val_eq_covariation_val cn[symmetric]
+    by (rule covariation_val_example_3_1[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint sconstraint_convex m2 mn tanpU_sq_sconstraint[OF _ _ _ mk L1] th r0 Tbig'])
 qed
 
 section \<open>The clauses for the value function of Eq. (1.6)\<close>
@@ -590,7 +639,7 @@ theorem exit_val_supersol_bc_K:
       (lsc_envK K (\<lambda>z. enn2real (exit_val k L T K z)))"
 proof -
   define v where "v = (\<lambda>z :: real^'n. enn2real (exit_val k L T K z))"
-  have v0: "0 \<le> v y" for y unfolding v_def by (rule exit_val_real_nonneg)
+  have v0: "0 \<le> v y" for y unfolding v_def by (rule enn2real_nonneg)
   have gate: "interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0} = interior K"
   proof
     show "interior K \<union> {x \<in> K - interior K. lsc_envK K v x < 0} \<subseteq> interior K"

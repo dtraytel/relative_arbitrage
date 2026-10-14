@@ -139,22 +139,6 @@ proof -
   then show ?thesis unfolding c0_def \<delta>f_def .
 qed
 
-corollary exit_val_ball_lower_sharp:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-    and b :: "nat \<Rightarrow> real^'n" and rB T :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L"
-    and Kc: "closed K" and sub: "cball 0 rB \<subseteq> K"
-    and xnz: "x \<noteq> 0" and xin: "norm x < rB"
-    and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and mk: "CARD('n) - k \<le> m - 1" and m2: "2 \<le> m"
-    and xfix: "projmat b m *v x = x"
-  shows "ennreal (min T ((rB\<^sup>2 - (norm x)\<^sup>2) / (real m - 1)))
-      \<le> exit_val k L T K x"
-  unfolding exit_val_eq_covariation_val
-  by (rule covariation_val_ball_lower_sharp[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
-        closed_sconstraint sconstraint_convex tanpU_sq_sconstraint[OF orth _ _ mk L1] Kc sub xnz xin
-        orth m2 xfix])
-
 (*<*)
 end
 (*>*)
