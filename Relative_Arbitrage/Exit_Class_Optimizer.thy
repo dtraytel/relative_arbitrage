@@ -71,7 +71,7 @@ qed
 
 section \<open>Joint continuity of the shift\<close>
 
-text \<open>After @{thm [source] exit_class_shift_image} the functional
+text \<open>After @{thm [source] covariation_class_shift_image} the functional
   whose supremum is @{term exit_val} is a function of the starting point
   and a member of the fixed class at the origin.  The selection theorem's
   measurability hypothesis --- that the supremum over each closed set be
@@ -258,7 +258,7 @@ proof -
       by (intro measurable_compose[OF _ measurable_ennreal] borel_measurableI_less)
         (simp add: borel_open)
     moreover have "Sup (?g y ` Cs) = ennreal (?f y)" for y
-      by (rule ess_inf_pexit_Sup_eq_vshift[OF T0 CsC False])
+      by (rule ess_inf_pexit_Sup_eq_vshift[OF T0 CsC[unfolded exit_class_eq_covariation] False])
     ultimately show ?thesis by simp
   qed simp
   \<comment> \<open>the selection theorem, and the transfer back to the value function\<close>
@@ -298,11 +298,12 @@ proof -
     qed
   qed
   have shiftmem: "pshift_law T y (s y) \<in> exit_class k L T y" for y
-    using exit_class_pshift[OF T0 sC, of y] by simp
+    using covariation_class_pshift[OF T0 sC[unfolded exit_class_eq_covariation], of y]
+    unfolding exit_class_eq_covariation by simp
   have supeq: "Sup (?g y ` ?C) = exit_val k L T K y" for y
   proof -
     have "exit_class k L T y = pshift_law T y ` ?C"
-      by (rule exit_class_shift_image[OF T0])
+      unfolding exit_class_eq_covariation by (rule covariation_class_shift_image[OF T0])
     then have "(\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))))
           ` exit_class k L T y = ?g y ` ?C"
       by (simp add: image_image)

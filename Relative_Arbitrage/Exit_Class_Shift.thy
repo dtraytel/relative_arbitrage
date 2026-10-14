@@ -32,16 +32,16 @@ section \<open>The shift structure of the class (Larsson--Ruf Prop. 2.2(ii))\<cl
 
 
 
-theorem exit_class_pshift:
+theorem covariation_class_pshift:
   fixes Q :: "('n::finite pairpath) measure" and x x0 :: "real^'n"
-  assumes T: "0 \<le> T" and Q: "Q \<in> exit_class k L T x0"
-  shows "pshift_law T x Q \<in> exit_class k L T (x + x0)"
+  assumes T: "0 \<le> T" and Q: "Q \<in> covariation_class S T x0"
+  shows "pshift_law T x Q \<in> covariation_class S T (x + x0)"
 proof -
   let ?F = "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   let ?cross = "\<lambda>v :: real^'n. (\<chi> i j. x $ i * v $ j + v $ i * x $ j) :: real^'n^'n"
-  have prob: "prob_space Q" by (rule exit_class_prob[OF Q])
+  have prob: "prob_space Q" by (rule covariation_class_prob[OF Q])
   have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF Q])
+    by (rule covariation_class_sets[OF Q])
   have finQ: "finite_measure Q" using prob by (simp add: prob_space_def)
   have SP: "Stochastic_Process.stochastic_process Q (0::real)
       (\<lambda>u \<omega> :: 'n pairpath. \<omega> u)"
@@ -51,12 +51,12 @@ proof -
         [OF SP finQ])
   have minI: "min u T \<in> {0..T}" if "0 \<le> u" for u using that T by simp
   have mX: "martingale Q ?F 0 (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
-    by (rule exit_class_X_martingale[OF Q])
+    by (rule covariation_class_martingale_fst[OF Q])
   interpret MX: martingale Q ?F 0 "\<lambda>u \<omega> :: 'n pairpath. fst (\<omega> (min u T))"
     by (rule mX)
   \<comment> \<open>the two almost-sure clauses\<close>
   have st: "AE \<omega> in Q. fst (\<omega> 0) = x0 \<and> snd (\<omega> 0) = 0"
-    using Q unfolding exit_class_def by blast
+    by (rule covariation_class_start[OF Q])
   have st': "AE \<omega> in pshift_law T x Q. fst (\<omega> 0) = x + x0 \<and> snd (\<omega> 0) = 0"
   proof (rule AE_pshift_law[OF T setsQ])
     show "AE \<omega> in Q. fst (pshift T x \<omega> 0) = x + x0
@@ -69,28 +69,28 @@ proof -
     qed
   qed
   have dq: "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding exit_class_def by blast
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+    by (rule covariation_class_diffquot[OF Q])
   have dq': "AE \<omega> in pshift_law T x Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
   proof (rule AE_pshift_law[OF T setsQ])
     show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
         (1 / (t - s)) *\<^sub>R (snd (pshift T x \<omega> t) - snd (pshift T x \<omega> s))
-          \<in> sconstraint k L"
+          \<in> S"
     proof (rule eventually_mono[OF dq])
       fix \<omega> :: "'n pairpath"
       assume q: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+          (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
       show "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
           (1 / (t - s)) *\<^sub>R (snd (pshift T x \<omega> t) - snd (pshift T x \<omega> s))
-            \<in> sconstraint k L"
+            \<in> S"
       proof (intro allI impI)
         fix s t :: real
         assume s: "0 \<le> s" and stt: "s < t" and tT: "t \<le> T"
         have sI: "s \<in> {0..T}" using s stt tT by simp
         have tI: "t \<in> {0..T}" using s stt tT by simp
         show "(1 / (t - s)) *\<^sub>R (snd (pshift T x \<omega> t) - snd (pshift T x \<omega> s))
-            \<in> sconstraint k L"
+            \<in> S"
           using q s stt tT by (simp add: pshift_snd[OF sI] pshift_snd[OF tI])
       qed
     qed
@@ -111,7 +111,7 @@ proof -
     by (rule martingale_pshift_law[OF T prob setsQ Zm mgX])
   have mC: "martingale Q ?F 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
-    by (rule exit_class_compensated_martingale[OF Q])
+    by (rule covariation_class_martingale_compensated[OF Q])
   interpret MC: martingale Q ?F 0
       "\<lambda>u \<omega> :: 'n pairpath. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T))"
     by (rule mC)
@@ -143,7 +143,7 @@ proof -
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T))) - snd (\<omega> (min u T)))"
     by (rule martingale_pshift_law[OF T prob setsQ ZmC mgC])
   show ?thesis
-    unfolding exit_class_def
+    unfolding covariation_class_def
   proof (intro CollectI conjI)
     show "prob_space (pshift_law T x Q)"
       by (rule prob_space_pshift_law[OF T prob setsQ])
@@ -151,7 +151,7 @@ proof -
     show "AE \<omega> in pshift_law T x Q. fst (\<omega> 0) = x + x0 \<and> snd (\<omega> 0) = 0"
       by (rule st')
     show "AE \<omega> in pshift_law T x Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
       by (rule dq')
     show "martingale (pshift_law T x Q)
         (natural_filtration (pshift_law T x Q) 0 (\<lambda>t \<omega>. \<omega> t)) 0
@@ -163,36 +163,36 @@ proof -
   qed
 qed
 
-text \<open>Larsson--Ruf Prop. 2.2(ii) for the paper's class, in the form the
+text \<open>Larsson--Ruf Prop. 2.2(ii) for the class, in the form the
   value function needs: the class at \<open>x\<close> is the \<open>x\<close>-translate of the class
   at \<open>0\<close>.  The reverse inclusion is the same theorem at \<open>-x\<close>, plus the fact
   that the two push-forwards compose to the identity.\<close>
 
-corollary exit_class_shift_image:
+corollary covariation_class_shift_image:
   fixes x :: "real^'n::finite"
   assumes T: "0 \<le> T"
-  shows "exit_class k L T x = pshift_law T x ` exit_class k L T 0"
+  shows "covariation_class S T x = pshift_law T x ` covariation_class S T 0"
 proof
-  show "pshift_law T x ` exit_class k L T 0 \<subseteq> exit_class k L T x"
+  show "pshift_law T x ` covariation_class S T 0 \<subseteq> covariation_class S T x"
   proof
     fix R :: "('n pairpath) measure"
-    assume "R \<in> pshift_law T x ` exit_class k L T 0"
-    then obtain Q0 where Q0: "Q0 \<in> exit_class k L T 0"
+    assume "R \<in> pshift_law T x ` covariation_class S T 0"
+    then obtain Q0 where Q0: "Q0 \<in> covariation_class S T 0"
       and R: "R = pshift_law T x Q0" by blast
-    have "pshift_law T x Q0 \<in> exit_class k L T (x + 0)"
-      by (rule exit_class_pshift[OF T Q0])
-    then show "R \<in> exit_class k L T x" using R by simp
+    have "pshift_law T x Q0 \<in> covariation_class S T (x + 0)"
+      by (rule covariation_class_pshift[OF T Q0])
+    then show "R \<in> covariation_class S T x" using R by simp
   qed
-  show "exit_class k L T x \<subseteq> pshift_law T x ` exit_class k L T 0"
+  show "covariation_class S T x \<subseteq> pshift_law T x ` covariation_class S T 0"
   proof
     fix Q :: "('n pairpath) measure"
-    assume Q: "Q \<in> exit_class k L T x"
+    assume Q: "Q \<in> covariation_class S T x"
     let ?B = "(path_borel T :: ('n pairpath) measure)"
-    have setsQ: "sets Q = sets ?B" by (rule exit_class_sets[OF Q])
+    have setsQ: "sets Q = sets ?B" by (rule covariation_class_sets[OF Q])
     have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
       by (rule space_of_path_sets[OF setsQ])
-    have mem0: "pshift_law T (- x) Q \<in> exit_class k L T 0"
-      using exit_class_pshift[OF T Q, of "- x"] by simp
+    have mem0: "pshift_law T (- x) Q \<in> covariation_class S T 0"
+      using covariation_class_pshift[OF T Q, of "- x"] by simp
     have shm: "pshift T (- x) \<in> Q \<rightarrow>\<^sub>M ?B"
       using pshift_measurable[OF T] measurable_cong_sets[OF setsQ refl] by blast
     have shm2: "pshift T x \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule pshift_measurable[OF T])
@@ -211,7 +211,7 @@ proof
     qed
     also have "\<dots> = Q" by (rule distr_id2[OF setsQ[symmetric]])
     finally have "pshift_law T x (pshift_law T (- x) Q) = Q" .
-    with mem0 show "Q \<in> pshift_law T x ` exit_class k L T 0" by force
+    with mem0 show "Q \<in> pshift_law T x ` covariation_class S T 0" by force
   qed
 qed
 
@@ -225,7 +225,7 @@ text \<open>On any nonempty part \<open>Cs\<close> of the class at the origin, t
 
 lemma ess_inf_pexit_Sup_eq_vshift:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  assumes T: "0 \<le> T" and Cs: "Cs \<subseteq> exit_class k L T (0 :: real^'n)"
+  assumes T: "0 \<le> T" and Cs: "Cs \<subseteq> covariation_class S T (0 :: real^'n)"
     and ne: "Cs \<noteq> {}"
   shows "Sup ((\<lambda>Q. ess_inf_time (pshift_law T x Q) (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) ` Cs)
       = ennreal (Sup (vshift T {p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K} (x, 0) ` Cs))"
@@ -233,9 +233,9 @@ proof -
   let ?A = "{p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K}"
   let ?g = "\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t))"
   have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)" if "Q \<in> Cs" for Q
-    using that Cs by (intro exit_class_sets) auto
+    using that Cs by (intro covariation_class_sets) auto
   have probQ: "prob_space Q" if "Q \<in> Cs" for Q :: "('n pairpath) measure"
-    using that Cs by (intro exit_class_prob) auto
+    using that Cs by (intro covariation_class_prob) auto
   have key: "ess_inf_time (pshift_law T x Q) ?g = ennreal (vshift T ?A (x, 0) Q)"
     if Q: "Q \<in> Cs" for Q
   proof -
@@ -267,36 +267,41 @@ proof -
   finally show ?thesis .
 qed
 
-theorem exit_val_eq_vshift_sup:
+theorem covariation_val_eq_vshift_sup:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
   \<comment> \<open>the \<open>0\<close> MUST be annotated: without it the class in the assumption
       elaborates at a fresh type variable and \<open>rule ne\<close> silently fails.\<close>
-  assumes T: "0 \<le> T" and ne: "exit_class k L T (0 :: real^'n) \<noteq> {}"
-  shows "exit_val k L T K x
+  assumes T: "0 \<le> T" and ne: "covariation_class S T (0 :: real^'n) \<noteq> {}"
+  shows "covariation_val S T K x
       = ennreal (Sup (vshift T {p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K} (x, 0)
-          ` exit_class k L T 0))"
+          ` covariation_class S T 0))"
   using ess_inf_pexit_Sup_eq_vshift[OF T order_refl ne, of x K]
-  unfolding exit_val_def exit_class_shift_image[OF T, of k L x] by (simp add: image_image)
+  unfolding covariation_val_def covariation_class_shift_image[OF T, of S x] by (simp add: image_image)
 
-subsection \<open>Clause (1) of Theorem 1.1, for the paper's own value function\<close>
+subsection \<open>Upper semicontinuity of the value\<close>
 
 text \<open>\<open>exit_val\<close> is Eq. (1.6): the supremum, over the class (1.7) started at
-  \<open>x\<close>, of the essential infimum of the exit time from \<open>K\<close>.  Upper
-  semicontinuity in \<open>x\<close> is exactly clause (1).  The class is sequentially
+  \<open>x\<close>, of the essential infimum of the exit time from \<open>K\<close>, i.e.
+  \<open>covariation_val\<close> at \<open>sconstraint k L\<close>.  Upper semicontinuity in \<open>x\<close> is
+  exactly clause (1), and holds for any closed \<open>S\<close> with the two bounds.  The class is sequentially
   compact and shift-equivariant (Prop. 2.2(ii)), so Berge applies through
   \<open>Path_Exit_Times.vshift_sup_usc_of_seq_compact\<close>, whose remaining
   hypothesis, nonemptiness of the class at \<open>0\<close>, is supplied by a separate
   construction.\<close>
 
-theorem exit_val_usc:
+theorem covariation_val_usc:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and b :: ennreal
-  assumes T: "0 < T" and L: "0 \<le> L" and K: "closed K"
-    and ne: "exit_class k L T (0 :: real^'n) \<noteq> {}"
-    and lt: "exit_val k L T K x < b"
-  shows "eventually (\<lambda>y. exit_val k L T K y < b) (nhds x)"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and S: "closed S" and K: "closed K"
+    and ne: "covariation_class S T (0 :: real^'n) \<noteq> {}"
+    and lt: "covariation_val S T K x < b"
+  shows "eventually (\<lambda>y. covariation_val S T K y < b) (nhds x)"
 proof -
   let ?A = "{p :: (real^'n) \<times> (real^'n^'n). fst p \<in> - K}"
-  let ?C = "exit_class k L T (0 :: real^'n)"
+  let ?C = "covariation_class S T (0 :: real^'n)"
   let ?S = "\<lambda>y :: real^'n. Sup (vshift T ?A (y, 0) ` ?C)"
   let ?e = "\<lambda>y :: real^'n. (y, 0 :: real^'n^'n)"
   have T0: "0 \<le> T" using T by simp
@@ -306,9 +311,9 @@ proof -
     show ?thesis unfolding e by (rule open_vimage_fst[OF open_Compl[OF K]])
   qed
   have probQ: "prob_space Q" if "Q \<in> ?C" for Q :: "('n pairpath) measure"
-    by (rule exit_class_prob[OF that])
-  have eqv: "exit_val k L T K y = ennreal (?S y)" for y :: "real^'n"
-    by (rule exit_val_eq_vshift_sup[OF T0 ne])
+    by (rule covariation_class_prob[OF that])
+  have eqv: "covariation_val S T K y = ennreal (?S y)" for y :: "real^'n"
+    by (rule covariation_val_eq_vshift_sup[OF T0 ne])
   have bdd: "bdd_above (vshift T ?A (y, 0) ` ?C)" for y :: "real^'n"
     by (rule bdd_aboveI[of _ T]) (auto intro: vshift_le[OF T0] probQ)
   have S0: "0 \<le> ?S y" for y :: "real^'n"
@@ -323,7 +328,7 @@ proof -
   proof (rule vshift_sup_usc_of_seq_compact[OF T0 Aopen])
     show "?C \<noteq> {}" by (rule ne)
     show "sets Q = sets (path_borel T :: ('n pairpath) measure)" if "Q \<in> ?C" for Q
-      by (rule exit_class_sets[OF that])
+      by (rule covariation_class_sets[OF that])
     show "prob_space Q" if "Q \<in> ?C" for Q by (rule probQ[OF that])
     show "\<exists>Lm r. Lm \<in> ?C \<and> strict_mono r \<and> weak_conv_on (\<sigma> \<circ> r) Lm sequentially
         (mtopology_of (path_metric T :: ('n pairpath) metric))"
@@ -332,9 +337,7 @@ proof -
       have mem: "\<sigma> m \<in> ?C" for m using that by auto
       have ex: "\<exists>a Q. strict_mono a \<and> Q \<in> ?C \<and> weak_conv_on (\<sigma> \<circ> a) Q sequentially
           (mtopology_of (path_metric T :: ('n pairpath) metric))"
-        unfolding exit_class_eq_covariation
-        by (rule covariation_class_convergent_subsequence[OF T sconstraint_bounds[OF L]
-            closed_sconstraint mem[unfolded exit_class_eq_covariation]])
+        by (rule covariation_class_convergent_subsequence[OF T B0 B D0 D S mem])
       obtain a where ea: "\<exists>Q. strict_mono a \<and> Q \<in> ?C
           \<and> weak_conv_on (\<sigma> \<circ> a) Q sequentially
               (mtopology_of (path_metric T :: ('n pairpath) metric))"
@@ -377,7 +380,7 @@ proof -
     then have "ennreal (?S y) < ennreal c"
       using S0[of y] by (simp add: ennreal_less_iff)
     also have "\<dots> \<le> b" by (rule cb)
-    finally show "exit_val k L T K y < b" using eqv[of y] by simp
+    finally show "covariation_val S T K y < b" using eqv[of y] by simp
   qed
 qed
 

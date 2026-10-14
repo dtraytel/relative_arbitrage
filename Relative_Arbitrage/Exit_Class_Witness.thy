@@ -397,8 +397,9 @@ proof -
   have "pshift_law T v (pair_law_of T (sbmpair S T)
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure))
     \<in> exit_class k L T (v + 0)"
-    by (rule exit_class_pshift[OF T
-          sbmpair_law_in_paper_pair_class[OF T L SST]])
+    unfolding exit_class_eq_covariation
+    by (rule covariation_class_pshift[OF T
+          sbmpair_law_in_paper_pair_class[OF T L SST, unfolded exit_class_eq_covariation]])
   then show ?thesis by simp
 qed
 
@@ -432,10 +433,14 @@ corollary exit_val_usc_unconditional:
   assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
     and lt: "exit_val k L T K x < b"
   shows "eventually (\<lambda>y. exit_val k L T K y < b) (nhds x)"
-proof (rule exit_val_usc[OF T _ K _ lt])
-  show "0 \<le> L" using L by simp
-  show "exit_class k L T (0 :: real^'n) \<noteq> {}"
-    using T L by (intro exit_class_nonempty) simp_all
+proof -
+  have L0: "0 \<le> L" using L by simp
+  have ne: "covariation_class (sconstraint k L) T (0 :: real^'n) \<noteq> {}"
+    using T L by (intro exit_class_nonempty[unfolded exit_class_eq_covariation]) simp_all
+  show ?thesis
+    unfolding exit_val_eq_covariation_val
+    by (rule covariation_val_usc[OF T sconstraint_bounds[OF L0] closed_sconstraint K ne
+          lt[unfolded exit_val_eq_covariation_val]])
 qed
 
 section \<open>Consolidating the clauses onto the paper's value function\<close>
