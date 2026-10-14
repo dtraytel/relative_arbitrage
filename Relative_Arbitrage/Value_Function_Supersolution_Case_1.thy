@@ -327,7 +327,7 @@ text \<open>If the supersolution inequality fails at a touching point with
   least \<open>v(x) + mg\<close> almost surely -- the exit branch is paid by
   \<open>\<gamma> rr\<^sup>2\<close>, the no-exit branch by \<open>cc \<eta> / 2\<close>, and the horizon cap by
   \<open>T - v(x) > 0\<close>, which a nonzero gradient forces.  That contradicts
-  @{thm [source] exit_val_dpp_sup_ge_time}.\<close>
+  @{thm [source] covariation_val_dpp_sup_ge_time}.\<close>
 
 subsection \<open>Case 1, packaged for the envelope form\<close>
 

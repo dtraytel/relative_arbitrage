@@ -17,16 +17,16 @@ theorem aglue_law_pexit_ge:
   assumes T0: "0 \<le> T" and PQ: "prob_space Q"
     and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
-    and Kc: "closed K" and L1: "1 \<le> L"
+    and Kc: "closed K"
     and st: "path_stopping_time T \<theta>"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qbnd: "AE p' in Q. c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
         + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
-           then enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
+           then enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
     and Kfr: "\<And>p'. p' \<in> space Q
       \<Longrightarrow> AE w in \<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0"
     and Kval: "\<And>p'. p' \<in> space Q \<Longrightarrow> AE w in \<kappa> p'.
-        enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p'))))
+        enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p'))))
           \<le> pexit (T - \<theta> p') K
               (\<lambda>u. fst (p' (\<theta> p')) + fst (prebase (\<theta> p') T w u))"
   shows "AE \<omega> in aglue_law T \<kappa> Q. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
@@ -45,18 +45,17 @@ proof -
     if sp: "p' \<in> space Q" and idem: "pstopped T \<theta> p' = p'"
       and bnd: "c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
         + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
-           then enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
+           then enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
     for p'
   proof -
     let ?r = "\<theta> p'"
     let ?y = "fst (p' ?r)"
-    let ?c = "enn2real (exit_val k L (T - ?r) K ?y)"
+    let ?c = "enn2real (covariation_val S (T - ?r) K ?y)"
     have r0: "0 \<le> ?r" by (rule th0)
     have rT: "?r \<le> T" by (rule thT)
     have Tr: "0 \<le> T - ?r" using rT by simp
     have c0: "0 \<le> ?c" by simp
-    have cle: "?c \<le> T - ?r" unfolding exit_val_eq_covariation_val
-      by (rule enn2real_leI[OF Tr covariation_val_le_T[OF Tr]])
+    have cle: "?c \<le> T - ?r" by (rule enn2real_leI[OF Tr covariation_val_le_T[OF Tr]])
     have stop: "p' t = p' ?r" if t: "t \<in> {0..T}" and rt: "?r \<le> t" for t
     proof -
       have "p' t = pstopped T \<theta> p' t" unfolding idem ..
@@ -115,12 +114,12 @@ lemma selector_value_AE:
     and val: "ess_inf_time (pshift_law (T - s) y
           (distr \<nu> ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)))
           (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t)))
-        = exit_val k L (T - s) K y"
-  shows "AE w in \<nu>. enn2real (exit_val k L (T - s) K y)
+        = covariation_val S (T - s) K y"
+  shows "AE w in \<nu>. enn2real (covariation_val S (T - s) K y)
       \<le> pexit (T - s) K (\<lambda>u. y + fst (prebase s T w u))"
 proof -
   let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
-  let ?v = "enn2real (exit_val k L (T - s) K y)"
+  let ?v = "enn2real (covariation_val S (T - s) K y)"
   have Ts: "0 \<le> T - s" using sT by simp
   have reb: "prebase s T \<in> \<nu> \<rightarrow>\<^sub>M ?Bs"
     unfolding measurable_cong_sets[OF setsnu refl]
@@ -133,8 +132,7 @@ proof -
   have mset: "{\<omega> \<in> space ?Bs. ?v \<le> pexit (T - s) K (\<lambda>t. y + fst (\<omega> t))}
       \<in> sets ?Bs" using sh by measurable
   have "AE \<omega> in distr \<nu> ?Bs (prebase s T). ?v \<le> pexit (T - s) K (\<lambda>t. y + fst (\<omega> t))"
-    by (rule covariation_val_le_pexit_AE[OF Ts _ val[unfolded exit_val_eq_covariation_val],
-          folded exit_val_eq_covariation_val]) simp
+    by (rule covariation_val_le_pexit_AE[OF Ts _ val]) simp
   then show ?thesis unfolding AE_distr_iff[OF reb mset] .
 qed
 
@@ -191,16 +189,20 @@ text \<open>Every kernel hypothesis of @{thm [source] covariation_class_aglue} i
   @{thm [source] pdelclass_comp_norm_mean_le}.  What remains as a
   hypothesis concerns the past factor alone.\<close>
 
-theorem exit_class_aglue_selector:
+theorem covariation_class_aglue_selector:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and PQ: "prob_space Q"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and PQ: "prob_space Q"
     and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
-        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
     and QH: "\<And>e. horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. fst (p' (min u T)) $ e) T"
@@ -211,25 +213,24 @@ theorem exit_class_aglue_selector:
     and QXint: "\<And>u. 0 \<le> u \<Longrightarrow> integrable Q (\<lambda>p'. fst (p' (min u T)))"
     and QCint: "\<And>u. 0 \<le> u \<Longrightarrow> integrable Q
         (\<lambda>p'. outerp (fst (p' (min u T))) - snd (p' (min u T)))"
-    and Sc: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass k L T s"
+    and SelC: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass S T s"
     and Sm: "Sel \<in> (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)
         \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
-  shows "aglue_law T (selker Sel \<theta>) Q \<in> exit_class k L T x"
+  shows "aglue_law T (selker Sel \<theta>) Q \<in> covariation_class S T x"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?\<kappa> = "selker Sel \<theta>"
-  let ?CX = "1 + real CARD('n) * (real CARD('n) * L * T)"
-  let ?CC = "real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
+  let ?CX = "1 + real CARD('n) * (B * T)"
+  let ?CC = "real CARD('n) * (B * T) + B * T"
   have T0': "0 \<le> T" using T0 by simp
-  have L0: "0 \<le> L" using L1 by simp
   have th0: "0 \<le> \<theta> p'" for p' :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> p' \<le> T" for p' :: "'n pairpath"
     by (rule path_stopping_time_le[OF st])
   have Kp: "?\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra ?B"
     by (rule selker_measurable[OF T0' setsQ st thM Sm])
-  have Kmem: "?\<kappa> p' \<in> pdelclass k L T (\<theta> p')" for p'
-    unfolding selker_def by (rule Sc[OF th0 thT])
+  have Kmem: "?\<kappa> p' \<in> pdelclass S T (\<theta> p')" for p'
+    unfolding selker_def by (rule SelC[OF th0 thT])
   have tm: "min u T \<in> {0..T}" if "0 \<le> u" for u using that T0' by simp
   interpret PQ': prob_space Q by (rule PQ)
 
@@ -237,8 +238,8 @@ proof -
   have Kfr: "AE w in ?\<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0" for p'
     by (rule pdelclass_frozen[OF th0 thT Kmem])
   have Kcov: "AE w in ?\<kappa> p'. \<forall>a b. \<theta> p' \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T
-      \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L" for p'
-    by (rule pdelclass_diffquot[OF th0 thT Kmem])
+      \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> S" for p'
+    by (rule pdelclass_diffquot[OF Sc th0 thT Kmem])
   have KmgX: "martingale (?\<kappa> p') (natural_filtration (?\<kappa> p') 0 (\<lambda>v w. w v)) 0
       (\<lambda>u w. fst (w (min u T)))" for p'
     by (rule pdelclass_X_martingale[OF th0 thT Kmem])
@@ -252,10 +253,10 @@ proof -
     if u: "0 \<le> u" for p' u by (rule martingale.integrable[OF KmgC u])
   have KXbnd: "(\<integral>w. norm (fst (w (min u T))) \<partial>(?\<kappa> p')) \<le> ?CX"
     if u: "0 \<le> u" for p' u
-    by (rule pdelclass_norm_mean_le[OF L0 th0 thT Kmem tm[OF u]])
+    by (rule pdelclass_norm_mean_le[OF B0 B th0 thT Kmem tm[OF u]])
   have KCbnd: "(\<integral>w. norm (outerp (fst (w (min u T))) - snd (w (min u T)))
       \<partial>(?\<kappa> p')) \<le> ?CC" if u: "0 \<le> u" for p' u
-    by (rule pdelclass_comp_norm_mean_le[OF L0 th0 thT Kmem tm[OF u]])
+    by (rule pdelclass_comp_norm_mean_le[OF B0 B th0 thT Kmem tm[OF u]])
 
   \<comment> \<open>\<open>RXint\<close> and \<open>RCint\<close>\<close>
   have RXint: "integrable (aglue_law T ?\<kappa> Q) (\<lambda>\<omega>. fst (\<omega> (min u T)))"
@@ -487,9 +488,8 @@ proof -
       and u: "0 \<le> u" and uv: "u \<le> v" and "v \<le> T" for p' C u v c d
     by (rule pdelclass_comp_increment[OF th0 thT Kmem C u uv])
   show ?thesis
-    unfolding exit_class_eq_covariation
     by (rule covariation_class_aglue
-        [OF T0 closed_sconstraint sconstraint_convex PQ setsQ Kp st thM Q0 Qst Qcov QH QHC Qcont Kfr Kcov
+        [OF T0 Sc Sv PQ setsQ Kp st thM Q0 Qst Qcov QH QHC Qcont Kfr Kcov
           Kmean KmeanC Kint KintC Kinc KincC RXint RCint
           msecX msecC gintX gintC])
 qed
@@ -498,22 +498,27 @@ section \<open>The \<open>\<ge>\<close> half at a stopping time\<close>
 
 text \<open>Assembly.  The competitor is the additive glue of the stopped past and
   the selector's continuation; it lies in the class by
-  @{thm [source] exit_class_aglue_selector}, its exit time dominates
+  @{thm [source] covariation_class_aglue_selector}, its exit time dominates
   \<open>c\<close> by @{thm [source] aglue_law_pexit_ge}, and the value function
   dominates the essential infimum of any class member's exit time by
   definition.\<close>
 
-theorem exit_val_ge_of_stopped_bound:
+theorem covariation_val_ge_of_stopped_bound:
   fixes Q :: "('n::finite pairpath) measure" and K :: "(real^'n) set"
-    and x :: "real^'n"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K" and PQ: "prob_space Q"
+    and x :: "real^'n" and \<sigma> :: "real^'n^'n"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and Kc: "closed K" and PQ: "prob_space Q"
     and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Q0: "AE p' in Q. fst (p' 0) = x \<and> snd (p' 0) = 0"
     and Qst: "AE p' in Q. pstopped T \<theta> p' = p'"
     and Qcov: "AE p' in Q. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p'
-        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+        \<longrightarrow> (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
     and QH: "\<And>e. horizon_sq_int_martingale Q
         (natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. fst (p' (min u T)) $ e) T"
@@ -523,8 +528,8 @@ theorem exit_val_ge_of_stopped_bound:
     and Qcont: "\<And>p'. p' \<in> space Q \<Longrightarrow> continuous_on {0..T} p'"
     and Qbnd: "AE p' in Q. c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
         + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
-           then enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
-  shows "ennreal c \<le> exit_val k L T K x"
+           then enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
+  shows "ennreal c \<le> covariation_val S T K x"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have T0': "0 \<le> T" using T0 by simp
@@ -535,12 +540,12 @@ proof -
   obtain Sel where
     Sm: "Sel \<in> (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)
         \<rightarrow>\<^sub>M prob_algebra ?B"
-    and Sc: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass k L T s"
-    and Sv: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow>
+    and SelC: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass S T s"
+    and SelV: "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow>
         ess_inf_time (pshift_law (T - s) y
             (distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)))
-          (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t))) = exit_val k L (T - s) K y"
-    by (rule exit_val_measurable_selector_horizon[where k = k, OF T0 L1 Kc]) blast
+          (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t))) = covariation_val S (T - s) K y"
+    by (rule covariation_val_measurable_selector_horizon[OF T0 B0 B D0 D Sc Sv SST Kc]) blast+
   let ?\<kappa> = "selker Sel \<theta>"
   let ?R = "aglue_law T ?\<kappa> Q"
   interpret PQ': prob_space Q by (rule PQ)
@@ -579,37 +584,36 @@ proof -
   qed
 
   \<comment> \<open>the competitor is in the class\<close>
-  have Rmem: "?R \<in> exit_class k L T x"
-    by (rule exit_class_aglue_selector
-        [OF T0 L1 PQ setsQ st thM Q0 Qst Qcov QH QHC Qcont QXint QCint Sc Sm])
+  have Rmem: "?R \<in> covariation_class S T x"
+    by (rule covariation_class_aglue_selector
+        [OF T0 B0 B D0 D Sc Sv PQ setsQ st thM Q0 Qst Qcov QH QHC Qcont QXint QCint SelC Sm])
 
   \<comment> \<open>and its exit time dominates \<open>c\<close>\<close>
   have Kp: "?\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra ?B"
     by (rule selker_measurable[OF T0' setsQ st thM Sm])
   have Kfr: "AE w in ?\<kappa> p'. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> \<theta> p' \<longrightarrow> w u = 0" for p'
     unfolding selker_def
-    by (rule pdelclass_frozen[OF th0 thT Sc[OF th0 thT]])
+    by (rule pdelclass_frozen[OF th0 thT SelC[OF th0 thT]])
   have Kval: "AE w in ?\<kappa> p'.
-      enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p'))))
+      enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p'))))
         \<le> pexit (T - \<theta> p') K
             (\<lambda>u. fst (p' (\<theta> p')) + fst (prebase (\<theta> p') T w u))" for p'
   proof -
     let ?s = "\<theta> p'"  let ?y = "fst (p' ?s)"
-    have m: "Sel (?s, ?y) \<in> pdelclass k L T ?s" by (rule Sc[OF th0 thT])
+    have m: "Sel (?s, ?y) \<in> pdelclass S T ?s" by (rule SelC[OF th0 thT])
     show ?thesis
       unfolding selker_def
       by (rule selector_value_AE[OF th0 thT Kc
             pdelclass_prob(1)[OF th0 thT m] pdelclass_prob(2)[OF th0 thT m]
-            Sv[OF th0 thT]])
+            SelV[OF th0 thT]])
   qed
   have Rbnd: "AE \<omega> in ?R. c \<le> pexit T K (\<lambda>t. fst (\<omega> t))"
     by (rule aglue_law_pexit_ge
-        [of T Q ?\<kappa> K, OF T0' PQ setsQ Kp Kc L1 st Qst Qbnd Kfr Kval])
+        [of T Q ?\<kappa> K, OF T0' PQ setsQ Kp Kc st Qst Qbnd Kfr Kval])
 
   \<comment> \<open>hence \<open>c\<close> is below the value function\<close>
   show ?thesis
-    unfolding exit_val_eq_covariation_val
-    by (rule covariation_val_ge_of_AE[OF Rmem[unfolded exit_class_eq_covariation] Rbnd])
+    by (rule covariation_val_ge_of_AE[OF Rmem Rbnd])
 qed
 
 subsection \<open>Transporting the bound from the law to its stopped version\<close>
@@ -620,44 +624,58 @@ text \<open>The DPP integrand reads the path only up to \<open>\<theta>\<close>,
   are handled by the same device: a quantity at the random horizon \<open>\<theta>\<close> is
   the quantity at the fixed horizon \<open>T\<close>, capped.  For the exit time that
   is @{thm [source] pexit_min_horizon}; for the value function it is
-  @{thm [source] exit_val_horizon_cap}, which is what makes \<open>exit_val\<close> at a
+  @{thm [source] covariation_val_horizon_cap}, which is what makes the value at a
   varying horizon measurable without any joint-measurability theorem.\<close>
+
+lemma enn2real_covariation_val_horizon_cap:
+  fixes K :: "(real^'n::finite) set" and y :: "real^'n" and \<sigma> :: "real^'n^'n"
+  assumes U0: "0 \<le> U" and UT: "U \<le> T" and Sc: "closed S" and Sv: "convex S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S" and Kc: "closed K"
+  shows "enn2real (covariation_val S U K y) = min (enn2real (covariation_val S T K y)) U"
+proof -
+  have T0: "0 \<le> T" using U0 UT by simp
+  have a: "ennreal (enn2real (covariation_val S U K y)) = covariation_val S U K y"
+    using covariation_val_neq_top[OF U0, of S K y]
+    by (simp add: less_top)
+  have b: "ennreal (min (enn2real (covariation_val S T K y)) U)
+      = min (covariation_val S T K y) (ennreal U)"
+  proof -
+    have "ennreal (min (enn2real (covariation_val S T K y)) U)
+        = min (ennreal (enn2real (covariation_val S T K y))) (ennreal U)"
+      using U0 by (simp add: min_ennreal)
+    also have "\<dots> = min (covariation_val S T K y) (ennreal U)"
+      using covariation_val_neq_top[OF T0, of S K y]
+      by (simp add: less_top)
+    finally show ?thesis .
+  qed
+  have "ennreal (enn2real (covariation_val S U K y))
+      = ennreal (min (enn2real (covariation_val S T K y)) U)"
+    unfolding a b by (rule covariation_val_horizon_cap[OF U0 UT Sc Sv SST Kc])
+  then show ?thesis by (subst (asm) ennreal_inj) (use U0 in auto)
+qed
 
 lemma enn2real_paper_v_horizon_cap:
   fixes K :: "(real^'n::finite) set" and y :: "real^'n"
   assumes S0: "0 \<le> S" and ST: "S \<le> T" and L1: "1 \<le> L" and Kc: "closed K"
   shows "enn2real (exit_val k L S K y) = min (enn2real (exit_val k L T K y)) S"
-proof -
-  have T0: "0 \<le> T" using S0 ST by simp
-  have a: "ennreal (enn2real (exit_val k L S K y)) = exit_val k L S K y"
-    using covariation_val_neq_top[OF S0, of "sconstraint k L" K y, folded exit_val_eq_covariation_val]
-    by (simp add: less_top)
-  have b: "ennreal (min (enn2real (exit_val k L T K y)) S)
-      = min (exit_val k L T K y) (ennreal S)"
-  proof -
-    have "ennreal (min (enn2real (exit_val k L T K y)) S)
-        = min (ennreal (enn2real (exit_val k L T K y))) (ennreal S)"
-      using S0 by (simp add: min_ennreal)
-    also have "\<dots> = min (exit_val k L T K y) (ennreal S)"
-      using covariation_val_neq_top[OF T0, of "sconstraint k L" K y, folded exit_val_eq_covariation_val]
-      by (simp add: less_top)
-    finally show ?thesis .
-  qed
-  have "ennreal (enn2real (exit_val k L S K y))
-      = ennreal (min (enn2real (exit_val k L T K y)) S)"
-    unfolding a b by (rule exit_val_horizon_cap[OF S0 ST L1 Kc])
-  then show ?thesis by (subst (asm) ennreal_inj) (use S0 in auto)
-qed
+  unfolding exit_val_eq_covariation_val
+  by (rule enn2real_covariation_val_horizon_cap[OF S0 ST closed_sconstraint sconstraint_convex
+        mat_1_rate_in_sconstraint[OF L1] Kc])
 
 lemma dpp_integrand_measurable_stopping:
-  fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+  fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and Kc: "closed K"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
   shows "{p' \<in> space (path_borel T :: ('n pairpath) measure).
       c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
         + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
-           then enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)}
+           then enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)}
     \<in> sets (path_borel T :: ('n pairpath) measure)"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
@@ -687,25 +705,23 @@ proof -
       \<in> borel_measurable ?B" unfolding pe using taum thM by measurable
   \<comment> \<open>and so is the value function\<close>
   have vv: "(\<lambda>p' :: 'n pairpath.
-      enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))))
-      = (\<lambda>p'. min (enn2real (exit_val k L T K (fst (p' (\<theta> p'))))) (T - \<theta> p'))"
+      enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p')))))
+      = (\<lambda>p'. min (enn2real (covariation_val S T K (fst (p' (\<theta> p'))))) (T - \<theta> p'))"
   proof (rule ext)
     fix p' :: "'n pairpath"
     have a: "0 \<le> T - \<theta> p'" using thT[of p'] by simp
     have b: "T - \<theta> p' \<le> T" using th0[of p'] by simp
-    show "enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p'))))
-        = min (enn2real (exit_val k L T K (fst (p' (\<theta> p'))))) (T - \<theta> p')"
-      by (rule enn2real_paper_v_horizon_cap[OF a b L1 Kc])
+    show "enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p'))))
+        = min (enn2real (covariation_val S T K (fst (p' (\<theta> p'))))) (T - \<theta> p')"
+      by (rule enn2real_covariation_val_horizon_cap[OF a b Sc Sv SST Kc])
   qed
   have vm: "(\<lambda>p' :: 'n pairpath.
-      enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p'))))) \<in> borel_measurable ?B"
+      enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p'))))) \<in> borel_measurable ?B"
   proof -
-    have pv: "(\<lambda>y :: real^'n. enn2real (exit_val k L T K y))
+    have pv: "(\<lambda>y :: real^'n. enn2real (covariation_val S T K y))
         \<in> borel_measurable borel"
-      unfolding exit_val_eq_covariation_val
-      by (rule covariation_val_borel_measurable[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
-            closed_sconstraint mat_1_rate_in_sconstraint[OF L1] Kc])
-    have c1: "(\<lambda>p' :: 'n pairpath. enn2real (exit_val k L T K (fst (p' (\<theta> p')))))
+      by (rule covariation_val_borel_measurable[OF T0 B0 B D0 D Sc SST Kc])
+    have c1: "(\<lambda>p' :: 'n pairpath. enn2real (covariation_val S T K (fst (p' (\<theta> p')))))
         \<in> borel_measurable ?B" by (rule measurable_compose[OF xm pv])
     show ?thesis unfolding vv using c1 thM by measurable
   qed
@@ -728,7 +744,7 @@ proof -
     using c1 c2 by measurable
   have gm: "(\<lambda>p' :: 'n pairpath. pexit (\<theta> p') K (\<lambda>t. fst (p' t))
       + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
-         then enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0))
+         then enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0))
       \<in> borel_measurable ?B"
     using pem vm condm by measurable
   show ?thesis using gm by measurable
@@ -746,11 +762,11 @@ lemma dpp_integrand_pstopped:
         + (if pexit (\<theta> (pstopped T \<theta> \<omega>)) K (\<lambda>t. fst (pstopped T \<theta> \<omega> t))
               = \<theta> (pstopped T \<theta> \<omega>)
             \<and> fst (pstopped T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>))) \<in> K
-           then enn2real (exit_val k L (T - \<theta> (pstopped T \<theta> \<omega>)) K
+           then enn2real (covariation_val S (T - \<theta> (pstopped T \<theta> \<omega>)) K
              (fst (pstopped T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>))))) else 0)
       = pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
         + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-           then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
+           then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
 proof -
   have th: "\<theta> (pstopped T \<theta> \<omega>) = \<theta> \<omega>"
     by (rule path_stopping_time_stopped[OF st cw])
@@ -770,23 +786,27 @@ proof -
   show ?thesis unfolding th pe en ..
 qed
 
-theorem exit_val_dpp_ge_const_time:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and P :: "('n pairpath) measure"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+theorem covariation_val_dpp_ge_const_time:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and P :: "('n pairpath) measure" and \<sigma> :: "real^'n^'n"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and Kc: "closed K"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
-    and P: "P \<in> exit_class k L T x"
+    and P: "P \<in> covariation_class S T x"
     and bnd: "AE \<omega> in P. c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
         + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-           then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
-  shows "ennreal c \<le> exit_val k L T K x"
+           then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
+  shows "ennreal c \<le> covariation_val S T K x"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?Q = "pair_law_of T (pstopped T \<theta>) P"
   have T0': "0 \<le> T" using T0 by simp
-  have L0: "0 \<le> L" using L1 by simp
-  have PS: "prob_space P" by (rule exit_class_prob[OF P])
-  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
+  have PS: "prob_space P" by (rule covariation_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule covariation_class_sets[OF P])
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
@@ -795,26 +815,26 @@ proof -
     unfolding measurable_cong_sets[OF setsP refl]
     by (rule pstopped_measurable[OF T0' thM th0 thT])
   have Pcov: "AE \<omega> in P. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T \<longrightarrow>
-      (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> sconstraint k L"
-    using P unfolding exit_class_def by blast
+      (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> S"
+    by (rule covariation_class_diffquot[OF P])
   have P0: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    by (rule exit_class_start[OF P])
+    by (rule covariation_class_start[OF P])
   \<comment> \<open>the bound transports because the integrand does not see the stopping\<close>
   have Qbnd: "AE p' in ?Q. c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
       + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
-         then enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
+         then enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
   proof -
     have mset: "{p' \<in> space ?B. c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
         + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
-           then enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)}
+           then enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)}
         \<in> sets ?B"
-      by (rule dpp_integrand_measurable_stopping[OF T0 L1 Kc st thM])
+      by (rule dpp_integrand_measurable_stopping[OF T0 B0 B D0 D Sc Sv SST Kc st thM])
     have "AE \<omega> in P. c \<le> pexit (\<theta> (pstopped T \<theta> \<omega>)) K
           (\<lambda>t. fst (pstopped T \<theta> \<omega> t))
         + (if pexit (\<theta> (pstopped T \<theta> \<omega>)) K (\<lambda>t. fst (pstopped T \<theta> \<omega> t))
               = \<theta> (pstopped T \<theta> \<omega>)
             \<and> fst (pstopped T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>))) \<in> K
-           then enn2real (exit_val k L (T - \<theta> (pstopped T \<theta> \<omega>)) K
+           then enn2real (covariation_val S (T - \<theta> (pstopped T \<theta> \<omega>)) K
              (fst (pstopped T \<theta> \<omega> (\<theta> (pstopped T \<theta> \<omega>))))) else 0)"
     proof -
       have "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
@@ -831,28 +851,43 @@ proof -
       unfolding pair_law_of_def AE_distr_iff[OF m1 mset] .
   qed
   show ?thesis
-  proof (rule exit_val_ge_of_stopped_bound
-      [OF T0 L1 Kc pstopped_law_prob[OF T0' PS setsP st thM] sets_pair_law_of
+  proof (rule covariation_val_ge_of_stopped_bound
+      [OF T0 B0 B D0 D Sc Sv SST Kc pstopped_law_prob[OF T0' PS setsP st thM] sets_pair_law_of
         st thM pstopped_law_start[OF T0' setsP st thM P0]
         pstopped_law_idem[OF T0' setsP st thM]
-        pstopped_law_diffquot[OF T0' setsP st thM Pcov]])
+        pstopped_law_diffquot[OF T0' Sc setsP st thM Pcov]])
     show "horizon_sq_int_martingale ?Q
         (natural_filtration ?Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. fst (p' (min u T)) $ e) T" for e
-      by (rule pstopped_law_horizon_component[OF T0 L0 P st thM])
+      by (rule pstopped_law_horizon_component[OF T0 B0 B P st thM])
     show "horizon_sq_int_martingale ?Q
         (natural_filtration ?Q 0 (\<lambda>v \<omega>. \<omega> v))
         (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ cc $ dd) T"
       for cc dd
-      by (rule pstopped_law_horizon_compensated[OF T0 L0 P st thM])
+      by (rule pstopped_law_horizon_compensated[OF T0 B0 B D0 D P st thM])
     show "continuous_on {0..T} p'" if "p' \<in> space ?Q" for p'
       by (rule pstopped_law_cont[OF that])
     show "AE p' in ?Q. c \<le> pexit (\<theta> p') K (\<lambda>t. fst (p' t))
         + (if pexit (\<theta> p') K (\<lambda>t. fst (p' t)) = \<theta> p' \<and> fst (p' (\<theta> p')) \<in> K
-           then enn2real (exit_val k L (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
+           then enn2real (covariation_val S (T - \<theta> p') K (fst (p' (\<theta> p')))) else 0)"
       by (rule Qbnd)
   qed
 qed
+
+theorem exit_val_dpp_ge_const_time:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and P :: "('n pairpath) measure"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+    and st: "path_stopping_time T \<theta>"
+    and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+    and P: "P \<in> exit_class k L T x"
+    and bnd: "AE \<omega> in P. c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
+        + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
+           then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
+  shows "ennreal c \<le> exit_val k L T K x"
+  unfolding exit_val_eq_covariation_val
+  by (rule covariation_val_dpp_ge_const_time[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+        closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1] Kc st thM
+        P[unfolded exit_class_eq_covariation] bnd[unfolded exit_val_eq_covariation_val]])
 
 subsection \<open>The \<open>\<ge>\<close> half at a random time, reduced to a constant\<close>
 
@@ -863,67 +898,71 @@ text \<open>The passage from a constant lower bound to the essential infimum
   and no stopping-time property.  So
   the whole \<open>\<ge>\<close> half at a random time reduces to the constant statement.\<close>
 
-theorem exit_val_dpp_sup_ge_time_of_const:
+theorem covariation_val_dpp_sup_ge_time_of_const:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<theta> :: "'n pairpath \<Rightarrow> real"
   assumes th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
-    and const: "\<And>P c. P \<in> exit_class k L T x \<Longrightarrow>
+    and const: "\<And>P c. P \<in> covariation_class S T x \<Longrightarrow>
         (AE \<omega> in P. c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
             + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-               then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0))
-        \<Longrightarrow> ennreal c \<le> exit_val k L T K x"
-  shows "(SUP P \<in> exit_class k L T x. ess_inf_time P
+               then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0))
+        \<Longrightarrow> ennreal c \<le> covariation_val S T K x"
+  shows "(SUP P \<in> covariation_class S T x. ess_inf_time P
             (\<lambda>\<omega>. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
               + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-                 then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)))
-      \<le> exit_val k L T K x"
+                 then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)))
+      \<le> covariation_val S T K x"
 proof (rule SUP_least)
   fix P :: "('n pairpath) measure"
-  assume P: "P \<in> exit_class k L T x"
+  assume P: "P \<in> covariation_class S T x"
   show "ess_inf_time P (\<lambda>\<omega>. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
       + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-         then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0))
-      \<le> exit_val k L T K x"
-  proof (rule ess_inf_time_le_of_real_bounds[OF exit_class_prob[OF P], where T = T])
+         then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0))
+      \<le> covariation_val S T K x"
+  proof (rule ess_inf_time_le_of_real_bounds[OF covariation_class_prob[OF P], where T = T])
     fix \<omega> :: "'n pairpath"
     have p: "0 \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))" "pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) \<le> \<theta> \<omega>"
       by (rule pexit_nonneg[OF th0], rule pexit_le_T[OF th0])
-    have "enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) \<le> T - \<theta> \<omega>"
-      using thT[of \<omega>] unfolding exit_val_eq_covariation_val
-      by (intro enn2real_leI covariation_val_le_T) simp_all
+    have "enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) \<le> T - \<theta> \<omega>"
+      using thT[of \<omega>] by (intro enn2real_leI covariation_val_le_T) simp_all
     with p thT[of \<omega>]
     show "0 \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
         + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-           then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
+           then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
       and "pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
         + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-           then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0) \<le> T"
+           then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0) \<le> T"
       by auto
   qed (rule const[OF P])
 qed
 
-corollary exit_val_dpp_sup_ge_time:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and Kc: "closed K"
+corollary covariation_val_dpp_sup_ge_time:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and Kc: "closed K"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
-  shows "(SUP P \<in> exit_class k L T x. ess_inf_time P
+  shows "(SUP P \<in> covariation_class S T x. ess_inf_time P
             (\<lambda>\<omega>. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
               + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-                 then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)))
-      \<le> exit_val k L T K x"
-proof (rule exit_val_dpp_sup_ge_time_of_const)
+                 then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)))
+      \<le> covariation_val S T K x"
+proof (rule covariation_val_dpp_sup_ge_time_of_const)
   show "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   show "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
     by (rule path_stopping_time_le[OF st])
-  show "ennreal c \<le> exit_val k L T K x"
-    if P: "P \<in> exit_class k L T x"
+  show "ennreal c \<le> covariation_val S T K x"
+    if P: "P \<in> covariation_class S T x"
       and bnd: "AE \<omega> in P. c \<le> pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
         + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-           then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
+           then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)"
     for P c
-    by (rule exit_val_dpp_ge_const_time[OF T0 L1 Kc st thM P bnd])
+    by (rule covariation_val_dpp_ge_const_time[OF T0 B0 B D0 D Sc Sv SST Kc st thM P bnd])
 qed
 
 
@@ -932,7 +971,7 @@ subsection \<open>The \<open>\<ge>\<close> half at a deterministic time\<close>
 
 text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close> states the dynamic programming
   principle
-    \<open>v x = (SUP P \<in> exit_class k L T x. P-ess-inf
+    \<open>v x = (SUP P \<in> covariation_class S T x. P-ess-inf
       (\<theta> \<and> \<tau>\<^sub>K + v (X \<theta>) * 1\<^sub>{\<theta> \<le> \<tau>\<^sub>K}))\<close>.
   Its \<open>\<ge>\<close> half at a deterministic time \<open>\<theta> = r\<close> is the case of a constant
   stopping time.  Both summands are read off the first piece: \<open>r \<and> \<tau>\<^sub>K\<close> is
@@ -943,31 +982,41 @@ lemma path_stopping_time_const:
   "0 \<le> r \<Longrightarrow> r \<le> T \<Longrightarrow> path_stopping_time T (\<lambda>_. r)"
   unfolding path_stopping_time_def by simp
 
-corollary exit_val_dpp_sup_ge:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and K: "closed K"
-  shows "(SUP P \<in> exit_class k L T x. ess_inf_time P
+corollary covariation_val_dpp_sup_ge:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
+  assumes r: "0 \<le> r" and rT: "r < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and K: "closed K"
+  shows "(SUP P \<in> covariation_class S T x. ess_inf_time P
             (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
               + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-                 then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)))
-      \<le> exit_val k L T K x"
+                 then enn2real (covariation_val S (T - r) K (fst (\<omega> r))) else 0)))
+      \<le> covariation_val S T K x"
 proof -
   have T0: "0 < T" using r rT by linarith
   show ?thesis
-    by (rule exit_val_dpp_sup_ge_time[OF T0 L1 K
+    by (rule covariation_val_dpp_sup_ge_time[OF T0 B0 B D0 D Sc Sv SST K
           path_stopping_time_const[OF r less_imp_le[OF rT]] borel_measurable_const])
 qed
 
-corollary exit_val_dpp_ge:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+corollary covariation_val_dpp_ge:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
     and P :: "('n pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r < T" and L1: "1 \<le> L" and K: "closed K"
-    and P: "P \<in> exit_class k L T x"
+  assumes r: "0 \<le> r" and rT: "r < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S"
+    and K: "closed K"
+    and P: "P \<in> covariation_class S T x"
   shows "ess_inf_time P (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
             + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
-               then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0))
-      \<le> exit_val k L T K x"
-  by (rule order.trans[OF SUP_upper[OF P] exit_val_dpp_sup_ge[OF r rT L1 K]])
+               then enn2real (covariation_val S (T - r) K (fst (\<omega> r))) else 0))
+      \<le> covariation_val S T K x"
+  by (rule order.trans[OF SUP_upper[OF P] covariation_val_dpp_sup_ge[OF r rT B0 B D0 D Sc Sv SST K]])
 
 (*<*)
 end

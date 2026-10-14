@@ -40,7 +40,7 @@ text \<open>The \<open>\<le>\<close> half of the DPP, @{thm [source] covariation
   random time only to lie in \<open>[0,T]\<close>, so the subsolution argument can use
   the exit time of a ball (\<open>pball_exit\<close>) directly.
 
-  The supersolution half needs @{thm [source] exit_val_dpp_sup_ge_time},
+  The supersolution half needs @{thm [source] covariation_val_dpp_sup_ge_time},
   whose \<open>\<theta>\<close> must be a \<^const>\<open>path_stopping_time\<close> --- true of the ball's
   exit time only on continuous paths, since the stopping-time predicate
   quantifies over all functions.
@@ -234,7 +234,8 @@ lemma exit_class_X_entry_stopped:
     and "(\<integral>\<omega>. fst (\<omega> (\<theta> \<omega>)) $ c \<partial>P) = x $ c"
   using exit_class_entry_stopped[where F = "\<lambda>z. fst z $ c", OF T P st thM
       measurable_compose[OF pair_fst_borel borel_measurable_nth]
-      pstopped_law_horizon_component[OF T L0 P st thM]]
+      pstopped_law_horizon_component[OF T sconstraint_bounds(1)[OF L0]
+        sconstraint_bounds(2)[OF L0, of _ k] P[unfolded exit_class_eq_covariation] st thM]]
   by simp_all
 
 lemma exit_class_comp_entry_stopped:
@@ -247,7 +248,9 @@ lemma exit_class_comp_entry_stopped:
         = outerp x $ cc $ dd"
   using exit_class_entry_stopped[where F = "\<lambda>z. (outerp (fst z) - snd z) $ cc $ dd",
       OF T P st thM compensated_entry_borel
-      pstopped_law_horizon_compensated[OF T L0 P st thM]]
+      pstopped_law_horizon_compensated[OF T sconstraint_bounds(1)[OF L0]
+        sconstraint_bounds(2)[OF L0, of _ k] sconstraint_bounds(3)[OF L0] sconstraint_bounds(4)[OF L0, of _ k]
+        P[unfolded exit_class_eq_covariation] st thM]]
   by simp_all
 
 lemma exit_class_Y_stopped_integrable:

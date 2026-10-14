@@ -170,7 +170,9 @@ proof (rule antisym)
             + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
                then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0)))
       \<le> exit_val k L T K x"
-    by (rule exit_val_dpp_sup_ge[OF r rT L1 Kc])
+    unfolding exit_class_eq_covariation exit_val_eq_covariation_val
+    by (rule covariation_val_dpp_sup_ge[OF r rT sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1] Kc])
 qed
 
 text \<open>Attainment: every optimizer of the value function attains the
@@ -192,7 +194,10 @@ proof (rule antisym)
             + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
                then enn2real (exit_val k L (T - r) K (fst (\<omega> r))) else 0))
       \<le> exit_val k L T K x"
-    by (rule exit_val_dpp_ge[OF r rT L1 Kc P])
+    unfolding exit_val_eq_covariation_val
+    by (rule covariation_val_dpp_ge[OF r rT sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1] Kc
+          P[unfolded exit_class_eq_covariation]])
   show "exit_val k L T K x
       \<le> ess_inf_time P (\<lambda>\<omega>. pexit r K (\<lambda>t. fst (\<omega> t))
             + (if pexit r K (\<lambda>t. fst (\<omega> t)) = r \<and> fst (\<omega> r) \<in> K
@@ -226,7 +231,7 @@ qed
 subsection \<open>Step 2: the equality at a stopping time\<close>
 
 text \<open>Proposition 2.4, Eq. (2.9), at a path stopping time \<open>\<theta>\<close> with values
-  in \<open>[0,T]\<close>.  The \<open>\<ge>\<close> half is @{thm [source] exit_val_dpp_sup_ge_time}; the
+  in \<open>[0,T]\<close>.  The \<open>\<ge>\<close> half is @{thm [source] covariation_val_dpp_sup_ge_time}; the
   \<open>\<le>\<close> half is @{thm [source] exit_val_dpp_le_time}.\<close>
 
 theorem exit_val_dpp_time:
@@ -254,7 +259,9 @@ proof (rule antisym)
             + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
                then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)))
       \<le> exit_val k L T K x"
-    by (rule exit_val_dpp_sup_ge_time[OF T0 L1 Kc st thM])
+    unfolding exit_class_eq_covariation exit_val_eq_covariation_val
+    by (rule covariation_val_dpp_sup_ge_time[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1] Kc st thM])
 qed
 
 theorem exit_val_dpp_time_optimizer:
@@ -280,7 +287,9 @@ proof (rule antisym)
                then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0)))"
     using P by (rule SUP_upper)
   also have "\<dots> \<le> exit_val k L T K x"
-    by (rule exit_val_dpp_sup_ge_time[OF T0 L1 Kc st thM])
+    unfolding exit_class_eq_covariation exit_val_eq_covariation_val
+    by (rule covariation_val_dpp_sup_ge_time[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint sconstraint_convex mat_1_rate_in_sconstraint[OF L1] Kc st thM])
   finally show "ess_inf_time P (\<lambda>\<omega>. pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
             + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega> \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
                then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>)))) else 0))

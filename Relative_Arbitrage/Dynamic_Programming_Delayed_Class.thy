@@ -14,25 +14,25 @@ section \<open>The delayed class on a fixed space\<close>
 
 
 
-definition pdelclass :: "nat \<Rightarrow> real \<Rightarrow> real \<Rightarrow> real
-    \<Rightarrow> (('n::finite pairpath) measure) set"
-  where "pdelclass k L T s =
+definition pdelclass :: "(real^'n::finite^'n) set \<Rightarrow> real \<Rightarrow> real
+    \<Rightarrow> (('n pairpath) measure) set"
+  where "pdelclass S T s =
      (\<lambda>\<nu>. distr \<nu> (path_borel T :: ('n pairpath) measure) (pembed s T))
-       ` exit_class k L (T - s) (0::real^'n)"
+       ` covariation_class S (T - s) (0::real^'n)"
 
 lemma pdelclassE:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
-  obtains \<mu> where "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
+  obtains \<mu> where "\<mu> \<in> covariation_class S (T - s) (0::real^'n)"
     and "\<nu> = distr \<mu> (path_borel T) (pembed s T)"
     and "sets \<mu> = sets (path_borel (T - s) :: ('n pairpath) measure)"
     and "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M (path_borel T :: ('n pairpath) measure)"
 proof -
-  from m obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  from m obtain \<mu> where mu: "\<mu> \<in> covariation_class S (T - s) (0::real^'n)"
     and nu: "\<nu> = distr \<mu> (path_borel T) (pembed s T)"
     unfolding pdelclass_def by blast
   have setsmu: "sets \<mu> = sets (path_borel (T - s) :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF mu])
+    by (rule covariation_class_sets[OF mu])
   show ?thesis
     by (rule that[OF mu nu setsmu]) (simp add: measurable_cong_sets[OF setsmu refl]
         pembed_measurable[OF s0 sT])
@@ -44,18 +44,18 @@ text \<open>A delayed law is a probability law on the \<open>T\<close>-space, it
 
 lemma pdelclass_prob:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
   shows "prob_space \<nu>"
     and "sets \<nu> = sets (path_borel T :: ('n pairpath) measure)"
 proof -
-  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  obtain \<mu> where mu: "\<mu> \<in> covariation_class S (T - s) (0::real^'n)"
     and nu: "\<nu> = distr \<mu> (path_borel T) (pembed s T)"
     and setsmu: "sets \<mu> = sets (path_borel (T - s))"
     and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M (path_borel T)"
     by (rule pdelclassE[OF s0 sT m])
   show "prob_space \<nu>"
     unfolding nu
-    by (rule prob_space.prob_space_distr[OF exit_class_prob[OF mu] pm])
+    by (rule prob_space.prob_space_distr[OF covariation_class_prob[OF mu] pm])
   show "sets \<nu> = sets (path_borel T :: ('n pairpath) measure)" unfolding nu by simp
 qed
 
@@ -65,19 +65,19 @@ text \<open>\<open>vanishes_of_rational\<close> lives in @{theory Continuous_Pat
 
 lemma pdelclass_frozen:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
   shows "AE w in \<nu>. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> s \<longrightarrow> w u = 0"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using s0 sT by simp
-  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  obtain \<mu> where mu: "\<mu> \<in> covariation_class S (T - s) (0::real^'n)"
     and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
     and setsmu: "sets \<mu> = sets (path_borel (T - s))" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
     by (rule pdelclassE[OF s0 sT m])
   have Phi: "{w \<in> space ?B. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> s \<longrightarrow> w u = 0} \<in> sets ?B"
     by (rule frozen_set_measurable[OF T0])
   have start: "AE v in \<mu>. fst (v 0) = 0 \<and> snd (v 0) = 0"
-    by (rule exit_class_start[OF mu])
+    by (rule covariation_class_start[OF mu])
   have "AE v in \<mu>. \<forall>u. u \<in> {0..T} \<longrightarrow> u \<le> s \<longrightarrow> pembed s T v u = 0"
     using start
   proof eventually_elim
@@ -107,56 +107,54 @@ text \<open>A single identity reduces the horizon-parametrised selector to a
 
 
 
-theorem exit_val_horizon_cap:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  assumes S0: "0 \<le> S" and ST: "S \<le> T" and L: "1 \<le> L" and K: "closed K"
-  shows "exit_val k L S K x = min (exit_val k L T K x) (ennreal S)"
+theorem covariation_val_horizon_cap:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
+  assumes U0: "0 \<le> U" and UT: "U \<le> T" and Sc: "closed S" and Sv: "convex S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S" and K: "closed K"
+  shows "covariation_val S U K x = min (covariation_val S T K x) (ennreal U)"
 proof (rule order.antisym)
-  show "exit_val k L S K x \<le> min (exit_val k L T K x) (ennreal S)"
-    by (intro min.boundedI covariation_val_horizon_mono[OF S0 ST closed_sconstraint sconstraint_convex
-          mat_1_rate_in_sconstraint[OF L] K, folded exit_val_eq_covariation_val] covariation_val_le_T[OF S0, of "sconstraint k L",
-          folded exit_val_eq_covariation_val])
-  show "min (exit_val k L T K x) (ennreal S) \<le> exit_val k L S K x"
+  show "covariation_val S U K x \<le> min (covariation_val S T K x) (ennreal U)"
+    by (intro min.boundedI covariation_val_horizon_mono[OF U0 UT Sc Sv SST K] covariation_val_le_T[OF U0])
+  show "min (covariation_val S T K x) (ennreal U) \<le> covariation_val S U K x"
   proof (rule ccontr)
-    assume "\<not> min (exit_val k L T K x) (ennreal S) \<le> exit_val k L S K x"
-    then have "exit_val k L S K x < min (exit_val k L T K x) (ennreal S)"
+    assume "\<not> min (covariation_val S T K x) (ennreal U) \<le> covariation_val S U K x"
+    then have "covariation_val S U K x < min (covariation_val S T K x) (ennreal U)"
       by (rule not_le_imp_less)
-    then obtain b where b1: "exit_val k L S K x < b"
-      and b2: "b < min (exit_val k L T K x) (ennreal S)"
+    then obtain b where b1: "covariation_val S U K x < b"
+      and b2: "b < min (covariation_val S T K x) (ennreal U)"
       using dense by blast
-    from b2 have bT: "b < exit_val k L T K x"
+    from b2 have bT: "b < covariation_val S T K x"
       by (rule order.strict_trans2[OF _ min.cobounded1])
-    from b2 have bS: "b < ennreal S"
+    from b2 have bS: "b < ennreal U"
       by (rule order.strict_trans2[OF _ min.cobounded2])
     from bT have "b < Sup ((\<lambda>Q. ess_inf_time Q
-        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) ` exit_class k L T x)"
-      unfolding exit_val_def .
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) ` covariation_class S T x)"
+      unfolding covariation_val_def .
     then obtain Q :: "('n pairpath) measure"
-      where Q: "Q \<in> exit_class k L T x"
+      where Q: "Q \<in> covariation_class S T x"
         and bQ: "b < ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
       by (auto simp: less_Sup_iff)
     have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-      by (rule exit_class_sets[OF Q])
-    have val: "ess_inf_time (pair_law_of S (pcut S) Q)
-          (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))
-        = min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
-      by (rule ess_inf_pexit_pair_law_pcut[OF S0 ST exit_class_prob[OF Q] setsQ K])
-    have inS: "pair_law_of S (pcut S) Q \<in> exit_class k L S x"
-      unfolding exit_class_eq_covariation
-      by (rule covariation_class_pcut[OF S0 ST closed_sconstraint Q[unfolded exit_class_eq_covariation]])
-    have "b < min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
+      by (rule covariation_class_sets[OF Q])
+    have val: "ess_inf_time (pair_law_of U (pcut U) Q)
+          (\<lambda>\<omega>. pexit U K (\<lambda>t. fst (\<omega> t)))
+        = min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal U)"
+      by (rule ess_inf_pexit_pair_law_pcut[OF U0 UT covariation_class_prob[OF Q] setsQ K])
+    have inS: "pair_law_of U (pcut U) Q \<in> covariation_class S U x"
+      by (rule covariation_class_pcut[OF U0 UT Sc Q])
+    have "b < min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal U)"
       using bQ bS by simp
-    also have "\<dots> = ess_inf_time (pair_law_of S (pcut S) Q)
-        (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))" using val ..
-    also have "\<dots> \<le> exit_val k L S K x"
-      unfolding exit_val_def using inS by (intro Sup_upper imageI)
+    also have "\<dots> = ess_inf_time (pair_law_of U (pcut U) Q)
+        (\<lambda>\<omega>. pexit U K (\<lambda>t. fst (\<omega> t)))" using val ..
+    also have "\<dots> \<le> covariation_val S U K x"
+      unfolding covariation_val_def using inS by (intro Sup_upper imageI)
     finally show False using b1 by simp
   qed
 qed
 
 section \<open>The horizon-parametrised measurable selector\<close>
 
-text \<open>@{thm [source] exit_val_horizon_cap} turns the selection problem into a
+text \<open>@{thm [source] covariation_val_horizon_cap} turns the selection problem into a
   pushforward problem.  The optimizer of the capped value is the optimizer
   of the uncapped one --- capping is an outer \<open>min\<close>, which is monotone ---
   so the selector \<^emph>\<open>at the full horizon\<close> already selects optimally at
@@ -190,33 +188,35 @@ text \<open>@{thm [source] exit_val_horizon_cap} turns the selection problem int
 
 
 
-theorem exit_val_measurable_selector_horizon:
-  fixes K :: "(real^'n::finite) set"
-  assumes T: "0 < T" and L: "1 \<le> L" and K: "closed K"
+theorem covariation_val_measurable_selector_horizon:
+  fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"
+  assumes T: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and SST: "\<sigma> ** transpose \<sigma> \<in> S" and K: "closed K"
   obtains Sel where
     "Sel \<in> (borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)
         \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ('n pairpath) measure)"
-    and "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass k L T s"
+    and "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow> Sel (s, y) \<in> pdelclass S T s"
     and "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow>
         distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)
-          \<in> exit_class k L (T - s) (0 :: real^'n)"
+          \<in> covariation_class S (T - s) (0 :: real^'n)"
     and "\<And>s y. 0 \<le> s \<Longrightarrow> s \<le> T \<Longrightarrow>
         ess_inf_time (pshift_law (T - s) y
             (distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)))
-          (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t))) = exit_val k L (T - s) K y"
+          (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t))) = covariation_val S (T - s) K y"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?P = "(borel :: real measure) \<Otimes>\<^sub>M (borel :: (real^'n) measure)"
   have T0: "0 \<le> T" using T by simp
   obtain S0 where S0k: "S0 \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B"
-    and S0C: "\<And>y. S0 y \<in> exit_class k L T (0 :: real^'n)"
+    and S0C: "\<And>y. S0 y \<in> covariation_class S T (0 :: real^'n)"
     and S0val: "\<And>y. ess_inf_time (pshift_law T y (S0 y))
-        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = exit_val k L T K y"
-    by (rule covariation_val_measurable_selector_kernel'[where S = "sconstraint k L",
-          OF T sconstraint_bounds[OF order_trans[OF zero_le_one L]] closed_sconstraint
-          mat_1_rate_in_sconstraint[OF L] K, folded exit_class_eq_covariation exit_val_eq_covariation_val]) blast+
-  have setsS0: "sets (S0 y) = sets ?B" for y by (rule exit_class_sets[OF S0C])
-  have PS0: "prob_space (S0 y)" for y by (rule exit_class_prob[OF S0C])
+        (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t))) = covariation_val S T K y"
+    by (rule covariation_val_measurable_selector_kernel'[OF T B0 B D0 D Sc SST K]) blast+
+  have setsS0: "sets (S0 y) = sets ?B" for y by (rule covariation_class_sets[OF S0C])
+  have PS0: "prob_space (S0 y)" for y by (rule covariation_class_prob[OF S0C])
   define Sel where "Sel = (\<lambda>p :: real \<times> (real^'n).
       distr (S0 (snd p)) ?B (pdel (fst p) T))"
 
@@ -310,15 +310,14 @@ proof -
   proof (rule that)
     show "Sel \<in> ?P \<rightarrow>\<^sub>M prob_algebra ?B" by (rule Selm)
   next
-    show "Sel (s, y) \<in> pdelclass k L T s" if s0: "0 \<le> s" and sT: "s \<le> T"
+    show "Sel (s, y) \<in> pdelclass S T s" if s0: "0 \<le> s" and sT: "s \<le> T"
       for s :: real and y :: "real^'n"
     proof -
       have a: "0 \<le> T - s" using sT by simp
       have b: "T - s \<le> T" using s0 by simp
       have cutC: "pair_law_of (T - s) (pcut (T - s)) (S0 y)
-          \<in> exit_class k L (T - s) (0 :: real^'n)"
-        unfolding exit_class_eq_covariation
-        by (rule covariation_class_pcut[OF a b closed_sconstraint S0C[unfolded exit_class_eq_covariation]])
+          \<in> covariation_class S (T - s) (0 :: real^'n)"
+        by (rule covariation_class_pcut[OF a b Sc S0C])
       have m1: "Sel (s, y)
           = distr (pair_law_of (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)"
         using main[OF s0 sT, of y] by blast
@@ -326,7 +325,7 @@ proof -
     qed
   next
     show "distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)
-        \<in> exit_class k L (T - s) (0 :: real^'n)"
+        \<in> covariation_class S (T - s) (0 :: real^'n)"
       if s0: "0 \<le> s" and sT: "s \<le> T" for s :: real and y :: "real^'n"
     proof -
       have a: "0 \<le> T - s" using sT by simp
@@ -334,13 +333,12 @@ proof -
       have m2: "distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)
           = pair_law_of (T - s) (pcut (T - s)) (S0 y)"
         using main[OF s0 sT, of y] by blast
-      show ?thesis unfolding m2 exit_class_eq_covariation
-        by (rule covariation_class_pcut[OF a b closed_sconstraint S0C[unfolded exit_class_eq_covariation]])
+      show ?thesis unfolding m2 by (rule covariation_class_pcut[OF a b Sc S0C])
     qed
   next
     show "ess_inf_time (pshift_law (T - s) y
           (distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)))
-        (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t))) = exit_val k L (T - s) K y"
+        (\<lambda>\<omega>. pexit (T - s) K (\<lambda>t. fst (\<omega> t))) = covariation_val S (T - s) K y"
       if s0: "0 \<le> s" and sT: "s \<le> T" for s :: real and y :: "real^'n"
     proof -
       have a: "0 \<le> T - s" using sT by simp
@@ -354,10 +352,10 @@ proof -
           = min (ess_inf_time (pshift_law T y (S0 y))
               (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal (T - s))"
         by (rule ess_inf_pexit_pcut_law[OF a b PS0 setsS0 K])
-      also have "\<dots> = min (exit_val k L T K y) (ennreal (T - s))"
+      also have "\<dots> = min (covariation_val S T K y) (ennreal (T - s))"
         unfolding S0val ..
-      also have "\<dots> = exit_val k L (T - s) K y"
-        by (rule exit_val_horizon_cap[OF a b L K, symmetric])
+      also have "\<dots> = covariation_val S (T - s) K y"
+        by (rule covariation_val_horizon_cap[OF a b Sc Sv SST K, symmetric])
       finally show ?thesis unfolding m2 .
     qed
   qed
@@ -390,9 +388,9 @@ text \<open>@{thm [source] covariation_class_aglue} asks its continuation kernel
 lemma pdelclass_martingale_of:
   fixes \<nu> :: "('n::finite pairpath) measure"
     and f :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> 'b::{banach,second_countable_topology}"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
     and f: "f \<in> borel_measurable borel"
-    and mgb: "\<And>\<mu>. \<mu> \<in> exit_class k L (T - s) (0::real^'n) \<Longrightarrow>
+    and mgb: "\<And>\<mu>. \<mu> \<in> covariation_class S (T - s) (0::real^'n) \<Longrightarrow>
       martingale \<mu> (natural_filtration \<mu> 0 (\<lambda>v w. w v)) 0 (\<lambda>t w. f (w (min t (T - s))))"
   shows "martingale \<nu> (natural_filtration \<nu> 0 (\<lambda>v w. w v)) 0 (\<lambda>u w. f (w (min u T)))"
 proof -
@@ -401,7 +399,7 @@ proof -
   let ?rho = "\<lambda>u :: real. min (max (u - s) 0) (T - s)"
   have T0: "0 \<le> T" using s0 sT by simp
   have Ts: "0 \<le> T - s" using sT by simp
-  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  obtain \<mu> where mu: "\<mu> \<in> covariation_class S (T - s) (0::real^'n)"
     and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
     and setsmu: "sets \<mu> = sets ?Bs" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
     by (rule pdelclassE[OF s0 sT m])
@@ -420,7 +418,7 @@ proof -
   show ?thesis
     unfolding nu'
   proof (rule martingale_pair_law[where T = T and FF = "\<lambda>u. ?F (?rho u)"])
-    show "prob_space \<mu>" by (rule exit_class_prob[OF mu])
+    show "prob_space \<mu>" by (rule covariation_class_prob[OF mu])
     show "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B" by (rule pm)
     show "martingale \<mu> (\<lambda>u. ?F (?rho u)) 0 (\<lambda>u w. f (pembed s T w (min u T)))"
       by (rule tc)
@@ -436,24 +434,24 @@ qed
 
 theorem pdelclass_X_martingale:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
   shows "martingale \<nu> (natural_filtration \<nu> 0 (\<lambda>v w. w v)) 0
       (\<lambda>u w. fst (w (min u T)))"
-  by (rule pdelclass_martingale_of[OF s0 sT m pair_fst_borel exit_class_X_martingale])
+  by (rule pdelclass_martingale_of[OF s0 sT m pair_fst_borel covariation_class_martingale_fst])
 
 theorem pdelclass_comp_martingale:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
   shows "martingale \<nu> (natural_filtration \<nu> 0 (\<lambda>v w. w v)) 0
       (\<lambda>u w. outerp (fst (w (min u T))) - snd (w (min u T)))"
   by (rule pdelclass_martingale_of[where f = "\<lambda>p. outerp (fst p) - snd p",
-        OF s0 sT m compensated_map_borel exit_class_compensated_martingale])
+        OF s0 sT m compensated_map_borel covariation_class_martingale_compensated])
 
 subsection \<open>The covariation clause of the continuation\<close>
 
 text \<open>The guard \<open>s \<le> a\<close> makes this the delayed constraint: below \<open>s\<close> the
-  path stands still, so no difference quotient there can lie in
-  \<^const>\<open>sconstraint\<close>, and the kernel is only ever asked about the
+  path stands still, so no difference quotient there need lie in
+  \<open>S\<close>, and the kernel is only ever asked about the
   stretch after the freeze.  One rational pair at a time
   (@{thm [source] closedin_diffquot_constraint} for measurability, so that
   @{thm [source] AE_distr_iff} applies), then two countable passes, then
@@ -461,35 +459,35 @@ text \<open>The guard \<open>s \<le> a\<close> makes this the delayed constraint
 
 theorem pdelclass_diffquot:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes Sc: "closed S" and s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
   shows "AE w in \<nu>. \<forall>a b. s \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T \<longrightarrow>
-      (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+      (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> S"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?Bs = "(path_borel (T - s) :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using s0 sT by simp
-  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  obtain \<mu> where mu: "\<mu> \<in> covariation_class S (T - s) (0::real^'n)"
     and nu: "\<nu> = distr \<mu> ?B (pembed s T)"
     and setsmu: "sets \<mu> = sets ?Bs" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
     by (rule pdelclassE[OF s0 sT m])
   have setsnu: "sets \<nu> = sets ?B" unfolding nu by simp
   have cov: "AE w in \<mu>. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T - s \<longrightarrow>
-      (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
-    using mu unfolding exit_class_def by blast
+      (1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> S"
+    using mu unfolding covariation_class_def by blast
   have one: "AE w in \<nu>.
-      (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+      (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> S"
     if p: "p \<in> {0..T}" and q: "q \<in> {0..T}" and pq: "p < q" and sp: "s \<le> p"
     for p q :: real
   proof -
     have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
       by (simp add: space_borel_of)
     have mset: "{w \<in> space ?B.
-        (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L}
+        (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> S}
         \<in> sets ?B"
       unfolding spB
-      by (rule borel_of_closed[OF closedin_diffquot_constraint[OF p q closed_sconstraint]])
+      by (rule borel_of_closed[OF closedin_diffquot_constraint[OF p q Sc]])
     have "AE w in \<mu>. (1 / (q - p)) *\<^sub>R
-        (snd (pembed s T w q) - snd (pembed s T w p)) \<in> sconstraint k L"
+        (snd (pembed s T w q) - snd (pembed s T w p)) \<in> S"
       using cov
     proof eventually_elim
       case (elim w)
@@ -509,7 +507,7 @@ proof -
       have ab: "p - s < q - s" using pq by simp
       have bT: "q - s \<le> T - s" using q by simp
       from elim have "(1 / ((q - s) - (p - s))) *\<^sub>R
-          (snd (w (q - s)) - snd (w (p - s))) \<in> sconstraint k L"
+          (snd (w (q - s)) - snd (w (p - s))) \<in> S"
         using a0 ab bT by blast
       then show ?case unfolding ep eqq by simp
     qed
@@ -517,7 +515,7 @@ proof -
   qed
   have rat: "AE w in \<nu>. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
       p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> s \<le> p \<longrightarrow>
-        (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+        (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> S"
     by (intro AE_ball_countable'[OF _ countable_rat] AE_impI one)
   have spn: "AE w in \<nu>. w \<in> space \<nu>" by (rule AE_space)
   from rat spn show ?thesis
@@ -525,7 +523,7 @@ proof -
     case (elim w)
     then have R: "\<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
         p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> s \<le> p \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> sconstraint k L"
+          (1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p)) \<in> S"
       and W: "w \<in> space \<nu>" by blast+
     have mw: "w \<in> mspace (path_metric T :: ('n pairpath) metric)"
       using W sets_eq_imp_space_eq[OF setsnu] by (simp add: space_borel_of)
@@ -536,13 +534,13 @@ proof -
       fix a b :: real
       assume sa: "s \<le> a" and ab: "a < b" and bT: "b \<le> T"
       have a0: "0 \<le> a" using sa s0 by simp
-      show "(1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> sconstraint k L"
+      show "(1 / (b - a)) *\<^sub>R (snd (w b) - snd (w a)) \<in> S"
       proof (rule diffquot_all_of_rational_ge
-          [OF closed_sconstraint cont _ sa a0 ab bT])
+          [OF Sc cont _ sa a0 ab bT])
         fix p q :: real
         assume "p \<in> \<rat>" "q \<in> \<rat>" "0 \<le> p" "p < q" "q \<le> T" "s \<le> p"
         then show "(1 / (q - p)) *\<^sub>R (snd (w q) - snd (w p))
-            \<in> sconstraint k L" using R bT by auto
+            \<in> S" using R bT by auto
       qed
     qed
   qed
@@ -558,7 +556,7 @@ text \<open>A martingale that starts at \<open>0\<close> has mean \<open>0\<clos
 
 lemma pdelclass_start_zero:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
   shows "AE w in \<nu>. w (min (0::real) T) = 0"
 proof -
   have T0: "0 \<le> T" using s0 sT by simp
@@ -567,7 +565,7 @@ qed
 
 corollary pdelclass_X_int:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
     and u: "0 \<le> u"
   shows "integrable \<nu> (\<lambda>w. fst (w (min u T)) $ e)"
   by (rule martingale.integrable
@@ -575,7 +573,7 @@ corollary pdelclass_X_int:
 
 corollary pdelclass_comp_int:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
     and u: "0 \<le> u"
   shows "integrable \<nu>
       (\<lambda>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d)"
@@ -584,7 +582,7 @@ corollary pdelclass_comp_int:
 
 corollary pdelclass_X_increment:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
     and C: "C \<in> sets (natural_filtration \<nu> 0 (\<lambda>t w. w t) u)"
     and u: "0 \<le> u" and uv: "u \<le> v"
   shows "set_lebesgue_integral \<nu> C (\<lambda>w. fst (w (min u T)) $ e)
@@ -595,7 +593,7 @@ corollary pdelclass_X_increment:
 
 corollary pdelclass_comp_increment:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
     and C: "C \<in> sets (natural_filtration \<nu> 0 (\<lambda>t w. w t) u)"
     and u: "0 \<le> u" and uv: "u \<le> v"
   shows "set_lebesgue_integral \<nu> C
@@ -608,7 +606,7 @@ corollary pdelclass_comp_increment:
 
 corollary pdelclass_X_mean:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
     and u: "0 \<le> u"
   shows "(\<integral>w. fst (w (min u T)) $ e \<partial>\<nu>) = 0"
 proof (rule martingale_mean_zero_of_start
@@ -619,7 +617,7 @@ qed
 
 corollary pdelclass_comp_mean:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
     and u: "0 \<le> u"
   shows "(\<integral>w. (outerp (fst (w (min u T))) - snd (w (min u T))) $ c $ d \<partial>\<nu>)
       = 0"
@@ -655,15 +653,15 @@ text \<open>\<open>Qst\<close> --- that the past law is carried by paths which a
 
 theorem pstopped_law_diffquot:
   fixes P :: "('n::finite pairpath) measure"
-  assumes T0: "0 \<le> T"
+  assumes T0: "0 \<le> T" and Sc: "closed S"
     and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and Pcov: "AE \<omega> in P. \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> T \<longrightarrow>
-        (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> sconstraint k L"
+        (1 / (b - a)) *\<^sub>R (snd (\<omega> b) - snd (\<omega> a)) \<in> S"
   shows "AE p' in pair_law_of T (pstopped T \<theta>) P.
       \<forall>a b. 0 \<le> a \<longrightarrow> a < b \<longrightarrow> b \<le> \<theta> p' \<longrightarrow>
-        (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
+        (1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   let ?Q = "pair_law_of T (pstopped T \<theta>) P"
@@ -678,30 +676,30 @@ proof -
   have spB: "space ?B = mspace (path_metric T :: ('n pairpath) metric)"
     by (simp add: space_borel_of)
   have one: "AE p' in ?Q. q \<le> \<theta> p' \<longrightarrow>
-      (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
+      (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> S"
     if p: "p \<in> {0..T}" and q: "q \<in> {0..T}" and pq: "p < q" for p q :: real
   proof -
     have S: "{p' \<in> space ?B.
-        (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L}
+        (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> S}
         \<in> sets ?B"
       unfolding spB
-      by (rule borel_of_closed[OF closedin_diffquot_constraint[OF p q closed_sconstraint]])
+      by (rule borel_of_closed[OF closedin_diffquot_constraint[OF p q Sc]])
     have G: "{p' \<in> space ?B. q \<le> \<theta> p'} \<in> sets ?B" using thM by measurable
     have mset: "{p' \<in> space ?B. q \<le> \<theta> p' \<longrightarrow>
-        (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L}
+        (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> S}
         \<in> sets ?B"
     proof -
       have "{p' \<in> space ?B. q \<le> \<theta> p' \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L}
+          (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> S}
           = (space ?B - {p' \<in> space ?B. q \<le> \<theta> p'})
             \<union> {p' \<in> space ?B.
-              (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L}"
+              (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> S}"
         by auto
       then show ?thesis using S G by (simp add: sets.Un sets.compl_sets)
     qed
     have "AE \<omega> in P. q \<le> \<theta> (pstopped T \<theta> \<omega>) \<longrightarrow>
         (1 / (q - p)) *\<^sub>R (snd (pstopped T \<theta> \<omega> q) - snd (pstopped T \<theta> \<omega> p))
-          \<in> sconstraint k L"
+          \<in> S"
       using Pcov AE_space
     proof eventually_elim
       case (elim \<omega>)
@@ -725,7 +723,7 @@ proof -
           finally show ?thesis .
         qed
         show "(1 / (q - p)) *\<^sub>R
-            (snd (pstopped T \<theta> \<omega> q) - snd (pstopped T \<theta> \<omega> p)) \<in> sconstraint k L"
+            (snd (pstopped T \<theta> \<omega> q) - snd (pstopped T \<theta> \<omega> p)) \<in> S"
           unfolding eq ep using elim p q pq by auto
       qed
     qed
@@ -734,7 +732,7 @@ proof -
   qed
   have rat: "AE p' in ?Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
       p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> q \<le> \<theta> p' \<longrightarrow>
-        (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
+        (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> S"
     by (intro AE_ball_countable'[OF _ countable_rat] AE_impI one)
   have spn: "AE p' in ?Q. p' \<in> space ?Q" by (rule AE_space)
   from rat spn show ?thesis
@@ -742,7 +740,7 @@ proof -
     case (elim p')
     then have R: "\<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
         p \<in> {0..T} \<longrightarrow> q \<in> {0..T} \<longrightarrow> p < q \<longrightarrow> q \<le> \<theta> p' \<longrightarrow>
-          (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
+          (1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> S"
       and W: "p' \<in> space ?Q" by blast+
     have mw: "p' \<in> mspace (path_metric T :: ('n pairpath) metric)"
       using W by (simp add: space_pair_law_of)
@@ -755,13 +753,13 @@ proof -
     proof (intro allI impI)
       fix a b :: real
       assume a0: "0 \<le> a" and ab: "a < b" and bth: "b \<le> \<theta> p'"
-      show "(1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> sconstraint k L"
-      proof (rule diffquot_all_of_rational[OF closed_sconstraint cont _ a0 ab bth])
+      show "(1 / (b - a)) *\<^sub>R (snd (p' b) - snd (p' a)) \<in> S"
+      proof (rule diffquot_all_of_rational[OF Sc cont _ a0 ab bth])
         fix p q :: real
         assume pq: "p \<in> \<rat>" "q \<in> \<rat>" "0 \<le> p" "p < q" "q \<le> \<theta> p'"
         have pT: "p \<in> {0..T}" using pq thT[of p'] by auto
         have qT: "q \<in> {0..T}" using pq thT[of p'] th0[of p'] by auto
-        show "(1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> sconstraint k L"
+        show "(1 / (q - p)) *\<^sub>R (snd (p' q) - snd (p' p)) \<in> S"
           using R pq pT qT by blast
       qed
     qed
@@ -784,7 +782,7 @@ text \<open>The last input the two martingale clauses need: the stopped path,
 lemma pstopped_law_horizon_of:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
     and f :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
-  assumes T0: "0 < T" and P: "P \<in> exit_class k L T x"
+  assumes T0: "0 < T" and P: "P \<in> covariation_class S T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
     and fc: "continuous_on UNIV f"
@@ -801,8 +799,8 @@ proof -
   let ?Z = "\<lambda>u \<omega> :: 'n pairpath. f (\<omega> (min u T))"
   have T0': "0 \<le> T" using T0 by simp
   have fB: "f \<in> borel_measurable borel" by (rule borel_measurable_continuous_onI[OF fc])
-  have setsP: "sets P = sets ?B" by (rule exit_class_sets[OF P])
-  have PS: "prob_space P" by (rule exit_class_prob[OF P])
+  have setsP: "sets P = sets ?B" by (rule covariation_class_sets[OF P])
+  have PS: "prob_space P" by (rule covariation_class_prob[OF P])
   have th0: "0 \<le> \<theta> \<omega>" for \<omega> :: "'n pairpath"
     by (rule path_stopping_time_nonneg[OF st])
   have thT: "\<theta> \<omega> \<le> T" for \<omega> :: "'n pairpath"
@@ -862,28 +860,30 @@ qed
 
 theorem pstopped_law_horizon_component:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B" and P: "P \<in> covariation_class S T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
   shows "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
       (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>u p'. fst (p' (min u T)) $ c) T"
   by (rule pstopped_law_horizon_of[where f = "\<lambda>z. fst z $ c",
-        OF T0 P st thM _ covariation_class_horizon_component[OF T0 sconstraint_bounds(1,2)[OF L0]
-          P[unfolded exit_class_eq_covariation]]])
+        OF T0 P st thM _ covariation_class_horizon_component[OF T0 B0 B P]])
     (intro continuous_intros)
 
 theorem pstopped_law_horizon_compensated:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
-  assumes T0: "0 < T" and L0: "0 \<le> L" and P: "P \<in> exit_class k L T x"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D" and P: "P \<in> covariation_class S T x"
     and st: "path_stopping_time T \<theta>"
     and thM: "\<theta> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
   shows "horizon_sq_int_martingale (pair_law_of T (pstopped T \<theta>) P)
       (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
   by (rule pstopped_law_horizon_of[where f = "\<lambda>z. (outerp (fst z) - snd z) $ c $ d",
-        OF T0 P st thM _ covariation_class_horizon_compensated[OF T0 sconstraint_bounds[OF L0]
-          P[unfolded exit_class_eq_covariation]]])
+        OF T0 P st thM _ covariation_class_horizon_compensated[OF T0 B0 B D0 D P]])
     (unfold outerp_def, intro continuous_intros)
 
 subsection \<open>Uniform first moments for the delayed class\<close>
@@ -894,20 +894,20 @@ text \<open>The six remaining side conditions of the additive glue are Fubini
   integral that does not depend on \<open>p'\<close>.  The class has one
   (@{thm [source] covariation_class_norm_mean_le},
   @{thm [source] covariation_class_comp_norm_mean_le}) --- depending only on
-  \<open>CARD('n)\<close>, \<open>L\<close> and the horizon --- and it survives the delay, because
+  \<open>CARD('n)\<close>, the norm bound \<open>B\<close> of \<open>S\<close> and the horizon --- and it survives the delay, because
   the delayed law reads the base law at an earlier time and the bound is
   monotone in the horizon.  The same constant works for every freezing
   time \<open>s\<close>, which makes the outer integral finite.\<close>
 
 lemma pdelclass_integral_eq:
   fixes \<nu> :: "('n::finite pairpath) measure" and g :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
-  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass k L T s"
+  assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
     and u: "u \<in> {0..T}" and g: "continuous_on UNIV g"
-  obtains \<mu> where "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  obtains \<mu> where "\<mu> \<in> covariation_class S (T - s) (0::real^'n)"
     and "(\<integral>w. g (w u) \<partial>\<nu>) = (\<integral>w. g (w (max (u - s) 0)) \<partial>\<mu>)"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
-  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  obtain \<mu> where mu: "\<mu> \<in> covariation_class S (T - s) (0::real^'n)"
     and nu: "\<nu> = distr \<mu> ?B (pembed s T)" and pm: "pembed s T \<in> \<mu> \<rightarrow>\<^sub>M ?B"
     by (rule pdelclassE[OF s0 sT m])
   have nb: "(\<lambda>w :: 'n pairpath. g (w u)) \<in> borel_measurable ?B"
@@ -922,45 +922,49 @@ qed
 
 lemma pdelclass_norm_mean_le:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes L0: "0 \<le> L" and s0: "0 \<le> s" and sT: "s \<le> T"
-    and m: "\<nu> \<in> pdelclass k L T s" and u: "u \<in> {0..T}"
+  assumes B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and s0: "0 \<le> s" and sT: "s \<le> T"
+    and m: "\<nu> \<in> pdelclass S T s" and u: "u \<in> {0..T}"
   shows "(\<integral>w. norm (fst (w u)) \<partial>\<nu>)
-      \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
+      \<le> 1 + real CARD('n) * (B * T)"
 proof -
   have Ts: "0 \<le> T - s" using sT by simp
   have tmem: "max (u - s) 0 \<in> {0..T - s}" using u s0 sT by auto
-  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  obtain \<mu> where mu: "\<mu> \<in> covariation_class S (T - s) (0::real^'n)"
     and eq: "(\<integral>w. norm (fst (w u)) \<partial>\<nu>) = (\<integral>w. norm (fst (w (max (u - s) 0))) \<partial>\<mu>)"
     by (rule pdelclass_integral_eq[where g = "\<lambda>z. norm (fst z)", OF s0 sT m u])
       (auto intro!: continuous_intros)
   have "(\<integral>w. norm (fst (w (max (u - s) 0))) \<partial>\<mu>)
-      \<le> 1 + real CARD('n) * (real CARD('n) * L * (T - s))"
-    by (rule covariation_class_norm_mean_le[OF Ts sconstraint_bounds(1,2)[OF L0] mu[unfolded exit_class_eq_covariation] tmem])
-  also have "\<dots> \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
-    using L0 s0 by (intro add_left_mono mult_left_mono mult_left_mono) auto
+      \<le> 1 + real CARD('n) * (B * (T - s))"
+    by (rule covariation_class_norm_mean_le[OF Ts B0 B mu tmem])
+  also have "\<dots> \<le> 1 + real CARD('n) * (B * T)"
+    using B0 s0 by (intro add_left_mono mult_left_mono mult_left_mono) auto
   finally show ?thesis unfolding eq .
 qed
 
 lemma pdelclass_comp_norm_mean_le:
   fixes \<nu> :: "('n::finite pairpath) measure"
-  assumes L0: "0 \<le> L" and s0: "0 \<le> s" and sT: "s \<le> T"
-    and m: "\<nu> \<in> pdelclass k L T s" and u: "u \<in> {0..T}"
+  assumes B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and s0: "0 \<le> s" and sT: "s \<le> T"
+    and m: "\<nu> \<in> pdelclass S T s" and u: "u \<in> {0..T}"
   shows "(\<integral>w. norm (outerp (fst (w u)) - snd (w u)) \<partial>\<nu>)
-      \<le> real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
+      \<le> real CARD('n) * (B * T) + B * T"
 proof -
   have Ts: "0 \<le> T - s" using sT by simp
   have tmem: "max (u - s) 0 \<in> {0..T - s}" using u s0 sT by auto
-  obtain \<mu> where mu: "\<mu> \<in> exit_class k L (T - s) (0::real^'n)"
+  obtain \<mu> where mu: "\<mu> \<in> covariation_class S (T - s) (0::real^'n)"
     and eq: "(\<integral>w. norm (outerp (fst (w u)) - snd (w u)) \<partial>\<nu>)
       = (\<integral>w. norm (outerp (fst (w (max (u - s) 0))) - snd (w (max (u - s) 0))) \<partial>\<mu>)"
     by (rule pdelclass_integral_eq[where g = "\<lambda>z. norm (outerp (fst z) - snd z)", OF s0 sT m u])
       (unfold outerp_def, auto intro!: continuous_intros)
   have "(\<integral>w. norm (outerp (fst (w (max (u - s) 0))) - snd (w (max (u - s) 0))) \<partial>\<mu>)
-      \<le> real CARD('n) * (real CARD('n) * L * (T - s)) + real CARD('n) * L * (T - s)"
+      \<le> real CARD('n) * (B * (T - s)) + B * (T - s)"
     by (rule covariation_class_comp_norm_mean_le
-        [OF Ts sconstraint_bounds(1,2)[OF L0] mu[unfolded exit_class_eq_covariation] tmem])
-  also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
-    using L0 s0 by (intro add_mono mult_left_mono mult_left_mono) auto
+        [OF Ts B0 B mu tmem])
+  also have "\<dots> \<le> real CARD('n) * (B * T) + B * T"
+    using B0 s0 by (intro add_mono mult_left_mono mult_left_mono) auto
   finally show ?thesis unfolding eq .
 qed
 
