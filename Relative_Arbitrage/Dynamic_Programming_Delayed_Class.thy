@@ -869,7 +869,8 @@ theorem pstopped_law_horizon_component:
       (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>u p'. fst (p' (min u T)) $ c) T"
   by (rule pstopped_law_horizon_of[where f = "\<lambda>z. fst z $ c",
-        OF T0 P st thM _ exit_class_horizon_component[OF T0 L0 P]])
+        OF T0 P st thM _ covariation_class_horizon_component[OF T0 sconstraint_bounds(1,2)[OF L0]
+          P[unfolded exit_class_eq_covariation]]])
     (intro continuous_intros)
 
 theorem pstopped_law_horizon_compensated:
@@ -881,7 +882,8 @@ theorem pstopped_law_horizon_compensated:
       (natural_filtration (pair_law_of T (pstopped T \<theta>) P) 0 (\<lambda>v \<omega>. \<omega> v))
       (\<lambda>u p'. (outerp (fst (p' (min u T))) - snd (p' (min u T))) $ c $ d) T"
   by (rule pstopped_law_horizon_of[where f = "\<lambda>z. (outerp (fst z) - snd z) $ c $ d",
-        OF T0 P st thM _ exit_class_horizon_compensated[OF T0 L0 P]])
+        OF T0 P st thM _ covariation_class_horizon_compensated[OF T0 sconstraint_bounds[OF L0]
+          P[unfolded exit_class_eq_covariation]]])
     (unfold outerp_def, intro continuous_intros)
 
 subsection \<open>Uniform first moments for the delayed class\<close>
