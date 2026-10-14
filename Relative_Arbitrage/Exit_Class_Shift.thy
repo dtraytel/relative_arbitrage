@@ -332,7 +332,9 @@ proof -
       have mem: "\<sigma> m \<in> ?C" for m using that by auto
       have ex: "\<exists>a Q. strict_mono a \<and> Q \<in> ?C \<and> weak_conv_on (\<sigma> \<circ> a) Q sequentially
           (mtopology_of (path_metric T :: ('n pairpath) metric))"
-        by (rule exit_class_convergent_subsequence[OF T L mem])
+        unfolding exit_class_eq_covariation
+        by (rule covariation_class_convergent_subsequence[OF T sconstraint_bounds[OF L]
+            closed_sconstraint mem[unfolded exit_class_eq_covariation]])
       obtain a where ea: "\<exists>Q. strict_mono a \<and> Q \<in> ?C
           \<and> weak_conv_on (\<sigma> \<circ> a) Q sequentially
               (mtopology_of (path_metric T :: ('n pairpath) metric))"

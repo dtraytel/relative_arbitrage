@@ -56,10 +56,17 @@ proof (rule compactin_of_seq_compact
     [OF metrizable_weak_conv_path_topology exit_class_subset_weak_topspace])
   fix \<sigma> :: "nat \<Rightarrow> ('n pairpath) measure"
   assume "range \<sigma> \<subseteq> exit_class k L T x"
+  then have mem: "\<sigma> m \<in> covariation_class (sconstraint k L) T x" for m
+    unfolding exit_class_eq_covariation by auto
+  have "\<exists>r l. strict_mono r \<and> l \<in> covariation_class (sconstraint k L) T x
+      \<and> weak_conv_on (\<sigma> \<circ> r) l sequentially
+          (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    by (rule covariation_class_convergent_subsequence[where Qm = \<sigma>,
+        OF T sconstraint_bounds[OF L] closed_sconstraint mem])
   then show "\<exists>l r. l \<in> exit_class k L T x \<and> strict_mono r \<and> limitin
       (weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric)))
       (\<sigma> \<circ> r) l sequentially"
-    using exit_class_convergent_subsequence[OF T L, of \<sigma>] by blast
+    unfolding exit_class_eq_covariation by blast
 qed
 
 section \<open>Joint continuity of the shift\<close>

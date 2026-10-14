@@ -1593,7 +1593,7 @@ subsection \<open>The weak limit of the Euler laws\<close>
 
 text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close> all live in the class
   \<open>exit_class k L c x\<close>, so some subsequence converges weakly to a class
-  member \<open>P\<close> (@{thm [source] exit_class_convergent_subsequence}).  The
+  member \<open>P\<close> (@{thm [source] covariation_class_convergent_subsequence}).  The
   portmanteau bound --- if the measures of an open set converge to \<open>b\<close>,
   the limit member gives the set at most \<open>b\<close>, and dually for closed sets
   (@{thm [source] weak_conv_open_liminf}, @{thm [source]
@@ -1625,9 +1625,13 @@ theorem exit_class_weak_limit:
           \<longrightarrow> b \<le> measure P D)"
 proof -
   let ?pm = "path_metric T :: ('n pairpath) metric"
-  obtain r P where r: "strict_mono r" and P: "P \<in> exit_class k L T x"
+  have "\<exists>r P. strict_mono r \<and> P \<in> covariation_class (sconstraint k L) T x
+      \<and> weak_conv_on (Pseq \<circ> r) P sequentially (mtopology_of ?pm)"
+    by (rule covariation_class_convergent_subsequence[where Qm = Pseq,
+        OF T sconstraint_bounds[OF L0] closed_sconstraint mem[unfolded exit_class_eq_covariation]])
+  then obtain r P where r: "strict_mono r" and P: "P \<in> exit_class k L T x"
     and wc: "weak_conv_on (Pseq \<circ> r) P sequentially (mtopology_of ?pm)"
-    using exit_class_convergent_subsequence[where Qm = Pseq, OF T L0 mem] by blast
+    unfolding exit_class_eq_covariation by blast
   have sub: "(\<lambda>i. ereal (measure ((Pseq \<circ> r) i) A)) \<longlonglongrightarrow> ereal b"
     if "(\<lambda>i. measure (Pseq i) A) \<longlonglongrightarrow> b" for A b
     using LIMSEQ_subseq_LIMSEQ[OF that r] by (simp add: o_def)
@@ -1711,9 +1715,11 @@ proof -
   have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     by (rule exit_class_sets[OF Q])
   have int4: "integrable Q (\<lambda>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4)"
-    by (rule exit_class_fourth_moment_integrable[OF T L Q st stt ttT])
+    by (rule covariation_class_fourth_moment_integrable[OF T sconstraint_bounds[OF L]
+        Q[unfolded exit_class_eq_covariation] st stt ttT])
   have intgl: "(\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q) \<le> 8 * L\<^sup>2 * (tt - s)\<^sup>2"
-    by (rule exit_class_fourth_moment_bochner[OF T L Q st stt ttT])
+    by (rule covariation_class_fourth_moment_bochner[OF T sconstraint_bounds[OF L]
+        Q[unfolded exit_class_eq_covariation] st stt ttT])
   have "measure Q {\<omega> \<in> space Q. l \<le> \<bar>fst (\<omega> tt) $ i - fst (\<omega> s) $ i\<bar>}
       \<le> (\<integral>\<omega>. (fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4 \<partial>Q) / l^4"
     using st stt ttT

@@ -350,19 +350,6 @@ text \<open>Per (1.7)--(1.8) the paper's processes are never stopped, so a marke
   by (1.8) it depends only on the path up to the first exit from \<open>K\<close>.\<close>
 
 
-theorem exit_class_lipschitz_ae:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x"
-  shows "AE \<omega> in Q. (real CARD('n) * L)-lipschitz_on {0..T} (\<lambda>t. snd (\<omega> t))"
-proof (rule covariation_class_lipschitz_ae[OF T])
-  show "0 \<le> real CARD('n) * L" using L by simp
-  show "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
-    by (rule sconstraint_norm_le[OF L])
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed
-
 theorem exit_class_Y_bounded_ae:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes T: "0 \<le> T" and L: "0 \<le> L"
