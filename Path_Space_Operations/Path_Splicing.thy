@@ -975,9 +975,9 @@ qed
 subsection \<open>The selector as a kernel into a family of laws\<close>
 
 text \<open>\<open>exit_val_measurable_selector_kernel'\<close> below makes the selector
-  a Giry-monad kernel, hypothesis \<^emph>\<open>Kp\<close> of \<open>exit_class_kglue_law'\<close>.  Measurability into the
+  a Giry-monad kernel, hypothesis \<^emph>\<open>Kp\<close> of \<open>covariation_class_kglue_law'\<close>.  Measurability into the
   class with its Levy-Prokhorov metric then comes for free inside that proof:
-  the kernel lands in the subspace, and \<open>exit_class_compact_metric_space\<close> identifies the class's metric
+  the kernel lands in the subspace, and \<open>covariation_class_compact_metric_space\<close> identifies the class's metric
   topology with the subspace topology of weak convergence.\<close>
 
 lemma pexit_path_measurable:
@@ -1016,17 +1016,17 @@ proof -
   then show ?thesis using sets.Int[OF s1 s2] by simp
 qed
 
-text \<open>The conditioning statement itself (\<open>exit_val_cond\<close> and
-  \<open>exit_val_cond_time\<close>), the key step of the \<open>\<le>\<close> half of the DPP
+text \<open>The conditioning statement itself (\<open>covariation_val_cond\<close> and
+  \<open>covariation_val_cond_time\<close>), the key step of the \<open>\<le>\<close> half of the DPP
   in \<open>Proposition_2_4\<close>.  The chain is:
 
   \<^item> the hypothesis becomes a measurable property of the pair
     \<open>(pcut r \<omega>, pfut r T \<omega>)\<close>, by \<open>pglue_pcut_pfut\<close>;
   \<^item> @{thm [source] AE_ksemi} disintegrates it along the r.c.d.;
-  \<^item> \<open>exit_class_rcd_member\<close> says the r.c.d. lands in the
+  \<^item> \<open>covariation_class_rcd_member\<close> says the r.c.d. lands in the
     class at the origin, so at a fixed good \<open>p'\<close> the surviving future is a
     class member started at \<open>0\<close> and shifted by the constant \<open>fst (p' r)\<close>;
-  \<^item> \<open>exit_val_ge_of_AE_pshift\<close> turns the almost-sure lower bound
+  \<^item> \<open>covariation_val_ge_of_AE_pshift\<close> turns the almost-sure lower bound
     on its exit time into a lower bound for \<open>exit_val\<close> at that point.
 
   No localization and no \<open>K\<^sub>\<epsilon>\<close> are needed: the starting point is a single

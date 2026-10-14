@@ -26,7 +26,7 @@ text \<open>\<open>bounded_linear_cross\<close> lives in @{theory Symmetric_Matr
 
 subsection \<open>The Brownian continuation on the half-line\<close>
 
-text \<open>The witness of \<open>bmpair_law_in_paper_pair_class\<close> without
+text \<open>The witness of \<open>bmpair_law_in_covariation_class\<close> without
   the horizon cap: Brownian motion paired with the covariation \<open>Y\<^sub>t = t \<sqdot> I\<close>.
   Cutting it at \<open>S\<close> returns \<open>bmpair\<close> exactly, so every restriction of
   its law is the horizon-\<open>S\<close> witness and lies in the class.\<close>

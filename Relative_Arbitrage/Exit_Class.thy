@@ -395,25 +395,6 @@ lemma sconstraint_bounds:
     and "\<And>(a :: real^'n^'n) j. a \<in> sconstraint k L \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> L"
   using L sconstraint_norm_le[OF L] sconstraint_diag by auto
 
-lemma exit_class_eval_measurable:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-  shows "(\<lambda>\<omega>. \<omega> t) \<in> borel_measurable Q"
-  by (rule pair_law_eval_measurable[OF exit_class_sets[OF Q]])
-
-lemma exit_class_Y_entry_integrable:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-  shows "integrable Q (\<lambda>\<omega>. snd (\<omega> t) $ i $ j)"
-proof (rule covariation_class_Y_entry_integrable)
-  show "0 \<le> real CARD('n) * L" using L by simp
-  show "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
-    by (rule sconstraint_norm_le[OF L])
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed (use assms in auto)
-
 lemma exit_class_compensated_martingale:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> exit_class k L T x"
@@ -433,29 +414,6 @@ proof (rule covariation_class_compensated_integrable)
     using Q unfolding exit_class_eq_covariation .
 qed (use assms in auto)
 
-lemma exit_class_compensated_entry_integrable:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-  shows "integrable Q (\<lambda>\<omega>. (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ j)"
-proof (rule covariation_class_compensated_entry_integrable)
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed (use assms in auto)
-
-
-theorem exit_class_sq_integrable:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-  shows "integrable Q (\<lambda>\<omega>. (fst (\<omega> t) $ i)\<^sup>2)"
-proof (rule covariation_class_sq_integrable)
-  show "0 \<le> real CARD('n) * L" using L by simp
-  show "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
-    by (rule sconstraint_norm_le[OF L])
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed (use assms in auto)
-
 theorem exit_class_compensated_mean:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
@@ -464,20 +422,6 @@ proof (rule covariation_class_compensated_mean)
   show "Q \<in> covariation_class (sconstraint k L) T x"
     using Q unfolding exit_class_eq_covariation .
 qed (use assms in auto)
-
-theorem exit_class_sq_mean_le:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-  shows "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q) \<le> (x $ i)\<^sup>2 + real CARD('n) * L * T"
-proof (rule covariation_class_sq_mean_le)
-  show "0 \<le> real CARD('n) * L" using L by simp
-  show "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
-    by (rule sconstraint_norm_le[OF L])
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed (use assms in auto)
-
 
 text \<open>The starting point is a closed condition too: evaluation at time \<open>0\<close>
   is continuous and \<open>{(x, 0)}\<close> is closed.\<close>

@@ -576,7 +576,7 @@ text \<open>The assembly.  Every hypothesis of
   \<open>path_stopping_time_event_filtration_all\<close>, the convergence from
   \<open>dyceil_tendsto\<close> and continuity of the paths, and the domination from
   @{theory Continuous_Time_Martingales.Doob_Inequality}'s \<open>Dsup\<close> through
-  \<open>exit_class_horizon_component\<close>.\<close>
+  \<open>covariation_class_horizon_component\<close>.\<close>
 
 text \<open>The same identity for an arbitrary real process that is a
   \<open>horizon_sq_int_martingale\<close> with continuous paths.  Both of the class's
@@ -1205,7 +1205,7 @@ next
   qed
 qed
 
-text \<open>So \<open>exit_val_dpp_sup_ge_time\<close> applies at the exit time of
+text \<open>So \<open>covariation_val_dpp_sup_ge_time\<close> applies at the exit time of
   a ball, and optional sampling at \<open>\<tau> \<and> h\<close> is available for stochastic
   localisation.\<close>
 

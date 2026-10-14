@@ -1227,7 +1227,7 @@ qed
 
 text \<open>The transfer principle.  Sequential compactness of the class
   extracts a convergent subsequence; membership clause (2) of
-  \<open>exit_class_compact_metric_space\<close> identifies the
+  \<open>covariation_class_compact_metric_space\<close> identifies the
   limit as weak convergence, and the portmanteau bounds
   (\<open>weak_conv_openin_liminf\<close>, \<open>weak_conv_closedin_limsup\<close>) turn it
   into the open/closed set bounds.  Convergence along the full sequence pins the
@@ -1287,7 +1287,7 @@ lemma Polish_space_path_metric:
 
 section \<open>Kernel pasting: the semidirect product\<close>
 
-text \<open>\<open>exit_class_kglue_law\<close> glues with a countably
+text \<open>\<open>covariation_class_kglue_law\<close> glues with a countably
   valued index, which \<open>Metric_space.usc_measurable_selection\<close>
   cannot supply.  The replacement is the Giry monad's semidirect product:
   run \<open>Q\<close>, then continue with the law the kernel picks at the endpoint

@@ -667,7 +667,7 @@ text \<open>One selector, every horizon.  \<open>Sel (s,y)\<close> is the \<^con
   the horizon-\<open>T\<close> optimizer started at \<open>y\<close>, cut back to \<open>T-s\<close>; it lands in
   \<open>pdelclass\<close>, is jointly measurable in \<open>(s,y)\<close> as a Giry kernel, and
   re-basing it attains \<^term>\<open>exit_val k L (T - s) K y\<close>.  This is the
-  continuation \<open>exit_class_aglue\<close> consumes for the
+  continuation \<open>covariation_class_aglue\<close> consumes for the
   additive glue.\<close>
 
 lemma ess_inf_time_pshift_law:
@@ -998,9 +998,9 @@ text \<open>Proving clauses (iii) and (iv) directly for \<open>ksemi\<close> run
   Neither has to be faced.  The class is weakly closed
   (\<open>exit_class_weak_closed\<close>), the glue with a countably
   valued index is already in it
-  (\<open>exit_class_kglue_law\<close>), and the class at the origin
+  (\<open>covariation_class_kglue_law\<close>), and the class at the origin
   is a compact metric space
-  (\<open>exit_class_compact_metric_space\<close>), hence separable,
+  (\<open>covariation_class_compact_metric_space\<close>), hence separable,
   so any kernel into it is a pointwise limit of countably valued ones.  If
   the semidirect products converge weakly, the glued laws do too, and weak
   closedness finishes --- which needs continuity of the glue and the
@@ -1918,7 +1918,7 @@ text \<open>The class is closed under concatenation with a continuation chosen
   Round the kernel to the dense sequence of the compact class
   (\<open>Metric_space.countably_valued_approx\<close>); each rounded
   glue is a legitimate pasting
-  (\<open>exit_class_kglue_law\<close>) and, by
+  (\<open>covariation_class_kglue_law\<close>) and, by
   @{thm [source] kglue_law_eq_kglue_law'}, is the kernel glue at the
   rounded kernel; the semidirect products converge weakly
   (@{thm [source] ksemi_weak_conv}), the glue is continuous
@@ -2166,7 +2166,7 @@ text \<open>\<open>pafter T \<theta> \<omega>\<close> is frozen on \<open>[0,\<t
   path stands still.  It is instead the delayed embedding of the ordinary
   rebased future \<open>pfut \<theta> T \<omega>\<close>, padded with \<open>0\<close> on \<open>[0,\<theta>]\<close> and running the
   future after that; the class statement for the kernel is thus a statement
-  about \<open>prebase \<theta> T \<circ> pafter T \<theta>\<close>, exactly what \<open>exit_class_rcd_member\<close> says about the law of \<open>pfut r T\<close>.  The random
+  about \<open>prebase \<theta> T \<circ> pafter T \<theta>\<close>, exactly what \<open>covariation_class_rcd_member\<close> says about the law of \<open>pfut r T\<close>.  The random
   horizon \<open>T - \<theta>\<close> is harmless: inside an almost-sure statement over the
   past, \<open>\<theta>\<close> is a fixed number, and the kernel's codomain stays a fixed space
   by keeping \<open>pafter\<close> on the \<open>T\<close>-space.\<close>

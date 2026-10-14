@@ -19,7 +19,7 @@ text \<open>
     instantaneous covariance mat 1 and a deterministic horizon.  For this
     model the martingale property with respect to the natural filtration
     becomes a theorem, and the model witnesses that the class \<open>\<P>\<^sub>0\<close> is
-    non-empty (\<open>exit_class_nonempty\<close>).\<close>
+    non-empty (\<open>covariation_class_nonempty\<close>).\<close>
 section \<open>Independence toolkit\<close>
 
 text \<open>Independence of a pair of random variables transports along a

@@ -1130,7 +1130,7 @@ qed
 section \<open>The additive glue lands in the class\<close>
 
 text \<open>All four clauses hold, with no martingale hypothesis left over.
-  Clauses (i)--(iii) come from \<open>exit_class_aglue_law\<close>;
+  Clauses (i)--(iii) come from \<open>covariation_class_aglue_law\<close>;
   the two martingale clauses are @{thm [source] aglue_law_X_martingale} and
   @{thm [source] aglue_law_comp_martingale}.  The remaining hypotheses
   concern only the two factors --- the stopped past \<open>Q\<close> and the
@@ -1744,7 +1744,7 @@ qed
 text \<open>The two instances.  For a coordinate of \<open>X\<close>, the shifted process is
   \<open>X\<^sub>r\<^sub>+\<^sub>u - X\<^sub>r\<close>, whose increment property is the martingale property of \<open>X\<close>
   under \<open>P\<close>; for a compensated entry it is the martingale
-  \<open>exit_class_pfut_comp_martingale\<close> in the shifted filtration, which agrees
+  \<open>covariation_class_pfut_comp_martingale\<close> in the shifted filtration, which agrees
   with \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>u\<^sub>)\<close> for \<open>u \<le> T - r\<close>.\<close>
 
 theorem pfut_rcd_X_martingale:

@@ -98,7 +98,7 @@ text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
   so the building block is Brownian motion pushed through a constant
   matrix \<open>S\<close>: the pair \<open>(S \<cdot> W\<^sub>t, t \<cdot> S S\<^sup>T)\<close>, started at \<open>0\<close>
   (\<open>sbmpair\<close>, whose case \<open>S = I\<close> is the witness \<open>bmpair\<close>).  In its class
-  membership (\<open>sbmpair_law_in_paper_pair_class\<close>) the
+  membership (\<open>sbmpair_law_in_covariation_class\<close>) the
   martingale clauses are bounded-linear images of the Brownian ones
   (@{thm [source] martingale_bounded_linear_image}), the covariation
   clause is deterministic, and an arbitrary start comes free from
@@ -274,13 +274,13 @@ qed
 
 
 text \<open>The value function at a shorter horizon is the value function at the
-  longer one, capped.  The \<open>\<le>\<close> half is \<open>exit_val_horizon_mono\<close>
-  together with \<open>exit_val_le_T\<close>; the \<open>\<ge>\<close> half cuts a
+  longer one, capped.  The \<open>\<le>\<close> half is \<open>covariation_val_horizon_mono\<close>
+  together with \<open>covariation_val_le_T\<close>; the \<open>\<ge>\<close> half cuts a
   competitor at the longer horizon back to the shorter one
-  (\<open>exit_class_pcut\<close>), where the two lemmas above turn
+  (\<open>covariation_class_pcut\<close>), where the two lemmas above turn
   its value into the capped value.  No pasting is needed in either
   direction --- the pasting is already inside
-  \<open>exit_val_horizon_mono\<close>.\<close>
+  \<open>covariation_val_horizon_mono\<close>.\<close>
 
 lemma pair_law_coord_sq_nn_bound:
   fixes N :: "('n::finite pairpath) measure"
