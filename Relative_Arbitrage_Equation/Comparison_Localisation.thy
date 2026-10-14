@@ -49,23 +49,25 @@ text \<open>\<open>soft_pen\<close> lives in @{theory Second_Order_Viscosity_Ana
 text \<open>\<open>convex_on_norm_lift\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 
+context geometric_operator
+begin
+
 theorem supersol_no_vanishing_jet_onesided:
   fixes w :: "real^'n::finite \<Rightarrow> real"
-  assumes sup: "supersol_jet k L \<Omega> w"
+  assumes sup: "supersol_usc \<Omega> w"
     and yh: "yh \<in> \<Omega>"
-    and k: "1 \<le> k" "k < CARD('n)" and L: "1 \<le> L"
     and ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
         ((- w) (yh + hh) - (- w) yh) / (norm hh)\<^sup>2 < c"
   shows False
 proof -
   obtain \<delta> :: real where d0: "0 < \<delta>"
     and ltone: "\<And>q :: real^'n.
-      ell_op_usc k L q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
-  proof (rule ell_op_usc_small_shift_lt_one[OF k(1) k(2) L])
+      F_usc q ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1) < 1"
+  proof (rule usc_small_shift_lt_one)
     fix dd :: real
     assume a1: "0 < dd" and a2: "dd < 1"
       and a3: "\<And>q :: real^'n.
-        ell_op_usc k L q ((0::real^'n^'n) - dd *\<^sub>R mat 1) < 1"
+        F_usc q ((0::real^'n^'n) - dd *\<^sub>R mat 1) < 1"
     show thesis by (rule that[OF a1 a3])
   qed
   have Ys: "transpose (0::real^'n^'n) = 0"
@@ -74,7 +76,7 @@ proof -
       ((- w) (yh + hh) - (- w) yh - (- (0::real^'n)) \<bullet> hh
         - (hh \<bullet> ((- (0::real^'n^'n)) *v hh))/2) / (norm hh)\<^sup>2 < c"
     using ub by simp
-  have one: "1 \<le> ell_op_usc k L (0::real^'n)
+  have one: "1 \<le> F_usc (0::real^'n)
       ((0::real^'n^'n) - \<delta> *\<^sub>R mat 1)"
     by (rule supersol_shifted_bound_onesided[OF sup yh Ys ub0 d0])
   show False using one ltone[of "0::real^'n"] by simp
@@ -120,11 +122,10 @@ text \<open>The comparison argument's doubled functional is built from the
 
 theorem subsol_shifted_bound_supconv:
   fixes u :: "real^'n::finite \<Rightarrow> real" and Xm :: "real^'n^'n"
-  assumes sub: "visc_subsol k L \<Omega> u"
+  assumes sub: "subsol \<Omega> u"
     and t: "0 < \<theta>"
     and ysO: "ys \<in> \<Omega>"
     and Xs: "transpose Xm = Xm"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and Bu: "\<And>y. \<theta> * u y \<le> Bu" and e: "0 < \<epsilon>"
     and opt: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x
         = \<theta> * u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
@@ -132,7 +133,7 @@ theorem subsol_shifted_bound_supconv:
         - supconv (\<lambda>y. \<theta> * u y) \<epsilon> x - p \<bullet> h
         - (h \<bullet> (Xm *v h))/2) / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
     and d: "0 < \<delta>"
-  shows "ell_op k L p (Xm + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
+  shows "F p (Xm + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
 proof -
   have sym: "transpose (Xm + \<delta> *\<^sub>R mat 1) = Xm + \<delta> *\<^sub>R mat 1"
     by (rule transpose_shift_add[OF Xs])
@@ -165,21 +166,21 @@ proof -
     by (rule jet_test_fun_at[OF sym])
   have g: "(\<lambda>z. p + (Xm + \<delta> *\<^sub>R mat 1) *v (z - ys)) ys = p"
     by simp
-  have ne: "feasible k L ((\<lambda>z. p + (Xm + \<delta> *\<^sub>R mat 1) *v (z - ys)) ys)
-      \<noteq> ({} :: (real^'n^'n) set)"
-    unfolding g by (rule feasible_nonempty[OF kk(1) kk(2) LL])
-  have "ell_op k L ((\<lambda>z. p + (Xm + \<delta> *\<^sub>R mat 1) *v (z - ys)) ys)
+  have "F ((\<lambda>z. p + (Xm + \<delta> *\<^sub>R mat 1) *v (z - ys)) ys)
       (Xm + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
-    by (rule visc_subsol_scaled_uniform[OF sub t ysO tf ne maxloc])
+    by (rule visc_subsol_scaled_uniform[OF sub dilation homogeneous t ysO tf maxloc])
   thus ?thesis unfolding g .
 qed
+
+end
 
 text \<open>\<open>neg_shift_matrix_apply\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
 theorem supersol_shifted_bound_supconv:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
-  assumes sup: "supersol_jet k L \<Omega> w"
+    and G :: "real^'n \<Rightarrow> real^'n^'n \<Rightarrow> ereal"
+  assumes sup: "visc_supersol_gen test_fun_at nhds G \<Omega> w"
     and ysO: "ys \<in> \<Omega>"
     and Ys: "transpose Ym = Ym"
     and Bw: "\<And>y. (- w) y \<le> Bw" and e: "0 < \<epsilon>"
@@ -188,7 +189,7 @@ theorem supersol_shifted_bound_supconv:
         - (- p) \<bullet> h - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2)
       \<longlongrightarrow> 0) (at 0)"
     and d: "0 < \<delta>"
-  shows "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
+  shows "1 \<le> G p (Ym - \<delta> *\<^sub>R mat 1)"
 proof -
   have sym: "transpose (Ym - \<delta> *\<^sub>R mat 1) = Ym - \<delta> *\<^sub>R mat 1"
     by (rule transpose_shift_diff[OF Ys])
@@ -244,16 +245,18 @@ proof -
     by (rule jet_test_fun_at[OF sym])
   have g: "(\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - ys)) ys = p"
     by simp
-  have "1 \<le> ell_op_usc k L ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - ys)) ys)
+  have "1 \<le> G ((\<lambda>z. p + (Ym - \<delta> *\<^sub>R mat 1) *v (z - ys)) ys)
       (Ym - \<delta> *\<^sub>R mat 1)"
-    using sup ysO tf minloc unfolding supersol_jet_def by blast
+    using sup ysO tf minloc unfolding visc_supersol_gen_nhds by blast
   thus ?thesis unfolding g .
 qed
 
+context geometric_operator
+begin
+
 corollary supersol_shifted_bound_supconv_ne:
   fixes w :: "real^'n::finite \<Rightarrow> real" and Ym :: "real^'n^'n"
-  assumes sup: "supersol_jet k L \<Omega> w" and ysO: "ys \<in> \<Omega>"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
+  assumes sup: "supersol_usc \<Omega> w" and ysO: "ys \<in> \<Omega>"
     and Ys: "transpose Ym = Ym"
     and Bw: "\<And>y. (- w) y \<le> Bw" and e: "0 < \<epsilon>"
     and opt: "supconv (- w) \<epsilon> x = (- w) ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
@@ -261,12 +264,12 @@ corollary supersol_shifted_bound_supconv_ne:
         - (- p) \<bullet> h - (h \<bullet> ((- Ym) *v h))/2) / (norm h)\<^sup>2)
       \<longlongrightarrow> 0) (at 0)"
     and d: "0 < \<delta>" and p0: "p \<noteq> 0"
-  shows "1 \<le> ell_op k L p (Ym - \<delta> *\<^sub>R mat 1)"
+  shows "1 \<le> F p (Ym - \<delta> *\<^sub>R mat 1)"
 proof -
-  have "1 \<le> ell_op_usc k L p (Ym - \<delta> *\<^sub>R mat 1)"
+  have "1 \<le> F_usc p (Ym - \<delta> *\<^sub>R mat 1)"
     by (rule supersol_shifted_bound_supconv[OF sup ysO Ys Bw e opt jet d])
   then show ?thesis
-    using ell_op_usc_off_zero[OF transpose_shift_diff[OF Ys] p0 LL kk(1) kk(2)] by simp
+    using usc_off_zero[OF transpose_shift_diff[OF Ys] p0] by simp
 qed
 
 subsection \<open>Absorbing Jensen's tilt: the general nearby-point form\<close>
@@ -278,39 +281,9 @@ text \<open>The tilt perturbs the gradient as well as the matrix, unlike the
   at points arbitrarily close to \<open>(p, M)\<close>, however produced, passes to
   the lower envelope -- exactly the content of \<open>F\<^sub>*\<close>, subsuming both
   the \<open>\<delta> I\<close> shifts and the tilt, with the nearby point allowed to
-  depend on the radius so that \<open>dd\<close> can be chosen after it.\<close>
-
-theorem ell_op_lsc_le_of_nearby:
-  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes b: "\<And>e. 0 < e \<Longrightarrow> \<exists>p' M'.
-      dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, M) < e
-      \<and> ell_op k L p' M' \<le> c"
-  shows "ell_op_lsc k L p M \<le> ereal c"
-  unfolding ell_op_lsc_def
-proof (rule SUP_least)
-  fix e :: real assume "e \<in> {0<..}"
-  then obtain p' M' where "((p', M') :: (real^'n) \<times> (real^'n^'n)) \<in> ball (p, M) e"
-    and "ell_op k L p' M' \<le> c"
-    using b[of e] by (auto simp: dist_commute)
-  then show "(INF v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v) \<le> ereal c"
-    by (intro INF_lower2) (auto simp: ell_op_pair_def)
-qed
-
-theorem ell_op_usc_ge_of_nearby:
-  fixes M :: "real^'n::finite^'n" and p :: "real^'n"
-  assumes b: "\<And>e. 0 < e \<Longrightarrow> \<exists>p' M'.
-      dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, M) < e
-      \<and> c \<le> ell_op k L p' M'"
-  shows "ereal c \<le> ell_op_usc k L p M"
-  unfolding ell_op_usc_def
-proof (rule INF_greatest)
-  fix e :: real assume "e \<in> {0<..}"
-  then obtain p' M' where "((p', M') :: (real^'n) \<times> (real^'n^'n)) \<in> ball (p, M) e"
-    and "c \<le> ell_op k L p' M'"
-    using b[of e] by (auto simp: dist_commute)
-  then show "ereal c \<le> (SUP v \<in> ball ((p :: real^'n), M) e. ell_op_pair k L v)"
-    by (intro SUP_upper2) (auto simp: ell_op_pair_def)
-qed
+  depend on the radius so that \<open>dd\<close> can be chosen after it: that is
+  @{thm [source] op_lsc_le_of_nearby} and @{thm [source] op_usc_ge_of_nearby}
+  of @{theory Relative_Arbitrage_Equation.Geometric_Operator}.\<close>
 
 text \<open>The closing contradiction in that generality. Its hypotheses do not
   name the \<open>\<delta> I\<close> shifts, only that suitable bounds hold arbitrarily near
@@ -322,28 +295,28 @@ theorem env_strict_contradiction_of_nearby:
   fixes X Y :: "real^'n::finite^'n" and p :: "real^'n"
   assumes psd: "psd (Y - X)"
     and symX: "transpose X = X" and symY: "transpose Y = Y"
-    and pnz: "p \<noteq> 0" and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
-    and c1: "c < 1"
+    and pnz: "p \<noteq> 0" and c1: "c < 1"
     and subs: "\<And>e. 0 < e \<Longrightarrow> \<exists>p' M'.
         dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, X) < e
-        \<and> ell_op k L p' M' \<le> c"
+        \<and> F p' M' \<le> c"
     and sups: "\<And>e. 0 < e \<Longrightarrow> \<exists>p' M'.
         dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, Y) < e
-        \<and> 1 \<le> ell_op k L p' M'"
+        \<and> 1 \<le> F p' M'"
   shows False
 proof -
-  have lsc: "ell_op_lsc k L p X \<le> ereal c"
-    by (rule ell_op_lsc_le_of_nearby[OF subs])
+  have lsc: "F_lsc p X \<le> ereal c"
+    by (rule op_lsc_le_of_nearby[OF subs])
   have c1e: "ereal c < 1"
     using c1 by (simp add: one_ereal_def)
-  have sub: "ell_op_lsc k L p X < 1"
+  have sub: "F_lsc p X < 1"
     using lsc c1e by (rule le_less_trans)
-  have sup: "1 \<le> ell_op_usc k L p Y"
-    using ell_op_usc_ge_of_nearby[OF sups] by (simp add: one_ereal_def)
+  have sup: "1 \<le> F_usc p Y"
+    using op_usc_ge_of_nearby[OF sups] by (simp add: one_ereal_def)
   show False
-    by (rule ell_op_env_strict_contradiction[OF psd symX symY pnz kk(1) kk(2)
-          LL sub sup])
+    by (rule env_strict_contradiction[OF psd symX symY pnz sub sup])
 qed
+
+end
 
 subsection \<open>The quantitative input the tilt argument needs\<close>
 
@@ -428,6 +401,9 @@ text \<open>The contradiction with both limits taken together: bounds at the
   \<open>\<delta>\<close>-corrected matrices along a sequence of tilts is exactly what the
   doubling reaches.\<close>
 
+context geometric_operator
+begin
+
 theorem env_strict_contradiction_of_shifted_limits:
   fixes X Y :: "nat \<Rightarrow> real^'n::finite^'n" and Pu Pw :: "nat \<Rightarrow> real^'n"
   assumes cX: "X \<longlonglongrightarrow> X0" and cY: "Y \<longlonglongrightarrow> Y0"
@@ -436,12 +412,11 @@ theorem env_strict_contradiction_of_shifted_limits:
     and symY: "\<And>i. transpose (Y i) = Y i"
     and p0: "psd (Y0 - X0)"
     and pnz: "p \<noteq> 0"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and c1: "c < 1" and D: "0 < D"
     and bndu: "\<And>i \<delta>. 0 < \<delta> \<Longrightarrow> \<delta> < D \<Longrightarrow>
-        ell_op k L (Pu i) (X i + \<delta> *\<^sub>R mat 1) \<le> c"
+        F (Pu i) (X i + \<delta> *\<^sub>R mat 1) \<le> c"
     and bndw: "\<And>i \<delta>. 0 < \<delta> \<Longrightarrow> \<delta> < D \<Longrightarrow>
-        1 \<le> ell_op k L (Pw i) (Y i - \<delta> *\<^sub>R mat 1)"
+        1 \<le> F (Pw i) (Y i - \<delta> *\<^sub>R mat 1)"
   shows False
 proof -
   have sX0: "transpose X0 = X0"
@@ -450,26 +425,25 @@ proof -
     by (rule transpose_limit[OF cY symY])
   note p0
   have subs: "\<exists>p' M'. dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, X0) < e
-      \<and> ell_op k L p' M' \<le> c" if e0: "0 < e" for e
+      \<and> F p' M' \<le> c" if e0: "0 < e" for e
   proof -
     have cZ: "(\<lambda>i. (Pu i, X i)) \<longlonglongrightarrow> ((p, X0) :: (real^'n) \<times> (real^'n^'n))"
       by (rule tendsto_Pair[OF cPu cX])
     show ?thesis
       by (rule nearby_of_convergent_shifted
-          [where Q = "\<lambda>p' M'. ell_op k L p' M' \<le> c", OF cZ bndu D e0])
+          [where Q = "\<lambda>p' M'. F p' M' \<le> c", OF cZ bndu D e0])
   qed
   have sups: "\<exists>p' M'. dist ((p', M') :: (real^'n) \<times> (real^'n^'n)) (p, Y0) < e
-      \<and> 1 \<le> ell_op k L p' M'" if e0: "0 < e" for e
+      \<and> 1 \<le> F p' M'" if e0: "0 < e" for e
   proof -
     have cZ: "(\<lambda>i. (Pw i, Y i)) \<longlonglongrightarrow> ((p, Y0) :: (real^'n) \<times> (real^'n^'n))"
       by (rule tendsto_Pair[OF cPw cY])
     show ?thesis
       by (rule nearby_of_convergent_shifted_neg
-          [where Q = "\<lambda>p' M'. 1 \<le> ell_op k L p' M'", OF cZ bndw D e0])
+          [where Q = "\<lambda>p' M'. 1 \<le> F p' M'", OF cZ bndw D e0])
   qed
   show False
-    by (rule env_strict_contradiction_of_nearby[OF p0 sX0 sY0 pnz kk(1) kk(2)
-          LL c1 subs sups])
+    by (rule env_strict_contradiction_of_nearby[OF p0 sX0 sY0 pnz c1 subs sups])
 qed
 
 subsection \<open>Theorem 4.2(a) from a sequence of sup-convolution jets\<close>
@@ -485,9 +459,8 @@ theorem comparison_supconv_sequence_complete:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and X Y :: "nat \<Rightarrow> real^'n^'n" and Pu Pw :: "nat \<Rightarrow> real^'n"
     and xu xw ysu ysw :: "nat \<Rightarrow> real^'n"
-  assumes sub: "visc_subsol k L \<Omega>\<^sub>u u" and sup: "supersol_jet k L \<Omega>\<^sub>w w"
+  assumes sub: "subsol \<Omega>\<^sub>u u" and sup: "supersol_usc \<Omega>\<^sub>w w"
     and t: "0 < \<theta>" "\<theta> < 1"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>"
     and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
     and ysuO: "\<And>i. ysu i \<in> \<Omega>\<^sub>u" and yswO: "\<And>i. ysw i \<in> \<Omega>\<^sub>w"
@@ -509,10 +482,10 @@ theorem comparison_supconv_sequence_complete:
     and pnz: "p \<noteq> 0"
   shows False
 proof -
-  have bndu: "ell_op k L (Pu i) (X i + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
+  have bndu: "F (Pu i) (X i + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
     if "0 < \<delta>" "\<delta> < 1" for i \<delta>
     by (rule subsol_shifted_bound_supconv
-        [OF sub t(1) ysuO symX kk(1) kk(2) LL Bu e optu jetu that(1)])
+        [OF sub t(1) ysuO symX Bu e optu jetu that(1)])
   \<comment> \<open>The supersolution bound is over \<open>F\<^sup>*\<close>, and \<open>F\<^sup>* = F\<close> only away from
       \<open>0\<close>; the gradient FAMILY need not avoid \<open>0\<close>, but its LIMIT does, so it
       avoids \<open>0\<close> eventually.  Shifting every family past that index costs
@@ -534,11 +507,11 @@ proof -
     have "norm p / 2 < norm (Pw (i + N))" by (rule N) simp
     then show ?thesis using np by auto
   qed
-  have bndw: "1 \<le> ell_op k L (Pw (i + N)) (Y (i + N) - \<delta> *\<^sub>R mat 1)"
+  have bndw: "1 \<le> F (Pw (i + N)) (Y (i + N) - \<delta> *\<^sub>R mat 1)"
     if "0 < \<delta>" "\<delta> < 1" for i \<delta>
     by (rule supersol_shifted_bound_supconv_ne
-        [OF sup yswO kk(1) kk(2) LL symY Bw e optw jetw that(1) pwnz])
-  have bndu': "ell_op k L (Pu (i + N)) (X (i + N) + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
+        [OF sup yswO symY Bw e optw jetw that(1) pwnz])
+  have bndu': "F (Pu (i + N)) (X (i + N) + \<delta> *\<^sub>R mat 1) \<le> \<theta>"
     if "0 < \<delta>" "\<delta> < 1" for i \<delta>
     by (rule bndu[OF that(1) that(2)])
   show False
@@ -548,9 +521,11 @@ proof -
            LIMSEQ_ignore_initial_segment[OF cPu]
            LIMSEQ_ignore_initial_segment[OF cPw]
            symX symY p0
-           pnz kk(1) kk(2) LL t(2)
+           pnz t(2)
            zero_less_one bndu' bndw])
 qed
+
+end
 
 subsection \<open>The shrinking tilt is always available\<close>
 
@@ -566,12 +541,6 @@ text \<open>\<open>comparison_supconv_sequence_complete\<close> takes attainment
   they exist by @{thm [source] supconv_attained_usc}, and every one of them
   lies within \<open>\<surd>(max 0 (2\<epsilon>(B\<^sub>u-u x)))\<close> of \<open>x\<close>
   (@{thm [source] supconv_attain_radius}).\<close>
-
-lemma visc_subsol_mono_dom:
-  assumes s: "visc_subsol k L \<Omega> u" and sub: "\<Omega>' \<subseteq> \<Omega>"
-  shows "visc_subsol k L \<Omega>' u"
-  using s sub unfolding visc_subsol_def by blast
-
 
 text \<open>Far from \<open>K\<close> the extended function's sup-convolution returns to the
   constant, since the whole competing ball misses \<open>K\<close>: this confines the
@@ -726,13 +695,15 @@ text \<open>The shifted analogue, \<open>shifted_jensen_family_gen\<close> in
   over \<open>cball \<xi>\<^sub>0 r\<close> is assumed.\<close>
 
 
+context geometric_operator
+begin
+
 theorem comparison_supconv_bounded_family:
   fixes u w :: "real^'n::finite \<Rightarrow> real"
     and X Y :: "nat \<Rightarrow> real^'n^'n" and Pu Pw G :: "nat \<Rightarrow> real^'n"
     and xu xw ysu ysw :: "nat \<Rightarrow> real^'n"
-  assumes sub: "visc_subsol k L \<Omega>\<^sub>u u" and sup: "supersol_jet k L \<Omega>\<^sub>w w"
+  assumes sub: "subsol \<Omega>\<^sub>u u" and sup: "supersol_usc \<Omega>\<^sub>w w"
     and t: "0 < \<theta>" "\<theta> < 1"
-    and kk: "1 \<le> k" "k < CARD('n)" and LL: "1 \<le> L"
     and e: "0 < \<epsilon>"
     and Bu: "\<And>y. \<theta> * u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
     and ysuO: "\<And>i. ysu i \<in> \<Omega>\<^sub>u" and yswO: "\<And>i. ysw i \<in> \<Omega>\<^sub>w"
@@ -808,10 +779,11 @@ proof -
     by (rule jetw)
   show False
     by (rule comparison_supconv_sequence_complete
-        [OF sub sup t(1) t(2) kk(1) kk(2) LL e Bu Bw ysuOr yswOr
+        [OF sub sup t(1) t(2) e Bu Bw ysuOr yswOr
            symXr symYr p0 optur optwr jetur jetwr cX cY cPu cPw pnz])
 qed
 
+end
 
 (*<*)
 end

@@ -3,7 +3,7 @@ section \<open>Theorem 1.1: the value function is the unique viscosity solution\
 (*<*)
 theory Value_Function_Uniqueness
   imports
-    "Relative_Arbitrage_Equation.Comparison_Two_Domain" Exit_Class_Infinite Value_Function_Assembly
+    "Relative_Arbitrage_Equation.Comparison_Instance" Exit_Class_Infinite Value_Function_Assembly
 begin
 (*>*)
 

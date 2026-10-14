@@ -432,6 +432,31 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>Positive homogeneity of \<open>F\<close> in the matrix argument: with
+  @{thm [source] feasible_scale}, this is the strict-perturbation mechanism, scaling
+  a subsolution's jet to \<open>(\<theta> p, \<theta> X)\<close> and its value to
+  \<open>\<theta> F(p,X) \<le> \<theta> < 1\<close>.\<close>
+
+lemma ell_op_scaleR_matrix:
+  fixes M :: "real^'n::finite^'n"
+  assumes t: "0 < \<theta>" and ne: "feasible k L p \<noteq> ({} :: (real^'n^'n) set)"
+  shows "ell_op k L p (\<theta> *\<^sub>R M) = \<theta> * ell_op k L p M"
+proof -
+  have pt: "- trace ((\<theta> *\<^sub>R M) ** a) / 2 = \<theta> * (- trace (M ** a) / 2)"
+    for a :: "real^'n^'n"
+  proof -
+    have "(\<theta> *\<^sub>R M) ** a = \<theta> *\<^sub>R (M ** a)"
+      by (rule scalar_matrix_assoc[symmetric])
+    thus ?thesis by (simp add: trace_scaleR)
+  qed
+  have img: "(\<lambda>a. - trace ((\<theta> *\<^sub>R M) ** a) / 2) ` feasible k L p
+      = (\<lambda>x. \<theta> * x) ` ((\<lambda>a. - trace (M ** a) / 2) ` feasible k L p)"
+    unfolding image_image using pt by simp
+  show ?thesis
+    unfolding ell_op_def img
+    by (rule cInf_mult_pos[OF t _ ell_op_bdd_below]) (use ne in simp)
+qed
+
 text \<open>The same holds for the upper envelope, the form used in Section 4's
   viscosity definitions.\<close>
 
@@ -469,9 +494,12 @@ text \<open>Lemma 3.1 consists of:
 
 section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>
 
-text \<open>Theorem 4.2(a) is \<open>max_principle_usc_lsc\<close> in \<open>Comparison_Principle\<close>;
-  Theorem 4.2(b) and Proposition 4.1 follow from it there, as
-  \<open>max_principle_le\<close> and \<open>uniqueness_from_max_principle\<close>.\<close>
+text \<open>The chain is proved in \<open>Comparison_Principle\<close> and \<open>Comparison_Two_Domain\<close>
+  for any operator of the locale \<open>geometric_operator\<close>; \<open>Comparison_Instance\<close>
+  shows that \<open>F\<close> is one and states Theorem 4.2(a) (\<open>max_principle_usc_lsc\<close>),
+  Theorem 4.2(b) (\<open>comparison_two_domain\<close>), Theorem 4.3
+  (\<open>comparison_expandable\<close>) and Proposition 4.1 (\<open>uniqueness_expandable\<close>)
+  for it.\<close>
 
 (*<*)
 end

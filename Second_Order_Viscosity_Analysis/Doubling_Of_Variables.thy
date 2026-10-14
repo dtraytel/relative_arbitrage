@@ -2610,7 +2610,7 @@ text \<open>This delivers the input of \<open>sums_psd_at_interior_max_gen\<clos
   point \<open>z'\<close>, a symmetric bounded-linear \<open>W\<close>, and the second-order
   expansion of the doubled functional at \<open>z'\<close>. With
   \<open>supconv_dominates_shift\<close>, transferring the jet back to \<open>u\<close> and
-  \<open>w\<close>, and \<open>ell_op_env_strict_contradiction\<close>, this completes the chain
+  \<open>w\<close>, and \<open>env_strict_contradiction\<close>, this completes the chain
   of Theorem 4.2(a), \<open>max_principle_usc_lsc\<close>. Jensen's lemma returns a global maximum of
   the tilted functional \<open>\<Psi> + p \<cdot> \<cdot>\<close> over \<open>cball \<xi> r\<close>, with \<open>norm p \<le> dd\<close>;
   converting it to the interior-max form needed only requires restricting
@@ -2777,7 +2777,7 @@ qed
 subsection \<open>Symmetry of the two block matrices\<close>
 
 text \<open>The jet alone yields all three matrix hypotheses of
-  \<open>ell_op_env_strict_contradiction\<close>: both block matrices are symmetric,
+  \<open>env_strict_contradiction\<close>: both block matrices are symmetric,
   and they are ordered.\<close>
 
 subsection \<open>The gradient alignment\<close>
@@ -2789,7 +2789,7 @@ text \<open>Consequently the jet at the doubled maximum has no first-order term
 
 text \<open>With \<open>q = 0\<close>, the first block's gradient is \<open>\<alpha>(x' - y')\<close> and the
   second block's is its negative, so a single \<open>p\<close> serves both jets, as
-  \<open>ell_op_env_strict_contradiction\<close> requires.\<close>
+  \<open>env_strict_contradiction\<close> requires.\<close>
 
 subsection \<open>Theorem 4.2(a), end to end\<close>
 
@@ -2805,7 +2805,7 @@ text \<open>Continuity of the two sup-convolutions is free: \<open>supconv_conti
   \<open>UNIV\<close> with no regularity of \<open>u\<close> or \<open>w\<close> beyond boundedness.\<close>
 
 text \<open>Theorem 4.2(a)'s proof runs the comparison on \<open>\<theta>u\<close> with \<open>\<theta> < 1\<close>, making
-  the operator inequality strict for \<open>ell_op_env_strict_contradiction\<close>.
+  the operator inequality strict for \<open>env_strict_contradiction\<close>.
   The interior/boundary gap for \<open>u-w\<close> survives this scaling explicitly:
   \<open>\<theta>u-w\<close> differs from \<open>u-w\<close> by at most \<open>(1-\<theta>)B\<close>, so a gap \<open>M-m\<close> survives
   whenever \<open>2(1-\<theta>)B < M-m\<close>.\<close>

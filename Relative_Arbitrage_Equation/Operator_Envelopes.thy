@@ -46,28 +46,12 @@ text \<open>Every ball around \<open>z\<close> contains \<open>z\<close>, which 
 lemma ell_op_lsc_le:
   fixes p :: "real^'n::finite"
   shows "ell_op_lsc k L p M \<le> ell_op_pair k L (p, M)"
-  unfolding ell_op_lsc_def
-proof (rule SUP_least)
-  fix e :: real assume e: "e \<in> {0<..}"
-  have "(p, M) \<in> ball (p, M) e"
-    using e by simp
-  then show "(INF w \<in> ball (p, M) e. ell_op_pair k L w)
-      \<le> ell_op_pair k L (p, M)"
-    by (rule INF_lower)
-qed
+  using op_lsc_le[of "ell_op k L" p M] by (simp add: ell_op_lsc_eq_op_lsc ell_op_pair_def)
 
 lemma ell_op_le_usc:
   fixes p :: "real^'n::finite"
   shows "ell_op_pair k L (p, M) \<le> ell_op_usc k L p M"
-  unfolding ell_op_usc_def
-proof (rule INF_greatest)
-  fix e :: real assume e: "e \<in> {0<..}"
-  have "(p, M) \<in> ball (p, M) e"
-    using e by simp
-  then show "ell_op_pair k L (p, M)
-      \<le> (SUP w \<in> ball (p, M) e. ell_op_pair k L w)"
-    by (rule SUP_upper)
-qed
+  using op_usc_ge[of "ell_op k L" p M] by (simp add: ell_op_usc_eq_op_usc ell_op_pair_def)
 
 text \<open>Restated in terms of \<open>F\<close> itself.\<close>
 
@@ -145,30 +129,8 @@ lemma ell_op_usc_ge_one_limit:
   assumes ge: "\<And>j. 1 \<le> ell_op_usc k L (ps j) (Ms j)"
     and lim: "(\<lambda>j. (ps j, Ms j)) \<longlonglongrightarrow> (p0, M0)"
   shows "1 \<le> ell_op_usc k L p0 M0"
-  unfolding ell_op_usc_def
-proof (rule INF_greatest)
-  fix e :: real assume "e \<in> {0<..}"
-  then have e0: "0 < e" by simp
-  have "\<forall>\<^sub>F j in sequentially. dist ((ps j, Ms j)) ((p0, M0)) < e / 2"
-    by (rule tendstoD[OF lim]) (use e0 in simp)
-  then obtain j where j: "dist ((ps j, Ms j)) ((p0, M0)) < e / 2"
-    by (auto simp: eventually_sequentially)
-  have sub: "ball ((ps j, Ms j)) (e / 2) \<subseteq> ball ((p0, M0)) e"
-  proof
-    fix w assume "w \<in> ball ((ps j, Ms j)) (e / 2)"
-    then have "dist ((ps j, Ms j)) w < e / 2" by simp
-    then have "dist ((p0, M0)) w < e"
-      using j dist_triangle[of "(p0, M0)" w "(ps j, Ms j)"]
-      by (simp add: dist_commute)
-    then show "w \<in> ball ((p0, M0)) e" by simp
-  qed
-  have "(1 :: ereal) \<le> ell_op_usc k L (ps j) (Ms j)" by (rule ge)
-  also have "\<dots> \<le> (SUP w \<in> ball ((ps j, Ms j)) (e / 2). ell_op_pair k L w)"
-    unfolding ell_op_usc_def by (rule INF_lower) (use e0 in simp)
-  also have "\<dots> \<le> (SUP w \<in> ball ((p0, M0)) e. ell_op_pair k L w)"
-    by (rule SUP_subset_mono[OF sub order_refl])
-  finally show "1 \<le> (SUP w \<in> ball ((p0, M0)) e. ell_op_pair k L w)" .
-qed
+  unfolding ell_op_usc_eq_op_usc
+  by (rule op_usc_ge_one_limit[OF ge[unfolded ell_op_usc_eq_op_usc] lim])
 
 text \<open>The special case used twice: the inequality \<open>\<ge> 1\<close> at every softened
   Hessian \<open>H - \<delta> I\<close> survives \<open>\<delta> \<rightarrow> 0\<close>.\<close>
@@ -177,18 +139,8 @@ lemma ell_op_usc_ge_one_shift:
   fixes p :: "real^'n::finite" and H :: "real^'n^'n"
   assumes ge: "\<And>\<delta>. 0 < \<delta> \<Longrightarrow> 1 \<le> ell_op_usc k L p (H - \<delta> *\<^sub>R mat 1)"
   shows "1 \<le> ell_op_usc k L p H"
-proof (rule ell_op_usc_ge_one_limit[where ps = "\<lambda>_. p"
-      and Ms = "\<lambda>j. H - (1 / real (Suc j)) *\<^sub>R mat 1"])
-  show "1 \<le> ell_op_usc k L p (H - (1 / real (Suc j)) *\<^sub>R mat 1)" for j
-    by (rule ge) simp
-  have "(\<lambda>j. 1 / real (Suc j)) \<longlonglongrightarrow> 0"
-    using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
-  from tendsto_diff[OF tendsto_const tendsto_scaleR[OF this tendsto_const]]
-  have "(\<lambda>j. H - (1 / real (Suc j)) *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H"
-    by simp
-  then show "(\<lambda>j. (p, H - (1 / real (Suc j)) *\<^sub>R mat 1)) \<longlonglongrightarrow> (p, H)"
-    by (rule tendsto_Pair[OF tendsto_const])
-qed
+  unfolding ell_op_usc_eq_op_usc
+  by (rule op_usc_ge_one_shift[OF ge[unfolded ell_op_usc_eq_op_usc]])
 
 section \<open>Lemma 3.1, the clause at \<open>p = 0\<close>: \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> \<bbbS>\<^sup>n\<close>\<close>
 
@@ -513,51 +465,19 @@ lemma visc_subsol_imp_env:
   fixes u :: "real^'n::finite \<Rightarrow> real"
   assumes sub: "visc_subsol k L \<Omega> u" and sub_K: "\<Omega> \<subseteq> K" and op: "open \<Omega>"
   shows "visc_subsol_env k L K \<Omega> u"
-  unfolding visc_subsol_env_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-    and gmax: "\<forall>y\<in>K. u y - \<phi> y \<le> u x - \<phi> x"
-  obtain e where e: "0 < e" "ball x e \<subseteq> \<Omega>"
-    using openE[OF op x] by blast
-  have loc: "\<exists>e>0. \<forall>y \<in> ball x e. u y - \<phi> y \<le> u x - \<phi> x"
-  proof (intro exI[of _ e] conjI ballI e(1))
-    fix y :: "real^'n" assume "y \<in> ball x e"
-    with e(2) sub_K have "y \<in> K" by blast
-    with gmax show "u y - \<phi> y \<le> u x - \<phi> x" by blast
-  qed
-  have "ell_op k L (g x) H \<le> 1"
-    using sub x tf loc unfolding visc_subsol_def by blast
-  then have "ereal (ell_op k L (g x) H) \<le> 1"
-    by simp
-  with ell_op_lsc_le_ell_op[of k L "g x" H] show "ell_op_lsc k L (g x) H \<le> 1"
-    by (rule order_trans)
-qed
+  unfolding visc_subsol_env_eq_gen
+  by (rule visc_subsol_gen_filter_mono[OF visc_subsol_gen_mono[OF
+        sub[unfolded visc_subsol_eq_gen] ell_op_lsc_le_ell_op]
+        nhds_le_principal_of_open[OF op sub_K]])
 
 lemma visc_supersol_imp_env:
   fixes u :: "real^'n::finite \<Rightarrow> real"
   assumes sup: "visc_supersol k L \<Omega> u" and sub_K: "\<Omega> \<subseteq> K" and op: "open \<Omega>"
   shows "visc_supersol_env k L K \<Omega> u"
-  unfolding visc_supersol_env_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-    and gmin: "\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y"
-  obtain e where e: "0 < e" "ball x e \<subseteq> \<Omega>"
-    using openE[OF op x] by blast
-  have loc: "\<exists>e>0. \<forall>y \<in> ball x e. u x - \<phi> x \<le> u y - \<phi> y"
-  proof (intro exI[of _ e] conjI ballI e(1))
-    fix y :: "real^'n" assume "y \<in> ball x e"
-    with e(2) sub_K have "y \<in> K" by blast
-    with gmin show "u x - \<phi> x \<le> u y - \<phi> y" by blast
-  qed
-  have "1 \<le> ell_op k L (g x) H"
-    using sup x tf loc unfolding visc_supersol_def by blast
-  then have "(1 :: ereal) \<le> ereal (ell_op k L (g x) H)"
-    by simp
-  then show "1 \<le> ell_op_usc k L (g x) H"
-    using ell_op_le_ell_op_usc[of k L "g x" H] by (rule order_trans)
-qed
+  unfolding visc_supersol_env_eq_gen
+  by (rule visc_supersol_gen_filter_mono[OF visc_supersol_gen_mono[OF
+        sup[unfolded visc_supersol_eq_gen] ell_op_le_ell_op_usc]
+        nhds_le_principal_of_open[OF op sub_K]])
 
 section \<open>Example 3.1 satisfies Definition 3.1 as stated in the paper\<close>
 
@@ -779,9 +699,11 @@ text \<open>Definition 3.1 constrains only test functions with a global touching
   \<open>\<psi> := \<phi> - C\<bar>z - x\<bar>\<^sup>4\<close>: it shares \<open>\<phi>\<close>'s two-jet at \<open>x\<close>, only deepens
   the touching inside the ball, and outside it is bounded below by
   \<open>Cr\<^sup>4\<close>, which for large \<open>C\<close> overwhelms the oscillation of \<open>w - \<phi>\<close> on
-  \<open>K\<close> (\<open>local_max_quartic_deepen\<close>).  The two boundedness hypotheses are what a genuine \<open>C\<^sup>2\<close> test
-  function on compact \<open>K\<close> supplies; \<^const>\<open>test_fun_at\<close> alone would
-  tolerate truncating \<open>\<phi>\<close> far from \<open>x\<close>.\<close>
+  \<open>K\<close> (\<open>local_max_quartic_deepen\<close>); the argument is the generic
+  @{thm [source] visc_subsol_gen_principal_local}.  The two boundedness
+  hypotheses are what a genuine \<open>C\<^sup>2\<close> test function on compact \<open>K\<close>
+  supplies; \<^const>\<open>test_fun_at\<close> alone would tolerate truncating \<open>\<phi>\<close> far
+  from \<open>x\<close>.\<close>
 
 text \<open>A test function is minorised near \<open>x\<close> by its two-jet quadratic,
   once the Hessian is shifted down by any \<open>\<delta> > 0\<close>, which lets a touching
@@ -800,16 +722,8 @@ theorem visc_subsol_env_local:
     and r0: "0 < r"
     and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
   shows "ell_op_lsc k L (g x) H \<le> 1"
-proof -
-  obtain C where glob: "\<And>y. y \<in> K \<Longrightarrow>
-      u y - (\<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> u x - \<phi> x"
-    using local_max_quartic_deepen[where u = u and \<phi> = \<phi>, OF uhi phi r0 lm] by blast
-  have "ell_op_lsc k L (g x - (4 * (- C) * ((x - x) \<bullet> (x - x))) *\<^sub>R (x - x)) H \<le> 1"
-    by (rule sub[unfolded visc_subsol_env_def, rule_format,
-          OF x\<Omega> test_fun_at_quartic_shift[OF tf]])
-      (drule glob; simp; linarith)
-  then show ?thesis by simp
-qed
+  by (rule visc_subsol_gen_principal_local[OF sub[unfolded visc_subsol_env_eq_gen] x\<Omega>
+        test_fun_at_quartic_shift[OF tf] uhi phi r0 lm])
 
 section \<open>Semicontinuity toolbox and the invariances of \<open>F\<close>\<close>
 
@@ -916,186 +830,26 @@ proof -
   then show ?thesis unfolding ell_op_def by simp
 qed
 
-subsection \<open>Transporting the envelopes along an \<open>F\<close>-preserving homeomorphism\<close>
-
-
-text \<open>\<open>matrix_mul_diff_right\<close> and \<open>matrix_mul_diff_left\<close> live in
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-text \<open>\<open>matvec_orth_inv\<close>, \<open>conj_orth_inv\<close>, \<open>norm_orthogonal_matrix_vector\<close>, \<open>norm_matrix_sq_trace\<close>, \<open>norm_conj_orthogonal\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>\<open>pos_image_scale\<close> lives in @{theory Semicontinuous_Analysis.Semicontinuity}.\<close>
-
-
-lemma ell_op_usc_transfer:
-  fixes \<Psi> :: "((real^'n::finite) \<times> (real^'n^'n)) \<Rightarrow> ((real^'n) \<times> (real^'n^'n))"
-  assumes F: "\<And>v. ell_op_pair k L (\<Psi> v) = ell_op_pair k L v"
-    and a0: "0 < a" and b0: "0 < b"
-    and sub1: "\<And>e. 0 < e \<Longrightarrow> \<Psi> ` ball z (e / a) \<subseteq> ball (\<Psi> z) e"
-    and sub2: "\<And>e. 0 < e \<Longrightarrow> ball (\<Psi> z) (b * e) \<subseteq> \<Psi> ` ball z e"
-  shows "(INF e \<in> {0<..}. SUP w \<in> ball (\<Psi> z) e. ell_op_pair k L w)
-       = (INF e \<in> {0<..}. SUP w \<in> ball z e. ell_op_pair k L w)"
-    (is "?A = ?B")
-proof (rule antisym)
-  have le1: "(SUP w \<in> ball (\<Psi> z) (b * e). ell_op_pair k L w)
-      \<le> (SUP w \<in> ball z e. ell_op_pair k L w)" if e0: "0 < e" for e
-  proof -
-    have "(SUP w \<in> ball (\<Psi> z) (b * e). ell_op_pair k L w)
-        \<le> (SUP w \<in> \<Psi> ` ball z e. ell_op_pair k L w)"
-      by (rule SUP_subset_mono[OF sub2[OF e0]]) simp
-    also have "\<dots> = (SUP v \<in> ball z e. ell_op_pair k L (\<Psi> v))"
-      by (simp add: image_image)
-    also have "\<dots> = (SUP v \<in> ball z e. ell_op_pair k L v)"
-      by (rule SUP_cong[OF refl]) (rule F)
-    finally show ?thesis .
-  qed
-  have imb: "(\<lambda>e. b * e) ` {0<..} = {(0::real)<..}"
-  proof
-    show "(\<lambda>e. b * e) ` {0<..} \<subseteq> {(0::real)<..}" using b0 by auto
-    show "{(0::real)<..} \<subseteq> (\<lambda>e. b * e) ` {0<..}"
-    proof
-      fix x :: real assume "x \<in> {0<..}"
-      then have x0: "0 < x" by simp
-      have xe: "x = b * (x / b)" using b0 by simp
-      have "x / b \<in> {0<..}" using x0 b0 by simp
-      then show "x \<in> (\<lambda>e. b * e) ` {0<..}" using xe by (metis image_eqI)
-    qed
-  qed
-  have "?A = (INF e \<in> {0<..}. SUP w \<in> ball (\<Psi> z) (b * e). ell_op_pair k L w)"
-  proof -
-    have "?A = (INF e \<in> (\<lambda>e. b * e) ` {0<..}.
-        SUP w \<in> ball (\<Psi> z) e. ell_op_pair k L w)" unfolding imb by (rule refl)
-    then show ?thesis by (simp add: image_image)
-  qed
-  also have "\<dots> \<le> ?B" by (rule INF_mono) (use le1 in blast)
-  finally show "?A \<le> ?B" .
-next
-  have le2: "(SUP w \<in> ball z (e / a). ell_op_pair k L w)
-      \<le> (SUP w \<in> ball (\<Psi> z) e. ell_op_pair k L w)" if e0: "0 < e" for e
-  proof -
-    have "(SUP w \<in> ball z (e / a). ell_op_pair k L w)
-        = (SUP v \<in> ball z (e / a). ell_op_pair k L (\<Psi> v))"
-      by (rule SUP_cong[OF refl]) (rule F[symmetric])
-    also have "\<dots> = (SUP w \<in> \<Psi> ` ball z (e / a). ell_op_pair k L w)"
-      by (simp add: image_image)
-    also have "\<dots> \<le> (SUP w \<in> ball (\<Psi> z) e. ell_op_pair k L w)"
-      by (rule SUP_subset_mono[OF sub1[OF e0]]) simp
-    finally show ?thesis .
-  qed
-  have "?B = (INF e \<in> {0<..}. SUP w \<in> ball z (e / a). ell_op_pair k L w)"
-  proof -
-    have "?B = (INF e \<in> (\<lambda>e. e / a) ` {0<..}.
-        SUP w \<in> ball z e. ell_op_pair k L w)"
-      unfolding pos_image_scale[OF a0] by (rule refl)
-    then show ?thesis by (simp add: image_image)
-  qed
-  also have "\<dots> \<le> ?A" by (rule INF_mono) (use le2 in blast)
-  finally show "?B \<le> ?A" .
-qed
-
 subsection \<open>The two envelope invariances that Theorem 4.3 consumes\<close>
 
-text \<open>\<open>dist_prod_scale_fst\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
+text \<open>Both are instances of the transport of \<open>F\<^sup>*\<close> along an \<open>F\<close>-preserving
+  map, @{thm [source] op_usc_dilation} and @{thm [source] op_usc_rotation}.\<close>
 
 theorem ell_op_usc_scale:
   fixes p :: "real^'n::finite" and M :: "real^'n^'n"
   assumes c0: "0 < c"
   shows "ell_op_usc k L (c *\<^sub>R p) M = ell_op_usc k L p M"
-proof -
-  define \<Psi> :: "((real^'n) \<times> (real^'n^'n)) \<Rightarrow> ((real^'n) \<times> (real^'n^'n))"
-    where "\<Psi> = (\<lambda>v. (c *\<^sub>R fst v, snd v))"
-  have F: "ell_op_pair k L (\<Psi> v) = ell_op_pair k L v" for v
-    unfolding \<Psi>_def ell_op_pair_def using c0 by (simp add: ell_op_scale)
-  have mx0: "0 < max c 1" using c0 by simp
-  have mn0: "0 < min c 1" using c0 by simp
-  have sub1: "\<Psi> ` ball (p, M) (e / max c 1) \<subseteq> ball (\<Psi> (p, M)) e" if e0: "0 < e" for e
-  proof
-    fix w assume "w \<in> \<Psi> ` ball (p, M) (e / max c 1)"
-    then obtain v where vb: "v \<in> ball (p, M) (e / max c 1)" and wv: "w = \<Psi> v" by auto
-    have dvz: "dist (p, M) v < e / max c 1" using vb by simp
-    have "dist (\<Psi> (p, M)) (\<Psi> v) \<le> max c 1 * dist (p, M) v"
-      unfolding \<Psi>_def by (rule dist_prod_scale_fst(1)[OF c0])
-    also have "\<dots> < max c 1 * (e / max c 1)"
-      by (rule mult_strict_left_mono[OF dvz mx0])
-    also have "\<dots> = e" using mx0 by simp
-    finally show "w \<in> ball (\<Psi> (p, M)) e" unfolding wv by simp
-  qed
-  have sub2: "ball (\<Psi> (p, M)) (min c 1 * e) \<subseteq> \<Psi> ` ball (p, M) e" if e0: "0 < e" for e
-  proof
-    fix w assume wb: "w \<in> ball (\<Psi> (p, M)) (min c 1 * e)"
-    define v where "v = ((inverse c) *\<^sub>R fst w, snd w)"
-    have wv: "\<Psi> v = w" unfolding \<Psi>_def v_def using c0 by simp
-    have "min c 1 * dist (p, M) v \<le> dist (\<Psi> (p, M)) (\<Psi> v)"
-      unfolding \<Psi>_def by (rule dist_prod_scale_fst(2)[OF c0])
-    also have "\<dots> < min c 1 * e" unfolding wv using wb by simp
-    finally have "dist (p, M) v < e" using mn0 by simp
-    then have "v \<in> ball (p, M) e" by simp
-    then show "w \<in> \<Psi> ` ball (p, M) e" using wv by (metis image_eqI)
-  qed
-  have "(INF e \<in> {0<..}. SUP w \<in> ball (\<Psi> (p, M)) e. ell_op_pair k L w)
-      = (INF e \<in> {0<..}. SUP w \<in> ball (p, M) e. ell_op_pair k L w)"
-    by (rule ell_op_usc_transfer[OF F mx0 mn0 sub1 sub2])
-  then show ?thesis unfolding ell_op_usc_def \<Psi>_def by simp
-qed
+  unfolding ell_op_usc_eq_op_usc
+  by (rule op_usc_dilation[OF _ c0]) (use c0 in \<open>simp add: ell_op_scale\<close>)
 
 theorem ell_op_usc_conj_rot:
   fixes p :: "real^'n::finite" and M R :: "real^'n^'n"
   assumes orth: "orthogonal_matrix R"
   shows "ell_op_usc k L (R *v p) (R ** M ** transpose R) = ell_op_usc k L p M"
-proof -
-  define \<Psi> :: "((real^'n) \<times> (real^'n^'n)) \<Rightarrow> ((real^'n) \<times> (real^'n^'n))"
-    where "\<Psi> = (\<lambda>v. (R *v fst v, R ** snd v ** transpose R))"
-  have F: "ell_op_pair k L (\<Psi> v) = ell_op_pair k L v" for v
-    unfolding \<Psi>_def ell_op_pair_def by (simp add: ell_op_conj_rot[OF orth])
-  have isom: "dist (\<Psi> v) (\<Psi> v') = dist v v'" for v v'
-  proof -
-    have p1: "R *v fst v - R *v fst v' = R *v (fst v - fst v')"
-      by (rule matrix_vector_mult_diff_distrib[symmetric])
-    have p2: "R ** snd v ** transpose R - R ** snd v' ** transpose R
-        = R ** (snd v - snd v') ** transpose R"
-      by (simp add: matrix_mul_diff_right matrix_mul_diff_left)
-    show ?thesis
-      unfolding \<Psi>_def dist_prod_def dist_norm
-      by (simp add: p1 p2 norm_orthogonal_matrix_vector[OF orth]
-          norm_conj_orthogonal[OF orth])
-  qed
-  have one: "(0 :: real) < 1" by simp
-  have sub1: "\<Psi> ` ball (p, M) (e / 1) \<subseteq> ball (\<Psi> (p, M)) e" if e0: "0 < e" for e
-  proof
-    fix w assume "w \<in> \<Psi> ` ball (p, M) (e / 1)"
-    then obtain v where vb: "v \<in> ball (p, M) (e / 1)" and wv: "w = \<Psi> v" by auto
-    have "dist (\<Psi> (p, M)) (\<Psi> v) = dist (p, M) v" by (rule isom)
-    also have "\<dots> < e" using vb by simp
-    finally show "w \<in> ball (\<Psi> (p, M)) e" unfolding wv by simp
-  qed
-  have sub2: "ball (\<Psi> (p, M)) (1 * e) \<subseteq> \<Psi> ` ball (p, M) e" if e0: "0 < e" for e
-  proof
-    fix w assume wb: "w \<in> ball (\<Psi> (p, M)) (1 * e)"
-    define v where "v = (transpose R *v fst w, transpose R ** snd w ** R)"
-    have fstv0: "fst v = transpose R *v fst w"
-      unfolding v_def by (rule fst_conv)
-    have sndv0: "snd v = transpose R ** snd w ** R"
-      unfolding v_def by (rule snd_conv)
-    have fstv: "R *v fst v = fst w"
-      unfolding fstv0 by (rule matvec_orth_inv[OF orth])
-    have sndv: "R ** snd v ** transpose R = snd w"
-      unfolding sndv0 by (rule conj_orth_inv[OF orth])
-    have wv: "\<Psi> v = w"
-      unfolding \<Psi>_def using fstv sndv by simp
-    have "dist (p, M) v = dist (\<Psi> (p, M)) (\<Psi> v)" by (rule isom[symmetric])
-    also have "\<dots> < e" unfolding wv using wb by simp
-    finally have "v \<in> ball (p, M) e" by simp
-    then show "w \<in> \<Psi> ` ball (p, M) e" using wv by (metis image_eqI)
-  qed
-  have "(INF e \<in> {0<..}. SUP w \<in> ball (\<Psi> (p, M)) e. ell_op_pair k L w)
-      = (INF e \<in> {0<..}. SUP w \<in> ball (p, M) e. ell_op_pair k L w)"
-    by (rule ell_op_usc_transfer[OF F one one sub1 sub2])
-  then show ?thesis unfolding ell_op_usc_def \<Psi>_def by simp
-qed
+  unfolding ell_op_usc_eq_op_usc
+  by (rule op_usc_rotation[where F = "ell_op k L", OF ell_op_conj_rot[OF orth] orth])
 
-text \<open>The \<open>ell_op_lsc\<close> versions follow from \<open>ell_op_usc_transfer\<close> verbatim with
+text \<open>The \<open>ell_op_lsc\<close> versions follow from @{thm [source] ball_usc_env_transfer} verbatim with
   \<open>INF\<close> and \<open>SUP\<close> exchanged; they are not needed by Theorem 4.3, which reads the
   supersolution side only, so they are not stated.\<close>
 
