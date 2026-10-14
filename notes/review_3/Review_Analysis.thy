@@ -32,7 +32,7 @@ val ctxt = @{context};
 val outdir = "/tmp/review_3_out/";  (* OUT: must exist *)
 val user_sessions = ["Symmetric_Matrix_Spectra","Semicontinuous_Analysis",
   "Second_Order_Viscosity_Analysis","Relative_Arbitrage_Equation","Wiener_Measure","Continuous_Time_Martingales",
-  "Continuous_Path_Spaces","Relative_Arbitrage","Relative_Arbitrage_Statement"];
+  "Continuous_Path_Spaces","Path_Space_Operations","Relative_Arbitrage","Relative_Arbitrage_Statement"];
 fun sess_of_thyname s = hd (space_explode "." s);
 fun is_user_thyname s = member (op =) user_sessions (sess_of_thyname s);
 

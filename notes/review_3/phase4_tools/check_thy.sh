@@ -2,7 +2,7 @@
 # Batch replacement for PIDE: check one theory file as a throwaway session.
 #   check_thy.sh /abs/path/My_Theory.thy [BASE_SESSION]
 # The theory may import any theory of the repository's sessions (session-qualified,
-# e.g. "Relative_Arbitrage.Comparison_Two_Domain"); BASE defaults to
+# e.g. "Relative_Arbitrage_Equation.Comparison_Two_Domain"); BASE defaults to
 # Relative_Arbitrage_Statement, whose heap holds all of them.  Prints the build's
 # error/warning messages and "RESULT: OK" or "RESULT: FAILED".  Runs with
 # threads=2 and a 600 s timeout; a looping proof shows up as a timeout.

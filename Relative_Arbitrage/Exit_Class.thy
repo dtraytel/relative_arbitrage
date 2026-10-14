@@ -261,7 +261,7 @@ subsection \<open>Averages of constrained densities stay constrained\<close>
 text \<open>The mathematical heart of the covariation condition, using the
   paper's Lemma 2.1: if a density takes values in a closed convex set, so
   does its average over any interval --- the difference quotient of
-  \<open>Y t = \<integral>₀ᵗ a\<close>. The proof is separation: an average outside \<open>S\<close>
+  \<open>Y t = \<integral>\<^sub>0\<^sup>t a\<close>. The proof is separation: an average outside \<open>S\<close>
   would be separated by a hyperplane, but the same linear functional under
   the integral cannot cross it.
 
@@ -272,7 +272,7 @@ text \<open>The mathematical heart of the covariation condition, using the
 text \<open>A market witness's volatility is a \<open>suff_volatile\<close> density with the
   \<open>eigen_ub\<close> cap; \<open>lemma_2_1_easy\<close> (the easy inclusion of Lemma 2.1)
   puts each value in \<open>sconstraint k L\<close>, and the average lemma then puts
-  the difference quotient of \<open>Y t = \<integral>₀ᵗ a\<close> there too.\<close>
+  the difference quotient of \<open>Y t = \<integral>\<^sub>0\<^sup>t a\<close> there too.\<close>
 
 lemma suff_volatile_cap_in_sconstraint:
   fixes a :: "real^'n::finite^'n"

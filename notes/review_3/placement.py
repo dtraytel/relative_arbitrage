@@ -14,9 +14,11 @@ decl={
  "Symmetric_Matrix_Spectra":["HOL-Analysis"],
  "Semicontinuous_Analysis":["HOL-Probability","Standard_Borel_Spaces","Lower_Semicontinuous"],
  "Second_Order_Viscosity_Analysis":["HOL-Analysis","Symmetric_Matrix_Spectra"],
+ "Relative_Arbitrage_Equation":["Second_Order_Viscosity_Analysis","Semicontinuous_Analysis"],
  "Continuous_Time_Martingales":["HOL-Probability","Martingales"],
  "Wiener_Measure":["HOL-Probability","Kolmogorov_Chentsov","Continuous_Time_Martingales"],
  "Continuous_Path_Spaces":["Continuous_Time_Martingales","Kolmogorov_Chentsov","Levy_Prokhorov_Metric","Standard_Borel_Spaces","Semicontinuous_Analysis","HOL-Complex_Analysis"],
+ "Path_Space_Operations":["Continuous_Path_Spaces","Symmetric_Matrix_Spectra","Disintegration"],
 }
 def closure(s):
     out=set(); st=[s]

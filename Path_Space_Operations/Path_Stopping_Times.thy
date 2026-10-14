@@ -900,10 +900,10 @@ text \<open>The compensated clause does not ride along on the additive split,
   because \<^const>\<open>outerp\<close> is quadratic.  Writing \<open>b = fst (\<omega> (\<theta> \<omega>))\<close>,
 
   \<open>outerp (X\<^sub>u - b) - (\<langle>X\<rangle>\<^sub>u - \<langle>X\<rangle>\<^sub>\<theta>)
-     = (outerp X\<^sub>u - \<langle>X\<rangle>\<^sub>u) - X\<^sub>u bᵀ - b X\<^sub>uᵀ + outerp b + \<langle>X\<rangle>\<^sub>\<theta>\<close>
+     = (outerp X\<^sub>u - \<langle>X\<rangle>\<^sub>u) - X\<^sub>u b\<^sup>T - b X\<^sub>u\<^sup>T + outerp b + \<langle>X\<rangle>\<^sub>\<theta>\<close>
 
   and between two times the last two summands cancel, leaving a compensated
-  increment plus two cross terms \<open>(\<Delta>X) bᵀ\<close> and \<open>b (\<Delta>X)ᵀ\<close>.  The factor \<open>b\<close> is
+  increment plus two cross terms \<open>(\<Delta>X) b\<^sup>T\<close> and \<open>b (\<Delta>X)\<^sup>T\<close>.  The factor \<open>b\<close> is
   \<open>\<F>\<^sub>\<theta>\<close>-measurable but not constant, so those terms need
   \<open>E[\<Delta>Y \<sqdot> Z] = 0\<close> for a square-integrable \<open>\<F>\<^sub>\<sigma>\<close>-measurable \<open>Z\<close>.
 

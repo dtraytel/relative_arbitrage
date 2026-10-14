@@ -51,7 +51,7 @@ text \<open>Hence the continued volatility has all its difference quotients in t
 
 subsection \<open>The running covariation built from a continued volatility\<close>
 
-text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>₀ᵗ a\<close> starts at
+text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>\<^sub>0\<^sup>t a\<close> starts at
   \<open>0\<close>, has increments given by interval integrals, and --- for the
   continued density --- difference quotients in the constraint set for every
   \<open>0 \<le> s < t\<close>: the covariation half of \<open>exit_class\<close>.\<close>
