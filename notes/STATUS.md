@@ -1,27 +1,106 @@
-> **This file is a development diary and is out of date from here down.**
-> It predates the restructuring into sessions and the theory renames, so its
-> file names, session name (`Arbitrage`) and theory count no longer apply.
->
-> Current state (2026-08-14): Theorem 1.1 of arXiv:2512.17702 is formalised in
-> full, with no `sorry` and no `axiomatization`. The formal statement of the
-> theorem and of every definition it mentions is
-> `Statement/Theorem_1_1_Statement.thy`; what the authors of the paper should
-> read is `NOTES_FOR_AUTHORS.md`.
-> The paper's own uncapped class and value function on `C([0,∞))` are
-> formalised in `Relative_Arbitrage/Exit_Class_Infinite.thy` and proved equal
-> to the horizon-capped ones used throughout the proofs. The paper's class
-> `P_x` itself — laws of `X` alone, not of the pair `(X, <X>)` — is
-> `Relative_Arbitrage/Exit_Class_Marginals.thy`, together with both inclusions and the
-> equality of the two value functions (`iexit_val_eq_xval`), so no item is
-> open against the paper; see `OPEN_ITEMS.md`.
->
-> The `Relative_Arbitrage_Unused` session — the discrete market, the discrete
-> stochastic integral built on it, and layers 1-4 of an abandoned Skorokhod
-> representation — has been deleted; the diary below still describes it. None
-> of it was reachable from Theorem 1.1, and none of it stood on its own: the
-> integral is a martingale transform over this project's own locales, and the
-> Skorokhod development stops short of the theorem it was aiming at, which
-> Levy-Prokhorov from the AFP supplied instead. It is in the git history.
+> **This file is a development diary and is out of date below the line.** It
+> predates three restructurings: its session name (`Arbitrage`), its theory
+> names and its theory counts no longer apply, and some of the facts it calls
+> done have since been deleted (see "Corrections" below). The history since
+> 2026-10-07 is the progress log of `PLAN_RESTRUCTURING_3.md` (§7); what the
+> authors of the paper should read is `NOTES_FOR_AUTHORS.md`; what is not
+> formalised is `OPEN_ITEMS.md`.
+
+## Current state (2026-10-14, phase 8 of `PLAN_RESTRUCTURING_3.md`)
+
+Theorem 1.1 of arXiv:2512.17702 is formalised in full, with no `sorry`, no
+`oops` and no `axiomatization`; the oracle check on the roots of
+`notes/review_3/roots.txt` is empty. The statement session
+`Relative_Arbitrage_Statement` (directory `Statement/`) has three theories:
+
+- `Theorem_1_1_Statement`: `theorem_1_1` (the five clauses, stated for the
+  paper's own value function `xval` over the paper's class `xclass`, with the
+  paper's hypotheses: clauses (0)–(3) for every compact `K`, clause (4) under
+  `expandable K`) and `example_3_1_closed_form`, with every definition they
+  mention;
+- `Paper_Readings`: the checked readings of the paper's wording;
+- `Paper_Map`: one theorem per numbered item of Sections 1–4, each with its
+  deviations from the paper stated beside it; Section 5 is listed as not
+  formalised.
+
+**Sessions**, in `ROOTS` order (lines and theories at `f2da170`; 88 078
+lines in all):
+
+| session | short | parent | further `sessions` | theories | lines |
+|---|---|---|---|---:|---:|
+| `Symmetric_Matrix_Spectra` | SMS | HOL-Analysis | — | 9 | 6 547 |
+| `Semicontinuous_Analysis` | SemiC | `Lower_Semicontinuous` | — | 3 | 1 356 |
+| `Second_Order_Viscosity_Analysis` | SOVA | SMS | SemiC | 12 | 14 251 |
+| `Relative_Arbitrage_Equation` | RAE | SOVA | SemiC | 13 | 9 143 |
+| `Continuous_Time_Martingales` | CTM | HOL-Probability | `Martingales` | 23 | 11 248 |
+| `Wiener_Measure` | WM | CTM | `Kolmogorov_Chentsov` | 8 | 3 308 |
+| `Continuous_Path_Spaces` | CPS | `Levy_Prokhorov_Metric` | CTM, `Kolmogorov_Chentsov`, SemiC | 13 | 8 319 |
+| `Path_Space_Operations` | PSO | CPS | SMS, `Disintegration` | 7 | 10 685 |
+| `Covariation_Constrained_Martingales` | CCM | PSO | WM | 18 | 12 629 |
+| `Relative_Arbitrage` | RA | CCM | RAE | 13 | 8 802 |
+| `Relative_Arbitrage_Statement` | Statement | RA | — | 3 | 1 790 |
+
+The paper is RAE (probability-free: the operator of Eq. (1.9), its envelopes,
+Lemma 2.1, the viscosity predicates and Section 4, with
+`No_Probability_Ancestor` as a build-time check) plus RA (the class of
+Eq. (1.7), the value function, the viscosity property of Section 3,
+Example 3.1 and the assembly). The other eight sessions are libraries and do
+not depend on the paper; PSO's `No_Viscosity_Ancestor` and CCM's
+`No_Paper_Ancestor` check their ancestry at build time.
+
+**Where the paper's items are now:**
+
+| item | theory |
+|---|---|
+| Eqs. (1.5)–(1.7): `sconstraint`, `exit_class`, `exit_val` (horizon `T`) | RA `Control_Problem` |
+| the class and value on `[0,∞)`; the class `P_x` of laws of `X` alone | RA `Exit_Class_Infinite`, `Exit_Class_Marginals` (generic forms: CCM `Covariation_Class_Infinite`, `Covariation_Class_Marginals`) |
+| Eq. (1.9): `eigen_lb`, `feasible`, `ell_op`; Eq. (3.5); envelopes | RAE `Elliptic_Operator`, `Operator_Formula`, `Operator_Envelopes` |
+| Lemma 2.1 (`lemma_2_1_exact`) | RAE `Constraint_Set_Convexity` |
+| Lemmas 2.2 and 2.3, for an abstract `S` | CCM `Covariation_Class_Tightness`, `Covariation_Class_Optimizer` (paper instances in RA `Control_Problem`) |
+| Proposition 2.4, for an abstract `S` and for the horizon-`T` value | CCM `Dynamic_Programming_Principle`; RA `Proposition_2_4` |
+| Section 3.1 (subsolution) | RA `Value_Function_Subsolution` |
+| Section 3.2 (supersolution; Case 1 by exact rotations, Case 2) | RA `Value_Function_Supersolution`, with its inputs in `Euler_Limit_Growth` (the rotated field `covariation_rotSF_exists`, growth along Euler limits) and `Value_Function_Tangential_Field` |
+| Example 3.1 | RA `Example_3_1` |
+| Section 4 (Theorems 4.2 and 4.3, Proposition 4.1) for any operator of the locale `geometric_operator` | RAE `Geometric_Operator`, `Comparison_Strictness`, `Comparison_Localisation`, `Maximum_Principle` (Theorem 4.2(a)), `Comparison_Two_Domain` (Theorems 4.2(b), 4.3, Proposition 4.1) |
+| the paper's operator as an instance; `covariation_op S` as an instance | RAE `Comparison_Instance`; RA `Covariation_Operator` |
+| Theorem 1.1: the clauses for the horizon-`T` value, uniqueness | RA `Value_Function_Uniqueness` |
+| Theorem 1.1 for `xval`, and for an abstract `S` (`covariation_theorem_1_1`) | RA `Theorem_1_1` |
+
+**Not formalised:** Section 5 of the paper, and Proposition 2.4 for `v` on
+`[0,∞)` at arbitrary stopping times of `X`; see `OPEN_ITEMS.md` §§3–4.
+
+**Theory names used below that were renamed or merged in phase 8:**
+`Curvature_Operator` → `Elliptic_Operator`; `Comparison_Principle` →
+`Maximum_Principle`; `Eigenvalue_Bound_Exact` → merged into
+`Constraint_Set_Convexity`; `Operator_Continuity` → merged into
+`Operator_Formula`; `Operator_Envelope_Continuity` → merged into
+`Operator_Envelopes`; `Theorem_On_Sums` → `Doubled_Functional_Jets` (SOVA);
+`Value_Function_Supersolution_Case_2` → `Value_Function_Supersolution`;
+`Value_Function_Supersolution_Case_1` → `Euler_Limit_Growth`;
+`Value_Function_Assembly` → merged into `Example_3_1`, which also received the
+Example 3.1 blocks of `Value_Function_Uniqueness`; `Exit_Class` →
+`Control_Problem`. The renamed facts are listed in
+`notes/review_3/renames.txt`. Older names (`Exit_Class_DPP`,
+`Value_Function_Viscosity`, `Comparison_Assembly`, `Lemma_3_1_Envelopes`, …)
+are older still; `git log --follow` on a current theory finds them.
+
+**Corrections to the diary below.**
+
+- Lemma 5.3's deterministic core, `eigen_lb_dim_obstruction` (a covariance
+  degenerate on a subspace `W` satisfies `eigen_lb a m` only if
+  `m + dim W ≤ n`), is listed below as done. It no longer exists in any
+  theory: it was removed before the repository's history begins, and no
+  dead-code record mentions it (`UNUSED_THMS.md`). Nothing of Section 5 is
+  formalised.
+- The `Relative_Arbitrage_Unused` session — the discrete market, the discrete
+  stochastic integral built on it, and layers 1–4 of an abandoned Skorokhod
+  representation — has been deleted, and so has the market layer of the paper
+  session (`4d5f47e`); the diary below still describes both. None of it was
+  reachable from Theorem 1.1. It is in the git history.
+- The "named gaps" below (`comparison_principle`, `max_principle_boundary`)
+  are closed: the locale and the interface predicate are deleted, and
+  Theorem 4.2(a) is proved in the paper's form for usc/lsc data
+  (`max_principle_usc_lsc`, RAE `Maximum_Principle` and `Comparison_Instance`).
 
 ---
 
@@ -2012,7 +2091,7 @@ line (Phases A4-G, tasks #4-#7) is independent of all of this and untouched.
 | **Thm 4.2(b)**, **4.3**, **Prop 4.1** from the 4.2(a) interface | **done** | `Lemma_3_1_Envelopes.thy` |
 | **Thm 4.3**, **Prop 4.1** for the BALL, unconditional | **done** | `Relative_Arbitrage_Comparison.thy` |
 | **Prop 5.1**, **5.2** (continuity of `v`) | behind Prop 2.4: Phase F | — |
-| **Lem 5.3** deterministic core | **done** | `Poincare_Separation.thy` |
+| **Lem 5.3** deterministic core | ~~done~~ — *correction 2026-10-14:* `eigen_lb_dim_obstruction` no longer exists in any theory (removed before the repository's history begins); nothing of Section 5 is formalised | — |
 | **Prop 5.4**, **5.5** | SKIPPED by instruction | — |
 
 ## The two named gaps (assumption audit)
@@ -4748,7 +4827,8 @@ maximisers together.
 
 Continuity of `v`: both go through the DPP (C4) plus barrier/comparison
 arguments already available (ball case unconditional; Lem 5.3's
-deterministic core `eigen_lb_dim_obstruction` done). Medium, after C.
+deterministic core `eigen_lb_dim_obstruction` done — *correction 2026-10-14:*
+it no longer exists; see the banner and `OPEN_ITEMS.md` §3). Medium, after C.
 
 ## Phase G — assembly
 
@@ -4796,7 +4876,8 @@ lemma exists at Poincare_Separation:3546 too; a duplicate broke a build);
 `eigval_ge_of_subspace`, general Poincare separation, Frobenius kit,
 `Mp_lipschitz_away_from_zero`, `ell_op_lipschitz_in_p`, Eq. (3.5)
 `ell_op_eq_half_bracket` via the box-program chain + `bracket_attained`
-witness, Lem 5.3 core `eigen_lb_dim_obstruction`, `feasible_iff_eigval`,
+witness, Lem 5.3 core `eigen_lb_dim_obstruction` (since deleted; see the
+banner), `feasible_iff_eigval`,
 and the NEW closedness kit `closed_feasible` etc.); `Lemma_3_1*.thy` +
 `Envelopes.thy` (Eq. (3.4), Eq. (3.6) `eq36`, all of Lemma 3.1 —
 `ell_op_envelopes_eq_off_zero`); `Relative_Arbitrage_Convexity.thy`
@@ -4890,7 +4971,7 @@ martingale-package form; BATCH-ONLY).
   is NOT strong enough for step (A) of Eq. (3.5) — the fact needed is
   `eigval m a >= 1`.
 - **A rank obstruction underlies Lemma 5.3**: degeneracy on `W` forces
-  `m + dim W <= n`.
+  `m + dim W <= n` (`eigen_lb_dim_obstruction`, no longer in any theory).
 - **Eq. (2.7) without BDG**: expand `(Y+d)^4` along partitions; the mesh
   limit of `SUM E[d^4]` is the only genuinely continuous-time step, closed
   by the four a2-lim steps for bounded martingales, then localization for

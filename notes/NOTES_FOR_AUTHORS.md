@@ -8,7 +8,10 @@ Theorem 1.1 of
 has been formalised in Isabelle/HOL. The development contains no `sorry` and
 no admitted step, so everything asserted below was settled by the proof
 assistant. The formal statement, with every definition it mentions and nothing
-else, is the single theory `Statement/Theorem_1_1_Statement.thy`.
+else, is the single theory `Statement/Theorem_1_1_Statement.thy`. Its
+companion `Statement/Paper_Map.thy` goes through the numbered items of
+Sections 1–4 one by one, each with its formal counterpart and the deviations
+from your text; Section 5 is not formalised (see the end of this note).
 
 Notation follows the paper: `n` is the dimension, `k` the eigenvalue index,
 `v` the value function of Eq. (1.6), `F` the operator of Eq. (1.9), `S` the
@@ -138,8 +141,9 @@ in the feasible set, so
   equals `tr(M a)` at `y = x`, so the trace margin follows from continuity at
   the touching point instead of from three explicit smallness estimates.
 
-This is `rotSF_exists` in `Value_Function_Supersolution_Case_1`, and it carries no
-hypothesis on `L` whatsoever. Clauses (2b), (3b) and (4) are therefore proved
+This is `covariation_rotSF_exists` in the theory `Euler_Limit_Growth`,
+stated for any set of rates invariant under orthogonal conjugation (your `S`
+is one: `sconstraint_conj`), and it carries no hypothesis on `L` whatsoever. Clauses (2b), (3b) and (4) are therefore proved
 here for every `L ≥ 1`, `L = 1` included, and the skew field of (3.24) is no
 longer formalised at all — the rotation replaced it outright.
 
@@ -194,42 +198,109 @@ and convex this is equivalent to every difference quotient of `A` lying in `S`
 
 ---
 
+## Beyond Theorem 1.1
+
+`Statement/Paper_Map.thy` has the details; in brief:
+
+* **Lemma 2.1** is proved as an equality, with `Π_m` read over orthogonal
+  projections (the reading its proof uses; `Statement/Theorem_1_1_Statement.thy`
+  explains why the literal reading fails).
+* **Lemmas 2.2 and 2.3** are proved for any bounded, respectively compact, set
+  `S` of positive semidefinite matrices, as you state them; Lemma 2.3 does not
+  need convexity (closedness of the class under weak limits needs only a
+  closed `S`). They are stated for the encoding by pair laws on `C([0,T])`;
+  compactness of `𝒫ₓ` itself on `C([0,∞))` is not stated.
+* **Proposition 2.4** is proved with attainment by every optimiser, at a
+  deterministic time and at a stopping time, for the horizon-`T` value and
+  stopping times of the pair `(X, ⟨X⟩)` with values in `[0,T]`. The transfer to
+  `v` on `[0,∞)` with arbitrary stopping times of `X` is not formalised: it
+  needs Galmarino's test for the coordinate filtration, among other things.
+  Upper semicontinuity of `v` itself is proved.
+* **Lemma 3.1**, **Eq. (3.5)** (for `p ≠ 0`) and **Example 3.1** are proved.
+* **Theorem 4.2(a)** is proved in your form, for upper and lower
+  semicontinuous data on `K`, with one hypothesis made explicit: a common bound
+  `|u|, |w| ≤ B` on `K`, which your proof uses through `‖u‖∞` and `‖w‖∞`.
+  **Theorem 4.2(b)**, **Theorem 4.3** and **Proposition 4.1** are proved too.
+  The whole of Section 4 is proved once for any operator with ten structural
+  properties (ellipticity, homogeneity in `M`, dilation and rotation
+  invariance, a shift bound, and five facts about its semicontinuous
+  envelopes), and `F` is shown to have them.
+* **Theorem 1.1 for other constraint sets.** All five clauses hold for the
+  value function over any closed, convex, bounded set `S` of positive
+  semidefinite matrices that has a positive lower bound on the trace, is
+  invariant under orthogonal conjugation, and contains the sphere-tangential
+  rates `(I − u uᵀ)(I − u uᵀ)ᵀ` for `|u| ≤ 1` (for a unit `u`, the projection
+  onto `u^⊥`), in dimension `n ≥ 2`, with `F` replaced by
+  `F_S(p, M) = inf {−tr(M a)/2 : a ∈ S, a p = 0}`. Your theorem is the case
+  `S` of Eq. (1.5).
+* **Section 5** is not formalised. Proposition 5.1 and Corollary 5.2 look
+  short: Theorem 4.2(b) is available, and so is the dilation invariance of
+  Definition 3.1 for supersolutions; the same invariance for subsolutions is
+  not. Lemma 5.3 would be new work here, and Propositions 5.4 and 5.5 defer to
+  Larsson–Ruf.
+
+---
+
 ## Infrastructure that had to be built
 
 None of the following existed in Isabelle/HOL or its Archive of Formal Proofs.
-Each now sits in a session of its own, none of which depends on this paper, and
-each of which is independently submittable (a few of their texts still cite the
-paper; `notes/PLAN_RESTRUCTURING_3.md` phase 8 removes those):
+The development is eleven sessions. Eight of them are libraries, none of which
+depends on this paper, and each of which is independently submittable in
+dependency order (a few of their texts still cite the paper;
+`notes/PLAN_RESTRUCTURING_3.md` phase 8 removes those):
 
 * **`Symmetric_Matrix_Spectra`** — the spectral theorem for real symmetric
   matrices, Ky Fan partial sums, the ordered eigenvalues as their differences,
-  their Lipschitz dependence on the matrix, Poincaré separation, and the
-  Householder reflections and rotations that transport them.
+  their Lipschitz dependence on the matrix, the Courant–Fischer lower bound,
+  Poincaré separation, orthogonal projections onto orthonormal families, and
+  the Householder reflections and rotations that transport them.
 * **`Semicontinuous_Analysis`** — the ε–δ semicontinuity calculus, attainment
   on compacta, the upper and lower envelopes (including the envelope relative
-  to a closed set), Berge's maximum theorem, and measurable selection for
-  upper semicontinuous payoffs on compact sets — the Bertsekas–Shreve
-  Proposition 7.33 that Larsson–Ruf appeal to. It is proved here by a greedy
-  nested bisection; a countably valued ε-selector does not exist, so some such
-  construction is forced.
+  to a closed set), and Berge's maximum theorem.
 * **`Second_Order_Viscosity_Analysis`** — Rademacher's theorem, Alexandrov's
   theorem, Jensen's lemma for semiconvex functions, the Crandall–Ishii theorem
   on sums, and the doubling-of-variables toolbox they exist to serve, the last
-  stated at `'a::euclidean_space` rather than at `ℝⁿ`.
-* **`Wiener_Measure`** — Wiener measure as a projective limit of Gaussian
-  finite-dimensional distributions, with independent increments and a
-  continuous modification.
+  stated at `'a::euclidean_space` rather than at `ℝⁿ`; on top of them, viscosity
+  sub- and supersolutions for an arbitrary second-order operator.
 * **`Continuous_Time_Martingales`** — Doob's maximal inequality; optional
   sampling and stopping at a bounded stopping time in continuous time;
-  quadratic variation and its compensator; Vitali's convergence theorem and
-  uniform integrability of a family of conditional expectations; exit times as
-  stopping times; and the algebra of transporting the martingale property
+  quadratic variation and its compensator; second and fourth moment bounds on
+  martingale increments without stochastic integration (the `8C²` of
+  Eq. (2.7)); Vitali's convergence theorem and uniform integrability of a
+  family of conditional expectations; exit times as stopping times and bounds
+  on their means; and the algebra of transporting the martingale property
   along images, products, restrictions and modifications.
+* **`Wiener_Measure`** — Wiener measure as a projective limit of Gaussian
+  finite-dimensional distributions, with independent increments and a
+  continuous modification, and the `n`-dimensional Brownian motion it carries.
 * **`Continuous_Path_Spaces`** — `C([0,T], ℝⁿ)` as a Polish space, with the
-  continuous mapping theorem and portmanteau; tightness from increment moments
-  alone; and continuous-time quadratic variation as a *path functional*: the
-  pathwise limit of dyadic sums, with an `L²` rate (`18C²T²/2ⁿ`) that is
-  summable, so the full dyadic sequence converges almost surely and no
-  subsequence is needed. Regularised to a version that is adapted and
-  continuous for **every** path, which is what makes the lift `w ↦ (w, ⟨w⟩)`
-  land in a space of continuous paths without breaking the filtration.
+  continuous mapping theorem, portmanteau and Arzelà–Ascoli; tightness from
+  increment moments alone; continuous-time quadratic variation as a *path
+  functional*: the pathwise limit of dyadic sums, with an `L²` rate
+  (`18C²T²/2ⁿ`) that is summable, so the full dyadic sequence converges almost
+  surely and no subsequence is needed, regularised to a version that is
+  adapted and continuous for **every** path, which is what makes the lift
+  `w ↦ (w, ⟨w⟩)` land in a space of continuous paths without breaking the
+  filtration; upper semicontinuity of exit times along weak convergence; and
+  measurable selection for upper semicontinuous payoffs on compact sets — the
+  Bertsekas–Shreve Proposition 7.33 that Larsson–Ruf appeal to, proved here by
+  a greedy nested bisection (a countably valued ε-selector does not exist, so
+  some such construction is forced).
+* **`Path_Space_Operations`** — cutting, gluing, shifting, delaying and
+  re-basing continuous paths and their laws; splitting a law at a stopping
+  time and reassembling it by addition; stopping times as path functionals,
+  the regular conditional distribution of the future given the stopped past,
+  and optional sampling on the path space.
+* **`Covariation_Constrained_Martingales`** — the class of martingale laws
+  whose covariation has its density in a given set `S`, for any `S`: weak
+  compactness (your Lemmas 2.2 and 2.3), a Brownian witness, pasting, a
+  measurable optimiser, the dynamic programming principle with attainment, an
+  Euler scheme along a field of rates, the class on the half-line, and its
+  laws of `X` alone.
+
+The paper itself is the two remaining sessions plus the statement:
+`Relative_Arbitrage_Equation` (the operator of Eq. (1.9), its envelopes,
+Lemma 2.1, Definition 3.1 and all of Section 4, with no probability theory
+underneath, checked at build time) and `Relative_Arbitrage` (the class of
+Eq. (1.7), the value function, the viscosity property of Section 3,
+Example 3.1 and the assembly of Theorem 1.1).

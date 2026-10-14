@@ -1,10 +1,22 @@
 # Items against the paper
 
-No item is open.  Section 0 below records the `P_x` bridge, which was the last
-one and is now closed; sections 1 and 2 record two further items, also closed.
-`Statement/Theorem_1_1_Statement.thy` states all five clauses of Theorem 1.1 in
-the paper's own terms.  See `NOTES_FOR_AUTHORS.md` for the differences that
-never were gaps.
+Refreshed 2026-10-14 for the session layout of `PLAN_RESTRUCTURING_3.md`
+(phase 8). Session abbreviations: SMS, SemiC, SOVA, RAE
+(`Relative_Arbitrage_Equation`), CTM, WM, CPS, PSO (`Path_Space_Operations`),
+CCM (`Covariation_Constrained_Martingales`), RA (`Relative_Arbitrage`, the
+paper session) and Statement (`Relative_Arbitrage_Statement`).
+
+**Theorem 1.1: no item is open.** Section 0 below records the `P_x` bridge,
+which was the last one and is now closed; sections 1 and 2 record two further
+items, also closed. `Statement/Theorem_1_1_Statement.thy` states all five
+clauses of Theorem 1.1 in the paper's own terms. See `NOTES_FOR_AUTHORS.md`
+for the differences that never were gaps.
+
+**The rest of the paper: two items are open**, both outside Theorem 1.1:
+Section 5 (section 3 below) and Proposition 2.4 for `v` itself (section 4).
+`Statement/Paper_Map.thy` lists every numbered item of the paper with its
+formal counterpart and its deviations; it is the complete list, and this file
+only records what is missing.
 
 ---
 
@@ -20,15 +32,19 @@ one built from `iexit_class`.  Until the two classes were identified, these were
 different objects that shared a name.
 
 The identification is: *the `X`-marginals of `iexit_class k L x` are exactly
-`P_x`*.  All four obligations are discharged, in
-`Relative_Arbitrage/Pathwise_Quadratic_Variation.thy` and `Relative_Arbitrage/Exit_Class_Marginals.thy`:
+`P_x`*.  All four obligations are discharged. Since phase 7 they are proved
+for an abstract constraint set `S` (closed, convex, of positive semidefinite
+matrices with bounded entries), in CPS `Pathwise_Quadratic_Variation` and
+`Adapted_Quadratic_Variation` and CCM `Covariation_Class_Marginals`; the
+paper's statements, at `S = sconstraint k L`, are one-step instances in RA
+`Exit_Class_Marginals`:
 
 | | |
 |---|---|
-| (a) `X` is a martingale for its OWN filtration, not the pair's | `iexit_class_X_own_filtration` |
-| (b) the second coordinate really IS `<X>` | `qvmat_eq_A_sym`, `iexit_class_qvmat` |
-| (c) `<X>` available as a MEASURABLE PATH FUNCTIONAL | `qvmat` / `qvmata` and their measurability |
-| (d) the four clauses of `iexit_class` for the pushforwards | `iexit_class_marginal_in_xclass`, `xclass_lift_in_iexit_class` |
+| (a) `X` is a martingale for its OWN filtration, not the pair's | inside `icovariation_class_marginal_in_xcovariation_class`, through `martingale_distr` (CTM `Martingale_Transfer`) |
+| (b) the second coordinate really IS `<X>` | `qvmat_eq_A_sym` (CPS), `icovariation_class_qvmat` (CCM) |
+| (c) `<X>` available as a MEASURABLE PATH FUNCTIONAL | `qvmat` / `qvmata` and their measurability (CPS) |
+| (d) the four clauses of the class for the pushforwards | `icovariation_class_marginal_in_xcovariation_class`, `xcovariation_class_lift_in_icovariation_class` (CCM); `iexit_class_marginal_in_xclass`, `xclass_lift_in_iexit_class` (RA) |
 
 Headline results:
 
@@ -39,9 +55,12 @@ Headline results:
 * `iexit_val_eq_xval` --- the two value functions are equal, so every clause of
   Theorem 1.1 is a statement about the paper's own `v` of Eq. (1.6).
 
-`Statement/Theorem_1_1_Statement.thy` states `xclass`, `xval` and the three
-theorems above (`paper_class_marginal`, `paper_class_lift`,
-`paper_value_function_agrees`).
+`Statement/Theorem_1_1_Statement.thy` states Theorem 1.1 for `xval` over
+`xclass` directly and displays both definitions; the three bridges above are
+roots (`notes/review_3/roots.txt`) and reach the statement through RA
+`Theorem_1_1` (`xval_eq_iexit_val`). The statement's earlier re-exports
+`paper_class_marginal`, `paper_class_lift` and `paper_value_function_agrees`
+are gone with that change.
 
 ### The idea that made it cheap
 
@@ -115,14 +134,20 @@ The constant is `4L`, not `L`: polarisation at `e_i +- e_j` turns an
 
 ### Placement
 
-`fourth_moment_bound_bounded` lives in `Continuous_Path_Spaces.Increment_Moments`,
-which is ABOVE `Continuous_Time_Martingales` --- so T1--T4 CANNOT go in
-`Continuous_Time_Martingales` where `qvar` lives.  They went into
-`Relative_Arbitrage/Pathwise_Quadratic_Variation.thy`, which deliberately does NOT import
-`Exit_Class`; T5--T7 need `iexit_class` and went into
-`Relative_Arbitrage/Exit_Class_Marginals.thy` after `Exit_Class_Infinite`.
+At the time, `fourth_moment_bound_bounded` lived in
+`Continuous_Path_Spaces.Increment_Moments`, so T1--T4 could not go into
+`Continuous_Time_Martingales` beside `qvar`, and went into the paper session
+together with T5--T7. The estimate was 2000--4000 lines; the two theories
+together were about 4000.
 
-The estimate was 2000--4000 lines; the two theories together are about 4000.
+Now: `fourth_moment_bound_bounded` is in CTM `Increment_Moments` (phase 5);
+T1--T4 are CPS `Pathwise_Quadratic_Variation` (the pathwise functional, `qvp`,
+`qvps`, `qvmat`) and `Adapted_Quadratic_Variation` (the adapted cut-down
+`qvpc`, `qvsa`, `qvmata` and the localised identifications), advertised there
+as quadratic variation as a path functional; T5--T7 are CCM
+`Covariation_Class_Infinite` and `Covariation_Class_Marginals` for an abstract
+`S`, with the paper's `iexit_class`, `xclass` and `xval` in RA
+`Exit_Class_Infinite` and `Exit_Class_Marginals`.
 
 ---
 
@@ -147,7 +172,8 @@ faces, so its liminf within `K` is positive there while its liminf over balls
 of `real^'n` is `0`.  Neither clause implied the other; the paper's had to be
 proved.
 
-**What closed it.**  `Operator_Envelopes` now carries the paper's envelope
+**What closed it.**  The paper's envelope is now in SemiC
+`Semicontinuous_Envelopes` (it was in `Operator_Envelopes`, now RAE)
 
     lsc_envK K u x = (SUP e:{0<..}. INF (u ` (ball x e Int K)))
 
@@ -157,7 +183,8 @@ functions on `real^'n`, can be pointed at hypotheses that only speak about `K`.
 * Clause (2b) and clause (3), where the envelope is a CONCLUSION, needed no
   extension.  The touching in the supersolution proof is global over `K` but
   the proof only ever uses it near the touching point, so the local form is the
-  one really proved (`exit_val_supersol_lsc_local`).  Stated locally, the
+  one really proved (now `covariation_val_supersol_lsc_local`, RA
+  `Value_Function_Supersolution`).  Stated locally, the
   paper's envelope follows at once: the two envelopes agree at interior points,
   and a small enough ball around an interior point meets `K` only in interior
   points.
@@ -187,7 +214,7 @@ included, and `Statement/Theorem_1_1_Statement.thy` states them that way.
 What follows is the record of what the obstruction was and how it was removed;
 nothing here is open.
 
-**What was blocking.**  `Value_Function_Viscosity.feasible_strict_eigendata`
+**What was blocking.**  `Value_Function_Viscosity.feasible_strict_eigendata` (deleted)
 produced a margin `m > 0` with `lam u <= L - m` on the eigenbasis and
 `1 + m <= lam u` on the top `n - k` of it, so that
 
@@ -221,7 +248,7 @@ which is orthogonal for every `q` and `w` (unconditionally --- the degenerate
 onto the ray through `w` whenever the two are not opposed, and is the identity
 at `w = q`.  The field is `R(y) a R(y)^T`, and conjugation by an orthogonal
 matrix moves neither the spectrum of `a` nor its membership of the feasible
-set (`Operator_Envelopes.feasible_conj`, which was already there).  So
+set (`feasible_conj`, RAE `Operator_Envelopes`, which was already there).  So
 
 * it lies in `sconstraint k L` at every `y`, with no margin, hence at `L = 1`;
 * it annihilates `grad phi(y)`, because `a` annihilates `q` and
@@ -231,12 +258,19 @@ set (`Operator_Envelopes.feasible_conj`, which was already there).  So
   continuity at the touching point instead of from three explicit smallness
   estimates.
 
-That is `rotSF_exists` (subsection "Exact rotations" of
+That was `rotSF_exists` (subsection "Exact rotations" of
 `Value_Function_Viscosity`), and it carries no hypothesis on `L` at all.  The
 two Case 1 arguments --- `exit_val_supersol_contradiction_case1` and its `_lsc`
-twin --- consume it in place of the strict eigendata, and `1 < L` was then
+twin --- consumed it in place of the strict eigendata, and `1 < L` was then
 weakened to `1 <= L` through the whole chain down to
 `Statement/Theorem_1_1_Statement.thy`.
+
+Now (phase 7): the rotated field is `covariation_rotSF_exists` (RA
+`Euler_Limit_Growth`, subsection "Exact rotations"), for any set of rates
+invariant under orthogonal conjugation; the paper's set is one
+(`sconstraint_conj`, same theory). The surviving Case 1 argument is
+`covariation_val_supersol_contradiction_case1_lsc` (RA
+`Value_Function_Supersolution`); the plain twin is gone.
 
 **Left over: nothing.**  The skew-field cluster the rotation replaced --- 29
 entities, `skewv`, `skewfield`, `skewSF`, `skewfield_properties`,
@@ -254,3 +288,70 @@ the value function does not depend on `L` when `K` is convex, and says the
 authors could not show it.  Nothing here bears on that: `F` itself depends on
 `L`, and what is proved above is that each `L >= 1` --- separately --- has its
 value function characterised.
+
+---
+
+## 3. Section 5 of the paper (continuity of `v` for convex `K`) --- OPEN, out of scope
+
+Decision D4b of `PLAN_RESTRUCTURING_3.md`. Nothing of Section 5 is formalised,
+and nothing of Theorem 1.1 depends on it. `Statement/Paper_Map.thy` (its last
+section) states this item by item.
+
+* **Proposition 5.1** (for convex `K`, `v` is continuous on `interior K`) and
+  **Corollary 5.2** (if moreover `v = 0` on `∂K`, `v` is continuous on `K`):
+  a gated pilot of at most 200 lines, not yet run. Its precondition, the
+  session `Relative_Arbitrage_Equation` (phase 6), now holds. The paper's
+  proof dilates `v` into `interior K` and compares the dilated `v`, as a
+  subsolution, with `v_*` by Theorem 4.2(b). What exists: Theorem 4.2(b)
+  (`paper_theorem_4_2_b`; `comparison_two_domain`, RAE `Comparison_Two_Domain`
+  and `Comparison_Instance`), the scaling of the operator and of its upper
+  envelope (`ell_op_scale`, `ell_op_usc_scale`, RAE `Operator_Envelopes`), and
+  the dilation invariance of Definition 3.1 for supersolutions
+  (`visc_supersol_env_affine`, RAE `Comparison_Instance`). What is missing: the same invariance for
+  subsolutions, and the argument itself. Corollary 5.2 needs, besides
+  Proposition 5.1, only `v ≥ 0` and upper semicontinuity (`xval_usc`, RA
+  `Theorem_1_1`).
+* **Lemma 5.3** (`v(x) = 0` iff the face of `K` containing `x` in its relative
+  interior has dimension at most `n − k`): new mathematics for this
+  development, recorded here and not planned. Its deterministic core (a
+  covariance degenerate on a subspace `W` satisfies `eigen_lb a m` only if
+  `m + dim W ≤ n`) was once proved as `eigen_lb_dim_obstruction`, but no
+  theory contains it now: it was removed before the repository's history
+  begins. `STATUS.md` listed it as done; that entry is corrected.
+* **Propositions 5.4** (`k ≤ 2`) **and 5.5** (polytopes): their proofs defer
+  "word by word" to Lemmas 5.6, 5.7 and Corollary 5.9(iii) of Larsson and
+  Ruf, *Minimum curvature flow and martingale exit times*, none of which is in
+  the repository. New mathematics; not planned.
+* **Remark 1.1(c)** conjectures that `v` does not depend on `L` when `K` is
+  convex, and says the authors could not show it. That is open in the paper
+  itself (see the end of section 2).
+
+## 4. Proposition 2.4 for `v` itself --- OPEN (follow-up pilot)
+
+Decision D4 of `PLAN_RESTRUCTURING_3.md`. Proposition 2.4 (Eq. (2.9) with
+attainment by every optimiser) is proved for the horizon-`T` value
+`exit_val k L T K` over `exit_class` (RA `Proposition_2_4`: `exit_val_dpp`,
+`exit_val_dpp_time`, `exit_val_dpp_time_optimizer`), and for an abstract
+closed convex `S` (CCM `Dynamic_Programming_Principle`). The stopping times
+are path stopping times of the pair `(X, A)` with values in `[0,T]`. The
+paper states (2.9) for `v` on `[0,∞)` and arbitrary stopping times of `X`.
+Upper semicontinuity of `v` itself is proved (`xval_usc`).
+
+What a transfer to `v` needs (sizes from the D4 pilot report):
+
+* the identification of `v` with `exit_val` at large horizons: exists
+  (`iexit_val_eq_exit_val_ball`, RA `Exit_Class_Infinite`;
+  `xval_eq_iexit_val`, RA `Theorem_1_1`; generic
+  `icovariation_val_eq_covariation_val`, CCM `Covariation_Class_Infinite`);
+* 200--400 lines transporting essential infima between the class of Eq. (1.7)
+  and `exit_class`;
+* Galmarino's test for the coordinate filtration on `C([0,∞))`: not in the
+  repository, and genuinely hard;
+* a limit argument for unbounded `θ`.
+
+For **bounded** `θ`, the independent re-check of D4 expects the transfer to
+follow from existing bridges (`covariation_val_horizon_cap`, CCM
+`Dynamic_Programming_Delayed_Class`; `iexit_val_eq_exit_val_ball`;
+`covariation_class_has_extension`, CCM `Covariation_Class_Infinite`) with
+`T ≥ sup θ + r_K²/(n − k)`. That is a follow-up pilot of at most 300 lines,
+gated and not yet run. Galmarino's test and unbounded `θ` stay out of scope.
