@@ -3,8 +3,8 @@ section \<open>The Euler scheme, its weak limit, and the exact quadratic lower b
 (*<*)
 theory Value_Function_Euler_Construction
   imports
-    "Lower_Semicontinuous.Lower_Semicontinuous" Dynamic_Programming_Pasting
-    "Second_Order_Viscosity_Analysis.Doubling_Of_Variables"
+    "Lower_Semicontinuous.Lower_Semicontinuous" "Covariation_Constrained_Martingales.Dynamic_Programming_Pasting"
+    "Second_Order_Viscosity_Analysis.Doubling_Of_Variables" Exit_Class
 begin
 
 (*>*)
@@ -25,7 +25,7 @@ text \<open>The supersolution inequality is an essential-infimum statement, so i
   Either way the field is fed to an Euler scheme glued by
   @{thm [source] covariation_class_kglue_law'} and passed to a weak limit.  The
   constant-volatility Gaussian member the Euler kernels are made of,
-  \<open>sbmpair\<close>, is in @{theory Relative_Arbitrage.Exit_Class_Witness}; this
+  \<open>sbmpair\<close>, is in @{theory Covariation_Constrained_Martingales.Covariation_Class_Witness}; this
   section writes the field as a square and builds the limit.\<close>
 
 subsection \<open>A crude operator bound for matrices\<close>

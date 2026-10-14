@@ -19,6 +19,7 @@ decl={
  "Wiener_Measure":["HOL-Probability","Kolmogorov_Chentsov","Continuous_Time_Martingales"],
  "Continuous_Path_Spaces":["Continuous_Time_Martingales","Kolmogorov_Chentsov","Levy_Prokhorov_Metric","Standard_Borel_Spaces","Semicontinuous_Analysis","HOL-Complex_Analysis"],
  "Path_Space_Operations":["Continuous_Path_Spaces","Symmetric_Matrix_Spectra","Disintegration"],
+ "Covariation_Constrained_Martingales":["Path_Space_Operations","Wiener_Measure"],
 }
 def closure(s):
     out=set(); st=[s]
@@ -96,7 +97,7 @@ for src,tgt in [("Continuous_Path_Spaces","Continuous_Time_Martingales"),("Secon
 json.dump({k:sorted(v) for k,v in res.items()}, open(OUT+'/movable.json','w'))
 
 print("\n==== strict modes: only Relative_Arbitrage facts may move ====")
-RA_SESS={'Relative_Arbitrage','Relative_Arbitrage_Equation','Path_Space_Operations'}
+RA_SESS={'Relative_Arbitrage','Relative_Arbitrage_Equation','Path_Space_Operations','Covariation_Constrained_Martingales'}
 ra_consts={c for c,t in const_thy.items() if sess(t) in RA_SESS}
 def movable2(A, library_ready):
     cand={n for n,f in facts.items() if f['sess'] in RA_SESS and f['thy'] not in A}

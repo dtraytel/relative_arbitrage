@@ -2,7 +2,7 @@ section \<open>Proposition 2.4: the dynamic programming equality, with attainmen
 
 (*<*)
 theory Proposition_2_4
-  imports Dynamic_Programming_Principle
+  imports "Covariation_Constrained_Martingales.Dynamic_Programming_Principle" Exit_Class
 begin
 (*>*)
 
@@ -19,7 +19,7 @@ text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close>, Eq. (2
 
   Each statement is the case \<open>S = sconstraint k L\<close> of the dynamic
   programming principle for an abstract constraint set, in
-  @{theory Relative_Arbitrage.Dynamic_Programming_Principle}.
+  @{theory Covariation_Constrained_Martingales.Dynamic_Programming_Principle}.
 
   What is not proved here.  The paper states (2.9) for \<open>v\<close> on \<open>[0,\<infinity>)\<close> at
   arbitrary stopping times of the natural filtration of \<open>X\<close>.  The transfer

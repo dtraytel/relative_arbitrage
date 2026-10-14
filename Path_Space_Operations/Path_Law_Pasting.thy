@@ -793,7 +793,7 @@ qed
 
 text \<open>The other branch needs a repair, and the repair needs the class to be
   a measurable set of laws.  It is: the class is compact in the weak
-  topology (\<open>exit_class_compactin_weak\<close>), that topology
+  topology (\<open>covariation_class_compactin_weak\<close>), that topology
   is the Levy-Prokhorov metric topology hence Hausdorff, so the class is
   closed, hence Borel; and \<open>prob_algebra\<close> is that Borel algebra
   restricted to the probability measures, which the class already consists
@@ -996,7 +996,7 @@ text \<open>Proving clauses (iii) and (iv) directly for \<open>ksemi\<close> run
   disintegrated set integral is only \<open>\<F>\<^sub>r\<close>-measurable).
 
   Neither has to be faced.  The class is weakly closed
-  (\<open>exit_class_weak_closed\<close>), the glue with a countably
+  (\<open>covariation_class_weak_closed\<close>), the glue with a countably
   valued index is already in it
   (\<open>covariation_class_kglue_law\<close>), and the class at the origin
   is a compact metric space
@@ -1924,7 +1924,7 @@ text \<open>The class is closed under concatenation with a continuation chosen
   (@{thm [source] ksemi_weak_conv}), the glue is continuous
   (@{thm [source] Lipschitz_pglue}), so the glued laws converge; and the
   class is weakly closed
-  (\<open>exit_class_weak_closed\<close>).\<close>
+  (\<open>covariation_class_weak_closed\<close>).\<close>
 
 lemma AE_kernel_integral_zero:
   fixes h :: "'b \<Rightarrow> real"

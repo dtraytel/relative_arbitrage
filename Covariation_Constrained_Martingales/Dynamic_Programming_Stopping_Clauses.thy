@@ -3,7 +3,7 @@ section \<open>Clause (iv) at a stopping time\<close>
 (*<*)
 theory Dynamic_Programming_Stopping_Clauses
   imports
-    "Kolmogorov_Chentsov.Kolmogorov_Chentsov" Exit_Class_Limits "Path_Space_Operations.Path_Law_Sampling"
+    "Kolmogorov_Chentsov.Kolmogorov_Chentsov" Covariation_Class_Limits "Path_Space_Operations.Path_Law_Sampling"
 begin
 
 (*>*)

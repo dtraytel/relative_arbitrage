@@ -1,4 +1,4 @@
-session Relative_Arbitrage = Path_Space_Operations +
+session Relative_Arbitrage = Covariation_Constrained_Martingales +
   description "
     Theorem 1.1 of Lai, Shkolnikov and Soner, Relative arbitrage problem under
     eigenvalue lower bounds (arXiv:2512.17702): the value function of the
@@ -10,31 +10,20 @@ session Relative_Arbitrage = Path_Space_Operations +
     and the comparison principle (Theorem 4.2(a)) are in the probability-free
     session Relative_Arbitrage_Equation; the operations on path laws (cutting,
     glueing, shifting, sampling at a stopping time) and the class of laws
-    with constrained covariation, for an arbitrary constraint set, are in
-    Path_Space_Operations.  This session instantiates that class at the
-    eigenvalue constraint set of Eq. (1.7), proves the dynamic programming
-    principle for it, and proves the five clauses for its value function.
+    with constrained covariation are in Path_Space_Operations, and its
+    compactness, pasting and dynamic programming principle, for an arbitrary
+    constraint set, are in Covariation_Constrained_Martingales.  This session
+    instantiates that class at the eigenvalue constraint set of Eq. (1.7)
+    and proves the five clauses for its value function: the viscosity
+    verification and uniqueness for an abstract constraint set, then their
+    instances.
   "
   options [document = pdf, document_output = "output"]
   sessions
-    Wiener_Measure
     Relative_Arbitrage_Equation
   theories
     Exit_Class
     Covariation_Density
-    Exit_Class_Limits
-    Exit_Class_Tightness
-    Exit_Class_Shift
-    Exit_Class_Witness
-    Exit_Class_Pasting
-    Exit_Class_Optimizer
-    Dynamic_Programming_Pasting
-    Dynamic_Programming_Conditioning
-    Dynamic_Programming_Stopping_Clauses
-    Dynamic_Programming_Additive_Glue
-    Dynamic_Programming_Delayed_Class
-    Dynamic_Programming_Assembly
-    Dynamic_Programming_Principle
     Proposition_2_4
     Value_Function_Subsolution
     Value_Function_Euler_Construction

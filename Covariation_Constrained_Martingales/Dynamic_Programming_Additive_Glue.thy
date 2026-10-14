@@ -3,7 +3,7 @@ section \<open>The additive glue and its clauses\<close>
 (*<*)
 theory Dynamic_Programming_Additive_Glue
   imports
-    Exit_Class_Pasting "Path_Space_Operations.Path_Law_Sampling"
+    Covariation_Class_Pasting "Path_Space_Operations.Path_Law_Sampling"
 begin
 
 (*>*)

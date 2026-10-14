@@ -26,7 +26,7 @@ for r in rows:
         need[t].add(fact_thy.get(d, dep_thy.get(d,'?')))
     for c in (r[7].split() if len(r)>7 and r[7] else []):
         need[t].add(const_thy.get(c,'?'))
-user=lambda t: t.split('.')[0] in {"Symmetric_Matrix_Spectra","Semicontinuous_Analysis","Second_Order_Viscosity_Analysis","Relative_Arbitrage_Equation","Wiener_Measure","Continuous_Time_Martingales","Continuous_Path_Spaces","Path_Space_Operations","Relative_Arbitrage","Relative_Arbitrage_Statement"}
+user=lambda t: t.split('.')[0] in {"Symmetric_Matrix_Spectra","Semicontinuous_Analysis","Second_Order_Viscosity_Analysis","Relative_Arbitrage_Equation","Wiener_Measure","Continuous_Time_Martingales","Continuous_Path_Spaces","Path_Space_Operations","Covariation_Constrained_Martingales","Relative_Arbitrage","Relative_Arbitrage_Statement"}
 # for each user theory: direct parents; which parents are "needed" = some needed theory is in anc(parent) and not reachable via other needed-parents? Simplify: parent p is redundant if no needed theory lies in anc(p) \ union(anc(q) for other parents q)... report parents whose anc contains no needed theory at all ("unused import") and parents subsumed by another parent ("transitively redundant").
 report=[]
 for t in sorted(par):

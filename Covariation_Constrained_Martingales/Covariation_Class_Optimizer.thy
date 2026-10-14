@@ -1,9 +1,9 @@
 section \<open>Attainment, the measurable optimizer, and the semidirect product\<close>
 
 (*<*)
-theory Exit_Class_Optimizer
+theory Covariation_Class_Optimizer
   imports
-    Exit_Class_Pasting
+    Covariation_Class_Pasting
 begin
 
 (*>*)
@@ -60,22 +60,11 @@ proof (rule compactin_of_seq_compact
     by blast
 qed
 
-text \<open>For the paper's constraint set this is Lemma 2.3's compactness.\<close>
+subsection \<open>Relative compactness and compactness for sets of positive semidefinite matrices\<close>
 
-theorem exit_class_compactin_weak:
-  fixes x :: "real^'n::finite"
-  assumes T: "0 < T" and L: "0 \<le> L"
-  shows "compactin (weak_conv_topology
-        (mtopology_of (path_metric T :: ('n pairpath) metric)))
-      (exit_class k L T x)"
-  unfolding exit_class_eq_covariation
-  by (rule covariation_class_compactin_weak[OF T sconstraint_bounds[OF L] closed_sconstraint])
-
-subsection \<open>Lemmas 2.2 and 2.3 for an abstract constraint set\<close>
-
-text \<open>The paper states Lemmas 2.2 and 2.3 for a set \<open>S \<subseteq> \<bbbS>\<^sup>n\<^sub>+\<close> of positive
-  semidefinite matrices: bounded for relative compactness, compact and convex
-  for compactness.  A bounded set of positive semidefinite matrices supplies
+text \<open>Lemmas 2.2 and 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> are stated for a set
+  \<open>S \<subseteq> \<bbbS>\<^sup>n\<^sub>+\<close> of positive semidefinite matrices: bounded for relative
+  compactness, compact and convex for compactness.  A bounded set of positive semidefinite matrices supplies
   both bounds the statements above take, with the same constant: a diagonal
   entry of a positive semidefinite matrix is nonnegative and at most its norm.\<close>
 
@@ -91,7 +80,7 @@ proof
   finally show "a $ j $ j \<le> norm a" .
 qed
 
-text \<open>Lemma 2.2: for a bounded set of positive semidefinite matrices the
+text \<open>For a bounded set of positive semidefinite matrices the
   class is relatively compact for weak convergence of laws on the path space.\<close>
 
 theorem covariation_class_relatively_compact:
@@ -126,8 +115,8 @@ proof -
   show ?thesis by (rule tight_imp_relatively_compact[OF met sep bound tight])
 qed
 
-text \<open>Lemma 2.3: for a compact set of positive semidefinite matrices the
-  class is compact.  The paper also assumes \<open>S\<close> convex; closedness of the class
+text \<open>For a compact set of positive semidefinite matrices the class is
+  compact.  No convexity of \<open>S\<close> is needed: closedness of the class
   under weak limits needs only \<open>S\<close> closed, so convexity is not used.\<close>
 
 theorem covariation_class_compact:
@@ -221,7 +210,7 @@ qed
 
 section \<open>A measurable optimizer: Larsson--Ruf Proposition 2.2(ii)\<close>
 
-text \<open>The supremum in (1.6) is attained, and the optimizer can be chosen
+text \<open>The supremum defining the value is attained, and the optimizer can be chosen
   measurably in the starting point: the class at the origin is a compact
   metric space (@{thm [source] covariation_class_compact_metric_space}),
   the payoff is jointly upper semicontinuous
@@ -398,7 +387,7 @@ proof -
   show ?thesis by (rule that[OF smW sC shiftmem sval])
 qed
 
-text \<open>In particular the supremum in (1.6) is attained at every starting point.\<close>
+text \<open>In particular the supremum defining the value is attained at every starting point.\<close>
 
 theorem covariation_val_attained:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"

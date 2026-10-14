@@ -1,9 +1,9 @@
 section \<open>Shift equivariance, and upper semicontinuity of the value function\<close>
 
 (*<*)
-theory Exit_Class_Shift
+theory Covariation_Class_Shift
   imports
-    Exit_Class_Tightness "Path_Space_Operations.Path_Law_Pasting"
+    Covariation_Class_Tightness "Path_Space_Operations.Path_Law_Pasting"
 begin
 
 (*>*)
@@ -215,7 +215,7 @@ proof
   qed
 qed
 
-section \<open>The value function of Eq. (1.6) is upper semicontinuous\<close>
+section \<open>The value function is upper semicontinuous\<close>
 
 subsection \<open>The value as a supremum of the exit functional\<close>
 
@@ -280,10 +280,9 @@ theorem covariation_val_eq_vshift_sup:
 
 subsection \<open>Upper semicontinuity of the value\<close>
 
-text \<open>\<open>exit_val\<close> is Eq. (1.6): the supremum, over the class (1.7) started at
-  \<open>x\<close>, of the essential infimum of the exit time from \<open>K\<close>, i.e.
-  \<open>covariation_val\<close> at \<open>sconstraint k L\<close>.  Upper semicontinuity in \<open>x\<close> is
-  exactly clause (1), and holds for any closed \<open>S\<close> with the two bounds.  The class is sequentially
+text \<open>\<open>covariation_val S T K x\<close> is the supremum, over the class started at
+  \<open>x\<close>, of the essential infimum of the exit time from \<open>K\<close>.  It is upper
+  semicontinuous in \<open>x\<close> for any closed \<open>S\<close> with the two bounds.  The class is sequentially
   compact and shift-equivariant (Prop. 2.2(ii)), so Berge applies through
   \<open>Path_Exit_Times.vshift_sup_usc_of_seq_compact\<close>, whose remaining
   hypothesis, nonemptiness of the class at \<open>0\<close>, is supplied by a separate

@@ -1,0 +1,54 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+\urlstyle{rm}
+\isabellestyle{it}
+
+\begin{document}
+
+\title{Martingales with Constrained Covariation and the Minimum Exit Time}
+\author{Dmitriy Traytel}
+\maketitle
+
+\begin{abstract}
+  Fix a set $S$ of $n \times n$ matrices and consider the martingale laws
+  on the space of continuous paths in $\mathbb{R}^n$, started at a point,
+  whose covariation has its density in $S$; the minimum-exit-time problem
+  asks for the supremum over this class of the essential infimum of the
+  exit time from a set $K$.  On top of the operations on path laws of the
+  Archive entry \texttt{Path\_Space\_Operations}, which defines the class,
+  this entry develops its theory with $S$ as a parameter, each result
+  taking from $S$ only what it uses.  For a closed $S$ with a norm bound
+  and a bound on the diagonal, the class is tight and closed under weak
+  limits, hence weakly compact; so it is relatively compact when $S$ is a
+  bounded set of positive semidefinite matrices and compact when $S$ is a
+  compact one.  Brownian motion pushed through a matrix $\sigma$ with
+  $\sigma\sigma^{T} \in S$ witnesses that the class is nonempty.  For a
+  convex $S$ the class is closed under shortening the horizon and under
+  pasting a member to a kernel of continuations; the value is upper
+  semicontinuous, Borel measurable and attained, with a measurable optimal
+  selector.  Conditioning on the past at a stopping time and the additive
+  glue at a stopping time then give the dynamic programming principle,
+  with attainment, at a deterministic time and at a stopping time, in the
+  form used by Lai, Shkolnikov and Soner~\cite{LaiShkolnikovSoner} after
+  Larsson and Ruf~\cite{LarssonRuf}.
+\end{abstract}
+
+\tableofcontents
+
+\parindent 0pt\parskip 0.5ex
+
+\input{session}
+
+\bibliographystyle{abbrv}
+\bibliography{root}
+
+\end{document}

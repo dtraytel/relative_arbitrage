@@ -1,9 +1,9 @@
 section \<open>Tightness and sequential compactness\<close>
 
 (*<*)
-theory Exit_Class_Tightness
+theory Covariation_Class_Tightness
   imports
-    Exit_Class_Limits
+    Covariation_Class_Limits
 begin
 
 (*>*)
@@ -304,14 +304,6 @@ proof -
     qed
   qed
 qed
-
-theorem tight_on_set_paper_pair_class:
-  fixes \<Gamma> :: "(('n::finite) pairpath) measure set" and x :: "real^'n"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and mem: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> N \<in> exit_class k L T x"
-  shows "tight_on_set (mtopology_of (path_metric T :: ('n pairpath) metric)) \<Gamma>"
-  by (rule covariation_class_tight_on_set[OF T sconstraint_bounds[OF L]
-        mem[unfolded exit_class_eq_covariation]])
 
 section \<open>The class is sequentially compact\<close>
 

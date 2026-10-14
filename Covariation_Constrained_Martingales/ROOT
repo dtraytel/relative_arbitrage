@@ -1,0 +1,39 @@
+session Covariation_Constrained_Martingales = Path_Space_Operations +
+  description "
+    Martingale laws on the space of continuous paths whose covariation has
+    its density in a given set S of matrices, and the minimum-exit-time
+    problem over them, with S as a parameter.  The class is closed under
+    weak limits and tight when S is closed with a norm and a diagonal
+    bound, so it is weakly compact; in particular it is relatively compact
+    for a bounded and compact for a compact set of positive semidefinite
+    matrices.  Laws of Brownian motion pushed through a matrix with
+    covariation rate in S witness that the class is nonempty.  The class is
+    closed under shortening the horizon and under pasting at a time, for
+    convex S; the value is upper semicontinuous and attained, with a
+    measurable optimizer.  Conditioning on the past at a stopping time and
+    the additive glue at a stopping time give the dynamic programming
+    principle for the value, with attainment, at a deterministic time and at
+    a stopping time.
+  "
+  options [document = pdf, document_output = "output"]
+  sessions
+    Wiener_Measure
+  theories
+    Covariation_Class_Limits
+    Covariation_Class_Tightness
+    Covariation_Class_Shift
+    Covariation_Class_Witness
+    Covariation_Class_Pasting
+    Covariation_Class_Optimizer
+    Dynamic_Programming_Pasting
+    Dynamic_Programming_Conditioning
+    Dynamic_Programming_Stopping_Clauses
+    Dynamic_Programming_Additive_Glue
+    Dynamic_Programming_Delayed_Class
+    Dynamic_Programming_Assembly
+    Dynamic_Programming_Principle
+  theories [document = false]
+    No_Paper_Ancestor
+  document_files
+    "root.tex"
+    "root.bib"

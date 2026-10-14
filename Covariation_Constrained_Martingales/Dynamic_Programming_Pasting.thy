@@ -2,7 +2,7 @@ section \<open>The optimal selector and the measurable value function\<close>
 (*<*)
 theory Dynamic_Programming_Pasting
   imports
-    "Disintegration.Disintegration" Exit_Class_Optimizer
+    "Disintegration.Disintegration" Covariation_Class_Optimizer
 begin
 
 (*>*)
@@ -11,7 +11,7 @@ text \<open>Ingredients of the dynamic programming principle of Proposition 2.4 
   almost-sure form of its optimality, and the Borel measurability of the
   value function.  The principle itself is assembled in
   \<open>Dynamic_Programming_Assembly\<close> (the \<open>\<ge>\<close> half, at a stopping time and
-  hence at a deterministic time) and \<open>Proposition_2_4\<close>.\<close>
+  hence at a deterministic time) and \<open>Dynamic_Programming_Principle\<close>.\<close>
 
 subsection \<open>The optimal selector as a kernel\<close>
 
@@ -85,7 +85,7 @@ qed
 
 subsection \<open>The value function is Borel measurable\<close>
 
-text \<open>Clause (1) --- upper semicontinuity --- makes every sublevel set
+text \<open>Upper semicontinuity makes every sublevel set
   \<open>{y. v y < b}\<close> open, so \<open>v\<close> and its real version \<open>enn2real \<circ> v\<close> are
   Borel measurable, as needed to state the dynamic programming principle's
   integrand as a random variable.\<close>

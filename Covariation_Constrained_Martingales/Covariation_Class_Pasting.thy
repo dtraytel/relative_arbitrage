@@ -1,9 +1,9 @@
-section \<open>Shortening the horizon, concatenation, and Proposition 2.4\<close>
+section \<open>Shortening the horizon, concatenation, and the pasting lower bound\<close>
 
 (*<*)
-theory Exit_Class_Pasting
+theory Covariation_Class_Pasting
   imports
-    Exit_Class_Witness
+    Covariation_Class_Witness
 begin
 
 (*>*)
@@ -281,7 +281,7 @@ qed
 
 section \<open>The horizon cap does not bind\<close>
 
-text \<open>\<open>covariation_val\<close> caps the exit time at \<open>T\<close>, the paper's \<open>v\<close> does
+text \<open>\<open>covariation_val\<close> caps the exit time at \<open>T\<close>, an uncapped value would
   not.  Cutting a member back to \<open>[0,U]\<close> (\<open>covariation_class_pcut\<close>) can
   only shorten its exit time to \<open>min \<tau> U\<close>, so the value at horizon \<open>T\<close> is
   already visible at horizon \<open>U\<close> once \<open>U\<close> exceeds the scale
@@ -760,7 +760,7 @@ qed
 text \<open>The class is closed under independent concatenation.  This is the
   constructive half of the pasting the weak dynamic programming principle
   needs; with a countable Borel partition of the endpoint it will give the
-  \<open>\<ge>\<close> inequality of (2.9).\<close>
+  \<open>\<ge>\<close> inequality of the dynamic programming principle.\<close>
 
 theorem covariation_class_pglue_law:
   fixes Q R :: "('n::finite pairpath) measure"
@@ -869,19 +869,19 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Horizon-cap invisibility, both halves.  Past the natural scale of
-  Example 3.1 the horizon does not matter at all, so the value --- defined
-  on the capped path space --- computes the paper's uncapped \<open>v\<close> of (1.6).\<close>
+text \<open>Horizon-cap invisibility, both halves.  Past the natural scale
+  \<open>(r\<^sup>2 - |x|\<^sup>2)/\<theta>\<close> the horizon does not matter at all, so the value --- defined
+  on the capped path space --- computes the uncapped value.\<close>
 
-section \<open>The pasting lower bound (Prop. 2.4)\<close>
+section \<open>The pasting lower bound\<close>
 
-text \<open>The mechanism behind the \<open>\<ge>\<close> half of the dynamic programming principle
-  (2.9): pasting produces a member of the class, so the essential infimum
+text \<open>The mechanism behind the \<open>\<ge>\<close> half of the dynamic programming principle:
+  pasting produces a member of the class, so the essential infimum
   of its exit time lower-bounds \<open>v(x)\<close>, and a glued path's exit time is at
   least \<open>r + c\<close> once the first piece stays in \<open>K\<close> to \<open>r\<close> and the re-based
   continuation stays in \<open>K\<close> for a further \<open>c\<close>.  A single law \<open>R\<close> started
   at \<open>0\<close> supplies a continuation from every endpoint via \<open>pglue\<close>; the full
-  (2.9) needs that law chosen depending on the endpoint.\<close>
+  principle needs that law chosen depending on the endpoint.\<close>
 
 
 lemma kglue_law_start:
@@ -2134,7 +2134,7 @@ qed
 
 text \<open>The class is closed under concatenation with a continuation chosen by
   the endpoint along any countable past-measurable selector --- what
-  Prop. 2.4's \<open>\<ge>\<close> inequality needs beyond \<open>covariation_class_pglue_law\<close>:
+  the \<open>\<ge>\<close> inequality of the dynamic programming principle needs beyond \<open>covariation_class_pglue_law\<close>:
   with an \<open>\<epsilon>\<close>-optimal continuation attached to each cell of a countable
   Borel partition of \<open>X(r)\<close>, the pasted law realises \<open>r + v(X(r))\<close> up to
   \<open>\<epsilon>\<close>.\<close>

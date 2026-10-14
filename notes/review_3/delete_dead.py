@@ -30,6 +30,7 @@ DIRS = {"Symmetric_Matrix_Spectra": "Symmetric_Matrix_Spectra",
         "Continuous_Time_Martingales": "Continuous_Time_Martingales",
         "Continuous_Path_Spaces": "Continuous_Path_Spaces",
         "Path_Space_Operations": "Path_Space_Operations",
+        "Covariation_Constrained_Martingales": "Covariation_Constrained_Martingales",
         "Relative_Arbitrage": "Relative_Arbitrage",
         "Relative_Arbitrage_Statement": "Statement"}
 START = re.compile(r'^(lemma|theorem|corollary|proposition|definition|fun|primrec|function|'

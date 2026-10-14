@@ -3,7 +3,7 @@ section \<open>Clause (2): the subsolution half\<close>
 (*<*)
 theory Value_Function_Subsolution
   imports
-    Dynamic_Programming_Assembly "Relative_Arbitrage_Equation.Eigenvalue_Bound_Exact" "Relative_Arbitrage_Equation.Operator_Envelopes"
+    "Covariation_Constrained_Martingales.Dynamic_Programming_Assembly" "Relative_Arbitrage_Equation.Eigenvalue_Bound_Exact" "Relative_Arbitrage_Equation.Operator_Envelopes" Exit_Class
 begin
 
 (*>*)

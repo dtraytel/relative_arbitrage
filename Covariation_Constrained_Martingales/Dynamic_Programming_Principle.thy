@@ -16,7 +16,7 @@ text \<open>The dynamic programming principle of Proposition 2.4 of
   a norm bound \<open>B\<close> and a diagonal bound \<open>D\<close> (the class is compact, so the
   value is upper semicontinuous and attained), and holds some covariation
   rate \<open>\<sigma> \<sigma>\<^sup>T\<close> (the class is nonempty and the value monotone in the
-  horizon).  The paper's case is in @{text Proposition_2_4}.
+  horizon).
 
   Both summands are read off the first piece: \<open>\<theta> \<and> \<tau>\<^sub>K\<close> is the exit time
   capped at \<open>\<theta>\<close>, and the indicator \<open>1\<^bsub>{\<theta> \<le> \<tau>\<^sub>K}\<^esub>\<close> is
@@ -104,7 +104,7 @@ proof -
   then show ?thesis unfolding ceq .
 qed
 
-text \<open>Hence the \<open>\<le>\<close> half of (2.9) at an arbitrary time function.\<close>
+text \<open>Hence the \<open>\<le>\<close> half of the principle at an arbitrary time function.\<close>
 
 theorem covariation_val_dpp_le_time:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
@@ -153,7 +153,7 @@ proof -
     by (rule covariation_val_dpp_ess_inf_mono_time[where \<theta> = "\<lambda>_. r", OF T0 B0 B D0 D Sc Sv SST Kc P r rT])
 qed
 
-text \<open>Proposition 2.4, Eq. (2.9), at a deterministic time \<open>0 \<le> r < T\<close>.\<close>
+text \<open>The principle at a deterministic time \<open>0 \<le> r < T\<close>.\<close>
 
 theorem covariation_val_dpp:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
@@ -190,7 +190,7 @@ proof (rule antisym)
 qed
 
 text \<open>Attainment: every optimizer of the value function attains the
-  supremum in (2.9).\<close>
+  supremum in the principle.\<close>
 
 theorem covariation_val_dpp_optimizer:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
@@ -222,7 +222,7 @@ proof (rule antisym)
 qed
 
 text \<open>Optimizers exist (@{thm [source] covariation_val_attained}), so the supremum
-  in (2.9) is a maximum.\<close>
+  in the principle is a maximum.\<close>
 
 corollary covariation_val_dpp_attained:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
@@ -249,7 +249,7 @@ qed
 
 subsection \<open>Step 2: the equality at a stopping time\<close>
 
-text \<open>Proposition 2.4, Eq. (2.9), at a path stopping time \<open>\<theta>\<close> with values
+text \<open>The principle at a path stopping time \<open>\<theta>\<close> with values
   in \<open>[0,T]\<close>.  The \<open>\<ge>\<close> half is @{thm [source] covariation_val_dpp_sup_ge_time}; the
   \<open>\<le>\<close> half is @{thm [source] covariation_val_dpp_le_time}.\<close>
 

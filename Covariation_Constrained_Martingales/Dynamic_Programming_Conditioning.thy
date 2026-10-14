@@ -703,7 +703,7 @@ text \<open>The conditioning half of the DPP holds at an arbitrary time function
     horizon smaller, and \<^const>\<open>covariation_val\<close> is monotone in the horizon
     (@{thm [source] covariation_val_horizon_mono}), so the bound survives replacing
     \<open>T - t\<^sub>n\<close> by \<open>T - s(\<omega>)\<close>.  What is left is a limit in the space variable,
-    which is clause (1), upper semicontinuity
+    which is upper semicontinuity
     (@{thm [source] covariation_val_usc}).  Approaching from below
     would not work: the horizon would grow and monotonicity would point the
     wrong way.\<close>
@@ -779,7 +779,7 @@ proof -
       ultimately show ?thesis by simp
     qed
 
-    \<comment> \<open>and the limit, where clause (1) enters\<close>
+    \<comment> \<open>and the limit, where upper semicontinuity enters\<close>
     show ?thesis
     proof (rule ccontr)
       assume ng: "\<not> c' \<le> s + ?e (?X s)"

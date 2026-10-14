@@ -1,26 +1,187 @@
-section \<open>Lemma 2.3: the class is closed under weak limits\<close>
+section \<open>The class is closed under weak limits\<close>
 
 (*<*)
-theory Exit_Class_Limits
+theory Covariation_Class_Limits
   imports
-    "Levy_Prokhorov_Metric.Space_of_Finite_Measures" Exit_Class "Path_Space_Operations.Path_Splicing"
+    "Levy_Prokhorov_Metric.Space_of_Finite_Measures" "Path_Space_Operations.Path_Splicing"
 begin
 
 (*>*)
 
-section \<open>The martingale clauses of Lemma 2.3\<close>
+section \<open>The two closed clauses of the class\<close>
 
-text \<open>This section proves the martingale clauses of Lemma 2.3 for a weak
+text \<open>The starting-point clause and the difference-quotient clause of
+  \<open>covariation_class S\<close> are closed sets of paths when \<open>S\<close> is closed, so
+  both are measurable and both pass to a weak limit in one step.\<close>
+
+lemma closedin_diffquot_constraint:
+  fixes s t :: real
+  assumes s: "s \<in> {0..T}" and t: "t \<in> {0..T}" and S: "closed S"
+  shows "closedin (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
+proof -
+  have "closedin (mtopology_of (path_metric T :: ('n pairpath) metric))
+      {\<omega> \<in> topspace (mtopology_of (path_metric T :: ('n pairpath) metric)).
+         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
+    by (intro closedin_continuous_map_preimage_gen[where Y = euclidean, simplified]
+        continuous_map_diffquot[OF s t] S closedin_topspace)
+  then show ?thesis
+    by simp
+qed
+
+text \<open>The whole difference-quotient clause, over all pairs at once, is a
+  closed set too: an intersection of the closed sets above.  So it is
+  measurable and passes to weak limits in one step, with no reduction to
+  rational pairs.\<close>
+
+lemma closedin_diffquot_constraint_all:
+  assumes S: "closed S"
+  shows "closedin (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
+      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+           (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
+proof -
+  let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
+  let ?D = "\<lambda>(s, t). {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
+  have "closedin ?X (\<Inter> (insert (topspace ?X) (?D ` {(s, t). 0 \<le> s \<and> s < t \<and> t \<le> T})))"
+    by (intro closedin_Inter)
+      (auto intro!: closedin_diffquot_constraint[OF _ _ S] closedin_topspace[of ?X, simplified])
+  moreover have "\<Inter> (insert (topspace ?X) (?D ` {(s, t). 0 \<le> s \<and> s < t \<and> t \<le> T}))
+      = {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+         \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+           (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
+    by auto
+  ultimately show ?thesis by simp
+qed
+
+lemma diffquot_all_sets:
+  assumes S: "closed S"
+  shows "{\<omega> \<in> space (path_borel T :: ('n::finite pairpath) measure).
+      \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}
+    \<in> sets (path_borel T :: ('n pairpath) measure)"
+  using borel_of_closed[OF closedin_diffquot_constraint_all[OF S]] by (simp add: space_borel_of)
+
+text \<open>\<open>diffquot_all_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Difference_Quotients}.\<close>
+
+text \<open>Passing a rule-shaped hypothesis such as
+  \<open>\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B\<close> through \<open>OF\<close> leaves
+  the trivially true premise \<open>\<And>a. a \<in> S \<Longrightarrow> a \<in> S\<close> at the
+  front of the result.  Simplifying with exactly the rules below removes it
+  and leaves the conclusion as it is.\<close>
+
+lemmas trivial_premise_simps = implies_True_equals triv_forall_equality True_implies_equals
+
+text \<open>The starting point is a closed condition too: evaluation at time \<open>0\<close>
+  is continuous and \<open>{(x, 0)}\<close> is closed.\<close>
+
+
+lemma covariation_class_start_full_mass:
+  fixes Q :: "(('n::finite) pairpath) measure"
+  assumes T: "0 \<le> T" and Q: "Q \<in> covariation_class S T x"
+  shows "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      \<omega> 0 = (x, 0)} = 1"
+proof -
+  interpret P: prob_space Q by (rule covariation_class_prob[OF Q])
+  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    by (rule covariation_class_sets[OF Q])
+  have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have mm: "{\<omega> \<in> space Q. \<omega> 0 = (x, 0)} \<in> sets Q"
+    unfolding sp setsQ by (rule borel_of_closed[OF closedin_start_point[OF T]])
+  have ae: "AE \<omega> in Q. \<omega> 0 = (x, 0)"
+    using covariation_class_start[OF Q] by (rule eventually_mono) (simp add: prod_eq_iff)
+  show ?thesis using P.prob_Collect_eq_1[OF mm] ae unfolding sp by blast
+qed
+
+subsection \<open>Both closed clauses pass to the weak limit\<close>
+
+text \<open>Both clauses are closed sets of paths
+  (@{thm [source] closedin_start_point},
+  @{thm [source] closedin_diffquot_constraint_all}), so portmanteau
+  (@{thm [source] weak_conv_closed_full_measure}) carries each to the weak
+  limit.\<close>
+
+theorem covariation_class_start_limit:
+  fixes Qi :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Q :: "('n pairpath) measure"
+  assumes T: "0 \<le> T"
+    and mem: "\<And>i. Qi i \<in> covariation_class S T x"
+    and wc: "weak_conv_on Qi Q sequentially
+      (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+  shows "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
+proof -
+  interpret P: prob_space Q by (rule prob)
+  have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
+    by (rule space_of_path_sets[OF setsQ])
+  have mm: "{\<omega> \<in> space Q. \<omega> 0 = (x, 0)} \<in> sets Q"
+    unfolding sp setsQ by (rule borel_of_closed[OF closedin_start_point[OF T]])
+  have "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      \<omega> 0 = (x, 0)} = 1"
+  proof (rule weak_conv_closed_full_measure[OF wc closedin_start_point[OF T]])
+    show "prob_space Q" by (rule prob)
+    show "\<And>i. measure (Qi i)
+        {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). \<omega> 0 = (x, 0)} = 1"
+      by (rule covariation_class_start_full_mass[OF T mem])
+  qed
+  then have "AE \<omega> in Q. \<omega> 0 = (x, 0)"
+    using P.prob_Collect_eq_1[OF mm] unfolding sp by blast
+  then show ?thesis by (rule eventually_mono) (simp add: prod_eq_iff)
+qed
+
+theorem covariation_class_diffquot_limit:
+  fixes Qi :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Q :: "('n pairpath) measure"
+  assumes S: "closed S" and mem: "\<And>i. Qi i \<in> covariation_class S T x"
+    and wc: "weak_conv_on Qi Q sequentially
+      (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+proof -
+  let ?D = "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
+      \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
+  have iff: "(AE \<omega> in M. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S)
+      \<longleftrightarrow> measure M ?D = 1"
+    if M: "prob_space M" "sets M = sets (path_borel T :: ('n pairpath) measure)"
+    for M :: "('n pairpath) measure"
+  proof -
+    interpret P: prob_space M by (rule M(1))
+    have sp: "space M = mspace (path_metric T :: ('n pairpath) metric)"
+      by (rule space_of_path_sets[OF M(2)])
+    have "{\<omega> \<in> space M. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S} \<in> sets M"
+      unfolding M(2) sets_eq_imp_space_eq[OF M(2)] by (rule diffquot_all_sets[OF S])
+    from P.prob_Collect_eq_1[OF this] show ?thesis unfolding sp by blast
+  qed
+  have "measure Q ?D = 1"
+  proof (rule weak_conv_closed_full_measure
+      [OF wc closedin_diffquot_constraint_all[OF S] _ prob])
+    show "measure (Qi i) ?D = 1" for i
+      using iff[OF covariation_class_prob[OF mem[of i]] covariation_class_sets[OF mem[of i]]]
+        covariation_class_diffquot[OF mem[of i]] by blast
+  qed
+  then show ?thesis using iff[OF prob setsQ] by simp
+qed
+
+section \<open>The martingale clauses at a weak limit\<close>
+
+text \<open>This section proves the martingale clauses for a weak
   limit of members of \<open>covariation_class S\<close>, for any constraint set \<open>S\<close>
-  with a norm bound and a bounded diagonal (the paper's class is the case
-  \<open>S = sconstraint k L\<close>), combining the class machinery of
-  @{theory Relative_Arbitrage.Exit_Class} with the generic weak-limit
+  with a norm bound and a bounded diagonal, from the generic weak-limit
   martingale theorem @{thm [source] martingale_F_limit} of
   @{theory Path_Space_Operations.Pair_Path_Laws}.
 
-  Unlike the two closed path conditions of (1.7), which pass to a weak
-  limit directly (\<open>Exit_Class.covariation_class_start_limit\<close>,
-  \<open>\<dots>_diffquot_limit\<close>), the martingale clauses are statements about
+  Unlike the two closed path conditions of the class, which pass to a weak
+  limit directly (@{thm [source] covariation_class_start_limit},
+  @{thm [source] covariation_class_diffquot_limit}), the martingale clauses are statements about
   integrals against past-measurable test functions, and only bounded
   continuous tests survive a weak limit.  @{thm [source] martingale_F_limit}
   carries the martingale property of a continuous functional \<open>F\<close> of the
@@ -97,13 +258,13 @@ corollary covariation_class_X_martingale_limit:
   by (rule martingale_vecI)
     (rule covariation_class_coord_martingale_limit[OF T B0 B mem wc prob setsQ])
 
-subsection \<open>Lemma 2.3: three of the four clauses, at the limit\<close>
+subsection \<open>Three of the four clauses, at the limit\<close>
 
 text \<open>A weak limit of class members satisfies the start clause, the
-  covariation clause, and the \<open>X\<close>-martingale clause of (1.7).  What
+  covariation clause, and the \<open>X\<close>-martingale clause of the class.  What
   remains for \<open>Q \<in> covariation_class S T x\<close> is the compensated clause
   \<open>outerp X - Y\<close>: carrying it through the weak limit needs an \<open>L\<^sup>2\<close> bound
-  on \<open>X\<^sub>i X\<^sub>j\<close>, i.e. a uniform fourth moment, which the paper obtains from
+  on \<open>X\<^sub>i X\<^sub>j\<close>, i.e. a uniform fourth moment, which one would usually obtain from
   Burkholder--Davis--Gundy -- not available in the AFP, and supplied
   instead in the next section.\<close>
 
@@ -135,7 +296,7 @@ qed
 
 section \<open>The uniform fourth moment of the class\<close>
 
-text \<open>This bound supplies the compensated clause of Lemma 2.3.  A
+text \<open>This bound supplies the compensated clause at the limit.  A
   coordinate of a class member is an \<open>L\<^sup>2\<close> martingale whose square is
   compensated by a diagonal entry of \<open>Y\<close>, which grows at rate at most
   \<open>D\<close>; so the generic estimate @{thm [source] fourth_moment_L2} applies,
@@ -278,7 +439,7 @@ qed
 section \<open>The weak-limit machinery, parametric in a state functional\<close>
 
 text \<open>The argument for the coordinate \<open>\<omega> \<mapsto> fst (\<omega> t) $ i\<close> also proves
-  the compensated clause of (1.7) for
+  the compensated clause of the class for
   \<open>\<omega> \<mapsto> (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ j\<close>: both are of the form
   \<open>\<omega> \<mapsto> F (\<omega> t)\<close> for a continuous \<open>F\<close> on the pair state, so this section
   redoes the chain once, parametric in \<open>F\<close>, and instantiates it twice.
@@ -521,7 +682,7 @@ text \<open>\<open>mat_inner_axis\<close>, \<open>mat_Basis_cases\<close>, \<ope
   \<open>martingale_matI\<close> live in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
-subsection \<open>Lemma 2.3: the compensated clause, at the limit\<close>
+subsection \<open>The compensated clause, at the limit\<close>
 
 theorem covariation_class_comp_entry_martingale_limit:
   fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
@@ -592,9 +753,9 @@ corollary covariation_class_comp_martingale_limit:
     (rule covariation_class_comp_entry_martingale_limit
       [OF T B0 B D0 D mem wc prob setsQ])
 
-section \<open>Lemma 2.3: the class is closed under weak limits\<close>
+section \<open>The class is closed under weak limits\<close>
 
-text \<open>All four clauses of (1.7) survive a weak limit, so the class of pair
+text \<open>All four clauses of the class survive a weak limit, so the class of pair
   laws is weakly closed for any closed \<open>S\<close> with a norm bound and a two-sided
   diagonal bound; the compensated clause is the one
   that needed the uniform fourth moment.\<close>
@@ -636,34 +797,6 @@ proof -
       by (rule covariation_class_comp_martingale_limit[OF T B0 B D0 D mem wc prob setsQ])
   qed
 qed
-
-text \<open>At the constraint set of Eq. (1.5): Lemma 2.3's closedness, and the
-  fourth moment with the paper's constant \<open>8L\<^sup>2\<close>.\<close>
-
-theorem exit_class_fourth_moment:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    and Q: "Q \<in> exit_class k L T x"
-    and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
-  shows "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
-      \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
-  by (rule covariation_class_fourth_moment[OF T sconstraint_bounds[OF L] setsQ
-        Q[unfolded exit_class_eq_covariation] st stt ttT])
-
-theorem exit_class_weak_closed:
-  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure"
-  assumes T: "0 < T" and L: "0 \<le> L"
-    and mem: "\<And>m. Qm m \<in> exit_class k L T x"
-    and wc: "weak_conv_on Qm Q sequentially
-        (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-  shows "Q \<in> exit_class k L T x"
-  unfolding exit_class_eq_covariation
-  by (rule covariation_class_weak_closed[OF T sconstraint_bounds[OF L] closed_sconstraint
-        mem[unfolded exit_class_eq_covariation] wc prob setsQ])
 
 (*<*)
 end

@@ -2,7 +2,8 @@
 (*<*)
 theory Exit_Class
   imports
-    "Relative_Arbitrage_Equation.Constraint_Set_Convexity" "Relative_Arbitrage_Equation.Operator_Formula" "Path_Space_Operations.Pair_Path_Laws"
+    "Relative_Arbitrage_Equation.Constraint_Set_Convexity" "Relative_Arbitrage_Equation.Operator_Formula"
+    "Covariation_Constrained_Martingales.Covariation_Class_Optimizer"
 begin
 
 (*>*)
@@ -190,58 +191,6 @@ lemma exit_class_sets:
 
 
 
-lemma closedin_diffquot_constraint:
-  fixes s t :: real
-  assumes s: "s \<in> {0..T}" and t: "t \<in> {0..T}" and S: "closed S"
-  shows "closedin (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
-proof -
-  have "closedin (mtopology_of (path_metric T :: ('n pairpath) metric))
-      {\<omega> \<in> topspace (mtopology_of (path_metric T :: ('n pairpath) metric)).
-         (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
-    by (intro closedin_continuous_map_preimage_gen[where Y = euclidean, simplified]
-        continuous_map_diffquot[OF s t] S closedin_topspace)
-  then show ?thesis
-    by simp
-qed
-
-text \<open>The whole difference-quotient clause, over all pairs at once, is a
-  closed set too: an intersection of the closed sets above.  So it is
-  measurable and passes to weak limits in one step, with no reduction to
-  rational pairs.\<close>
-
-lemma closedin_diffquot_constraint_all:
-  assumes S: "closed S"
-  shows "closedin (mtopology_of (path_metric T :: ('n::finite pairpath) metric))
-      {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-           (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
-proof -
-  let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
-  let ?D = "\<lambda>(s, t). {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
-  have "closedin ?X (\<Inter> (insert (topspace ?X) (?D ` {(s, t). 0 \<le> s \<and> s < t \<and> t \<le> T})))"
-    by (intro closedin_Inter)
-      (auto intro!: closedin_diffquot_constraint[OF _ _ S] closedin_topspace[of ?X, simplified])
-  moreover have "\<Inter> (insert (topspace ?X) (?D ` {(s, t). 0 \<le> s \<and> s < t \<and> t \<le> T}))
-      = {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-         \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-           (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
-    by auto
-  ultimately show ?thesis by simp
-qed
-
-lemma diffquot_all_sets:
-  assumes S: "closed S"
-  shows "{\<omega> \<in> space (path_borel T :: ('n::finite pairpath) measure).
-      \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}
-    \<in> sets (path_borel T :: ('n pairpath) measure)"
-  using borel_of_closed[OF closedin_diffquot_constraint_all[OF S]] by (simp add: space_borel_of)
-
-text \<open>\<open>diffquot_all_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Difference_Quotients}.\<close>
-
 
 section \<open>From difference quotients to the density\<close>
 
@@ -380,111 +329,6 @@ lemma sconstraint_bounds:
     and "\<And>(a :: real^'n^'n) j. a \<in> sconstraint k L \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> L"
   using L sconstraint_norm_le[OF L] sconstraint_diag by auto
 
-text \<open>Passing a rule-shaped fact such as the second clause above, or a
-  hypothesis \<open>\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B\<close>, through \<open>OF\<close> leaves
-  the trivially true premise \<open>\<And>a. a \<in> S \<Longrightarrow> a \<in> S\<close> at the
-  front of the result.  Simplifying with exactly the rules below removes it
-  and leaves the conclusion as it is.\<close>
-
-lemmas trivial_premise_simps = implies_True_equals triv_forall_equality True_implies_equals
-
-text \<open>The starting point is a closed condition too: evaluation at time \<open>0\<close>
-  is continuous and \<open>{(x, 0)}\<close> is closed.\<close>
-
-
-lemma covariation_class_start_full_mass:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes T: "0 \<le> T" and Q: "Q \<in> covariation_class S T x"
-  shows "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      \<omega> 0 = (x, 0)} = 1"
-proof -
-  interpret P: prob_space Q by (rule covariation_class_prob[OF Q])
-  have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    by (rule covariation_class_sets[OF Q])
-  have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsQ])
-  have mm: "{\<omega> \<in> space Q. \<omega> 0 = (x, 0)} \<in> sets Q"
-    unfolding sp setsQ by (rule borel_of_closed[OF closedin_start_point[OF T]])
-  have ae: "AE \<omega> in Q. \<omega> 0 = (x, 0)"
-    using covariation_class_start[OF Q] by (rule eventually_mono) (simp add: prod_eq_iff)
-  show ?thesis using P.prob_Collect_eq_1[OF mm] ae unfolding sp by blast
-qed
-
-subsection \<open>Both closed clauses pass to the weak limit\<close>
-
-text \<open>Both clauses are closed sets of paths
-  (@{thm [source] closedin_start_point},
-  @{thm [source] closedin_diffquot_constraint_all}), so portmanteau
-  (@{thm [source] weak_conv_closed_full_measure}) carries each to the weak
-  limit.\<close>
-
-theorem covariation_class_start_limit:
-  fixes Qi :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure"
-  assumes T: "0 \<le> T"
-    and mem: "\<And>i. Qi i \<in> covariation_class S T x"
-    and wc: "weak_conv_on Qi Q sequentially
-      (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-  shows "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-proof -
-  interpret P: prob_space Q by (rule prob)
-  have sp: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
-    by (rule space_of_path_sets[OF setsQ])
-  have mm: "{\<omega> \<in> space Q. \<omega> 0 = (x, 0)} \<in> sets Q"
-    unfolding sp setsQ by (rule borel_of_closed[OF closedin_start_point[OF T]])
-  have "measure Q {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      \<omega> 0 = (x, 0)} = 1"
-  proof (rule weak_conv_closed_full_measure[OF wc closedin_start_point[OF T]])
-    show "prob_space Q" by (rule prob)
-    show "\<And>i. measure (Qi i)
-        {\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric). \<omega> 0 = (x, 0)} = 1"
-      by (rule covariation_class_start_full_mass[OF T mem])
-  qed
-  then have "AE \<omega> in Q. \<omega> 0 = (x, 0)"
-    using P.prob_Collect_eq_1[OF mm] unfolding sp by blast
-  then show ?thesis by (rule eventually_mono) (simp add: prod_eq_iff)
-qed
-
-theorem covariation_class_diffquot_limit:
-  fixes Qi :: "nat \<Rightarrow> ('n::finite pairpath) measure"
-    and Q :: "('n pairpath) measure"
-  assumes S: "closed S" and mem: "\<And>i. Qi i \<in> covariation_class S T x"
-    and wc: "weak_conv_on Qi Q sequentially
-      (mtopology_of (path_metric T :: ('n pairpath) metric))"
-    and prob: "prob_space Q"
-    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-  shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
-proof -
-  let ?D = "{\<omega> \<in> mspace (path_metric T :: ('n pairpath) metric).
-      \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S}"
-  have iff: "(AE \<omega> in M. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S)
-      \<longleftrightarrow> measure M ?D = 1"
-    if M: "prob_space M" "sets M = sets (path_borel T :: ('n pairpath) measure)"
-    for M :: "('n pairpath) measure"
-  proof -
-    interpret P: prob_space M by (rule M(1))
-    have sp: "space M = mspace (path_metric T :: ('n pairpath) metric)"
-      by (rule space_of_path_sets[OF M(2)])
-    have "{\<omega> \<in> space M. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S} \<in> sets M"
-      unfolding M(2) sets_eq_imp_space_eq[OF M(2)] by (rule diffquot_all_sets[OF S])
-    from P.prob_Collect_eq_1[OF this] show ?thesis unfolding sp by blast
-  qed
-  have "measure Q ?D = 1"
-  proof (rule weak_conv_closed_full_measure
-      [OF wc closedin_diffquot_constraint_all[OF S] _ prob])
-    show "measure (Qi i) ?D = 1" for i
-      using iff[OF covariation_class_prob[OF mem[of i]] covariation_class_sets[OF mem[of i]]]
-        covariation_class_diffquot[OF mem[of i]] by blast
-  qed
-  then show ?thesis using iff[OF prob setsQ] by simp
-qed
-
 section \<open>The value function of Eq. (1.6), capped at horizon \<open>T\<close>\<close>
 
 definition exit_val ::
@@ -501,6 +345,96 @@ text \<open>Eq. (1.6) is the generic value functional at the constraint set of
 theorem exit_val_eq_covariation_val:
   "exit_val k L T K x = covariation_val (sconstraint k L) T K x"
   by (simp add: exit_val_def covariation_val_def exit_class_eq_covariation)
+
+section \<open>The class at the constraint set of Eq. (1.5)\<close>
+
+text \<open>The results of the session \<open>Covariation_Constrained_Martingales\<close>
+  for an abstract constraint set, at \<open>sconstraint k L\<close>: the norm bound
+  \<open>CARD('n) \<sqdot> L\<close> and the diagonal bound \<open>[0, L]\<close>
+  (@{thm [source] sconstraint_bounds}), and the trace lower bound \<open>n - k\<close>.\<close>
+
+text \<open>At the constraint set of Eq. (1.5): Lemma 2.3's closedness, and the
+  fourth moment with the paper's constant \<open>8L\<^sup>2\<close>.\<close>
+
+theorem exit_class_fourth_moment:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+    and Q: "Q \<in> exit_class k L T x"
+    and st: "0 \<le> s" and stt: "s \<le> tt" and ttT: "tt \<le> T"
+  shows "(\<integral>\<^sup>+\<omega>. ennreal ((fst (\<omega> tt) $ i - fst (\<omega> s) $ i)^4) \<partial>Q)
+      \<le> ennreal (8 * L\<^sup>2 * (tt - s)\<^sup>2)"
+  by (rule covariation_class_fourth_moment[OF T sconstraint_bounds[OF L] setsQ
+        Q[unfolded exit_class_eq_covariation] st stt ttT])
+
+theorem exit_class_weak_closed:
+  fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
+    and Q :: "('n pairpath) measure"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and mem: "\<And>m. Qm m \<in> exit_class k L T x"
+    and wc: "weak_conv_on Qm Q sequentially
+        (mtopology_of (path_metric T :: ('n pairpath) metric))"
+    and prob: "prob_space Q"
+    and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+  shows "Q \<in> exit_class k L T x"
+  unfolding exit_class_eq_covariation
+  by (rule covariation_class_weak_closed[OF T sconstraint_bounds[OF L] closed_sconstraint
+        mem[unfolded exit_class_eq_covariation] wc prob setsQ])
+
+theorem tight_on_set_paper_pair_class:
+  fixes \<Gamma> :: "(('n::finite) pairpath) measure set" and x :: "real^'n"
+  assumes T: "0 < T" and L: "0 \<le> L"
+    and mem: "\<And>N. N \<in> \<Gamma> \<Longrightarrow> N \<in> exit_class k L T x"
+  shows "tight_on_set (mtopology_of (path_metric T :: ('n pairpath) metric)) \<Gamma>"
+  by (rule covariation_class_tight_on_set[OF T sconstraint_bounds[OF L]
+        mem[unfolded exit_class_eq_covariation]])
+
+text \<open>For the paper's constraint set this is Lemma 2.3's compactness.\<close>
+
+theorem exit_class_compactin_weak:
+  fixes x :: "real^'n::finite"
+  assumes T: "0 < T" and L: "0 \<le> L"
+  shows "compactin (weak_conv_topology
+        (mtopology_of (path_metric T :: ('n pairpath) metric)))
+      (exit_class k L T x)"
+  unfolding exit_class_eq_covariation
+  by (rule covariation_class_compactin_weak[OF T sconstraint_bounds[OF L] closed_sconstraint])
+
+text \<open>The paper's constraint set carries
+  \<open>\<theta> = n - k\<close>: the identity is a rank-\<open>n\<close> projection, so
+  \<open>Pi_proj a n \<le> trace a\<close>, and the constraint's own bound at \<open>m = n\<close> is
+  \<open>n - k\<close>.\<close>
+
+lemma sconstraint_trace_ge:
+  fixes a :: "real^'n::finite^'n"
+  assumes k: "k < CARD('n)" and a: "a \<in> sconstraint k L"
+  shows "real (CARD('n) - k) \<le> trace a"
+proof -
+  have p: "psd a"
+    and pi: "\<And>m. k < m \<Longrightarrow> m \<le> CARD('n) \<Longrightarrow> real (m - k) \<le> Pi_proj a m"
+    using a unfolding sconstraint_def Pi_constraint_def by auto
+  have "real (CARD('n) - k) \<le> Pi_proj a CARD('n)" using k by (intro pi) auto
+  also have "\<dots> \<le> trace (a ** mat 1)"
+    by (rule Pi_proj_le[OF p]) (simp_all add: is_proj_def trace_I)
+  also have "\<dots> = trace a" by simp
+  finally show ?thesis .
+qed
+
+text \<open>The two numbers of \<open>sconstraint k L\<close> that the exit-time estimates read:
+  the norm bound \<open>CARD('n) \<sqdot> L\<close> and the trace lower bound \<open>n - k\<close>, in the
+  order those lemmas take them.\<close>
+
+lemma sconstraint_trace_bounds:
+  fixes L :: real
+  assumes k: "k < CARD('n::finite)" and L: "0 \<le> L"
+  shows "0 \<le> real CARD('n) * L"
+    and "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
+    and "0 < real (CARD('n) - k)"
+    and "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> real (CARD('n) - k) \<le> trace a"
+  using sconstraint_bounds(1,2)[OF L] k sconstraint_trace_ge[OF k] by auto
+
+text \<open>For the paper's constraint set the rate is \<open>n - k\<close>
+  (@{thm [source] sconstraint_trace_bounds}), which gives inequality (3.10).\<close>
 
 (*<*)
 end

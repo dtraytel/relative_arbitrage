@@ -6,7 +6,7 @@ key="ANALYTIC(SMS+SOVA+SemiC\\Selection, no probability)"
 A=set(targets[key]) | {"Continuous_Time_Martingales.Integrability_Criteria__virtual"}
 dep_thy["Integrability_Criteria.cInf_mult_pos"]="Continuous_Time_Martingales.Integrability_Criteria__virtual"
 if "Integrability_Criteria.cInf_mult_pos" in facts: facts["Integrability_Criteria.cInf_mult_pos"]['thy']="Continuous_Time_Martingales.Integrability_Criteria__virtual"
-RA_SESS={'Relative_Arbitrage','Relative_Arbitrage_Equation','Path_Space_Operations'}
+RA_SESS={'Relative_Arbitrage','Relative_Arbitrage_Equation','Path_Space_Operations','Covariation_Constrained_Martingales'}
 cand={n for n,f in facts.items() if f['sess'] in RA_SESS and f['thy'] not in A}
 while True:
     def ok(n):

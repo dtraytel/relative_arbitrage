@@ -3,7 +3,7 @@ section \<open>The class and the value function on the half-line\<close>
 (*<*)
 theory Exit_Class_Infinite
   imports
-    Exit_Class_Pasting
+    "Covariation_Constrained_Martingales.Covariation_Class_Pasting" Exit_Class
 begin
 (*>*)
 

@@ -1,9 +1,9 @@
 section \<open>Concrete pair processes, and nonemptiness of the class\<close>
 
 (*<*)
-theory Exit_Class_Witness
+theory Covariation_Class_Witness
   imports
-    Exit_Class_Shift "Wiener_Measure.Continuous_Brownian_Motion"
+    Covariation_Class_Shift "Wiener_Measure.Continuous_Brownian_Motion"
 begin
 
 (*>*)
@@ -416,9 +416,9 @@ proof -
   then show ?thesis using covariation_val_ge_ess_inf[OF Q] by (rule order_trans)
 qed
 
-text \<open>Clause (0): the exit functional of Eq. (1.6) is capped at the horizon,
+text \<open>The exit functional is capped at the horizon,
   so the value is bounded by it outright, for any constraint set.  The sharp
-  bound on a ball, giving also clause (3), needs the class-level
+  bound on a ball, which also gives the value \<open>0\<close> on its boundary, needs the class-level
   expected-exit-time estimate below.\<close>
 
 theorem covariation_val_le_T:
@@ -440,39 +440,8 @@ proof (rule Sup_least)
 qed
 
 text \<open>A lower bound \<open>\<theta>\<close> on the trace over the constraint set makes
-  \<open>|X|\<^sup>2\<close> a submartingale with rate at least \<open>\<theta>\<close>, which gives Lemma 2.1's
-  exit-time estimate at the class level.  The paper's constraint set carries
-  \<open>\<theta> = n - k\<close>: the identity is a rank-\<open>n\<close> projection, so
-  \<open>Pi_proj a n \<le> trace a\<close>, and the constraint's own bound at \<open>m = n\<close> is
-  \<open>n - k\<close>.\<close>
-
-lemma sconstraint_trace_ge:
-  fixes a :: "real^'n::finite^'n"
-  assumes k: "k < CARD('n)" and a: "a \<in> sconstraint k L"
-  shows "real (CARD('n) - k) \<le> trace a"
-proof -
-  have p: "psd a"
-    and pi: "\<And>m. k < m \<Longrightarrow> m \<le> CARD('n) \<Longrightarrow> real (m - k) \<le> Pi_proj a m"
-    using a unfolding sconstraint_def Pi_constraint_def by auto
-  have "real (CARD('n) - k) \<le> Pi_proj a CARD('n)" using k by (intro pi) auto
-  also have "\<dots> \<le> trace (a ** mat 1)"
-    by (rule Pi_proj_le[OF p]) (simp_all add: is_proj_def trace_I)
-  also have "\<dots> = trace a" by simp
-  finally show ?thesis .
-qed
-
-text \<open>The two numbers of \<open>sconstraint k L\<close> that the exit-time estimates read:
-  the norm bound \<open>CARD('n) \<sqdot> L\<close> and the trace lower bound \<open>n - k\<close>, in the
-  order those lemmas take them.\<close>
-
-lemma sconstraint_trace_bounds:
-  fixes L :: real
-  assumes k: "k < CARD('n::finite)" and L: "0 \<le> L"
-  shows "0 \<le> real CARD('n) * L"
-    and "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
-    and "0 < real (CARD('n) - k)"
-    and "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> real (CARD('n) - k) \<le> trace a"
-  using sconstraint_bounds(1,2)[OF L] k sconstraint_trace_ge[OF k] by auto
+  \<open>|X|\<^sup>2\<close> a submartingale with rate at least \<open>\<theta>\<close>, which gives an
+  exit-time estimate at the class level.\<close>
 
 text \<open>\<open>bounded_linear_trace\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
@@ -527,7 +496,7 @@ proof -
   then show ?thesis by (simp add: inner_vec_def power2_eq_square)
 qed
 
-text \<open>The class-level form of Lemma 2.1's estimate: the expected squared
+text \<open>The class-level form of the exit-time estimate: the expected squared
   norm grows at rate at least \<open>\<theta>\<close>, using the compensated clause only at
   the fixed time \<open>t\<close> --- no stopping, no optional sampling.\<close>
 
@@ -593,11 +562,11 @@ proof -
   finally show ?thesis unfolding mean .
 qed
 
-text \<open>Example 3.1, inequality (3.10): if the target set fits inside a ball
+text \<open>Inequality (3.10) of \<^cite>\<open>LaiShkolnikovSoner\<close>: if the target set fits inside a ball
   of radius \<open>r\<close>, then \<open>v(x) \<le> (r\<^sup>2 - |x|\<^sup>2) / \<theta>\<close>, independent of the
-  horizon \<open>T\<close> --- the quantitative form of clause (0), and why the horizon
-  cap is eventually invisible.  The paper derives (3.10) from It\<open>\<^bold>o\<close>'s formula; here it
-  follows from \<open>covariation_class_sq_norm_mean_ge\<close>, Lemma 2.1's estimate at
+  horizon \<open>T\<close> --- the quantitative form of the horizon bound, and why the horizon
+  cap is eventually invisible.  That paper derives it from It\<open>\<^bold>o\<close>'s formula; here it
+  follows from \<open>covariation_class_sq_norm_mean_ge\<close>, the estimate at
   a fixed time, with no stochastic calculus.\<close>
 
 theorem covariation_val_le_ball_bound:
@@ -704,10 +673,7 @@ proof -
   from main show ?thesis unfolding V_def .
 qed
 
-text \<open>For the paper's constraint set the rate is \<open>n - k\<close>
-  (@{thm [source] sconstraint_trace_bounds}), which gives inequality (3.10).\<close>
-
-text \<open>Clause (3) on the ball: a member starting on the boundary
+text \<open>On the boundary of the ball: a member starting on the boundary
   \<open>|x| = r\<close> has exit value \<open>0\<close>, the case \<open>x \<bullet> x = r\<^sup>2\<close> of the
   bound above.\<close>
 

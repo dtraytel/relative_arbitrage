@@ -33,8 +33,8 @@
   boundary condition of their Definition 3.1, and that it is the only bounded
   upper semicontinuous such solution.  The two inequalities of the dynamic
   programming principle that their proof takes from Larsson and
-  Ruf~\cite{LarssonRuf} are proved here, at a deterministic time and at a
-  stopping time, as is the measurable selection of an optimizer (the equality
+  Ruf~\cite{LarssonRuf} are proved, at a deterministic time and at a
+  stopping time and for an arbitrary constraint set, as is the measurable selection of an optimizer (the equality
   of their Proposition~2.4 is not stated as a single theorem); the argument runs at a finite horizon, where the
   class of admissible laws is weakly compact, and the paper's own class on
   $C([0,\infty))$ is then shown to have the same value function.  Two points
@@ -43,12 +43,13 @@
   cube in $\mathbb{R}^{3}$ at $k = 2$, and continuity of $v$ is not asserted
   anywhere.  The deterministic part --- the operator $F$, its envelopes and
   the comparison principle --- is the separate entry
-  \texttt{Relative\_Arbitrage\_Equation}, and the operations on path laws
-  and the class of laws with constrained covariation, for an arbitrary
+  \texttt{Relative\_Arbitrage\_Equation}, the operations on path laws
+  and the class of laws with constrained covariation are the separate entry
+  \texttt{Path\_Space\_Operations}, and the compactness of that class,
+  its pasting and the dynamic programming principle, for an arbitrary
   constraint set, are the separate entry
-  \texttt{Path\_Space\_Operations}; this entry instantiates that class at
-  the eigenvalue constraints and proves the dynamic programming principle
-  and the five clauses.  The remaining reusable machinery --- the
+  \texttt{Covariation\_Constrained\_Martingales}; this entry instantiates
+  the class at the eigenvalue constraints and proves the five clauses.  The remaining reusable machinery --- the
   second-order differentiability theory behind comparison, the construction
   of Wiener measure, the martingale toolbox, and the path-space tightness
   argument --- is published as separate entries as well.
