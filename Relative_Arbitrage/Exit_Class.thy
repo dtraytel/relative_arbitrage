@@ -195,6 +195,14 @@ lemma exit_class_start:
   using Q unfolding exit_class_eq_covariation by (rule covariation_class_start)
 
 
+lemma exit_class_X_martingale:
+  fixes Q :: "('n::finite pairpath) measure"
+  assumes Q: "Q \<in> exit_class k L T x"
+  shows "martingale Q (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u)) 0
+      (\<lambda>u \<omega>. fst (\<omega> (min u T)))"
+  using Q unfolding exit_class_eq_covariation by (rule covariation_class_martingale_fst)
+
+
 lemma closedin_diffquot_constraint:
   fixes s t :: real
   assumes s: "s \<in> {0..T}" and t: "t \<in> {0..T}" and S: "closed S"
@@ -379,24 +387,24 @@ proof -
   show "a $ i $ i \<le> L" by (rule psd_eigen_ub_diag(2)[OF p u])
 qed
 
+text \<open>The two numbers of \<open>sconstraint k L\<close> that the generic class lemmas
+  read: a norm bound \<open>CARD('n) \<sqdot> L\<close> and a two-sided bound \<open>[0, L]\<close> on the
+  diagonal, in the order those lemmas take them.\<close>
+
+lemma sconstraint_bounds:
+  fixes L :: real
+  assumes L: "0 \<le> L"
+  shows "0 \<le> real CARD('n::finite) * L"
+    and "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
+    and "0 \<le> L"
+    and "\<And>(a :: real^'n^'n) j. a \<in> sconstraint k L \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> L"
+  using L sconstraint_norm_le[OF L] sconstraint_diag by auto
+
 lemma exit_class_eval_measurable:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
   shows "(\<lambda>\<omega>. \<omega> t) \<in> borel_measurable Q"
   by (rule pair_law_eval_measurable[OF exit_class_sets[OF Q]])
-
-lemma exit_class_Y_entry_bound_ae:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-  shows "AE \<omega> in Q. norm (snd (\<omega> t) $ i $ j) \<le> real CARD('n) * L * T"
-proof (rule covariation_class_Y_entry_bound_ae)
-  show "0 \<le> real CARD('n) * L" using L by simp
-  show "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
-    by (rule sconstraint_norm_le[OF L])
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed (use assms in auto)
 
 lemma exit_class_Y_entry_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"

@@ -72,7 +72,8 @@ next
   also have "\<dots> \<le> ennreal (8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ i)^4)
                + 8 * (8 * L\<^sup>2 * T\<^sup>2 + (x $ j)^4)
                + 2 * (real CARD('n) * L * T)\<^sup>2)"
-    by (rule exit_class_comp_entry_sq_nn[OF T L Q u])
+    by (rule covariation_class_comp_entry_sq_nn[OF T sconstraint_bounds[OF L]
+        Q[unfolded exit_class_eq_covariation] u])
   also have "\<dots> < \<infinity>" by simp
   finally show "(\<integral>\<^sup>+\<omega>. ennreal (norm
       (((outerp (fst (\<omega> u)) - snd (\<omega> u)) $ i $ j)\<^sup>2)) \<partial>Q) < \<infinity>" .
