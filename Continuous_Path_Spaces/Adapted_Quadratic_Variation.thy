@@ -961,9 +961,10 @@ subsection \<open>The matrix identification without the boundedness hypothesis\<
 
 text \<open>The polarisation, run through the localised scalar theorem.  The
   hypotheses are pointwise on \<open>space M\<close> rather than almost everywhere, which is
-  what the stopping arguments need; the intended application reaches that form
-  through the \<open>restrict_full\<close> package of
-  @{theory Continuous_Time_Martingales.Stopped_Localization}.\<close>
+  what the stopping arguments need.  Almost-sure hypotheses reach that form by
+  restricting the probability space to a full-measure event, which changes
+  neither the laws nor the martingale property (the \<open>*_restrict_full\<close> facts
+  of @{theory Continuous_Time_Martingales.Martingale_Transfer}).\<close>
 
 theorem qvmat_eq_A_localised:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite" and A :: "real \<Rightarrow> 'a \<Rightarrow> real^'n^'n"

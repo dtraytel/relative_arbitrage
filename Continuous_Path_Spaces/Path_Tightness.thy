@@ -566,9 +566,8 @@ qed
 subsection \<open>The dyadic extension operator\<close>
 
 text \<open>
-  \<open>dyadic_ext\<close> takes the limit along the anchor sequences \<open>danchor k t\<close>;
-  the chaining bound for pairs of dyadics it rests on is
-  \<open>dyadic_pair_modulus\<close> (@{theory Continuous_Path_Spaces.Modulus_Tails}).
+  \<open>dyadic_ext\<close> extends a function from the dyadics by taking the limit
+  along the anchor sequences \<open>danchor k t\<close>.
 \<close>
 
 definition dyadic_ext :: "(real \<Rightarrow> 'b) \<Rightarrow> real \<Rightarrow> 'b::complete_space" where
@@ -1026,11 +1025,11 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The class's integrated identities --- \<open>E[Z\<sqdot>(X\<^sub>t - X\<^sub>s)] = 0\<close> for a
-  bounded continuous test \<open>Z\<close> of the past, and its covariation analogue ---
+text \<open>Integrated identities such as \<open>E[Z\<sqdot>(X\<^sub>t - X\<^sub>s)] = 0\<close> for a
+  bounded continuous test \<open>Z\<close> of the past, and its covariation analogue,
   are integrals of continuous but unbounded path functionals, so weak
-  convergence alone does not transfer them. \<open>Path_Tightness\<close>'s
-  \<open>weak_conv_on_integral_unif_integrable\<close> closes the gap given uniform
+  convergence alone does not transfer them.
+  \<open>weak_conv_on_integral_unif_integrable\<close> above closes the gap given uniform
   integrability, which a uniform \<open>L\<^sup>2\<close> bound supplies via
   Chebyshev--Markov: \<open>\<integral>\<bar>f\<bar>\<sqdot>1\<^bsub>{\<bar>f\<bar>>R}\<^esub> \<le> (1/R)\<sqdot>\<integral>f\<^sup>2 \<le> C/R\<close>.\<close>
 
@@ -1092,8 +1091,7 @@ proof -
     by (intro exI[of _ R]) auto
 qed
 
-text \<open>The transfer the canonical-market construction uses: a continuous
-  path functional with a uniform second-moment bound has its integral
+text \<open>The transfer itself: a continuous path functional with a uniform second-moment bound has its integral
   pass to the weak limit. Applied with
   \<open>f \<omega> = Z \<omega> \<sqdot> ((X\<^sub>t - X\<^sub>s) \<bullet> e\<^sub>j)\<close> this carries the martingale
   identity to the limit law, and with the squared increment the
@@ -1124,16 +1122,13 @@ theorem weak_conv_integral_of_L2_bound:
 subsection \<open>A convergent subsequence of path laws, in the vector case\<close>
 
 text \<open>
-  The adapter between the stochastic layer (\<open>Stopped_Localization\<close>) and the
-  topological layer (\<open>Path_Tightness\<close>): the moment hypotheses of
-  \<open>path_laws_convergent_subsequence_vec\<close> are discharged per coordinate by
-  \<open>fourth_moment_L2_bochner\<close>, so the
-  subsequence extraction of Lemma 2.2 holds for any sequence of laws carrying,
-  per coordinate, an \<open>L\<^sup>2\<close> martingale with a compensated square whose
-  compensator grows at rate at most \<open>C\<close> --- the formal content of the paper's
-  admissibility conditions Eqs. (1.7)-(1.8).
+  The moment hypotheses of \<open>path_laws_convergent_subsequence_vec\<close>,
+  discharged per coordinate by the martingale estimate
+  \<open>fourth_moment_L2_bochner\<close>: the path laws of any sequence of processes
+  carrying, per coordinate, a continuous \<open>L\<^sup>2\<close> martingale from a common start
+  with a compensated square whose compensator grows at rate at most \<open>C\<close> have
+  a weakly convergent subsequence.
 \<close>
-
 
 corollary path_laws_convergent_subsequence_martingale:
   fixes MM :: "nat \<Rightarrow> 'a measure" and FF :: "nat \<Rightarrow> real \<Rightarrow> 'a measure"

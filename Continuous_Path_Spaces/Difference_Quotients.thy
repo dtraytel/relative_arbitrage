@@ -224,10 +224,9 @@ proof (rule lipschitz_onI[OF _ B0])
   qed
 qed
 
-text \<open>The \<open>\<forall>\<close>-form of the freezing, which the additive glue's \<open>Kfr\<close> hypothesis
-  consumes.  The measurability of the frozen set is the only real content:
-  a continuous path vanishing at every rational point of \<open>[0,d]\<close> vanishes
-  there, so the set is a countable intersection of evaluation conditions.\<close>
+text \<open>A continuous path vanishing at every rational point of \<open>[0,d]\<close> vanishes
+  on all of \<open>[0,d]\<close>.  So the event that a path is frozen on \<open>[0,d]\<close> is a
+  countable intersection of evaluation conditions, hence measurable.\<close>
 
 lemma vanishes_of_rational:
   fixes w :: "real \<Rightarrow> 'b::real_normed_vector"

@@ -102,16 +102,6 @@ text \<open>Each compensated increment has second moment at most \<open>18 C\<^s
   fourth moment contributes \<open>8 C\<^sup>2 (dt)\<^sup>2\<close> by Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> and the compensator
   increment \<open>C\<^sup>2 (dt)\<^sup>2\<close> by the Lipschitz rate, through \<open>(a - b)\<^sup>2 \<le> 2a\<^sup>2 + 2b\<^sup>2\<close>.\<close>
 
-text \<open>\<open>sq_diff_le_two\<close> is \<open>sq_diff_le\<close> from
-  @{theory Continuous_Time_Martingales.Quadratic_Variation}.\<close>
-
-text \<open>The same, with the first square already folded into a fourth power ---
-  the form the two integral bounds are stated in.\<close>
-
-text \<open>Monotonicity of the even powers under an absolute bound; both directions of
-  the rewriting between \<open>x^4\<close> and \<open>(x\<^sup>2)\<^sup>2\<close> are needed downstream.\<close>
-
-
 lemma compensated_increment_second_moment:
   fixes X A :: "real \<Rightarrow> 'a \<Rightarrow> real"
   assumes P: "prob_space M"
@@ -723,13 +713,13 @@ qed
 
 end
 
-section \<open>The matrix case, by polarisation\<close>
+subsection \<open>The matrix case, by polarisation\<close>
 
 text \<open>The scalar theory is applied to \<open>X\<^sub>i + c X\<^sub>j\<close> for \<open>c = 1\<close> and \<open>c = -1\<close>; the
   difference of the two quadratic variations, divided by four, is the covariation
   \<open>\<langle>X\<^sub>i, X\<^sub>j\<rangle>\<close>.  Nothing of the scalar theory is redone.\<close>
 
-subsection \<open>The quadratic form at a two-index direction\<close>
+subsubsection \<open>The quadratic form at a two-index direction\<close>
 
 text \<open>The direction that polarisation needs is \<open>e\<^sub>i + c e\<^sub>j\<close>; the quadratic form of
   a matrix there is the corresponding combination of four entries.  The formula
@@ -753,7 +743,7 @@ proof -
   finally show ?thesis unfolding y_def .
 qed
 
-subsection \<open>The polarised pair, without boundedness\<close>
+subsubsection \<open>The polarised pair, without boundedness\<close>
 
 text \<open>The scalar hypotheses for \<open>X\<^sub>i + c X\<^sub>j\<close> and its compensator
   \<open>A\<^sub>i\<^sub>i + c (A\<^sub>i\<^sub>j + A\<^sub>j\<^sub>i) + c\<^sup>2 A\<^sub>j\<^sub>j\<close> that need no bound on \<open>X\<close>: both
@@ -835,14 +825,17 @@ proof (intro allI impI)
     unfolding diff using cij by linarith
 qed
 
-subsection \<open>The matrix functional\<close>
+subsubsection \<open>The matrix functional\<close>
+
+text \<open>Entry \<open>(i, j)\<close> of the matrix functional is the polarisation of \<open>qvps\<close>
+  along \<open>X\<^sub>i + X\<^sub>j\<close> and \<open>X\<^sub>i - X\<^sub>j\<close>.\<close>
 
 definition qvmat :: "(real \<Rightarrow> real^'n::finite) \<Rightarrow> real \<Rightarrow> real^'n^'n" where
   "qvmat w t = (\<chi> i. \<chi> j. (qvps (\<lambda>s. w s $ i + w s $ j) t
                             - qvps (\<lambda>s. w s $ i + (- 1) * (w s $ j)) t) / 4)"
 
-text \<open>\<open>measurable_mat_entries\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
+text \<open>Like \<open>qvps\<close>, the matrix functional at time \<open>t\<close> is measurable as soon
+  as the values of the path before \<open>t\<close> are.\<close>
 
 lemma qvmat_measurable:
   fixes Y :: "real \<Rightarrow> 'b \<Rightarrow> real^'n::finite" and N :: "'b measure"
@@ -860,7 +853,7 @@ proof (rule measurable_mat_entries)
     using p[of 1] p[of "- 1"] by simp
 qed
 
-subsection \<open>Standing hypotheses, matrix version\<close>
+subsubsection \<open>Standing hypotheses, matrix version\<close>
 
 text \<open>Stated entrywise: the components of \<open>X\<close> are martingales, and so are the
   compensated products \<open>X\<^sub>i X\<^sub>j - A\<^sub>i\<^sub>j\<close>.  The rate hypothesis splits into the two
@@ -948,7 +941,7 @@ proof (rule bounded_martingale_compensator.intro)
     using cont by eventually_elim (simp add: Xpol_def continuous_intros)
 qed
 
-subsection \<open>The matrix identification\<close>
+subsubsection \<open>The matrix identification\<close>
 
 text \<open>Two applications of the scalar identification, at \<open>c = 1\<close> and
   \<open>c = -1\<close>, and the difference of the

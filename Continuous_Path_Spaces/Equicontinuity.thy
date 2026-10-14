@@ -14,7 +14,7 @@ text \<open>
   covariation rates in a bounded set @{text S} -- follows the chain:
 
   \<^item> Ito's formula and the Burkholder-Davis-Gundy inequality give the fourth
-    \<open>moment bound of Eq. (2.7), @{text "E |X t - X s| ^ 4 \<le> 66 C\<^sup>2 (t - s)\<^sup>2"};\<close>
+    moment bound of Eq. (2.7), @{text "E |X t - X s| ^ 4 \<le> 66 C\<^sup>2 (t - s)\<^sup>2"};
   \<^item> Kolmogorov's continuity criterion gives locally Holder paths;
   \<^item> the Arzela-Ascoli theorem gives compact sets of paths;
   \<^item> Prokhorov's theorem converts tightness into relative compactness.
@@ -23,7 +23,7 @@ text \<open>
 
   \<^item> Kolmogorov's criterion is @{text Kolmogorov_Chentsov.Kolmogorov_Chentsov},
     whose hypothesis is literally the moment bound of Eq. (2.7) with
-    \<open>@{text "a = 4"}, @{text "b = 1"}, @{text "C = 66 C\<^sup>2"}, and whose\<close>
+    @{text "a = 4"}, @{text "b = 1"}, @{text "C = 66 C\<^sup>2"}, and whose
     conclusion is a modification with all paths @{text "local_holder_on \<gamma>"} for
     @{text "\<gamma> < 1/4"};
   \<^item> @{text Kolmogorov_Chentsov.local_holder_compact_imp_holder} upgrades that to
@@ -341,23 +341,6 @@ proof -
     using L3 by blast
   show ?thesis by (rule that[OF L2 L1 L0 Lhol L4])
 qed
-
-subsection \<open>Composing with the AFP's Holder predicate\<close>
-
-text \<open>
-  The same statement phrased with @{const dist}, which is how
-  @{const holder_on} -- and hence the output of Kolmogorov's criterion -- states
-  its bound.
-\<close>
-
-text \<open>
-  The limit produced above is itself @{term "ga-holder_on {0..T}"}, so the
-  Arzela-Ascoli step stays inside the class delivered by Kolmogorov's
-  criterion.
-\<close>
-
-text \<open>Berge's maximum theorem and the sequential-limit facts it rests on
-  live in @{theory Semicontinuous_Analysis.Berge}.\<close>
 
 (*<*)
 end

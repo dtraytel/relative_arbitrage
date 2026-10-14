@@ -10,8 +10,8 @@ begin
 section \<open>A measurable selection theorem for upper semicontinuous payoffs\<close>
 
 text \<open>A measurable selection theorem for upper semicontinuous payoffs on
-  compact sets, in the form of Bertsekas--Shreve (1978), Prop. 7.33, which
-  Larsson--Ruf's Proposition 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>(ii) appeals to.  The construction is a
+  compact sets, in the form of Prop. 7.33 of \<^cite>\<open>BertsekasShreve\<close>, to
+  which Proposition 2.2(ii) of \<^cite>\<open>LarssonRuf\<close> appeals.  The construction is a
   greedy nested bisection along a countable dense sequence.\<close>
 
 text \<open>A separable metric space carries a dense sequence (it is nonempty, so

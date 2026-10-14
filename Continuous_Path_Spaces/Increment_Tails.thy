@@ -10,13 +10,14 @@ begin
 (*>*)
 
 text \<open>
-  The quantitative tail estimates that turn Eq. (2.7) into tightness. The
-  AFP's Kolmogorov-Chentsov theorem produces a continuous modification but
-  not the tail bound on the modulus of continuity that Lemma 2.2 of
-  \<^cite>\<open>LaiShkolnikovSoner\<close> needs; that bound is assembled here from Markov's
-  inequality and a union bound over one partition level. The chaining over
-  dyadic levels is the following step.
+  Two tail estimates on the way from a fourth-moment bound on increments to
+  tightness: Markov's inequality at the fourth power, and the tail of the norm
+  of a vector bounded by the tails of its coordinates.  The AFP's
+  Kolmogorov-Chentsov theorem produces a continuous modification but no tail
+  bound on the modulus of continuity, which the theory \<open>Modulus_Tails\<close>
+  assembles from the first.
 \<close>
+
 subsection \<open>Markov's inequality at the fourth power\<close>
 
 lemma fourth_moment_tail:
@@ -81,14 +82,6 @@ proof -
     by (rule measure_UNION_le) (use Em in auto)
   finally show ?thesis .
 qed
-
-subsection \<open>The tail bound at one partition level\<close>
-
-text \<open>
-  The union bound over the increments of the \<open>m\<close>-th uniform partition. The
-  bound decays like \<open>1 / Suc m\<close>: refining the partition by a factor halves
-  the tail, which is what makes the dyadic chaining sum converge.
-\<close>
 
 (*<*)
 end

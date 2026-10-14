@@ -1,3 +1,4 @@
+section \<open>Exit times of continuous paths\<close>
 
 (*<*)
 theory Path_Exit_Times
@@ -18,10 +19,8 @@ text \<open>
   an open event of positive mass, and the open-set half of the portmanteau
   theorem keeps that mass positive along the sequence.  No Laplace transform
   is needed.\<close>
-section \<open>The path-space exit time\<close>
-text \<open>(The crowning theorem of this theory is \<open>ess_inf_pexit_usc\<close>: the
-  essential infimum of the exit time is upper semicontinuous
-  along weak convergence of path laws.)\<close>
+
+subsection \<open>The path-space exit time\<close>
 
 text \<open>The capped exit time from \<open>K\<close>, read off a path rather than a sample
   point: the composition of \<open>etime\<close> with the identity process. All laws in
@@ -161,7 +160,7 @@ proof (rule borel_measurableI_less)
     using borel_of_open[OF pexit_sublevel_open[OF T K]] by simp
 qed
 
-section \<open>The portmanteau theorem on the path space\<close>
+subsection \<open>The portmanteau theorem on the path space\<close>
 
 text \<open>Along weak convergence of path laws, the measure of an open set can
   only gain mass in the limit (the open-set half of the portmanteau
@@ -193,7 +192,7 @@ lemma weak_conv_closed_limsup:
       \<le> ereal (measure \<Lambda> A)"
   by (rule weak_conv_closedin_limsup[OF wc A])
 
-section \<open>Upper semicontinuity of the essential infimum of the exit time\<close>
+subsection \<open>Upper semicontinuity of the essential infimum of the exit time\<close>
 
 text \<open>Upper semicontinuity in the form of \<open>Limsup_le_iff\<close>: whenever
   \<open>ess_inf_time \<Lambda> (pexit T K) < d\<close>, the sublevel \<open>{pexit T K < d}\<close> is an
@@ -268,7 +267,7 @@ proof -
   qed
 qed
 
-section \<open>Shifted exit times, confinement, and test functionals\<close>
+subsection \<open>Shifted exit times, confinement, and test functionals\<close>
 
 lemma open_etime_shift_less:
   fixes T d :: real and A :: "'b::{polish_space,real_normed_vector} set" and y :: 'b
@@ -279,6 +278,7 @@ lemma open_etime_shift_less:
   using etime_comp_sublevel_open[OF T A, where \<phi> = "\<lambda>z. y + z"]
   by (simp add: continuous_intros)
 
+subsubsection \<open>The uncapped exit time\<close>
 
 text \<open>The exit time from \<open>K\<close> is the increasing limit of the capped exit times.
   It takes the value \<open>\<top>\<close> exactly on the paths that never leave \<open>K\<close>.\<close>
@@ -290,11 +290,6 @@ lemma pexit_le_iexit:
   assumes T: "0 \<le> T"
   shows "ennreal (pexit T K f) \<le> iexit K f"
   unfolding iexit_def using T by (intro SUP_upper) simp
-
-text \<open>Hence the elementary bound identifying \<open>iexit\<close> as the first time the
-  path is outside \<open>K\<close>.\<close>
-
-subsection \<open>The essential infimum of an unbounded time\<close>
 
 lemma pexit_cong_nonneg:
   assumes eq: "\<And>s. 0 \<le> s \<Longrightarrow> f s = g s" and T: "0 \<le> T"
@@ -377,6 +372,8 @@ proof -
   qed
   then show ?thesis by simp
 qed
+
+subsubsection \<open>Splitting the exit time at an intermediate time\<close>
 
 text \<open>Translating a nonempty set of reals that is bounded below translates
   its infimum.\<close>
@@ -481,13 +478,9 @@ proof -
   finally show ?thesis .
 qed
 
-subsection \<open>The rebased future as a map of path spaces\<close>
-
-text \<open>\<open>pfut r T \<omega>\<close> is the path after \<open>r\<close>, re-based at its own starting point,
-  so that it starts at \<open>0\<close> no matter where \<open>\<omega>\<close> was at time \<open>r\<close>.  It is the
-  map along which the conditional law of the future is taken.  Like the glue,
-  it is Lipschitz --- with constant \<open>2\<close>, because the base point is subtracted
-  and so counts once more.\<close>
+text \<open>A path whose exit time is at least \<open>c\<close> has stayed in \<open>K\<close> up to
+  every earlier time \<open>r\<close>: its exit time capped at \<open>r\<close> is \<open>r\<close>, and its
+  position at \<open>r\<close> lies in \<open>K\<close>.\<close>
 
 lemma pexit_surv_of_less:
   fixes f :: "real \<Rightarrow> 'a::polish_space" and K :: "'a set"
@@ -508,26 +501,7 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-text \<open>Hence the \<open>\<le>\<close> half of (2.9) reduces to a single statement about
-  conditioning, and no other property of the class is needed:
-
-  \<open>\begin{quote}\<close>
-  if the exit time of \<open>P \<in> \<P>\<^sub>x\<close> is almost surely at least \<open>c\<close>, then almost
-  surely on the survival event \<open>{r \<le> \<tau>\<^sub>K}\<close> the value at the position reached
-  is at least the time still to run, \<open>c - r\<close>.
-  \<open>\end{quote}\<close>
-
-  That is exactly the statement that the conditional law of the future given
-  \<open>\<F>\<^sub>r\<close> is, almost surely, a member of the class started at \<open>X\<^sub>r\<close>, so that its
-  own essential infimum is bounded by \<open>v(X\<^sub>r)\<close>; it is a regular conditional
-  distribution argument.  Off the survival event it is unconditional, by
-  @{thm [source] pexit_cap_eq}.\<close>
-
-text \<open>\<open>ess_inf_time_mono\<close> lives in
-  @{theory Continuous_Time_Martingales.Essential_Infimum},
-  with an almost-sure rather than a pointwise hypothesis; this theory had a
-  pointwise copy that shadowed it.\<close>
-
+subsubsection \<open>Shifted exit times below a level\<close>
 
 text \<open>The countable reduction, at the level of measures: \<open>etime_less_iff_qtimes_open\<close>
   turns the event into a union over the countable \<open>qtimes T\<close>, so
@@ -695,6 +669,11 @@ lemma rclamp_cont: "continuous_map euclideanreal euclideanreal (rclamp c)"
   unfolding continuous_map_iff_continuous2 rclamp_def
   by (intro continuous_intros)
 
+subsubsection \<open>Attainment and the horizon cap\<close>
+
+text \<open>Below the horizon, the exit time from an open set is attained: the
+  path is outside the set at that time.\<close>
+
 lemma pexit_mem_of_less_T:
   fixes f :: "real \<Rightarrow> 'b::polish_space"
   assumes T0: "0 \<le> T" and Kop: "open K"
@@ -735,8 +714,9 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-text \<open>The second is the congruence clause of a stopping time, restricted to
-  continuous paths.  The asymmetry: the \<open>\<ge>\<close> direction is unconditional (a
+text \<open>Hence the congruence clause of a stopping time, restricted to continuous
+  paths: a path that agrees with \<open>f\<close> up to the exit time of \<open>f\<close> has the
+  same exit time.  The asymmetry: the \<open>\<ge>\<close> direction is unconditional (a
   witness for \<open>g\<close> strictly below the exit time of \<open>f\<close> is a witness for \<open>f\<close>
   too), and only the \<open>\<le>\<close> direction needs attainment.\<close>
 
@@ -841,7 +821,7 @@ next
 qed
 
 
-section \<open>Upper semicontinuity in the starting point\<close>
+subsection \<open>Upper semicontinuity in the starting point\<close>
 
 text \<open>The shifted exit-time functional \<open>vshift T A x P\<close> meets the hypotheses of
   Berge's maximum theorem (\<open>usc_sup_over_compactin\<close>) jointly in the starting
@@ -950,7 +930,7 @@ proof -
   qed
 qed
 
-subsection \<open>Berge's box hypothesis for the shifted exit time\<close>
+subsubsection \<open>Berge's box hypothesis for the shifted exit time\<close>
 
 text \<open>
   Both perturbations at once, in the sequential form Levy--Prokhorov
@@ -1037,7 +1017,7 @@ proof -
   qed
 qed
 
-subsection \<open>Upper semicontinuity of the supremum over a compact family\<close>
+subsubsection \<open>Upper semicontinuity of the supremum over a compact family\<close>
 
 text \<open>
   Granted Lemma 2.3, this gives clause (1) of Theorem 1.1: the supremum

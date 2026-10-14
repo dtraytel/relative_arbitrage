@@ -14,7 +14,7 @@ text \<open>
   HOL-Analysis' set-based \<open>cfunspace\<close> (bounded continuous maps with the sup
   metric) over the compact interval \<open>{0..T}\<close>, valued in a Polish type.
   Completeness is \<open>Metric_space.mcomplete_cfunspace\<close> and separability
-  \<open>Metric_space.separable_space_cfunspace\<close> (AFP \<open>Standard\_Borel\_Spaces);\<close>
+  \<open>Metric_space.separable_space_cfunspace\<close> (AFP \<open>Standard_Borel_Spaces\<close>);
   with compactness and metrizability of the domain, these are the
   hypotheses of the AFP's \<open>Prokhorov_theorem_LP\<close>, converting tightness of
   the Lemma 2.2 laws into relative compactness in the L\'evy-Prokhorov
@@ -869,19 +869,11 @@ lemma continuous_map_path_eval:
   using Lipschitz_continuous_imp_continuous_map[OF Lipschitz_path_eval[OF t]]
   by simp
 
-text \<open>The exit time is upper semicontinuous because "has already entered
-  \<open>A\<close> strictly before \<open>c\<close>" is an open condition on the path: witnessed at a
-  single time \<open>r\<close>, with evaluation at a fixed time continuous
-  (\<open>continuous_map_path_eval\<close>), so an open \<open>A\<close> pulls back to an open set of
-  paths, and the union over admissible witness times \<open>r\<close> stays open.
-  Stated here, purely about the path topology, because
-  \<open>Stopping_Times.etime_less_iff\<close> -- identifying this set with
-  \<open>{f. etime T A (\<lambda>s w. w s) f < c}\<close> when \<open>\<not> T < c\<close> -- lives on a
-  different import branch.\<close>
-
-text \<open>The brick the proof above used inline, now stated on its own:
-  evaluation at a fixed admissible time is continuous, so an open target
-  pulls back to an open set of paths.\<close>
+text \<open>Evaluation at a fixed admissible time is continuous
+  (\<open>continuous_map_path_eval\<close>), so an open target pulls back to an open
+  set of paths.  This is what makes exit times upper semicontinuous: "has
+  already entered \<open>A\<close> strictly before \<open>c\<close>" is witnessed at a single time,
+  and a union of open sets over the witness times stays open.\<close>
 
 lemma open_eval_preimage:
   fixes T r :: real and U :: "'b::polish_space set"
@@ -1109,8 +1101,8 @@ proof -
   from less_LiminfD[OF this] show ?thesis by simp
 qed
 
-text \<open>The hypothesis that makes \<open>Equicontinuity.box_of_sequential\<close>
-  usable on the space of laws: the weak topology over the path space is
+text \<open>The hypothesis that makes Berge's sequential criterion
+  \<open>box_of_sequential\<close> usable on the space of laws: the weak topology over the path space is
   metrizable, by the L\'evy--Prokhorov theorem.  Both inputs are already
   here: the path space is a metric space by construction and separable by
   \<open>path_metric_polish\<close>.\<close>
@@ -1129,7 +1121,9 @@ proof (rule metrizable_weak_conv_topology)
 qed
 
 
-subsection \<open>The path space is Polish, and restriction is measurable\<close>
+subsection \<open>Restriction, open sets of paths, and the Polish topology\<close>
+
+text \<open>A point of the path space is its own restriction to \<open>{0..T}\<close>.\<close>
 
 lemma mspace_path_restrict_self:
   fixes \<omega> :: "real \<Rightarrow> 'b::polish_space"
@@ -1156,6 +1150,9 @@ proof -
     qed
   qed
 qed
+
+text \<open>Staying inside an open set up to time \<open>t\<close> is an open condition on
+  paths.\<close>
 
 lemma open_stay_inside:
   fixes T t :: real and A :: "'b::{polish_space, heine_borel} set"
@@ -1225,28 +1222,9 @@ proof -
   then show ?thesis by (simp add: topeq)
 qed
 
-text \<open>The transfer principle.  Sequential compactness of the class
-  extracts a convergent subsequence; membership clause (2) of
-  \<open>covariation_class_compact_metric_space\<close> identifies the
-  limit as weak convergence, and the portmanteau bounds
-  (\<open>weak_conv_openin_liminf\<close>, \<open>weak_conv_closedin_limsup\<close>) turn it
-  into the open/closed set bounds.  Convergence along the full sequence pins the
-  Liminf and Limsup along any subsequence, so the subsequence never
-  appears in the statement.\<close>
-
-text \<open>
-  Larsson--Ruf get joint upper semicontinuity of
-  \<open>f(x,P) = ((x + \<cdot>)\<^sub>*P)\<hyphen>essinf \<tau>\<^sub>K\<close> from continuity of
-  \<open>(x,P) \<mapsto> (x + \<cdot>)\<^sub>*P\<close>; Berge's \<open>box\<close> hypothesis needs only that
-  \<open>f(x,P) < d\<close> persists on a product neighbourhood, which is cheaper.
-
-  The obstruction is uniformity: \<open>f(x,P) < d\<close> means
-  \<open>{\<omega> : \<tau>\<^sub>K(x + \<omega>) < d}\<close> has positive mass, and each witnessing \<open>\<omega>\<close>
-  (via \<open>etime_less_iff\<close>) has its own room to move \<open>x\<close> --- worthless
-  pointwise against a measure. The erosion operator \<open>eroded \<delta> A\<close> fixes
-  this: open, exhausting \<open>A\<close>, with a margin \<open>\<delta>\<close> uniform over all points;
-  \<open>positive_mass_at_some_erosion\<close> says some level retains positive mass.
-\<close>
+text \<open>An evaluation shifted by a fixed point \<open>x\<close> also pulls open sets back
+  to open sets of paths.  This is the step that lets the
+  starting point of an exit-time functional move.\<close>
 
 lemma open_shifted_eval_preimage:
   fixes T r :: real
@@ -1275,26 +1253,13 @@ proof -
   thus ?thesis using open_eval_preimage[OF rT op] by simp
 qed
 
-text \<open>The margin itself: no property of \<open>\<omega>\<close> beyond the single evaluation
-  \<open>\<omega>(r)\<close> is used, and \<open>\<delta>\<close> does not depend on \<open>\<omega>\<close>.\<close>
-
+text \<open>The path space is Polish as a topological space, and second countable.\<close>
 
 lemma Polish_space_path_metric:
   "Polish_space (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric))"
   unfolding mtopology_of_def
   by (rule Metric_space.Polish_space_mtopology
       [OF Metric_space_mspace_mdist path_metric_polish(1) path_metric_polish(2)])
-
-section \<open>Kernel pasting: the semidirect product\<close>
-
-text \<open>\<open>covariation_class_kglue_law\<close> glues with a countably
-  valued index, which \<open>Metric_space.usc_measurable_selection\<close>
-  cannot supply.  The replacement is the Giry monad's semidirect product:
-  run \<open>Q\<close>, then continue with the law the kernel picks at the endpoint
-  reached.  \<open>ksemi\<close> and its API live in
-  \<open>Semidirect_Kernels\<close>.\<close>
-
-subsection \<open>The glued law, and the two almost-sure clauses of (1.7)\<close>
 
 lemma second_countable_path_metric:
   "second_countable (mtopology_of (path_metric T :: (real \<Rightarrow> 'b::polish_space) metric))"
