@@ -11,13 +11,13 @@ def closure(root, stop_thys):
         if F[n]['thy'].split('.')[-1] in stop_thys: continue   # do not look inside the interface theories
         st+=F[n]['deps']
     return seen
-op_thys={"Elliptic_Operator","Viscosity_Definitions","Constraint_Set_Convexity","Eigenvalue_Bound_Exact","Operator_Continuity","Operator_Formula","Operator_Envelopes","Operator_Envelope_Continuity","Viscosity_Ball","Viscosity_Comparison_Interface","Ball_Solution"}
+op_thys={"Elliptic_Operator","Viscosity_Definitions","Constraint_Set_Convexity","Operator_Continuity","Operator_Formula","Operator_Envelopes","Operator_Envelope_Continuity","Viscosity_Ball","Viscosity_Comparison_Interface","Ball_Solution"}
 for root in ["Comparison_Two_Domain.uniqueness_expandable"]:
     c=closure(root, op_thys)
     iface=sorted(n for n in c if F[n]['thy'].split('.')[-1] in op_thys)
     print(f"{root}: closure {len(c)} facts; operator-layer facts consumed directly: {len(iface)}")
     for n in iface: print("   ", n)
-cls_thys={"Exit_Class","Constraint_Set_Convexity","Elliptic_Operator","Eigenvalue_Bound_Exact","Operator_Formula","Operator_Continuity","Operator_Envelopes"}
+cls_thys={"Exit_Class","Constraint_Set_Convexity","Elliptic_Operator","Operator_Formula","Operator_Continuity","Operator_Envelopes"}
 # which sconstraint-related facts are consumed by the class / DPP / tightness chain (outside the operator theories)
 sc=[n for n,f in F.items() if any(c.endswith('.sconstraint') for c in f['consts']) and f['thy'].split('.')[-1]=='Exit_Class']
 users=collections.defaultdict(set)
