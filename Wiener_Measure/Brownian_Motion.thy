@@ -245,12 +245,6 @@ text \<open>Over a strictly increasing list of times, the increment vector of th
   coordinate selection from the independent increment product, hence its
   components are independent.\<close>
 
-text \<open>\<open>sorted_wrt_less_nth_iff\<close> lives in @{theory Wiener_Measure.Sorted_Lists}.\<close>
-
-text \<open>\<open>sorted_wrt_less_set_take\<close> lives in @{theory Wiener_Measure.Sorted_Lists}.\<close>
-
-text \<open>\<open>sorted_wrt_less_Max_last\<close> lives in @{theory Wiener_Measure.Sorted_Lists}.\<close>
-
 theorem bm_increments_indep:
   assumes l: "sorted_wrt (<) l" and l0: "set l \<subseteq> {0..}"
     and len: "2 \<le> length l"

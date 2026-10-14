@@ -164,8 +164,6 @@ qed
 
 subsection \<open>Rectangle emeasure formula\<close>
 
-text \<open>\<open>prod_indicator_conj\<close> lives in @{theory Wiener_Measure.Sorted_Lists}.\<close>
-
 lemma sumprod_measurable:
   fixes Mm :: "real \<Rightarrow> real measure"
   assumes Mm: "\<And>s. sets (Mm s) = sets borel"

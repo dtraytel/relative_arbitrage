@@ -10,16 +10,15 @@ begin
 
 
 text \<open>
-  The continuous Brownian state process on the product path space,
-             and the transfer of its martingale property to its own natural
-             filtration.
+  The continuous vector Brownian motion on the product path space, and the
+  transfer of its martingale properties to its own natural filtration.
 
-    The product model \<open>bm_paths\<close> of \<open>Brownian_Market\<close> has no continuous paths: its
-    sample points are arbitrary functions.  The Kolmogorov-Chentsov theorem
-    provides a continuous modification Bcont of the coordinate process, and
-    \<open>Modification_Transfer\<close> moves the martingale property of the state process
-    to the natural filtration of the modification.  The continuous state
-    process built here is what the exit-time market needs.\<close>
+  The product model \<open>bm_paths\<close> of \<open>Product_Brownian_Motion\<close> has no
+  continuous paths: its sample points are arbitrary functions.  The
+  Kolmogorov--Chentsov theorem provides a continuous modification \<open>Bcont\<close>
+  of the coordinate process, and \<open>Modification_Transfer\<close> moves the
+  martingale property of the vector process to the natural filtration of
+  the modification.\<close>
 section \<open>A continuous version of the coordinate process\<close>
 
 definition Bcont :: "(real, real \<Rightarrow> real, real) stochastic_process" where
@@ -141,10 +140,6 @@ qed (auto intro: measurable_compose[OF measurable_cbmX f] adapted_of_natural_fil
 
 section \<open>Path continuity\<close>
 
-text \<open>\<open>continuous_on_vec_lambda\<close> is HOL-Analysis's, in
-  \<open>Cartesian_Euclidean_Space\<close>, and carries \<open>[continuous_intros]\<close>; this
-  theory re-proved it without the attribute, shadowing it.\<close>
-
 lemma cbmX_cont:
   fixes x0 :: "real^'n::finite"
   shows "continuous_on {0..} (\<lambda>t. cbmX x0 t \<omega>)"
@@ -168,9 +163,9 @@ theorem martingale_cbm_coord_square:
 
 section \<open>The compensated square is a martingale for the same filtration\<close>
 
-text \<open>The market locales need both the state process and its compensated
-  square to be martingales for one filtration, namely the natural filtration
-  of the continuous process.  The compensated square of the norm is the sum
+text \<open>The vector process and its compensated square are martingales for one
+  filtration, the natural filtration of the continuous process.  The
+  compensated square of the norm is the sum
   of the compensated coordinate squares above, a bounded linear image of the
   vector of them.\<close>
 

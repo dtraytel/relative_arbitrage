@@ -19,9 +19,6 @@ lemma bm_coordinate_mean:
   using bm_coordinate_integral[OF u _ gauss_measure_moment_odd[of u 0], of i]
   by (simp_all add: has_bochner_integral_iff)
 
-text \<open>\<open>integrable_vec_components\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
-
 lemma bmX_integrable:
   fixes x0 :: "real^'n::finite"
   assumes u: "0 \<le> u"
@@ -217,7 +214,7 @@ proof (rule has_cond_expI')
       = (\<integral>\<omega> \<in> A. bmX x0 s \<omega> \<partial>?M)" .
 qed
 
-section \<open>The market is a martingale\<close>
+section \<open>The vector Brownian motion is a martingale\<close>
 
 theorem martingale_bmX:
   fixes x0 :: "real^'n::finite"
@@ -251,13 +248,12 @@ qed
 
 section \<open>Ito's formula for the square: the compensated square is a martingale\<close>
 
-text \<open>The Dynkin identity \<open>bmX_sq\<close> is the \<^emph>\<open>expectation\<close>
-  form of Ito's formula for the test function \<open>|x|\<^sup>2\<close>.  Its process form,
+text \<open>Ito's formula for the test function \<open>\<parallel>x\<parallel>\<^sup>2\<close>, in process form:
 
-    \<open>Z t = |B t|\<^sup>2 - int_0^t tr(mat 1) ds\<close> is a martingale,
+    \<open>Z t = \<parallel>B t\<parallel>\<^sup>2 - \<integral>\<^sub>0\<^sup>t trace (mat 1) ds\<close> is a martingale.
 
-  is proved in this section, through the compensated products of the
-  coordinates \<open>X\<^sub>i X\<^sub>j - t \<delta>\<^sub>i\<^sub>j\<close>.\<close>
+  It is proved in this and the next two sections, through the compensated
+  products of the coordinates \<open>X\<^sub>i X\<^sub>j - t \<delta>\<^sub>i\<^sub>j\<close>.\<close>
 
 lemma bm_meas_increment_product:
   fixes x0 :: "real^'n::finite"

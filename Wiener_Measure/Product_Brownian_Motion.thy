@@ -12,14 +12,12 @@ begin
 
 
 text \<open>
-  An n-dimensional Brownian market model.
-
-    The market is the product of CARD('n) independent copies of the Wiener
-    measure \<open>wiener_pre\<close> from \<open>Brownian_Motion\<close>, started at x0, with constant
-    instantaneous covariance mat 1 and a deterministic horizon.  For this
-    model the martingale property with respect to the natural filtration
-    becomes a theorem, and the model witnesses that the class \<open>\<P>\<^sub>0\<close> is
-    non-empty (\<open>covariation_class_nonempty\<close>).\<close>
+  The \<open>n\<close>-dimensional Brownian motion: the product of \<open>CARD('n)\<close>
+  independent copies of the Wiener measure \<open>wiener_pre\<close> of
+  \<open>Brownian_Motion\<close>, started at \<open>x0\<close>, with instantaneous covariance
+  \<open>mat 1\<close>.  This theory proves its Gaussian moments and the independence of
+  its increments from its natural filtration; the martingale properties
+  follow in \<open>Vector_Brownian_Martingales\<close>.\<close>
 section \<open>Independence toolkit\<close>
 
 text \<open>Independence of a pair of random variables transports along a
@@ -607,10 +605,7 @@ proof -
     by (simp add: power2_eq_square)
 qed
 
-section \<open>The market process\<close>
-
-text \<open>\<open>measurable_vec_components\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
+section \<open>The vector Brownian motion started at \<open>x0\<close>\<close>
 
 definition bmX :: "real^'n::finite \<Rightarrow> real \<Rightarrow> ('n \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> real^'n"
   where "bmX x0 t \<omega> = x0 + (\<chi> i. \<omega> i t)"
@@ -664,18 +659,7 @@ proof -
   qed
 qed
 
-section \<open>The Dynkin identity for a deterministic time\<close>
-
-text \<open>\<open>trace (mat 1) = CARD('n)\<close> is HOL-Analysis's \<open>trace_I\<close>.\<close>
-
-
-text \<open>Two-sided pointwise bounds on the trace, from the eigenvalue
-  conditions: positive semidefiniteness makes the diagonal, hence the trace,
-  nonnegative, and an eigenvalue upper bound \<open>L\<close> caps every diagonal
-  entry by \<open>L\<close>.\<close>
-
-
-section \<open>Past and increments of the market are independent\<close>
+section \<open>Past and increments of the product model are independent\<close>
 
 lemma bm_paths_past_increment_indep:
   fixes U :: "real set"
@@ -744,7 +728,7 @@ proof -
     using s st
     by (intro measurable_vec_components borel_measurable_diff
         measurable_bm_coordinate) auto
-  \<comment> \<open>the finite-dimensional independence, composed to the market process\<close>
+  \<comment> \<open>the finite-dimensional independence, composed to the vector process\<close>
   have Xvec_ind: "BMP.indep_var
       (Pi\<^sub>M V (\<lambda>_. borel :: (real^'n) measure)) (\<lambda>\<omega>. \<lambda>u\<in>V. bmX x0 u \<omega>)
       (Pi\<^sub>M {t} (\<lambda>_. borel :: (real^'n) measure)) (\<lambda>\<omega>. \<lambda>u\<in>{t}. D \<omega>)"
