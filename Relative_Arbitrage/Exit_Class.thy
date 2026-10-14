@@ -394,24 +394,6 @@ text \<open>Passing a rule-shaped fact such as the second clause above, or a
 
 lemmas trivial_premise_simps = implies_True_equals triv_forall_equality True_implies_equals
 
-lemma exit_class_compensated_integrable:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-  shows "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
-proof (rule covariation_class_compensated_integrable)
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed (use assms in auto)
-
-theorem exit_class_compensated_mean:
-  fixes Q :: "(('n::finite) pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
-  shows "(\<integral>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t) \<partial>Q) = outerp x"
-proof (rule covariation_class_compensated_mean)
-  show "Q \<in> covariation_class (sconstraint k L) T x"
-    using Q unfolding exit_class_eq_covariation .
-qed (use assms in auto)
-
 text \<open>The starting point is a closed condition too: evaluation at time \<open>0\<close>
   is continuous and \<open>{(x, 0)}\<close> is closed.\<close>
 
