@@ -3,7 +3,7 @@ section \<open>Theorem 1.1, assembled\<close>
 (*<*)
 theory Theorem_1_1
   imports
-    Exit_Class_Marginals Value_Function_Uniqueness
+    Exit_Class_Marginals Value_Function_Uniqueness Example_3_1
 begin
 (*>*)
 
