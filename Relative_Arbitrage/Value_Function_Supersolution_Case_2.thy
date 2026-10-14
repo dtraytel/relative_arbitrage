@@ -40,29 +40,104 @@ subsection \<open>Recentring the quadratic\<close>
 text \<open>\<open>quad_grad_shift\<close>, \<open>quad_shift\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 
+subsection \<open>The upper envelope of the operator for an abstract set\<close>
+
+text \<open>\<open>F\<^sup>*\<close> for the \<^typ>\<open>ereal\<close>-valued operator \<^const>\<open>covariation_op\<close>, with the
+  two limit facts Case 2 consumes; at \<open>S = sconstraint k L\<close> and \<open>1 \<le> k\<close> it is
+  the paper's \<open>F\<^sup>*\<close> (\<open>ell_op_usc_eq_covariation_op_usc\<close> below).\<close>
+
+definition covariation_op_usc ::
+  "(real^'n::finite^'n) set \<Rightarrow> real^'n \<Rightarrow> real^'n^'n \<Rightarrow> ereal" where
+  "covariation_op_usc S p M
+     = (INF e \<in> {0<..}. SUP w \<in> ball (p, M) e. covariation_op S (fst w) (snd w))"
+
+lemma covariation_op_le_usc: "covariation_op S p M \<le> covariation_op_usc S p M"
+  unfolding covariation_op_usc_def
+proof (rule INF_greatest)
+  fix e :: real assume "e \<in> {0<..}"
+  then have "(p, M) \<in> ball (p, M) e" by simp
+  then show "covariation_op S p M \<le> (SUP w \<in> ball (p, M) e. covariation_op S (fst w) (snd w))"
+    by (rule SUP_upper2) simp
+qed
+
+lemma covariation_op_usc_ge_one_limit:
+  fixes ps :: "nat \<Rightarrow> real^'n::finite" and Ms :: "nat \<Rightarrow> real^'n^'n"
+  assumes ge: "\<And>j. 1 \<le> covariation_op_usc S (ps j) (Ms j)"
+    and lim: "(\<lambda>j. (ps j, Ms j)) \<longlonglongrightarrow> (p0, M0)"
+  shows "1 \<le> covariation_op_usc S p0 M0"
+  unfolding covariation_op_usc_def
+proof (rule INF_greatest)
+  fix e :: real assume "e \<in> {0<..}"
+  then have e0: "0 < e" by simp
+  have "\<forall>\<^sub>F j in sequentially. dist (ps j, Ms j) (p0, M0) < e / 2"
+    by (rule tendstoD[OF lim]) (use e0 in simp)
+  then obtain j where j: "dist (ps j, Ms j) (p0, M0) < e / 2"
+    by (auto simp: eventually_sequentially)
+  have sub: "ball (ps j, Ms j) (e / 2) \<subseteq> ball (p0, M0) e"
+  proof
+    fix w assume "w \<in> ball (ps j, Ms j) (e / 2)"
+    then have "dist (ps j, Ms j) w < e / 2" by simp
+    then have "dist (p0, M0) w < e"
+      using j dist_triangle[of "(p0, M0)" w "(ps j, Ms j)"] by (simp add: dist_commute)
+    then show "w \<in> ball (p0, M0) e" by simp
+  qed
+  have "(1 :: ereal) \<le> covariation_op_usc S (ps j) (Ms j)" by (rule ge)
+  also have "\<dots> \<le> (SUP w \<in> ball (ps j, Ms j) (e / 2). covariation_op S (fst w) (snd w))"
+    unfolding covariation_op_usc_def by (rule INF_lower) (use e0 in simp)
+  also have "\<dots> \<le> (SUP w \<in> ball (p0, M0) e. covariation_op S (fst w) (snd w))"
+    by (rule SUP_subset_mono[OF sub order_refl])
+  finally show "1 \<le> (SUP w \<in> ball (p0, M0) e. covariation_op S (fst w) (snd w))" .
+qed
+
+lemma covariation_op_usc_ge_one_shift:
+  fixes p :: "real^'n::finite" and H :: "real^'n^'n"
+  assumes ge: "\<And>\<delta>. 0 < \<delta> \<Longrightarrow> 1 \<le> covariation_op_usc S p (H - \<delta> *\<^sub>R mat 1)"
+  shows "1 \<le> covariation_op_usc S p H"
+proof (rule covariation_op_usc_ge_one_limit[where ps = "\<lambda>_. p"
+      and Ms = "\<lambda>j. H - (1 / real (Suc j)) *\<^sub>R mat 1"])
+  show "1 \<le> covariation_op_usc S p (H - (1 / real (Suc j)) *\<^sub>R mat 1)" for j
+    by (rule ge) simp
+  have "(\<lambda>j. 1 / real (Suc j)) \<longlonglongrightarrow> 0"
+    using LIMSEQ_inverse_real_of_nat by (simp add: divide_inverse)
+  from tendsto_diff[OF tendsto_const tendsto_scaleR[OF this tendsto_const]]
+  have "(\<lambda>j. H - (1 / real (Suc j)) *\<^sub>R (mat 1 :: real^'n^'n)) \<longlonglongrightarrow> H"
+    by simp
+  then show "(\<lambda>j. (p, H - (1 / real (Suc j)) *\<^sub>R mat 1)) \<longlonglongrightarrow> (p, H)"
+    by (rule tendsto_Pair[OF tendsto_const])
+qed
+
+lemma ell_op_usc_eq_covariation_op_usc:
+  assumes k1: "1 \<le> k" and kn: "k < CARD('n::finite)" and L1: "1 \<le> L"
+  shows "ell_op_usc k L = covariation_op_usc (sconstraint k L :: (real^'n^'n) set)"
+  by (intro ext) (simp add: ell_op_usc_eq_op_usc op_usc_def covariation_op_usc_def
+      ell_op_eq_covariation_op[OF k1 kn L1])
+
 subsection \<open>Growth up to a time, on a region\<close>
 
 
-theorem exit_val_supersol_contradiction_case1_lsc:
+theorem covariation_val_supersol_contradiction_case1_lsc:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
-    and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k"
-    and kn: "k < CARD('n)" and Kc: "closed K"
+    and H :: "real^'n^'n" and \<sigma> :: "real^'n^'n"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S" and Kc: "closed K"
     and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x"
     and rho0: "0 < \<rho>"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
-      lsc_env (\<lambda>z. enn2real (exit_val k L T K z)) x - \<phi> x
-        \<le> lsc_env (\<lambda>z. enn2real (exit_val k L T K z)) y - \<phi> y"
+      lsc_env (\<lambda>z. enn2real (covariation_val S T K z)) x - \<phi> x
+        \<le> lsc_env (\<lambda>z. enn2real (covariation_val S T K z)) y - \<phi> y"
     and gx0: "g x \<noteq> 0"
-    and fail: "ell_op k L (g x) H < 1"
+    and fail: "covariation_op S (g x) H < 1"
   shows False
 proof -
-  have L1': "1 \<le> L" using L1 by linarith
-  have L0: "0 \<le> L" using L1 by linarith
   have T0': "0 \<le> T" using T0 by linarith
-  define tv where "tv = (\<lambda>y. enn2real (exit_val k L T K y))"
+  define tv where "tv = (\<lambda>y. enn2real (covariation_val S T K y))"
   define vs where "vs = lsc_env tv"
   have tv0: "\<And>z. 0 \<le> tv z" unfolding tv_def by simp
   have tvT: "\<And>z. tv z \<le> T"
@@ -70,7 +145,7 @@ proof -
     fix z :: "real^'n"
     have "tv z = min (tv z) T"
       unfolding tv_def
-      by (rule enn2real_paper_v_horizon_cap[OF T0' order_refl L1' Kc])
+      by (rule enn2real_covariation_val_horizon_cap[OF T0' order_refl Sc Sv SST Kc])
     then show "tv z \<le> T" by linarith
   qed
   have vs_le: "\<And>z. vs z \<le> tv z"
@@ -85,22 +160,18 @@ proof -
     fix y :: "real^'n" assume "y \<in> K"
     show "vs y \<le> T" using vs_le[of y] tvT[of y] by linarith
   qed
-  obtain a where aF: "a \<in> feasible k L (g x)"
-    and "- trace (H ** a) / 2 < ell_op k L (g x) H + (1 - ell_op k L (g x) H)"
-    by (rule ell_op_approx[OF k1 kn L1', where \<epsilon> = "1 - ell_op k L (g x) H"])
-      (use fail in simp)
-  then have aTr: "- trace (H ** a) / 2 < 1" by simp
+  obtain a where aS: "a \<in> S" and aq: "a *v g x = 0"
+    and aTr: "- trace (H ** a) / 2 < 1"
+    using covariation_op_less_witness[OF fail[unfolded one_ereal_def]] by blast
   define \<eta>\<^sub>0 where "\<eta>\<^sub>0 = (1 - (- trace (H ** a) / 2)) / 2"
   have h00: "0 < \<eta>\<^sub>0" unfolding \<eta>\<^sub>0_def using aTr by simp
   have trH: "2 * \<eta>\<^sub>0 \<le> 1 + trace (H ** a) / 2"
     unfolding \<eta>\<^sub>0_def by simp
-  have aS: "a \<in> sconstraint k L"
-    using aF feasible_subset_sconstraint by blast
-  define TB where "TB = real CARD('n) * L"
+  define TB where "TB = real CARD('n) * D"
   have trab: "trace a \<le> TB"
-    unfolding TB_def by (rule sconstraint_trace_le[OF aS])
+    unfolding TB_def by (rule trace_le_diag_bound) (use D[OF aS] in blast)
   have tra0: "0 \<le> trace a"
-    using sconstraint_trace_ge[OF kn aS] by linarith
+    unfolding trace_def by (rule sum_nonneg) (use D[OF aS] in blast)
   have TB1: "0 < TB + 1"
   proof -
     have "0 \<le> TB" using trab tra0 by linarith
@@ -157,12 +228,15 @@ proof -
   have rmx0: "0 < min (rphi / 2) (min (eK / 2) (\<rho> / 2))"
     using rphi0 eK0 rho0 by simp
   show False
-  proof (rule rotSF_exists[where M = M and x = x, OF aF gx0 e3 rmx0])
+  proof (rule covariation_rotSF_exists[where M = M and x = x, OF aS Spsd[OF aS] aq _ gx0 e3 rmx0])
+    show "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+      by (rule rot)
+  next
     fix SF :: "real^'n \<Rightarrow> real^'n^'n" and rr :: real
     assume rr0: "0 < rr"
       and rrx: "rr \<le> min (rphi / 2) (min (eK / 2) (\<rho> / 2))"
       and SFc: "continuous_on UNIV SF"
-      and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+      and SFs: "\<And>z. SF z ** transpose (SF z) \<in> S"
       and killc: "\<And>z. transpose (SF z)
           *v (g x + M *v (closest_point (cball x rr) z - x)) = 0"
       and trcl: "\<And>z. \<bar>trace (M ** (SF z ** transpose (SF z)))
@@ -272,7 +346,7 @@ proof -
       have psiY_ub: "psiY \<le> mg / 4"
         using psiY_small[unfolded abs_le_iff] by linarith
       \<comment> \<open>the growth package, run at \<open>y\<close> with the quadratic centred at \<open>x\<close>\<close>
-      obtain P where Pc: "P \<in> exit_class k L T y"
+      obtain P where Pc: "P \<in> covariation_class S T y"
         and AEg: "AE \<omega> in P. \<forall>t.
           0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rr) \<longrightarrow>
           t * (\<eta> - 2) / 2 \<le> qy \<bullet> (fst (\<omega> t) - y)
@@ -303,20 +377,19 @@ proof -
         have margy: "\<And>z. z \<in> ball x rr \<Longrightarrow>
             \<eta> - 2 \<le> trace (M ** (SF z ** transpose (SF z)))"
           using marg by blast
-        have "\<exists>P \<in> covariation_class (sconstraint k L) T y. AE \<omega> in P. \<forall>t.
+        have "\<exists>P \<in> covariation_class S T y. AE \<omega> in P. \<forall>t.
             0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rr) \<longrightarrow>
             t * (\<eta> - 2) / 2 \<le> qy \<bullet> (fst (\<omega> t) - y)
               + (1/2) * ((fst (\<omega> t) - y) \<bullet> (M *v (fst (\<omega> t) - y)))"
-          by (rule eulerp_limit_good_region[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
-              sconstraint_convex SFc SFs symM ROo ROb killy margy])
-        then show ?thesis using that unfolding exit_class_eq_covariation by blast
+          by (rule eulerp_limit_good_region[OF T0 B0 B D0 D Sc Sv SFc SFs symM ROo ROb killy margy])
+        then show ?thesis using that by blast
       qed
       have setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
-        by (rule exit_class_sets[OF Pc])
+        by (rule covariation_class_sets[OF Pc])
       have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
         by (rule space_of_path_sets[OF setsP])
       have start: "AE \<omega> in P. fst (\<omega> 0) = y \<and> snd (\<omega> 0) = 0"
-        by (rule covariation_class_start[OF Pc[unfolded exit_class_eq_covariation]])
+        by (rule covariation_class_start[OF Pc])
       have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
       define \<theta> where "\<theta> = (\<lambda>\<omega> :: 'n pairpath. min cc (pball_exit T x rr \<omega>))"
       have st: "path_stopping_time T \<theta>"
@@ -332,7 +405,7 @@ proof -
           pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t))
           + (if pexit (\<theta> \<omega>) K (\<lambda>t. fst (\<omega> t)) = \<theta> \<omega>
                 \<and> fst (\<omega> (\<theta> \<omega>)) \<in> K
-             then enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
+             then enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
              else 0))"
       have AEfun: "AE \<omega> in P. vs x + mg + psiY \<le> FN \<omega>"
         using AEg start sp
@@ -388,10 +461,10 @@ proof -
           by (rule pexit_eq_of_stays[OF less_imp_le[OF th0]])
             (use inK in simp)
         have XinK: "fst (\<omega> (\<theta> \<omega>)) \<in> K" using inK[of "\<theta> \<omega>"] th0 by simp
-        have cap: "enn2real (exit_val k L (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
+        have cap: "enn2real (covariation_val S (T - \<theta> \<omega>) K (fst (\<omega> (\<theta> \<omega>))))
             = min (tv (fst (\<omega> (\<theta> \<omega>)))) (T - \<theta> \<omega>)"
           unfolding tv_def
-          by (rule enn2real_paper_v_horizon_cap[OF _ _ L1' Kc])
+          by (rule enn2real_covariation_val_horizon_cap[OF _ _ Sc Sv SST Kc])
             (use thT th0 in auto)
         have feq: "FN \<omega> = \<theta> \<omega> + min (tv (fst (\<omega> (\<theta> \<omega>)))) (T - \<theta> \<omega>)"
           unfolding FN_def using pex XinK cap by simp
@@ -551,11 +624,12 @@ proof -
         qed
         show ?case by (rule fun_ge)
       qed
-      have dpp: "ennreal (vs x + mg + psiY) \<le> exit_val k L T K y"
-        by (rule exit_val_dpp_ge_const_time[OF T0 L1' Kc st thM Pc AEfun[unfolded FN_def]])
-      have vfin: "ennreal (tv y) = exit_val k L T K y"
+      have dpp: "ennreal (vs x + mg + psiY) \<le> covariation_val S T K y"
+        by (rule covariation_val_dpp_ge_const_time[OF T0 B0 B D0 D Sc Sv SST Kc st thM Pc
+            AEfun[unfolded FN_def]])
+      have vfin: "ennreal (tv y) = covariation_val S T K y"
         unfolding tv_def
-        using covariation_val_neq_top[OF T0', of "sconstraint k L" K y, folded exit_val_eq_covariation_val]
+        using covariation_val_neq_top[OF T0', of S K y]
         by (simp add: less_top)
       have chain: "ennreal (vs x + mg + psiY) \<le> ennreal (tv y)"
         using dpp by (simp add: vfin)
@@ -826,43 +900,35 @@ proof -
   show False using ge vz th0 by linarith
 qed
 
-theorem exit_val_not_locally_constant:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-    and tv :: "real^'n \<Rightarrow> real" and r T :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
-    and Kc: "closed K"
-    and tvdef: "tv = (\<lambda>u. enn2real (exit_val k L T K u))"
-    and r0: "0 < r" and sub: "cball x r \<subseteq> K"
-    and cap: "lsc_env tv x < T / 2"
-    and const: "\<And>y. dist x y < r \<Longrightarrow> lsc_env tv y = lsc_env tv x"
-  shows False
-proof -
-  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
-  show False
-    by (rule covariation_val_not_locally_constant[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
-          closed_sconstraint sconstraint_convex tanpU_id_sq_sconstraint[OF _ k1 L1] n2 Kc
-          tvdef[unfolded exit_val_eq_covariation_val] r0 sub cap const])
-qed
-
 text \<open>Horn A at a local minimiser handed over by the case split of the
   assembly.\<close>
 
-lemma exit_val_case2_at_minimiser:
+lemma covariation_val_case2_at_minimiser:
   fixes K :: "(real^'n::finite) set" and x y \<eta> :: "real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
     and Kc: "closed K" and symH: "transpose H = H"
     and rho: "0 < \<rho>" and sub: "cball x \<rho> \<subseteq> interior K"
     and dxy: "dist x y < \<rho>"
     and loc: "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y
+      lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) y
           - (((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
-        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) w
+        \<le> lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) w
           - (((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
     and gy: "(H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta> \<noteq> 0"
-  shows "1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
+  shows "1 \<le> covariation_op S ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
       (H - \<epsilon> *\<^sub>R mat 1)"
 proof -
+  have SST: "tanpU (mat 1) 0 ** transpose (tanpU (mat 1) (0 :: real^'n)) \<in> S"
+    by (rule tan1) simp
   have symM: "transpose (H - \<epsilon> *\<^sub>R mat 1) = H - \<epsilon> *\<^sub>R mat 1"
     by (rule transpose_shift_diff[OF symH])
   have rp: "0 < \<rho> - dist x y" using dxy by simp
@@ -875,20 +941,20 @@ proof -
       (\<lambda>z. 0 + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2 + \<eta> \<bullet> (z - x))
       (\<lambda>z. (H - \<epsilon> *\<^sub>R mat 1) *v (z - x) + \<eta>) (H - \<epsilon> *\<^sub>R mat 1) y"
     by (rule test_fun_at_shifted_quadratic[OF symM])
-  have tminy: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y
+  have tminy: "lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) y
         - (0 + ((y - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
-      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) w
+      \<le> lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) w
         - (0 + ((w - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
     if wK: "w \<in> K" and dw: "dist y w < \<rho> - dist x y" for w
     using loc[OF dw] by simp
   show ?thesis
   proof (rule ccontr)
-    assume "\<not> 1 \<le> ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
+    assume "\<not> 1 \<le> covariation_op S ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
         (H - \<epsilon> *\<^sub>R mat 1)"
-    then have flt: "ell_op k L ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
+    then have flt: "covariation_op S ((H - \<epsilon> *\<^sub>R mat 1) *v (y - x) + \<eta>)
         (H - \<epsilon> *\<^sub>R mat 1) < 1" by simp
     show False
-      by (rule exit_val_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc yi
+      by (rule covariation_val_supersol_contradiction_case1_lsc[OF T0 B0 B D0 D Sc Sv Spsd rot SST Kc yi
             tfy rp tminy gy flt])
   qed
 qed
@@ -898,38 +964,45 @@ subsection \<open>Case 2 assembled at a fixed \<open>\<epsilon>\<close>\<close>
 text \<open>The dichotomy.  Either arbitrarily small tilts admit a local
   minimiser with nonzero gradient --- and then Case 1 fires at each of
   them, the gradients tend to \<open>0\<close> because \<open>\<bar>y - x\<bar> \<le> 4\<bar>\<eta>\<bar>/\<epsilon>\<close>, and
-  \<open>ell_op_usc_ge_one_limit\<close> delivers the inequality at \<open>p = 0\<close> --- or
+  \<open>covariation_op_usc_ge_one_limit\<close> delivers the inequality at \<open>p = 0\<close> --- or
   some threshold fails, which is exactly the hypothesis of
   \<open>horn_B_locally_constant\<close>, and then \<open>v\<^sub>*\<close> is locally constant, which
-  \<open>exit_val_not_locally_constant\<close> refutes.
+  \<open>covariation_val_not_locally_constant\<close> refutes.
 
   A singular \<open>H - \<epsilon>\<cdot>1\<close> needs no separate treatment: it supplies
   arbitrarily small tilts for which the gradient can never vanish, so
   the first branch always applies.  That is why the second branch may
   assume invertibility.\<close>
 
-theorem exit_val_case2_eps:
+theorem covariation_val_case2_eps:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
     and Kc: "closed K" and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
     and rho0: "0 < \<rho>\<^sub>0"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho>\<^sub>0 \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
-        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
-    and cap: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
+      lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) y - \<phi> y"
+    and cap: "lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x < T / 2"
     and e0: "0 < \<epsilon>"
-  shows "1 \<le> ell_op_usc k L 0 (H - \<epsilon> *\<^sub>R mat 1)"
+  shows "1 \<le> covariation_op_usc S 0 (H - \<epsilon> *\<^sub>R mat 1)"
 proof -
-  let ?W = "lsc_env (\<lambda>u. enn2real (exit_val k L T K u))"
+  let ?W = "lsc_env (\<lambda>u. enn2real (covariation_val S T K u))"
   let ?M = "H - \<epsilon> *\<^sub>R mat 1"
-  have L1': "1 \<le> L" using L1 by linarith
   have symH: "transpose H = H" using tf unfolding test_fun_at_def by blast
   have symM: "transpose ?M = ?M" by (rule transpose_shift_diff[OF symH])
   have c0: "0 < \<epsilon> / 4" using e0 by simp
-  have tv0: "\<And>u. (0 :: real) \<le> enn2real (exit_val k L T K u)" by simp
+  have tv0: "\<And>u. (0 :: real) \<le> enn2real (covariation_val S T K u)" by simp
   have lscW: "\<exists>d>0. \<forall>u. dist z u < d \<longrightarrow> a < ?W u"
     if lt: "a < ?W z" for a and z :: "real^'n"
     by (rule lsc_env_lsc[OF tv0 lt])
@@ -961,7 +1034,7 @@ proof -
     define N where "N = onorm ((*v) ?M)"
     have N0: "0 \<le> N" unfolding N_def by (rule onorm_pos_le[OF bl])
     have Cpos: "0 \<le> 4 * N / \<epsilon> + 1" using N0 e0 by simp
-    have ex: "\<exists>p :: real^'n. 1 \<le> ell_op k L p ?M
+    have ex: "\<exists>p :: real^'n. 1 \<le> covariation_op S p ?M
         \<and> norm p \<le> (4 * N / \<epsilon> + 1) * \<delta>s j" for j
     proof -
       have gd: "good (\<delta>s j)" using True by blast
@@ -973,14 +1046,13 @@ proof -
             \<le> ?W w - (((w - x) \<bullet> (?M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
         and gy: "?M *v (y - x) + \<eta> \<noteq> 0"
         using gd unfolding good_def by blast
-      have ge: "1 \<le> ell_op k L (?M *v (y - x) + \<eta>) ?M"
-      proof (rule exit_val_case2_at_minimiser[OF T0 L1 k1 kn Kc symH rho subK
-              dxy _ gy])
-        fix w :: "real^'n" assume "dist y w < \<rho> - dist x y"
-        then show "?W y - (((y - x) \<bullet> (?M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
+      have locw: "\<And>w. dist y w < \<rho> - dist x y \<Longrightarrow>
+          ?W y - (((y - x) \<bullet> (?M *v (y - x))) / 2 + \<eta> \<bullet> (y - x))
             \<le> ?W w - (((w - x) \<bullet> (?M *v (w - x))) / 2 + \<eta> \<bullet> (w - x))"
-          using loc by blast
-      qed
+        using loc by blast
+      have ge: "1 \<le> covariation_op S (?M *v (y - x) + \<eta>) ?M"
+        by (rule covariation_val_case2_at_minimiser[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc symH rho subK
+              dxy locw gy])
       have nb: "norm (?M *v (y - x) + \<eta>) \<le> (4 * N / \<epsilon> + 1) * \<delta>s j"
       proof -
         have t1: "norm (?M *v (y - x) + \<eta>) \<le> norm (?M *v (y - x)) + norm \<eta>"
@@ -1000,7 +1072,7 @@ proof -
       show ?thesis using ge nb by blast
     qed
     obtain ps :: "nat \<Rightarrow> real^'n" where
-      psge: "\<And>j. 1 \<le> ell_op k L (ps j) ?M"
+      psge: "\<And>j. 1 \<le> covariation_op S (ps j) ?M"
       and psn: "\<And>j. norm (ps j) \<le> (4 * N / \<epsilon> + 1) * \<delta>s j"
       using ex by metis
     have dslim: "\<delta>s \<longlonglongrightarrow> 0"
@@ -1030,15 +1102,15 @@ proof -
     have plim: "ps \<longlonglongrightarrow> 0" using d2 by (simp add: tendsto_norm_zero_iff)
     have lim: "(\<lambda>j. (ps j, ?M)) \<longlonglongrightarrow> (0, ?M)"
       by (intro tendsto_Pair plim tendsto_const)
-    have gew: "1 \<le> ell_op_usc k L (ps j) ?M" for j
+    have gew: "1 \<le> covariation_op_usc S (ps j) ?M" for j
     proof -
-      have "(1 :: ereal) \<le> ereal (ell_op k L (ps j) ?M)"
+      have "(1 :: ereal) \<le> covariation_op S (ps j) ?M"
         using psge[of j] by simp
-      also have "\<dots> \<le> ell_op_usc k L (ps j) ?M"
-        by (rule ell_op_le_ell_op_usc)
+      also have "\<dots> \<le> covariation_op_usc S (ps j) ?M"
+        by (rule covariation_op_le_usc)
       finally show ?thesis .
     qed
-    show ?thesis by (rule ell_op_usc_ge_one_limit[OF gew lim])
+    show ?thesis by (rule covariation_op_usc_ge_one_limit[OF gew lim])
   next
     case False
     then obtain j where nj: "\<not> good (\<delta>s j)" by blast
@@ -1104,15 +1176,15 @@ proof -
           unfolding r2_def using rho by auto
         then show ?thesis using subK interior_subset by blast
       qed
-      have contra: False
-      proof (rule exit_val_not_locally_constant[OF T0 L1' k1 kn Kc refl r20 r2K])
-        show "?W x < T / 2" by (rule cap)
-      next
-        fix y :: "real^'n" assume dy: "dist x y < r2"
+      have constx: "?W y = ?W x" if dy: "dist x y < r2" for y
+      proof -
         have "r2 \<le> rr / 2" unfolding r2_def by simp
         then have "dist x y < rr" using dy rr0 by linarith
         then show "?W y = ?W x" by (rule rc)
       qed
+      have contra: False
+        by (rule covariation_val_not_locally_constant[OF T0 B0 B D0 D Sc Sv tan1 n2 Kc refl r20 r2K
+              cap constx])
       then show ?thesis by simp
     qed
   qed
@@ -1121,31 +1193,39 @@ qed
 subsection \<open>Case 2, and the supersolution property\<close>
 
 text \<open>Letting \<open>\<epsilon> \<rightarrow> 0\<close> along \<open>1/(j+1)\<close> moves the Hessian back to \<open>H\<close>,
-  and one more application of \<open>ell_op_usc_ge_one_limit\<close> --- this time in
+  and one more application of \<open>covariation_op_usc_ge_one_limit\<close> --- this time in
   the matrix argument rather than the gradient --- finishes Case 2.\<close>
 
-theorem exit_val_case2:
+theorem covariation_val_case2:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
     and Kc: "closed K" and xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
     and rho0: "0 < \<rho>\<^sub>0"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho>\<^sub>0 \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
-        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
-    and cap: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
-  shows "1 \<le> ell_op_usc k L 0 H"
+      lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) y - \<phi> y"
+    and cap: "lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x < T / 2"
+  shows "1 \<le> covariation_op_usc S 0 H"
 proof -
   show ?thesis
-    by (rule ell_op_usc_ge_one_shift, rule exit_val_case2_eps[OF T0 L1 k1 kn Kc xi tf gx0
-          rho0 tmin cap])
+    by (rule covariation_op_usc_ge_one_shift, rule covariation_val_case2_eps[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc
+          xi tf gx0 rho0 tmin cap])
 qed
 
 text \<open>Definition 3.1(b) for the paper's own value function.  Case 1
   (\<open>\<nabla>\<phi>(x) \<noteq> 0\<close>) is the skew-trick contradiction, lifted from
-  \<open>ell_op\<close> to \<open>ell_op_usc\<close>; Case 2 (\<open>\<nabla>\<phi>(x) = 0\<close>) is the dichotomy
+  \<open>covariation_op\<close> to \<open>covariation_op_usc\<close>; Case 2 (\<open>\<nabla>\<phi>(x) = 0\<close>) is the dichotomy
   above.  Both cases consume the touching only on a ball around \<open>x\<close>, so
   the inequality is stated for a local touching.
 
@@ -1155,59 +1235,77 @@ text \<open>Definition 3.1(b) for the paper's own value function.  Case 1
   all.  For a bounded \<open>K\<close> it follows from
   @{thm [source] exit_val_le_ball_bound}.\<close>
 
-theorem exit_val_supersol_lsc_local:
+theorem covariation_val_supersol_lsc_local:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
     and Kc: "closed K"
-    and cap: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
+    and cap: "lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x < T / 2"
     and xi: "x \<in> interior K" and tf: "test_fun_at \<phi> g H x" and rho0: "0 < \<rho>"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho> \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
-        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
-  shows "1 \<le> ell_op_usc k L (g x) H"
+      lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x - \<phi> x
+        \<le> lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) y - \<phi> y"
+  shows "1 \<le> covariation_op_usc S (g x) H"
 proof (cases "g x = 0")
   case False
-  have plain: "1 \<le> ell_op k L (g x) H"
+  have SST: "tanpU (mat 1) 0 ** transpose (tanpU (mat 1) (0 :: real^'n)) \<in> S"
+    by (rule tan1) simp
+  have plain: "1 \<le> covariation_op S (g x) H"
   proof (rule ccontr)
-    assume "\<not> 1 \<le> ell_op k L (g x) H"
-    then have flt: "ell_op k L (g x) H < 1" by simp
+    assume "\<not> 1 \<le> covariation_op S (g x) H"
+    then have flt: "covariation_op S (g x) H < 1" by simp
     show False
-      by (rule exit_val_supersol_contradiction_case1_lsc[OF T0 L1 k1 kn Kc xi
+      by (rule covariation_val_supersol_contradiction_case1_lsc[OF T0 B0 B D0 D Sc Sv Spsd rot SST Kc xi
             tf rho0 tmin False flt])
   qed
-  have "(1 :: ereal) \<le> ereal (ell_op k L (g x) H)" using plain by simp
-  also have "\<dots> \<le> ell_op_usc k L (g x) H" by (rule ell_op_le_ell_op_usc)
+  have "(1 :: ereal) \<le> covariation_op S (g x) H" using plain by simp
+  also have "\<dots> \<le> covariation_op_usc S (g x) H" by (rule covariation_op_le_usc)
   finally show ?thesis .
 next
   case True
-  have "1 \<le> ell_op_usc k L 0 H"
-    by (rule exit_val_case2[OF T0 L1 k1 kn Kc xi tf True rho0 tmin cap])
+  have "1 \<le> covariation_op_usc S 0 H"
+    by (rule covariation_val_case2[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc xi tf True rho0 tmin cap])
   then show ?thesis unfolding True .
 qed
 
 text \<open>A touching over all of \<open>K\<close> is in particular a local one (with
   \<open>\<rho> = 1\<close>), so the global form follows.\<close>
 
-theorem exit_val_supersol_lsc:
+theorem covariation_val_supersol_lsc:
   fixes K :: "(real^'n::finite) set"
-  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
     and Kc: "closed K"
     and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
-  shows "visc_supersol_lsc k L K (interior K)
-      (\<lambda>u. enn2real (exit_val k L T K u))"
-  unfolding visc_supersol_lsc_def
+      lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x < T / 2"
+  shows "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S) (interior K)
+      (lsc_env (\<lambda>u. enn2real (covariation_val S T K u)))"
+  unfolding visc_supersol_gen_principal
 proof (intro ballI allI impI)
   fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
     and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
   assume xi: "x \<in> interior K" and tf: "test_fun_at \<phi> g H x"
-    and tmin: "\<forall>y\<in>K. lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
-      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
-  show "1 \<le> ell_op_usc k L (g x) H"
-    by (rule exit_val_supersol_lsc_local[OF T0 L1 k1 kn Kc cap[OF xi] xi tf
-          zero_less_one]) (use tmin in blast)
+    and tmin: "\<forall>y\<in>K. lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x - \<phi> x
+      \<le> lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) y - \<phi> y"
+  show "1 \<le> covariation_op_usc S (g x) H"
+    by (rule covariation_val_supersol_lsc_local[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc cap[OF xi] xi tf
+          zero_less_one]) (use tmin in blast)+
 qed
 
 subsection \<open>The same inequality for the envelope taken within \<open>K\<close>\<close>
@@ -1217,6 +1315,73 @@ text \<open>The local form also gives the inequality for the paper's envelope
   small enough ball around an interior point meets \<open>K\<close> only in interior
   points.\<close>
 
+theorem covariation_val_supersol_envK:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
+    and Kc: "closed K"
+    and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x < T / 2"
+  shows "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S) (interior K)
+      (lsc_envK K (\<lambda>u. enn2real (covariation_val S T K u)))"
+  unfolding visc_supersol_gen_principal
+proof (intro ballI allI impI)
+  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
+    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
+  assume xi: "x \<in> interior K"
+    and tf: "test_fun_at \<phi> g H x"
+    and tmin: "\<forall>y\<in>K. lsc_envK K (\<lambda>u. enn2real (covariation_val S T K u)) x - \<phi> x
+      \<le> lsc_envK K (\<lambda>u. enn2real (covariation_val S T K u)) y - \<phi> y"
+  have v0: "(0 :: real) \<le> enn2real (covariation_val S T K y)" for y by simp
+  obtain \<rho> where rho0: "0 < \<rho>" and rsub: "ball x \<rho> \<subseteq> interior K"
+    using openE[OF open_interior xi] by blast
+  have eqI: "lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) y
+      = lsc_envK K (\<lambda>u. enn2real (covariation_val S T K u)) y"
+    if "y \<in> interior K" for y
+    by (rule lsc_env_eq_on_interior[OF v0 that])
+  have loc: "lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x - \<phi> x
+      \<le> lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) y - \<phi> y"
+    if yK: "y \<in> K" and dy: "dist x y < \<rho>" for y
+  proof -
+    have "y \<in> interior K" using rsub dy by auto
+    then show ?thesis using tmin yK eqI[OF xi] eqI[of y] by simp
+  qed
+  show "1 \<le> covariation_op_usc S (g x) H"
+    by (rule covariation_val_supersol_lsc_local[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc cap[OF xi] xi tf
+          rho0 loc])
+qed
+
+text \<open>The paper's supersolution properties are the instances \<open>S = sconstraint k L\<close>:
+  that set is closed, convex, bounded, made of psd matrices, invariant under
+  orthogonal conjugation (@{thm [source] sconstraint_conj}), and contains the
+  sphere-tangential rates for \<open>1 \<le> k\<close> (@{thm [source] tanpU_id_sq_sconstraint}).\<close>
+
+theorem exit_val_supersol_lsc:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
+    and Kc: "closed K"
+    and cap: "\<And>x :: real^'n. x \<in> interior K \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
+  shows "visc_supersol_lsc k L K (interior K)
+      (\<lambda>u. enn2real (exit_val k L T K u))"
+proof -
+  have L0: "0 \<le> L" using L1 by simp
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  show ?thesis
+    unfolding visc_supersol_lsc_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]
+      exit_val_eq_covariation_val
+    by (rule covariation_val_supersol_lsc[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
+          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 Kc cap[unfolded exit_val_eq_covariation_val]])
+qed
+
 theorem exit_val_supersol_envK:
   fixes K :: "(real^'n::finite) set"
   assumes T0: "0 < T" and L1: "1 \<le> L" and k1: "1 \<le> k" and kn: "k < CARD('n)"
@@ -1225,31 +1390,15 @@ theorem exit_val_supersol_envK:
       lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
   shows "visc_supersol_env k L K (interior K)
       (lsc_envK K (\<lambda>u. enn2real (exit_val k L T K u)))"
-  unfolding visc_supersol_env_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> :: "real^'n \<Rightarrow> real"
-    and g :: "real^'n \<Rightarrow> real^'n" and H :: "real^'n^'n"
-  assume xi: "x \<in> interior K"
-    and tf: "test_fun_at \<phi> g H x"
-    and tmin: "\<forall>y\<in>K. lsc_envK K (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
-      \<le> lsc_envK K (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
-  have v0: "(0 :: real) \<le> enn2real (exit_val k L T K y)" for y by simp
-  obtain \<rho> where rho0: "0 < \<rho>" and rsub: "ball x \<rho> \<subseteq> interior K"
-    using openE[OF open_interior xi] by blast
-  have eqI: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y
-      = lsc_envK K (\<lambda>u. enn2real (exit_val k L T K u)) y"
-    if "y \<in> interior K" for y
-    by (rule lsc_env_eq_on_interior[OF v0 that])
-  have loc: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
-      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
-    if yK: "y \<in> K" and dy: "dist x y < \<rho>" for y
-  proof -
-    have "y \<in> interior K" using rsub dy by auto
-    then show ?thesis using tmin yK eqI[OF xi] eqI[of y] by simp
-  qed
-  show "1 \<le> ell_op_usc k L (g x) H"
-    by (rule exit_val_supersol_lsc_local[OF T0 L1 k1 kn Kc cap[OF xi] xi tf
-          rho0 loc])
+proof -
+  have L0: "0 \<le> L" using L1 by simp
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  show ?thesis
+    unfolding visc_supersol_env_eq_gen ell_op_usc_eq_covariation_op_usc[OF k1 kn L1]
+      exit_val_eq_covariation_val
+    by (rule covariation_val_supersol_envK[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
+          sconstraint_convex sconstraint_psd_entry(1) sconstraint_conj
+          tanpU_id_sq_sconstraint[OF _ k1 L1] n2 Kc cap[unfolded exit_val_eq_covariation_val]])
 qed
 
 subsection \<open>Discharging the horizon hypothesis\<close>
@@ -1322,6 +1471,32 @@ proof (rule exit_val_supersol_lsc[OF T0 L1 k1 kn Kc])
     unfolding exit_val_eq_covariation_val
     by (rule covariation_val_cap_inert[OF less_imp_le[OF T0]
         sconstraint_trace_bounds[OF kn order_trans[OF zero_le_one L1]] KB Tbig])
+qed
+
+text \<open>The same for an abstract set with a trace lower bound \<open>\<theta>\<close>.\<close>
+
+corollary covariation_val_supersol_lsc_bounded:
+  fixes K :: "(real^'n::finite) set"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S" and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
+    and Kc: "closed K" and KB: "K \<subseteq> cball 0 rK"
+    and Tbig: "2 * (rK * rK) / \<theta> < T"
+  shows "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S) (interior K)
+      (lsc_env (\<lambda>u. enn2real (covariation_val S T K u)))"
+proof -
+  have cap: "\<And>x. x \<in> interior K \<Longrightarrow>
+      lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x < T / 2"
+    by (rule covariation_val_cap_inert[OF less_imp_le[OF T0] B0 B th0 th KB Tbig])
+  show ?thesis
+    by (rule covariation_val_supersol_lsc[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc cap])
 qed
 
 

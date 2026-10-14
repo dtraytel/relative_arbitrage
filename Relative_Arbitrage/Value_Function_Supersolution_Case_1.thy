@@ -444,28 +444,6 @@ proof -
 qed
 
 
-text \<open>The paper's instance, from a feasible rate.\<close>
-
-theorem rotSF_exists:
-  fixes a M :: "real^'n::finite^'n" and q x :: "real^'n"
-    and \<epsilon> r0 :: real
-  assumes aF: "a \<in> feasible k L q" and q0: "q \<noteq> 0"
-    and eps: "0 < \<epsilon>" and r00: "0 < r0"
-  obtains SF :: "real^'n \<Rightarrow> real^'n^'n" and r :: real where
-    "0 < r" and "r \<le> r0"
-    and "continuous_on UNIV SF"
-    and "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
-    and "\<And>z. transpose (SF z)
-          *v (q + M *v (closest_point (cball x r) z - x)) = 0"
-    and "\<And>z. \<bar>trace (M ** (SF z ** transpose (SF z))) - trace (M ** a)\<bar> \<le> \<epsilon>"
-proof -
-  have aS: "a \<in> sconstraint k L" using aF feasible_subset_sconstraint by blast
-  have psda: "psd a" and aq: "a *v q = 0" using aF unfolding feasible_def by blast+
-  show thesis
-    by (rule covariation_rotSF_exists[OF aS psda aq sconstraint_conj q0 eps r00])
-      (assumption | rule that)+
-qed
-
 subsection \<open>Case 1: a nonzero gradient contradicts a failed supersolution
   inequality\<close>
 
@@ -474,7 +452,7 @@ text \<open>If the supersolution inequality fails at a touching point with
   \<open>2\<eta>\<^sub>0\<close>.  Softening the Hessian by \<open>(2\<gamma>+\<delta>)\<cdot>1\<close> keeps slack \<open>2\<eta>\<close> and buys
   both the Taylor minorant (via \<open>\<delta>\<close>) and a strict sphere margin (via
   \<open>\<gamma>\<close>); the witness is rotated into a covariance field by
-  @{thm [source] rotSF_exists}, the Euler limit
+  @{thm [source] covariation_rotSF_exists}, the Euler limit
   produces a class member whose paths grow along the quadratic, and at the
   stopping time \<open>min cc (pball_exit T x rr)\<close> the DPP functional is at
   least \<open>v(x) + mg\<close> almost surely -- the exit branch is paid by
