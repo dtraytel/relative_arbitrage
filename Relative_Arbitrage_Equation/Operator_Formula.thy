@@ -354,7 +354,7 @@ section \<open>The objective of Eq. (3.5) in the adapted eigenbasis\<close>
 
 text \<open>The paper justifies Eq. (3.5) by observing \<open>tr(Ma) = tr(M\<^sub>p a)\<close> for
   \<open>a \<succeq> 0\<close> with \<open>ap = 0\<close>, and writing symmetric \<open>M\<^sub>p\<close> as a linear
-  combination of outer products (\<open>trace_Mp\<close> in @{theory Relative_Arbitrage.Operator_Continuity} gives the
+  combination of outer products (\<open>trace_Mp\<close> in @{theory Relative_Arbitrage_Equation.Operator_Continuity} gives the
   first fact).  This section carries out the expansion and its weight
   constraints.\<close>
 

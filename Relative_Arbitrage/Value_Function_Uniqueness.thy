@@ -3,7 +3,7 @@ section \<open>Theorem 1.1: the value function is the unique viscosity solution\
 (*<*)
 theory Value_Function_Uniqueness
   imports
-    Comparison_Two_Domain Exit_Class_Infinite Value_Function_Assembly
+    "Relative_Arbitrage_Equation.Comparison_Two_Domain" Exit_Class_Infinite Value_Function_Assembly
 begin
 (*>*)
 
@@ -13,7 +13,7 @@ text \<open>
   Eq. (1.9) satisfying the zero boundary condition of Definition 3.1.  This theory
   joins the two halves of that statement: the viscosity property, proved in
   @{theory Relative_Arbitrage.Value_Function_Assembly}, and the comparison principle, proved in
-  @{theory Relative_Arbitrage.Comparison_Principle}.  It also derives Example 3.1 in closed form.
+  @{theory Relative_Arbitrage_Equation.Comparison_Principle}.  It also derives Example 3.1 in closed form.
 \<close>
 
 section \<open>The clauses of Theorem 1.1 and where they are proved\<close>

@@ -55,7 +55,7 @@ qed
 
 subsection \<open>The \<open>T\<^sub>\<iota>\<close> hypothesis and its convex instance\<close>
 
-text \<open>\<open>expandable\<close> lives in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
+text \<open>\<open>expandable\<close> lives in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
 
 
 
@@ -186,7 +186,7 @@ subsection \<open>The two-domain doubled maximiser\<close>
 
 text \<open>Existence of the maximiser of \<open>\<theta>u(x)-w(y)-pen(x-y)\<close> over \<open>K \<times> K'\<close>
   for usc \<open>u\<close> and lsc \<open>w\<close>, needing no continuity: the objective is usc
-  on the compact product, by the \<open>\<epsilon>\<close>-form calculus in @{theory Relative_Arbitrage.Operator_Envelopes} and
+  on the compact product, by the \<open>\<epsilon>\<close>-form calculus in @{theory Relative_Arbitrage_Equation.Operator_Envelopes} and
   \<open>usc_attains_sup_gen\<close>, stated there for an arbitrary metric space so
   it applies to the product.\<close>
 

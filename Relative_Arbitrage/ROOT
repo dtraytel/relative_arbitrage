@@ -6,12 +6,13 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     is the unique bounded upper semicontinuous viscosity solution of the
     associated degenerate elliptic equation.
 
-    The session is layered: the path toolkit (Pair_Path_Space through
-    Path_Law_Sampling) knows nothing of the constraint set or the value
-    function; the operator layer states Eq. (1.9) and its envelopes; the
-    comparison layer proves Theorem 4.2(a); the class and dynamic
-    programming layer builds the class of Eq. (1.7); and the value-function
-    layer proves the five clauses.
+    The operator of Eq. (1.9), its envelopes, the subspace-tangential field
+    and the comparison principle (Theorem 4.2(a)) are in the probability-free
+    session Relative_Arbitrage_Equation.  This session is layered: the path
+    toolkit (Pair_Path_Space through Path_Law_Sampling) knows nothing of the
+    constraint set or the value function; the class and dynamic programming
+    layer builds the class of Eq. (1.7); and the value-function layer proves
+    the five clauses.
   "
   options [document = pdf, document_output = "output"]
   sessions
@@ -20,6 +21,7 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Second_Order_Viscosity_Analysis
     Wiener_Measure
     Disintegration
+    Relative_Arbitrage_Equation
   theories
     Pair_Path_Space
     Pair_Path_Laws
@@ -27,14 +29,6 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Path_Stopping_Times
     Path_Law_Pasting
     Path_Law_Sampling
-    Curvature_Operator
-    Viscosity_Definitions
-    Constraint_Set_Convexity
-    Eigenvalue_Bound_Exact
-    Operator_Continuity
-    Operator_Formula
-    Operator_Envelopes
-    Operator_Envelope_Continuity
     Exit_Class
     Covariation_Density
     Exit_Class_Limits
@@ -56,10 +50,6 @@ session Relative_Arbitrage = Continuous_Path_Spaces +
     Value_Function_Supersolution_Case_2
     Value_Function_Tangential_Field
     Value_Function_Assembly
-    Comparison_Strictness
-    Comparison_Localisation
-    Comparison_Principle
-    Comparison_Two_Domain
     Value_Function_Uniqueness
     Exit_Class_Infinite
     Exit_Class_Marginals

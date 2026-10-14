@@ -1,7 +1,7 @@
 import csv, re, os, sys, collections, json
 REPO=os.path.abspath(os.path.join(os.path.dirname(__file__),'..','..'))
 OUT=sys.argv[1]
-dirs={"Symmetric_Matrix_Spectra":"Symmetric_Matrix_Spectra","Semicontinuous_Analysis":"Semicontinuous_Analysis","Second_Order_Viscosity_Analysis":"Second_Order_Viscosity_Analysis","Wiener_Measure":"Wiener_Measure","Continuous_Time_Martingales":"Continuous_Time_Martingales","Continuous_Path_Spaces":"Continuous_Path_Spaces","Relative_Arbitrage":"Relative_Arbitrage","Relative_Arbitrage_Statement":"Statement"}
+dirs={"Symmetric_Matrix_Spectra":"Symmetric_Matrix_Spectra","Semicontinuous_Analysis":"Semicontinuous_Analysis","Second_Order_Viscosity_Analysis":"Second_Order_Viscosity_Analysis","Relative_Arbitrage_Equation":"Relative_Arbitrage_Equation","Wiener_Measure":"Wiener_Measure","Continuous_Time_Martingales":"Continuous_Time_Martingales","Continuous_Path_Spaces":"Continuous_Path_Spaces","Relative_Arbitrage":"Relative_Arbitrage","Relative_Arbitrage_Statement":"Statement"}
 rows=[l.rstrip('\n').split('\t') for l in open(OUT+'/facts.tsv')]
 START=re.compile(r'^(lemma|theorem|corollary|proposition|definition|fun|primrec|function|abbreviation|locale|sublocale|interpretation|lemmas|text|section|subsection|subsubsection|paragraph|context|end|declare|notation|type_synonym|inductive|ML|setup|instance|instantiation)\b')
 NAMED=re.compile(r'^(?:lemma|theorem|corollary|proposition|lemmas|definition|abbreviation|fun|primrec)\s+(?:\(in\s+\w+\)\s*)?"?(\w+)')

@@ -2,7 +2,7 @@
 (*<*)
 theory Exit_Class
   imports
-    Constraint_Set_Convexity Operator_Formula Pair_Path_Laws
+    "Relative_Arbitrage_Equation.Constraint_Set_Convexity" "Relative_Arbitrage_Equation.Operator_Formula" Pair_Path_Laws
 begin
 
 (*>*)

@@ -33,11 +33,11 @@ unbundle inner_syntax
 
 section \<open>The operator of Eq. (1.9) on pairs\<close>
 
-text \<open>\<open>ell_op_pair\<close> lives in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
+text \<open>\<open>ell_op_pair\<close> lives in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
 
 section \<open>The semicontinuous envelopes \<open>F\<^sub>*\<close> and \<open>F\<^sup>*\<close>\<close>
 
-text \<open>\<open>ell_op_lsc\<close>, \<open>ell_op_usc\<close> live in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
+text \<open>\<open>ell_op_lsc\<close>, \<open>ell_op_usc\<close> live in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
 
 text \<open>Every ball around \<open>z\<close> contains \<open>z\<close>, which gives the sandwich
   \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close>.  This is all that is needed to see that the
@@ -224,7 +224,7 @@ abbreviation mgap :: "real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real^'
   "mgap L M N \<equiv> entrysum (M - N) * L / 2"
 
 text \<open>\<open>trace_mult_feasible_bound\<close>, \<open>ell_op_le_witness\<close> and \<open>ell_op_approx\<close>
-  live in @{theory Relative_Arbitrage.Curvature_Operator}.\<close>
+  live in @{theory Relative_Arbitrage_Equation.Curvature_Operator}.\<close>
 
 lemma ell_op_M_gap:
   fixes M N :: "real^'n::finite^'n"
@@ -500,7 +500,7 @@ text \<open>At the degenerate gradient, the subsolution inequality of
 
 section \<open>Definition 3.1 in envelope form\<close>
 
-text \<open>\<open>visc_subsol_env\<close>, \<open>visc_supersol_env\<close>, \<open>visc_sol_env\<close> live in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
+text \<open>\<open>visc_subsol_env\<close>, \<open>visc_supersol_env\<close>, \<open>visc_sol_env\<close> live in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
 
 section \<open>The envelope-free notions are the stronger ones\<close>
 

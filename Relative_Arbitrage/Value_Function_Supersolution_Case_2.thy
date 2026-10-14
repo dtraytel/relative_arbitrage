@@ -32,7 +32,7 @@ text \<open>\<open>lsc_env\<close>, \<open>usc_env\<close>, their attainment/ext
 
 subsection \<open>The faithful supersolution property\<close>
 
-text \<open>\<open>visc_supersol_lsc\<close> lives in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
+text \<open>\<open>visc_supersol_lsc\<close> lives in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
 
 
 subsection \<open>Recentring the quadratic\<close>

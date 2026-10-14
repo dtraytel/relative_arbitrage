@@ -138,7 +138,7 @@ proof -
   then show ?thesis by simp
 qed
 
-text \<open>\<open>supersol_jet\<close> lives in @{theory Relative_Arbitrage.Viscosity_Definitions}.\<close>
+text \<open>\<open>supersol_jet\<close> lives in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
 
 theorem visc_supersol_env_imp_jet:
   fixes K :: "(real^'n::finite) set" and w :: "real^'n \<Rightarrow> real"
@@ -421,7 +421,7 @@ text \<open>\<open>superjet_local_max\<close> introduces a strictly convex corre
   \<open>(\<delta>/2) * norm k\<^sup>2\<close>, so the matrix reaching the operator is \<open>X + \<delta> I\<close>
   rather than \<open>X\<close>. Removing \<open>\<delta>\<close> passes to closed second-order jets via the
   envelopes: the two envelope inequalities sandwich the sharp one, and
-  \<open>visc_subsol_imp_env\<close> / \<open>visc_supersol_imp_env\<close> (@{theory Relative_Arbitrage.Operator_Envelopes}) show the
+  \<open>visc_subsol_imp_env\<close> / \<open>visc_supersol_imp_env\<close> (@{theory Relative_Arbitrage_Equation.Operator_Envelopes}) show the
   envelope-free notions already imply the envelope ones on an open
   \<open>\<Omega> \<subseteq> K\<close>.\<close>
 
