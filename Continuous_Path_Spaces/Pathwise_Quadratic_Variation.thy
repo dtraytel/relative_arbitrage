@@ -760,7 +760,8 @@ text \<open>The scalar hypotheses for \<open>X\<^sub>i + c X\<^sub>j\<close> and
   martingale properties, from the entrywise ones, and the rate, from positive
   semidefinite increments with \<open>C\<close>-Lipschitz entries --- monotonicity from the
   former, the bound \<open>4 C\<close> (four entries, \<open>\<bar>c\<bar> \<le> 1\<close>) from the latter.  The
-  locale below and the localised identification of \<open>Pair_Path_Space\<close> both
+  locale below and the localised identification of
+  \<open>Adapted_Quadratic_Variation\<close> both
   rest on them.\<close>
 
 lemma polarised_martingale:

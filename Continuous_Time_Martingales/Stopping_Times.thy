@@ -48,6 +48,21 @@ lemma etime_le_of_mem:
   unfolding etime_def
   using etime_bdd_below[OF T] r mem by (intro cInf_lower) auto
 
+text \<open>The exit time does not notice the restriction to \<open>{0..T}\<close> that the law of a
+  path process performs, because it only ever inspects times in \<open>[0,T]\<close>.\<close>
+
+lemma etime_shift_of_restrict:
+  fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{polish_space,banach}" and y :: 'b
+  shows "etime T A (\<lambda>s w. y + w s) (restrict (\<lambda>t. X t \<omega>) {0..T})
+       = etime T A (\<lambda>s \<omega>'. y + X s \<omega>') \<omega>"
+proof -
+  have "{r. 0 \<le> r \<and> r \<le> T \<and> y + restrict (\<lambda>t. X t \<omega>) {0..T} r \<in> A}
+      = {r. 0 \<le> r \<and> r \<le> T \<and> y + X r \<omega> \<in> A}"
+    by (auto simp: restrict_def)
+  thus ?thesis unfolding etime_def by simp
+qed
+
+
 text \<open>The strict-inequality characterisation of \<open>etime\<close>, underlying upper
   semicontinuity of the exit time along the lines of Larsson--Ruf's Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close>:
   \<open>etime T A X \<omega> < c\<close> holds exactly when a witness time \<open>r < c\<close> has

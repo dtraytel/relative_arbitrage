@@ -1,11 +1,17 @@
 session Continuous_Path_Spaces = Levy_Prokhorov_Metric +
   description "
     Weak convergence of processes done properly: C([0,T],'b) as a Polish
-    space with portmanteau and the continuous mapping theorem, tightness of a
-    family of path laws from increment moments alone, and quadratic variation
-    as an adapted, everywhere-continuous path functional with a summable L2
-    rate -- and the exit time of a closed set by a continuous path, upper
-    semicontinuous along weak convergence of path laws.
+    space with portmanteau, the continuous mapping theorem and
+    Arzela-Ascoli; tightness of a family of path laws from increment moments
+    alone, hence a weakly convergent subsequence of the path laws of any
+    sequence of continuous L2 martingales from a common start whose
+    compensators grow at a common bounded rate; quadratic variation as an adapted, everywhere-continuous
+    path functional with a summable L2 rate, equal to the compensator of a
+    continuous L2 martingale whose compensator grows at a bounded rate, with
+    no boundedness hypothesis on the martingale -- and the exit
+    time of a closed set by a continuous path, upper semicontinuous along
+    weak convergence of path laws, with Berge's theorem for the supremum of
+    its essential infimum over a weakly compact family of laws.
   "
   options [document = pdf, document_output = "output"]
   sessions

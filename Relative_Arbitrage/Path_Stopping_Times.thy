@@ -1080,6 +1080,380 @@ text \<open>The second, and last, clause-(iv) instance.  The pathwise identity i
   \<open>outerp b\<close> and \<open>\<langle>X\<rangle>\<^sub>\<theta>\<close> have already cancelled between the two times.\<close>
 
 
+section \<open>The exit time of a ball\<close>
+
+text \<open>The capped exit time of the state component of a pair path from an open
+  ball, and the pathwise facts about it that the viscosity arguments consume.\<close>
+
+definition pball_exit :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real \<Rightarrow> 'n pairpath \<Rightarrow> real"
+  where "pball_exit T x \<epsilon> \<omega> = pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t))"
+
+lemma pball_exit_nonneg:
+  assumes T0: "0 \<le> T" shows "0 \<le> pball_exit T x \<epsilon> \<omega>"
+  unfolding pball_exit_def by (rule pexit_nonneg[OF T0])
+
+lemma pball_exit_le:
+  assumes T0: "0 \<le> T" shows "pball_exit T x \<epsilon> \<omega> \<le> T"
+  unfolding pball_exit_def by (rule pexit_le_T[OF T0])
+
+lemma pball_exit_cong:
+  fixes \<omega> \<omega>' :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+    and eq: "\<And>t. t \<in> {0..pball_exit T x \<epsilon> \<omega>} \<Longrightarrow> \<omega> t = \<omega>' t"
+  shows "pball_exit T x \<epsilon> \<omega>' = pball_exit T x \<epsilon> \<omega>"
+  unfolding pball_exit_def
+proof (rule pexit_cong_stopping[OF T0 open_ball cont])
+  fix t :: real
+  assume t: "0 \<le> t" "t \<le> pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t))"
+  then have "t \<in> {0..pball_exit T x \<epsilon> \<omega>}" by (simp add: pball_exit_def)
+  from eq[OF this] show "fst (\<omega> t) = fst (\<omega>' t)" by simp
+qed
+
+text \<open>What makes the exit time useful to the expansion: below
+  the horizon the path has actually travelled the full distance \<open>\<epsilon>\<close>.\<close>
+
+lemma pball_exit_outside:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+    and lt: "pball_exit T x \<epsilon> \<omega> < T"
+  shows "\<epsilon> \<le> dist (fst (\<omega> (pball_exit T x \<epsilon> \<omega>))) x"
+proof -
+  have "fst (\<omega> (pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t)))) \<notin> ball x \<epsilon>"
+    using lt unfolding pball_exit_def
+    by (intro pexit_mem_of_less_T[OF T0 open_ball cont]) simp
+  then show ?thesis
+    unfolding pball_exit_def by (simp add: dist_commute)
+qed
+
+text \<open>And it is strictly positive when the path starts strictly inside the
+  ball --- exactly the situation of the subsolution argument, where the
+  starting point is the touching point \<open>x\<close> itself.  Without this the DPP
+  bound of \<open>exit_val_cond_at_time\<close> would be vacuous.\<close>
+
+lemma pball_exit_pos:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 < T"
+    and start: "dist (fst (\<omega> 0)) x < \<epsilon>"
+    and cont: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+  shows "0 < pball_exit T x \<epsilon> \<omega>"
+proof -
+  have T0': "0 \<le> T" using T0 by simp
+  have z: "(0::real) \<in> {0..T}" using T0 by simp
+  have e0: "0 < \<epsilon> - dist (fst (\<omega> 0)) x" using start by simp
+  from cont[unfolded continuous_on_iff] z e0
+  obtain \<delta> where d0: "0 < \<delta>"
+    and dd: "\<And>t. t \<in> {0..T} \<Longrightarrow> dist t 0 < \<delta>
+        \<Longrightarrow> dist (fst (\<omega> t)) (fst (\<omega> 0)) < \<epsilon> - dist (fst (\<omega> 0)) x"
+    by blast
+  have mle: "min \<delta> T \<le> pball_exit T x \<epsilon> \<omega>"
+  proof (rule ccontr)
+    assume "\<not> min \<delta> T \<le> pball_exit T x \<epsilon> \<omega>"
+    then have lt0: "pball_exit T x \<epsilon> \<omega> < min \<delta> T" by (rule not_le_imp_less)
+    then have lt: "pexit T (ball x \<epsilon>) (\<lambda>t. fst (\<omega> t)) < min \<delta> T"
+      by (simp add: pball_exit_def)
+    have "(\<exists>r. 0 \<le> r \<and> r \<le> T \<and> fst (\<omega> r) \<in> - ball x \<epsilon> \<and> r < min \<delta> T)
+        \<or> T < min \<delta> T"
+      using lt[unfolded pexit_less_iff[OF T0']] .
+    then obtain r where r: "0 \<le> r" "r \<le> T" "fst (\<omega> r) \<notin> ball x \<epsilon>"
+      "r < min \<delta> T" by auto
+    have dr: "dist (fst (\<omega> r)) (fst (\<omega> 0)) < \<epsilon> - dist (fst (\<omega> 0)) x"
+      using r by (intro dd) (auto simp: dist_real_def)
+    have "dist (fst (\<omega> r)) x
+        \<le> dist (fst (\<omega> r)) (fst (\<omega> 0)) + dist (fst (\<omega> 0)) x"
+      by (rule dist_triangle)
+    also have "\<dots> < \<epsilon>" using dr by simp
+    finally have "fst (\<omega> r) \<in> ball x \<epsilon>" by (simp add: dist_commute)
+    with r(3) show False by simp
+  qed
+  have m0: "0 < min \<delta> T" using d0 T0 by simp
+  show ?thesis by (rule order_less_le_trans[OF m0 mle])
+qed
+
+subsection \<open>The ball exit time is a stopping time\<close>
+
+text \<open>\<^const>\<open>path_stopping_time\<close> restricts its congruence clause to
+  continuous paths, which is exactly what @{thm [source] pexit_mem_of_less_T}
+  shows is forced: attainment of the infimum genuinely fails off the path
+  space, so no redefinition of the exit time could have avoided it.  The
+  restriction costs nothing, because \<open>space Q = mspace (path_metric T)\<close> is
+  the set of continuous paths, and it buys this:\<close>
+
+theorem pball_exit_path_stopping_time:
+  fixes x :: "real^'n::finite"
+  assumes T0: "0 \<le> T"
+  shows "path_stopping_time T (pball_exit T x \<epsilon>)"
+  unfolding path_stopping_time_def
+proof (intro conjI)
+  show "\<forall>\<omega> :: 'n pairpath.
+      0 \<le> pball_exit T x \<epsilon> \<omega> \<and> pball_exit T x \<epsilon> \<omega> \<le> T"
+    using pball_exit_nonneg[OF T0] pball_exit_le[OF T0] by blast
+next
+  show "\<forall>\<omega> \<omega>' :: 'n pairpath.
+      continuous_on {0..T} (\<lambda>t. fst (\<omega> t)) \<longrightarrow>
+      continuous_on {0..T} (\<lambda>t. fst (\<omega>' t)) \<longrightarrow>
+      (\<forall>t \<in> {0..pball_exit T x \<epsilon> \<omega>}. \<omega> t = \<omega>' t) \<longrightarrow>
+      pball_exit T x \<epsilon> \<omega>' = pball_exit T x \<epsilon> \<omega>"
+  proof (intro allI impI)
+    fix \<omega> \<omega>' :: "'n pairpath"
+    assume c: "continuous_on {0..T} (\<lambda>t. fst (\<omega> t))"
+      and c': "continuous_on {0..T} (\<lambda>t. fst (\<omega>' t))"
+      and e: "\<forall>t \<in> {0..pball_exit T x \<epsilon> \<omega>}. \<omega> t = \<omega>' t"
+    show "pball_exit T x \<epsilon> \<omega>' = pball_exit T x \<epsilon> \<omega>"
+      by (rule pball_exit_cong[OF T0 c]) (use e in blast)
+  qed
+qed
+
+text \<open>So \<open>exit_val_dpp_sup_ge_time\<close> applies at the exit time of
+  a ball, and optional sampling at \<open>\<tau> \<and> h\<close> is available for stochastic
+  localisation.\<close>
+
+subsection \<open>Measurability of the ball exit time\<close>
+
+text \<open>\<open>pexit_path_measurable\<close> covers closed targets and the ball is open, so
+  this cannot be inherited directly.  With the closed set \<open>- ball x \<epsilon>\<close> as
+  the hitting target, along a continuous path the sublevel event
+  \<open>{\<tau> \<le> t}\<close> is (by @{thm [source] etime_le_iff}, using attainment) the
+  event that the path reaches distance \<open>\<ge> \<epsilon>\<close> somewhere on \<open>[0,t]\<close>, and by
+  continuity that is decided by countably many times: the rationals of
+  \<open>[0,t]\<close> and \<open>t\<close> itself.  A countable intersection of countable unions of
+  evaluation events remains measurable.\<close>
+
+lemma pball_exit_le_iff_dense:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T" and t: "0 \<le> t" and tT: "t < T"
+    and cont: "continuous_on {0..T} (\<lambda>s. fst (\<omega> s))"
+  shows "pball_exit T x \<epsilon> \<omega> \<le> t \<longleftrightarrow>
+     (\<forall>n :: nat. \<exists>r \<in> insert t ({0..t} \<inter> \<rat>).
+        \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x)"
+proof -
+  have Ac: "closed (- ball x \<epsilon> :: (real^'n) set)"
+    by (simp add: closed_Compl)
+  have hc: "continuous_on {0..T} (\<lambda>s. dist (fst (\<omega> s)) x)"
+    by (intro continuous_on_dist cont continuous_on_const)
+  show ?thesis
+  proof
+    assume le: "pball_exit T x \<epsilon> \<omega> \<le> t"
+    then have "etime T (- ball x \<epsilon>) (\<lambda>r g. g r) (\<lambda>s. fst (\<omega> s)) \<le> t"
+      by (simp add: pball_exit_def pexit_def)
+    then have "\<exists>r\<in>{0..t}. fst (\<omega> r) \<in> - ball x \<epsilon>"
+      using etime_le_iff[where X = "\<lambda>r g. g r" and \<omega> = "\<lambda>s. fst (\<omega> s)",
+          OF T0 t tT Ac cont] by simp
+    then obtain r0 where r0: "r0 \<in> {0..t}" and m0: "fst (\<omega> r0) \<notin> ball x \<epsilon>"
+      by auto
+    have d0: "\<epsilon> \<le> dist (fst (\<omega> r0)) x"
+      using m0 by (simp add: dist_commute)
+    show "\<forall>n :: nat. \<exists>r \<in> insert t ({0..t} \<inter> \<rat>).
+        \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x"
+    proof
+      fix n :: nat
+      show "\<exists>r \<in> insert t ({0..t} \<inter> \<rat>).
+          \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x"
+      proof (cases "r0 = 0 \<or> r0 = t")
+        case True
+        have mem: "r0 \<in> insert t ({0..t} \<inter> \<rat>)"
+          using True r0 t by auto
+        have p1: "0 < 1 / real (Suc n)" by simp
+        with d0 have "\<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r0)) x" by linarith
+        with mem show ?thesis by blast
+      next
+        case False
+        then have r00: "0 < r0" and r0t: "r0 < t" using r0 by auto
+        have r0T: "r0 \<in> {0..T}" using r0 tT by auto
+        have cw: "continuous (at r0 within {0..T}) (\<lambda>s. dist (fst (\<omega> s)) x)"
+          using hc r0T by (simp add: continuous_on_eq_continuous_within)
+        have e1: "0 < 1 / real (Suc n)" by simp
+        obtain d where dd: "0 < d"
+          and near: "\<And>s. s \<in> {0..T} \<Longrightarrow> dist s r0 < d \<Longrightarrow>
+              dist (dist (fst (\<omega> s)) x) (dist (fst (\<omega> r0)) x) < 1 / real (Suc n)"
+          using cw[unfolded continuous_within_eps_delta, rule_format, OF e1]
+          by blast
+        obtain q where q: "q \<in> \<rat>" and ql: "r0 - min d r0 < q" and qu: "q < r0"
+          using Rats_dense_in_real[of "r0 - min d r0" r0] dd r00 by auto
+        have q0: "0 \<le> q" using ql dd r00 by simp
+        have qt: "q \<le> t" using qu r0t by simp
+        have qT: "q \<in> {0..T}" using q0 qt tT by auto
+        have "dist q r0 < d" using ql qu dd by (simp add: dist_real_def)
+        then have "dist (dist (fst (\<omega> q)) x) (dist (fst (\<omega> r0)) x)
+            < 1 / real (Suc n)"
+          by (rule near[OF qT])
+        then have "dist (fst (\<omega> r0)) x - 1 / real (Suc n) < dist (fst (\<omega> q)) x"
+          by (simp add: dist_real_def abs_diff_less_iff)
+        with d0 have "\<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> q)) x" by simp
+        moreover have "q \<in> insert t ({0..t} \<inter> \<rat>)" using q q0 qt by auto
+        ultimately show ?thesis by blast
+      qed
+    qed
+  next
+    assume H: "\<forall>n :: nat. \<exists>r \<in> insert t ({0..t} \<inter> \<rat>).
+        \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x"
+    have "\<exists>r \<in> {0..t}. \<epsilon> \<le> dist (fst (\<omega> r)) x"
+    proof -
+      obtain rs where rs: "\<And>n :: nat. rs n \<in> insert t ({0..t} \<inter> \<rat>)
+          \<and> \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> (rs n))) x"
+        using H by metis
+      have rng: "rs n \<in> {0..t}" for n using rs[of n] t by auto
+      have bdd: "bounded (range rs)"
+      proof (rule boundedI[of _ t])
+        fix w assume "w \<in> range rs"
+        then obtain n where "w = rs n" by blast
+        then show "norm w \<le> t" using rng[of n] t by auto
+      qed
+      obtain l \<sigma> where sm: "strict_mono \<sigma>" and lim: "(rs \<circ> \<sigma>) \<longlonglongrightarrow> l"
+        using bounded_imp_convergent_subsequence[OF bdd] by blast
+      have inI: "(rs \<circ> \<sigma>) n \<in> {0..t}" for n using rng[of "\<sigma> n"] by simp
+      have lI: "l \<in> {0..t}"
+        by (rule closed_sequentially[OF closed_atLeastAtMost _ lim])
+          (use inI in blast)
+      have lT: "l \<in> {0..T}" using lI tT by auto
+      have cl: "continuous (at l within {0..T}) (\<lambda>s. dist (fst (\<omega> s)) x)"
+        using hc lT by (simp add: continuous_on_eq_continuous_within)
+      have inT: "(rs \<circ> \<sigma>) n \<in> {0..T}" for n using inI[of n] tT by auto
+      have tends: "(\<lambda>n. dist (fst (\<omega> ((rs \<circ> \<sigma>) n))) x)
+          \<longlonglongrightarrow> dist (fst (\<omega> l)) x"
+        using cl[unfolded continuous_within_sequentially, rule_format,
+            of "rs \<circ> \<sigma>"] inT lim by (simp add: o_def)
+      have low: "\<epsilon> - 1 / real (Suc n) \<le> dist (fst (\<omega> ((rs \<circ> \<sigma>) n))) x" for n
+      proof -
+        have "\<epsilon> - 1 / real (Suc (\<sigma> n)) < dist (fst (\<omega> (rs (\<sigma> n)))) x"
+          using rs[of "\<sigma> n"] by blast
+        moreover have "\<epsilon> - 1 / real (Suc n) \<le> \<epsilon> - 1 / real (Suc (\<sigma> n))"
+          using seq_suble[OF sm, of n] by (simp add: frac_le)
+        ultimately show ?thesis by (simp add: o_def)
+      qed
+      have lima: "(\<lambda>n. \<epsilon> - 1 / real (Suc n)) \<longlonglongrightarrow> \<epsilon>"
+      proof -
+        have "(\<lambda>n. 1 / real (Suc n)) \<longlonglongrightarrow> 0"
+          using LIMSEQ_inverse_real_of_nat by (simp add: inverse_eq_divide)
+        then have "(\<lambda>n. \<epsilon> - 1 / real (Suc n)) \<longlonglongrightarrow> \<epsilon> - 0"
+          by (intro tendsto_diff tendsto_const)
+        then show ?thesis by simp
+      qed
+      have "\<epsilon> \<le> dist (fst (\<omega> l)) x"
+        by (rule LIMSEQ_le[OF lima tends]) (use low in blast)
+      then show ?thesis using lI by blast
+    qed
+    then obtain r where r: "r \<in> {0..t}" and rd: "\<epsilon> \<le> dist (fst (\<omega> r)) x"
+      by blast
+    have "fst (\<omega> r) \<notin> ball x \<epsilon>" using rd by (simp add: dist_commute)
+    then have "pexit T (ball x \<epsilon>) (\<lambda>s. fst (\<omega> s)) \<le> r"
+      using r tT by (intro pexit_le_of_mem[OF T0]) auto
+    then have "pball_exit T x \<epsilon> \<omega> \<le> r" by (simp add: pball_exit_def)
+    then show "pball_exit T x \<epsilon> \<omega> \<le> t"
+      using r by (auto intro: order_trans)
+  qed
+qed
+
+theorem pball_exit_measurable:
+  fixes x :: "real^'n::finite"
+  assumes T0: "0 \<le> T"
+  shows "pball_exit T x \<epsilon> \<in> borel_measurable (path_borel T :: ('n pairpath) measure)"
+proof (rule borel_measurableI_le)
+  let ?B = "(path_borel T :: ('n pairpath) measure)"
+  fix a :: real
+  show "{\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a} \<in> sets ?B"
+  proof (cases "a < 0")
+    case True
+    have empty: "{\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a} = {}"
+    proof (rule set_eqI)
+      fix \<omega> :: "'n pairpath"
+      have "\<not> pball_exit T x \<epsilon> \<omega> \<le> a"
+        using pball_exit_nonneg[OF T0, of x \<epsilon> \<omega>] True by linarith
+      then show "\<omega> \<in> {\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a}
+          \<longleftrightarrow> \<omega> \<in> {}" by simp
+    qed
+    show ?thesis unfolding empty by simp
+  next
+    case False
+    then have a0: "0 \<le> a" by simp
+    show ?thesis
+    proof (cases "T \<le> a")
+      case True
+      have ya: "pball_exit T x \<epsilon> \<omega> \<le> a" for \<omega> :: "'n pairpath"
+        using pball_exit_le[OF T0, of x \<epsilon> \<omega>] True by linarith
+      then have "{\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a} = space ?B" by auto
+      then show ?thesis by simp
+    next
+      case False
+      then have aT: "a < T" by simp
+      let ?D = "insert a ({0..a} \<inter> \<rat>)"
+      let ?S = "\<lambda>n r. {\<omega> \<in> space ?B. \<epsilon> - 1 / real (Suc n) < dist (fst (\<omega> r)) x}"
+      have cntD: "countable ?D"
+        by (intro countable_insert countable_Int2 countable_rat)
+      have atom: "?S n r \<in> sets ?B" for n r
+      proof -
+        have "(\<lambda>\<omega> :: 'n pairpath. dist (fst (\<omega> r)) x) \<in> borel_measurable ?B"
+          by (rule dist_eval_measurable)
+        then have "(\<lambda>\<omega> :: 'n pairpath. dist (fst (\<omega> r)) x) -` {\<epsilon> - 1 / real (Suc n) <..}
+            \<inter> space ?B \<in> sets ?B"
+          by (rule measurable_sets) simp
+        moreover have "?S n r = (\<lambda>\<omega> :: 'n pairpath. dist (fst (\<omega> r)) x)
+            -` {\<epsilon> - 1 / real (Suc n) <..} \<inter> space ?B"
+          by auto
+        ultimately show ?thesis by simp
+      qed
+      have eq: "{\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a}
+          = (\<Inter>n. \<Union>r \<in> ?D. ?S n r)"
+      proof (rule set_eqI)
+        fix \<omega> :: "'n pairpath"
+        show "\<omega> \<in> {\<omega> \<in> space ?B. pball_exit T x \<epsilon> \<omega> \<le> a}
+            \<longleftrightarrow> \<omega> \<in> (\<Inter>n. \<Union>r \<in> ?D. ?S n r)"
+        proof (cases "\<omega> \<in> space ?B")
+          case True
+          have cw: "continuous_on {0..T} (\<lambda>s. fst (\<omega> s))"
+            by (rule path_sets_fst_continuous[OF refl True])
+          show ?thesis
+            using pball_exit_le_iff_dense[OF T0 a0 aT cw, of x \<epsilon>] True
+            by auto
+        next
+          case False
+          then show ?thesis by auto
+        qed
+      qed
+      have un_m: "(\<Union>r \<in> ?D. ?S n r) \<in> sets ?B" for n
+        by (rule sets.countable_UN'[OF cntD]) (use atom in blast)
+      have "(\<Inter>n. \<Union>r \<in> ?D. ?S n r) \<in> sets ?B"
+        using un_m by blast
+      with eq show ?thesis by metis
+    qed
+  qed
+qed
+
+subsection \<open>Up to the exit time the path stays in the closed ball\<close>
+
+lemma pball_exit_stays_cball:
+  fixes \<omega> :: "'n::finite pairpath"
+  assumes T0: "0 \<le> T"
+    and start: "dist (fst (\<omega> 0)) x < \<epsilon>"
+    and cont: "continuous_on {0..T} (\<lambda>s. fst (\<omega> s))"
+    and s: "0 \<le> s" and sle: "s \<le> pball_exit T x \<epsilon> \<omega>"
+  shows "dist (fst (\<omega> s)) x \<le> \<epsilon>"
+proof (rule ccontr)
+  assume "\<not> dist (fst (\<omega> s)) x \<le> \<epsilon>"
+  then have gt: "\<epsilon> < dist (fst (\<omega> s)) x" by simp
+  have sT: "s \<le> T" using sle pball_exit_le[OF T0] order_trans by blast
+  have notin: "fst (\<omega> s) \<notin> ball x \<epsilon>"
+    using gt by (simp add: dist_commute)
+  have le1: "pball_exit T x \<epsilon> \<omega> \<le> s"
+    unfolding pball_exit_def
+    by (rule pexit_le_of_mem[where f = "\<lambda>s. fst (\<omega> s)" and r = s
+          and K = "ball x \<epsilon>", OF T0 s sT notin])
+  with sle have seq: "s = pball_exit T x \<epsilon> \<omega>" by simp
+  have h0: "dist (fst (\<omega> 0)) x \<le> \<epsilon>" using start by simp
+  have hc: "continuous_on {0..s} (\<lambda>r. dist (fst (\<omega> r)) x)"
+    by (rule continuous_on_subset[of "{0..T}"])
+      (use sT in \<open>auto intro!: continuous_on_dist cont continuous_on_const\<close>)
+  obtain r where r0: "0 \<le> r" and rs: "r \<le> s" and rd: "dist (fst (\<omega> r)) x = \<epsilon>"
+    using IVT'[of "\<lambda>r. dist (fst (\<omega> r)) x" 0 \<epsilon> s] h0 gt s hc by auto
+  have rlt: "r < s" using rd gt rs by (cases "r = s") auto
+  have "fst (\<omega> r) \<notin> ball x \<epsilon>" using rd by (simp add: dist_commute)
+  then have "pball_exit T x \<epsilon> \<omega> \<le> r"
+    unfolding pball_exit_def
+    by (intro pexit_le_of_mem[OF T0 r0]) (use rs sT in auto)
+  with rlt seq show False by simp
+qed
+
 (*<*)
 end
 (*>*)

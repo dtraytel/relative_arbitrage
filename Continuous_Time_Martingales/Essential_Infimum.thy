@@ -247,14 +247,63 @@ proof -
   from ess_inf_mono[OF this] show ?thesis unfolding ess_inf_ennreal .
 qed
 
+text \<open>Capping the integrand by a constant caps the essential infimum by the
+  same constant.  Both halves are elementary, but the \<open>\<ge>\<close> half has to be
+  run through the density of the order on @{typ ennreal}: the defining
+  supremum need not be attained.\<close>
+
+lemma ess_inf_time_min_const:
+  fixes c :: real
+  assumes M: "prob_space M"
+  shows "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) = min (ess_inf_time M g) (ennreal c)"
+proof (rule order.antisym)
+  show "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) \<le> min (ess_inf_time M g) (ennreal c)"
+  proof (intro min.boundedI)
+    show "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) \<le> ess_inf_time M g"
+      by (rule ess_inf_time_mono) simp
+    show "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) \<le> ennreal c"
+      by (rule ess_inf_time_le_const[OF M]) simp
+  qed
+  show "min (ess_inf_time M g) (ennreal c) \<le> ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c)"
+  proof (rule ccontr)
+    assume "\<not> min (ess_inf_time M g) (ennreal c)
+        \<le> ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c)"
+    then have "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c)
+        < min (ess_inf_time M g) (ennreal c)" by (rule not_le_imp_less)
+    then obtain b where b1: "ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c) < b"
+      and b2: "b < min (ess_inf_time M g) (ennreal c)"
+      using dense by blast
+    from b2 have bg: "b < ess_inf_time M g"
+      by (rule order.strict_trans2[OF _ min.cobounded1])
+    from b2 have bc: "b < ennreal c"
+      by (rule order.strict_trans2[OF _ min.cobounded2])
+    from bg have "b < Sup {e. AE \<omega> in M. e \<le> ennreal (g \<omega>)}"
+      unfolding ess_inf_time_def .
+    then obtain e where eA: "e \<in> {e. AE \<omega> in M. e \<le> ennreal (g \<omega>)}"
+      and be: "b < e" by (auto simp: less_Sup_iff)
+    from eA have e: "AE \<omega> in M. e \<le> ennreal (g \<omega>)" by simp
+    then have "AE \<omega> in M. b \<le> ennreal (min (g \<omega>) c)"
+    proof (rule eventually_mono)
+      fix \<omega> assume "e \<le> ennreal (g \<omega>)"
+      with be have "b \<le> ennreal (g \<omega>)" by simp
+      with bc have "b \<le> min (ennreal (g \<omega>)) (ennreal c)" by simp
+      also have "\<dots> = ennreal (min (g \<omega>) c)"
+        by (rule min_of_mono) (rule monoI, erule ennreal_leI)
+      finally show "b \<le> ennreal (min (g \<omega>) c)" .
+    qed
+    then have "b \<le> ess_inf_time M (\<lambda>\<omega>. min (g \<omega>) c)"
+      unfolding ess_inf_time_def by (intro Sup_upper) simp
+    with b1 show False by simp
+  qed
+qed
+
+
 text \<open>The essential infimum transported along a pushforward: exit times of
   a law presented as a distr (e.g.\ a path law, or a member of \<open>\<P>\<^sub>x\<close>
   reconstructed from a limit) can be computed on either side. Needed when
   Lemma 2.3 exhibits weak limits as members of \<open>\<P>\<^sub>x\<close> and Proposition 2.4
   concatenates laws at stopping times.\<close>
 
-text \<open>The exit time does not notice the restriction to \<open>{0..T}\<close> that \<open>path_law\<close>
-  performs, because it only ever inspects times in \<open>[0,T]\<close>.\<close>
 
 lemma ess_inf_distr:
   assumes f: "f \<in> M \<rightarrow>\<^sub>M N"

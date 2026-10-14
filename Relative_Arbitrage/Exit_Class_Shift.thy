@@ -284,7 +284,7 @@ text \<open>\<open>exit_val\<close> is Eq. (1.6): the supremum, over the class (
   \<open>x\<close>, of the essential infimum of the exit time from \<open>K\<close>.  Upper
   semicontinuity in \<open>x\<close> is exactly clause (1).  The class is sequentially
   compact and shift-equivariant (Prop. 2.2(ii)), so Berge applies through
-  \<open>Exit_Time_Semicontinuity.vshift_sup_usc_of_seq_compact\<close>, whose remaining
+  \<open>Path_Exit_Times.vshift_sup_usc_of_seq_compact\<close>, whose remaining
   hypothesis, nonemptiness of the class at \<open>0\<close>, is supplied by a separate
   construction.\<close>
 

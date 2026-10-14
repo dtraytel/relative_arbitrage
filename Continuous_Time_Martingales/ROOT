@@ -3,15 +3,18 @@ session Continuous_Time_Martingales = "HOL-Probability" +
     What continuous-time martingale theory needs beyond the AFP's
     Martingales entry: Doob's maximal inequality, optional sampling and
     stopping at a bounded stopping time together with the sigma-algebra of
-    events before it, stopping an L2 martingale with continuous paths without
-    a domination hypothesis, quadratic variation and its compensator, second
+    events before it and the dyadic approximation of a stopping time from
+    above, stopping an L2 martingale with continuous paths without a
+    domination hypothesis, quadratic variation and its compensator, second
     and fourth moment bounds on martingale increments without stochastic
     integration, Vitali's theorem and the uniform integrability of
-    conditional expectations, exit times as stopping times, and the algebra
-    of transporting the martingale property along images, products,
-    restrictions and modifications -- together with the elementary power
-    inequalities every moment estimate runs on and the essential infimum of a
-    nonnegative payoff.
+    conditional expectations, exit times as stopping times and bounds on
+    their means, natural filtrations, the semidirect product of a measure
+    and a probability kernel with its almost-sure, rectangle and section
+    calculus, and the algebra of transporting the martingale property along
+    images, products, restrictions and modifications -- together with the
+    elementary power inequalities every moment estimate runs on and the
+    essential infimum of a nonnegative payoff.
   "
   options [document = pdf, document_output = "output"]
   sessions

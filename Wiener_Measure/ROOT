@@ -4,8 +4,10 @@ session Wiener_Measure = Continuous_Time_Martingales +
     finite-dimensional distributions, with independent increments and a
     continuous modification -- the canonical construction, and the only one
     in Isabelle -- and then the n-dimensional vector process it carries: its
-    increments independent of the natural filtration, its martingale
-    property, and the compensated square of the norm and of each coordinate.
+    increments independent of the natural filtration, its Gaussian moments,
+    its martingale property, and the compensated square of the norm and of
+    each coordinate, for the process and for a continuous version of it.
+    Built on Continuous_Time_Martingales.
   "
   options [document = pdf, document_output = "output"]
   sessions
