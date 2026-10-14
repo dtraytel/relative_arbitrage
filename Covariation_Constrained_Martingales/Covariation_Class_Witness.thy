@@ -8,7 +8,7 @@ begin
 
 (*>*)
 
-section \<open>Laws of concrete pair processes\<close>
+subsection \<open>Laws of concrete pair processes\<close>
 
 text \<open>The compensated outer product of the continuous Brownian state is a
   matrix martingale, assembled entrywise by \<open>martingale_matI\<close> from the
@@ -29,7 +29,7 @@ proof (rule martingale_matI)
     by (simp add: outerp_def)
 qed
 
-section \<open>The class is nonempty\<close>
+subsection \<open>The class is nonempty\<close>
 
 text \<open>The witness: Brownian motion started at \<open>0\<close> and pushed through a
   constant matrix \<open>\<sigma>\<close>, paired with the deterministic covariation
@@ -349,6 +349,13 @@ proof -
         sbmpair_measurable[OF T] sbmpair_adapted Zm mg])
 qed
 
+text \<open>In the membership of the witness the martingale clauses are
+  bounded-linear images of the Brownian ones
+  (@{thm [source] martingale_bounded_linear_image}) and the covariation
+  clause is deterministic, so the only hypothesis on \<open>S\<close> is that it is
+  closed and contains \<open>\<sigma> \<sigma>\<^sup>T\<close>; an arbitrary start comes free from
+  @{thm [source] covariation_class_pshift}.\<close>
+
 theorem sbmpair_law_in_covariation_class:
   assumes T: "0 \<le> T" and S: "closed S"
     and SST: "\<sigma> ** transpose \<sigma> \<in> S"
@@ -368,7 +375,7 @@ corollary sbmpair_pshift_law_in_covariation_class:
   using covariation_class_pshift[OF T sbmpair_law_in_covariation_class[OF T S SST], of v]
   by simp
 
-subsection \<open>The witness is a member, so the class is nonempty\<close>
+subsubsection \<open>The witness is a member, so the class is nonempty\<close>
 
 definition bmpair :: "real \<Rightarrow> ('n::finite \<Rightarrow> real \<Rightarrow> real) \<Rightarrow> 'n pairpath"
   where "bmpair T \<omega> = restrict (\<lambda>t. (cbmX 0 t \<omega>, t *\<^sub>R mat 1)) {0..T}"
@@ -394,7 +401,7 @@ corollary covariation_class_nonempty:
   shows "covariation_class S T (x :: real^'n) \<noteq> {}"
   using sbmpair_pshift_law_in_covariation_class[OF T S SST, of x] by blast
 
-section \<open>Bounds on the value\<close>
+subsection \<open>Bounds on the value\<close>
 
 text \<open>Lower bounds for the value: every member of the class bounds it
   from below by its essential infimum, so an almost-sure lower bound on one
@@ -442,10 +449,6 @@ qed
 text \<open>A lower bound \<open>\<theta>\<close> on the trace over the constraint set makes
   \<open>|X|\<^sup>2\<close> a submartingale with rate at least \<open>\<theta>\<close>, which gives an
   exit-time estimate at the class level.\<close>
-
-text \<open>\<open>bounded_linear_trace\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
 
 theorem covariation_class_trace_rate:
   fixes Q :: "('n::finite pairpath) measure"

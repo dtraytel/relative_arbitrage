@@ -8,7 +8,7 @@ begin
 
 (*>*)
 
-section \<open>The shift structure of the class (Larsson--Ruf Prop. 2.2(ii))\<close>
+subsection \<open>The shift structure of the class (Larsson--Ruf Prop. 2.2(ii))\<close>
 
 
 
@@ -215,9 +215,9 @@ proof
   qed
 qed
 
-section \<open>The value function is upper semicontinuous\<close>
+subsection \<open>The value function is upper semicontinuous\<close>
 
-subsection \<open>The value as a supremum of the exit functional\<close>
+subsubsection \<open>The value as a supremum of the exit functional\<close>
 
 text \<open>On any nonempty part \<open>Cs\<close> of the class at the origin, the supremum
   of the payoff over the shifted laws is the supremum of the real-valued
@@ -278,7 +278,7 @@ theorem covariation_val_eq_vshift_sup:
   using ess_inf_pexit_Sup_eq_vshift[OF T order_refl ne, of x K]
   unfolding covariation_val_def covariation_class_shift_image[OF T, of S x] by (simp add: image_image)
 
-subsection \<open>Upper semicontinuity of the value\<close>
+subsubsection \<open>Upper semicontinuity of the value\<close>
 
 text \<open>\<open>covariation_val S T K x\<close> is the supremum, over the class started at
   \<open>x\<close>, of the essential infimum of the exit time from \<open>K\<close>.  It is upper

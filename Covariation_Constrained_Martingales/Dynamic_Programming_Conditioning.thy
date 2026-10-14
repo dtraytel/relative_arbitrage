@@ -8,23 +8,7 @@ begin
 
 (*>*)
 
-section \<open>Conditioning on the past for the \<open>\<le>\<close> half\<close>
-
-
-text \<open>Clause (iv) needs a separate argument, because \<^const>\<open>outerp\<close> is
-  quadratic: the compensated process of the rebased future is not the
-  increment of the compensated process.  Expanding
-  \<open>outerp (a - b) = outerp a - (a \<otimes> b + b \<otimes> a) + outerp b\<close> with
-  \<open>a = X\<^sub>t\<close>, \<open>b = X\<^sub>r\<close> gives
-  \<open>outerp (X\<^sub>t - X\<^sub>r) - (Y\<^sub>t - Y\<^sub>r)
-       = (outerp X\<^sub>t - Y\<^sub>t) - (X\<^sub>t \<otimes> X\<^sub>r + X\<^sub>r \<otimes> X\<^sub>t) + (outerp X\<^sub>r + Y\<^sub>r)\<close>.
-  The first bracket is clause (iv) for \<open>P\<close>; the third is constant in \<open>t\<close> and
-  \<open>\<F>\<^sub>r\<close>-measurable; the middle, cross term is a martingale because a
-  martingale multiplied entrywise by a fixed \<open>\<F>\<^sub>r\<close>-measurable factor is again
-  a martingale, lifted entrywise to \<open>real^'n^'n\<close> through @{thm [source]
-  martingale_matI}, with integrability of \<open>X\<^sub>t $ i * X\<^sub>r $ j\<close> supplied by
-  Cauchy--Schwarz from the class's fourth moments (@{thm [source]
-  covariation_class_fourth_moment}).\<close>
+subsection \<open>Conditioning on the past for the \<open>\<le>\<close> half\<close>
 
 
 text \<open>Both coordinate processes of a class member, restarted at \<open>r\<close>: the
@@ -231,38 +215,11 @@ proof -
   qed
 qed
 
-subsection \<open>The survival event belongs to the past\<close>
+subsubsection \<open>The conditional law of the future given the past\<close>
 
-text \<open>\<open>pexit r K \<dots> = r \<and> fst (\<omega> r) \<in> K\<close> says exactly that the path never
-  leaves \<open>K\<close> on \<open>{0..r}\<close>, and for a continuous path against a closed \<open>K\<close>
-  that is decided by the rational times alone, so the survival event is
-  \<open>\<F>\<^sub>r\<close>-measurable.\<close>
-
-subsection \<open>A set-integral criterion for the conditional law\<close>
-
-text \<open>Every condition defining the class is linear in the measure ---
-  \<open>\<mu> C = 1\<close> for the initial and covariation clauses, \<open>\<integral> (X\<^sub>t - X\<^sub>s) 1\<^sub>A d\<mu> = 0\<close>
-  for the martingale clauses --- so passing from "it holds for
-  \<open>P(\<sqdot> | A)\<close>, every \<open>A \<in> \<F>\<^sub>r\<close>" to "it holds for the conditional law at
-  almost every \<open>\<omega>\<close>" needs only that a \<open>\<G>\<close>-measurable function all of whose
-  \<open>\<G>\<close>-set integrals vanish is almost everywhere zero.\<close>
-
-text \<open>\<open>AE_zero_of_set_integral_zero\<close> lives
-  in @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
-
-subsection \<open>The conditional law of the future given the past\<close>
-
-text \<open>The only hypothesis of AFP \<^theory>\<open>Disintegration.Disintegration\<close> that
-  is not automatic here is that the future path space is standard Borel: this
-  is immediate, since \<open>standard_borel\<close> only asks for some Polish topology
-  whose Borel sets agree, and the path space already is the Borel algebra of
-  one.\<close>
-
-
-text \<open>The transfer that every full-measure clause needs: an almost-sure
-  property of the future under \<open>P\<close> makes the corresponding rectangle
-  \<open>ksemi\<close>-null, which is the hypothesis of @{thm [source] AE_kernel_full}.\<close>
-
+text \<open>The difference-quotient clause passes to the conditional law of the
+  rebased future: at almost every past, the conditional law satisfies it on
+  the remaining horizon.\<close>
 
 lemma pfut_rcd_diffquot:
   fixes P :: "('n::finite pairpath) measure"
@@ -364,16 +321,12 @@ proof -
   qed
 qed
 
-subsection \<open>Unbounded disintegration for the martingale clauses\<close>
-
-text \<open>Clauses (i) and (ii) needed only \<open>emeasure\<close>, so the unconditional
-  @{thm [source] nn_integral_ksemi} sufficed.  The martingale clauses need
-  \<open>\<integral>\<^sub>A\<^sub>' X\<^sub>i d\<kappa> p'\<close>, and the coordinate process is not bounded on the path
-  space, while @{thm [source] integral_ksemi_bounded} assumes a uniform
-  bound; the unbounded version is built through the positive and negative
-  parts, where @{thm [source] nn_integral_ksemi} applies with no boundedness
-  hypothesis.\<close>
-
+text \<open>Hence the conditional law of the rebased future given the past at \<open>r\<close>
+  is, at almost every past, a member of the class started at \<open>0\<close> at horizon
+  \<open>T - r\<close>: the start from @{thm [source] pfut_rcd_start}, the difference
+  quotients from @{thm [source] pfut_rcd_diffquot}, and the two martingale
+  clauses from @{thm [source] pfut_rcd_X_martingale} and
+  @{thm [source] pfut_rcd_comp_martingale}.\<close>
 
 theorem covariation_class_rcd_member:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -449,14 +402,7 @@ proof -
   qed
 qed
 
-section \<open>The conditioning statement\<close>
-
-text \<open>Two pathwise facts underlying the conditioning statement for the DPP
-  at a deterministic time.  On the survival event the exit time splits at
-  \<open>r\<close> (@{thm [source] pexit_split_at_r}), and the second piece is the exit
-  time of the rebased future shifted back to where the path actually was,
-  which is exactly the object \<open>pshift_law\<close> pushes into the class at
-  that point.\<close>
+subsection \<open>The conditioning statement\<close>
 
 text \<open>The class-level step: an almost-sure lower bound on the exit time of
   the shifted law is a lower bound for \<^const>\<open>covariation_val\<close> at the shift.  The
@@ -681,7 +627,7 @@ proof -
   qed
 qed
 
-section \<open>The conditioning statement at a random time\<close>
+subsection \<open>The conditioning statement at a random time\<close>
 
 text \<open>The conditioning half of the DPP holds at an arbitrary time function
   \<open>s(\<omega>)\<close>, with no stopping-time hypothesis and no measurability of \<open>s\<close>
@@ -695,7 +641,7 @@ text \<open>The conditioning half of the DPP holds at an arbitrary time function
 
   \<^item> Below \<open>c\<close> the survival event is free: if the path has not left \<open>K\<close>
     before \<open>c\<close> and \<open>r < c\<close>, it has not left before \<open>r\<close> either
-    (\<open>pexit_surv_of_less\<close> below).  So the conditional conclusion of
+    (\<open>pexit_surv_of_less\<close>).  So the conditional conclusion of
     @{thm [source] covariation_val_cond} becomes an unconditional one at every
     deterministic time below \<open>c\<close>, and the survival hypothesis disappears
     from the random-time statement too.

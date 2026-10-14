@@ -8,7 +8,7 @@ begin
 
 (*>*)
 
-section \<open>The additive glue\<close>
+subsection \<open>The additive glue\<close>
 
 
 
@@ -25,6 +25,11 @@ section \<open>The additive glue\<close>
 
 
 
+
+text \<open>The difference quotients of an additive glue, for a past frozen after
+  \<open>r\<close> and a continuation that vanishes up to \<open>r\<close>, lie in a convex \<open>S\<close> as soon
+  as those of the two pieces do on their own stretches: a quotient across
+  \<open>r\<close> is a convex combination of one quotient from each piece.\<close>
 
 lemma padd_diffquot:
   fixes p' w :: "'n::finite pairpath"
@@ -147,25 +152,9 @@ proof -
   qed
 qed
 
-section \<open>Clause (iv) for the glue: the two collapses\<close>
-
-text \<open>The martingale clauses do not need the weak-closedness detour that the
-  deterministic pasting theorem takes, because stopping the glue gives back
-  the past (@{thm [source] pstopped_padd})
-  and the conditioning set collapses on each half of \<open>{\<theta> \<le> i}\<close>.
-
-  \<^item> On \<open>{\<theta> > i}\<close> the continuation has not started, so the glued path agrees
-    with the past on \<open>[0,i]\<close> and an \<open>\<F>\<^sub>i\<close>-set of the glue is a set of the past
-    alone --- it does not constrain \<open>w\<close> at all.
-  \<^item> On \<open>{\<theta> \<le> i}\<close> the past has stopped, so the increment of the glue is the
-    increment of the continuation, and for a fixed past the set's \<open>w\<close>-section
-    is an \<open>\<F>\<^sub>i\<close>-set of the continuation.
-
-  Both statements are about \<^const>\<open>pcut\<close>, since
-  @{thm [source] sets_natural_filtration_eq_pcut_vimage} presents an
-  \<open>\<F>\<^sub>i\<close>-set as a \<^const>\<open>pcut\<close>-preimage.  These are the two pathwise facts.\<close>
-
-
+text \<open>The glued law is in the class as soon as its two martingale clauses
+  hold: the start, the frozen continuation and the difference quotients pass
+  through the glue by the lemmas above.\<close>
 
 theorem covariation_class_aglue_law:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -209,21 +198,11 @@ proof (intro CollectI conjI)
       (\<lambda>t \<omega>. outerp (fst (\<omega> (min t T))) - snd (\<omega> (min t T)))" by (rule mgC)
 qed
 
-text \<open>The set-integral transfer for the glue --- what a martingale identity
-  for \<open>aglue_law\<close> has to be pushed through.  Same two steps as
-  @{thm [source] AE_aglue_law}: @{thm [source] integral_distr} to the
-  semidirect product, then @{thm [source] integral_ksemi_real} to the past
-  and the continuation.\<close>
-
-
-
-
-
-
-
-
-
-
+text \<open>Hence the glued law is in the class with no martingale hypothesis left:
+  the two martingale clauses are @{thm [source] aglue_law_X_martingale} and
+  @{thm [source] aglue_law_comp_martingale}, and the remaining hypotheses
+  concern only the two factors, the stopped past \<open>Q\<close> and the continuation
+  kernel \<open>\<kappa>\<close>.\<close>
 
 theorem covariation_class_aglue:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"

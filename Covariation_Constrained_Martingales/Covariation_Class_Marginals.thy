@@ -22,10 +22,6 @@ text \<open>
   to agree with \<open>qvmat\<close>, which is a functional of the path alone.
 \<close>
 
-text \<open>The adapted continuous version of the quadratic-variation functional
-  --- \<open>qvp_good\<close>, \<open>qvp_goodupto\<close>, \<open>qvpc\<close>, \<open>qvsa\<close> and \<open>qvmata\<close> ---
-  lives in @{theory Continuous_Path_Spaces.Adapted_Quadratic_Variation}.\<close>
-
 subsection \<open>The class of laws of \<open>X\<close>\<close>
 
 definition xcovariation_class ::
@@ -104,17 +100,6 @@ proof (rule boundedI)
     by (intro sum_mono D[OF a])
   finally show "norm a \<le> real CARD('n) * (real CARD('n) * D)" by simp
 qed
-
-text \<open>The constraint set supplies exactly the two hypotheses the matrix locale
-  of @{theory Continuous_Path_Spaces.Pathwise_Quadratic_Variation} needs: the
-  increments of \<open>A\<close> are positive semidefinite, and their entries are
-  Lipschitz in time.  So \<open>S\<close> is taken to consist of positive semidefinite
-  matrices whose entries are bounded by some \<open>D\<close>.\<close>
-
-text \<open>\<open>natural_filtration_pull\<close> lives in
-  @{theory Continuous_Time_Martingales.Natural_Filtration}: the \<open>pull\<close>
-  hypothesis of \<open>martingale_distr\<close> in the case that matters here, since the
-  target filtration is the natural one of the coordinate process.\<close>
 
 subsection \<open>What the constraint set gives the matrix hypotheses\<close>
 
@@ -195,9 +180,9 @@ text \<open>Obligation (b) of the bridge, for an arbitrary filtered process: a
   \<open>A\<close> starting at \<open>0\<close> and difference quotients in the constraint set, has
   \<open>A\<close> as its adapted quadratic variation.  The side conditions are stated
   almost everywhere, while the localised identification wants them pointwise;
-  the two are reconciled by restricting to a full-measure event, which is what
-  the \<open>restrict_full\<close> package of
-  @{theory Continuous_Time_Martingales.Stopped_Localization} is for.  The event is
+  the two are reconciled by restricting to a full-measure event (the
+  \<open>*_restrict_full\<close> facts of
+  @{theory Continuous_Time_Martingales.Martingale_Transfer}).  The event is
   built from a null set rather than from the conditions themselves, so nothing
   has to be shown measurable --- in particular not the difference-quotient
   condition, which quantifies over all real pairs.  Both the pair class and
@@ -417,13 +402,6 @@ text \<open>
   of the image back along the map, and the second component of the map is
   \<^const>\<open>qvmata\<close>.
 \<close>
-
-text \<open>\<open>outerp_borel\<close> lives in @{theory Path_Space_Operations.Pair_Path_Laws}.\<close>
-
-text \<open>\<open>natural_filtration_eval\<close>, the evaluations of a natural filtration in
-  the two shapes the pushforward needs them, lives in
-  @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
-
 
 theorem icovariation_class_marginal_in_xcovariation_class:
   fixes P :: "('n::finite pairpath) measure"

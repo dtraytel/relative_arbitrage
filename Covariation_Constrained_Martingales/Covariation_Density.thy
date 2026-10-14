@@ -28,7 +28,7 @@ text \<open>Equation (1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> constrai
   (@{thm [source] Lebesgue_differentiation_thm}).\<close>
 
 
-section \<open>An integral mean lies in a closed convex set\<close>
+subsection \<open>An integral mean lies in a closed convex set\<close>
 
 lemma integral_mean_in_convex:
   fixes f :: "real \<Rightarrow> 'a::euclidean_space" and S :: "'a set"
@@ -79,7 +79,7 @@ proof -
     by (rule integral_mean_in_convex[OF cvx cl st, where f = f' and I = I]) auto
 qed
 
-section \<open>A derivative of a path with quotients in \<open>S\<close> lies in \<open>S\<close>\<close>
+subsection \<open>A derivative of a path with quotients in \<open>S\<close> lies in \<open>S\<close>\<close>
 
 lemma vector_derivative_in_closed_set:
   fixes g :: "real \<Rightarrow> 'a::euclidean_space"
@@ -98,7 +98,7 @@ proof (rule Lim_in_closed_set[OF cl _ trivial_limit_at_right_real])
       (use dq[of x "x + h" for h] x0 in \<open>auto simp: divide_inverse_commute\<close>)
 qed
 
-section \<open>The two readings of the covariation constraint\<close>
+subsection \<open>The two readings of the covariation constraint\<close>
 
 definition dq_cond :: "(real \<Rightarrow> 'a::euclidean_space) \<Rightarrow> 'a set \<Rightarrow> bool" where
   "dq_cond g S \<longleftrightarrow> (\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> (1/(t-s)) *\<^sub>R (g t - g s) \<in> S)"

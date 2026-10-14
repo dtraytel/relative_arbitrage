@@ -8,7 +8,7 @@ begin
 
 (*>*)
 
-section \<open>The class is closed under shortening the horizon\<close>
+subsection \<open>The class is closed under shortening the horizon\<close>
 
 
 text \<open>Clause (iii) from the pairwise bounds, at rational pairs only: an
@@ -152,7 +152,7 @@ proof -
     using prob' sets_process_law start' cov' mgX' mgC' by blast
 qed
 
-section \<open>Concatenation of pair paths\<close>
+subsection \<open>Concatenation of pair paths\<close>
 
 text \<open>The other half of the dynamic programming principle needs the class
   closed under pasting: run \<open>\<omega>\<close> to time \<open>r\<close>, then continue with an
@@ -221,7 +221,7 @@ proof -
   qed
 qed
 
-subsection \<open>The pasted law\<close>
+subsubsection \<open>The pasted law\<close>
 
 
 lemma pglue_law_start:
@@ -279,31 +279,7 @@ proof (rule AE_pglue_law[OF r rT covariation_class_prob[OF Q] covariation_class_
     using A B by (intro allI impI pglue_diffquot[OF r rT Sv]) auto
 qed
 
-section \<open>The horizon cap does not bind\<close>
-
-text \<open>\<open>covariation_val\<close> caps the exit time at \<open>T\<close>, an uncapped value would
-  not.  Cutting a member back to \<open>[0,U]\<close> (\<open>covariation_class_pcut\<close>) can
-  only shorten its exit time to \<open>min \<tau> U\<close>, so the value at horizon \<open>T\<close> is
-  already visible at horizon \<open>U\<close> once \<open>U\<close> exceeds the scale
-  \<open>(r\<^sup>2 - |x|\<^sup>2)/\<theta>\<close> of \<open>covariation_val_le_ball_bound\<close>.  No pasting is needed here.\<close>
-
-
-text \<open>The pasting theorem needs three transfer results: a first-factor
-  martingale, a second-factor martingale, and the product of a
-  first-factor variable with a second-factor martingale, are all
-  martingales for the product filtration.  \<open>sets_pair_measure_mono\<close>,
-  \<open>filtered_measure_pair\<close>, \<open>martingale_pair_fst\<close>, \<open>distr_pair_snd\<close>,
-  \<open>martingale_pair_snd_param\<close> and \<open>martingale_pair_snd\<close> live in
-  @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
-
-text \<open>\<open>martingale_cong_AE\<close>, \<open>martingale_time_change\<close> (used for the second
-  factor's \<open>\<omega>' 0 = 0\<close> clause, and reparametrising time by the nondecreasing
-  clock \<open>u \<mapsto> (u - r)\<^sup>+\<close>) and \<open>martingale_pair_mult\<close> (the third transfer
-  result, needed for the compensated clause) live in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra} and
-  @{theory Continuous_Time_Martingales.Martingale_Transfer} respectively.\<close>
-
-section \<open>The pasted law is a member of the class\<close>
+subsection \<open>The pasted law is a member of the class\<close>
 
 text \<open>The glued process splits as a first-factor martingale plus a
   second-factor martingale on the shifted clock \<open>u \<mapsto> (u - r)\<^sup>+\<close>: on
@@ -869,11 +845,7 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Horizon-cap invisibility, both halves.  Past the natural scale
-  \<open>(r\<^sup>2 - |x|\<^sup>2)/\<theta>\<close> the horizon does not matter at all, so the value --- defined
-  on the capped path space --- computes the uncapped value.\<close>
-
-section \<open>The pasting lower bound\<close>
+subsection \<open>The pasting lower bound\<close>
 
 text \<open>The mechanism behind the \<open>\<ge>\<close> half of the dynamic programming principle:
   pasting produces a member of the class, so the essential infimum
@@ -964,17 +936,11 @@ proof (rule AE_kglue_law[OF r rT covariation_class_prob[OF Q]
     by (intro allI impI pglue_diffquot[OF r rT Sv]) auto
 qed
 
-text \<open>The decomposition for clauses (iii) and (iv) of the kernel glue is
-  pointwise: the second summand subtracts the continuation's initial
-  value, so it is literally \<open>0\<close> before \<open>r\<close>, keeping it adapted since \<open>N\<close>
-  is only \<open>\<F>\<^sub>r\<close>-measurable.  Freezing the first coordinate turns \<open>X\<^sub>r\<close>
-  into a constant, so even clause (iv)'s cross term is a second-factor
-  martingale (a bounded-linear image of one), and
-  \<open>martingale_pair_snd_param\<close> carries everything.\<close>
-
-text \<open>\<open>martingale_sub_initial\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
-
+text \<open>Uniform moment bounds for the integrability of the kernel glue.  They
+  depend only on \<open>B\<close>, the dimension and the horizon, not on the member, so
+  they hold simultaneously for every candidate continuation.  The first
+  moment follows from the second through \<open>a \<le> 1 + a\<^sup>2\<close>, with no square root
+  and no Cauchy--Schwarz.\<close>
 
 lemma covariation_class_inner_mean_le:
   fixes Q :: "('n::finite pairpath) measure"
@@ -1051,6 +1017,14 @@ proof -
     using covariation_class_inner_mean_le[OF T B0 B Q t] by simp
   finally show ?thesis .
 qed
+
+text \<open>The decomposition for clauses (iii) and (iv) of the kernel glue is
+  pointwise: the second summand subtracts the continuation's initial
+  value, so it is literally \<open>0\<close> before \<open>r\<close>, keeping it adapted since \<open>N\<close>
+  is only \<open>\<F>\<^sub>r\<close>-measurable.  Freezing the first coordinate turns \<open>X\<^sub>r\<close>
+  into a constant, so even clause (iv)'s cross term is a second-factor
+  martingale (a bounded-linear image of one), and
+  \<open>martingale_pair_snd_param\<close> carries everything.\<close>
 
 theorem kglue_law_X_martingale:
   fixes Q :: "('n::finite pairpath) measure"
@@ -1391,11 +1365,6 @@ text \<open>The cross term of \<open>outerp (X\<^sub>r + W)\<close> is \<open>X\
   is linear, hence bounded on a finite-dimensional space --- so the cross
   term is a bounded-linear image of the second factor's martingale, not a
   product of two martingales.\<close>
-
-text \<open>\<open>norm_outer_prod\<close> lives in
-  @{theory Symmetric_Matrix_Spectra.Outer_Products}, stated through
-  \<open>outer_prod\<close>; \<open>outerp x\<close> is \<open>outer_prod x x\<close>.\<close>
-
 
 lemma kglue_param_comp_martingale:
   fixes RR :: "nat \<Rightarrow> ('n::finite pairpath) measure"

@@ -8,12 +8,7 @@ begin
 
 (*>*)
 
-text \<open>The measurable selection theorem for upper semicontinuous payoffs,
-  Bertsekas--Shreve (1978) Prop. 7.33, lives in
-  @{theory Continuous_Path_Spaces.Semicontinuous_Selection}, as
-  \<open>Metric_space.usc_measurable_selection\<close>.\<close>
-
-section \<open>The class is a compact metric space of measures\<close>
+subsection \<open>The class is a compact metric space of measures\<close>
 
 text \<open>The AFP entry \<open>Levy_Prokhorov_Metric\<close> makes the space of finite
   Borel measures on a separable metric space a metric space for the
@@ -60,7 +55,7 @@ proof (rule compactin_of_seq_compact
     by blast
 qed
 
-subsection \<open>Relative compactness and compactness for sets of positive semidefinite matrices\<close>
+subsubsection \<open>Relative compactness and compactness for sets of positive semidefinite matrices\<close>
 
 text \<open>Lemmas 2.2 and 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close> are stated for a set
   \<open>S \<subseteq> \<bbbS>\<^sup>n\<^sub>+\<close> of positive semidefinite matrices: bounded for relative
@@ -134,23 +129,10 @@ proof -
           compact_imp_closed[OF cS]])
 qed
 
-section \<open>Joint continuity of the shift\<close>
-
-text \<open>After @{thm [source] covariation_class_shift_image} the functional
-  whose supremum is @{term covariation_val} is a function of the starting point
-  and a member of the fixed class at the origin.  The selection theorem's
-  measurability hypothesis --- that the supremum over each closed set be
-  measurable in the parameter --- comes from joint upper semicontinuity,
-  in turn from joint continuity of the shift: shifting a path by a
-  constant vector moves it by exactly that vector in the sup metric, so a
-  uniformly continuous test function is displaced uniformly.  Weak
-  convergence may be tested against bounded uniformly continuous
-  functions (@{thm [source] mweak_conv_fin.mweak_conv_eq1}), so no
-  tightness is needed; @{thm [source] weak_conv_on_pushforward_uniform}
-  packages the argument.\<close>
-
-
-
+text \<open>The class packaged exactly as \<open>Metric_space.usc_measurable_selection\<close>
+  consumes it: a compact metric space, the metric being the
+  L\'evy--Prokhorov metric restricted to the class, and its topology the
+  subspace topology of weak convergence.\<close>
 
 theorem covariation_class_compact_metric_space:
   fixes x :: "real^'n::finite"
@@ -208,7 +190,7 @@ proof -
     by (rule compact_space_subtopology[OF covariation_class_compactin_weak[OF T B0 B D0 D Sc]])
 qed
 
-section \<open>A measurable optimizer: Larsson--Ruf Proposition 2.2(ii)\<close>
+subsection \<open>A measurable optimizer: Larsson--Ruf Proposition 2.2(ii)\<close>
 
 text \<open>The supremum defining the value is attained, and the optimizer can be chosen
   measurably in the starting point: the class at the origin is a compact
@@ -224,7 +206,20 @@ text \<open>The supremum defining the value is attained, and the optimizer can b
   supremum over a closed, hence compact, subset is upper semicontinuous
   in the parameter: it is the supremum of the real exit functional
   (@{thm [source] ess_inf_pexit_Sup_eq_vshift}), to which Berge's theorem
-  applies (@{thm [source] vshift_sup_usc}).\<close>
+  applies (@{thm [source] vshift_sup_usc}).
+
+  After @{thm [source] covariation_class_shift_image} the functional
+  whose supremum is @{term covariation_val} is a function of the starting point
+  and a member of the fixed class at the origin.  The selection theorem's
+  measurability hypothesis --- that the supremum over each closed set be
+  measurable in the parameter --- comes from joint upper semicontinuity,
+  in turn from joint continuity of the shift: shifting a path by a
+  constant vector moves it by exactly that vector in the sup metric, so a
+  uniformly continuous test function is displaced uniformly.  Weak
+  convergence may be tested against bounded uniformly continuous
+  functions (@{thm [source] mweak_conv_fin.mweak_conv_eq1}), so no
+  tightness is needed; @{thm [source] weak_conv_on_pushforward_uniform}
+  packages the argument.\<close>
 
 theorem covariation_val_measurable_selector:
   fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"
@@ -407,7 +402,7 @@ proof -
   then show ?thesis by blast
 qed
 
-section \<open>The optimizer as a Giry-monad kernel\<close>
+subsection \<open>The optimizer as a Giry-monad kernel\<close>
 
 text \<open>Kernel pasting glues with the Giry monad's @{term bind}, which wants
   the continuation as a measurable map into @{term prob_algebra} --- the

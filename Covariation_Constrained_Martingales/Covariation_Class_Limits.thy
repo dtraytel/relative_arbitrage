@@ -8,7 +8,7 @@ begin
 
 (*>*)
 
-section \<open>The two closed clauses of the class\<close>
+subsection \<open>The two closed clauses of the class\<close>
 
 text \<open>The starting-point clause and the difference-quotient clause of
   \<open>covariation_class S\<close> are closed sets of paths when \<open>S\<close> is closed, so
@@ -64,8 +64,6 @@ lemma diffquot_all_sets:
     \<in> sets (path_borel T :: ('n pairpath) measure)"
   using borel_of_closed[OF closedin_diffquot_constraint_all[OF S]] by (simp add: space_borel_of)
 
-text \<open>\<open>diffquot_all_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Difference_Quotients}.\<close>
-
 text \<open>Passing a rule-shaped hypothesis such as
   \<open>\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B\<close> through \<open>OF\<close> leaves
   the trivially true premise \<open>\<And>a. a \<in> S \<Longrightarrow> a \<in> S\<close> at the
@@ -96,7 +94,7 @@ proof -
   show ?thesis using P.prob_Collect_eq_1[OF mm] ae unfolding sp by blast
 qed
 
-subsection \<open>Both closed clauses pass to the weak limit\<close>
+subsubsection \<open>Both closed clauses pass to the weak limit\<close>
 
 text \<open>Both clauses are closed sets of paths
   (@{thm [source] closedin_start_point},
@@ -171,7 +169,7 @@ proof -
   then show ?thesis using iff[OF prob setsQ] by simp
 qed
 
-section \<open>The martingale clauses at a weak limit\<close>
+subsection \<open>The martingale clauses at a weak limit\<close>
 
 text \<open>This section proves the martingale clauses for a weak
   limit of members of \<open>covariation_class S\<close>, for any constraint set \<open>S\<close>
@@ -192,7 +190,7 @@ text \<open>This section proves the martingale clauses for a weak
   test functional is continuous but unbounded, and the transfer runs through
   the uniform \<open>L\<^sup>2\<close> bound (@{thm [source] covariation_class_sq_mean_le}).\<close>
 
-subsection \<open>The coordinate clause\<close>
+subsubsection \<open>The coordinate clause\<close>
 
 lemma covariation_class_coord_martingale:
   fixes Q :: "('n::finite pairpath) measure"
@@ -258,7 +256,7 @@ corollary covariation_class_X_martingale_limit:
   by (rule martingale_vecI)
     (rule covariation_class_coord_martingale_limit[OF T B0 B mem wc prob setsQ])
 
-subsection \<open>Three of the four clauses, at the limit\<close>
+subsubsection \<open>Three of the four clauses, at the limit\<close>
 
 text \<open>A weak limit of class members satisfies the start clause, the
   covariation clause, and the \<open>X\<close>-martingale clause of the class.  What
@@ -294,7 +292,7 @@ proof -
     by (rule covariation_class_X_martingale_limit[OF T B0 B mem wc prob setsQ])
 qed
 
-section \<open>The uniform fourth moment of the class\<close>
+subsection \<open>The uniform fourth moment of the class\<close>
 
 text \<open>This bound supplies the compensated clause at the limit.  A
   coordinate of a class member is an \<open>L\<^sup>2\<close> martingale whose square is
@@ -304,7 +302,7 @@ text \<open>This bound supplies the compensated clause at the limit.  A
   surely, are made pointwise by restricting to a full-measure event
   (@{thm [source] martingale_restrict_full}).\<close>
 
-subsection \<open>The coordinate process, its compensator, and its paths\<close>
+subsubsection \<open>The coordinate process, its compensator, and its paths\<close>
 
 lemma covariation_class_compensated_coord_martingale:
   fixes Q :: "('n::finite pairpath) measure"
@@ -436,36 +434,16 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-section \<open>The weak-limit machinery, parametric in a state functional\<close>
+subsubsection \<open>The fourth moment of a coordinate, and the compensated entry\<close>
 
-text \<open>The argument for the coordinate \<open>\<omega> \<mapsto> fst (\<omega> t) $ i\<close> also proves
-  the compensated clause of the class for
-  \<open>\<omega> \<mapsto> (outerp (fst (\<omega> t)) - snd (\<omega> t)) $ i $ j\<close>: both are of the form
-  \<open>\<omega> \<mapsto> F (\<omega> t)\<close> for a continuous \<open>F\<close> on the pair state, so this section
-  redoes the chain once, parametric in \<open>F\<close>, and instantiates it twice.
+text \<open>The compensated clause is the instance of the generic
+  @{thm [source] martingale_F_limit} at an entry of \<open>outerp X - Y\<close>, a
+  continuous function of the pair state.  What it needs is a uniform \<open>L\<^sup>2\<close>
+  bound on that entry, hence a uniform fourth moment of the coordinates.
 
-  The hypotheses a caller must supply are exactly four: \<open>F\<close> continuous,
-  the process \<open>\<lambda>u \<omega>. F (\<omega> (min u T))\<close> a martingale under every
-  approximating law, a uniform \<open>L\<^sup>2\<close> bound on \<open>F (\<omega> u)\<close>, and the usual
-  weak-convergence data.\<close>
-
-subsection \<open>Continuity and measurability of the \<open>F\<close>-functionals\<close>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  The fourth moment of the coordinate itself, not of an increment: the start
+  clause pins \<open>X\<^sub>0 = x\<close>, so \<open>(a + b)\<^sup>4 \<le> 8 (a\<^sup>4 + b\<^sup>4)\<close> turns the increment
+  bound into an absolute one, uniform over the whole class.\<close>
 
 lemma covariation_class_fourth_moment_abs:
   fixes Q :: "('n::finite pairpath) measure"
@@ -677,12 +655,7 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>\<open>mat_inner_axis\<close>, \<open>mat_Basis_cases\<close>, \<open>measurable_mat_entries\<close>,
-  \<open>integrable_mat_entries\<close>, \<open>set_integral_mat_component\<close> and
-  \<open>martingale_matI\<close> live in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
-
-subsection \<open>The compensated clause, at the limit\<close>
+subsubsection \<open>The compensated clause, at the limit\<close>
 
 theorem covariation_class_comp_entry_martingale_limit:
   fixes Qm :: "nat \<Rightarrow> ('n::finite pairpath) measure"
@@ -753,7 +726,7 @@ corollary covariation_class_comp_martingale_limit:
     (rule covariation_class_comp_entry_martingale_limit
       [OF T B0 B D0 D mem wc prob setsQ])
 
-section \<open>The class is closed under weak limits\<close>
+subsection \<open>The class is closed under weak limits\<close>
 
 text \<open>All four clauses of the class survive a weak limit, so the class of pair
   laws is weakly closed for any closed \<open>S\<close> with a norm bound and a two-sided

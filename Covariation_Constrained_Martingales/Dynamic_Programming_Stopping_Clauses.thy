@@ -8,7 +8,7 @@ begin
 
 (*>*)
 
-section \<open>The class's component martingale has a dominating function\<close>
+subsection \<open>The class's component martingale has a dominating function\<close>
 
 text \<open>@{theory Continuous_Time_Martingales.Doob_Inequality}'s \<open>horizon_sq_int_martingale\<close> locale already builds
   the running supremum \<open>Dsup\<close>, proves it integrable, and proves it dominates
@@ -49,11 +49,8 @@ lemma covariation_class_horizon_component:
         martingale_vec_nth[OF covariation_class_martingale_fst[OF P]]])
     (rule covariation_class_sq_integrable[OF B0 B less_imp_le[OF T0] P])
 
-text \<open>The \<open>cont\<close> hypothesis of @{thm [source] set_martingale_sampling} for
-  the class's component process: the dyadic times converge and the path is
-  continuous, so the values do.\<close>
-
-
+text \<open>Each entry of the compensated process is square integrable at every
+  time.\<close>
 
 lemma covariation_class_comp_entry_sq_integrable:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -97,34 +94,6 @@ lemma covariation_class_horizon_compensated:
   by (rule covariation_class_horizon_of[where g = "\<lambda>z. (outerp (fst z) - snd z) $ c $ d", OF T0 P
         martingale_mat_nth[OF covariation_class_martingale_compensated[OF P]]])
     (rule covariation_class_comp_entry_sq_integrable[OF T0 B0 B D0 D P])
-
-section \<open>Clause (iv): the conditioning rectangle at a stopping time\<close>
-
-text \<open>The deterministic case conditions on rectangles
-  \<open>(pcut r, pfut r T) -` (A \<times> A')\<close>, which sit in \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> by
-  @{thm [source] rect_vimage_natural_filtration}.  At a stopping time the
-  split is \<open>(pstopped T \<theta>, pafter T \<theta>)\<close>; since \<^const>\<open>pafter\<close> is the delayed
-  future, frozen until \<open>\<theta>\<close> and then running on the same clock, the time on
-  the second factor is an absolute time \<open>u\<close>, not an offset, so the sampling
-  time attached to it is \<open>u \<or> \<theta>\<close>, and this section is about that family.
-
-  Everything rests on one pathwise observation: below a deterministic \<open>t\<close>
-  both factors are read off the path stopped at \<open>t\<close>, an \<open>\<F>\<^sub>t\<close>-measurable
-  function of \<open>\<omega>\<close>, the same device @{thm [source]
-  path_stopping_time_event_filtration} uses for the event \<open>{\<theta> \<le> t}\<close> itself.\<close>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 (*<*)
 end

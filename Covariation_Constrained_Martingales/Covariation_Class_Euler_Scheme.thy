@@ -8,7 +8,7 @@ begin
 
 (*>*)
 
-section \<open>A continuous field of rates\<close>
+subsection \<open>A continuous field of rates\<close>
 
 text \<open>Given a continuous field \<open>SF\<close> of rates with \<open>SF z (SF z)\<^sup>T \<in> S\<close>, an
   Euler scheme freezes the field at the grid points, runs the
@@ -23,13 +23,7 @@ text \<open>Given a continuous field \<open>SF\<close> of rates with \<open>SF z
   integral.  This section writes the field as a square and builds the
   limit.\<close>
 
-subsection \<open>A crude operator bound for matrices\<close>
-
-
-text \<open>\<open>matvec_norm_le\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-subsection \<open>Writing the field as a square: columns into a matrix\<close>
+subsubsection \<open>Writing the field as a square: columns into a matrix\<close>
 
 text \<open>\<open>sbmpair\<close> wants a volatility matrix \<open>S\<close> with \<open>S S\<^sup>T\<close> equal to the
   field value; the field is a sum of column outer products, so \<open>S\<close> is the
@@ -261,7 +255,7 @@ proof -
   qed
 qed
 
-subsection \<open>The Euler kernel: measurability package\<close>
+subsubsection \<open>The Euler kernel: measurability package\<close>
 
 text \<open>A continuous matrix field with admissible squares induces, through
   the Gaussian member, a kernel with exactly the two properties
@@ -357,7 +351,7 @@ proof -
       \<in> borel \<rightarrow>\<^sub>M prob_algebra ?B" unfolding KK_def .
 qed
 
-subsection \<open>The Euler process\<close>
+subsubsection \<open>The Euler process\<close>
 
 text \<open>Freeze the field at the left endpoint of each step and glue with
   @{thm [source] covariation_class_kglue_law'}: stage \<open>j\<close> is a member on
@@ -426,10 +420,7 @@ next
   then show ?case unfolding r_def T'_def by simp
 qed
 
-subsection \<open>Step moments of the Gaussian member\<close>
-
-text \<open>\<open>bounded_linear_trace_mult_left\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
+subsubsection \<open>Step moments of the Gaussian member\<close>
 
 lemma sbm_entry_bound:
   fixes S :: "real^'n::finite^'n"
@@ -448,7 +439,7 @@ proof -
   then show ?thesis by simp
 qed
 
-subsection \<open>The step increment: mean zero\<close>
+subsubsection \<open>The step increment: mean zero\<close>
 
 theorem sbm_xi_mean0:
   fixes S :: "real^'n::finite^'n" and M :: "real^'n^'n" and h :: real
@@ -575,10 +566,7 @@ proof -
   finally show "(\<integral>\<omega>'. ?\<xi> \<omega>' \<partial>?\<mu>) = 0" .
 qed
 
-subsection \<open>The step increment: variance of order \<open>h\<^sup>2\<close>\<close>
-
-text \<open>\<open>diff_sq_le_double\<close> is \<open>sq_diff_le\<close> from
-  @{theory Continuous_Time_Martingales.Quadratic_Variation}.\<close>
+subsubsection \<open>The step increment: variance of order \<open>h\<^sup>2\<close>\<close>
 
 theorem sbm_xi_sq_bound:
   fixes S :: "real^'n::finite^'n" and M :: "real^'n^'n" and h :: real
@@ -828,7 +816,7 @@ proof -
       \<le> (6 * (Cmm * Cs\<^sup>2)\<^sup>2 * n'\<^sup>2 + 2 * (n'\<^sup>2 * Cmm * D)\<^sup>2) * h\<^sup>2" .
 qed
 
-subsection \<open>A volatility-uniform variance constant\<close>
+subsubsection \<open>A volatility-uniform variance constant\<close>
 
 definition xiC :: "real^'n::finite^'n \<Rightarrow> real \<Rightarrow> real" where
   "xiC M D = (let n' = real (CARD('n));
@@ -887,7 +875,7 @@ proof -
   from base mult_right_mono[OF tot h2] show ?thesis by linarith
 qed
 
-subsection \<open>The compensated grid functional of the Euler process\<close>
+subsubsection \<open>The compensated grid functional of the Euler process\<close>
 
 definition euXi :: "(real^'n::finite \<Rightarrow> real^'n^'n) \<Rightarrow> real^'n^'n \<Rightarrow> real
     \<Rightarrow> nat \<Rightarrow> 'n pairpath \<Rightarrow> real" where
@@ -1008,7 +996,7 @@ proof -
   finally show ?thesis .
 qed
 
-subsection \<open>The second moment of the grid functional grows linearly\<close>
+subsubsection \<open>The second moment of the grid functional grows linearly\<close>
 
 theorem eulerp_Xi_sq_bound:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
@@ -1302,7 +1290,7 @@ next
   show ?case using intS bndS by blast
 qed
 
-subsection \<open>The increments are almost surely orthogonal to a killed field\<close>
+subsubsection \<open>The increments are almost surely orthogonal to a killed field\<close>
 
 lemma sbm_orth_increment:
   fixes S :: "real^'n::finite^'n" and w :: "real^'n"
@@ -1368,7 +1356,7 @@ proof -
 qed
 
 
-subsection \<open>Partial grid sums: peel, moment bound, Chebyshev\<close>
+subsubsection \<open>Partial grid sums: peel, moment bound, Chebyshev\<close>
 
 lemma euXi_pglue_prefix:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
@@ -1590,12 +1578,7 @@ proof -
   finally show ?thesis .
 qed
 
-subsection \<open>The exact quadratic lower bound along the grid\<close>
-
-text \<open>\<open>quad_taylor_step\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-subsection \<open>The weak limit of the Euler laws\<close>
+subsubsection \<open>The weak limit of the Euler laws\<close>
 
 text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close> all live in the class
   \<open>covariation_class S c x\<close>, so some subsequence converges weakly to a class
@@ -1605,8 +1588,7 @@ text \<open>The Euler laws at mesh \<open>c / (i + 1)\<close> all live in the cl
   (@{thm [source] weak_conv_open_liminf}, @{thm [source]
   weak_conv_closed_limsup}) --- applies to the event that a
   path stays inside a region while the quadratic drops below its
-  guaranteed growth, whose probability vanishes with the mesh by
-  @{thm [source] eulerp_Xi_chebyshev} and \<open>eulerp_quad_lower_region\<close>.
+  guaranteed growth, once its probability vanishes with the mesh.
 
   Staying strictly inside an open set through time \<open>t\<close> is an open
   condition on the path: the image of \<open>{0..t}\<close> is compact, so it sits at
@@ -1702,18 +1684,13 @@ theorem eulerp_weak_limit:
   by (rule covariation_class_weak_limit[OF c0 B0 B D0 D Sc
       eulerp_seq_in_class[OF c0 B0 B D0 D Sc Sv SFc SFs]])
 
-subsection \<open>The bad event vanishes with the mesh\<close>
+subsubsection \<open>The bad event vanishes with the mesh\<close>
 
-text \<open>The bad event --- the path stays inside a bounded region through
-  time \<open>t\<close> yet the quadratic drops below its guaranteed growth --- has
-  vanishing probability under the Euler laws
-  (\<open>eulerp_bad_event_null_region\<close>).  Three estimates feed the proof:
-  the grid functional's Chebyshev bound
-  (@{thm [source] eulerp_Xi_chebyshev}), the pathwise lower bound at the
-  nearest grid point (\<open>eulerp_quad_lower_region\<close>), and a
-  fourth-moment tail for the one-step gap between the grid point and
-  \<open>t\<close>, derived below from
-  @{thm [source] covariation_class_fourth_moment_bochner}.\<close>
+text \<open>A fourth-moment tail for the increment of a class member over a short
+  time, from @{thm [source] covariation_class_fourth_moment_bochner}: with
+  the Chebyshev bound @{thm [source] eulerp_Xi_chebyshev} of the grid
+  functional, the estimate for the one-step gap between a grid point and an
+  arbitrary time.\<close>
 
 lemma covariation_class_increment_tail:
   fixes Q :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -1789,13 +1766,6 @@ proof -
   qed
   finally show ?thesis .
 qed
-
-text \<open>The bad event is open when the region is open
-  (\<open>open_quad_bad_event_region\<close>): staying inside the region is
-  @{thm [source] open_stay_inside} through the first projection, and the
-  strict quadratic drop is an open condition on the evaluation at \<open>t\<close>,
-  via @{thm [source] open_eval_preimage}.\<close>
-
 
 (*<*)
 end

@@ -8,7 +8,7 @@ begin
 
 (*>*)
 
-section \<open>The pathwise DPP bound for the additive glue\<close>
+subsection \<open>The pathwise DPP bound for the additive glue\<close>
 
 
 
@@ -180,7 +180,7 @@ proof -
     unfolding selker_def by (rule measurable_compose[OF pm Sm])
 qed
 
-section \<open>The additive glue with the selector kernel\<close>
+subsection \<open>The additive glue with the selector kernel\<close>
 
 text \<open>Every kernel hypothesis of @{thm [source] covariation_class_aglue} is a
   one-line application of a \<open>pdelclass_\<close> lemma, and every side condition
@@ -494,7 +494,7 @@ proof -
           msecX msecC gintX gintC])
 qed
 
-section \<open>The \<open>\<ge>\<close> half at a stopping time\<close>
+subsection \<open>The \<open>\<ge>\<close> half at a stopping time\<close>
 
 text \<open>Assembly.  The competitor is the additive glue of the stopped past and
   the selector's continuation; it lies in the class by
@@ -616,7 +616,7 @@ proof -
     by (rule covariation_val_ge_of_AE[OF Rmem Rbnd])
 qed
 
-subsection \<open>Transporting the bound from the law to its stopped version\<close>
+subsubsection \<open>Transporting the bound from the law to its stopped version\<close>
 
 text \<open>The DPP integrand reads the path only up to \<open>\<theta>\<close>, so it is unchanged by
   stopping there; transporting it along @{thm [source] AE_distr_iff}
@@ -866,7 +866,7 @@ proof -
   qed
 qed
 
-subsection \<open>The \<open>\<ge>\<close> half at a random time, reduced to a constant\<close>
+subsubsection \<open>The \<open>\<ge>\<close> half at a random time, reduced to a constant\<close>
 
 text \<open>The passage from a constant lower bound to the essential infimum
   (@{thm [source] ess_inf_time_le_of_real_bounds}) does not care whether the
@@ -944,7 +944,7 @@ qed
 
 
 
-subsection \<open>The \<open>\<ge>\<close> half at a deterministic time\<close>
+subsubsection \<open>The \<open>\<ge>\<close> half at a deterministic time\<close>
 
 text \<open>Proposition 2.4 of \<^cite>\<open>LaiShkolnikovSoner\<close> states the dynamic programming
   principle

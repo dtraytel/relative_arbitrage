@@ -8,7 +8,7 @@ begin
 
 (*>*)
 
-section \<open>The class is tight\<close>
+subsection \<open>The class is tight\<close>
 
 text \<open>The other consumer of the uniform fourth moment.  The Kolmogorov
   chain in @{theory Continuous_Path_Spaces.Path_Tightness} wants the moment as a Bochner integral, so the
@@ -73,6 +73,18 @@ proof -
   finally show ?thesis using C0 by simp
 qed
 
+
+text \<open>The mass a class member puts outside a pair H\"older ball.  This is
+  the argument of \<open>path_law_holder_ball_bound_vec\<close>, run natively on the
+  pair path space: that theorem is about the pushforward \<open>path_law M X T\<close>
+  of an abstract process and wants the start pointwise, whereas a class
+  member is already a law on paths and starts at \<open>x\<close> only almost surely.
+  The charge splits along the components: the H\"older event of the state
+  and the Lipschitz event of the covariation intersect inside a pair
+  H\"older ball (\<open>pair_holder_of_components\<close>), so their complements cover
+  the complement of the ball and subadditivity finishes; the Lipschitz
+  event has probability one, so only the estimate for the state carries
+  content.\<close>
 
 theorem covariation_class_pair_holder_charge:
   fixes Q :: "('n::finite pairpath) measure"
@@ -305,7 +317,7 @@ proof -
   qed
 qed
 
-section \<open>The class is sequentially compact\<close>
+subsection \<open>The class is sequentially compact\<close>
 
 text \<open>Sequential compactness of the class: every sequence of
   members has a subsequence converging weakly to a member.  Tightness

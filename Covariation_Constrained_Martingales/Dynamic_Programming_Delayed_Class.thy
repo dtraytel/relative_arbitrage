@@ -9,7 +9,7 @@ begin
 
 (*>*)
 
-section \<open>The delayed class on a fixed space\<close>
+subsection \<open>The delayed class on a fixed space\<close>
 
 
 
@@ -59,10 +59,6 @@ proof -
   show "sets \<nu> = sets (path_borel T :: ('n pairpath) measure)" unfolding nu by simp
 qed
 
-text \<open>\<open>vanishes_of_rational\<close> lives in @{theory Continuous_Path_Spaces.Difference_Quotients}.\<close>
-
-
-
 lemma pdelclass_frozen:
   fixes \<nu> :: "('n::finite pairpath) measure"
   assumes s0: "0 \<le> s" and sT: "s \<le> T" and m: "\<nu> \<in> pdelclass S T s"
@@ -93,7 +89,7 @@ proof -
   then show ?thesis unfolding nu AE_distr_iff[OF pm Phi] .
 qed
 
-section \<open>The horizon enters the value only as a cap\<close>
+subsection \<open>The horizon enters the value only as a cap\<close>
 
 text \<open>A single identity reduces the horizon-parametrised selector to a
   pushforward, not a new selection theorem: the capped exit time at a
@@ -103,7 +99,15 @@ text \<open>A single identity reduces the horizon-parametrised selector to a
   class, so the horizon acts on the value function as an outer \<open>min\<close> and
   not on which law is optimal.  Consequently one selector, built once at
   the full horizon \<open>T\<close>, is optimal at every shorter horizon, and the
-  parameter \<open>s\<close> is carried through only by a pushforward.\<close>
+  parameter \<open>s\<close> is carried through only by a pushforward.
+
+  The \<open>\<le>\<close> half of the identity is @{thm [source] covariation_val_horizon_mono}
+  together with @{thm [source] covariation_val_le_T}; the \<open>\<ge>\<close> half cuts a
+  competitor at the longer horizon back to the shorter one
+  (@{thm [source] covariation_class_pcut}), where
+  @{thm [source] ess_inf_pexit_pair_law_pcut} turns its value into the
+  capped value.  No pasting is needed beyond the one inside
+  @{thm [source] covariation_val_horizon_mono}.\<close>
 
 
 
@@ -152,7 +156,7 @@ proof (rule order.antisym)
   qed
 qed
 
-section \<open>The horizon-parametrised measurable selector\<close>
+subsection \<open>The horizon-parametrised measurable selector\<close>
 
 text \<open>@{thm [source] covariation_val_horizon_cap} turns the selection problem into a
   pushforward problem.  The optimizer of the capped value is the optimizer
@@ -361,7 +365,7 @@ proof -
   qed
 qed
 
-section \<open>The delayed class supplies the additive glue's kernel clauses\<close>
+subsection \<open>The delayed class supplies the additive glue's kernel clauses\<close>
 
 text \<open>@{thm [source] covariation_class_aglue} asks its continuation kernel for
   nine facts.  Four are already in hand for \<^const>\<open>pdelclass\<close> --- \<open>Kp\<close>
@@ -379,8 +383,7 @@ text \<open>@{thm [source] covariation_class_aglue} asks its continuation kernel
   needs to push the martingale forward along \<^const>\<open>pembed\<close>.  A delayed
   path carries no extra information at time \<open>u\<close>, which is why the
   martingale property survives the delay; taking the base's own filtration
-  instead would make the statement false.  \<open>martingale_time_change_cong\<close>
-  lives in @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
+  instead would make the statement false.\<close>
 
 
 
@@ -447,7 +450,7 @@ theorem pdelclass_comp_martingale:
   by (rule pdelclass_martingale_of[where f = "\<lambda>p. outerp (fst p) - snd p",
         OF s0 sT m compensated_map_borel covariation_class_martingale_compensated])
 
-subsection \<open>The covariation clause of the continuation\<close>
+subsubsection \<open>The covariation clause of the continuation\<close>
 
 text \<open>The guard \<open>s \<le> a\<close> makes this the delayed constraint: below \<open>s\<close> the
   path stands still, so no difference quotient there need lie in
@@ -546,13 +549,12 @@ proof -
   qed
 qed
 
-subsection \<open>Mean, integrability and the increment identity\<close>
+subsubsection \<open>Mean, integrability and the increment identity\<close>
 
 text \<open>A martingale that starts at \<open>0\<close> has mean \<open>0\<close> at every later time; the
   set-integral identity over the whole space is the case \<open>i = 0\<close> of the
   martingale property, and @{thm [source] pdelclass_frozen} supplies the
-  start.  \<open>martingale_mean_zero_of_start\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
+  start.\<close>
 
 lemma pdelclass_start_zero:
   fixes \<nu> :: "('n::finite pairpath) measure"
@@ -635,21 +637,10 @@ proof (rule martingale_mean_zero_of_start
   qed
 qed
 
-section \<open>The stopped past law satisfies the additive glue's \<open>Q\<close>-clauses\<close>
+subsection \<open>The stopped past law satisfies the additive glue's \<open>Q\<close>-clauses\<close>
 
-text \<open>\<open>Qst\<close> --- that the past law is carried by paths which are their own
-  stopped versions --- is where the a.e. form is unavoidable, so its
-  transfer needs the fixed-point set to be measurable.  It is: two paths
-  that agree at every rational of \<open>[0,T]\<close> and are both continuous there
-  agree everywhere (@{thm [source] vanishes_of_rational} on their
-  difference), so the fixed-point set is a countable intersection of
-  evaluation conditions --- the same shape as
-  @{thm [source] frozen_set_measurable}.\<close>
-
-
-
-
-
+text \<open>The stopped law satisfies the difference-quotient clause up to \<open>\<theta>\<close>,
+  where the stopped path is the path.\<close>
 
 theorem pstopped_law_diffquot:
   fixes P :: "('n::finite pairpath) measure"
@@ -766,18 +757,10 @@ proof -
   qed
 qed
 
-text \<open>The last input the two martingale clauses need: the stopped path,
-  evaluated at a time \<open>r \<le> u\<close>, is \<open>\<F>\<^sub>u\<close>-measurable as a path point, with
-  no componentwise decomposition.  The trick reads it off the \<open>u\<close>-cut
-  rather than off the whole path: \<^const>\<open>pcut\<close> is measurable into the
-  \<open>u\<close>-horizon space by the description of the natural filtration
-  (@{thm [source] sets_natural_filtration_eq_pcut_vimage}), the truncated
-  stopping time \<open>r \<and> \<theta>\<close> is \<open>\<F>\<^sub>u\<close>-measurable because \<open>{r \<and> \<theta> \<le> t}\<close> is
-  either everything or \<open>{\<theta> \<le> t}\<close> with \<open>t < r\<close>, and
-  @{thm [source] path_eval_at_measurable_time} joins the two.\<close>
-
-
-
+text \<open>A horizon martingale of \<open>P\<close>, read along the stopped path, is a horizon
+  martingale of the stopped law; hence so are the components of the state
+  and the entries of the compensated process.  The measurability input is
+  @{thm [source] pstopped_eval_filtration}.\<close>
 
 lemma pstopped_law_horizon_of:
   fixes P :: "('n::finite pairpath) measure" and x :: "real^'n"
@@ -886,7 +869,7 @@ theorem pstopped_law_horizon_compensated:
         OF T0 P st thM _ covariation_class_horizon_compensated[OF T0 B0 B D0 D P]])
     (unfold outerp_def, intro continuous_intros)
 
-subsection \<open>Uniform first moments for the delayed class\<close>
+subsubsection \<open>Uniform first moments for the delayed class\<close>
 
 text \<open>The six remaining side conditions of the additive glue are Fubini
   statements about \<^const>\<open>ksemi\<close>, needing beyond the per-\<open>p'\<close>
@@ -967,34 +950,6 @@ proof -
     using B0 s0 by (intro add_mono mult_left_mono mult_left_mono) auto
   finally show ?thesis unfolding eq .
 qed
-
-section \<open>Fubini over the semidirect product: the glue's side conditions\<close>
-
-text \<open>Three generic facts about \<^const>\<open>ksemi\<close>, all from
-  @{thm [source] nn_integral_ksemi}: a function of the past alone is
-  integrable as soon as it is integrable on the base; a function whose
-  inner \<open>\<kappa>\<close>-integral is bounded uniformly in the past is integrable; and
-  the inner integral is measurable in the past.  Together with the
-  uniform first moments of the delayed class these discharge every side
-  condition of the additive glue.\<close>
-
-text \<open>\<open>integral_kernel_measurable\<close> and \<open>integrable_ksemi_of_past_bound\<close> (the
-  workhorse: the inner bound may itself be a function of the past, as long
-  as that function is integrable --- covering all three shapes the glue
-  produces, a constant, \<open>norm (f \<omega>)\<close>, and \<open>norm (f \<omega>) * C\<close>) live in
-  @{theory Continuous_Time_Martingales.Semidirect_Kernels}.\<close>
-
-subsection \<open>\<open>RXint\<close> and \<open>RCint\<close>\<close>
-
-
-
-
-
-
-
-
-
-
 
 (*<*)
 end
