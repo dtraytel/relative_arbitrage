@@ -3,7 +3,7 @@ section \<open>Section 4 for the operator of Eq. (1.9)\<close>
 (*<*)
 theory Comparison_Instance
   imports
-    Comparison_Two_Domain Operator_Envelope_Continuity
+    Comparison_Two_Domain Operator_Envelopes
 begin
 (*>*)
 

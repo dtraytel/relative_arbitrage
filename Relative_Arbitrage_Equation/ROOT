@@ -20,7 +20,6 @@ session Relative_Arbitrage_Equation = Second_Order_Viscosity_Analysis +
     Operator_Formula
     Subspace_Tangential_Field
     Operator_Envelopes
-    Operator_Envelope_Continuity
     Comparison_Strictness
     Comparison_Localisation
     Maximum_Principle

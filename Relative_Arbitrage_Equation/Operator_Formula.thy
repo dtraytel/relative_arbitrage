@@ -1482,7 +1482,7 @@ text \<open>\<open>bracket_lipschitz\<close> and \<open>eigval_lipschitz\<close>
 section \<open>Continuity of \<open>F\<close> away from \<open>p = 0\<close>\<close>
 
 text \<open>Eq. (3.5) and Eq. (3.6) are proved (\<open>ell_op_eq_half_bracket\<close> here,
-  \<open>eq36\<close> in \<open>Operator_Envelope_Continuity\<close>.thy), as is the general Poincare separation
+  \<open>eq36\<close> in \<open>Operator_Envelopes\<close>.thy), as is the general Poincare separation
   inequality (\<open>poincare_separation\<close>).  The remaining clause of Lemma 3.1,
   \<open>F\<^sub>* = F\<^sup>* = F\<close> on \<open>(\<real>\<^sup>n \ {0}) \<times> \<S>\<^sup>n\<close>, is continuity of \<open>F\<close> away from
   \<open>p = 0\<close>.  Writing \<open>F(p, M) = -\<onehalf> bracket (n-k) L (M\<^sub>p)\<close> with \<open>M\<close> replaced

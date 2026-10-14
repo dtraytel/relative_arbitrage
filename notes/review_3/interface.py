@@ -11,7 +11,7 @@ def closure(root, stop_thys):
         if F[n]['thy'].split('.')[-1] in stop_thys: continue   # do not look inside the interface theories
         st+=F[n]['deps']
     return seen
-op_thys={"Elliptic_Operator","Viscosity_Definitions","Constraint_Set_Convexity","Operator_Formula","Operator_Envelopes","Operator_Envelope_Continuity","Viscosity_Ball","Viscosity_Comparison_Interface","Ball_Solution"}
+op_thys={"Elliptic_Operator","Viscosity_Definitions","Constraint_Set_Convexity","Operator_Formula","Operator_Envelopes","Viscosity_Ball","Viscosity_Comparison_Interface","Ball_Solution"}
 for root in ["Comparison_Two_Domain.uniqueness_expandable"]:
     c=closure(root, op_thys)
     iface=sorted(n for n in c if F[n]['thy'].split('.')[-1] in op_thys)

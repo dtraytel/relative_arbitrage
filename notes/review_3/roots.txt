@@ -389,12 +389,12 @@ Operator_Formula.feasible_iff_eigval    # KEEP_EVIDENCE
 Operator_Envelopes.visc_subsol_imp_env    # FIX_THEN_KEEP
 Operator_Envelopes.visc_supersol_imp_env    # FIX_THEN_KEEP
 Operator_Envelopes.visc_subsol_env_local    # FIX_THEN_KEEP
-Operator_Envelope_Continuity.eq36_rhs_def    # KEEP_ROOT
-Operator_Envelope_Continuity.ell_op_usc_at_zero_ge    # KEEP_ROOT
-Operator_Envelope_Continuity.ell_op_le_eq36    # KEEP_ROOT
-Operator_Envelope_Continuity.ell_op_usc_at_zero_le    # KEEP_ROOT
-Operator_Envelope_Continuity.eq36    # KEEP_ROOT
-Operator_Envelope_Continuity.ell_op_envelopes_eq_off_zero    # KEEP_ROOT
+Operator_Envelopes.eq36_rhs_def    # KEEP_ROOT
+Operator_Envelopes.ell_op_usc_at_zero_ge    # KEEP_ROOT
+Operator_Envelopes.ell_op_le_eq36    # KEEP_ROOT
+Operator_Envelopes.ell_op_usc_at_zero_le    # KEEP_ROOT
+Operator_Envelopes.eq36    # KEEP_ROOT
+Operator_Envelopes.ell_op_envelopes_eq_off_zero    # KEEP_ROOT
 # sms_semic
 Eigenvalue_Continuity.eigval_lipschitz    # KEEP_ROOT
 Householder_Rotation.hrefl_orthogonal    # KEEP_API
