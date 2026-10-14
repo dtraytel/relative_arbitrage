@@ -513,51 +513,19 @@ lemma visc_subsol_imp_env:
   fixes u :: "real^'n::finite \<Rightarrow> real"
   assumes sub: "visc_subsol k L \<Omega> u" and sub_K: "\<Omega> \<subseteq> K" and op: "open \<Omega>"
   shows "visc_subsol_env k L K \<Omega> u"
-  unfolding visc_subsol_env_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-    and gmax: "\<forall>y\<in>K. u y - \<phi> y \<le> u x - \<phi> x"
-  obtain e where e: "0 < e" "ball x e \<subseteq> \<Omega>"
-    using openE[OF op x] by blast
-  have loc: "\<exists>e>0. \<forall>y \<in> ball x e. u y - \<phi> y \<le> u x - \<phi> x"
-  proof (intro exI[of _ e] conjI ballI e(1))
-    fix y :: "real^'n" assume "y \<in> ball x e"
-    with e(2) sub_K have "y \<in> K" by blast
-    with gmax show "u y - \<phi> y \<le> u x - \<phi> x" by blast
-  qed
-  have "ell_op k L (g x) H \<le> 1"
-    using sub x tf loc unfolding visc_subsol_def by blast
-  then have "ereal (ell_op k L (g x) H) \<le> 1"
-    by simp
-  with ell_op_lsc_le_ell_op[of k L "g x" H] show "ell_op_lsc k L (g x) H \<le> 1"
-    by (rule order_trans)
-qed
+  unfolding visc_subsol_env_eq_gen
+  by (rule visc_subsol_gen_filter_mono[OF visc_subsol_gen_mono[OF
+        sub[unfolded visc_subsol_eq_gen] ell_op_lsc_le_ell_op]
+        nhds_le_principal_of_open[OF op sub_K]])
 
 lemma visc_supersol_imp_env:
   fixes u :: "real^'n::finite \<Rightarrow> real"
   assumes sup: "visc_supersol k L \<Omega> u" and sub_K: "\<Omega> \<subseteq> K" and op: "open \<Omega>"
   shows "visc_supersol_env k L K \<Omega> u"
-  unfolding visc_supersol_env_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-    and gmin: "\<forall>y\<in>K. u x - \<phi> x \<le> u y - \<phi> y"
-  obtain e where e: "0 < e" "ball x e \<subseteq> \<Omega>"
-    using openE[OF op x] by blast
-  have loc: "\<exists>e>0. \<forall>y \<in> ball x e. u x - \<phi> x \<le> u y - \<phi> y"
-  proof (intro exI[of _ e] conjI ballI e(1))
-    fix y :: "real^'n" assume "y \<in> ball x e"
-    with e(2) sub_K have "y \<in> K" by blast
-    with gmin show "u x - \<phi> x \<le> u y - \<phi> y" by blast
-  qed
-  have "1 \<le> ell_op k L (g x) H"
-    using sup x tf loc unfolding visc_supersol_def by blast
-  then have "(1 :: ereal) \<le> ereal (ell_op k L (g x) H)"
-    by simp
-  then show "1 \<le> ell_op_usc k L (g x) H"
-    using ell_op_le_ell_op_usc[of k L "g x" H] by (rule order_trans)
-qed
+  unfolding visc_supersol_env_eq_gen
+  by (rule visc_supersol_gen_filter_mono[OF visc_supersol_gen_mono[OF
+        sup[unfolded visc_supersol_eq_gen] ell_op_le_ell_op_usc]
+        nhds_le_principal_of_open[OF op sub_K]])
 
 section \<open>Example 3.1 satisfies Definition 3.1 as stated in the paper\<close>
 
@@ -800,16 +768,8 @@ theorem visc_subsol_env_local:
     and r0: "0 < r"
     and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
   shows "ell_op_lsc k L (g x) H \<le> 1"
-proof -
-  obtain C where glob: "\<And>y. y \<in> K \<Longrightarrow>
-      u y - (\<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> u x - \<phi> x"
-    using local_max_quartic_deepen[where u = u and \<phi> = \<phi>, OF uhi phi r0 lm] by blast
-  have "ell_op_lsc k L (g x - (4 * (- C) * ((x - x) \<bullet> (x - x))) *\<^sub>R (x - x)) H \<le> 1"
-    by (rule sub[unfolded visc_subsol_env_def, rule_format,
-          OF x\<Omega> test_fun_at_quartic_shift[OF tf]])
-      (drule glob; simp; linarith)
-  then show ?thesis by simp
-qed
+  by (rule visc_subsol_gen_principal_local[OF sub[unfolded visc_subsol_env_eq_gen] x\<Omega>
+        test_fun_at_quartic_shift[OF tf] uhi phi r0 lm])
 
 section \<open>Semicontinuity toolbox and the invariances of \<open>F\<close>\<close>
 

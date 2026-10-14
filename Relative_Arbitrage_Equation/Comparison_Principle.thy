@@ -516,27 +516,11 @@ lemma supersol_jet_cong_on:
   assumes s: "supersol_jet k L \<Omega> w" and op: "open \<Omega>"
     and eq: "\<And>y. y \<in> \<Omega> \<Longrightarrow> w' y = w y"
   shows "supersol_jet k L \<Omega> w'"
-  unfolding supersol_jet_def
-proof (intro ballI allI impI)
-  fix x \<phi> g H
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_at \<phi> g H x"
-    and loc: "\<exists>e>0. \<forall>y \<in> ball x e. w' x - \<phi> x \<le> w' y - \<phi> y"
-  from loc obtain e where e0: "0 < e"
-    and le: "\<And>y. y \<in> ball x e \<Longrightarrow> w' x - \<phi> x \<le> w' y - \<phi> y" by blast
-  from op x obtain d where d0: "0 < d" and dsub: "ball x d \<subseteq> \<Omega>"
-    using open_contains_ball by blast
-  have loc': "\<exists>e>0. \<forall>y \<in> ball x e. w x - \<phi> x \<le> w y - \<phi> y"
-  proof (intro exI[of _ "min e d"] conjI ballI)
-    show "0 < min e d" using e0 d0 by simp
-    fix y assume y: "y \<in> ball x (min e d)"
-    then have ye: "y \<in> ball x e" and yd: "y \<in> ball x d" by auto
-    have "w x - \<phi> x = w' x - \<phi> x" using eq[OF x] by simp
-    also have "\<dots> \<le> w' y - \<phi> y" by (rule le[OF ye])
-    also have "\<dots> = w y - \<phi> y" using eq[OF subsetD[OF dsub yd]] by simp
-    finally show "w x - \<phi> x \<le> w y - \<phi> y" .
-  qed
-  from s x tf loc' show "1 \<le> ell_op_usc k L (g x) H"
-    unfolding supersol_jet_def by blast
+  unfolding supersol_jet_eq_gen
+proof (rule visc_supersol_gen_cong[OF s[unfolded supersol_jet_eq_gen]])
+  show "w x = w' x" if "x \<in> \<Omega>" for x using eq[OF that] by simp
+  show "eventually (\<lambda>y. w y = w' y) (nhds x)" if "x \<in> \<Omega>" for x
+    using eventually_nhds_in_open[OF op that] by eventually_elim (simp add: eq)
 qed
 
 section \<open>The two branches of the contradiction\<close>

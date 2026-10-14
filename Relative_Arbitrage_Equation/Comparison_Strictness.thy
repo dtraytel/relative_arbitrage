@@ -32,34 +32,18 @@ lemma visc_subsol_env2_cong:
   assumes OK: "\<Omega> \<subseteq> K" and eq: "\<And>y. y \<in> K \<Longrightarrow> f1 y = f2 y"
     and h: "visc_subsol_env2 k L K \<Omega> f1"
   shows "visc_subsol_env2 k L K \<Omega> f2"
-  unfolding visc_subsol_env2_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_C2 \<phi> g H x"
-    and gl: "\<forall>y\<in>K. f2 y - \<phi> y \<le> f2 x - \<phi> x"
-  have xK: "x \<in> K" using x OK by blast
-  have "\<forall>y\<in>K. f1 y - \<phi> y \<le> f1 x - \<phi> x"
-    using gl eq xK by (metis (no_types, lifting))
-  then show "ell_op_lsc k L (g x) H \<le> 1"
-    using h x tf unfolding visc_subsol_env2_def by blast
-qed
+  unfolding visc_subsol_env2_eq_gen
+  by (rule visc_subsol_gen_cong[OF h[unfolded visc_subsol_env2_eq_gen]])
+    (use OK eq in \<open>auto simp: eventually_principal\<close>)
 
 lemma visc_supersol_env2_cong:
   fixes f1 f2 :: "real^'n::finite \<Rightarrow> real"
   assumes OK: "\<Omega> \<subseteq> K" and eq: "\<And>y. y \<in> K \<Longrightarrow> f1 y = f2 y"
     and h: "visc_supersol_env2 k L K \<Omega> f1"
   shows "visc_supersol_env2 k L K \<Omega> f2"
-  unfolding visc_supersol_env2_def
-proof (intro ballI allI impI)
-  fix x :: "real^'n" and \<phi> g and H :: "real^'n^'n"
-  assume x: "x \<in> \<Omega>" and tf: "test_fun_C2 \<phi> g H x"
-    and gl: "\<forall>y\<in>K. f2 x - \<phi> x \<le> f2 y - \<phi> y"
-  have xK: "x \<in> K" using x OK by blast
-  have "\<forall>y\<in>K. f1 x - \<phi> x \<le> f1 y - \<phi> y"
-    using gl eq xK by (metis (no_types, lifting))
-  then show "1 \<le> ell_op_usc k L (g x) H"
-    using h x tf unfolding visc_supersol_env2_def by blast
-qed
+  unfolding visc_supersol_env2_eq_gen
+  by (rule visc_supersol_gen_cong[OF h[unfolded visc_supersol_env2_eq_gen]])
+    (use OK eq in \<open>auto simp: eventually_principal\<close>)
 
 lemma visc_supersol_env2_mono:
   fixes u :: "real^'n::finite \<Rightarrow> real"
@@ -99,22 +83,8 @@ theorem visc_supersol_env2_local:
     and r0: "0 < r"
     and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> w x - \<phi> x \<le> w y - \<phi> y"
   shows "1 \<le> ell_op_usc k L (g x) H"
-proof -
-  have "\<exists>C. \<forall>y\<in>K. - w y - (- \<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> - w x - - \<phi> x"
-  proof (rule local_max_quartic_deepen[where Bu = "- Bw" and B\<phi> = "- B\<phi>", OF _ _ r0])
-    show "- w y \<le> - Bw" if "y \<in> K" for y using wlo[OF that] by linarith
-    show "- B\<phi> \<le> - \<phi> y" if "y \<in> K" for y using phi[OF that] by linarith
-    show "- w y - - \<phi> y \<le> - w x - - \<phi> x" if "y \<in> ball x r" for y
-      using lm[OF that] by linarith
-  qed
-  then obtain C where glob: "\<And>y. y \<in> K \<Longrightarrow>
-      - w y - (- \<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> - w x - - \<phi> x" by blast
-  have "1 \<le> ell_op_usc k L (g x - (4 * C * ((x - x) \<bullet> (x - x))) *\<^sub>R (x - x)) H"
-    by (rule sup[unfolded visc_supersol_env2_def, rule_format,
-          OF x\<Omega> test_fun_C2_quartic_shift[OF tf]])
-      (drule glob; simp; linarith)
-  then show ?thesis by simp
-qed
+  by (rule visc_supersol_gen_principal_local[OF sup[unfolded visc_supersol_env2_eq_gen] x\<Omega>
+        test_fun_C2_quartic_shift[OF tf] wlo phi r0 lm])
 
 theorem visc_subsol_env2_local:
   fixes K :: "(real^'n::finite) set" and u \<phi> :: "real^'n \<Rightarrow> real"
@@ -127,16 +97,8 @@ theorem visc_subsol_env2_local:
     and r0: "0 < r"
     and lm: "\<And>y. y \<in> ball x r \<Longrightarrow> u y - \<phi> y \<le> u x - \<phi> x"
   shows "ell_op_lsc k L (g x) H \<le> 1"
-proof -
-  obtain C where glob: "\<And>y. y \<in> K \<Longrightarrow>
-      u y - (\<phi> y + C * ((y - x) \<bullet> (y - x))\<^sup>2) \<le> u x - \<phi> x"
-    using local_max_quartic_deepen[where u = u and \<phi> = \<phi>, OF uhi phi r0 lm] by blast
-  have "ell_op_lsc k L (g x - (4 * (- C) * ((x - x) \<bullet> (x - x))) *\<^sub>R (x - x)) H \<le> 1"
-    by (rule sub[unfolded visc_subsol_env2_def, rule_format,
-          OF x\<Omega> test_fun_C2_quartic_shift[OF tf]])
-      (drule glob; simp; linarith)
-  then show ?thesis by simp
-qed
+  by (rule visc_subsol_gen_principal_local[OF sub[unfolded visc_subsol_env2_eq_gen] x\<Omega>
+        test_fun_C2_quartic_shift[OF tf] uhi phi r0 lm])
 
 text \<open>\<open>supersol_jet\<close> lives in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
 
