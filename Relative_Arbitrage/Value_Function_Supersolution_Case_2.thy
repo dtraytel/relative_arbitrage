@@ -303,9 +303,13 @@ proof -
         have margy: "\<And>z. z \<in> ball x rr \<Longrightarrow>
             \<eta> - 2 \<le> trace (M ** (SF z ** transpose (SF z)))"
           using marg by blast
-        show ?thesis
-          using eulerp_limit_good_region[OF T0 L1' SFc SFs symM
-              ROo ROb killy margy] that by blast
+        have "\<exists>P \<in> covariation_class (sconstraint k L) T y. AE \<omega> in P. \<forall>t.
+            0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ball x rr) \<longrightarrow>
+            t * (\<eta> - 2) / 2 \<le> qy \<bullet> (fst (\<omega> t) - y)
+              + (1/2) * ((fst (\<omega> t) - y) \<bullet> (M *v (fst (\<omega> t) - y)))"
+          by (rule eulerp_limit_good_region[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
+              sconstraint_convex SFc SFs symM ROo ROb killy margy])
+        then show ?thesis using that unfolding exit_class_eq_covariation by blast
       qed
       have setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
         by (rule exit_class_sets[OF Pc])

@@ -196,7 +196,8 @@ proof -
   have marg2: "\<And>z. z \<in> RO \<Longrightarrow> - 2 * (real m - 1)
       \<le> trace (((-2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
     using trRO[of _ "-2"] by simp
-  obtain P where P: "P \<in> exit_class k L T x"
+  have L0: "0 \<le> L" using L1 by simp
+  obtain P where P: "P \<in> covariation_class (sconstraint k L) T x"
     and AE2: "AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
       (t * (2 * (real m - 1)) / 2
@@ -207,10 +208,10 @@ proof -
         \<le> ((-2) *\<^sub>R (x - y\<^sub>0)) \<bullet> (fst (\<omega> t) - x)
           + (1/2) * ((fst (\<omega> t) - x)
               \<bullet> (((-2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x))))"
-    using eulerp_limit_good2_region[OF T0 L1 SFc SFs sym1 sym2
-        ROo ROb kill1 marg1 kill2 marg2] by blast
+    by (rule bexE[OF eulerp_limit_good2_region[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
+        sconstraint_convex SFc SFs sym1 sym2 ROo ROb kill1 marg1 kill2 marg2]])
   show ?thesis
-  proof (intro bexI[OF _ P])
+  proof (intro bexI[OF _ P[folded exit_class_eq_covariation]])
     show "AE \<omega> in P. \<forall>t.
         0 < t \<longrightarrow> t \<le> T \<longrightarrow>
         (\<forall>s\<in>{0..t}. fst (\<omega> s)

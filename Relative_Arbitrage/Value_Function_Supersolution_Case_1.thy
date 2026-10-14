@@ -351,9 +351,13 @@ text \<open>The Euler increments annihilate a continuous field wherever the fiel
 theorem eulerp_orth_increments_cond:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and G :: "real^'n \<Rightarrow> real^'n"
     and x :: "real^'n" and h :: real
-  assumes h0: "0 < h" and L1: "1 \<le> L"
+  assumes h0: "0 < h" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
     and SFc: "continuous_on UNIV SF"
-    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> S"
     and Gc: "continuous_on UNIV G"
   shows "AE \<omega> in eulerp SF x h N. \<forall>j<Suc N.
       transpose (SF (fst (\<omega> (real j * h))))
@@ -410,11 +414,10 @@ next
   have r0: "0 \<le> r" unfolding r_def using h0' by simp
   have rleT: "r \<le> T'" unfolding r_def T'_def
     using h0' by (intro mult_right_mono) simp_all
-  have Qc: "?Q \<in> exit_class k L r x"
-    unfolding r_def by (rule eulerp_in_class[OF h0 L1 SFc SFs])
-  have PQ: "prob_space ?Q" by (rule exit_class_prob[OF Qc])
-  have setsQ: "sets ?Q = sets ?Br" by (rule exit_class_sets[OF Qc])
-  note pack = sbm_kernel_package[OF h0 L1 SFc SFs]
+  have Qc: "?Q \<in> covariation_class S r x"
+    unfolding r_def by (rule eulerp_in_class[OF h0 B0 B D0 D Sc Sv SFc SFs])
+  have PQ: "prob_space ?Q" by (rule covariation_class_prob[OF Qc])
+  have setsQ: "sets ?Q = sets ?Br" by (rule covariation_class_sets[OF Qc])
   have mfst: "(fst :: (real^'n) \<times> (real^'n^'n) \<Rightarrow> real^'n)
       \<in> borel_measurable borel"
     using measurable_fst[of "borel :: (real^'n) measure"
@@ -422,7 +425,7 @@ next
   have eQ: "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> r)) \<in> borel_measurable ?Q"
     by (rule measurable_compose[OF pair_law_eval_measurable[OF setsQ] mfst])
   have Kp: "?K \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?MR"
-    unfolding hT by (rule measurable_compose[OF eQ pack(1)])
+    unfolding hT by (rule measurable_compose[OF eQ sbm_kernel_package(1)[OF h0 B0 B D0 D Sc SFc SFs]])
   have Ee: "eulerp SF x h (Suc N) = kglue_law' r T' ?K ?Q"
     by (simp add: r_def T'_def)
   have msetP: "{\<omega> \<in> mspace (path_metric T' :: ('n pairpath) metric).
@@ -537,9 +540,13 @@ text \<open>The quadratic lower bound along the grid: the kill and the trace mar
 theorem eulerp_quad_lower_region:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
     and q x :: "real^'n" and h cm :: real and R :: "(real^'n) set"
-  assumes h0: "0 < h" and L1: "1 \<le> L"
+  assumes h0: "0 < h" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
     and SFc: "continuous_on UNIV SF"
-    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> S"
     and sym: "transpose M = M"
     and kill: "\<And>z. z \<in> R \<Longrightarrow>
         transpose (SF z) *v (q + M *v (z - x)) = 0"
@@ -561,11 +568,12 @@ proof -
           linear_continuous_on[OF matrix_vector_mul_bounded_linear] d]) auto
     show ?thesis by (intro continuous_intros mv)
   qed
-  note orth = eulerp_orth_increments_cond[OF h0 L1 SFc SFs Gc]
-  have Qc: "eulerp SF x h N \<in> exit_class k L (real (Suc N) * h) x"
-    by (rule eulerp_in_class[OF h0 L1 SFc SFs])
+  note orth = eulerp_orth_increments_cond[OF h0 B0 B D0 D Sc Sv SFc SFs Gc,
+      simplified trivial_premise_simps]
+  have Qc: "eulerp SF x h N \<in> covariation_class S (real (Suc N) * h) x"
+    by (rule eulerp_in_class[OF h0 B0 B D0 D Sc Sv SFc SFs])
   have st: "AE \<omega> in eulerp SF x h N. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    using Qc unfolding exit_class_def by blast
+    by (rule covariation_class_start[OF Qc])
   show ?thesis
     using orth st
   proof eventually_elim
@@ -697,9 +705,13 @@ theorem eulerp_bad_event_null_region:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
     and q x :: "real^'n" and c cm t \<beta> Rn :: real
     and RO :: "(real^'n) set"
-  assumes c0: "0 < c" and L1: "1 \<le> L"
+  assumes c0: "0 < c" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
     and SFc: "continuous_on UNIV SF"
-    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> S"
     and sym: "transpose M = M"
     and ROb: "\<And>z. z \<in> RO \<Longrightarrow> norm (z - x) \<le> Rn"
     and kill: "\<And>z. z \<in> RO \<Longrightarrow>
@@ -724,8 +736,8 @@ proof -
   define C\<psi> where "C\<psi> = norm q + 2 * ?CM * Rn + 1"
   define \<delta> where "\<delta> = \<beta> / (4 * C\<psi>)"
   define h\<^sub>0 where "h\<^sub>0 = \<beta> / (2 * (\<bar>cm\<bar> + 1))"
-  define A where "A = 4 * c * xiC M L / \<beta>\<^sup>2"
-  define B where "B = real (CARD('n)) ^ 5 * 8 * L\<^sup>2 / \<delta>^4"
+  define A where "A = 4 * c * xiC M D / \<beta>\<^sup>2"
+  define Bt where "Bt = real (CARD('n)) ^ 5 * 8 * D\<^sup>2 / \<delta>^4"
   have CM0: "0 \<le> ?CM" by (auto intro!: sum_nonneg)
   have Rn0: "0 \<le> Rn \<or> RO = {}"
   proof (cases "RO = {}")
@@ -755,9 +767,8 @@ proof -
     have C\<psi>0: "0 < C\<psi>" using C\<psi>1' by linarith
     have \<delta>0: "0 < \<delta>" unfolding \<delta>_def using b0 C\<psi>0 by simp
     have h\<^sub>00: "0 < h\<^sub>0" unfolding h\<^sub>0_def using b0 by simp
-    have L0: "0 \<le> L" using L1 by linarith
     have bound: "measure (eulerp SF x (?h i) i) ?U
-        \<le> A * ?h i + B * (?h i)\<^sup>2"
+        \<le> A * ?h i + Bt * (?h i)\<^sup>2"
       if hs: "?h i \<le> h\<^sub>0" for i
     proof -
       define h where "h = ?h i"
@@ -765,13 +776,13 @@ proof -
       have h0: "0 < h" unfolding h_def using c0 by simp
       have hc: "real (Suc i) * h = c" unfolding h_def by simp
       let ?Q = "eulerp SF x h i"
-      have Qc: "?Q \<in> exit_class k L c x"
-        unfolding h_def by (rule eulerp_seq_in_class[OF c0 L1 SFc SFs])
+      have Qc: "?Q \<in> covariation_class S c x"
+        unfolding h_def by (rule eulerp_seq_in_class[OF c0 B0 B D0 D Sc Sv SFc SFs])
       have setsQ: "sets ?Q = sets (path_borel c :: ('n pairpath) measure)"
-        by (rule exit_class_sets[OF Qc])
+        by (rule covariation_class_sets[OF Qc])
       have spQ: "space ?Q = mspace (path_metric c :: ('n pairpath) metric)"
         by (rule space_of_path_sets[OF setsQ])
-      interpret PQ: prob_space ?Q by (rule exit_class_prob[OF Qc])
+      interpret PQ: prob_space ?Q by (rule covariation_class_prob[OF Qc])
       define m where "m = nat \<lfloor>t / h\<rfloor>"
       have tdh0: "0 \<le> t / h" using t0 h0 by simp
       have fl0: "0 \<le> \<lfloor>t / h\<rfloor>" using tdh0 by simp
@@ -806,14 +817,13 @@ proof -
       define E2 where "E2 = {\<omega> \<in> space ?Q.
           \<delta> \<le> norm (fst (\<omega> t) - fst (\<omega> (real m * h)))}"
       have b20: "0 < \<beta> / 2" using b0 by simp
-      have mE1: "measure ?Q E1 \<le> real m * xiC M L * h\<^sup>2 / (\<beta> / 2)\<^sup>2"
+      have mE1: "measure ?Q E1 \<le> real m * xiC M D * h\<^sup>2 / (\<beta> / 2)\<^sup>2"
         unfolding E1_def
-        by (rule eulerp_Xi_chebyshev[OF h0 L1 SFc SFs mSuc b20])
+        by (rule eulerp_Xi_chebyshev[OF h0 B0 B D0 D Sc Sv SFc SFs mSuc b20])
       have mE2: "measure ?Q E2
-          \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4"
+          \<le> real (CARD('n)) ^ 5 * (8 * D\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4"
         unfolding E2_def
-        by (rule covariation_class_increment_tail_norm[OF c0 sconstraint_bounds[OF L0]
-            Qc[unfolded exit_class_eq_covariation] mh0 mh_le tc \<delta>0])
+        by (rule covariation_class_increment_tail_norm[OF c0 B0 B D0 D Qc mh0 mh_le tc \<delta>0])
       have sE1: "E1 \<in> sets ?Q"
       proof -
         have xm: "euXi SF M h m \<in> borel_measurable ?Q"
@@ -858,7 +868,7 @@ proof -
             \<le> q \<bullet> (fst (\<omega> (real m' * h)) - x)
               + (1/2) * ((fst (\<omega> (real m' * h)) - x)
                   \<bullet> (M *v (fst (\<omega> (real m' * h)) - x)))"
-        by (rule eulerp_quad_lower_region[OF h0 L1 SFc SFs sym kill marg])
+        by (rule eulerp_quad_lower_region[OF h0 B0 B D0 D Sc Sv SFc SFs sym kill marg])
       have incl: "AE \<omega> in ?Q. \<omega> \<in> ?U \<longrightarrow> \<omega> \<in> E1 \<union> E2"
         using QL
       proof (eventually_elim)
@@ -988,7 +998,7 @@ proof -
         by (rule PQ.finite_measure_mono_AE[OF incl sets.Un[OF sE1 sE2]])
       have s2: "measure ?Q (E1 \<union> E2) \<le> measure ?Q E1 + measure ?Q E2"
         by (rule measure_Un_le[OF sE1 sE2])
-      have n1: "real m * xiC M L * h\<^sup>2 / (\<beta> / 2)\<^sup>2 \<le> A * h"
+      have n1: "real m * xiC M D * h\<^sup>2 / (\<beta> / 2)\<^sup>2 \<le> A * h"
       proof -
         have mhc: "real m * h \<le> c"
         proof -
@@ -997,39 +1007,39 @@ proof -
             using h0 by (intro mult_right_mono) simp_all
           then show ?thesis using hc by simp
         qed
-        have e1: "real m * xiC M L * h\<^sup>2 = real m * h * xiC M L * h"
+        have e1: "real m * xiC M D * h\<^sup>2 = real m * h * xiC M D * h"
           by (simp add: power2_eq_square algebra_simps)
-        have e2: "real m * h * xiC M L * h \<le> c * xiC M L * h"
+        have e2: "real m * h * xiC M D * h \<le> c * xiC M D * h"
           by (intro mult_right_mono mult_right_mono[OF mhc xiC_nonneg])
             (use h0 in simp_all)
-        have num: "real m * xiC M L * h\<^sup>2 \<le> c * xiC M L * h"
+        have num: "real m * xiC M D * h\<^sup>2 \<le> c * xiC M D * h"
           unfolding e1 by (rule e2)
-        have "real m * xiC M L * h\<^sup>2 / (\<beta> / 2)\<^sup>2
-            \<le> c * xiC M L * h / (\<beta> / 2)\<^sup>2"
+        have "real m * xiC M D * h\<^sup>2 / (\<beta> / 2)\<^sup>2
+            \<le> c * xiC M D * h / (\<beta> / 2)\<^sup>2"
           by (rule divide_right_mono[OF num]) simp
         also have "\<dots> = A * h"
           unfolding A_def using b0 by (simp add: field_simps)
         finally show ?thesis .
       qed
-      have n2: "real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4
-          \<le> B * h\<^sup>2"
+      have n2: "real (CARD('n)) ^ 5 * (8 * D\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4
+          \<le> Bt * h\<^sup>2"
       proof -
         have sq: "(t - real m * h)\<^sup>2 \<le> h\<^sup>2"
           using t_mh mh_le by (intro power_mono) simp_all
-        have inner8: "8 * L\<^sup>2 * (t - real m * h)\<^sup>2 \<le> 8 * L\<^sup>2 * h\<^sup>2"
+        have inner8: "8 * D\<^sup>2 * (t - real m * h)\<^sup>2 \<le> 8 * D\<^sup>2 * h\<^sup>2"
           by (intro mult_left_mono[OF sq]) simp
-        have "real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2)
-            \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * h\<^sup>2)"
+        have "real (CARD('n)) ^ 5 * (8 * D\<^sup>2 * (t - real m * h)\<^sup>2)
+            \<le> real (CARD('n)) ^ 5 * (8 * D\<^sup>2 * h\<^sup>2)"
           by (intro mult_left_mono[OF inner8]) simp
         then have "real (CARD('n)) ^ 5
-            * (8 * L\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4
-            \<le> real (CARD('n)) ^ 5 * (8 * L\<^sup>2 * h\<^sup>2) / \<delta>^4"
+            * (8 * D\<^sup>2 * (t - real m * h)\<^sup>2) / \<delta>^4
+            \<le> real (CARD('n)) ^ 5 * (8 * D\<^sup>2 * h\<^sup>2) / \<delta>^4"
           by (intro divide_right_mono) simp_all
-        also have "\<dots> = B * h\<^sup>2"
-          unfolding B_def using \<delta>0 by (simp add: field_simps)
+        also have "\<dots> = Bt * h\<^sup>2"
+          unfolding Bt_def using \<delta>0 by (simp add: field_simps)
         finally show ?thesis .
       qed
-      have "measure ?Q ?U \<le> A * h + B * h\<^sup>2"
+      have "measure ?Q ?U \<le> A * h + Bt * h\<^sup>2"
         using s1 s2 mE1 mE2 n1 n2 by linarith
       then show ?thesis unfolding h_def .
     qed
@@ -1037,7 +1047,7 @@ proof -
       using tendsto_mult[OF tendsto_const LIMSEQ_inverse_real_of_nat, of c]
       by (simp add: divide_inverse)
     have ev: "\<forall>\<^sub>F i in sequentially.
-        measure (eulerp SF x (?h i) i) ?U \<le> A * ?h i + B * (?h i)\<^sup>2"
+        measure (eulerp SF x (?h i) i) ?U \<le> A * ?h i + Bt * (?h i)\<^sup>2"
     proof -
       have "\<forall>\<^sub>F i in sequentially. ?h i < h\<^sub>0"
         by (rule order_tendstoD(2)[OF hlim h\<^sub>00])
@@ -1050,9 +1060,9 @@ proof -
     have ev0: "\<forall>\<^sub>F i in sequentially.
         (0 :: real) \<le> measure (eulerp SF x (?h i) i) ?U"
       by (intro always_eventually allI measure_nonneg)
-    have glim: "(\<lambda>i. A * ?h i + B * (?h i)\<^sup>2) \<longlonglongrightarrow> 0"
+    have glim: "(\<lambda>i. A * ?h i + Bt * (?h i)\<^sup>2) \<longlonglongrightarrow> 0"
     proof -
-      have "(\<lambda>i. A * ?h i + B * (?h i)\<^sup>2) \<longlonglongrightarrow> A * 0 + B * 0\<^sup>2"
+      have "(\<lambda>i. A * ?h i + Bt * (?h i)\<^sup>2) \<longlonglongrightarrow> A * 0 + Bt * 0\<^sup>2"
         by (intro tendsto_add tendsto_mult tendsto_const
             tendsto_power hlim)
       then show ?thesis by simp
@@ -1077,9 +1087,13 @@ lemma eulerp_limit_member_good_region:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
     and q x :: "real^'n" and c cm Rn :: real
     and RO :: "(real^'n) set" and P :: "('n pairpath) measure"
-  assumes c0: "0 < c" and L1: "1 \<le> L"
+  assumes c0: "0 < c" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
     and SFc: "continuous_on UNIV SF"
-    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> S"
     and sym: "transpose M = M"
     and ROo: "open RO"
     and ROb: "\<And>z. z \<in> RO \<Longrightarrow> norm (z - x) \<le> Rn"
@@ -1087,7 +1101,7 @@ lemma eulerp_limit_member_good_region:
         transpose (SF z) *v (q + M *v (z - x)) = 0"
     and marg: "\<And>z. z \<in> RO \<Longrightarrow>
         cm \<le> trace (M ** (SF z ** transpose (SF z)))"
-    and P: "P \<in> exit_class k L c x"
+    and P: "P \<in> covariation_class S c x"
     and Praw: "\<forall>U b'. openin (mtopology_of (path_metric c :: ('n pairpath) metric)) U \<longrightarrow>
       (\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i) U) \<longlonglongrightarrow> b' \<longrightarrow>
       measure P U \<le> b'"
@@ -1102,9 +1116,9 @@ proof -
       \<and> q \<bullet> (fst (\<omega> r) - x)
         + (1/2) * ((fst (\<omega> r) - x) \<bullet> (M *v (fst (\<omega> r) - x)))
         < r * cm / 2 - \<beta>})"
-  interpret FP: prob_space P by (rule exit_class_prob[OF P])
+  interpret FP: prob_space P by (rule covariation_class_prob[OF P])
   have setsP: "sets P = sets (borel_of (mtopology_of ?pm))"
-    by (rule exit_class_sets[OF P])
+    by (rule covariation_class_sets[OF P])
   have spaceP: "space P = mspace ?pm"
     by (rule space_of_path_sets[OF setsP])
   have AErn1: "AE \<omega> in P. \<omega> \<notin> U1 r (inverse (real (Suc n)))"
@@ -1117,7 +1131,7 @@ proof -
     have tnd: "(\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i)
         (U1 r (inverse (real (Suc n))))) \<longlonglongrightarrow> 0"
       unfolding U1_def
-      by (rule eulerp_bad_event_null_region[OF c0 L1 SFc SFs sym
+      by (rule eulerp_bad_event_null_region[OF c0 B0 B D0 D Sc Sv SFc SFs sym
           ROb kill marg r0 rc inv0])
     have le0: "measure P (U1 r (inverse (real (Suc n)))) \<le> 0"
       using Praw opn tnd by blast
@@ -1196,9 +1210,13 @@ theorem eulerp_limit_good_region:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
     and q x :: "real^'n" and c cm Rn :: real
     and RO :: "(real^'n) set"
-  assumes c0: "0 < c" and L1: "1 \<le> L"
+  assumes c0: "0 < c" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
     and SFc: "continuous_on UNIV SF"
-    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> S"
     and sym: "transpose M = M"
     and ROo: "open RO"
     and ROb: "\<And>z. z \<in> RO \<Longrightarrow> norm (z - x) \<le> Rn"
@@ -1206,21 +1224,25 @@ theorem eulerp_limit_good_region:
         transpose (SF z) *v (q + M *v (z - x)) = 0"
     and marg: "\<And>z. z \<in> RO \<Longrightarrow>
         cm \<le> trace (M ** (SF z ** transpose (SF z)))"
-  shows "\<exists>P \<in> exit_class k L c x. AE \<omega> in P. \<forall>t.
+  shows "\<exists>P \<in> covariation_class S c x. AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
       t * cm / 2 \<le> q \<bullet> (fst (\<omega> t) - x)
         + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M *v (fst (\<omega> t) - x)))"
-  using eulerp_weak_limit[OF c0 L1 SFc SFs, of x]
-    eulerp_limit_member_good_region[OF c0 L1 SFc SFs sym ROo ROb kill marg]
+  using eulerp_weak_limit[OF c0 B0 B D0 D Sc Sv SFc SFs, of x, simplified trivial_premise_simps]
+    eulerp_limit_member_good_region[OF c0 B0 B D0 D Sc Sv SFc SFs sym ROo ROb kill marg, simplified trivial_premise_simps]
   by blast
 
 theorem eulerp_limit_good2_region:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M1 M2 :: "real^'n^'n"
     and q1 q2 x :: "real^'n" and c cm1 cm2 Rn :: real
     and RO :: "(real^'n) set"
-  assumes c0: "0 < c" and L1: "1 \<le> L"
+  assumes c0: "0 < c" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
     and SFc: "continuous_on UNIV SF"
-    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
+    and SFs: "\<And>z. SF z ** transpose (SF z) \<in> S"
     and sym1: "transpose M1 = M1" and sym2: "transpose M2 = M2"
     and ROo: "open RO"
     and ROb: "\<And>z. z \<in> RO \<Longrightarrow> norm (z - x) \<le> Rn"
@@ -1232,26 +1254,26 @@ theorem eulerp_limit_good2_region:
         transpose (SF z) *v (q2 + M2 *v (z - x)) = 0"
     and marg2: "\<And>z. z \<in> RO \<Longrightarrow>
         cm2 \<le> trace (M2 ** (SF z ** transpose (SF z)))"
-  shows "\<exists>P \<in> exit_class k L c x. AE \<omega> in P. \<forall>t.
+  shows "\<exists>P \<in> covariation_class S c x. AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
       (t * cm1 / 2 \<le> q1 \<bullet> (fst (\<omega> t) - x)
         + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M1 *v (fst (\<omega> t) - x))))
       \<and> (t * cm2 / 2 \<le> q2 \<bullet> (fst (\<omega> t) - x)
         + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M2 *v (fst (\<omega> t) - x))))"
 proof -
-  obtain P where P: "P \<in> exit_class k L c x"
+  obtain P where P: "P \<in> covariation_class S c x"
     and Praw: "\<forall>U b'. openin (mtopology_of (path_metric c :: ('n pairpath) metric)) U \<longrightarrow>
       (\<lambda>i. measure (eulerp SF x (c / real (Suc i)) i) U) \<longlonglongrightarrow> b' \<longrightarrow>
       measure P U \<le> b'"
-    using eulerp_weak_limit[OF c0 L1 SFc SFs] by blast
+    using eulerp_weak_limit[OF c0 B0 B D0 D Sc Sv SFc SFs, simplified trivial_premise_simps] by blast
   have A1: "AE \<omega> in P. \<forall>t. 0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
       t * cm1 / 2 \<le> q1 \<bullet> (fst (\<omega> t) - x)
         + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M1 *v (fst (\<omega> t) - x)))"
-    by (rule eulerp_limit_member_good_region[OF c0 L1 SFc SFs sym1 ROo ROb kill1 marg1 P Praw])
+    by (rule eulerp_limit_member_good_region[OF c0 B0 B D0 D Sc Sv SFc SFs sym1 ROo ROb kill1 marg1 P Praw])
   have A2: "AE \<omega> in P. \<forall>t. 0 < t \<longrightarrow> t \<le> c \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
       t * cm2 / 2 \<le> q2 \<bullet> (fst (\<omega> t) - x)
         + (1/2) * ((fst (\<omega> t) - x) \<bullet> (M2 *v (fst (\<omega> t) - x)))"
-    by (rule eulerp_limit_member_good_region[OF c0 L1 SFc SFs sym2 ROo ROb kill2 marg2 P Praw])
+    by (rule eulerp_limit_member_good_region[OF c0 B0 B D0 D Sc Sv SFc SFs sym2 ROo ROb kill2 marg2 P Praw])
   show ?thesis
     by (intro bexI[OF _ P] eventually_mono[OF AE_conjI[OF A1 A2]]) blast
 qed

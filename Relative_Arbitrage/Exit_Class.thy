@@ -386,6 +386,14 @@ lemma sconstraint_bounds:
     and "\<And>(a :: real^'n^'n) j. a \<in> sconstraint k L \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> L"
   using L sconstraint_norm_le[OF L] sconstraint_diag by auto
 
+text \<open>Passing a rule-shaped fact such as the second clause above, or a
+  hypothesis \<open>\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B\<close>, through \<open>OF\<close> leaves
+  the trivially true premise \<open>\<And>a. a \<in> S \<Longrightarrow> a \<in> S\<close> at the
+  front of the result.  Simplifying with exactly the rules below removes it
+  and leaves the conclusion as it is.\<close>
+
+lemmas trivial_premise_simps = implies_True_equals triv_forall_equality True_implies_equals
+
 lemma exit_class_compensated_integrable:
   fixes Q :: "(('n::finite) pairpath) measure"
   assumes Q: "Q \<in> exit_class k L T x" and t: "t \<in> {0..T}"
