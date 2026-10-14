@@ -23,7 +23,6 @@ session Relative_Arbitrage = Covariation_Constrained_Martingales +
     Relative_Arbitrage_Equation
   theories
     Exit_Class
-    Covariation_Density
     Proposition_2_4
     Value_Function_Subsolution
     Value_Function_Euler_Construction

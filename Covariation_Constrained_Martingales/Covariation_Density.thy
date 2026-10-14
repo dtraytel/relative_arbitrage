@@ -6,7 +6,7 @@ theory Covariation_Density
     "Disintegration.Disintegration"
     "Kolmogorov_Chentsov.Dyadic_Interval" "Kolmogorov_Chentsov.Holder_Continuous"
     "Levy_Prokhorov_Metric.Prokhorov_Theorem" "Martingales.Martingale"
-    "Second_Order_Viscosity_Analysis.Rademacher" "Continuous_Path_Spaces.Difference_Quotients"
+    "Continuous_Path_Spaces.Difference_Quotients"
 begin
 (*>*)
 
@@ -90,7 +90,8 @@ lemma vector_derivative_in_closed_set:
 proof (rule Lim_in_closed_set[OF cl _ trivial_limit_at_right_real])
   show "((\<lambda>h. (g (x + h) - g x) /\<^sub>R h) \<longlongrightarrow> D) (at_right 0)"
     using tendsto_mono[OF at_le[OF subset_UNIV]
-        dquot_tendsto_vector_derivative[OF differentiableI_vector[OF der]]]
+        LIM_offset_zero[OF vector_derivative_works[THEN iffD1, OF differentiableI_vector[OF der],
+          unfolded has_vector_derivative_within_1D]]]
     by (simp add: vector_derivative_at[OF der])
   show "\<forall>\<^sub>F h in at_right 0. (g (x + h) - g x) /\<^sub>R h \<in> S"
     by (rule eventually_mono[OF eventually_at_right_less])
