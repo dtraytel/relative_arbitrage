@@ -306,7 +306,7 @@ Doob_Inequality.horizon_sq_int_martingale.esup.cong    # KEEP_API
 Doob_Inequality.horizon_sq_int_martingale.Dsup.cong    # KEEP_API
 Doob_Inequality.horizon_sq_int_martingale.dy_floor    # KEEP_API
 Essential_Infimum.ess_inf_time_ge_iff_measure    # KEEP_API
-Integrability_Criteria.measure_pmf.indep_vars_cong_sets    # KEEP_API
+Product_Brownian_Motion.measure_pmf.indep_vars_cong_sets    # KEEP_API
 Martingale_Algebra.martingale_coarser_filtration    # FIX_THEN_KEEP
 Martingale_Transfer.uniform_measure_density_real    # FIX_THEN_KEEP
 Martingale_Transfer.integral_uniform_measure_eq    # FIX_THEN_KEEP
