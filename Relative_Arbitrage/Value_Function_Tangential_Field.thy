@@ -8,16 +8,14 @@ begin
 
 (*>*)
 
-section \<open>The subspace-tangential field for Example 3.1, general \<open>k\<close>\<close>
-
 text \<open>The tangential projector field around a centre \<open>y\<^sub>0\<close>, with the ambient
   identity replaced by the orthogonal projector onto a subspace containing
-  the start.  The companion input of Case 2, that the usc envelope passes
-  \<open>\<ge> 1\<close> through limits in \<open>(p, M)\<close>, is
-  @{thm [source] ell_op_usc_ge_one_limit}.  Clamped away from \<open>y\<^sub>0\<close>, the
-  field is an admissible volatility that kills the radial direction exactly,
-  so the squared distance to \<open>y\<^sub>0\<close> moves at a deterministic rate; this is
-  the positivity input for the second horn of the Case-2 dichotomy, and for
+  the start.  Its probability-free part is in \<open>Subspace_Tangential_Field\<close>
+  of the session \<open>Relative_Arbitrage_Equation\<close>; this theory adds the
+  constraint set and the laws.  Clamped away from \<open>y\<^sub>0\<close>, the field is an
+  admissible volatility that kills the radial direction exactly, so the
+  squared distance to \<open>y\<^sub>0\<close> moves at a deterministic rate; this is the
+  positivity input for the second horn of the Case 2 dichotomy, and for
   Example 3.1's lower bound.\<close>
 
 theorem tanpU_sq_sconstraint:

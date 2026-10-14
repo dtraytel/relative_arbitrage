@@ -162,7 +162,7 @@ definition paper_expandable :: "(real^'n::finite) set \<Rightarrow> bool" where
                 (\<forall>x. norm (R i *v x - x) \<le> e * norm x) \<and> norm (b i) \<le> e))"
 
 text \<open>The direction that matters: the paper's hypothesis implies the formal
-  one, so Theorem 1.1 applies whenever Theorem 1.1's own hypothesis holds.
+  one, so the formal Theorem 1.1 applies whenever the paper's hypothesis holds.
   \<^const>\<open>expandable\<close> differs in presenting the family as \<open>\<forall>e>0. \<exists>\<dots>\<close>, in
   measuring closeness on the inverse map over \<open>K\<close> --- which is what the
   comparison argument consumes --- and in allowing reflections, which only

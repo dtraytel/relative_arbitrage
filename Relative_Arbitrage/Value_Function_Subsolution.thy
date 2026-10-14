@@ -8,32 +8,34 @@ begin
 
 (*>*)
 
-text \<open>
-  Towards clause (2) of Theorem 1.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> --- the two
-             viscosity inequalities for `\<open>exit_val\<close>`.  PLAN section 2.1.
+text \<open>The subsolution half of clause (2) of Theorem 1.1 of
+  \<^cite>\<open>LaiShkolnikovSoner\<close>, for the value function of an abstract closed
+  convex constraint set.  Two facts shape the argument.
 
-    Two facts shape everything here.
+  First, the operator of Eq. (1.9) is an infimum over the feasible rates, so
+  a subsolution inequality needs only one witness rate, while a supersolution
+  inequality needs the whole family.
 
-    (a) The operator of Eq. (1.9) is an INFIMUM,
+  Second, the two halves of the dynamic programming principle are not
+  interchangeable.  The \<open>\<le>\<close> half is an almost sure bound, and almost sure
+  bounds survive integration; the \<open>\<ge>\<close> half bounds an essential infimum from
+  below, which no mean can do.  So the subsolution half is the one an
+  expectation argument reaches.
 
-          \<open>ell_op\<close> k L p M = Inf ((\<open>\<lambda>\<close>a. - trace (M ** a) / 2) ` feasible k L p),
+  The class of Eq. (1.7) is defined by martingale properties, not by a
+  stochastic differential equation, so Ito's formula is not available.  For a
+  quadratic test function it is not needed: \<open>z \<bullet> (M *v z) = trace (M ** outerp z)\<close>
+  is a linear functional of the compensated martingale clause, so the expansion
+  of the test function is exact, also at a bounded stopping time, and its mean
+  increment is \<open>(t/2) \<sqdot> trace (M ** b)\<close> for an averaged covariation \<open>b\<close> in
+  the constraint set.  \<open>covariation_val_subsol_quadratic_ball\<close> is the
+  subsolution inequality this yields for a quadratic touching on a closed
+  ball, in witness form for the operator without the orthogonality
+  constraint.  An anti-concentration argument and compactness recover the
+  orthogonality (\<open>covariation_val_touch_orth\<close>), and a general test function
+  is dominated near the touching point by a quadratic with the Hessian bumped
+  by \<open>\<delta>\<close> (\<open>test_fun_quadratic_dominates\<close>).\<close>
 
-        so a subsolution inequality needs only ONE witness, while a
-        supersolution inequality needs the whole family.
-
-    (b) The two halves of the DPP are not interchangeable.  The `<=` half is an
-        ALMOST SURE bound, and a.s. bounds survive integration; the `>=` half
-        bounds an essential infimum from below, which no mean can do.  So the
-        SUBSOLUTION half is the one an expectation argument reaches.
-
-    The class of (1.7) is a martingale-problem class, not an SDE class, so Ito's
-    formula is unavailable.  For QUADRATIC test functions it is also unnecessary:
-    z . (M *v z) = trace (M ** outerp z) is a linear functional of the
-    compensated clause, so the expansion is exact and elementary, also at a
-    bounded stopping time.  \<open>covariation_val_subsol_quadratic_ball\<close> is the
-    subsolution inequality it yields for a quadratic touching on a closed
-    ball, in witness form for the relaxed operator (no orthogonality to the
-    gradient): some \<open>b\<close> in the constraint set has \<open>- trace (M ** b) / 2 \<le> 1\<close>.\<close>
 section \<open>The DPP capped at an arbitrary \<open>[0,T]\<close>-valued time\<close>
 
 text \<open>The \<open>\<le>\<close> half of the DPP, @{thm [source] covariation_val_cond_time}, needs its
@@ -83,56 +85,10 @@ proof -
   qed
 qed
 
-section \<open>Ito for quadratic test functions, from the martingale clauses\<close>
+section \<open>The feasible rates of Eq. (1.9) lie in the constraint set\<close>
 
-text \<open>The class of (1.7) is defined by martingale properties, not by an SDE,
-  so Ito's formula is not available.  For a quadratic test function the
-  expansion is exact and needs no stochastic integration:
-
-    \<open>\<phi> z = c + p \<bullet> z + (z \<bullet> (M *v z))/2\<close>,
-
-  and \<open>z \<bullet> (M *v z) = trace (M ** outerp z)\<close>, so the second-order term is a
-  linear functional of the compensated clause (iv) of (1.7).  Its mean is
-  therefore pinned by that clause alone, and the first-order term by the
-  martingale clause (iii).  What comes out is
-
-    \<open>E[\<phi>(X\<^sub>t)] - \<phi>(x) = (t/2) \<sqdot> trace (M ** b)\<close>,  \<open>b \<in> S\<close>,
-
-  which is exactly the shape the viscosity argument consumes, with \<open>b\<close> the
-  averaged covariation direction.\<close>
-
-subsection \<open>The exact expansion of a quadratic test function\<close>
-
-text \<open>The second-order identity holds with no symmetry hypothesis on \<open>M\<close> and
-  no stopping: clause (iv) is used at the fixed time \<open>t\<close>, exactly as in
-  @{thm [source] covariation_class_sq_norm_mean_ge}, of which this is the
-  \<open>M = 1\<close> case with the inequality replaced by an identity.\<close>
-
-text \<open>The mean increment of a quadratic test function along any class member
-  is \<open>(t/2) \<sqdot> trace (M ** b)\<close> for a single averaged direction \<open>b\<close> of the
-  constraint set: the substitute for Ito's formula that the viscosity
-  argument needs.\<close>
-
-subsection \<open>What the orthogonality constraint of Eq. (1.9) does\<close>
-
-text \<open>A direction annihilated by the averaged covariation is frozen: the
-  process does not move along it, almost surely.  The proof is the
-  quadratic identity at \<open>M = outerp q\<close>, which turns the second moment of
-  \<open>q \<bullet> X\<^sub>t\<close> into \<open>q \<bullet> (E[Y\<^sub>t] *v q)\<close>, so the variance vanishes exactly when
-  that number does.
-
-  This is the mechanism behind the constraint \<open>a *v p = 0\<close> of Eq. (1.9).
-  For a quadratic test function with gradient \<open>q = p + M *v x\<close> at \<open>x\<close>,
-
-    \<open>\<phi>(X\<^sub>t) - \<phi>(x) = q \<bullet> (X\<^sub>t - x) + (X\<^sub>t - x) \<bullet> (M *v (X\<^sub>t - x)) / 2\<close>
-
-  when \<open>M\<close> is symmetric, and feasibility of the covariation direction
-  kills the first-order term identically, not just in mean: an a.s.
-  statement, obtained from a mean-zero variance, that the supersolution
-  argument needs and the subsolution argument does not.\<close>
-
-text \<open>\<open>trace_mult_commute\<close> is HOL-Analysis's \<open>trace_mul_sym\<close>.\<close>
-
+text \<open>By the easy inclusion of Lemma 2.1, every feasible rate of the operator
+  of Eq. (1.9) lies in the constraint set \<open>sconstraint k L\<close>.\<close>
 
 lemma feasible_subset_sconstraint:
   fixes p :: "real^'n::finite"
@@ -146,25 +102,6 @@ proof
   show "a \<in> sconstraint k L"
     by (rule suff_volatile_cap_in_sconstraint[OF sv ub])
 qed
-
-text \<open>@{thm [source] covariation_val_attained} supplies the optimizer, at which the
-  exit time dominates the value almost surely --- the reason the
-  subsolution half is reachable by expectations: the DPP bound it
-  consumes is an a.s. bound, and a.s. bounds survive integration, whereas
-  the supersolution half needs a lower bound on an essential infimum,
-  which a mean cannot give.
-
-  The test function here is quadratic and touches globally; turning a
-  local touching into a global one is the Crandall--Ishii localisation
-  step, not used here, so the relaxed operator, without the orthogonality
-  constraint, is what comes out; \<open>covariation_val_touch_orth\<close> below
-  recovers the orthogonality.\<close>
-
-
-section \<open>Scalar multiples through the Bochner integral\<close>
-
-text \<open>\<open>integral_pos_of_AE_pos\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
-
 
 section \<open>Optional sampling at a stopping time, via the stopped law\<close>
 
@@ -362,7 +299,7 @@ proof (rule weighted_integral_mean_in_closed_convex[OF Sv Sc])
   qed
 qed
 
-section \<open>Moments at a stopping time, assembled\<close>
+section \<open>Moments at a stopping time\<close>
 
 lemma covariation_class_stopped_moments:
   fixes P :: "('n::finite pairpath) measure" and x q :: "real^'n"
@@ -738,16 +675,10 @@ proof -
   show ?thesis by (rule that[OF SQ(3) SQ(4)])
 qed
 
-text \<open>For the paper's constraint set, as the near-orthogonal argument below
-  uses it.\<close>
+section \<open>A trace bound from the diagonal\<close>
 
-section \<open>From quadratics to arbitrary test functions\<close>
-
-text \<open>The classical reduction: a \<open>C\<^sup>1\<close> function whose gradient is
-  differentiable at \<open>x\<close> is dominated, near \<open>x\<close>, by its second-order
-  expansion with the Hessian bumped by \<open>\<delta>\<close>.  One-dimensional along each
-  ray: the difference has nonpositive derivative, by the \<open>\<epsilon>\<close>-\<open>\<delta>\<close> form of
-  differentiability of the gradient with \<open>\<epsilon> := \<delta>/2\<close>.\<close>
+text \<open>A bound on the diagonal bounds the trace; for the paper's constraint set
+  the bound is \<open>CARD('n) \<sqdot> L\<close>.\<close>
 
 lemma trace_le_diag_bound:
   fixes b :: "real^'n::finite^'n"
@@ -761,11 +692,13 @@ lemma sconstraint_trace_le:
   shows "trace b \<le> real CARD('n) * L"
   by (rule trace_le_diag_bound) (rule sconstraint_diag(2)[OF b])
 
-section \<open>Positive semidefinite forms kill their null directions\<close>
+section \<open>From the constraint set back to the feasible rates\<close>
 
-text \<open>The Cauchy--Schwarz inequality for a psd form, in the shape needed
-  later: if the form vanishes at \<open>q\<close> then \<open>q\<close> is in the kernel.\<close>
-
+text \<open>A rate of \<open>sconstraint k L\<close> that annihilates \<open>q\<close> is matched by a
+  feasible rate of Eq. (1.9) for the gradient \<open>q\<close> with no larger value of
+  \<open>- trace (M ** a) / 2\<close>.  This is what makes the operator over the
+  constraint set agree with the paper's operator
+  (\<open>ell_op_eq_covariation_op\<close> below).\<close>
 
 theorem sconstraint_orth_feasible:
   fixes b M :: "real^'n::finite^'n" and q :: "real^'n"
@@ -1021,11 +954,6 @@ proof -
     using val by simp
   then show ?thesis using that feas by blast
 qed
-
-section \<open>Small pointwise bounds\<close>
-
-text \<open>\<open>quadform_abs_le\<close>, \<open>axis1_self\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 section \<open>The near-orthogonal direction: the anti-concentration dichotomy\<close>
 

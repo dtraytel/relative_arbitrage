@@ -36,7 +36,7 @@ theorem xval_eq_xcovariation_val:
   "xval k L K x = xcovariation_val (sconstraint k L) K x"
   by (simp add: xval_def xcovariation_val_def xclass_eq_xcovariation)
 
-subsection \<open>The paper's classes\<close>
+subsection \<open>From the pair class to the laws of \<open>X\<close>, and back\<close>
 
 text \<open>For \<open>S = sconstraint k L\<close> the entry bound is \<open>D = L\<close>
   (@{thm [source] sconstraint_psd_entry}).\<close>

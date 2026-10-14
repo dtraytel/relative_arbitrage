@@ -17,8 +17,6 @@ text \<open>
   @{theory Relative_Arbitrage_Equation.Maximum_Principle}.
 \<close>
 
-section \<open>The clauses of Theorem 1.1 and where they are proved\<close>
-
 text \<open>With \<open>v = enn2real \<circ> covariation_val S T K\<close> (the paper's \<open>exit_val k L T K\<close> at
   \<open>S = sconstraint k L\<close>), Theorem 1.1 has five clauses.
 
@@ -58,8 +56,8 @@ text \<open>\<open>enn2real \<circ> covariation_val S T K\<close> is a viscosity
 
 section \<open>Theorem 1.1 assembled\<close>
 
-text \<open>\<open>exit_val\<close> as a real-valued function: nonnegative, globally bounded, and
-  upper semicontinuous in the \<open>\<epsilon>\<close>-form the comparison machinery consumes.\<close>
+text \<open>The value function \<open>covariation_val\<close> as a real-valued function:
+  nonnegative, globally bounded, and upper semicontinuous in the \<open>\<epsilon>\<close>-form the comparison machinery consumes.\<close>
 
 
 lemma covariation_val_real_bounded:
@@ -117,8 +115,9 @@ proof -
   then show ?thesis using e0 by blast
 qed
 
-text \<open>The supersolution clause of Definition 3.1 for \<open>exit_val\<close>, with the
-  boundary gate included.  The gate is vacuous: \<open>exit_val \<ge> 0\<close>, hence so is its
+text \<open>The supersolution clause of Definition 3.1 for \<open>covariation_val\<close>, with
+  the boundary gate included.  The gate is vacuous: the value is nonnegative,
+  hence so is its
   lower envelope, so \<open>{x. lsc_env v x < 0} = {}\<close> and the \<open>\<Omega>\<close> of
   Definition 3.1(b) collapses to \<open>interior K\<close>.\<close>
 
@@ -281,12 +280,9 @@ text \<open>Everything above is stated at a finite horizon.  Since
   what follows is Theorem 1.1 for the value function of Eq. (1.6) as the paper
   writes it, on \<open>C([0,\<infinity>))\<close>.\<close>
 
-text \<open>\<open>compact_cball_bound\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>The same bound in \<open>ennreal\<close>, which is the form of Eq. (3.10) and, unlike
-  the real-valued one above, also says that the value is finite: \<open>enn2real\<close> maps
-  \<open>\<top>\<close> to \<open>0\<close>, so the bound on \<open>\<bar>enn2real \<dots>\<bar>\<close> alone would hold vacuously at \<open>\<top>\<close>.
+text \<open>The bound of Eq. (3.10) on the value, in \<open>ennreal\<close>.  Unlike a bound on
+  \<open>enn2real\<close> of the value, it also says that the value is finite: \<open>enn2real\<close>
+  maps \<open>\<top>\<close> to \<open>0\<close>, so the bound on \<open>\<bar>enn2real \<dots>\<bar>\<close> alone would hold vacuously at \<open>\<top>\<close>.
   Every clause below reads the value function through \<open>enn2real\<close>, so this is
   what makes those readings the paper's \<open>v\<close>.\<close>
 
@@ -330,15 +326,13 @@ proof -
     by (rule covariation_val_real_usc[OF T0 B0 B D0 D Sc SST Kc lt[unfolded eq]])
 qed
 
-text \<open>\<^bold>\<open>Clause (2), subsolution half.\<close>\<close>
-
-text \<open>\<^bold>\<open>Clause (2), supersolution half\<close>, in the form of Definition 3.1(b) for
-  the lower semicontinuous envelope.  The hypothesis that the horizon does not
-  bind at interior points is discharged by the a priori bound, so it too is
-  gone.\<close>
-
-text \<open>\<^bold>\<open>Clause (3): the zero boundary condition\<close>, in the
-  viscosity sense of Definition 3.1, both halves with the boundary gate.\<close>
+text \<open>\<^bold>\<open>Clauses (2) and (3), subsolution half.\<close>  Definition 3.1(a) on the
+  interior of \<open>K\<close> and at the boundary points where the value is positive: the
+  subsolution half of the viscosity property of Eq. (1.9) and of the zero
+  boundary condition at once.  The supersolution half is stated below with the
+  paper's envelope (\<open>icovariation_val_supersol_bc_K\<close>); there the hypothesis
+  that the horizon does not bind at interior points is discharged by the a
+  priori bound.\<close>
 
 theorem icovariation_val_subsol_bc:
   fixes K :: "(real^'n::finite) set" and \<sigma> :: "real^'n^'n"

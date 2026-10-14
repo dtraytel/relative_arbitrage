@@ -8,37 +8,22 @@ begin
 
 (*>*)
 
-section \<open>The paper's supersolution: touching the lower envelope\<close>
-
 text \<open>Definition 3.1(b) of the paper touches the lower semicontinuous
-  envelope \<open>u\<^sub>*\<close>, not \<open>u\<close> itself, which is what makes the minimisers in
-  the Case-2 dichotomy exist and is the form the comparison principle
-  consumes.  This section builds the envelope, states the faithful
-  supersolution notion, and records two algebraic facts that let the
-  verified Euler machinery serve a process whose start is separated
-  from the quadratic's centre, since the envelope argument runs the
-  construction at points approaching the touching point rather than at
-  the touching point itself.\<close>
+  envelope \<open>u\<^sub>*\<close>, not \<open>u\<close> itself (\<open>visc_supersol_lsc\<close>); this is
+  what makes the minimisers of the Case 2 dichotomy exist, and it is the
+  form the comparison principle reads.  The envelope \<open>lsc_env\<close> and its
+  approximation property \<open>lsc_env_approx\<close> (arbitrarily near \<open>x\<close> there are
+  points where \<open>u\<close> is arbitrarily close to \<open>u\<^sub>*(x)\<close> from above) are in the
+  session \<open>Semicontinuous_Analysis\<close>.  The construction of Case 1 runs along
+  such an approximating sequence, at points approaching the touching point
+  rather than at the touching point itself.
 
-subsection \<open>The lower semicontinuous envelope\<close>
-
-text \<open>\<open>lsc_env\<close>, \<open>usc_env\<close>, their attainment/extension lemmas, and
-  \<open>lsc_env_approx\<close> (arbitrarily near \<open>x\<close> there are points where \<open>u\<close> is
-  arbitrarily close to \<open>u\<^sub>*(x)\<close> from above, which supplies the
-  approximating sequence the construction below is run along) live in
-  @{theory Semicontinuous_Analysis.Semicontinuous_Envelopes} and
-  @{theory Semicontinuous_Analysis.Semicontinuity}; what follows are the
-  \<open>exit_val\<close>-facing consequences.\<close>
-
-subsection \<open>The faithful supersolution property\<close>
-
-text \<open>\<open>visc_supersol_lsc\<close> lives in @{theory Relative_Arbitrage_Equation.Viscosity_Definitions}.\<close>
-
-
-subsection \<open>Recentring the quadratic\<close>
-
-text \<open>\<open>quad_grad_shift\<close>, \<open>quad_shift\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
+  The constraint set \<open>S\<close> is abstract throughout.  The paper's set
+  \<open>sconstraint k L\<close> has every property used: it is closed, convex, bounded,
+  made of psd matrices, invariant under orthogonal conjugation
+  (@{thm [source] sconstraint_conj}), and contains the sphere-tangential rates
+  for \<open>1 \<le> k\<close> (@{thm [source] tanpU_id_sq_sconstraint}); the paper's
+  supersolution clauses are its instances in \<open>Value_Function_Uniqueness\<close>.\<close>
 
 subsection \<open>The upper envelope of the operator for an abstract set\<close>
 
@@ -656,40 +641,18 @@ proof -
   qed
 qed
 
-subsection \<open>The envelope is lower semicontinuous, and attains its infimum\<close>
-
-text \<open>Case 2 tilts the test function and reads off a minimiser of
-  \<open>v\<^sub>* - \<psi>\<close> over a small closed ball.  The minimiser exists because the
-  lower envelope is lower semicontinuous --- which is the point of the
-  envelope --- and an lsc function attains its infimum on a nonempty
-  compact set.  The semicontinuity is \<open>lsc_env_lsc\<close> and the attainment is
-  \<open>lsc_attains_inf_gen\<close>/\<open>lsc_attains_inf_ex\<close>, both from
-  @{theory Semicontinuous_Analysis.Semicontinuous_Envelopes} and
-  @{theory Semicontinuous_Analysis.Semicontinuity}.\<close>
-
 subsection \<open>Case 2: minimisers of a tilted quadratic\<close>
 
-text \<open>Case 2 of the supersolution proof perturbs the test function and
-  reads off a minimiser of \<open>v\<^sub>* - \<psi>\<close>.  Three ingredients are needed and
-  none of them mentions the value function, so all three are proved here
-  in the abstract.
+text \<open>Case 2 of the supersolution proof tilts the test function and reads off
+  a minimiser of \<open>v\<^sub>* - \<psi>\<close> over a small closed ball.  Three ingredients are
+  needed, and none of them mentions the value function.  The first two are
+  in the session \<open>Semicontinuous_Analysis\<close>: a lower semicontinuous function
+  attains its infimum on a nonempty compact set (\<open>lsc_attains_inf_gen\<close>), and
+  lower semicontinuity survives subtracting a continuous function
+  (\<open>lsc_diff_continuous\<close>), which applies to the lower envelope because it is
+  lower semicontinuous (\<open>lsc_env_lsc\<close>).
 
-  First, an infimum-attainment statement for a lower semicontinuous
-  function.  The envelope version proved above attains the infimum of
-  \<open>lsc_env u\<close> itself, but what Case 2 minimises is \<open>lsc_env u\<close> minus a
-  quadratic, so the argument needs lower semicontinuity as a
-  hypothesis rather than as a property of the envelope: this is exactly
-  \<open>lsc_attains_inf_gen\<close> from @{theory Semicontinuous_Analysis.Semicontinuity},
-  stated there at \<open>'a::metric_space\<close> and instantiated here at
-  \<open>real^'n::finite\<close>.  Second, lower semicontinuity is stable under
-  subtracting a continuous function --- which is what turns the envelope
-  into something whose minimiser over a small closed ball exists; this is
-  \<open>lsc_diff_continuous\<close>, from the same theory.\<close>
-
-text \<open>\<open>continuous_on_quad_tilt\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>Third, the strict quadratic minorant.  This is what replaces the
+  The third, proved here, is a strict quadratic minorant.  It replaces the
   paper's bump construction.  The paper builds a \<open>C\<^sup>2\<close> function
   \<open>\<phi>\<^sup>m\<close> lying strictly below \<open>v\<^sub>*\<close> off the touching point, exactly
   quadratic near it with a nonsingular Hessian tending to
@@ -759,17 +722,7 @@ proof -
   show ?thesis by (rule that[OF rho sub]) (use key in blast)
 qed
 
-text \<open>Case 2's tilt step for the value function.  The minimiser \<open>y\<close>
-  produced by \<open>tilted_local_touching\<close> lies strictly inside the ball, so
-  it is an interior point of \<open>K\<close> at which the tilted quadratic touches
-  \<open>v\<^sub>*\<close> from below on a whole neighbourhood.  That is precisely the
-  hypothesis of the localised Case 1, which therefore applies at \<open>y\<close>
-  whenever the tilted gradient there is nonzero.\<close>
-
 subsection \<open>Case 2, second horn: quadratic pinching forces local constancy\<close>
-
-text \<open>\<open>pinch_segment_bound\<close>, \<open>pinch_implies_constant\<close>, \<open>quad_form_bounded_below\<close>, \<open>quad_minimality_pinch\<close>, \<open>singular_matrix_avoids_range\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 theorem covariation_val_not_locally_constant:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
@@ -915,8 +868,13 @@ proof -
   show False using ge vz th0 by linarith
 qed
 
-text \<open>Horn A at a local minimiser handed over by the case split of the
-  assembly.\<close>
+subsection \<open>Case 2, first horn: Case 1 at a minimiser of the tilt\<close>
+
+text \<open>The minimiser \<open>y\<close> produced by \<open>tilted_local_touching\<close> lies strictly
+  inside the ball, so it is an interior point of \<open>K\<close> at which the tilted
+  quadratic touches \<open>v\<^sub>*\<close> from below on a whole neighbourhood.  That is
+  precisely the hypothesis of the localised Case 1, which therefore applies
+  at \<open>y\<close> whenever the tilted gradient there is nonzero.\<close>
 
 lemma covariation_val_case2_at_minimiser:
   fixes K :: "(real^'n::finite) set" and x y \<eta> :: "real^'n"
@@ -1372,13 +1330,6 @@ proof (intro ballI allI impI)
     by (rule covariation_val_supersol_lsc_local[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 Kc cap[OF xi] xi tf
           rho0 loc])
 qed
-
-text \<open>The paper's set \<open>sconstraint k L\<close> has every property used above: it is
-  closed, convex, bounded, made of psd matrices, invariant under orthogonal
-  conjugation (@{thm [source] sconstraint_conj}), and contains the
-  sphere-tangential rates for \<open>1 \<le> k\<close> (@{thm [source] tanpU_id_sq_sconstraint});
-  the paper's supersolution clauses are its instances in
-  \<open>Value_Function_Uniqueness\<close>.\<close>
 
 subsection \<open>Discharging the horizon hypothesis\<close>
 

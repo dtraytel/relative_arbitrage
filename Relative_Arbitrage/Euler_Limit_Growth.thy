@@ -15,15 +15,7 @@ text \<open>The inputs of Case 1 of the supersolution property
   and the almost-sure growth, along such a quadratic, of every weak limit of
   the Euler laws driven by a field, while the path stays in a region.\<close>
 
-subsection \<open>Bricks for the Case-1 contradiction\<close>
-
-text \<open>\<open>trace_msub_mat\<close>, \<open>quad_soften_split\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
 subsection \<open>Exact rotations: a covariance field with no eigenvalue margin\<close>
-
-text \<open>\<open>colmat_matvec\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 definition rotSF ::
   "(real^'n::finite \<Rightarrow> real) \<Rightarrow> ('n \<Rightarrow> real^'n) \<Rightarrow> real^'n
@@ -78,9 +70,6 @@ proof -
     unfolding rotSF_def cp_def[symmetric]
     by (intro continuous_on_vec_lambda entry)
 qed
-
-text \<open>\<open>rot_cone_ok\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 definition colm :: "(real^'n::finite \<Rightarrow> real) \<Rightarrow> ('n \<Rightarrow> real^'n) \<Rightarrow> real^'n^'n"
   where "colm lam f = (\<chi> i j. (sqrt (lam (f j)) *\<^sub>R f j) $ i)"
@@ -265,6 +254,8 @@ proof -
   show ?thesis
     unfolding sconstraint_def Pi_constraint_def using psdA ubA PiA by simp
 qed
+
+subsection \<open>A rate field that annihilates the gradient of a quadratic\<close>
 
 text \<open>The field of Case 1, for any set of rates that is invariant under
   orthogonal conjugation: a psd rate \<open>a \<in> S\<close> that annihilates \<open>q\<close> is
@@ -811,9 +802,6 @@ proof -
 qed
 
 subsection \<open>Region variants of the Lipschitz bound and the open event\<close>
-
-text \<open>\<open>quad_diff_bound_gen\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 theorem eulerp_bad_event_null_region:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"

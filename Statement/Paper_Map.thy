@@ -16,7 +16,7 @@ text \<open>The reader's index of the paper \<^cite>\<open>LaiShkolnikovSoner\<c
   content is formalised in its own right.  The other numbered equations are
   steps inside proofs and are not listed.  An item that is formalised gets a
   theorem named after it
-  (\<open>paper_lemma_2_2\<close>, \<open>paper_theorem_4_2_a\<close>, \<dots>) stating the formal result in
+  (\<open>paper_lemma_2_2\<close>, \<open>paper_theorem_4_2_a\<close>, and so on) stating the formal result in
   the form closest to the paper, proved from the working lemma by \<open>rule\<close> or a
   few lines of plumbing; the text before it says what the paper states and
   exactly how the formal statement differs.  An item that is not formalised gets
@@ -157,9 +157,12 @@ text \<open>If \<open>S \<subseteq> \<bbbS>\<^sup>n\<^sub>+\<close> is bounded, 
   \<open>X(0) = x\<close> and \<open>d\<langle>X\<rangle>/dt \<in> S\<close> form a relatively compact set for weak
   convergence; in particular every \<open>\<P>\<^sub>x\<close> is relatively compact.
 
-  The formal statement differs in three ways.  It is proved only for
+  The formal statement differs in three ways.  It is stated for
   \<open>S = sconstraint k L\<close> (for any \<open>k\<close> and any \<open>L \<ge> 0\<close>), not for an arbitrary
-  bounded \<open>S\<close>.  It is about \<^const>\<open>exit_class\<close>, not \<open>\<P>\<^sub>x\<close>: laws of the
+  bounded \<open>S\<close>; the tightness it rests on is proved for every \<open>S\<close> with a norm
+  bound whose members have their diagonal entries in some \<open>[0, D]\<close>
+  (\<open>covariation_class_tight_on_set\<close>), which includes every bounded
+  \<open>S \<subseteq> \<bbbS>\<^sup>n\<^sub>+\<close>.  It is about \<^const>\<open>exit_class\<close>, not \<open>\<P>\<^sub>x\<close>: laws of the
   pair \<open>(X, A)\<close> on the continuous paths over \<open>[0,T]\<close>, \<open>A\<close> the compensator
   of \<open>XX\<^sup>T\<close>, starting at \<open>0\<close> with difference quotients in \<open>S\<close>, \<open>X\<close> and
   \<open>XX\<^sup>T - A\<close> martingales up to \<open>T\<close> for the filtration of the pair.  And the
@@ -206,7 +209,9 @@ text \<open>If \<open>S\<close> is compact and convex, that set of laws is compa
   particular every \<open>\<P>\<^sub>x\<close> is compact.  The formal statement has the three
   differences of Lemma 2.2 (\<open>sconstraint k L\<close> is compact and convex:
   @{thm [source] sconstraint_convex}, @{thm [source] closed_sconstraint},
-  @{thm [source] bounded_sconstraint}).  Closedness under weak limits is
+  @{thm [source] bounded_sconstraint}); the compactness itself is proved for
+  every closed \<open>S\<close> with the bounds of Lemma 2.2, convexity not being needed
+  (\<open>covariation_class_compactin_weak\<close>).  Closedness under weak limits is
   @{thm [source] exit_class_weak_closed}.  Compactness of \<open>\<P>\<^sub>x\<close> itself, on
   \<open>C([0,\<infinity>), \<real>\<^sup>n)\<close>, is not stated.\<close>
 

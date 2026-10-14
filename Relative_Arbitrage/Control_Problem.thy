@@ -19,13 +19,11 @@ text \<open>
   constraint set \<open>S = Pi_constraint k \<inter> {eigen_ub L}\<close>. Lemma 2.1, in
   the exact form \<open>lemma_2_1_exact\<close>, identifies \<open>S\<close> with the convex hull
   of the unconvexified sufficient-volatility set of Eq. (1.4).\<close>
+
 section \<open>The constraint set of Eq. (1.5) with the technical cap\<close>
 
 definition sconstraint :: "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite^'n) set" where
   "sconstraint k L = Pi_constraint k \<inter> {a. eigen_ub a L}"
-
-text \<open>\<open>quadform_convex_comb\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 lemma convex_eigen_ub:
   "convex {a :: real^'n::finite^'n. eigen_ub a L}"
@@ -77,9 +75,6 @@ next
       \<longrightarrow> c \<le> trace (a ** P)"
   then show "c \<le> Pi_proj a m" by (intro Pi_proj_ge[OF m]) blast
 qed
-
-text \<open>\<open>continuous_on_trace_mult_right\<close>, \<open>closed_trace_proj_halfspace\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 
 lemma closed_Pi_constraint:
   "closed (Pi_constraint k :: (real^'n::finite^'n) set)"
@@ -142,12 +137,12 @@ theorem bounded_sconstraint:
   shows "bounded (sconstraint k L :: (real^'n::finite^'n) set)"
   by (rule boundedI) (use sconstraint_norm_le[OF L] in blast)
 
-section \<open>The pair path space and its coordinate processes\<close>
+section \<open>The class of Eq. (1.7) on the pair path space\<close>
 
 text \<open>Paths take values in \<open>real^'n \<times> real^'n^'n\<close>: the process together
-  with its running covariation. \<open>path_law\<close>, \<open>path_metric\<close> and the
-  tightness machinery are polymorphic in the value type, so the whole
-  Section-2 toolchain applies verbatim.\<close>
+  with its running covariation.  \<open>path_law\<close>, \<open>path_metric\<close> and the
+  tightness results are polymorphic in the value type, so they apply to
+  this path space as they stand.\<close>
 
 
 definition exit_class ::
@@ -192,36 +187,15 @@ lemma exit_class_sets:
   shows "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   using Q unfolding exit_class_eq_covariation by (rule covariation_class_sets)
 
+section \<open>Members of the constraint set\<close>
 
-
-
-section \<open>From difference quotients to the density\<close>
-
-text \<open>\<open>diffquot_lipschitz\<close> lives in @{theory Continuous_Path_Spaces.Difference_Quotients}.\<close>
-
-
-text \<open>The density statement of Eq. (1.7): the difference-quotient constraint
-  makes \<open>Y\<close> Lipschitz, hence of bounded variation, hence differentiable
-  off a negligible set by \<open>Lebesgue_differentiation_thm\<close>; at every point
-  of differentiability the derivative lies in the constraint set.\<close>
-
-subsection \<open>Averages of constrained densities stay constrained\<close>
-
-text \<open>The mathematical heart of the covariation condition, using the
-  paper's Lemma 2.1: if a density takes values in a closed convex set, so
-  does its average over any interval --- the difference quotient of
-  \<open>Y t = \<integral>\<^sub>0\<^sup>t a\<close>. The proof is separation: an average outside \<open>S\<close>
-  would be separated by a hyperplane, but the same linear functional under
-  the integral cannot cross it.
-
-  Stated for any closed convex set; the application takes
-  \<open>S = sconstraint k L\<close>, whose members arrive as \<open>suff_volatile\<close>
-  densities via \<open>lemma_2_1_easy\<close>.\<close>
-
-text \<open>A market witness's volatility is a \<open>suff_volatile\<close> density with the
-  \<open>eigen_ub\<close> cap; \<open>lemma_2_1_easy\<close> (the easy inclusion of Lemma 2.1)
-  puts each value in \<open>sconstraint k L\<close>, and the average lemma then puts
-  the difference quotient of \<open>Y t = \<integral>\<^sub>0\<^sup>t a\<close> there too.\<close>
+text \<open>The class constrains the difference quotients of the covariation, while
+  Eq. (1.7) constrains its density.  For a closed, convex and bounded
+  constraint set the two readings are the same (\<open>dq_iff_density\<close>, in the
+  session \<open>Covariation_Constrained_Martingales\<close>).  A density value is
+  admissible when it lies in \<open>sconstraint k L\<close>, and by the easy inclusion of
+  Lemma 2.1 (\<open>lemma_2_1_easy\<close>) every sufficiently volatile matrix with the
+  \<open>eigen_ub\<close> cap does.\<close>
 
 lemma suff_volatile_cap_in_sconstraint:
   fixes a :: "real^'n::finite^'n"
@@ -234,11 +208,7 @@ subsection \<open>The constraint set is inhabited\<close>
 
 text \<open>The paper's standing assumption \<open>L \<ge> 1\<close> (Theorem 1.1) makes the
   identity matrix admissible: \<open>\<Pi>\<^sub>m(I) = m \<ge> m - k\<close> and
-  \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(I) = 1 \<le> L\<close>. Since (1.7)'s constraint holds for a.e.
-  \<open>t \<ge> 0\<close> with the process never stopped, the bridge from a stopped
-  market witness must continue its volatility past the stopping time with
-  an admissible value; \<open>mat 1\<close> serves that role.\<close>
-
+  \<open>\<lambda>\<^sub>(\<^sub>1\<^sub>)(I) = 1 \<le> L\<close>.\<close>
 
 lemma Pi_proj_mat_1:
   assumes m: "m \<le> CARD('n::finite)"
@@ -280,21 +250,19 @@ next
   qed
 qed
 
-text \<open>In the form the Brownian witness of the class reads it: the identity
-  is the covariation rate \<open>\<sigma> \<sigma>\<^sup>T\<close> of \<open>\<sigma> = I\<close>.\<close>
+text \<open>In the form the generic class lemmas read it: they ask for some
+  \<open>\<sigma> \<sigma>\<^sup>T\<close> in the constraint set, a constant volatility from which they
+  build members of the class, and the identity is \<open>\<sigma> \<sigma>\<^sup>T\<close> for \<open>\<sigma> = I\<close>.\<close>
 
 lemma mat_1_rate_in_sconstraint:
   assumes L: "1 \<le> L"
   shows "mat 1 ** transpose (mat 1) \<in> (sconstraint k L :: (real^'n::finite^'n) set)"
   using mat_1_in_sconstraint[OF L] by simp
 
-subsection \<open>Continuing a stopped volatility past its stopping time\<close>
+subsection \<open>Bounds on the entries\<close>
 
-text \<open>Per (1.7)--(1.8) the paper's processes are never stopped, so a market
-  witness --- whose volatility vanishes after its stopping time --- must be
-  continued to become a class member, via \<open>mat 1\<close>, admissible since
-  \<open>L \<ge> 1\<close> (\<open>mat_1_in_sconstraint\<close>). The exit time \<open>\<tau>\<^sub>K\<close> is untouched:
-  by (1.8) it depends only on the path up to the first exit from \<open>K\<close>.\<close>
+text \<open>A member of \<open>sconstraint k L\<close> is positive semidefinite with largest
+  eigenvalue at most \<open>L\<close>, so its diagonal entries lie in \<open>[0, L]\<close>.\<close>
 
 
 lemma sconstraint_diag:
@@ -342,8 +310,9 @@ definition exit_val ::
        ` exit_class k L T x)"
 
 text \<open>Eq. (1.6) is the generic value functional at the constraint set of
-  Eq. (1.5); and it is monotone in that set, which is the shape in which a
-  reader can compare this problem with a differently constrained one.\<close>
+  Eq. (1.5).  Through this equation, the monotonicity of that functional in the
+  constraint set (\<open>covariation_val_mono_class\<close>) compares this problem with a
+  differently constrained one.\<close>
 
 theorem exit_val_eq_covariation_val:
   "exit_val k L T K x = covariation_val (sconstraint k L) T K x"
@@ -352,12 +321,11 @@ theorem exit_val_eq_covariation_val:
 section \<open>The class at the constraint set of Eq. (1.5)\<close>
 
 text \<open>The results of the session \<open>Covariation_Constrained_Martingales\<close>
-  for an abstract constraint set, at \<open>sconstraint k L\<close>: the norm bound
-  \<open>CARD('n) \<sqdot> L\<close> and the diagonal bound \<open>[0, L]\<close>
-  (@{thm [source] sconstraint_bounds}), and the trace lower bound \<open>n - k\<close>.\<close>
-
-text \<open>At the constraint set of Eq. (1.5): Lemma 2.3's closedness, and the
-  fourth moment with the paper's constant \<open>8L\<^sup>2\<close>.\<close>
+  for an abstract constraint set, at \<open>sconstraint k L\<close>, which supplies their
+  norm bound \<open>CARD('n) \<sqdot> L\<close> and diagonal bound \<open>[0, L]\<close>
+  (@{thm [source] sconstraint_bounds}): the fourth moment of the increments
+  with the paper's constant \<open>8L\<^sup>2\<close>, and the closedness and tightness behind
+  Lemma 2.3.\<close>
 
 theorem exit_class_fourth_moment:
   fixes Q :: "('n::finite pairpath) measure"
@@ -425,7 +393,8 @@ qed
 
 text \<open>The two numbers of \<open>sconstraint k L\<close> that the exit-time estimates read:
   the norm bound \<open>CARD('n) \<sqdot> L\<close> and the trace lower bound \<open>n - k\<close>, in the
-  order those lemmas take them.\<close>
+  order those lemmas take them.  The trace lower bound is the rate in the
+  expected exit-time bound of Eq. (3.10).\<close>
 
 lemma sconstraint_trace_bounds:
   fixes L :: real
@@ -435,9 +404,6 @@ lemma sconstraint_trace_bounds:
     and "0 < real (CARD('n) - k)"
     and "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> real (CARD('n) - k) \<le> trace a"
   using sconstraint_bounds(1,2)[OF L] k sconstraint_trace_ge[OF k] by auto
-
-text \<open>For the paper's constraint set the rate is \<open>n - k\<close>
-  (@{thm [source] sconstraint_trace_bounds}), which gives inequality (3.10).\<close>
 
 (*<*)
 end
