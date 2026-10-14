@@ -50,10 +50,10 @@ text \<open>Evaluating a path at a random time.  This is the one new measurabili
   asks for continuity on all of \<open>{0..}\<close>.\<close>
 
 lemma pstopped_mspace:
-  fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
+  fixes \<omega> :: "(real \<Rightarrow> 'p::{polish_space,banach})"
   assumes th0: "0 \<le> \<theta> \<omega>" and thT: "\<theta> \<omega> \<le> T"
-    and w: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-  shows "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    and w: "\<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
+  shows "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
 proof -
   have c: "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD[OF w])
   have m: "continuous_on {0..T} (\<lambda>t. min t (\<theta> \<omega>))" by (intro continuous_intros)
@@ -67,24 +67,24 @@ lemma pstopped_const_measurable_filtration:
   fixes T t :: real
   assumes T0: "0 \<le> T" and t: "0 \<le> t" and tT: "t \<le> T"
   shows "pstopped T (\<lambda>_. t)
-      \<in> natural_filtration (path_borel T :: ((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure) 0 (\<lambda>v \<omega>. \<omega> v) t
-      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+      \<in> natural_filtration (path_borel T :: (real \<Rightarrow> 'p::{polish_space,banach}) measure) 0 (\<lambda>v \<omega>. \<omega> v) t
+      \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'p) measure)"
 proof -
-  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) t"
-  have spF: "space ?F = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  let ?B = "(path_borel T :: (real \<Rightarrow> 'p) measure)"
+  let ?F = "natural_filtration ?B 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) t"
+  have spF: "space ?F = mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
     by (simp add: space_borel_of)
-  have into: "pstopped T (\<lambda>_. t) \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
-    if w: "\<omega> \<in> space ?F" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
+  have into: "pstopped T (\<lambda>_. t) \<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
+    if w: "\<omega> \<in> space ?F" for \<omega> :: "(real \<Rightarrow> 'p)"
   proof -
-    have m: "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    have m: "\<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
       using w spF by simp
     show ?thesis by (rule pstopped_mspace[OF t tT m])
   qed
-  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T (\<lambda>_. t) \<omega> s) \<in> borel_measurable ?F"
+  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). pstopped T (\<lambda>_. t) \<omega> s) \<in> borel_measurable ?F"
     if True: "s \<in> {0..T}" for s
   proof -
-    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min s t)) \<in> borel_measurable ?F"
+    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). \<omega> (min s t)) \<in> borel_measurable ?F"
       by (rule natural_filtration_eval) (use True t in auto)
     then show ?thesis by (simp add: pstopped_apply[OF True])
   qed
@@ -96,35 +96,35 @@ text \<open>Stopping at a measurable time is measurable: by
   and @{thm [source] path_eval_at_measurable_time} makes it so.\<close>
 
 lemma pstopped_measurable:
-  fixes \<theta> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}) \<Rightarrow> real"
+  fixes \<theta> :: "(real \<Rightarrow> 'p::{polish_space,banach}) \<Rightarrow> real"
   assumes T0: "0 \<le> T"
-    and thm': "\<theta> \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and thm': "\<theta> \<in> borel_measurable (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and th0: "\<And>\<omega>. 0 \<le> \<theta> \<omega>" and thT: "\<And>\<omega>. \<theta> \<omega> \<le> T"
-  shows "pstopped T \<theta> \<in> (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)
-      \<rightarrow>\<^sub>M (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  shows "pstopped T \<theta> \<in> (path_borel T :: (real \<Rightarrow> 'p) measure)
+      \<rightarrow>\<^sub>M (path_borel T :: (real \<Rightarrow> 'p) measure)"
 proof -
-  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  have sp: "space ?B = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  let ?B = "(path_borel T :: (real \<Rightarrow> 'p) measure)"
+  have sp: "space ?B = mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
     by (simp add: space_borel_of)
-  have into: "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  have into: "pstopped T \<theta> \<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
     if "\<omega> \<in> space ?B" for \<omega>
-    using that sp by (intro pstopped_mspace[OF th0 thT]) simp
-  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> \<omega> t) \<in> borel_measurable ?B"
+    using that sp by (intro pstopped_mspace[where \<theta> = \<theta>, OF th0 thT]) simp
+  have ev: "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). pstopped T \<theta> \<omega> t) \<in> borel_measurable ?B"
     if True: "t \<in> {0..T}" for t
   proof -
-    have base: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min t (\<theta> \<omega>))) \<in> borel_measurable ?B"
+    have base: "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). \<omega> (min t (\<theta> \<omega>))) \<in> borel_measurable ?B"
     proof (rule path_eval_at_measurable_time
-        [where X = "\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>" and g = "\<lambda>\<omega>. min t (\<theta> \<omega>)", OF T0])
-      show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
-      show "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). min t (\<theta> \<omega>)) \<in> borel_measurable ?B"
+        [where X = "\<lambda>\<omega> :: (real \<Rightarrow> 'p). \<omega>" and g = "\<lambda>\<omega>. min t (\<theta> \<omega>)", OF T0])
+      show "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). \<omega>) \<in> ?B \<rightarrow>\<^sub>M ?B" by (rule measurable_ident_sets[OF refl])
+      show "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). min t (\<theta> \<omega>)) \<in> borel_measurable ?B"
         using thm' by measurable
-      show "0 \<le> min t (\<theta> \<omega>)" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
+      show "0 \<le> min t (\<theta> \<omega>)" for \<omega> :: "(real \<Rightarrow> 'p)"
         using True th0[of \<omega>] by simp
-      show "min t (\<theta> \<omega>) \<le> T" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
+      show "min t (\<theta> \<omega>) \<le> T" for \<omega> :: "(real \<Rightarrow> 'p)"
         using thT[of \<omega>] by simp
     qed
-    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). pstopped T \<theta> \<omega> t)
-        = (\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> (min t (\<theta> \<omega>)))"
+    have "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). pstopped T \<theta> \<omega> t)
+        = (\<lambda>\<omega> :: (real \<Rightarrow> 'p). \<omega> (min t (\<theta> \<omega>)))"
       by (rule ext) (rule pstopped_apply[OF True])
     then show ?thesis using base by simp
   qed
