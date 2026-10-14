@@ -3,7 +3,7 @@ section \<open>Two-domain comparison: Theorem 4.2(b), Theorem 4.3, Proposition 4
 (*<*)
 theory Comparison_Two_Domain
   imports
-    Comparison_Principle
+    Maximum_Principle
 begin
 
 (*>*)

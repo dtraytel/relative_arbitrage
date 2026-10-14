@@ -27,7 +27,7 @@ text \<open>
   The test functions here are the \<^const>\<open>test_fun_at\<close> ones, which are less
   regular than Definition 3.1's \<open>C\<^sup>2\<close>; that makes these notions the stronger,
   which is what the clauses \<^emph>\<open>asserting\<close> the viscosity property want.  The
-  uniqueness clause needs the paper's own class instead; \<open>Comparison_Principle\<close>
+  uniqueness clause needs the paper's own class instead; \<open>Maximum_Principle\<close>
   restates Definition 3.1 over it as \<open>visc_subsol_env2\<close> / \<open>visc_supersol_env2\<close>.\<close>
 unbundle inner_syntax
 

@@ -14,7 +14,7 @@ text \<open>
   Eq. (1.9) satisfying the zero boundary condition of Definition 3.1.  This theory
   joins the two halves of that statement: the viscosity property, proved in
   @{theory Relative_Arbitrage.Value_Function_Assembly}, and the comparison principle, proved in
-  @{theory Relative_Arbitrage_Equation.Comparison_Principle}.  It also derives Example 3.1 in closed form.
+  @{theory Relative_Arbitrage_Equation.Maximum_Principle}.  It also derives Example 3.1 in closed form.
 \<close>
 
 section \<open>The clauses of Theorem 1.1 and where they are proved\<close>

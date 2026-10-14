@@ -9,7 +9,7 @@ Relative_Arbitrage_Statement.Paper_Readings.*
 Relative_Arbitrage_Statement.Paper_Map.*   # one theorem per numbered paper item (D8)
 Relative_Arbitrage.Theorem_1_1.*
 Relative_Arbitrage.Proposition_2_4.*   # Prop. 2.4 for the horizon-T value (D4)
-Comparison_Instance.max_principle_usc_lsc   # Theorem 4.2(a) for usc/lsc data (D3); moved from Comparison_Principle by G-C (the chain is now in the locale geometric_operator)
+Comparison_Instance.max_principle_usc_lsc   # Theorem 4.2(a) for usc/lsc data (D3); moved from Comparison_Principle (now Maximum_Principle) by G-C (the chain is now in the locale geometric_operator)
 Relative_Arbitrage_Equation.Comparison_Instance.*   # Section 4 for the operator of Eq. (1.9), the instance of the G-C locale
 Relative_Arbitrage.Exit_Class_Expected_Exit_Time.*   # the class bound on E[tau] (D2)
 Continuous_Time_Martingales.Expected_Exit_Times.*   # expected exit times from optional sampling (D2)
@@ -280,7 +280,7 @@ Semicontinuous_Selection.usc_sel_def
 # class_dp
 Vector_Brownian_Martingales.bm_increment_cross    # KEEP_API
 # comparison
-Comparison_Principle.geometric_operator.max_principle_boundary_holds    # FIX_THEN_KEEP; in the locale since G-C
+Maximum_Principle.geometric_operator.max_principle_boundary_holds    # FIX_THEN_KEEP; in the locale since G-C
 Comparison_Localisation.theta_gap_preserved    # FIX_THEN_KEEP
 Comparison_Localisation.supconv_uniform_upper    # FIX_THEN_KEEP
 # cps_tightness_qv
@@ -614,15 +614,15 @@ Path_Space_Infinite.sets_ipath_law    # KEEP_API
 
 # --- COROLLARY verdicts that keep their name (shortened in phase 4) ------------
 Exit_Class.exit_val_eq_covariation_val    # COROLLARY
-Comparison_Principle.geometric_operator.viscosity_uniqueness_compact    # COROLLARY; in the locale since G-C
+Maximum_Principle.geometric_operator.viscosity_uniqueness_compact    # COROLLARY; in the locale since G-C
 Adapted_Quadratic_Variation.qvps_mono_lip    # COROLLARY
 Adapted_Quadratic_Variation.qvps_continuous    # COROLLARY
 Pathwise_Quadratic_Variation.bounded_matrix_martingale_compensator.qvmat_eq_A_sym    # COROLLARY
 Stopped_Localization.fourth_moment_L2_bochner    # COROLLARY
 Optional_Sampling.nat_stopped_martingale.stopped_expectation    # COROLLARY
 Sampled_Quadratic_Variation.expectation_sq_sampled    # COROLLARY
-Comparison_Principle.geometric_operator.max_principle_le    # COROLLARY; in the locale since G-C
-Comparison_Principle.geometric_operator.uniqueness_from_max_principle    # COROLLARY; in the locale since G-C
+Maximum_Principle.geometric_operator.max_principle_le    # COROLLARY; in the locale since G-C
+Maximum_Principle.geometric_operator.uniqueness_from_max_principle    # COROLLARY; in the locale since G-C
 Poincare_Separation.is_proj_rank1    # COROLLARY
 Doubling_Of_Variables.doubling_dist_bound    # COROLLARY
 Doubling_Of_Variables.penalty_difference_identity    # COROLLARY

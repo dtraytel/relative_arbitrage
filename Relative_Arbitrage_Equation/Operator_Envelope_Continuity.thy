@@ -494,7 +494,7 @@ text \<open>Lemma 3.1 consists of:
 
 section \<open>Section 4: the chain 4.2(a) ==> 4.2(b) ==> 4.3 ==> 4.1\<close>
 
-text \<open>The chain is proved in \<open>Comparison_Principle\<close> and \<open>Comparison_Two_Domain\<close>
+text \<open>The chain is proved in \<open>Maximum_Principle\<close> and \<open>Comparison_Two_Domain\<close>
   for any operator of the locale \<open>geometric_operator\<close>; \<open>Comparison_Instance\<close>
   shows that \<open>F\<close> is one and states Theorem 4.2(a) (\<open>max_principle_usc_lsc\<close>),
   Theorem 4.2(b) (\<open>comparison_two_domain\<close>), Theorem 4.3

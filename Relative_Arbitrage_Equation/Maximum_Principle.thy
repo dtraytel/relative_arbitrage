@@ -1,7 +1,7 @@
 section \<open>The instantiation: Theorem 4.2(a) from the doubling data alone\<close>
 
 (*<*)
-theory Comparison_Principle
+theory Maximum_Principle
   imports Comparison_Localisation
 begin
 
