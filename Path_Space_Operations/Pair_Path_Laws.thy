@@ -11,10 +11,19 @@ begin
 
 (*>*)
 
-text \<open>Laws of pair paths as a family: the second-moment bounds that make a
-  family tight, the compactness of the family of laws under those bounds, the
-  Brownian continuation on the half-line, and the transfer of the exit
-  functional to a limit law.\<close>
+text \<open>Laws on the pair path space and their weak limits.  The measurable
+  structure of the path space (standard Borel, evaluations, start and frozen
+  events, the natural filtration), H\"older balls of pair paths, and the
+  passage of a martingale property through weak limits of laws: tested
+  against a bounded continuous functional of the past, the martingale
+  identity is the integral of a continuous path functional, which a uniform
+  \<open>L\<^sup>2\<close> bound carries to the limit, and countably many such tests determine
+  the martingale property.  On top of this, the class of laws whose
+  covariation has its difference quotients in a set \<open>S\<close> of matrices, and the
+  value of the minimum-exit-time problem over it.\<close>
+
+text \<open>The outer product of a sum, split into the outer products of the
+  summands and the cross terms.\<close>
 
 lemma comp_shift_split:
   fixes x v :: "real^'n::finite" and w :: "real^'n^'n"
@@ -22,64 +31,15 @@ lemma comp_shift_split:
        = outerp (x + v) - w"
   by (simp add: outerp_def vec_eq_iff algebra_simps)
 
-text \<open>\<open>bounded_linear_cross\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-subsection \<open>The Brownian continuation on the half-line\<close>
-
-text \<open>The witness of \<open>bmpair_law_in_covariation_class\<close> without
-  the horizon cap: Brownian motion paired with the covariation \<open>Y\<^sub>t = t \<sqdot> I\<close>.
-  Cutting it at \<open>S\<close> returns \<open>bmpair\<close> exactly, so every restriction of
-  its law is the horizon-\<open>S\<close> witness and lies in the class.\<close>
-
-text \<open>Time-measurability is inherited by the continuation: the locale
-  assumption \<open>acov_time_measurable\<close> is stated on the nonnegative axis
-  only, matching (1.7)'s "a.e. \<open>t \<ge> 0\<close>", and nothing more is available
-  since for \<open>u < 0 \<le> tv\<close> the continuation still reads \<open>a u\<close>.
-
-  A trap: \<open>lborel\<close> is polymorphic and \<^typ>\<open>real^'n^'n\<close> carries
-  an \<^class>\<open>ord\<close> instance, so an unannotated binder in
-  \<open>(\<lambda>u. \<dots>) \<in> borel_measurable lborel\<close> can silently elaborate at the
-  matrix type instead of \<open>real\<close>. Pin \<open>lborel :: real measure\<close> and
-  annotate every binder.\<close>
-
-subsection \<open>A second-moment bound in nn-integral form\<close>
-
-text \<open>Hence the continued volatility has all its difference quotients in the
-  constraint set --- which is exactly the covariation condition of
-  \<open>exit_class\<close>, holding for every \<open>0 \<le> s < t\<close> with no stopping
-  caveat, as (1.7) demands.\<close>
-
-subsection \<open>The running covariation built from a continued volatility\<close>
-
-text \<open>The volatility side of the bridge: \<open>Yint a t = \<integral>\<^sub>0\<^sup>t a\<close> starts at
-  \<open>0\<close>, has increments given by interval integrals, and --- for the
-  continued density --- difference quotients in the constraint set for every
-  \<open>0 \<le> s < t\<close>: the covariation half of \<open>exit_class\<close>.\<close>
-
-section \<open>The relaxed operator, and the inequality the class really gives\<close>
-
-text \<open>Eq. (1.9) takes its infimum over \<open>feasible\<close>, which carries the
-  orthogonality constraint \<open>a *v p = 0\<close> on top of the spectral bounds; the
-  class of (1.7) carries no such constraint, its covariation directions
-  living in \<open>sconstraint\<close>.  The two are related in one direction,
-
-    \<open>feasible\<close> \<open>k L p\<close> \<open>\<subseteq>\<close> \<open>sconstraint\<close> \<open>k L\<close>
-
-  (\<open>suff_volatile_cap_in_sconstraint\<close>), so the infimum over
-  the larger set is smaller.  The relaxed infimum, over the whole set,
-  leaves the missing ingredient --- orthogonality of the optimal direction to
-  the gradient --- visible instead of buried.\<close>
+text \<open>The running integral of a rate over \<open>[0, t]\<close>.\<close>
 
 definition Yint :: "(real \<Rightarrow> 'b::{polish_space,banach}) \<Rightarrow> real \<Rightarrow> 'b"
   where "Yint a t = set_lebesgue_integral lborel {0..t} a"
 
-subsection \<open>What a second-moment bound gives the tightness argument\<close>
+subsection \<open>The measurable structure of the path space\<close>
 
-text \<open>The \<open>Y\<close>-side of the pair tightness costs nothing: the class's
-  difference quotients lie a.s. in \<open>sconstraint k L\<close>, whose elements have
-  norm at most \<open>n\<sqdot>L\<close> (\<open>sconstraint_norm_le\<close>), so \<open>diffquot_lipschitz\<close>
-  makes \<open>Y\<close> a.s. \<open>n\<sqdot>L\<close>-Lipschitz, leaving only the
-  \<open>X\<close>-side Hoelder estimate.\<close>
+text \<open>The path space is standard Borel and nonempty, and the evaluations
+  are measurable for every law on it.\<close>
 
 lemma standard_borel_path_metric:
   "standard_borel (path_borel U :: (real \<Rightarrow> 'p::{polish_space,banach}) measure)"
@@ -244,6 +204,9 @@ proof -
   show ?thesis by (rule measurable_compose[OF ev c])
 qed
 
+text \<open>A H\"older bound on the first component and a Lipschitz bound on the
+  second give a H\"older bound on the pair, over a bounded horizon.\<close>
+
 lemma pair_holder_of_components:
   fixes \<omega> :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
   assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
@@ -268,12 +231,8 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Hence the compact set: pair paths starting at \<open>(x, 0)\<close> whose
-  \<open>X\<close>-part obeys a Hoelder-\<open>ga\<close> bound and whose \<open>Y\<close>-part is
-  \<open>B\<close>-Lipschitz form a subset of a compact pair-Hoelder ball. This is the
-  set the tightness estimate has to charge; the \<open>X\<close>-side probability
-  bound is \<open>Path_Tightness.path_law_holder_ball_bound_vec\<close> and the
-  \<open>Y\<close>-side holds with probability one by \<open>diffquot_lipschitz\<close>.\<close>
+text \<open>Every event of the natural filtration at time \<open>s\<close> is the preimage of a
+  Borel set of the path space of horizon \<open>s\<close> under restriction.\<close>
 
 lemma natural_filtration_eq_restrict_vimage:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -319,7 +278,7 @@ proof -
   then show thesis by (rule that)
 qed
 
-subsection \<open>The limit law's process is a martingale\<close>
+subsection \<open>Coordinates and pair H\"older balls\<close>
 
 text \<open>The coordinate projections of a pair are Borel measurable.\<close>
 
@@ -341,6 +300,11 @@ lemma pair_snd_borel:
      \<in> borel_measurable borel"
   by (intro borel_measurable_continuous_onI continuous_intros)
 
+text \<open>Hence pair paths starting at \<open>(x, 0)\<close> whose first component obeys a
+  H\"older-\<open>ga\<close> bound and whose second component is \<open>B\<close>-Lipschitz lie in a
+  single pair H\"older ball, which is compact: the set a tightness estimate
+  for pair laws has to charge.\<close>
+
 lemma pair_holder_ball_mem:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and x :: "'a"
   assumes T: "0 \<le> T" and ga: "0 < ga" "ga \<le> 1" and c: "0 \<le> c" and B: "0 \<le> B"
@@ -357,14 +321,12 @@ lemma pair_holder_ball_mem:
   using mem start
   by (auto intro!: pair_holder_of_components[OF T ga c B X Y])
 
-text \<open>Clause (iv).  Beyond \<open>r\<close> the glued pair is \<open>(X\<^sub>r + W, Y\<^sub>r + \<langle>W\<rangle>)\<close>, so
-  its compensated process expands as
+subsection \<open>Tilting a strict quadratic minorant\<close>
 
-    \<open>(outerp X\<^sub>r - Y\<^sub>r) + (outerp W - \<langle>W\<rangle>) + (X\<^sub>r \<otimes> W + W \<otimes> X\<^sub>r)\<close>:
-
-  one compensated martingale from each factor, plus a cross term that is a
-  martingale only because the factors are independent
-  (\<open>martingale_pair_mult\<close>, entrywise through \<open>martingale_matI\<close>).\<close>
+text \<open>Let a lower semicontinuous \<open>W\<close> lie above its quadratic expansion at
+  \<open>x\<close> plus \<open>c \<bar>z - x\<bar>\<^sup>2\<close> on a ball.  Then for every small \<open>\<eta>\<close>, the function
+  \<open>W\<close> minus the quadratic tilted by \<open>\<eta>\<close> has a local minimum at a point
+  within \<open>\<bar>\<eta>\<bar>/c\<close> of \<open>x\<close>.\<close>
 
 lemma tilted_local_touching:
   fixes W :: "real^'n::finite \<Rightarrow> real" and M :: "real^'n^'n"
@@ -442,42 +404,9 @@ proof -
   qed
 qed
 
-text \<open>Assembling the separation for the value function.  On a small
-  enough ball the touching hypothesis and the strict quadratic minorant
-  combine into exactly the separation \<open>tilted_local_touching\<close> wants:
-  the touching gives \<open>\<phi> z - \<phi> x \<le> W z - W x\<close> and the minorant gives
-  \<open>Q\<^sub>\<epsilon>(z) + (\<epsilon>/4)\<bar>z - x\<bar>\<^sup>2 \<le> \<phi> z - \<phi> x\<close>.  The radius is also shrunk
-  below the distance to the complement of \<open>interior K\<close>, so that every
-  point of the ball is an admissible touching point in its own right.\<close>
+subsection \<open>Closed and measurable events of paths\<close>
 
-text \<open>The charge splits along the components: the \<open>X\<close>-side Hoelder event and
-  the \<open>Y\<close>-side Lipschitz event intersect inside a pair Hoelder ball
-  (\<open>pair_holder_of_components\<close>), so their complements cover the ball's
-  complement and subadditivity finishes; here the \<open>Y\<close>-event has
-  probability one, so only the \<open>X\<close>-side estimate carries content.\<close>
-
-section \<open>Passing the martingale identities through the weak limit\<close>
-
-text \<open>\<open>unif_integrable_of_L2_bound\<close>, \<open>weak_conv_integral_of_L2_bound\<close> live in @{theory Continuous_Path_Spaces.Path_Tightness}.\<close>
-
-
-section \<open>Which clauses survive a weak limit\<close>
-
-text \<open>Lemma 2.3 of the paper says the class is closed, passing each defining
-  clause of (1.7) to the limit law. The paper uses Prokhorov followed by
-  Skorokhod's representation theorem; this instead uses the closed-set
-  half of the portmanteau theorem (\<open>weak_conv_closed_full_measure\<close>), needing
-  no almost-sure realisation.
-
-  This section discharges the two clauses that are closed conditions on
-  a single path: the starting point \<open>(x, 0)\<close> and the covariation
-  constraint of (1.7). Portmanteau gives them only for the countably many
-  rational pairs \<open>s < t\<close>, and path continuity upgrades that to all real
-  pairs (\<open>diffquot_all_of_rational\<close>), as in the paper's own argument. The
-  remaining two clauses are the martingale properties, which go through
-  the integrated identities instead (\<open>weak_conv_integral_of_L2_bound\<close>).\<close>
-
-subsection \<open>Full mass of the two closed clauses on a class member\<close>
+text \<open>The paths starting at \<open>(x, 0)\<close> form a closed set.\<close>
 
 lemma closedin_start_point:
   fixes x :: "'a::{polish_space,banach}"
@@ -502,6 +431,10 @@ proof (rule measurable_compose[OF path_law_evaluation_measurable[OF refl]])
   show "(\<lambda>pr :: (real^'n) \<times> (real^'n^'n). fst pr $ c) \<in> borel_measurable borel"
     by (rule measurable_compose[OF pair_fst_borel borel_measurable_nth])
 qed
+
+text \<open>The event that at every grid time \<open>j h\<close> with \<open>j < m\<close> the next increment
+  is orthogonal to \<open>G\<close> wherever the rate field \<open>SF\<close> annihilates \<open>G\<close> is
+  measurable, for continuous \<open>SF\<close> and \<open>G\<close>.\<close>
 
 lemma euOrth_mset_cond:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n"
@@ -670,6 +603,9 @@ proof -
   qed
 qed
 
+text \<open>A path of the capped path space, stopped at the horizon, is continuous
+  on the half-line; so is each coordinate of its state.\<close>
+
 lemma path_stopped_at_horizon_continuous:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes T: "0 \<le> T"
@@ -699,6 +635,11 @@ proof -
     by (rule linear_continuous_on[OF bounded_linear_vec_nth])
   show ?thesis by (rule continuous_on_compose2[OF c3 c2]) simp
 qed
+
+text \<open>The first-order alternative to the tilting lemma.  Suppose that at every
+  local minimum \<open>y\<close> produced by a small tilt \<open>\<eta>\<close> the gradient of the tilted
+  quadratic vanishes, \<open>M (y - x) + \<eta> = 0\<close>.  For a symmetric invertible
+  \<open>M\<close> this forces \<open>W\<close> to be constant near \<open>x\<close>.\<close>
 
 lemma horn_B_locally_constant:
   fixes W :: "real^'n::finite \<Rightarrow> real" and M :: "real^'n^'n" and x :: "real^'n"
@@ -809,23 +750,15 @@ proof -
   show ?thesis by (rule that[OF r0']) (use const in blast)
 qed
 
-text \<open>The second horn dies here.  Suppose \<open>v\<^sub>*\<close> were constant \<open>= c\<close> on a
-  ball around \<open>x\<close> whose closure lies in \<open>K\<close>.  The envelope's own defining
-  property supplies points \<open>z\<close> arbitrarily close to \<open>x\<close> at which \<open>v\<close>
-  itself is within \<open>\<theta>/2\<close> of \<open>c\<close>.  But the deterministic-radius member
-  started at such a \<open>z\<close> stays inside the ball for a time \<open>\<theta>\<close> that does
-  not shrink with \<open>z\<close>, and its endpoint is again in the ball where
-  \<open>v \<ge> c\<close>; so \<open>covariation_val_ball_lower_plus\<close> gives \<open>v z \<ge> \<theta> + c\<close>.  Those two
-  are incompatible.
-
-  The hypothesis \<open>c < T/2\<close> is what keeps the horizon cap inert.  It
-  cannot be dropped: if \<open>v \<equiv> T\<close> on an open set then \<open>v\<^sub>*\<close> is locally
-  constant there, and no contradiction is available --- indeed the
-  supersolution inequality itself fails at such a point, since a
-  constant test function would demand \<open>1 \<le> F\<^sup>*(0,0) = 0\<close>.  For a
-  bounded \<open>K\<close> the hypothesis is discharged by
-  \<open>covariation_val_le_ball_bound\<close> once \<open>T\<close> exceeds twice the ball
-  bound.\<close>
+text \<open>Evaluating a path at a random time.  This is where the paths'
+  continuity is spent: approximate the time from above by dyadic rationals, each fixed
+  dyadic giving a measurable evaluation among only countably many, and pass
+  to the limit inside each path.  Only pointwise continuity of each path is
+  used, so no uniform-continuity machinery is needed.  Compare
+  \<open>stopped_adapted_of_cont\<close>, which runs the same dyadic
+  argument for a real-valued adapted process and delivers the sharper
+  \<open>\<F>\<^sub>v\<close>-measurability, needing the paths capped as \<open>\<omega> (min s T)\<close> because it
+  asks for continuity on all of \<open>{0..}\<close>.\<close>
 
 lemma path_eval_at_measurable_time:
   fixes M :: "'a measure" and g :: "'a \<Rightarrow> real"
@@ -903,9 +836,7 @@ proof -
   show ?thesis by (rule borel_measurable_LIMSEQ_metric[OF stepm conv])
 qed
 
-text \<open>Both halves of the split are again capped paths.  Freezing and
-  rebasing preserve continuity, and @{thm [source] mspace_path_metricI} does
-  the extensionality --- both maps are \<open>restrict\<close>ed by construction.\<close>
+text \<open>The start event on the half-line path space.\<close>
 
 lemma pairpath_start_sets:
   fixes x :: "'a::{polish_space,banach}"
@@ -946,10 +877,8 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Hence both halves of the split are measurable maps of the path.  Only
-  Borel measurability of \<open>\<theta>\<close> is used here; the stopping-time property is
-  what makes the kernel a function of the past, entering later through
-  @{thm [source] stopped_adapted_of_cont}.\<close>
+text \<open>The trace functional of an Euler increment against a continuous rate
+  field is continuous jointly in the two consecutive points.\<close>
 
 lemma euXi_term_cont:
   fixes SF :: "real^'n::finite \<Rightarrow> real^'n^'n" and M :: "real^'n^'n"
@@ -1010,6 +939,9 @@ proof -
         linear_continuous_on[OF bounded_linear_trace_mult_left] inner]) auto
 qed
 
+text \<open>The uncapped exit time of the first component is measurable on the
+  half-line path space.\<close>
+
 lemma iexit_fst_measurable_ipath:
   fixes K :: "('a::{polish_space,banach}) set"
   assumes K: "closed K"
@@ -1029,6 +961,13 @@ next
   show "continuous_on {0..} (\<lambda>t. fst (\<omega> t))"
     by (rule continuous_on_compose2[OF g c]) auto
 qed
+
+text \<open>A quadratic functional of the state is continuous, and the paths that
+  stay in an open region up to time \<open>t\<close> and are below a threshold of the
+  functional at \<open>t\<close> form an open set: staying inside the region is
+  @{thm [source] open_stay_inside} through the first projection, and the
+  strict inequality is an open condition on the evaluation at \<open>t\<close>, via
+  @{thm [source] open_eval_preimage}.\<close>
 
 lemma quad_pair_cont:
   fixes x q :: "real^'n::finite" and M :: "real^'n^'n"
@@ -1075,13 +1014,10 @@ proof -
   show ?thesis unfolding eq by (rule openin_Int[OF o1 o2])
 qed
 
-subsection \<open>The bad event vanishes on a region\<close>
+subsection \<open>Stopped martingales and the natural filtration\<close>
 
-text \<open>The vanishing-probability theorem over an arbitrary bounded
-  stay-region, \<open>eulerp_bad_event_null_region\<close>: the kill and the trace
-  margin hold on the region, which is contained in a ball of radius
-  \<open>Rn\<close> around the quadratic's centre, and a Chebyshev-plus-gap
-  dissection gives the \<open>A h + B h\<^sup>2\<close> bound once the mesh is fine.\<close>
+text \<open>Every point of a law on the path space has a continuous first
+  component.\<close>
 
 lemma path_sets_fst_continuous:
   fixes N :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -1094,6 +1030,10 @@ proof -
   then have "continuous_on {0..T} \<omega>" by (rule mspace_path_metricD)
   then show ?thesis by (rule continuous_on_fst)
 qed
+
+text \<open>A continuous square-integrable martingale up to the horizon, constant
+  after it, stopped at a stopping time is again a martingale with
+  square-integrable values.\<close>
 
 lemma horizon_sq_int_martingale_stopped:
   fixes Q :: "'a measure" and Z :: "real \<Rightarrow> 'a \<Rightarrow> real" and \<tau> :: "'a \<Rightarrow> real"
@@ -1126,22 +1066,8 @@ proof -
           tstop that]) (use tnn in auto)
 qed
 
-text \<open>\<open>martingale_cong_ge\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra},
-  general at any \<open>t\<^sub>0\<close> and with the equation oriented \<open>X u = Y u\<close> rather than
-  \<open>Y u = X u\<close>.\<close>
-
-subsection \<open>\<open>QH\<close> and \<open>QHC\<close> for the stopped past law\<close>
-
-text \<open>Both clauses by the same three steps: stop the class's horizon
-  martingale at \<open>\<theta>\<close> (@{thm [source] horizon_sq_int_martingale_stopped}),
-  push the result forward along \<open>pstopped\<close>
-  (\<open>martingale_process_law\<close>, with
-  \<open>pstopped_eval_filtration\<close> as its adaptedness input and
-  \<open>P\<close>'s own filtration --- a stopped path carries no more information than
-  the past, so unlike the delayed class there is no time change here), and
-  carry the square-integrability across with
-  \<open>integrable_distr_eq\<close>.\<close>
+text \<open>The natural filtration of a law on the path space consists of
+  sub-\<open>\<sigma>\<close>-algebras of its Borel sets.\<close>
 
 lemma subalgebra_natural_filtration_path:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -1184,23 +1110,12 @@ proof -
     using sets_natural_filtration_path_subset[of U U] by blast
 qed
 
-subsection \<open>The conditioning rectangle lives in the past-plus-\<open>i\<close> filtration\<close>
+subsection \<open>Tests of a path law\<close>
 
-text \<open>What \<open>integral_ksemi_rect_of_set_integral\<close> hands to the
-  martingale property of \<open>P\<close> is the set \<open>\<phi> \<^sup>-\<^sup>1 (A \<times> A')\<close>.  For the martingale
-  property to apply at time \<open>r + i\<close> that set must lie in \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>: the
-  past factor is in \<open>\<F>\<^sub>r\<close> by @{thm [source] sets_natural_filtration_path},
-  since \<open>A\<close> ranges over all Borel sets of the \<open>r\<close>-path space and not merely
-  over the cut law's natural filtration, and the future factor is in
-  \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close> by \<open>pfut_filtration_measurable\<close>.\<close>
-
-text \<open>\<open>sets_natural_filtration_mono\<close> and \<open>natural_filtration_cong_space\<close> live
-  in @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
-
-section \<open>Sums of outer products: the toolkit\<close>
-
-text \<open>\<open>onormal_subset\<close> lives in
-  @{theory Symmetric_Matrix_Spectra.Orthonormal_Families}.\<close>
+text \<open>A continuous function of the value at a fixed time, its square, and its
+  increment weighted by a continuous functional of the past are continuous on
+  the path space; hence measurable for every law on it, and integrable under
+  a second-moment bound.\<close>
 
 lemma path_value_continuous_map:
   fixes F :: "'p::{polish_space,banach} \<Rightarrow> real"
@@ -1283,8 +1198,6 @@ lemma pair_law_coord_measurable:
   by (rule path_law_value_measurable[where F = "\<lambda>p :: (real^'n) \<times> (real^'n^'n). fst p $ i",
         OF _ setsN u]) (intro continuous_intros)
 
-text \<open>\<open>trace_mult_add\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 lemma path_law_value_square_measurable:
   fixes N :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
     and F :: "'p \<Rightarrow> real"
@@ -1357,18 +1270,8 @@ proof -
   then show ?thesis using measurable_cong_sets[OF setsN refl] by blast
 qed
 
-section \<open>From the convexified constraint to a feasible witness\<close>
-
-text \<open>The step the paper never needs to make explicit: a matrix of the
-  convexified constraint set that kills \<open>q\<close> dominates, in any linear
-  value, a matrix of the original feasible set of Eq. (1.9).  The
-  construction is a capped spectral split: write \<open>b\<close> in its eigenbasis,
-  cut the eigenvalues at \<open>1\<close>, decompose the capped part by the threshold
-  selection --- its atoms are projections, so they carry eigenvalue cap
-  \<open>1\<close> --- and hand the excess, bounded by \<open>L - 1\<close>, to the chosen atom.
-  The cap closes at \<open>1 + (L-1) = L\<close>, exactly why the split must happen at
-  level \<open>1\<close> and nowhere else.  Orthogonality to \<open>q\<close> survives because every
-  eigendirection that carries weight is orthogonal to \<open>q\<close> already.\<close>
+text \<open>A weighted increment with weight bounded by \<open>B\<close> and second moments
+  bounded by \<open>C\<close> has second moment at most \<open>4 B\<^sup>2 C\<close>.\<close>
 
 lemma path_law_increment_test_square_bound:
   fixes N :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure" and h :: "(real \<Rightarrow> 'p) \<Rightarrow> real"
@@ -1446,6 +1349,8 @@ proof -
   finally show "(\<integral>\<omega>. (?f \<omega>)\<^sup>2 \<partial>N) \<le> 4 * B\<^sup>2 * C" .
 qed
 
+
+text \<open>The compensated map \<open>(x, y) \<mapsto> x x\<^sup>T - y\<close> and its entries are Borel.\<close>
 
 lemma outerp_borel:
   "(outerp :: real^'n::finite \<Rightarrow> real^'n^'n) \<in> borel_measurable borel"
@@ -1651,6 +1556,10 @@ lemma sigma_finite_subalgebra_natural_filtration_path:
     (simp add: finite_measure_subalgebra_def finite_measure_subalgebra_axioms_def
       prob_space.finite_measure[OF PS] subalgebra_natural_filtration_path[OF setsQ])
 
+text \<open>From rational times to all times: for a process continuous in time
+  and integrable at the rational times, a set-integral identity against the
+  final value passes from the rational times to every time.\<close>
+
 theorem integrable_and_set_integral_eq_of_rational_times:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
     and Z :: "real \<Rightarrow> (real \<Rightarrow> 'p) \<Rightarrow> real"
@@ -1779,25 +1688,11 @@ next
   show ?thesis using Zi main by blast
 qed
 
-subsection \<open>From a generating \<open>\<pi>\<close>-system to the whole sub-\<open>\<sigma>\<close>-algebra\<close>
+subsection \<open>The martingale property of a weak limit\<close>
 
-text \<open>The conditioning set \<open>A'\<close> of \<open>pfut_rcd_F_increment_zero\<close>
-  also ranges over a countable family, so what arrives at almost every \<open>p'\<close>
-  is the vanishing of the set integral on a \<open>\<pi>\<close>-system only.  Upgrading that
-  to the generated \<open>\<sigma>\<close>-algebra is a Dynkin argument: \<open>sigma_sets_induct_disjoint\<close> does the induction and \<open>lebesgue_integral_countable_add\<close> discharges its disjoint-union case.  The
-  lemma is stated for a general measure and generating \<open>\<pi>\<close>-system, and also
-  serves clause (iv).\<close>
-
-text \<open>\<open>set_integral_zero_of_generator\<close> lives in
-  @{theory Continuous_Time_Martingales.Natural_Filtration}: passing the
-  vanishing of set integrals from a generating \<open>\<pi>\<close>-system to the whole
-  generated \<open>\<sigma>\<close>-algebra.\<close>
-
-text \<open>The \<open>\<pi>\<close>-system for the previous lemma: \<open>\<F>\<^sub>s\<close> is the pullback of the
-  \<open>s\<close>-path space's Borel sets along \<open>pcut\<close>, via @{thm [source]
-  natural_filtration_eq_restrict_vimage} and \<open>pcut_vimage_natural_filtration\<close>, so second countability of that space
-  (@{thm [source] second_countable_path_metric}) hands over a countable base
-  with no limit argument.\<close>
+text \<open>The test identity of \<open>martingale_test_F_limit\<close> passes from bounded
+  continuous functionals of the past to indicators of Borel sets of the
+  past.\<close>
 
 theorem martingale_event_F_limit:
   fixes Qm :: "nat \<Rightarrow> (real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -2025,6 +1920,9 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>The Borel sets of a path space are generated by a countable
+  \<open>\<inter>\<close>-stable family that contains the whole space.\<close>
+
 lemma countable_Int_stable_generator_path:
   fixes s :: real
   obtains D where
@@ -2145,8 +2043,8 @@ proof -
   show thesis by (rule that[OF cD DInt Dpow Dtop Dsets])
 qed
 
-text \<open>And its pullback: the countable \<open>\<pi>\<close>-system for \<open>\<F>\<^sub>s\<close> that the
-  conditioning sets of clause (iii)/(iv) range over.\<close>
+text \<open>Hence the martingale property itself passes to a weak limit of laws,
+  under a uniform second-moment bound along the sequence.\<close>
 
 theorem martingale_F_limit:
   fixes Qm :: "nat \<Rightarrow> (real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -2279,12 +2177,9 @@ proof -
   qed
 qed
 
-section \<open>The compensated clause of Lemma 2.3\<close>
-
-text \<open>\<open>prod_minus_sq_bound\<close>, \<open>fourth_power_sum_bound\<close> and \<open>pow4_nonneg\<close> live in @{theory Continuous_Time_Martingales.Power_Inequalities}.\<close>
-
-
-subsection \<open>The compensated functional\<close>
+text \<open>A process adapted to the natural filtration of a path law, continuous
+  in time, constant after the horizon and integrable, whose set integrals at
+  the rational times agree with those at the horizon, is a martingale.\<close>
 
 lemma martingale_of_rational_set_integral_eq:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -2373,11 +2268,9 @@ proof -
   qed
 qed
 
-subsection \<open>Clause (iii) for the conditional law\<close>
+subsection \<open>Entries of the compensated map, and quadratic functionals\<close>
 
-text \<open>The two pointwise facts about the capped coordinate that the fixed-law
-  lemma asks for.  Neither depends on the measure: the natural filtration
-  only sees \<open>space Q\<close>, and continuity in time is a property of the path.\<close>
+text \<open>The entries of the compensated map, explicitly, and their continuity.\<close>
 
 lemma comp_entry_eq:
   fixes p :: "(real^'n::finite) \<times> (real^'n^'n)"
@@ -2394,29 +2287,7 @@ proof -
   show ?thesis unfolding e by (intro continuous_intros)
 qed
 
-text \<open>The fourth moment of the coordinate itself, not of an increment: the
-  start clause pins \<open>X\<^sub>0 = x\<close>, so \<open>(a+b)\<^sup>4 \<le> 8(a\<^sup>4+b\<^sup>4)\<close> turns the increment
-  bound into an absolute one, uniform over the whole class.\<close>
-
-text \<open>Clause (iii) of (1.7) for the conditional law, assembled from:
-
-  \<^item> \<open>pfut_rcd_F_increment_zero\<close>, supplying one almost-sure
-    condition per \<open>(q, A')\<close> for each coordinate \<open>c\<close>, countably many
-    since \<open>q\<close> is rational, \<open>A'\<close> ranges over the \<open>\<pi>\<close>-system of
-    \<open>countable_pi_system_natural_filtration_path\<close>, and \<open>c\<close>
-    ranges over the finite index type;
-  \<^item> \<open>AE_ball_countable'\<close>, turning "for each, almost surely"
-    into "almost surely, for all";
-  \<^item> at a fixed good \<open>p'\<close>, @{thm [source] set_integral_zero_of_generator}
-    widening the \<open>\<pi>\<close>-system to \<open>\<F>\<^sub>q\<close> and
-    @{thm [source] martingale_of_rational_set_integral_eq} widening the
-    rational times to all times;
-  \<^item> @{thm [source] martingale_vecI}, putting the finitely many components
-    back together.\<close>
-
-text \<open>Clause (iv) of (1.7) for the conditional law, by the same assembly as
-  clause (iii): the index set of components is now a pair, and
-  @{thm [source] martingale_matI} does the reassembly.\<close>
+text \<open>A quadratic functional of the state is continuous along a path.\<close>
 
 lemma quad_eval_cont:
   fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
@@ -2454,19 +2325,8 @@ proof (rule le_from_below[OF quad_eval_cont[OF wm] _ tc order_refl])
     using s tc by (intro good) (auto intro: inb)
 qed
 
-subsection \<open>Case 1 for the lower envelope\<close>
-
-text \<open>The touching-point argument at the envelope, for
-  \<open>covariation_val_supersol_contradiction_case1_lsc\<close>.  The horizon lemma is
-  applied to the envelope, so it is stated for an arbitrary touching
-  function with an explicit cap.  The value at the touching point need
-  not be attained there, so the construction is run at an approximating
-  point \<open>y\<close> supplied by \<open>lsc_env_approx\<close>, with the quadratic still
-  centred at \<open>x\<close>.  @{thm [source] quad_shift} and @{thm [source] quad_grad_shift}
-  make the verified machinery serve that configuration unchanged: the
-  gradient field and the kill hypothesis are the same, and the only
-  trace of the displacement is the additive constant \<open>\<psi>(y)\<close>, which the
-  choice of \<open>y\<close> drives below any prescribed margin.\<close>
+text \<open>The same lower bound, from the rational times of a stay \<open>[0, t]\<close> in
+  the region to its endpoint \<open>t\<close>.\<close>
 
 lemma quad_good_rat_to_real_region:
   fixes \<omega> :: "'n::finite pairpath" and q x :: "real^'n"
@@ -2489,7 +2349,7 @@ proof (rule le_from_below[OF quad_eval_cont[OF wm] _ tc _ rats_below_closure[OF 
     using s tc by (intro rat) (auto intro: inb)
 qed
 
-section \<open>Laws with a constrained covariation\<close>
+subsection \<open>Laws with a constrained covariation\<close>
 
 text \<open>
   The object a stochastic-control argument in the martingale-problem
@@ -2499,10 +2359,15 @@ text \<open>
   for the pair's own filtration, and \<open>X X\<^sup>T - Y\<close> is one too -- so that \<open>Y\<close>
   is the covariation of \<open>X\<close> and \<open>S\<close> constrains its density.
 
-  Only the third clause mentions \<open>S\<close>, and the results below say which
-  properties of \<open>S\<close> each consequence needs: a norm bound gives Lipschitz
-  paths for \<open>Y\<close>, and a bound on the diagonal entries gives the monotone
-  increments a compensator argument reads.  \<open>S\<close> itself is arbitrary.
+  Only the difference-quotient clause mentions \<open>S\<close>, and the results below
+  say which properties of \<open>S\<close> each consequence needs: a norm bound gives
+  Lipschitz paths for \<open>Y\<close> and the integrability of the entries.  \<open>S\<close> itself
+  is arbitrary.
+
+  The martingale clauses stop the process at \<open>T\<close>: points of the path space
+  are extensional on \<open>{0..T}\<close>, so after \<open>T\<close> every path takes the same
+  value, and an unstopped clause would force the state to be almost surely
+  constant.
 \<close>
 
 definition covariation_class ::
@@ -2651,8 +2516,9 @@ proof -
   qed
 qed
 
-text \<open>A two-sided bound on the diagonal entries of \<open>S\<close> makes each diagonal
-  entry of the covariation nondecreasing, at rate at most \<open>B\<close>.\<close>
+text \<open>The entries of the covariation at a fixed time are measurable, bounded by
+  \<open>B T\<close> almost surely under a norm bound \<open>B\<close> on \<open>S\<close>, and hence integrable;
+  so are the entries of the compensated process.\<close>
 
 lemma covariation_class_Y_entry_measurable:
   fixes Q :: "(('n::finite) pairpath) measure"
@@ -2754,13 +2620,9 @@ subsection \<open>The uniform \<open>L\<^sup>2\<close> bound on the class\<close
 
 text \<open>The uniform bound the weak-limit machinery needs, from a martingale's
   constant mean: \<open>E[outerp X\<^sub>t - Y\<^sub>t] = outerp x\<close>, whose diagonal entry
-  is \<open>(x $ i)\<^sup>2 - E[Y\<^sub>t $ i $ i]\<close>. Since \<open>Y\<close> is bounded by \<open>n\<sqdot>L\<sqdot>T\<close>,
+  is \<open>(x $ i)\<^sup>2 - E[Y\<^sub>t $ i $ i]\<close>. Since \<open>Y\<close> is bounded by \<open>B\<sqdot>T\<close>,
   the second moments are bounded uniformly over the class --- the hypothesis
   of \<open>unif_integrable_of_L2_bound\<close>.\<close>
-
-text \<open>\<open>set_integral_of_bounded_linear\<close>, \<open>martingale_bounded_linear_image\<close>,
-  \<open>martingale_vec_nth\<close> and \<open>martingale_mat_nth\<close> live in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 theorem covariation_class_compensated_mean:
   fixes Q :: "(('n::finite) pairpath) measure"
@@ -2847,10 +2709,7 @@ proof -
   from split partA partB show ?thesis by simp
 qed
 
-section \<open>Pair tightness from the two component moduli\<close>
-
-text \<open>\<open>lipschitz_imp_holder_bound\<close> lives in @{theory Continuous_Path_Spaces.Holder_Interpolation}.\<close>
-
+subsection \<open>The value of the minimum-exit-time problem\<close>
 
 text \<open>The value of the minimum-exit-time problem over such a class: the
   largest almost-sure lower bound on the exit time of \<open>K\<close>, optimised over

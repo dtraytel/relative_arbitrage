@@ -15,23 +15,18 @@ text \<open>The surgery: \<open>pcut\<close> truncates at a time, \<open>pglue\<
   definition on functions; what takes room is that each is continuous where
   it should be and measurable for the Borel algebra of the path metric.\<close>
 
+text \<open>The future after \<open>r\<close>, re-based to start at \<open>0\<close>.\<close>
+
 definition pfut :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pfut r T \<omega> = restrict (\<lambda>s. \<omega> (r + s) - \<omega> r) {0..T - r}"
 
-text \<open>The conditioning-free half of the closure the weak DPP needs: a
-  member on \<open>[0,T]\<close> restricted to \<open>[0,S]\<close> is a member on \<open>[0,S]\<close>.  Both
-  martingale clauses follow from \<open>martingale_process_law\<close> with the restriction
-  as path map, adapted for free since \<open>pcut S \<omega> r = \<omega> r\<close> on \<open>{0..S}\<close>, and
-  \<open>martingale_stopped_const\<close> turns the \<open>T\<close>-clause into the \<open>S\<close>-clause.\<close>
+text \<open>The past up to \<open>S\<close>.\<close>
 
 definition pcut :: "real \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pcut S \<omega> = restrict \<omega> {0..S}"
 
-text \<open>Every member started at \<open>x\<close> is the \<open>x\<close>-translate of a member started
-  at \<open>0\<close>.  This turns the value function into a supremum over a fixed
-  family, the shape Berge's theorem needs.  The translation must
-  \<open>restrict\<close>, because points of the capped path space are extensional on
-  \<open>{0..T}\<close>.\<close>
+text \<open>The shift of the first component by \<open>x\<close>.  It must \<open>restrict\<close>,
+  because points of the capped path space are extensional on \<open>{0..T}\<close>.\<close>
 
 definition pshift :: "real \<Rightarrow> 'a::{polish_space,banach} \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b::{polish_space,banach}) \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b)"
   where "pshift T x \<omega> = restrict (\<lambda>t. (x + fst (\<omega> t), snd (\<omega> t))) {0..T}"
@@ -39,15 +34,12 @@ definition pshift :: "real \<Rightarrow> 'a::{polish_space,banach} \<Rightarrow>
 lemma pfut_apply: "s \<in> {0..T - r} \<Longrightarrow> pfut r T \<omega> s = \<omega> (r + s) - \<omega> r"
   by (simp add: pfut_def)
 
-text \<open>Reassembly of the split is addition, so the kernel is pushed
-  through the glue map \<^term>\<open>padd T p' w\<close>, not \<open>pglue\<close>.  It is defined
-  on the same pair of \<open>T\<close>-path spaces the r.c.d. lives on, and needs no
-  \<open>\<theta>\<close> --- the reason the additive split was chosen over freeze-and-rebase.
-
-  The facts below form the foundation layer: the glue lands in the path
-  space and is measurable as a map out of the product; given that the
-  continuation stands still until \<open>\<theta>\<close>, stopping the glued path returns
-  the stopped factor (\<open>pstopped_padd\<close>).\<close>
+text \<open>The additive glue: a past plus a continuation, both on the same
+  \<open>T\<close>-path space.  When the continuation stands still until a stopping time
+  \<open>\<theta>\<close>, stopping the glued path at \<open>\<theta>\<close> returns the past stopped there
+  (\<open>pstopped_padd\<close>), so a law split at \<open>\<theta>\<close> into its stopped past and the
+  conditional law of the rest is reassembled by addition, with no re-basing
+  at the random time.\<close>
 
 definition padd :: "real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "padd T p' w = restrict (\<lambda>t. p' t + w t) {0..T}"
@@ -100,11 +92,9 @@ proof -
   then show ?thesis unfolding padd_def by (rule mspace_path_metricI)
 qed
 
-text \<open>The glue with the past fixed: the form the four-cell argument needs,
-  since there the continuation is only frozen almost surely, so the
-  integrand identities transport via
-  \<open>Bochner_Integration.integral_cong_AE\<close> rather than
-  pointwise, which needs both sides measurable in \<open>w\<close> alone.\<close>
+text \<open>The future of a path of the path space is a path of the path space of
+  the remaining horizon, and the future map is \<open>2\<close>-Lipschitz: the base point
+  is subtracted, and so counts twice.\<close>
 
 lemma pfut_in_mspace:
   fixes \<omega> :: "(real \<Rightarrow> 'p::{polish_space,banach})"
@@ -152,11 +142,6 @@ next
     by (auto simp: pcut_def)
   then show ?thesis by simp
 qed
-
-text \<open>The rational reduction of the covariation clause, factored out since
-  it recurs in every construction of a class member: countably many pairs
-  by \<open>AE_ball_countable'\<close>, then \<open>diffquot_all_of_rational\<close> against path
-  continuity.\<close>
 
 lemma Lipschitz_pfut:
   assumes r: "0 \<le> r" and rT: "r \<le> T"
@@ -288,10 +273,8 @@ proof -
   show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
-text \<open>The split inverts the glue, provided the continuation stands still up
-  to \<open>\<theta>\<close> --- which is exactly clause (ii) of the kernel's membership in the
-  class.  The stopping time reads only the stopped factor, because on
-  \<open>[0, \<theta> p']\<close> the glue agrees with it.\<close>
+text \<open>Hence the future map is Borel measurable, and so is the future of a
+  law.\<close>
 
 lemma pfut_measurable:
   assumes r: "0 \<le> r" and rT: "r \<le> T"
@@ -308,16 +291,7 @@ lemma pfut_measurable_law:
   shows "pfut r T \<in> Q \<rightarrow>\<^sub>M (path_borel (T - r) :: (real \<Rightarrow> 'p) measure)"
   using pfut_measurable[OF r rT] measurable_cong_sets[OF setsQ refl] by blast
 
-text \<open>The exit time of the future, expressed through \<open>pfut\<close>: re-basing at the
-  endpoint and adding the endpoint back is the identity on the exit time.\<close>
-
-text \<open>Conditioning on an event of the past keeps martingales martingales:
-  \<open>uniform_measure_density_real\<close>, \<open>integral_uniform_measure_eq\<close>,
-  \<open>integrable_uniform_measureI\<close>, \<open>set_integral_uniform_measure_eq\<close> and
-  \<open>martingale_uniform_measure\<close> live in
-  @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
-
-text \<open>\<open>pair_fst_borel\<close> lives in @{theory Path_Space_Operations.Pair_Path_Laws}.\<close>
+text \<open>The shift is Borel measurable.\<close>
 
 lemma pshift_measurable:
   fixes x :: "'a::{polish_space,banach}"
@@ -410,8 +384,6 @@ proof -
   qed
 qed
 
-subsection \<open>The shifted law\<close>
-
 lemma padd_fst_continuous:
   fixes p' w :: "real \<Rightarrow> 'a::topological_ab_group_add \<times> 'b::ab_group_add"
   assumes cp: "continuous_on {0..T} (\<lambda>t. fst (p' t))"
@@ -450,6 +422,11 @@ lemma pexit_pcut:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
   shows "pexit U K (\<lambda>t. fst (pcut U \<omega> t)) = pexit U K (\<lambda>t. fst (\<omega> t))"
   by (rule pexit_cong_on) (simp add: pcut_apply)
+
+subsection \<open>Glueing two paths\<close>
+
+text \<open>\<open>pglue r T \<omega> \<omega>'\<close> runs \<open>\<omega>\<close> up to \<open>r\<close> and continues with the increments
+  of \<open>\<omega>'\<close>.\<close>
 
 definition pglue :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b)
     \<Rightarrow> (real \<Rightarrow> 'b)"
@@ -497,8 +474,8 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The almost-sure transfer through a glue, with the underlying measure
-  \<open>Q\<close> left free, so that unfolding \<open>process_law_def\<close> cannot
+text \<open>The additive glue is measurable out of the product, with the measure
+  \<open>Q\<close> of the first factor left free, so that unfolding \<open>process_law_def\<close> cannot
   also unfold a \<open>process_law\<close> hiding inside \<open>Q\<close> itself.\<close>
 
 lemma padd_measurable_ksemi:
@@ -567,12 +544,6 @@ proof -
   show ?thesis
     using pathify_measurable[OF T0 Xm cont] unfolding pglue_def by simp
 qed
-
-text \<open>The eigenvalue constraint (1.7) survives concatenation: across the
-  glue point the difference quotient is a convex combination of one
-  quotient from each piece, which is why the constraint set had to be
-  convexified (Lemma 2.1, \<open>sconstraint_convex\<close>) --- the unconvexified set
-  of (1.4) would not do.\<close>
 
 subsection \<open>Gluing a continuation onto the half-line\<close>
 
@@ -706,9 +677,7 @@ proof (rule ext)
   qed
 qed
 
-text \<open>Assembled: clauses (i)--(iii) are discharged from the lemmas above;
-  the two martingale clauses are the remaining input, resting on the two
-  collapses above.\<close>
+text \<open>Shifting commutes with cutting.\<close>
 
 lemma pshift_pcut_comm:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
@@ -735,19 +704,15 @@ proof (rule ext)
   qed
 qed
 
+subsection \<open>The first component as a path\<close>
+
+text \<open>\<open>pfst T \<omega>\<close> is the path of the first component, a \<open>1\<close>-Lipschitz map
+  between the two path spaces.  Through it, facts about exit times of paths
+  of the first component alone, such as \<open>ess_inf_pexit_usc\<close>, apply to pair
+  paths, and weak convergence pushes forward.\<close>
+
 definition pfst :: "real \<Rightarrow> (real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach}) \<Rightarrow> (real \<Rightarrow> 'a)"
   where "pfst S \<omega> = restrict (\<lambda>t. fst (\<omega> t)) {0..S}"
-
-text \<open>The pointwise half of Larsson--Ruf's Proposition 2.2(ii): the class
-  is sequentially compact and the essential infimum of the exit time is
-  upper semicontinuous along weak convergence, so the supremum defining
-  \<open>exit_val\<close> is a maximum --- needed independently of the DPP, since the
-  paper's Section 3.1 opens by fixing an optimizer.
-
-  The usc input (\<open>"Continuous_Path_Spaces.Path_Exit_Times".ess_inf_pexit_usc\<close>) lives on the
-  vector path space, so the functional is transported along the
-  \<open>X\<close>-component map \<open>pfst\<close>, \<open>1\<close>-Lipschitz between the two path metrics, and
-  weak convergence pushes forward.\<close>
 
 lemma pfst_mspace:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})"
@@ -830,7 +795,7 @@ proof -
   then show ?thesis unfolding pexit_def etime_def by simp
 qed
 
-subsection \<open>A value functional as a shifted supremum at \<open>0\<close>\<close>
+subsection \<open>Cutting twice, and the glue as a Lipschitz map\<close>
 
 lemma pcut_pcut:
   fixes \<omega> :: "real \<Rightarrow> 'b"
@@ -943,19 +908,7 @@ proof (rule Lipschitz_path_mapI[where B = 3])
   finally show "dist (pglue r T (fst p) (snd p) t) (pglue r T (fst q) (snd q) t) \<le> 3 * ?pd" .
 qed
 
-subsection \<open>Weak convergence of the semidirect products\<close>
-
-text \<open>\<open>integral_ksemi_bounded\<close> (all the weak-convergence route needs, since
-  test functions for weak convergence are bounded and real by definition)
-  and \<open>integral_ksemi_measurable\<close> live in
-  @{theory Continuous_Time_Martingales.Semidirect_Kernels}.\<close>
-
-text \<open>Pointwise weak convergence of the kernels gives weak convergence of
-  the semidirect products.  The proof is dominated convergence over the
-  first coordinate: a bounded continuous test function on the product is,
-  at each fixed first coordinate, a bounded continuous test function on
-  the second, so the inner integrals converge pointwise, and they are all
-  bounded by the same constant.\<close>
+text \<open>The exit time of a glued path is at least that of its first piece.\<close>
 
 lemma pexit_pglue_ge:
   fixes K :: "('a::{polish_space,banach}) set" and \<omega> \<omega>' :: "(real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})"
@@ -972,13 +925,8 @@ proof -
   finally show ?thesis .
 qed
 
-subsection \<open>The selector as a kernel into a family of laws\<close>
-
-text \<open>\<open>exit_val_measurable_selector_kernel'\<close> below makes the selector
-  a Giry-monad kernel, hypothesis \<^emph>\<open>Kp\<close> of \<open>covariation_class_kglue_law'\<close>.  Measurability into the
-  class with its Levy-Prokhorov metric then comes for free inside that proof:
-  the kernel lands in the subspace, and \<open>covariation_class_compact_metric_space\<close> identifies the class's metric
-  topology with the subspace topology of weak convergence.\<close>
+text \<open>The exit time of the first component is Borel measurable on the path
+  space.\<close>
 
 lemma pexit_path_measurable:
   fixes K :: "('a::{polish_space,banach}) set" and N :: "((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure"
@@ -1016,50 +964,25 @@ proof -
   then show ?thesis using sets.Int[OF s1 s2] by simp
 qed
 
-text \<open>The conditioning statement itself (\<open>covariation_val_cond\<close> and
-  \<open>covariation_val_cond_time\<close>), the key step of the \<open>\<le>\<close> half of the DPP
-  in \<open>Proposition_2_4\<close>.  The chain is:
+subsection \<open>Delaying and re-basing a path\<close>
 
-  \<^item> the hypothesis becomes a measurable property of the pair
-    \<open>(pcut r \<omega>, pfut r T \<omega>)\<close>, by \<open>pglue_pcut_pfut\<close>;
-  \<^item> @{thm [source] AE_ksemi} disintegrates it along the r.c.d.;
-  \<^item> \<open>covariation_class_rcd_member\<close> says the r.c.d. lands in the
-    class at the origin, so at a fixed good \<open>p'\<close> the surviving future is a
-    class member started at \<open>0\<close> and shifted by the constant \<open>fst (p' r)\<close>;
-  \<^item> \<open>covariation_val_ge_of_AE_pshift\<close> turns the almost-sure lower bound
-    on its exit time into a lower bound for \<open>exit_val\<close> at that point.
-
-  No localization and no \<open>K\<^sub>\<epsilon>\<close> are needed: the starting point is a single
-  vector.\<close>
-
-text \<open>\<open>sets_PiM_mono\<close>, \<open>filtered_measure_PiM\<close>, \<open>martingale_distr\<close> and
-  \<open>martingale_PiM_component\<close> live in
-  @{theory Continuous_Time_Martingales.Martingale_Transfer}.\<close>
-
-section \<open>Kernel pasting: a continuation chosen by the endpoint\<close>
-
-text \<open>The step from \<open>pglue_law\<close> (one continuation for every endpoint) to
-  what (2.9) needs: a countable family \<open>RR\<close> of candidate continuations and
-  a past-measurable index \<open>N\<close> selecting one.  The second factor is the
-  product \<open>\<Pi>\<^sub>M i. RR i\<close>, from which the glue picks the \<open>N \<omega>\<close>-th;
-  freezing the first coordinate makes the index constant, so
-  \<open>martingale_pair_snd_param\<close> and \<open>martingale_PiM_component\<close> carry the
-  construction.\<close>
+text \<open>\<open>pembed s T w\<close> is \<open>w\<close> delayed by \<open>s\<close>: it stands at \<open>w 0\<close> until \<open>s\<close>
+  and then runs \<open>w\<close>, on the \<open>T\<close>-path space.  \<open>pdel\<close> is the same with \<open>s\<close>
+  clamped to \<open>[0, T]\<close>, and \<open>prebase s T\<close> reads a path from time \<open>s\<close> on.\<close>
 
 definition pembed :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pembed s T w = restrict (\<lambda>t. w (max (t - s) 0)) {0..T}"
 
 text \<open>Stroock--Varadhan splice the continuation into the same
   \<open>C([0,\<infinity>))\<close>, so no horizon ever varies; here the path space is capped at
-  \<open>T\<close>, so \<^term>\<open>exit_class k L (T - s) 0\<close> lives on a different space
+  \<open>T\<close>, so a class of laws at horizon \<open>T - s\<close> lives on a different space
   for each \<open>s\<close>, and a continuation kernel indexed by the past would have to
   be measurable into a moving target.
 
   The additive glue shows the way out: a continuation enters only as a
   delayed law on the fixed \<open>T\<close>-path space, so the object to select is the
   \<^const>\<open>pembed\<close>-image of a rebased law --- \<open>s\<close> is then a mere parameter,
-  as the time argument of the paper's value function is, and the candidate
-  space no longer moves.
+  and the candidate space no longer moves.
 
   This rests on two facts: that \<^const>\<open>pembed\<close> is a map of path spaces,
   and that \<open>prebase\<close> inverts it on the left, so nothing is lost by
@@ -1128,6 +1051,13 @@ qed
 lemma prebase_apply: "u \<in> {0..T - s} \<Longrightarrow> prebase s T w u = w (s + u)"
   by (simp add: prebase_def)
 
+text \<open>The bridge between the two clocks: a bound on the exit time of the
+  rebased continuation at horizon \<open>T - r\<close> is a bound on the exit time of
+  the delayed path at horizon \<open>T\<close>.  Since the delayed
+  path stands at \<open>y \<in> K\<close> throughout \<open>[0,r]\<close> it cannot exit there, so its
+  exit time is exactly \<open>r\<close> later --- and that \<open>r\<close> is the term
+  \<open>pexit_padd_dpp\<close> asks for.\<close>
+
 lemma pexit_delayed_rebase:
   fixes w :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and y :: "'a"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
@@ -1150,13 +1080,6 @@ proof -
     by (rule pexit_cong_on) (simp add: prebase_apply)
   finally show ?thesis by simp
 qed
-
-section \<open>The exit bound for the glued law\<close>
-
-text \<open>The two pathwise lemmas compose into the law-level statement the
-  \<open>\<ge>\<close> half needs: if the past already satisfies the DPP integrand bound
-  and the continuation attains the value function after \<open>\<theta>\<close>, then the
-  glue's exit time is at least \<open>c\<close> almost surely.\<close>
 
 lemma pembed_outside: "t \<notin> {0..T} \<Longrightarrow> pembed s T w t = undefined"
   unfolding pembed_def restrict_def by (rule if_not_P)
@@ -1182,9 +1105,8 @@ proof -
   show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
-text \<open>\<^const>\<open>prebase\<close> inverts \<^const>\<open>pembed\<close>: the delayed law carries exactly
-  the same information as the rebased one, so selecting the delayed law is
-  no weaker than selecting the rebased one.\<close>
+text \<open>The delayed path reads \<open>w\<close> only on \<open>[0, T - s]\<close>, so cutting \<open>w\<close> there
+  first changes nothing.\<close>
 
 lemma pembed_pcut:
   fixes \<omega> :: "real \<Rightarrow> 'b"
@@ -1276,7 +1198,8 @@ proof -
   show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
-subsection \<open>Cutting a law commutes with shifting, and caps its value\<close>
+text \<open>The delayed path at time \<open>r\<close> reads \<open>w\<close> only up to time \<open>r - s\<close>, so it is
+  measurable for the natural filtration there.\<close>
 
 lemma pembed_eval_le:
   fixes w :: "(real \<Rightarrow> 'p::{polish_space,banach})"
@@ -1304,16 +1227,9 @@ qed
 lemma prebase_outside: "u \<notin> {0..T - s} \<Longrightarrow> prebase s T w u = undefined"
   unfolding prebase_def restrict_def by (rule if_not_P)
 
-text \<open>The two bridges: \<open>pafter\<close> is the delayed future, and the future is
-  recovered from it by re-basing, so nothing is lost either way.\<close>
-
-subsection \<open>Where the stopping-time property enters\<close>
-
-text \<open>Everything so far used only Borel measurability of \<open>\<theta>\<close>.  From here on
-  \<open>\<theta>\<close> must be a genuine stopping time, which on path space says exactly one
-  thing: \<open>\<theta>\<close> is decided by the path up to \<open>\<theta>\<close>.  Two paths agreeing on
-  \<open>[0, \<theta> \<omega>]\<close> get the same value, which is what makes \<open>\<theta>\<close> a function of the
-  stopped path, and hence makes the kernel a function of the past.\<close>
+text \<open>\<^const>\<open>prebase\<close> inverts \<^const>\<open>pembed\<close>: the delayed law carries exactly
+  the same information as the rebased one, so selecting the delayed law is
+  no weaker than selecting the rebased one.\<close>
 
 lemma prebase_pembed:
   fixes w :: "(real \<Rightarrow> 'p::{polish_space,banach})"
@@ -1347,13 +1263,8 @@ proof (rule ext)
   qed
 qed
 
-subsection \<open>The delayed class at a fixed freezing time\<close>
-
-text \<open>\<^const>\<open>pembed\<close> is 1-Lipschitz --- it only reindexes time --- hence a
-  continuous map of path spaces, so by
-  @{thm [source] weak_conv_on_pushforward} it carries weak convergence, and
-  the delayed class at a fixed \<open>s\<close> is a continuous image of the compact
-  class at horizon \<open>T - s\<close>.\<close>
+text \<open>Re-basing maps the \<open>T\<close>-path space into the path space of horizon
+  \<open>T - s\<close>, measurably.\<close>
 
 lemma prebase_mspace:
   fixes w :: "(real \<Rightarrow> 'p::{polish_space,banach})"
@@ -1395,26 +1306,7 @@ proof -
   qed
   show ?thesis by (rule path_measurable_of_eval[OF Ts into ev])
 qed
-text \<open>Hence clause (i) for the kernel: re-based, the conditional law is a
-  probability measure on the \<open>(T - \<theta>)\<close>-path space.\<close>
-
-text \<open>Clause (ii) for the kernel.  The pathwise content is already there:
-  at \<open>t = \<theta> \<omega>\<close>, when the clock starts, the future factor is still \<open>0\<close>,
-  so all that is needed is to push it through the r.c.d., the same chain
-  as the mixed glue's transfer: \<open>AE_distr_iff\<close> into the joint law, the
-  r.c.d. equation, and @{thm [source] AE_ksemi} back out.  The
-  stopping-time property is spent where the kernel is indexed by the
-  stopped path: the clock has to be read off that, and
-  \<open>path_stopping_time_stopped\<close> says it is the same number.\<close>
-
-text \<open>Clause (iii) at one pair of times.  This is the analogue of the \<open>one\<close>
-  step inside \<open>pfut_rcd_diffquot\<close>, and the pathwise content is
-  free: after \<open>\<theta>\<close> the future factor's increments are \<open>\<omega>\<close>'s increments,
-  because the \<open>- \<omega> (\<theta> \<omega>)\<close> cancels in the difference.  The guard
-  \<open>\<theta> p' \<le> p\<close> lives inside the predicate, which makes the conditioning set a
-  pair-set, so the transfer is the @{thm [source] AE_ksemi} chain of clause
-  (ii) rather than \<open>AE_kernel_full\<close>, and the rational grid
-  stays in the original time scale.\<close>
+text \<open>The components of an additive glue are the sums of the components.\<close>
 
 lemma padd_eval_split:
   fixes p' w :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
@@ -1424,8 +1316,8 @@ lemma padd_eval_split:
   by (simp_all add: padd_apply[OF t])
 
 text \<open>The pathwise dynamic programming bound, at the value \<open>r\<close> a stopping
-  time takes on the path.  The two summands are the paper's \<open>r \<and> \<tau>\<^sub>K\<close>
-  and \<open>v(X\<^sub>r) \<sqdot> 1\<^sub>{r \<le> \<tau>\<^sub>K}\<close>.  Because
+  time takes on the path.  The two summands are those of the dynamic
+  programming principle, \<open>r \<and> \<tau>\<^sub>K\<close> and \<open>v(X\<^sub>r) \<sqdot> 1\<^sub>{r \<le> \<tau>\<^sub>K}\<close>.  Because
   \<^const>\<open>padd\<close> keeps both factors on the original clock, the
   continuation's contribution is stated as a bound on \<open>pexit T K\<close> of the
   delayed path \<open>s \<mapsto> fst (p' r) + fst (w s)\<close> --- already including the
@@ -1487,12 +1379,8 @@ proof -
   qed
 qed
 
-text \<open>The bridge between the two clocks: the selector's optimality is a
-  statement at horizon \<open>T - r\<close> about the rebased continuation, while the
-  glue wants it at horizon \<open>T\<close> about the delayed one.  Since the delayed
-  path stands at \<open>y \<in> K\<close> throughout \<open>[0,r]\<close> it cannot exit there, so its
-  exit time is exactly \<open>r\<close> later --- and that \<open>r\<close> is the term
-  @{thm [source] pexit_padd_dpp} asks for.\<close>
+text \<open>The compensated process of an additive glue is bounded by those of the
+  two factors plus the two cross terms.\<close>
 
 lemma padd_comp_norm_le:
   fixes p' w :: "'n::finite pairpath"
@@ -1535,6 +1423,9 @@ proof -
       b_def[symmetric] B_def[symmetric]
     using t1 t2 t3 by linarith
 qed
+
+text \<open>Glueing the past and the future of a path at \<open>r\<close> gives back the path,
+  and the exit time of a glued path is measurable in the pair.\<close>
 
 lemma pglue_pcut_pfut:
   fixes \<omega> :: "(real \<Rightarrow> 'p::{polish_space,banach})"

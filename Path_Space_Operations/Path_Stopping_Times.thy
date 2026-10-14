@@ -29,25 +29,9 @@ lemma pstopped_apply: "t \<in> {0..T} \<Longrightarrow> pstopped T \<theta> \<om
 lemma pstopped_outside: "t \<notin> {0..T} \<Longrightarrow> pstopped T \<theta> \<omega> t = undefined"
   unfolding pstopped_def restrict_def by (rule if_not_P)
 
-text \<open>The reassembly law.  This is the analogue of
-  @{thm [source] pglue_pcut_pfut} at a random time, and unlike that one it
-  costs nothing: no membership hypothesis on \<open>\<omega>\<close>, and no \<open>\<theta>\<close> on the
-  right-hand side.\<close>
-
-text \<open>The future factor starts at \<open>0\<close> --- exactly the normalisation the class
-  asks of a continuation --- and the two halves live on disjoint stretches of
-  time.\<close>
-
-text \<open>Evaluating a path at a random time.  This is the one new measurability
-  fact the additive split needs, and it is where the paths' continuity is
-  spent: approximate the time from above by dyadic rationals, each fixed
-  dyadic giving a measurable evaluation among only countably many, and pass
-  to the limit inside each path.  Only pointwise continuity of each path is
-  used, so no uniform-continuity machinery is needed.  Compare
-  @{thm [source] stopped_adapted_of_cont}, which runs the same dyadic
-  argument for a real-valued adapted process and delivers the sharper
-  \<open>\<F>\<^sub>v\<close>-measurability, needing the paths capped as \<open>\<omega> (min s T)\<close> because it
-  asks for continuity on all of \<open>{0..}\<close>.\<close>
+text \<open>A path stopped at a time in \<open>[0, T]\<close> is again a path of the path
+  space; stopped at a fixed time \<open>t\<close>, it is measurable for the natural
+  filtration at \<open>t\<close>.\<close>
 
 lemma pstopped_mspace:
   fixes \<omega> :: "(real \<Rightarrow> 'p::{polish_space,banach})"
@@ -131,15 +115,11 @@ proof -
   show ?thesis by (rule path_measurable_of_eval[OF T0 into ev])
 qed
 
-subsection \<open>The regular conditional distribution, with both maps and horizons free\<close>
+subsection \<open>Path stopping times\<close>
 
-text \<open>The regular conditional distribution of the past given the future uses
-  the two maps only through their measurability, so it is proved
-  (\<open>path_rcd\<close>, \<open>path_rcd_ksemi\<close> in \<open>Path_Law_Pasting\<close>) with the two maps
-  and the two horizons free; the deterministic split
-  (\<open>pcut_pfut_rcd_ksemi\<close>) is the instance \<open>u := r\<close>, \<open>v := T - r\<close>, and
-  the stopping-time case is \<open>u := v := T\<close>, \<open>\<phi>\<^sub>1 := pstopped T \<theta>\<close>,
-  \<open>\<phi>\<^sub>2 := pafter T \<theta>\<close>.\<close>
+text \<open>A path stopping time takes values in \<open>[0, T]\<close>, and two paths with
+  continuous first components that agree up to its value at one of them
+  share its value.\<close>
 
 definition path_stopping_time ::
   "real \<Rightarrow> ((real \<Rightarrow> 'a::topological_space \<times> 'b) \<Rightarrow> real) \<Rightarrow> bool"
@@ -161,13 +141,6 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>On \<open>{\<theta> > i}\<close> an \<open>\<F>\<^sub>i\<close>-set of the glue is a set of the past alone ---
-  @{thm [source] pcut_padd_before} --- so its indicator does not depend on
-  \<open>w\<close> at all.  On \<open>{\<theta> \<le> i}\<close>, for a fixed past, the \<open>w\<close>-section of an
-  \<open>\<F>\<^sub>i\<close>-set of the glue is an \<open>\<F>\<^sub>i\<close>-set of the continuation, because
-  @{thm [source] pcut_padd_section} presents it as a function of
-  \<^term>\<open>pcut i w\<close>.\<close>
-
 lemma path_stopping_time_nonneg:
   "path_stopping_time T \<theta> \<Longrightarrow> 0 \<le> \<theta> \<omega>"
   unfolding path_stopping_time_def by blast
@@ -176,8 +149,10 @@ lemma path_stopping_time_le:
   "path_stopping_time T \<theta> \<Longrightarrow> \<theta> \<omega> \<le> T"
   unfolding path_stopping_time_def by blast
 
-text \<open>Continuity is available wherever it is needed: the space of a path law
-  is the set of continuous paths.\<close>
+text \<open>The paths that are their own stopped paths form a Borel set: two paths
+  that agree at every rational of \<open>[0, T]\<close> and are both continuous there
+  agree everywhere, so the set is a countable intersection of evaluation
+  conditions.\<close>
 
 lemma pstopped_fixed_set_measurable:
   fixes T :: real
@@ -264,11 +239,7 @@ proof -
   then show ?thesis unfolding eq .
 qed
 
-text \<open>The four cheap \<open>Q\<close>-clauses for the stopped past law.  \<open>Qst\<close> is
-  \<open>pstopped_idem\<close> transported through
-  \<open>AE_distr_iff\<close>; \<open>Q0\<close> is the start clause of \<open>P\<close>, which the
-  stopping does not touch because \<open>\<theta> \<ge> 0\<close>; \<open>Qcont\<close> is membership in the
-  path space, the one clause that is pointwise on the space.\<close>
+text \<open>The congruence clause, as a rule.\<close>
 
 lemma path_stopping_time_cong:
   "path_stopping_time T \<theta> \<Longrightarrow> continuous_on {0..T} (\<lambda>t. fst (\<omega> t))
@@ -277,9 +248,8 @@ lemma path_stopping_time_cong:
     \<Longrightarrow> \<theta> \<omega>' = \<theta> \<omega>"
   unfolding path_stopping_time_def by blast
 
-text \<open>Hence \<open>\<theta>\<close> reads only the stopped path --- the fact every later step
-  needs, and the reason the kernel can be indexed by \<open>pstopped T \<theta> \<omega>\<close>
-  alone.\<close>
+text \<open>Adding a continuation that vanishes up to \<open>\<theta>\<close> to a stopped path changes
+  neither \<open>\<theta>\<close> nor the stopped path.\<close>
 
 lemma padd_stopping_time:
   fixes p' w :: "(real \<Rightarrow> 'a::topological_ab_group_add \<times> 'b::ab_group_add)"
@@ -335,12 +305,7 @@ proof (rule ext)
   qed
 qed
 
-subsection \<open>The glued law, and the clauses that come for free\<close>
-
-text \<open>The law of the reassembled path: run the past under \<open>Q\<close>, draw a
-  continuation from \<open>\<kappa>\<close>, and add.  This is the stopping-time analogue of
-  \<open>kglue_law'\<close>, and the only structural difference is that
-  \<^const>\<open>padd\<close> replaces \<^const>\<open>pglue\<close>.\<close>
+subsection \<open>New stopping times from old\<close>
 
 text \<open>Postponing a stopping time by a map \<open>f\<close> of \<open>[0,T]\<close> into itself with
   \<open>x \<le> f x\<close> keeps it a stopping time: two paths agreeing up to the later
@@ -375,14 +340,19 @@ proof -
   show ?thesis unfolding path_stopping_time_def using c1 c2 by blast
 qed
 
+text \<open>Hence \<open>u \<or> \<theta>\<close> is a stopping time: it never looks back less far than \<open>\<theta>\<close>
+  does.\<close>
+
 lemma path_stopping_time_max:
   fixes \<theta> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add) \<Rightarrow> real"
   assumes st: "path_stopping_time T \<theta>" and u: "0 \<le> u" and uT: "u \<le> T"
   shows "path_stopping_time T (\<lambda>\<omega>. max u (\<theta> \<omega>))"
   by (rule path_stopping_time_comp_ge[OF st, where f = "\<lambda>x. max u x"]) (use u uT in auto)
 
-text \<open>The event lemma with the horizon restriction removed: past \<open>T\<close> there is
-  nothing left to decide.\<close>
+text \<open>The times \<open>(\<theta> + i) \<and> T\<close> are stopping times for the same reason \<open>\<theta>\<close>
+  is: shifting forward and capping
+  only ever looks further back, so two paths agreeing up to the shifted time
+  agree up to \<open>\<theta>\<close> as well.\<close>
 
 lemma path_stopping_time_shift:
   fixes \<theta> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add) \<Rightarrow> real"
@@ -390,14 +360,10 @@ lemma path_stopping_time_shift:
   shows "path_stopping_time T (\<lambda>\<omega>. min (\<theta> \<omega> + i) T)"
   by (rule path_stopping_time_comp_ge[OF st, where f = "\<lambda>x. min (x + i) T"]) (use i in auto)
 
-text \<open>They are also ordered in \<open>i\<close>, which is what lets
-  \<open>pre_sigma_of_mono\<close> carry the conditioning set from the
-  earlier sampling time to the later one; pure arithmetic, discharged where
-  it is used.\<close>
-
-text \<open>The stopping-time event is not merely Borel but lies in the natural
-  filtration at \<open>t\<close>, which is what \<open>set_martingale_sampling\<close>
-  consumes.\<close>
+text \<open>\<open>i \<and> \<theta>\<close> is a stopping time.  Unlike \<open>i \<or> \<theta>\<close> this needs both directions
+  of the congruence: on \<open>{\<theta> \<le> i}\<close> the value is \<open>\<theta>\<close> and agreement up to \<open>\<theta>\<close>
+  fixes it; on \<open>{\<theta> > i}\<close> the value is \<open>i\<close>, and agreement up to \<open>i\<close> still fixes
+  it, because a path with \<open>\<theta> < i\<close> would already have been detected by then.\<close>
 
 lemma path_stopping_time_min:
   fixes \<theta> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add) \<Rightarrow> real"
@@ -437,9 +403,9 @@ proof -
   show ?thesis unfolding path_stopping_time_def using c1 c2 by blast
 qed
 
-text \<open>The stopped past, read at \<open>u \<and> T\<close>, is the past read at \<open>u \<and> \<theta>\<close>: this is
-  what turns the glue's own clock into the stopping-time family that
-  \<open>stopped_increment_of_horizon_gen\<close> samples at.\<close>
+subsection \<open>From the pathwise stopping time to the filtration one\<close>
+
+text \<open>The stopped path has a continuous first component where the path has.\<close>
 
 lemma pstopped_fst_continuous:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
@@ -455,6 +421,9 @@ proof -
     by (rule continuous_on_compose2[OF cw c1]) (use th0 thT in auto)
   then show ?thesis by (rule continuous_on_eq) (simp add: e)
 qed
+
+text \<open>If \<open>\<theta> \<omega> \<le> t\<close>, stopping first at \<open>t\<close> changes neither \<open>\<theta>\<close> nor the path
+  stopped at \<open>\<theta>\<close>.\<close>
 
 lemma path_stopping_time_cut_eq:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
@@ -498,12 +467,12 @@ proof (rule ext)
   qed
 qed
 
-text \<open>The second factor only agrees up to \<open>u\<close> --- exactly as far as an
-  \<open>\<F>\<^sub>u\<close>-set can look, so composing with \<^const>\<open>pcut\<close> loses nothing.\<close>
-
-text \<open>\<open>u \<or> \<theta>\<close> is a stopping time for the same reason \<open>(\<theta>+i) \<and> T\<close> is
-  (@{thm [source] path_stopping_time_shift}): it never looks back less far
-  than \<open>\<theta>\<close> does.\<close>
+text \<open>\<open>path_stopping_time\<close> is the pathwise notion: \<open>\<theta>\<close> is decided by the
+  path up to \<open>\<theta>\<close>.  What the sampling theorem consumes is the filtration
+  notion, \<open>{\<theta> \<le> t} \<in> \<F>\<^sub>t\<close>.  The bridge is that below \<open>t\<close> the event only sees
+  the path stopped at \<open>t\<close>: \<open>\<theta> \<omega> \<le> t\<close> exactly when
+  \<open>\<theta> (\<omega> stopped at t) \<le> t\<close>, and the stopped path is an \<open>\<F>\<^sub>t\<close>-measurable
+  function of \<open>\<omega>\<close>.\<close>
 
 lemma path_stopping_time_cut:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
@@ -529,13 +498,9 @@ next
   then show "\<theta> \<omega> \<le> t" using h by simp
 qed
 
-text \<open>Hence the event is measurable with respect to the natural filtration at
-  \<open>t\<close> --- the stopped path is, and \<open>\<theta>\<close> is Borel.\<close>
-
-text \<open>The times clause (iv) samples at are \<open>(\<theta> + i) \<and> T\<close>, and they are
-  stopping times for the same reason \<open>\<theta>\<close> is: shifting forward and capping
-  only ever looks further back, so two paths agreeing up to the shifted time
-  agree up to \<open>\<theta>\<close> as well.\<close>
+text \<open>Hence the event \<open>{\<theta> \<le> t}\<close> is not merely Borel but lies in the natural
+  filtration at \<open>t\<close>, which is what optional sampling consumes: the stopped
+  path is measurable for it, and \<open>\<theta>\<close> is Borel.\<close>
 
 lemma path_stopping_time_event_filtration:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<theta>"
@@ -566,28 +531,8 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-section \<open>Clause (iv) at a stopping time: the increment identity\<close>
-
-text \<open>The assembly.  Every hypothesis of
-  \<open>set_martingale_sampling_two\<close> now has a supplier: the
-  martingale from the class via @{thm [source] martingale_vec_nth},
-  the filtration facts from @{thm [source] sets_natural_filtration_mono} and
-  the martingale locale, the stopping-time events from
-  \<open>path_stopping_time_event_filtration_all\<close>, the convergence from
-  \<open>dyceil_tendsto\<close> and continuity of the paths, and the domination from
-  @{theory Continuous_Time_Martingales.Doob_Inequality}'s \<open>Dsup\<close> through
-  \<open>covariation_class_horizon_component\<close>.\<close>
-
-text \<open>The same identity for an arbitrary real process that is a
-  \<open>horizon_sq_int_martingale\<close> with continuous paths.  Both of the class's
-  martingale clauses are of that shape --- the \<open>X\<close> one componentwise, the
-  compensated one entrywise --- so this is the form clause (iv) uses twice.
-  \<open>martingale_mat_nth\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
-
-text \<open>Square-integrability of the compensated entry, from its
-  nonnegative-integral bound.  This is the second half of what
-  \<open>horizon_sq_int_martingale\<close> asks for.\<close>
+text \<open>The event lemma with the horizon restriction removed: past \<open>T\<close> there is
+  nothing left to decide.\<close>
 
 lemma path_stopping_time_event_filtration_all:
   assumes T0: "0 \<le> T" and st: "path_stopping_time T \<sigma>"
@@ -613,8 +558,9 @@ next
   ultimately show ?thesis by simp
 qed
 
-text \<open>A packaging lemma: for a stopping time bounded by \<open>T\<close> it is enough to
-  check the \<open>\<F>\<^sub>\<sigma>\<close> condition at times below the horizon.\<close>
+text \<open>\<open>\<theta>\<close> reads only the stopped path --- the fact every later step
+  needs, and the reason the kernel can be indexed by \<open>pstopped T \<theta> \<omega>\<close>
+  alone.\<close>
 
 lemma path_stopping_time_stopped:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{topological_space,ab_group_add} \<times> 'b::ab_group_add)"
@@ -656,13 +602,9 @@ proof (rule ext)
   qed
 qed
 
-text \<open>And the future factor of a stopped path is trivial: stopping twice
-  leaves nothing after \<open>\<theta>\<close>.  This is the pathwise seed of clause (ii) for
-  the kernel --- the continuation starts at \<open>0\<close>.\<close>
-
-text \<open>The re-basing map at a fixed time is an ordinary path-space map, and
-  that is all clause (i) of the kernel statement needs, since \<open>\<theta> \<omega>\<close> is a
-  fixed number inside an almost-sure statement.\<close>
+text \<open>The stopped past, read at \<open>u \<and> T\<close>, is the past read at \<open>u \<and> \<theta>\<close>: this is
+  what turns the glue's own clock into the stopping-time family that
+  \<open>stopped_increment_of_horizon_gen\<close> samples at.\<close>
 
 lemma pstopped_eval_min_T:
   fixes \<omega> :: "real \<Rightarrow> 'b"
@@ -741,14 +683,16 @@ proof -
   qed
 qed
 
-section \<open>From the pathwise stopping time to the filtration one\<close>
+subsection \<open>Optional sampling on the path space\<close>
 
-text \<open>\<open>path_stopping_time\<close> is the pathwise notion: \<open>\<theta>\<close> is decided by the
-  path up to \<open>\<theta>\<close>.  What the sampling theorem consumes is the filtration
-  notion, \<open>{\<theta> \<le> t} \<in> \<F>\<^sub>t\<close>.  The bridge is that below \<open>t\<close> the event only sees
-  the path stopped at \<open>t\<close>: \<open>\<theta> \<omega> \<le> t\<close> exactly when
-  \<open>\<theta> (\<omega> stopped at t) \<le> t\<close>, and the stopped path is an \<open>\<F>\<^sub>t\<close>-measurable
-  function of \<open>\<omega>\<close>.\<close>
+text \<open>For a continuous \<open>horizon_sq_int_martingale\<close> \<open>Y\<close> of the natural
+  filtration and path stopping times \<open>\<sigma> \<le> \<rho>\<close>, the values of \<open>Y\<close> at \<open>\<sigma>\<close> and
+  at \<open>\<rho>\<close> have the same set integral over every event before \<open>\<sigma>\<close>.  Both
+  martingale clauses of a covariation class are of that shape, the state
+  componentwise and the compensated process entrywise.  The proof samples
+  \<open>set_martingale_sampling_two\<close> along the dyadic ceilings of the two
+  times, with the paths' continuity for the convergence and Doob's maximal
+  inequality for the domination.\<close>
 
 theorem stopped_increment_of_horizon_gen:
   fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -822,6 +766,8 @@ proof -
           conts contr Dbd Dint])
 qed
 
+text \<open>The sampled process is integrable.\<close>
+
 lemma integrable_at_path_stopping_time:
   fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
     and Y :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real" and \<sigma> :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
@@ -873,28 +819,7 @@ proof -
         [OF mg stops sig0 sigU T0' conts Dbd Dint])
 qed
 
-section \<open>The increment identity moves to the kernel\<close>
-
-text \<open>The stopping-time twin of \<open>pfut_rcd_F_increment_zero\<close>,
-  stated once for an arbitrary real integrand \<open>h\<close> on the future factor
-  together with the identity \<open>hP\<close> pulling it back to an increment of a
-  horizon martingale \<open>Y\<close> of \<open>P\<close>.  Every clause of the class surviving the
-  additive split has this shape, so the disintegration is done once here
-  and instantiated afterwards.
-
-  The chain follows the deterministic one --- \<open>AE_kernel_integral_zero\<close>
-  to rectangles, \<open>integral_ksemi_rect_of_set_integral\<close> to a set
-  integral over \<open>P\<close> --- with the conditioning set landing in
-  \<open>\<F>\<^sub>(\<^sub>i\<^sub> \<^sub>\<or>\<^sub> \<^sub>\<theta>\<^sub>)\<close> instead of a
-  deterministic \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>, closed by
-  @{thm [source] stopped_increment_of_horizon_gen} instead of
-  \<open>martingale.set_integral_eq\<close>.\<close>
-
-text \<open>Clause (iv) for the \<open>X\<close> martingale: the additive split carries it
-  across unchanged, since \<^term>\<open>pafter T \<theta> \<omega>\<close> is a difference of values of
-  \<open>\<omega>\<close> and the constant \<^term>\<open>\<omega> (\<theta> \<omega>)\<close> cancels between the two times.\<close>
-
-section \<open>The cross term: an increment against a known factor\<close>
+subsection \<open>The cross term: an increment against a known factor\<close>
 
 text \<open>The compensated clause does not ride along on the additive split,
   because \<^const>\<open>outerp\<close> is quadratic.  Writing \<open>b = fst (\<omega> (\<theta> \<omega>))\<close>,
@@ -1063,24 +988,7 @@ proof -
     by (simp add: mult.commute)
 qed
 
-text \<open>The known factor is a function of the stopped path, hence \<open>\<F>\<^sub>\<theta>\<close>- and a
-  fortiori \<open>\<F>\<^sub>(\<^sub>u\<^sub> \<^sub>\<or>\<^sub> \<^sub>\<theta>\<^sub>)\<close>-measurable.\<close>
-
-section \<open>Clause (iv) for the compensated martingale\<close>
-
-text \<open>The second, and last, clause-(iv) instance.  The pathwise identity is
-  the \<^const>\<open>outerp\<close> expansion: with \<open>\<sigma> = i \<or> \<theta>\<close>, \<open>\<rho> = j \<or> \<theta>\<close> and
-  \<open>b = fst (\<omega> (\<theta> \<omega>))\<close>,
-
-  \<open>h (pafter T \<theta> \<omega>) = (Ym\<^sub>\<rho> - Ym\<^sub>\<sigma>) - (Yc\<^sub>\<rho> - Yc\<^sub>\<sigma>)\<sqdot>b$d - (Yd\<^sub>\<rho> - Yd\<^sub>\<sigma>)\<sqdot>b$c\<close>
-
-  --- a compensated increment, which @{thm [source] stopped_increment_of_horizon_gen}
-  kills, and two cross terms, which
-  @{thm [source] set_integral_increment_times_known} kills.  The constants
-  \<open>outerp b\<close> and \<open>\<langle>X\<rangle>\<^sub>\<theta>\<close> have already cancelled between the two times.\<close>
-
-
-section \<open>The exit time of a ball\<close>
+subsection \<open>The exit time of a ball\<close>
 
 text \<open>The capped exit time of the state component of a pair path from an open
   ball, and the pathwise facts about it that the viscosity arguments consume.\<close>
@@ -1171,7 +1079,7 @@ proof -
   show ?thesis by (rule order_less_le_trans[OF m0 mle])
 qed
 
-subsection \<open>The ball exit time is a stopping time\<close>
+subsubsection \<open>The ball exit time is a stopping time\<close>
 
 text \<open>\<^const>\<open>path_stopping_time\<close> restricts its congruence clause to
   continuous paths, which is exactly what @{thm [source] pexit_mem_of_less_T}
@@ -1209,7 +1117,7 @@ text \<open>So \<open>covariation_val_dpp_sup_ge_time\<close> applies at the exi
   a ball, and optional sampling at \<open>\<tau> \<and> h\<close> is available for stochastic
   localisation.\<close>
 
-subsection \<open>Measurability of the ball exit time\<close>
+subsubsection \<open>Measurability of the ball exit time\<close>
 
 text \<open>\<open>pexit_path_measurable\<close> covers closed targets and the ball is open, so
   this cannot be inherited directly.  With the closed set \<open>- ball x \<epsilon>\<close> as
@@ -1420,7 +1328,7 @@ proof (rule borel_measurableI_le)
   qed
 qed
 
-subsection \<open>Up to the exit time the path stays in the closed ball\<close>
+subsubsection \<open>Up to the exit time the path stays in the closed ball\<close>
 
 lemma pball_exit_stays_cball:
   fixes \<omega> :: "'n::finite pairpath"

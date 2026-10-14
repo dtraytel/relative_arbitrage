@@ -8,10 +8,14 @@ begin
 (*>*)
 
 text \<open>What the surgery does to laws rather than to paths: the law of a
-  concrete process (\<open>process_law\<close>), the glued law \<open>pglue_law\<close>, the shifted
-  law, the kernel glue \<open>kglue_law\<close> that continues a law by a kernel of
-  continuations, and the additive glue \<open>aglue_law\<close> that splits a law at a
-  stopping time and reassembles it by addition.\<close>
+  concrete process (\<open>process_law\<close>), the shifted law, the additive glue
+  \<open>aglue_law\<close> that reassembles a law split at a stopping time by addition,
+  the glued law \<open>pglue_law\<close> of two independent pieces, the kernel glue
+  \<open>kglue_law'\<close> that continues a law by a kernel of continuations and its
+  countably indexed form \<open>kglue_law\<close>, the stopped law, and the regular
+  conditional distribution of the future given the past.\<close>
+
+subsection \<open>The law of a process\<close>
 
 text \<open>A process with continuous paths on some filtered probability space
   pushes forward to its law on the path space, and a martingale for the process's own filtration is a
@@ -87,29 +91,10 @@ proof -
   then show ?thesis unfolding process_law_def .
 qed
 
-text \<open>The other plumbing piece the witness needs: the class stops its
-  processes at the horizon, so a martingale must be stopped at the
-  deterministic time \<open>T\<close>.  \<open>martingale_stopped_const\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
+subsection \<open>The shifted law\<close>
 
-section \<open>The off-diagonal covariation of Brownian motion\<close>
-
-text \<open>The market locale's \<open>coord_Z_martingale\<close> gives only the diagonal
-  compensator, but the paper's class needs the whole matrix \<open>outerp X - Y\<close>;
-  off the diagonal the compensator is \<open>0\<close>, so what is needed is that
-  \<open>W\<^sub>i W\<^sub>j\<close> is a martingale for \<open>i \<noteq> j\<close>.  This follows from independence of
-  the coordinates of \<open>bm_paths = Pi\<^sub>M UNIV (\<lambda>_. wiener_pre)\<close>, via
-  \<open>Kolmogorov_Chentsov_Extras.indep_vars_PiM_coordinate\<close>.\<close>
-
-subsection \<open>The four clauses of (1.7) for the conditioned future law\<close>
-
-text \<open>Clause (i) is free: @{thm [source] pfut_zero} says the rebased future
-  starts at \<open>0\<close> no matter where the path was at time \<open>r\<close>, so the initial
-  condition holds identically rather than almost surely.\<close>
-
-text \<open>Clause (ii) is inheritance: the future's increment over \<open>[p,q]\<close> is
-  the path's increment over \<open>[r+p, r+q]\<close>, the base point cancelling, and the
-  two time spans agree.\<close>
+text \<open>\<open>pshift_law T x Q\<close> is the law of the paths of \<open>Q\<close> with their first
+  component shifted by \<open>x\<close>.\<close>
 
 abbreviation pshift_law ::
   "real \<Rightarrow> 'a::{polish_space,banach} \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b)) measure"
@@ -179,16 +164,10 @@ proof -
   then show ?thesis unfolding FF unfolding pshift_law_def .
 qed
 
-text \<open>\<open>martingale_add_const\<close> and \<open>martingale_cong_ge\<close> live in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}; sums are the AFP's
-  \<open>martingale.add\<close>.\<close>
+subsection \<open>The additive glue\<close>
 
-subsection \<open>Almost-sure statements transport through the shift\<close>
-
-text \<open>The shift is a bijection of the path space with measurable inverse,
-  so a null set for \<open>Q\<close> has a null image --- which is what lets the two
-  almost-sure clauses of (1.7) be transported without any measurability
-  hypothesis on the property itself.\<close>
+text \<open>\<open>aglue_law T \<kappa> Q\<close>: draw a past from \<open>Q\<close>, draw a continuation from
+  the kernel \<open>\<kappa>\<close> at that past, and add the two paths (\<open>padd\<close>).\<close>
 
 abbreviation aglue_law :: "real \<Rightarrow> ((real \<Rightarrow> 'p::{polish_space,banach}) \<Rightarrow> (real \<Rightarrow> 'p) measure)
     \<Rightarrow> (real \<Rightarrow> 'p) measure \<Rightarrow> (real \<Rightarrow> 'p) measure"
@@ -197,6 +176,9 @@ abbreviation aglue_law :: "real \<Rightarrow> ((real \<Rightarrow> 'p::{polish_s
 
 lemmas aglue_law_def =
   process_law_def[where \<phi> = "\<lambda>p. padd T (fst p) (snd p)" and M = "ksemi Q B \<kappa>" for T Q B \<kappa>]
+
+text \<open>The shifted law is jointly continuous in the shift and the law, along
+  weakly convergent sequences.\<close>
 
 lemma pshift_law_weak_conv_joint:
   fixes ym :: "nat \<Rightarrow> 'a::{polish_space,banach}" and Rm :: "nat \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure"
@@ -232,12 +214,6 @@ proof -
   then show ?thesis by (simp add: pshift_law_def)
 qed
 
-text \<open>Joint upper semicontinuity of the payoff, in sequential form.  The
-  parameter and the law move together; joint continuity of the shift
-  carries the pair to a weakly convergent sequence of laws, and
-  @{thm [source] ess_inf_pexit_usc} --- which lives on the vector path
-  space --- is reached through @{thm [source] Lipschitz_pfst}.\<close>
-
 lemma prob_space_aglue_law:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
   assumes T0: "0 \<le> T" and PQ: "prob_space Q"
@@ -258,6 +234,9 @@ proof -
     by (rule prob_space.prob_space_distr[OF prob_space_ksemi[OF PQ Kp] pm])
 qed
 
+
+text \<open>An almost-sure property of a pushforward of a product of probability
+  measures follows from almost-sure properties of the two factors.\<close>
 
 lemma AE_distr_pair_imp:
   assumes PQ: "prob_space Q" and PR: "prob_space R"
@@ -306,8 +285,9 @@ lemma AE_aglue_law:
       padd_measurable_ksemi[OF T0 setsQ] Phi]
   unfolding aglue_law_def by simp
 
-text \<open>Clause (ii) for the glue: the past starts at \<open>x\<close> and the continuation
-  at \<open>0\<close>, and \<^const>\<open>padd\<close> adds them.\<close>
+text \<open>Almost-sure statements transport through the shift: it is a bijection
+  of the path space with measurable inverse, so a null set for \<open>Q\<close> has a
+  null image, with no measurability hypothesis on the property itself.\<close>
 
 lemma AE_pshift_law:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and x :: "'a"
@@ -380,11 +360,8 @@ proof -
     unfolding eventually_ae_filter using sub Bn by blast
 qed
 
-subsection \<open>Shift equivariance\<close>
-
-text \<open>The one algebraic input: translating \<open>X\<close> splits the compensated
-  process into itself, a term linear in \<open>X\<close>, and a constant --- so it stays
-  a martingale.\<close>
+text \<open>The past starts at \<open>(x, 0)\<close>, the continuation at \<open>0\<close>, and \<open>padd\<close>
+  adds them, so the glued law starts at \<open>(x, 0)\<close>.\<close>
 
 lemma aglue_law_start:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and x :: "'a"
@@ -417,11 +394,10 @@ proof -
     unfolding AE_aglue_law[OF T0 PQ setsQ Kp Phi] .
 qed
 
-text \<open>Clause (iii) for the glue, pathwise.  Exactly the three-case argument
-  of the deterministic pasting: below \<open>r\<close> only the past moves, above \<open>r\<close>
-  only the continuation, and a straddling pair is a convex combination of
-  the two difference quotients --- which is why \<open>sconstraint\<close> had to
-  be convex (\<open>sconstraint_convex\<close>) in the first place.\<close>
+subsection \<open>Glueing two independent laws\<close>
+
+text \<open>The glue of two laws at time \<open>r\<close>: the law of \<open>pglue r T\<close> applied to
+  a pair drawn from the product \<open>Q \<Otimes>\<^sub>M R\<close>.\<close>
 
 definition pglue_law :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'p::{polish_space,banach}) measure
     \<Rightarrow> (real \<Rightarrow> 'p) measure \<Rightarrow> (real \<Rightarrow> 'p) measure"
@@ -451,7 +427,7 @@ qed
 text \<open>The transfer principle for almost-sure statements: a property of the
   glued path holds \<open>pglue_law\<close>-a.s. as soon as it follows from one
   \<open>Q\<close>-a.s. property of the first piece and one \<open>R\<close>-a.s. property of the
-  second.  Both \<open>AE\<close> clauses of (1.7) are of this shape.\<close>
+  second.\<close>
 
 lemma AE_pglue_law:
   fixes Q R :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -472,6 +448,12 @@ proof (rule AE_distr_pair_imp[OF PQ PR pglue_measurable[OF r rT setsQ setsR] _ A
   show "{\<omega> \<in> space (path_borel T). P \<omega>} \<in> sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
     using mset by (simp add: space_borel_of)
 qed (use imp space_of_path_sets[OF setsQ] space_of_path_sets[OF setsR] in auto)
+
+text \<open>Joint upper semicontinuity of the payoff, in sequential form.  The
+  parameter and the law move together; joint continuity of the shift
+  carries the pair to a weakly convergent sequence of laws, and
+  @{thm [source] ess_inf_pexit_usc}, stated for paths of the first
+  component alone, is reached through @{thm [source] Lipschitz_pfst}.\<close>
 
 lemma ess_inf_pexit_pshift_usc:
   fixes ym :: "nat \<Rightarrow> 'a::{polish_space,banach}" and Rm :: "nat \<Rightarrow> ((real \<Rightarrow> 'a \<times> 'b::{polish_space,banach})) measure"
@@ -509,9 +491,8 @@ proof -
   show ?thesis using lim by (simp add: eqS)
 qed
 
-text \<open>The class packaged exactly as \<open>Metric_space.usc_measurable_selection\<close> consumes it: a compact metric
-  space, the metric being L\'evy--Prokhorov restricted to the class, and
-  its topology the subspace topology of weak convergence.\<close>
+text \<open>Shifts compose, commute with cutting, and the zero shift is the
+  identity.\<close>
 
 lemma pshift_law_compose:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and x y :: "'a"
@@ -559,10 +540,6 @@ proof -
     unfolding pshift_law_def process_law_def ..
   finally show ?thesis .
 qed
-
-text \<open>The value of a cut law is the value of the original, capped.  This is
-  the law-level form of @{thm [source] pexit_min_horizon}, and it is what
-  makes one selector serve every horizon.\<close>
 
 lemma pshift_law_zero:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -661,14 +638,8 @@ proof -
     by (rule ess_inf_pexit_pair_law_pcut[OF S0 ST prob_space_pshift_law[OF T0 PR setsR] _ K]) simp
 qed
 
-subsection \<open>The selector\<close>
-
-text \<open>One selector, every horizon.  \<open>Sel (s,y)\<close> is the \<^const>\<open>pembed\<close>-image of
-  the horizon-\<open>T\<close> optimizer started at \<open>y\<close>, cut back to \<open>T-s\<close>; it lands in
-  \<open>pdelclass\<close>, is jointly measurable in \<open>(s,y)\<close> as a Giry kernel, and
-  re-basing it attains \<^term>\<open>exit_val k L (T - s) K y\<close>.  This is the
-  continuation \<open>covariation_class_aglue\<close> consumes for the
-  additive glue.\<close>
+text \<open>The essential infimum of a functional under the shifted law is the
+  essential infimum of the shifted functional.\<close>
 
 lemma ess_inf_time_pshift_law:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and x :: "'a"
@@ -683,11 +654,11 @@ proof -
   then show ?thesis unfolding ess_inf_time_def by simp
 qed
 
-subsection \<open>The exit functional of (1.6) is the shifted exit time\<close>
+subsection \<open>Cutting a law on the half-line\<close>
 
-text \<open>Both sides are the same infimum: the times range over \<open>{0..T}\<close>, and
-  there \<open>fst (pshift T x \<omega> r) = x + fst (\<omega> r) = fst ((x,0) + \<omega> r)\<close>.  No
-  path-space membership is needed.\<close>
+text \<open>For a law on the half-line path space, the natural filtration up to a
+  horizon \<open>S\<close> is the pullback, along the cut at \<open>S\<close>, of the natural
+  filtration of the cut law.\<close>
 
 lemma natural_filtration_pcut:
   fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -741,9 +712,12 @@ proof -
   finally show ?thesis unfolding sets_natural_filtration .
 qed
 
-text \<open>Hence a process whose restrictions are martingales at every horizon is
-  a martingale on the half-line: the set-integral identity at \<open>u \<le> v\<close> is the
-  one the restriction at \<open>v\<close> already satisfies.\<close>
+subsection \<open>The kernel glue\<close>
+
+text \<open>\<open>kglue_law' r T \<kappa> Q\<close>: draw a past on \<open>[0, r]\<close> from \<open>Q\<close>, draw a
+  continuation from the kernel \<open>\<kappa>\<close> at that past, and glue it on with
+  \<open>pglue\<close>.  Glueing the past of a law \<open>P\<close> to its future along their regular
+  conditional distribution gives back \<open>P\<close>.\<close>
 
 definition kglue_law' :: "real \<Rightarrow> real \<Rightarrow> ((real \<Rightarrow> 'p::{polish_space,banach}) \<Rightarrow> (real \<Rightarrow> 'p) measure)
     \<Rightarrow> (real \<Rightarrow> 'p) measure \<Rightarrow> (real \<Rightarrow> 'p) measure"
@@ -791,14 +765,6 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The other branch needs a repair, and the repair needs the class to be
-  a measurable set of laws.  It is: the class is compact in the weak
-  topology (\<open>covariation_class_compactin_weak\<close>), that topology
-  is the Levy-Prokhorov metric topology hence Hausdorff, so the class is
-  closed, hence Borel; and \<open>prob_algebra\<close> is that Borel algebra
-  restricted to the probability measures, which the class already consists
-  of.\<close>
-
 lemma sets_kglue_law'[simp]:
   "sets (kglue_law' r T Kr Q)
      = sets (path_borel T :: (real \<Rightarrow> 'p::{polish_space,banach}) measure)"
@@ -822,6 +788,9 @@ proof -
     using measurable_cong_sets[OF sets_ksemi[OF K ne] refl] by blast
 qed
 
+text \<open>An almost-sure property of the kernel glue is an almost-sure property
+  of the glued pair under the semidirect product.\<close>
+
 lemma AE_kglue_law_of_kernel:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
@@ -835,6 +804,10 @@ lemma AE_kglue_law_of_kernel:
           \<Phi> (pglue r T (fst p) (snd p)))"
   unfolding kglue_law'_def process_law_def
   by (rule AE_distr_iff[OF kglue_law'_measurable[OF r rT setsQ Kp ne] mset])
+
+text \<open>A process on the half-line whose cuts are martingales at every horizon is
+  a martingale on the half-line: the set-integral identity at \<open>u \<le> v\<close> is the
+  one the restriction at \<open>v\<close> already satisfies.\<close>
 
 lemma martingale_of_cuts:
   fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -933,11 +906,6 @@ proof -
   qed
 qed
 
-subsection \<open>The extension lies in the uncapped class\<close>
-
-text \<open>The semidirect product on a rectangle, the shape in which the AFP's
-  disintegration arrives.\<close>
-
 lemma prob_space_kglue_law':
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T" and PQ: "prob_space Q"
@@ -980,34 +948,10 @@ proof (rule AE_distr_ksemi_imp[OF K prob_space.not_empty[OF PQ]
     using mset by (simp add: space_borel_of)
 qed (use imp space_of_path_sets[OF setsQ] in \<open>auto simp: space_borel_of\<close>)
 
-text \<open>Clause (i) of (1.7) for the kernel glue.\<close>
+subsection \<open>Almost-sure statements pass to the kernel\<close>
 
-text \<open>Clause (ii): the covariation difference quotient.  The kernel's
-  values have to lie in the class at the origin --- this is the first
-  place where that is used, and it is where the almost-sure statement of
-  the continuation enters, one \<open>\<omega>\<close> at a time.\<close>
-
-subsection \<open>The almost-sure clauses pass to the kernel\<close>
-
-text \<open>Proving clauses (iii) and (iv) directly for \<open>ksemi\<close> runs into
-  two obstructions: the distribution's \<open>integral_bind\<close> covers only
-  bounded real integrands, and the first-factor martingale property is
-  false for a semidirect product (the weight \<open>(Kr \<omega>)(A\<^sub>\<omega>)\<close> in the
-  disintegrated set integral is only \<open>\<F>\<^sub>r\<close>-measurable).
-
-  Neither has to be faced.  The class is weakly closed
-  (\<open>covariation_class_weak_closed\<close>), the glue with a countably
-  valued index is already in it
-  (\<open>covariation_class_kglue_law\<close>), and the class at the origin
-  is a compact metric space
-  (\<open>covariation_class_compact_metric_space\<close>), hence separable,
-  so any kernel into it is a pointwise limit of countably valued ones.  If
-  the semidirect products converge weakly, the glued laws do too, and weak
-  closedness finishes --- which needs continuity of the glue and the
-  identity of the two \<open>\<sigma>\<close>-algebras on the product.\<close>
-
-text \<open>Clauses (i) and (ii) of (1.7) both say "\<open>\<mu> C = 1\<close> for a fixed
-  measurable \<open>C\<close>", linear in \<open>\<mu>\<close>, so each transfers to the kernel by a
+text \<open>A statement "\<open>\<mu> C = 1\<close> for a fixed measurable \<open>C\<close>" is linear in
+  \<open>\<mu>\<close>, so it transfers from a semidirect product to its kernel by a
   single nonnegative-integral argument: the complement has integral \<open>0\<close>,
   hence vanishes almost everywhere.\<close>
 
@@ -1051,8 +995,8 @@ proof -
   qed
 qed
 
-text \<open>Clause (i) for the kernel, the easiest of the four: @{thm [source]
-  pfut_zero} makes the initial condition hold identically, so the offending
+text \<open>The start clause for the conditional law of the rebased future:
+  @{thm [source] pfut_zero} makes the initial condition hold identically, so the offending
   set has empty preimage, not merely a null one.\<close>
 
 lemma pfut_rcd_start:
@@ -1115,6 +1059,13 @@ proof -
     using null spQ by simp
   show ?thesis by (rule AE_kernel_full[OF KQ neQ CY null'])
 qed
+
+text \<open>Pointwise weak convergence of the kernels gives weak convergence of
+  the semidirect products.  The proof is dominated convergence over the
+  first coordinate: a bounded continuous test function on the product is,
+  at each fixed first coordinate, a bounded continuous test function on
+  the second, so the inner integrals converge pointwise, and they are all
+  bounded by the same constant.\<close>
 
 lemma ksemi_weak_conv:
   fixes Krm :: "nat \<Rightarrow> 'a \<Rightarrow> 'b measure" and X :: "'a topology" and Y :: "'b topology"
@@ -1278,20 +1229,8 @@ proof -
   qed
 qed
 
-subsection \<open>Countably valued approximation of a kernel\<close>
-
-text \<open>\<open>countably_valued_approx\<close>, \<open>limitin_of_dist_half\<close> live in @{theory Continuous_Path_Spaces.Semicontinuous_Selection}.\<close>
-
-
-subsection \<open>The two constructions agree at a countably valued kernel\<close>
-
-text \<open>With a countably valued index the
-  product-of-all-candidates construction and the Giry semidirect product
-  give the same law, because the second coordinate of the product,
-  evaluated at a first-coordinate-measurable index, has exactly the
-  kernel's law.  Both sides reduce to
-  \<open>\<integral>\<^sup>+\<omega>. (RR (N \<omega>)) {\<omega>'. pglue r T \<omega> \<omega>' \<in> A} \<partial>Q\<close>: on the left by Fubini and
-  \<open>distr_PiM_component\<close>, on the right by \<open>emeasure_bind\<close> and \<open>emeasure_distr\<close>.\<close>
+text \<open>An almost-sure property of the future of \<open>P\<close> makes the complementary
+  rectangle null for the semidirect product of its conditional law.\<close>
 
 lemma ksemi_rect_null_of_AE:
   fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -1344,11 +1283,10 @@ proof -
 qed
 
 
-text \<open>The unbounded disintegration of Bochner integrals, through the
-  positive and negative parts.  \<open>real_lebesgue_integral_def\<close>
-  splits both sides into \<open>enn2real\<close> of nonnegative integrals, and on those
-  @{thm [source] nn_integral_ksemi} applies with no boundedness hypothesis at
-  all.\<close>
+subsection \<open>The stopped law, and integrals under a semidirect product\<close>
+
+text \<open>The law of the path stopped at a path stopping time is a probability
+  measure, under which stopping again changes nothing.\<close>
 
 lemma pstopped_law_prob:
   fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -1402,6 +1340,12 @@ proof -
   then show ?thesis
     unfolding process_law_def AE_distr_iff[OF m1 mset] .
 qed
+
+text \<open>The unbounded disintegration of Bochner integrals, through the
+  positive and negative parts.  \<open>real_lebesgue_integral_def\<close>
+  splits both sides into \<open>enn2real\<close> of nonnegative integrals, and on those
+  @{thm [source] nn_integral_ksemi} applies with no boundedness hypothesis at
+  all.\<close>
 
 lemma integral_ksemi_real:
   fixes g :: "'a \<times> 'b \<Rightarrow> real"
@@ -1492,12 +1436,8 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The shape actually needed: the integrand is an indicator of a
-  rectangle times a function of the future only.  The \<open>msec\<close> hypothesis of
-  @{thm [source] integral_ksemi_real} is then discharged by the AFP's
-  fixed-integrand \<open>integral_measurable_subprob_algebra\<close>, and
-  the section integral factors as a constant times an integral over the
-  kernel.\<close>
+text \<open>The integral under the additive glue, as an iterated integral over the
+  past and the continuation.\<close>
 
 lemma integral_aglue_law:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure" and h :: "(real \<Rightarrow> 'p) \<Rightarrow> real"
@@ -1534,12 +1474,8 @@ proof -
   finally show ?thesis by simp
 qed
 
-subsection \<open>Auxiliaries for clause (iv)\<close>
-
-text \<open>\<open>i \<and> \<theta>\<close> is a stopping time.  Unlike \<open>i \<or> \<theta>\<close> this needs both directions of
-  the cut: on \<open>{\<theta> \<le> i}\<close> the value is \<open>\<theta>\<close> and agreement up to \<open>\<theta>\<close> fixes it; on
-  \<open>{\<theta> > i}\<close> the value is \<open>i\<close>, and agreement up to \<open>i\<close> still fixes it, because
-  a path with \<open>\<theta> < i\<close> would already have been detected by then.\<close>
+text \<open>The stopped law starts where the law starts, and its points are
+  continuous paths.\<close>
 
 lemma pstopped_law_start:
   fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and x :: "'a"
@@ -1583,12 +1519,12 @@ proof -
   then show ?thesis by (rule mspace_path_metricD)
 qed
 
-text \<open>\<open>Qcov\<close>.  The stopped law's covariation constraint holds up to the
-  random horizon \<open>\<theta> p'\<close>, exactly the shape
-  @{thm [source] diffquot_all_of_rational} takes once its horizon
-  parameter is instantiated with \<open>\<theta> p'\<close> rather than \<open>T\<close>.  No guarded
-  variant is needed: the rationals the lemma picks already satisfy
-  \<open>q < t \<le> \<theta> p'\<close>.\<close>
+text \<open>The shape actually needed: the integrand is an indicator of a
+  rectangle times a function of the future only.  The \<open>msec\<close> hypothesis of
+  @{thm [source] integral_ksemi_real} is then discharged by the AFP's
+  fixed-integrand \<open>integral_measurable_subprob_algebra\<close>, and
+  the section integral factors as a constant times an integral over the
+  kernel.\<close>
 
 lemma integral_ksemi_rect_real:
   fixes h :: "'b \<Rightarrow> real"
@@ -1621,24 +1557,14 @@ proof -
     using integral_ksemi_real[OF K gm gi ne msec] by (simp add: inner)
 qed
 
-text \<open>Two small facts used repeatedly in what follows: the map
-  \<open>\<omega> \<mapsto> \<integral> h d(Kr \<omega>)\<close> is measurable when the integrand does not depend on \<open>\<omega>\<close>,
-  and every measure is a subalgebra of itself --- the form @{thm [source]
-  AE_zero_of_set_integral_zero} gets applied in, its \<open>\<G>\<close>-measurability
-  supplied by the kernel rather than by a genuine sub-\<open>\<sigma>\<close>-algebra.\<close>
+subsection \<open>Glueing with a countably valued index\<close>
 
-text \<open>\<open>measurable_integral_kernel\<close> lives in
-  @{theory Continuous_Time_Martingales.Semidirect_Kernels}.\<close>
-
-text \<open>\<open>subalgebra_self\<close> lives in
-  @{theory Continuous_Time_Martingales.Natural_Filtration}.\<close>
-
-text \<open>At the \<open>ksemi\<close> level: if every rectangle integral of \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close>
-  vanishes, then the kernel's own integral of \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close> vanishes almost
-  everywhere.  It isolates what the path-specific part has to supply:
-  integrability, and the vanishing of the rectangle integrals, which for the
-  martingale clauses is \<open>martingale.set_integral_eq\<close> applied to
-  \<open>P\<close>.\<close>
+text \<open>The glue with a countably valued index: a countable family \<open>RR\<close> of
+  candidate continuations, drawn independently, and a past-measurable index
+  \<open>N\<close> selecting one.  The second factor is the product \<open>\<Pi>\<^sub>M i. RR i\<close>, from
+  which the glue picks the \<open>N \<omega>\<close>-th; freezing the first coordinate makes
+  the index constant, so \<open>martingale_pair_snd_param\<close> and
+  \<open>martingale_PiM_component\<close> carry the martingale clauses.\<close>
 
 definition kglue :: "real \<Rightarrow> real \<Rightarrow> ((real \<Rightarrow> 'p::{polish_space,banach}) \<Rightarrow> nat)
     \<Rightarrow> ((real \<Rightarrow> 'p) \<times> (nat \<Rightarrow> (real \<Rightarrow> 'p))) \<Rightarrow> (real \<Rightarrow> 'p)"
@@ -1649,6 +1575,15 @@ definition kglue_law :: "real \<Rightarrow> real \<Rightarrow> ((real \<Rightarr
     \<Rightarrow> (real \<Rightarrow> 'p) measure"
   where "kglue_law r T N Q RR
      = process_law T (kglue r T N) (Q \<Otimes>\<^sub>M Pi\<^sub>M UNIV RR)"
+
+text \<open>The regular conditional distribution of one path functional given
+  another, on rectangles, from the disintegration theorem of the AFP entry
+  \<open>Disintegration\<close>.  The two maps and their horizons are free: the split
+  at a fixed time \<open>r\<close> is the instance \<open>pcut r\<close>, \<open>pfut r T\<close> with horizons \<open>r\<close>
+  and \<open>T - r\<close>, and the split at a stopping time \<open>\<theta>\<close> the instance
+  \<open>pstopped T \<theta>\<close>, \<open>pafter T \<theta>\<close> with both horizons \<open>T\<close>.  The only
+  hypothesis of the disintegration theorem that is not automatic is that the
+  path space is standard Borel (@{thm [source] standard_borel_path_metric}).\<close>
 
 theorem path_rcd:
   fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -1790,6 +1725,14 @@ proof -
     unfolding kglue_def pglue_def by simp
 qed
 
+text \<open>With a countably valued index the
+  product-of-all-candidates construction and the Giry semidirect product
+  give the same law, because the second coordinate of the product,
+  evaluated at a first-coordinate-measurable index, has exactly the
+  kernel's law.  Both sides reduce to
+  \<open>\<integral>\<^sup>+\<omega>. (RR (N \<omega>)) {\<omega>'. pglue r T \<omega> \<omega>' \<in> A} \<partial>Q\<close>: on the left by Fubini and
+  \<open>distr_PiM_component\<close>, on the right by \<open>emeasure_bind\<close> and \<open>emeasure_distr\<close>.\<close>
+
 lemma kglue_law_eq_kglue_law':
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
     and RR :: "nat \<Rightarrow> (real \<Rightarrow> 'p) measure"
@@ -1908,23 +1851,12 @@ proof (rule measure_eqI)
     using lhs rhs by simp
 qed
 
-subsection \<open>Kernel pasting: clauses (iii) and (iv), by weak closedness\<close>
-
-text \<open>The class is closed under concatenation with a continuation chosen
-  by an arbitrary measurable kernel, not just a countably valued index ---
-  and the two martingale clauses never have to be proved for the
-  semidirect product.
-
-  Round the kernel to the dense sequence of the compact class
-  (\<open>Metric_space.countably_valued_approx\<close>); each rounded
-  glue is a legitimate pasting
-  (\<open>covariation_class_kglue_law\<close>) and, by
-  @{thm [source] kglue_law_eq_kglue_law'}, is the kernel glue at the
-  rounded kernel; the semidirect products converge weakly
-  (@{thm [source] ksemi_weak_conv}), the glue is continuous
-  (@{thm [source] Lipschitz_pglue}), so the glued laws converge; and the
-  class is weakly closed
-  (\<open>covariation_class_weak_closed\<close>).\<close>
+text \<open>At the \<open>ksemi\<close> level: if every rectangle integral of \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close>
+  vanishes, then the kernel's own integral of \<open>1\<^sub>A\<^sub>' \<sqdot> h\<close> vanishes almost
+  everywhere.  It isolates what the path-specific part has to supply:
+  integrability, and the vanishing of the rectangle integrals, which for the
+  martingale clauses is \<open>martingale.set_integral_eq\<close> applied to
+  \<open>P\<close>.\<close>
 
 lemma AE_kernel_integral_zero:
   fixes h :: "'b \<Rightarrow> real"
@@ -1958,16 +1890,6 @@ proof -
     by (rule AE_zero_of_set_integral_zero[OF subalgebra_self fi fmeas zz])
 qed
 
-text \<open>Two path-specific facts the instantiation needs.  First: an increment
-  of the rebased future is an increment of the original path, the base point
-  cancelling, which is why the martingale property of \<open>P\<close> applies to it
-  unchanged.\<close>
-
-text \<open>Second: \<open>pfut\<close> pulls the future's natural filtration back into \<open>P\<close>'s,
-  with the clock shifted by \<open>r\<close>, which puts the conditioning set
-  \<open>(pcut r) -` A \<inter> (pfut r T) -` A'\<close> into \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>, where the martingale
-  property of \<open>P\<close> applies to it.\<close>
-
 lemma prob_space_kglue_law:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
     and RR :: "nat \<Rightarrow> (real \<Rightarrow> 'p) measure"
@@ -1985,6 +1907,11 @@ proof -
     by (rule PP.prob_space_distr
         [OF kglue_measurable[OF r rT setsQ setsR Nm]])
 qed
+
+text \<open>The rebased future \<open>pfut\<close> pulls the future's natural filtration back
+  into \<open>P\<close>'s, with the clock shifted by \<open>r\<close>, which puts the conditioning set
+  \<open>(pcut r) -` A \<inter> (pfut r T) -` A'\<close> into \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>, where the martingale
+  property of \<open>P\<close> applies to it.\<close>
 
 lemma pfut_filtration_measurable:
   fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -2028,10 +1955,7 @@ proof -
          OF phim adap spF])
 qed
 
-text \<open>The \<open>gi\<close> hypothesis of @{thm [source] AE_kernel_integral_zero}: since
-  the semidirect product is a pushforward of \<open>P\<close>, integrability of the
-  rectangle integrand reduces to integrability of the future part under \<open>P\<close>,
-  the two indicators only shrinking the norm.\<close>
+text \<open>The almost-sure transfer for the glue with a countably valued index.\<close>
 
 lemma AE_kglue_law:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -2131,7 +2055,7 @@ proof -
   show ?thesis by (rule that[OF Km eq])
 qed
 
-text \<open>Their instances for the past \<open>pcut r\<close> and the future \<open>pfut r T\<close> of a
+text \<open>The instance for the past \<open>pcut r\<close> and the future \<open>pfut r T\<close> of a
   horizon-\<open>T\<close> path.\<close>
 
 theorem pcut_pfut_rcd_ksemi:
@@ -2154,23 +2078,6 @@ proof -
     by (rule path_rcd_ksemi[OF Tr PS pcut_measurable[OF r rT setsP]
           pfut_measurable_law[OF r rT setsP]]) (rule that)
 qed
-
-text \<open>The conditional law of the increments after \<open>\<theta>\<close> given the path stopped
-  at \<open>\<theta>\<close>.  Both factors live on the same \<open>T\<close>-path space, so this is
-  @{thm [source] path_rcd_ksemi} at \<open>u = v = T\<close>.\<close>
-
-subsection \<open>Identifying where the conditional law lives\<close>
-
-text \<open>\<open>pafter T \<theta> \<omega>\<close> is frozen on \<open>[0,\<theta>]\<close>, so it is not a member of
-  \<open>exit_class k L T 0\<close>: the covariation constraint fails while the
-  path stands still.  It is instead the delayed embedding of the ordinary
-  rebased future \<open>pfut \<theta> T \<omega>\<close>, padded with \<open>0\<close> on \<open>[0,\<theta>]\<close> and running the
-  future after that; the class statement for the kernel is thus a statement
-  about \<open>prebase \<theta> T \<circ> pafter T \<theta>\<close>, exactly what \<open>covariation_class_rcd_member\<close> says about the law of \<open>pfut r T\<close>.  The random
-  horizon \<open>T - \<theta>\<close> is harmless: inside an almost-sure statement over the
-  past, \<open>\<theta>\<close> is a fixed number, and the kernel's codomain stays a fixed space
-  by keeping \<open>pafter\<close> on the \<open>T\<close>-space.\<close>
-
 
 text \<open>The companion of @{thm [source] pfut_filtration_measurable} for the
   past: together they put \<open>\<phi> \<^sup>-\<^sup>1 (A \<times> A')\<close> into \<open>\<F>\<^sub>(\<^sub>r\<^sub>+\<^sub>i\<^sub>)\<close>, with \<open>A\<close> in the
@@ -2200,17 +2107,9 @@ proof -
          OF phim adap spF])
 qed
 
-subsection \<open>The evaluations generate the path space's Borel sets\<close>
-
-text \<open>@{thm [source] pcut_filtration_measurable} lands in the natural
-  filtration of the cut law, while the per-\<open>(i,j,A')\<close> statement quantifies
-  the conditioning set over all of \<open>sets ?Q\<close>, since
-  @{thm [source] AE_zero_of_set_integral_zero} is applied with \<open>\<G> = ?Q\<close>.  So
-  the two must be the same \<open>\<sigma>\<close>-algebra: the coordinate evaluations have to
-  generate the Borel sets of the path space.  The proof is metric: the
-  distance to a fixed path is decided by the rational times alone, hence
-  measurable in the filtration, hence so is every ball, and the balls
-  generate since the path space is second countable.\<close>
+text \<open>Under the product of the candidate laws, each candidate's martingale,
+  delayed by \<open>r\<close>, is a martingale for the product of the delayed natural
+  filtrations.\<close>
 
 lemma kglue_param_martingale:
   fixes RR :: "nat \<Rightarrow> (real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -2238,11 +2137,10 @@ proof -
   from martingale_time_change[OF this s0 smono] show ?thesis .
 qed
 
-text \<open>The uniform first-moment bound the kernel glue's integrability needs:
-  the bound depends only on \<open>k\<close>, \<open>L\<close> and the horizon, not on the member ---
-  so it holds simultaneously for every candidate continuation in the
-  family.  \<open>a \<le> 1 + a\<^sup>2\<close> avoids a square root, so no Cauchy--Schwarz is
-  needed.\<close>
+subsection \<open>Generators of the natural filtration\<close>
+
+text \<open>A Borel set of the past, pulled back along the cut at \<open>r\<close>, is an event
+  of the natural filtration at \<open>r\<close>.\<close>
 
 lemma pcut_vimage_natural_filtration:
   fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -2271,6 +2169,10 @@ proof -
     by (rule measurable_sets[OF m AQ])
   then show ?thesis by simp
 qed
+
+text \<open>Likewise for the past of an additive glue with a fixed first path
+  \<open>p'\<close>: the paths \<open>w\<close> such that the past of \<open>padd T p' w\<close> up to \<open>i\<close> lies in a
+  Borel set form an event of the natural filtration at \<open>i\<close>.\<close>
 
 lemma section_padd_in_filtration:
   fixes p' :: "(real \<Rightarrow> 'p::{polish_space,banach})" and N :: "(real \<Rightarrow> 'p) measure"
@@ -2312,12 +2214,8 @@ proof -
   then show ?thesis unfolding eq .
 qed
 
-subsection \<open>The conditioning set on \<open>{\<theta> > i}\<close> lives in \<open>\<F>\<^sub>(\<^sub>i\<^sub> \<^sub>\<and>\<^sub> \<^sub>\<theta>\<^sub>)\<close>\<close>
-
-text \<open>The one set-theoretic step of the four-cell argument.  A \<open>pcut i\<close>-set
-  intersected with \<open>{\<theta> > i}\<close> is an \<open>\<F>\<^sub>(\<^sub>i\<^sub> \<^sub>\<and>\<^sub> \<^sub>\<theta>\<^sub>)\<close>-set: below \<open>i\<close> the cut
-  \<open>{i \<and> \<theta> \<le> t}\<close> forces \<open>\<theta> \<le> t < i\<close> and so meets \<open>{\<theta> > i}\<close> in nothing, while
-  from \<open>i\<close> on the cut is everything and the set is already \<open>\<F>\<^sub>i\<close>-measurable.\<close>
+text \<open>Conversely, every event of the natural filtration at \<open>s\<close> is such a
+  pullback.\<close>
 
 lemma sets_natural_filtration_eq_pcut_vimage:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -2344,8 +2242,8 @@ next
     unfolding Aeq by (rule pcut_vimage_natural_filtration[OF s sT setsQ B])
 qed
 
-text \<open>A countable \<open>\<pi>\<close>-system generating the path space's Borel sets.  A base
-  is not \<open>\<pi>\<close>-stable, so close it under finite intersections: still countable,
+text \<open>A countable \<open>\<pi>\<close>-system generating the natural filtration at \<open>s\<close>,
+  pulled back from a base of the path space of horizon \<open>s\<close>.  A base is not \<open>\<pi>\<close>-stable, so close it under finite intersections: still countable,
   and it generates the same \<open>\<sigma>\<close>-algebra because a \<open>\<sigma>\<close>-algebra is closed under
   finite intersections.  The whole space is thrown in so that the complement
   case of @{thm [source] set_integral_zero_of_generator} has something to
@@ -2436,20 +2334,6 @@ proof -
     by blast
   then show ?thesis by (rule bchoice)
 qed
-
-subsection \<open>The martingale property at a fixed law\<close>
-
-text \<open>At a fixed \<open>p'\<close>, adaptedness, integrability, continuity in time, and
-  the set-integral identity against the terminal value at rational times
-  give the martingale property, via @{thm [source]
-  integrable_and_set_integral_eq_of_rational_times} (rational to real) and,
-  inside its \<open>rat\<close> hypothesis, @{thm [source] set_integral_zero_of_generator}
-  (\<open>\<pi>\<close>-system to \<open>\<F>\<^sub>q\<close>).  The process must be constant past \<open>S\<close> --- the capped
-  \<open>\<lambda>u w. w (min u S)\<close> is --- since the filtration is indexed by \<open>[0,\<infinity>)\<close>
-  while the path space only knows \<open>[0,S]\<close>.\<close>
-
-text \<open>The rectangle itself --- the stopping-time analogue of
-  \<open>rect_vimage_natural_filtration\<close>.\<close>
 
 (*<*)
 end

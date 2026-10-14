@@ -13,10 +13,6 @@ begin
 
 (*>*)
 
-text \<open>The state and its covariation, carried as one path.\<close>
-
-type_synonym 'n pairpath = "real \<Rightarrow> (real^'n) \<times> (real^'n^'n)"
-
 text \<open>The path space this development works on carries a pair: the state
   and its covariation, \<open>real \<Rightarrow> (real^'n) \<times> (real^'n^'n)\<close>.  This theory fixes
   that type and collects what is true of paths, and of laws of paths, before
@@ -31,15 +27,16 @@ text \<open>The path space this development works on carries a pair: the state
   times of the first component, path stopping times, the covariation
   constraint) are stated at a product.\<close>
 
+text \<open>The state and its covariation, carried as one path.\<close>
 
-section \<open>Diagonal entries under the eigenvalue constraints\<close>
+type_synonym 'n pairpath = "real \<Rightarrow> (real^'n) \<times> (real^'n^'n)"
 
+subsection \<open>The components of a pair path\<close>
 
-text \<open>\<open>radial_sq_upto\<close> transports the growth identity to the
-  endpoint of a half-open confinement interval.  Nothing in its proof is
-  specific to \<open>\<lambda>w. (norm (w - y\<^sub>0))\<^sup>2\<close> --- any continuous functional of the
-  position does --- and the sharp bound below needs it for the projected
-  square as well.\<close>
+text \<open>An identity \<open>F (X\<^sub>t) = c\<^sub>0 + t c\<^sub>n\<close> for a continuous functional \<open>F\<close>
+  of the first component, known at every time up to which the path stays in
+  a region \<open>RO\<close>, extends to the endpoint of a half-open stay \<open>[0, e)\<close>:
+  both sides are continuous, so the identity passes to the limit from below.\<close>
 
 lemma radial_sq_upto_gen:
   fixes \<omega> :: "(real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})" and TT e c0 cn :: real
@@ -67,16 +64,7 @@ proof -
   ultimately show ?thesis by linarith
 qed
 
-text \<open>The subspace-tangential member confines the path to
-  \<open>cball 0 rB \<subseteq> K\<close> for any deterministic time \<open>cc\<close> strictly below
-  \<open>\<delta> = (rB\<^sup>2 - |x|\<^sup>2)/(m-1)\<close>.  The inner barrier is unreachable because the
-  projected square only grows, and the outer sphere pins the time exactly
-  because the full square grows at the same rate --- that is what the
-  upgraded \<open>subspace_tangential_exact_growth\<close> delivers.
-  Feeding the constant-time DPP gives \<open>cc \<le> v(x)\<close>, and \<open>cc\<close> is a free
-  parameter, so no factor \<open>2\<close> and no \<open>T/2\<close> cap survive: letting
-  \<open>cc \<longrightarrow> min T \<delta>\<close> is the corollary below.\<close>
-
+text \<open>Each coordinate of the state is continuous along a pair path.\<close>
 
 lemma path_coord_cont_on:
   fixes \<omega> :: "'n::finite pairpath"
@@ -90,27 +78,7 @@ proof -
   show ?thesis by (rule continuous_on_compose2[OF c2 c]) simp
 qed
 
-text \<open>The mass a class member puts outside a pair Hoelder ball.  This is
-  \<open>Path_Tightness.path_law_holder_ball_bound_vec\<close>'s argument, run natively
-  on the pair path space.  Two things stop that theorem from being applied
-  off the shelf: its conclusion is about the push-forward \<open>path_law M X T\<close>
-  of an abstract process, whereas a class member is already a law on paths;
-  and it wants the start condition \<open>X\<^sub>0 = x\<close> pointwise, whereas a class
-  member only has it almost surely.  Charging the failure of the
-  start-and-Lipschitz event to a null set handles both.\<close>
-
-subsection \<open>The constant-volatility Gaussian member\<close>
-
-text \<open>The Euler kernels freeze the covariance at the step's left endpoint,
-  so the building block is Brownian motion pushed through a constant
-  matrix \<open>S\<close>: the pair \<open>(S \<cdot> W\<^sub>t, t \<cdot> S S\<^sup>T)\<close>, started at \<open>0\<close>
-  (\<open>sbmpair\<close>, whose case \<open>S = I\<close> is the witness \<open>bmpair\<close>).  In its class
-  membership (\<open>sbmpair_law_in_covariation_class\<close>) the
-  martingale clauses are bounded-linear images of the Brownian ones
-  (@{thm [source] martingale_bounded_linear_image}), the covariation
-  clause is deterministic, and an arbitrary start comes free from
-  \<open>covariation_class_pshift\<close>.  The only hypothesis is
-  \<open>S S\<^sup>T \<in> sconstraint k L\<close>.\<close>
+text \<open>The two components at a time.\<close>
 
 abbreviation pairX :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> 'a"
   where "pairX t \<omega> \<equiv> fst (\<omega> t)"
@@ -119,31 +87,9 @@ abbreviation pairX :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<
 abbreviation pairY :: "real \<Rightarrow> (real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> 'b"
   where "pairY t \<omega> \<equiv> snd (\<omega> t)"
 
-section \<open>Laws on the capped path space\<close>
+subsection \<open>Laws on the capped path space\<close>
 
-text \<open>Operational reading of (1.7), equivalent by compensator uniqueness: a
-  law of \<open>(X, Y)\<close> where \<open>X\<close> is a martingale from \<open>x\<close>, \<open>Y\<close> starts at \<open>0\<close>
-  with difference quotients in the constraint set (so \<open>Y\<close> is Lipschitz and
-  a.e. differentiable into \<open>S\<close>), and \<open>X X\<^sup>T - Y\<close> is a martingale, making
-  \<open>Y\<close> the quadratic covariation. The cap at \<open>T\<close> is invisible once \<open>T\<close>
-  exceeds the uniform exit-time bound (Lemma 1.9 / Eq. (3.10)).
-
-  The martingale clauses must stop the process at \<open>T\<close>: points of
-  \<^term>\<open>mspace (path_metric T)\<close> are extensional on \<open>{0..T}\<close>, so an
-  unstopped clause would force the coordinate process to be almost surely
-  constant, emptying the class for every \<open>T > 0\<close>. Stopping at \<open>T\<close>
-  captures exactly (1.7) on \<open>[0,T]\<close>.\<close>
-
-
-subsection \<open>The value functional of a family of laws\<close>
-
-text \<open>
-  Eq. (1.6)--(1.7) of \<^cite>\<open>LaiShkolnikovSoner\<close> as the paper states them: laws of
-  the \<open>R\<^sup>n\<close>-valued path alone.  The covariation enters existentially, through a
-  compensator \<open>A\<close> whose difference quotients lie in the constraint set --- which
-  is what \<open>d\<langle>X\<rangle>(t)/dt \<in> S\<^sub>k\<^sup>L\<close> says once \<open>\<langle>X\<rangle>\<close> is read as the compensator of
-  \<open>X X\<^sup>T\<close>.
-\<close>
+text \<open>A law on the path space has the paths as its points.\<close>
 
 lemma space_of_path_sets:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -151,15 +97,9 @@ lemma space_of_path_sets:
   shows "space Q = mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
   using sets_eq_imp_space_eq[OF assms] by (simp add: space_borel_of)
 
-section \<open>The constraint passes to weak limits, without Skorokhod\<close>
-
-text \<open>The paper passes the covariation constraint to the limit law via
-  Skorokhod's representation theorem; this instead uses the closed-set half
-  of the portmanteau theorem (\<open>weak_conv_closed_full_measure\<close>). For fixed
-  times \<open>s < t\<close> the difference quotient is a continuous function of the
-  path and the constraint set is closed, so
-  \<open>{\<omega>. (Y t \<omega> - Y s \<omega>)/(t - s) \<in> S}\<close> is closed and has full mass under
-  every approximating law, hence under the limit.\<close>
+text \<open>Restricting a path to \<open>{0..s}\<close> is measurable from the natural
+  filtration at \<open>s\<close> into the path space of horizon \<open>s\<close>; hence so is every
+  Borel test of the restricted path, a test of the past.\<close>
 
 lemma restrict_measurable_natural_filtration:
   fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
@@ -197,7 +137,10 @@ lemma past_test_measurable_natural_filtration:
   by (rule measurable_compose
       [OF restrict_measurable_natural_filtration[OF setsQ s sT] h])
 
-subsection \<open>The identity at a law, against a bounded test\<close>
+subsection \<open>Glueing two continuous paths\<close>
+
+text \<open>Running \<open>\<omega>\<close> up to time \<open>r\<close> and continuing with the increments of
+  \<open>\<omega>'\<close> gives a continuous path, on the half-line and on a capped horizon.\<close>
 
 lemma continuous_on_iglue:
   fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'p::real_normed_vector)"
@@ -246,6 +189,15 @@ proof -
   then show ?thesis by (rule continuous_on_eq) (use r rT in \<open>auto simp: min_def\<close>)
 qed
 
+subsection \<open>Difference quotients and second moments\<close>
+
+text \<open>For fixed times \<open>s\<close> and \<open>t\<close>, the difference quotient of the covariation
+  is a continuous function of the path.  So for a closed set \<open>S\<close> of
+  matrices the paths whose quotient lies in \<open>S\<close> form a closed set, and the
+  closed-set half of the portmanteau theorem (\<open>weak_conv_closed_full_measure\<close>)
+  passes full mass of that set to a weak limit, with no Skorokhod
+  representation.\<close>
+
 lemma continuous_map_diffquot:
   fixes s t :: real
   assumes s: "s \<in> {0..T}" and t: "t \<in> {0..T}"
@@ -280,14 +232,7 @@ proof -
 qed
 
 
-text \<open>The value function at a shorter horizon is the value function at the
-  longer one, capped.  The \<open>\<le>\<close> half is \<open>covariation_val_horizon_mono\<close>
-  together with \<open>covariation_val_le_T\<close>; the \<open>\<ge>\<close> half cuts a
-  competitor at the longer horizon back to the shorter one
-  (\<open>covariation_class_pcut\<close>), where the two lemmas above turn
-  its value into the capped value.  No pasting is needed in either
-  direction --- the pasting is already inside
-  \<open>covariation_val_horizon_mono\<close>.\<close>
+text \<open>A second-moment bound on a coordinate, in nonnegative-integral form.\<close>
 
 lemma pair_law_coord_sq_nn_bound:
   fixes N :: "('n::finite pairpath) measure"
@@ -304,20 +249,10 @@ proof -
   finally show ?thesis .
 qed
 
-subsection \<open>Generic integrability side conditions of the transfer theorem\<close>
-
-text \<open>\<open>clamp_integrable\<close>, \<open>tail_indicator_measurable\<close>, \<open>tail_integrable\<close> live in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
-
-
-subsection \<open>From a market to its law: transferring the exit time\<close>
-
-text \<open>
-  \<open>vshift\<close> speaks about laws on the path space, while a market is a
-  measure, filtration, process and covariation.  \<open>Path_Space.path_law\<close>
-  bridges the two, and these lemmas carry the essential infimum of the
-  exit time across it, connecting the semicontinuity results above to
-  \<open>\<P>\<^sub>x\<close>.
-\<close>
+text \<open>The algebra of the compensated clause at a difference of points: the
+  outer product of \<open>a - b\<close> minus the difference of the covariations is the
+  compensated outer product at \<open>a\<close>, minus the two cross terms, plus a
+  remainder in \<open>b\<close> alone.\<close>
 
 lemma outerp_diff_compensated:
   fixes a b :: "real^'n::finite" and Ya Yb :: "real^'n^'n"
@@ -326,21 +261,11 @@ lemma outerp_diff_compensated:
         + (outerp b + Yb)"
   by (simp add: outerp_diff)
 
-text \<open>The martingale-level form of "pulling out what is known": the AFP's
-  conditional-expectation lemma \<open>cond_exp_measurable_mult\<close> feeds the
-  cross term of @{thm [source] outerp_diff_compensated}.  The factor must be
-  measurable for the filtration at the initial time, not merely somewhere
-  along it, or it is not adapted.  \<open>martingale_mult_measurable\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
+subsection \<open>The exit time of a process and of its law\<close>
 
-text \<open>\<open>integrable_prod_of_squares\<close> lives in @{theory Continuous_Time_Martingales.Quadratic_Variation}.\<close>
-
-
-text \<open>\<open>martingale_cross_measurable\<close> lives in
-  @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
-
-subsection \<open>The shifted processes of a law\<close>
-
+text \<open>The shifted exit-time functional \<open>vshift\<close> speaks about laws on the
+  path space; \<open>path_law\<close> bridges to a process with continuous paths, and
+  the essential infimum of the exit time is the same on both sides.\<close>
 
 theorem vshift_path_law:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{polish_space,banach}" and y :: 'b

@@ -13,15 +13,12 @@ text \<open>What optional sampling looks like on the path space: the increment
   clauses that survive the sampling.\<close>
 
 
-text \<open>\<open>stopped_increment_of_horizon_gen\<close> is stated for the offset
-  family \<open>(\<theta>+i) \<and> T\<close>; the additive split instead uses the delayed family
-  \<open>u \<or> \<theta>\<close>.  Both are instances of one statement about an arbitrary pair of
-  ordered bounded path stopping times, proved here and already abstract in
-  @{thm [source] set_martingale_sampling_two}.
+subsection \<open>Events of the past at the sampled time\<close>
 
-  Integrability of the sampled process, free in the deterministic
-  development from the martingale locale, is reconstructed here from the
-  dyadic approximation and the same dominating function.\<close>
+text \<open>A \<open>pcut i\<close>-set intersected with \<open>{\<theta> > i}\<close> is an \<open>\<F>\<^sub>(\<^sub>i\<^sub> \<^sub>\<and>\<^sub> \<^sub>\<theta>\<^sub>)\<close>-set: below
+  \<open>i\<close> the cut \<open>{i \<and> \<theta> \<le> t}\<close> forces \<open>\<theta> \<le> t < i\<close> and so meets \<open>{\<theta> > i}\<close> in
+  nothing, while from \<open>i\<close> on the cut is everything and the set is already
+  \<open>\<F>\<^sub>i\<close>-measurable.\<close>
 
 lemma pcut_after_in_pre_sigma:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -81,7 +78,14 @@ proof -
   qed
 qed
 
-subsection \<open>Clause (iv): the inner-integral identity\<close>
+text \<open>The stopped path, evaluated at a time \<open>r \<le> u\<close>, is \<open>\<F>\<^sub>u\<close>-measurable
+  as a path point, with no componentwise decomposition.  The trick reads it off the \<open>u\<close>-cut
+  rather than off the whole path: \<^const>\<open>pcut\<close> is measurable into the
+  \<open>u\<close>-horizon space by the description of the natural filtration
+  (@{thm [source] sets_natural_filtration_eq_pcut_vimage}), the truncated
+  stopping time \<open>r \<and> \<theta>\<close> is \<open>\<F>\<^sub>u\<close>-measurable because \<open>{r \<and> \<theta> \<le> t}\<close> is
+  either everything or \<open>{\<theta> \<le> t}\<close> with \<open>t < r\<close>, and
+  @{thm [source] path_eval_at_measurable_time} joins the two.\<close>
 
 lemma pstopped_eval_filtration:
   fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
@@ -196,7 +200,7 @@ next
     by (rule measurable_from_subalg[OF sub]) (use ev same in simp)
 qed
 
-subsection \<open>Stopping a horizon-capped square-integrable martingale\<close>
+subsection \<open>The inner-integral identity along the additive glue\<close>
 
 text \<open>The engine behind the \<open>X\<close> and the compensated clause (iv), stated
   once for a continuous real functional \<open>F\<close> of the path value.  Along the
@@ -1127,16 +1131,9 @@ proof -
   then show ?thesis by simp
 qed
 
-section \<open>The additive glue lands in the class\<close>
+subsection \<open>Integrability under the additive glue\<close>
 
-text \<open>All four clauses hold, with no martingale hypothesis left over.
-  Clauses (i)--(iii) come from \<open>covariation_class_aglue_law\<close>;
-  the two martingale clauses are @{thm [source] aglue_law_X_martingale} and
-  @{thm [source] aglue_law_comp_martingale}.  The remaining hypotheses
-  concern only the two factors --- the stopped past \<open>Q\<close> and the
-  continuation kernel \<open>\<kappa>\<close> --- read off the class and the r.c.d. by a caller.
-
-  Integrability under the glued law, for a functional \<open>H\<close> of the path value
+text \<open>Integrability under the glued law, for a functional \<open>H\<close> of the path value
   whose norm along the glue is bounded by a \<open>Q\<close>-integrable term of the past
   plus a term of the continuation with \<open>Q\<close>-integrably bounded \<open>\<kappa> p'\<close>-mean:
   the bound has the shape @{thm [source] integrable_ksemi_of_past_bound} was
@@ -1543,11 +1540,11 @@ text \<open>Only countably many conditions survive the passage from "for each,
   and \<open>finite_measure.vitali_convergence\<close> finishes, both from
   @{theory Continuous_Time_Martingales.Conditional_UI}.
 
-  Larsson--Ruf's argument instead uses a regular conditional distribution
-  citing Stroock--Varadhan, Thm 1.3.4; their classical conditioning theorem
-  needs none of this because the martingale problem there is stated with
+  Larsson and Ruf \<^cite>\<open>LarssonRuf\<close> instead use a regular conditional
+  distribution, citing Stroock--Varadhan, Thm 1.3.4; that classical conditioning
+  theorem needs none of this because the martingale problem there is stated with
   test functions in \<open>C\<^sub>c\<^sup>\<infinity>\<close>, whose martingales are bounded, while the
-  paper's class (1.7) makes \<open>X\<close> itself and \<open>outerp X - Y\<close> the martingales,
+  covariation class makes \<open>X\<close> itself and \<open>outerp X - Y\<close> the martingales,
   and those are not.
 
   The countably many almost-sure conditions of
@@ -1885,18 +1882,6 @@ proof -
     by (intro eventually_all_finite mc)
   then show ?thesis by eventually_elim (rule martingale_matI, blast)
 qed
-
-subsection \<open>The conditional law is in the class\<close>
-
-text \<open>The regular conditional distribution of the rebased future given the
-  past lies, at almost every \<open>p'\<close>, in the paper's class (1.7) at the origin,
-  from the four clauses: (i) @{thm [source] pfut_rcd_start}, (ii)
-  \<open>pfut_rcd_diffquot\<close>, (iii)
-  @{thm [source] pfut_rcd_X_martingale}, (iv)
-  @{thm [source] pfut_rcd_comp_martingale}.  Under \<open>\<kappa> p'\<close> the starting point
-  is a constant, so the shifted law lies in the class at that point and its
-  essential infimum is bounded by \<open>exit_val\<close> by definition, with no
-  localization and no \<open>K\<^sub>\<epsilon>\<close>.\<close>
 
 (*<*)
 end
