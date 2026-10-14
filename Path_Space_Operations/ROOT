@@ -1,19 +1,21 @@
 session Path_Space_Operations = Continuous_Path_Spaces +
   description "
-    Operations on laws of continuous paths that carry a state together with
-    its running covariation.  Cutting, glueing, shifting, delaying and
-    re-basing a path, each continuous and Borel measurable for the
-    supremum metric, and the same operations on path laws: the law of a
-    concrete process, glueing a law to a kernel of continuations chosen by
-    the endpoint, and splitting a law at a stopping time and reassembling
-    it by addition.  Stopping times as path functionals, the regular
-    conditional distribution of the future given the stopped past, and
-    optional sampling on the path space.  The martingale identities, and the
-    closed clauses of a constraint on the covariation, pass through weak
-    limits of laws.  The class of martingale laws whose covariation has its
-    density in a given set of matrices, with its elementary properties, and
-    the value function of the minimum-exit-time problem over that class,
-    with the set of matrices and the domain as parameters.
+    Operations on laws of continuous paths, with values in any Polish Banach
+    space where the operation does not look at the value, and otherwise
+    carrying a state together with its running covariation.  Cutting,
+    glueing, shifting, delaying and re-basing a path, each continuous and
+    Borel measurable for the supremum metric, and the same operations on
+    path laws: the law of a concrete process, glueing a law to a kernel of
+    continuations chosen by the endpoint, and splitting a law at a stopping
+    time and reassembling it by addition.  Stopping times as path
+    functionals, the regular conditional distribution of the future given
+    the stopped past, and optional sampling on the path space.  The
+    martingale identities, and the closed clauses of a constraint on the
+    covariation, pass through weak limits of laws.  The class of martingale
+    laws whose covariation has its density in a given set of matrices, with
+    its elementary properties, and the value function of the
+    minimum-exit-time problem over that class, with the set of matrices and
+    the domain as parameters.
   "
   options [document = pdf, document_output = "output"]
   sessions
