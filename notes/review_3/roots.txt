@@ -501,12 +501,37 @@ Test_Functions.convex_expandable    # KEEP_EVIDENCE
 Viscosity_Solutions.visc_subsol_gen_def    # FIX_THEN_KEEP
 Viscosity_Solutions.visc_supersol_gen_def    # FIX_THEN_KEEP
 Viscosity_Solutions.visc_sol_gen_def    # FIX_THEN_KEEP
-Viscosity_Solutions.visc_subsol_gen_env_def    # FIX_THEN_KEEP
-Viscosity_Solutions.visc_supersol_gen_env_def    # FIX_THEN_KEEP
+# G-G (D9): the touching over K is the instance N = (%_. principal K) of the
+# generic predicates; the former visc_*_gen_env_def are their elementary forms
+# visc_*_gen_principal, and visc_*_gen_env_imp are visc_*_gen_subset (the same
+# statement for every test class and locality).
+Viscosity_Solutions.visc_subsol_gen_principal    # FIX_THEN_KEEP (was visc_subsol_gen_env_def)
+Viscosity_Solutions.visc_supersol_gen_principal    # FIX_THEN_KEEP (was visc_supersol_gen_env_def)
+Viscosity_Solutions.visc_subsol_gen_nhds    # KEEP_API
+Viscosity_Solutions.visc_supersol_gen_nhds    # KEEP_API
 Viscosity_Solutions.visc_subsol_gen_mono    # KEEP_API
 Viscosity_Solutions.visc_supersol_gen_mono    # KEEP_API
-Viscosity_Solutions.visc_subsol_gen_env_imp    # KEEP_API
-Viscosity_Solutions.visc_supersol_gen_env_imp    # KEEP_API
+Viscosity_Solutions.visc_subsol_gen_subset    # KEEP_API (was visc_subsol_gen_env_imp)
+Viscosity_Solutions.visc_supersol_gen_subset    # KEEP_API (was visc_supersol_gen_env_imp)
+Viscosity_Solutions.visc_subsol_gen_test_mono    # KEEP_API
+Viscosity_Solutions.visc_supersol_gen_test_mono    # KEEP_API
+Viscosity_Solutions.visc_subsol_gen_filter_mono    # KEEP_API
+Viscosity_Solutions.visc_supersol_gen_filter_mono    # KEEP_API
+Viscosity_Solutions.visc_subsol_gen_cong    # KEEP_API
+Viscosity_Solutions.visc_supersol_gen_cong    # KEEP_API
+Viscosity_Solutions.visc_subsol_gen_principal_local    # KEEP_API
+Viscosity_Solutions.visc_supersol_gen_principal_local    # KEEP_API
+# G-G (D9): the paper's predicates as instances of the generic ones (proved bridges)
+Viscosity_Definitions.visc_subsol_eq_gen
+Viscosity_Definitions.visc_supersol_eq_gen
+Viscosity_Definitions.visc_sol_eq_gen
+Viscosity_Definitions.visc_subsol_env_eq_gen
+Viscosity_Definitions.visc_supersol_env_eq_gen
+Viscosity_Definitions.visc_sol_env_eq_gen
+Viscosity_Definitions.visc_subsol_env2_eq_gen
+Viscosity_Definitions.visc_supersol_env2_eq_gen
+Viscosity_Definitions.visc_supersol_lsc_eq_gen
+Viscosity_Definitions.supersol_jet_eq_gen
 # toolkit
 Path_Tightness.path_laws_convergent_subsequence_martingale    # FIX_THEN_KEEP
 Symmetric_Spectral.psd_diag_nonneg    # KEEP_API
