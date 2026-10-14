@@ -815,7 +815,7 @@ proof -
     unfolding natural_filtration_cong_space[OF sp] sp .
   have contT: "continuous_on {0..T} (\<lambda>s. ?Z s \<omega>)" if w: "\<omega> \<in> space P" for \<omega>
     by (rule continuous_on_subset[OF continuous_on_compose2
-          [OF fc exit_class_path_cont[OF T0' setsP w]]]) auto
+          [OF fc path_stopped_at_horizon_continuous[OF T0' setsP w]]]) auto
   have cap: "?Z s \<omega> = ?Z (min s T) \<omega>" for s and \<omega> :: "'n pairpath" by simp
   have mgs: "martingale P ?F 0 (\<lambda>v \<omega>. ?Z (min v (\<theta> \<omega>)) \<omega>)"
     by (rule horizon_sq_int_martingale_stopped(1)

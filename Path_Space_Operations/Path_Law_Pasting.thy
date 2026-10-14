@@ -2134,7 +2134,7 @@ qed
 text \<open>Their instances for the past \<open>pcut r\<close> and the future \<open>pfut r T\<close> of a
   horizon-\<open>T\<close> path.\<close>
 
-theorem exit_class_rcd_ksemi:
+theorem pcut_pfut_rcd_ksemi:
   fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"

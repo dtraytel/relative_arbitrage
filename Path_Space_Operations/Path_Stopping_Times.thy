@@ -137,7 +137,7 @@ text \<open>The regular conditional distribution of the past given the future us
   the two maps only through their measurability, so it is proved
   (\<open>path_rcd\<close>, \<open>path_rcd_ksemi\<close> in \<open>Path_Law_Pasting\<close>) with the two maps
   and the two horizons free; the deterministic split
-  (\<open>exit_class_rcd\<close>, \<open>exit_class_rcd_ksemi\<close>) is the instance \<open>u := r\<close>, \<open>v := T - r\<close>, and
+  (\<open>pcut_pfut_rcd_ksemi\<close>) is the instance \<open>u := r\<close>, \<open>v := T - r\<close>, and
   the stopping-time case is \<open>u := v := T\<close>, \<open>\<phi>\<^sub>1 := pstopped T \<theta>\<close>,
   \<open>\<phi>\<^sub>2 := pafter T \<theta>\<close>.\<close>
 

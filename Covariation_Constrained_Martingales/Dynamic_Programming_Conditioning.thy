@@ -531,7 +531,7 @@ proof -
   have neQ: "space ?Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   obtain \<kappa> where Km: "\<kappa> \<in> ?X \<rightarrow>\<^sub>M prob_algebra ?Y"
     and eq: "distr P (?X \<Otimes>\<^sub>M ?Y) ?\<phi> = ksemi ?Q ?Y \<kappa>"
-    by (rule exit_class_rcd_ksemi[OF r rT setsP PS])
+    by (rule pcut_pfut_rcd_ksemi[OF r rT setsP PS])
   have KQ: "\<kappa> \<in> ?Q \<rightarrow>\<^sub>M prob_algebra ?Y"
     using Km measurable_cong_sets[OF setsQ refl] by blast
   have member: "AE p' in ?Q. \<kappa> p' \<in> covariation_class S ?S 0"

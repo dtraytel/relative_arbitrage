@@ -376,7 +376,7 @@ proof -
       by (rule integrable_restrict_full[OF RF covariation_class_sq_integrable[OF B0 B T0 Q]])
         (use that T0 in simp_all)
     show "continuous_on {0..} (\<lambda>u. ?X u \<omega>)" if "\<omega> \<in> space (restrict_space Q G)" for \<omega>
-      by (rule exit_class_coord_paths_cont[OF T0 setsQ]) (use that spM in \<open>simp add: G_def\<close>)
+      by (rule path_stopped_at_horizon_coordinate_continuous[OF T0 setsQ]) (use that spM in \<open>simp add: G_def\<close>)
     show "AE \<omega> in restrict_space Q G. \<bar>?X 0 \<omega>\<bar> \<le> \<bar>x $ i\<bar>"
     proof (rule AE_I2)
       fix \<omega> assume "\<omega> \<in> space (restrict_space Q G)"

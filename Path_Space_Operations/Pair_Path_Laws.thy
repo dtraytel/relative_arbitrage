@@ -670,7 +670,7 @@ proof -
   qed
 qed
 
-lemma exit_class_path_cont:
+lemma path_stopped_at_horizon_continuous:
   fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
   assumes T: "0 \<le> T"
     and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
@@ -686,7 +686,7 @@ proof -
   show ?thesis by (rule continuous_on_compose2[OF c m mim])
 qed
 
-lemma exit_class_coord_paths_cont:
+lemma path_stopped_at_horizon_coordinate_continuous:
   fixes Q :: "('n::finite pairpath) measure"
   assumes T: "0 \<le> T"
     and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
@@ -694,7 +694,7 @@ lemma exit_class_coord_paths_cont:
   shows "continuous_on {0..} (\<lambda>s. fst (\<omega> (min s T)) $ i)"
 proof -
   have c2: "continuous_on {0..} (\<lambda>s. fst (\<omega> (min s T)))"
-    by (rule continuous_on_fst[OF exit_class_path_cont[OF T setsQ w]])
+    by (rule continuous_on_fst[OF path_stopped_at_horizon_continuous[OF T setsQ w]])
   have c3: "continuous_on UNIV (\<lambda>v :: real^'n. v $ i)"
     by (rule linear_continuous_on[OF bounded_linear_vec_nth])
   show ?thesis by (rule continuous_on_compose2[OF c3 c2]) simp
