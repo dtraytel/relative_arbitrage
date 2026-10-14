@@ -1,12 +1,19 @@
-section \<open>The supersolution, case 1: a nonzero gradient\<close>
+section \<open>Rate fields for the supersolution, and the growth of Euler limits\<close>
 
 (*<*)
-theory Value_Function_Supersolution_Case_1
+theory Euler_Limit_Growth
   imports
     "Covariation_Constrained_Martingales.Covariation_Class_Euler_Scheme" Value_Function_Subsolution
 begin
 
 (*>*)
+
+text \<open>The inputs of Case 1 of the supersolution property
+  (\<open>Value_Function_Supersolution\<close>) and of the
+  subspace-tangential field: a continuous field of rates in a set invariant
+  under orthogonal conjugation that annihilates the gradient of a quadratic,
+  and the almost-sure growth, along such a quadratic, of every weak limit of
+  the Euler laws driven by a field, while the path stays in a region.\<close>
 
 subsection \<open>Bricks for the Case-1 contradiction\<close>
 
@@ -443,30 +450,6 @@ proof -
   qed
 qed
 
-
-subsection \<open>Case 1: a nonzero gradient contradicts a failed supersolution
-  inequality\<close>
-
-text \<open>If the supersolution inequality fails at a touching point with
-  nonzero gradient, the failure yields a feasible witness with slack
-  \<open>2\<eta>\<^sub>0\<close>.  Softening the Hessian by \<open>(2\<gamma>+\<delta>)\<cdot>1\<close> keeps slack \<open>2\<eta>\<close> and buys
-  both the Taylor minorant (via \<open>\<delta>\<close>) and a strict sphere margin (via
-  \<open>\<gamma>\<close>); the witness is rotated into a covariance field by
-  @{thm [source] covariation_rotSF_exists}, the Euler limit
-  produces a class member whose paths grow along the quadratic, and at the
-  stopping time \<open>min cc (pball_exit T x rr)\<close> the DPP functional is at
-  least \<open>v(x) + mg\<close> almost surely -- the exit branch is paid by
-  \<open>\<gamma> rr\<^sup>2\<close>, the no-exit branch by \<open>cc \<eta> / 2\<close>, and the horizon cap by
-  \<open>T - v(x) > 0\<close>, which a nonzero gradient forces.  That contradicts
-  @{thm [source] covariation_val_dpp_sup_ge_time}.\<close>
-
-subsection \<open>Case 1, packaged for the envelope form\<close>
-
-text \<open>The contradiction, read back as the positive statement the envelope
-  supersolution definition wants: at any interior touching point with a
-  nonzero gradient the usc envelope of the operator is at least one, since
-  \<open>F \<le> F\<^sup>*\<close> (@{thm [source] ell_op_le_ell_op_usc}) turns a failed envelope
-  inequality into a failed plain one.\<close>
 
 subsection \<open>Conditional orthogonality: the kill checked at the point\<close>
 

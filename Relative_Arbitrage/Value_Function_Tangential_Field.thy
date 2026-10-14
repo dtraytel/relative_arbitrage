@@ -3,7 +3,7 @@ section \<open>The subspace-tangential field for Example 3.1, general \<open>k\<
 (*<*)
 theory Value_Function_Tangential_Field
   imports
-    Value_Function_Supersolution_Case_1 "Relative_Arbitrage_Equation.Subspace_Tangential_Field"
+    Euler_Limit_Growth "Relative_Arbitrage_Equation.Subspace_Tangential_Field"
 begin
 
 (*>*)

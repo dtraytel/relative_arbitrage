@@ -25,8 +25,8 @@ session Relative_Arbitrage = Covariation_Constrained_Martingales +
     Exit_Class
     Proposition_2_4
     Value_Function_Subsolution
-    Value_Function_Supersolution_Case_1
-    Value_Function_Supersolution_Case_2
+    Euler_Limit_Growth
+    Value_Function_Supersolution
     Value_Function_Tangential_Field
     Value_Function_Assembly
     Covariation_Operator

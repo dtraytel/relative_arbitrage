@@ -3,7 +3,7 @@ section \<open>Clause (2): the value function is a viscosity solution\<close>
 (*<*)
 theory Value_Function_Assembly
   imports
-    Value_Function_Supersolution_Case_2
+    Value_Function_Supersolution
 begin
 
 (*>*)

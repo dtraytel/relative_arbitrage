@@ -27,7 +27,7 @@ text \<open>With \<open>v = enn2real \<circ> covariation_val S T K\<close> (the 
   \<^item> Upper semicontinuity: \<open>covariation_val_real_usc\<close> below.
   \<^item> The viscosity property of Eq. (1.9): \<open>Value_Function_Subsolution.covariation_val_visc_subsol\<close>
     for the subsolution half, with the operator itself, and
-    \<open>Value_Function_Supersolution_Case_2.covariation_val_supersol_lsc\<close> for the supersolution half.
+    \<open>Value_Function_Supersolution.covariation_val_supersol_lsc\<close> for the supersolution half.
   \<^item> The zero boundary condition, in the viscosity sense of
     Definition 3.1: \<open>Value_Function_Subsolution.covariation_val_subsol_bc\<close> and
     \<open>covariation_val_supersol_bc\<close> below.

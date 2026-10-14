@@ -1,7 +1,7 @@
-section \<open>The supersolution, case 2: touching the lower envelope\<close>
+section \<open>The value function is a viscosity supersolution\<close>
 
 (*<*)
-theory Value_Function_Supersolution_Case_2
+theory Value_Function_Supersolution
   imports
     Value_Function_Tangential_Field
 begin
@@ -112,7 +112,22 @@ lemma ell_op_usc_eq_covariation_op_usc:
   by (intro ext) (simp add: ell_op_usc_eq_op_usc op_usc_def covariation_op_usc_def
       ell_op_eq_covariation_op[OF k1 kn L1])
 
-subsection \<open>Growth up to a time, on a region\<close>
+subsection \<open>Case 1: a nonzero gradient contradicts a failed supersolution
+  inequality\<close>
+
+text \<open>If the supersolution inequality fails at a touching point with
+  nonzero gradient, the failure yields a feasible witness with slack
+  \<open>2\<eta>\<^sub>0\<close>.  Softening the Hessian by \<open>(2\<gamma>+\<delta>)\<cdot>1\<close> keeps slack \<open>2\<eta>\<close> and buys
+  both the Taylor minorant (via \<open>\<delta>\<close>) and a strict sphere margin (via
+  \<open>\<gamma>\<close>); the witness is rotated into a covariance field by
+  @{thm [source] covariation_rotSF_exists}, the Euler limit
+  produces a class member whose paths grow along the quadratic, and at the
+  stopping time \<open>min cc (pball_exit T x rr)\<close> the DPP functional is at
+  least \<open>v(x) + mg\<close> almost surely -- the exit branch is paid by
+  \<open>\<gamma> rr\<^sup>2\<close>, the no-exit branch by \<open>cc \<eta> / 2\<close>, and the horizon cap by
+  \<open>T - v(x) > 0\<close>, which a nonzero gradient forces.  That contradicts
+  @{thm [source] covariation_val_dpp_sup_ge_time}.\<close>
+
 
 
 theorem covariation_val_supersol_contradiction_case1_lsc:

@@ -3,7 +3,7 @@ section \<open>The operator of an abstract constraint set is a geometric operato
 (*<*)
 theory Covariation_Operator
   imports
-    "Relative_Arbitrage_Equation.Comparison_Two_Domain" Value_Function_Supersolution_Case_2
+    "Relative_Arbitrage_Equation.Comparison_Two_Domain" Value_Function_Supersolution
 begin
 (*>*)
 
