@@ -3,7 +3,6 @@
 theory Path_Exit_Times
   imports
     Path_Space_Infinite "Continuous_Time_Martingales.Essential_Infimum"
-    "Continuous_Time_Martingales.Integrability_Criteria"
     "Continuous_Time_Martingales.Stopping_Times"
 begin
 
@@ -403,6 +402,37 @@ proof -
       by (intro ipath_continuous_on) auto
   qed
   then show ?thesis by simp
+qed
+
+text \<open>Translating a nonempty set of reals that is bounded below translates
+  its infimum.\<close>
+
+lemma cInf_shift_real:
+  fixes S :: "real set"
+  assumes ne: "S \<noteq> {}" and bdd: "bdd_below S"
+  shows "Inf ((\<lambda>s. r + s) ` S) = r + Inf S"
+proof -
+  obtain m where m: "\<And>s. s \<in> S \<Longrightarrow> m \<le> s" using bdd by (auto simp: bdd_below_def)
+  have neI: "(\<lambda>s. r + s) ` S \<noteq> {}" using ne by blast
+  have bddI: "bdd_below ((\<lambda>s. r + s) ` S)"
+    by (rule bdd_belowI[of _ "r + m"]) (use m in auto)
+  show ?thesis
+  proof (rule antisym)
+    have "Inf ((\<lambda>s. r + s) ` S) - r \<le> s" if s: "s \<in> S" for s
+    proof -
+      have "Inf ((\<lambda>s. r + s) ` S) \<le> r + s"
+        using s by (intro cInf_lower[OF _ bddI]) blast
+      then show ?thesis by simp
+    qed
+    then have "Inf ((\<lambda>s. r + s) ` S) - r \<le> Inf S" by (intro cInf_greatest[OF ne])
+    then show "Inf ((\<lambda>s. r + s) ` S) \<le> r + Inf S" by simp
+    show "r + Inf S \<le> Inf ((\<lambda>s. r + s) ` S)"
+    proof (rule cInf_greatest[OF neI])
+      fix z assume "z \<in> (\<lambda>s. r + s) ` S"
+      then obtain s where s: "s \<in> S" "z = r + s" by blast
+      then show "r + Inf S \<le> z" using cInf_lower[OF s(1) bdd] by simp
+    qed
+  qed
 qed
 
 text \<open>On the survival event the exit time splits exactly: the first piece

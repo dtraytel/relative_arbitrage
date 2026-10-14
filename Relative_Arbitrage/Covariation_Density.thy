@@ -6,7 +6,7 @@ theory Covariation_Density
     "Disintegration.Disintegration"
     "Kolmogorov_Chentsov.Dyadic_Interval" "Kolmogorov_Chentsov.Holder_Continuous"
     "Levy_Prokhorov_Metric.Prokhorov_Theorem" "Martingales.Martingale"
-    "Second_Order_Viscosity_Analysis.Rademacher" "Continuous_Path_Spaces.Increment_Moments"
+    "Second_Order_Viscosity_Analysis.Rademacher" "Continuous_Path_Spaces.Difference_Quotients"
 begin
 (*>*)
 

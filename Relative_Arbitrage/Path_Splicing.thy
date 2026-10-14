@@ -15,9 +15,6 @@ text \<open>The surgery: \<open>pcut\<close> truncates at a time, \<open>pglue\<
   definition on functions; what takes room is that each is continuous where
   it should be and measurable for the Borel algebra of the path metric.\<close>
 
-text \<open>\<open>cInf_shift_real\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
-
-
 definition pfut :: "real \<Rightarrow> real \<Rightarrow> (real \<Rightarrow> 'b::ab_group_add) \<Rightarrow> (real \<Rightarrow> 'b)"
   where "pfut r T \<omega> = restrict (\<lambda>s. \<omega> (r + s) - \<omega> r) {0..T - r}"
 

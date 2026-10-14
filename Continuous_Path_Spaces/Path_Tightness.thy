@@ -3,7 +3,7 @@ section \<open>Tightness of the path laws\<close>
 (*<*)
 theory Path_Tightness
   imports
-    Holder_Interpolation Increment_Moments Path_Space
+    Holder_Interpolation Path_Space
 begin
 
 (*>*)
@@ -574,6 +574,104 @@ text \<open>
 definition dyadic_ext :: "(real \<Rightarrow> 'b) \<Rightarrow> real \<Rightarrow> 'b::complete_space" where
   "dyadic_ext f t = lim (\<lambda>k. f (danchor k t))"
 
+subsection \<open>Truncation: the other half of the \<open>3\<epsilon>\<close> argument\<close>
+
+text \<open>Uniform integrability of the squared increments is what passes the
+  covariation constraint's linear inequalities
+
+    \<open>E[(X\<^sub>t - X\<^sub>s)\<^sup>T M (X\<^sub>t - X\<^sub>s) g] \<le> (t-s) h\<^sub>S(M) E[g]\<close>
+
+  to weak limits without a Skorokhod representation (the closedness half
+  of Lemma 2.3 of \<^cite>\<open>LaiShkolnikovSoner\<close>). Quantifying only
+  over \<open>M \<succeq> 0\<close> does not work: the set \<open>{a : tr(M a) \<le> h\<^sub>S(M) \<forall> M \<succeq> 0}\<close> is
+  the downward closure of \<open>S\<close> in the psd order, whereas \<open>S\<close> carries lower
+  bounds (\<open>\<Pi>\<^sub>m(a) \<ge> m-k\<close>) and is not downward closed. Weak convergence
+  alone gives only the Fatou direction \<open>liminf \<ge> lim\<close>, which runs the
+  wrong way for the lower constraints.
+
+  The fourth-moment bound of Eq. (2.7) (\<open>fourth_moment_bound_bounded\<close>
+  in \<open>Increment_Moments\<close>, free of Ito and BDG) controls the tail of the
+  squared increment uniformly over the family, the hypothesis
+  \<open>unif_integrable\<close> of \<open>Vitali_Convergence.vitali_convergence\<close>. The
+  estimate is pointwise and elementary: on \<open>{Z\<^sup>2 > R}\<close>,
+  \<open>Z\<^sup>2 = Z\<^sup>4/Z\<^sup>2 < Z\<^sup>4/R\<close>, and off that set the left side vanishes.\<close>
+
+text \<open>Weak convergence upgrades to convergence of unbounded continuous
+  integrals \<open>\<integral>f dP\<^sub>m \<rightarrow> \<integral>f dP\<close> when \<open>f\<close> has uniformly integrable tails:
+  truncate \<open>f\<close> at height \<open>R\<close> --- bounded and continuous, so weak
+  convergence applies directly --- and control the two truncation errors
+  by the tail integral of \<open>|f|\<close> over \<open>{|f| > R}\<close>.
+
+  The error estimate: pointwise the clamped function differs from \<open>f\<close>
+  only where \<open>|f| > R\<close>, and there by at most \<open>|f|\<close> itself, so the error
+  is dominated by that tail integral (\<open>clamp_integral_error\<close>), which
+  \<open>unif_integrable_of_L2_bound\<close> makes uniformly small
+  under an \<open>L\<^sup>2\<close> bound.\<close>
+
+text \<open>The abstract shape of the \<open>3\<epsilon>\<close> argument, with the measure theory
+  removed: a sequence uniformly within \<open>e\<close> of some convergent sequence,
+  whose limit is itself within \<open>e\<close> of \<open>z\<close> for every \<open>e\<close>, converges to
+  \<open>z\<close> -- what truncating the integrand at height \<open>R\<close> and bounding the two
+  errors by the tail integral leaves to prove.
+
+  The margin is \<open>e = \<epsilon>/4\<close> rather than \<open>\<epsilon>/3\<close> so the three terms sum to
+  \<open>3\<epsilon>/4 < \<epsilon>\<close> strictly, as \<open>LIMSEQ_I\<close> wants.\<close>
+
+lemma tendsto_real_of_approximants:
+  fixes x :: "nat \<Rightarrow> real" and z :: real
+  assumes approx: "\<And>e. 0 < e \<Longrightarrow>
+      \<exists>y w. (\<forall>m. \<bar>x m - y m\<bar> \<le> e) \<and> (y \<longlonglongrightarrow> w) \<and> \<bar>w - z\<bar> \<le> e"
+  shows "x \<longlonglongrightarrow> z"
+proof (rule LIMSEQ_I)
+  fix r :: real assume r: "0 < r"
+  have q: "0 < r/4" using r by simp
+  obtain y w where near: "\<And>m. \<bar>x m - y m\<bar> \<le> r/4"
+    and lim: "y \<longlonglongrightarrow> w" and wz: "\<bar>w - z\<bar> \<le> r/4"
+    using approx[OF q] by blast
+  obtain no where no: "\<And>m. no \<le> m \<Longrightarrow> norm (y m - w) < r/4"
+    using LIMSEQ_D[OF lim q] by blast
+  have "norm (x m - z) < r" if m: "no \<le> m" for m
+  proof -
+    have "\<bar>x m - z\<bar> \<le> \<bar>x m - y m\<bar> + \<bar>y m - w\<bar> + \<bar>w - z\<bar>" by simp
+    moreover have "\<bar>y m - w\<bar> < r/4" using no[OF m] by simp
+    ultimately have "\<bar>x m - z\<bar> < r/4 + r/4 + r/4"
+      using near[of m] wz by linarith
+    moreover have "r/4 + r/4 + r/4 < r" using r by simp
+    ultimately show ?thesis by simp
+  qed
+  then show "\<exists>no. \<forall>m\<ge>no. norm (x m - z) < r" by blast
+qed
+
+lemma clamp_diff_le_tail_pointwise:
+  fixes z R :: real
+  assumes Rnn: "0 \<le> R"
+  shows "\<bar>z - max (- R) (min R z)\<bar> \<le> \<bar>z\<bar> * indicat_real {w. R < \<bar>w\<bar>} z"
+  using Rnn by (auto simp: indicator_def abs_if max_def min_def)
+
+lemma clamp_integral_error:
+  fixes f :: "'a \<Rightarrow> real"
+  assumes M: "finite_measure M"
+    and R: "0 \<le> R"
+    and iF: "integrable M f"
+    and iC: "integrable M (\<lambda>\<omega>. max (- R) (min R (f \<omega>)))"
+    and iT: "integrable M (\<lambda>\<omega>. \<bar>f \<omega>\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f \<omega>))"
+  shows "\<bar>(\<integral>\<omega>. f \<omega> \<partial>M) - (\<integral>\<omega>. max (- R) (min R (f \<omega>)) \<partial>M)\<bar>
+      \<le> (\<integral>\<omega>. \<bar>f \<omega>\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f \<omega>) \<partial>M)"
+proof -
+  have diff: "(\<integral>\<omega>. f \<omega> \<partial>M) - (\<integral>\<omega>. max (- R) (min R (f \<omega>)) \<partial>M)
+      = (\<integral>\<omega>. f \<omega> - max (- R) (min R (f \<omega>)) \<partial>M)"
+    by (rule Bochner_Integration.integral_diff[symmetric, OF iF iC])
+  have idiff: "integrable M (\<lambda>\<omega>. f \<omega> - max (- R) (min R (f \<omega>)))"
+    by (rule Bochner_Integration.integrable_diff[OF iF iC])
+  have "\<bar>(\<integral>\<omega>. f \<omega> - max (- R) (min R (f \<omega>)) \<partial>M)\<bar>
+      \<le> (\<integral>\<omega>. \<bar>f \<omega> - max (- R) (min R (f \<omega>))\<bar> \<partial>M)"
+    by (rule integral_abs_bound)
+  also have "\<dots> \<le> (\<integral>\<omega>. \<bar>f \<omega>\<bar> * indicat_real {w. R < \<bar>w\<bar>} (f \<omega>) \<partial>M)"
+    by (rule integral_mono[OF integrable_abs[OF idiff] iT])
+       (rule clamp_diff_le_tail_pointwise[OF R])
+  finally show ?thesis unfolding diff .
+qed
+
 subsection \<open>Weak convergence upgraded by uniform integrability\<close>
 
 text \<open>\<open>weak_conv_on_nn_integral_le\<close> handles a non-negative integrand and
@@ -586,8 +684,8 @@ text \<open>\<open>weak_conv_on_nn_integral_le\<close> handles a non-negative in
   \<open>limsup \<le>\<close> is what uniform integrability buys, via the \<open>3\<epsilon>\<close> argument:
   truncate \<open>f\<close> at height \<open>R\<close> (bounded and continuous, so weak convergence
   applies directly) and control both truncation errors by the tail
-  hypothesis, using \<open>Increment_Moments.clamp_integral_error\<close> and
-  \<open>Increment_Moments.tendsto_real_of_approximants\<close>;
+  hypothesis, using \<open>clamp_integral_error\<close> and
+  \<open>tendsto_real_of_approximants\<close> above;
   \<open>unif_integrable_of_L2_bound\<close> supplies the tail hypothesis from an
   \<open>L\<^sup>2\<close> bound on \<open>f\<close>, which for the squared increment is the
   fourth-moment bound of Eq. (2.7) of \<^cite>\<open>LaiShkolnikovSoner\<close>.

@@ -3,7 +3,8 @@ section \<open>The product Brownian model and its increments\<close>
 (*<*)
 theory Product_Brownian_Motion
   imports
-    "Continuous_Time_Martingales.Integrability_Criteria"
+    "Continuous_Time_Martingales.Martingale_Algebra"
+    "Continuous_Time_Martingales.Quadratic_Variation"
     "Kolmogorov_Chentsov.Kolmogorov_Chentsov_Extras" Brownian_Motion
 begin
 
@@ -21,14 +22,266 @@ text \<open>
     non-empty (\<open>exit_class_nonempty\<close>).\<close>
 section \<open>Independence toolkit\<close>
 
-text \<open>\<open>indep_var_distr_iff\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+text \<open>Independence of a pair of random variables transports along a
+  pushforward in both directions.\<close>
 
+lemma indep_var_distr_iff:
+  assumes M: "prob_space M"
+    and T[measurable]: "T \<in> M \<rightarrow>\<^sub>M N"
+    and f[measurable]: "f \<in> N \<rightarrow>\<^sub>M S" and g[measurable]: "g \<in> N \<rightarrow>\<^sub>M S'"
+  shows "prob_space.indep_var (distr M N T) S f S' g
+     \<longleftrightarrow> prob_space.indep_var M S (\<lambda>x. f (T x)) S' (\<lambda>x. g (T x))"
+proof -
+  interpret prob_space M by fact
+  interpret D: prob_space "distr M N T"
+    by (rule prob_space_distr[OF T])
+  have fD: "f \<in> distr M N T \<rightarrow>\<^sub>M S"
+    by (subst measurable_cong_sets[OF sets_distr refl]) (rule f)
+  have gD: "g \<in> distr M N T \<rightarrow>\<^sub>M S'"
+    by (subst measurable_cong_sets[OF sets_distr refl]) (rule g)
+  have fT: "(\<lambda>x. f (T x)) \<in> M \<rightarrow>\<^sub>M S"
+    by (rule measurable_compose[OF T f])
+  have gT: "(\<lambda>x. g (T x)) \<in> M \<rightarrow>\<^sub>M S'"
+    by (rule measurable_compose[OF T g])
+  have pair: "(\<lambda>x. (f x, g x)) \<in> N \<rightarrow>\<^sub>M S \<Otimes>\<^sub>M S'"
+    by (intro measurable_Pair f g)
+  have j: "distr (distr M N T) (S \<Otimes>\<^sub>M S') (\<lambda>x. (f x, g x))
+      = distr M (S \<Otimes>\<^sub>M S') (\<lambda>x. (f (T x), g (T x)))"
+    by (subst distr_distr[OF pair T]) (simp add: comp_def)
+  have m1: "distr (distr M N T) S f = distr M S (\<lambda>x. f (T x))"
+    by (subst distr_distr[OF f T]) (simp add: comp_def)
+  have m2: "distr (distr M N T) S' g = distr M S' (\<lambda>x. g (T x))"
+    by (subst distr_distr[OF g T]) (simp add: comp_def)
+  show ?thesis
+    unfolding D.indep_var_distribution_eq indep_var_distribution_eq
+    using fD gD fT gT j m1 m2 by auto
+qed
 
-text \<open>\<open>indep_vars_cong_sets\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+text \<open>Independence of two families of sets passes to subfamilies.\<close>
 
+lemma (in prob_space) indep_set_mono:
+  assumes "indep_set A B" "A' \<subseteq> A" "B' \<subseteq> B"
+  shows "indep_set A' B'"
+  using assms(1) unfolding indep_set_def
+  by (rule indep_sets_mono_sets) (use assms(2,3) in \<open>auto split: bool.split\<close>)
 
-text \<open>\<open>indep_var_PiM_components\<close> lives in @{theory Continuous_Time_Martingales.Integrability_Criteria}.\<close>
+text \<open>Componentwise independent pairs over a finite product measure give an
+  independent pair of product-valued vectors.\<close>
 
+lemma indep_var_PiM_components:
+  fixes N :: "'i \<Rightarrow> 'b measure" and S :: "'i \<Rightarrow> 'c measure"
+    and S' :: "'i \<Rightarrow> 'c measure"
+    and g :: "'i \<Rightarrow> 'b \<Rightarrow> 'c" and h :: "'i \<Rightarrow> 'b \<Rightarrow> 'c"
+  assumes fin: "finite I"
+    and prob: "\<And>i. prob_space (N i)"
+    and g: "\<And>i. i \<in> I \<Longrightarrow> g i \<in> N i \<rightarrow>\<^sub>M S i"
+    and h: "\<And>i. i \<in> I \<Longrightarrow> h i \<in> N i \<rightarrow>\<^sub>M S' i"
+    and ind: "\<And>i. i \<in> I \<Longrightarrow>
+      prob_space.indep_var (N i) (S i) (g i) (S' i) (h i)"
+  shows "prob_space.indep_var (Pi\<^sub>M I N)
+      (Pi\<^sub>M I S) (\<lambda>\<omega>. \<lambda>i\<in>I. g i (\<omega> i))
+      (Pi\<^sub>M I S') (\<lambda>\<omega>. \<lambda>i\<in>I. h i (\<omega> i))"
+proof -
+  interpret P: prob_space "Pi\<^sub>M I N"
+    by (intro prob_space_PiM prob)
+  interpret PSF: product_sigma_finite N
+    by (intro product_sigma_finite.intro prob_space_imp_sigma_finite prob)
+  let ?G = "\<lambda>\<omega>. \<lambda>i\<in>I. g i (\<omega> i)" and ?H = "\<lambda>\<omega>. \<lambda>i\<in>I. h i (\<omega> i)"
+  have Gm: "?G \<in> Pi\<^sub>M I N \<rightarrow>\<^sub>M Pi\<^sub>M I S"
+  proof (rule measurable_restrict)
+    fix i assume i: "i \<in> I"
+    show "(\<lambda>\<omega>. g i (\<omega> i)) \<in> Pi\<^sub>M I N \<rightarrow>\<^sub>M S i"
+      by (rule measurable_compose[OF
+          measurable_component_singleton[OF i, where M = N] g[OF i]])
+  qed
+  have Hm: "?H \<in> Pi\<^sub>M I N \<rightarrow>\<^sub>M Pi\<^sub>M I S'"
+  proof (rule measurable_restrict)
+    fix i assume i: "i \<in> I"
+    show "(\<lambda>\<omega>. h i (\<omega> i)) \<in> Pi\<^sub>M I N \<rightarrow>\<^sub>M S' i"
+      by (rule measurable_compose[OF
+          measurable_component_singleton[OF i, where M = N] h[OF i]])
+  qed
+  \<comment> \<open>rectangle preimages generate the two @{text \<sigma>}-algebras\<close>
+  define E1 where "E1 = {?G -` Pi\<^sub>E I A \<inter> space (Pi\<^sub>M I N) |
+      A. \<forall>i. A i \<in> sets (S i)}"
+  define E2 where "E2 = {?H -` Pi\<^sub>E I B \<inter> space (Pi\<^sub>M I N) |
+      B. \<forall>i. B i \<in> sets (S' i)}"
+  have rect_a: "?G -` Pi\<^sub>E I A \<inter> space (Pi\<^sub>M I N)
+      = Pi\<^sub>E I (\<lambda>i. (\<lambda>x. g i x) -` A i \<inter> space (N i))"
+    if A: "\<And>i. i \<in> I \<Longrightarrow> A i \<in> sets (S i)" for A
+    by (auto simp: space_PiM PiE_iff extensional_def)
+  have rect_b: "?H -` Pi\<^sub>E I B \<inter> space (Pi\<^sub>M I N)
+      = Pi\<^sub>E I (\<lambda>i. (\<lambda>x. h i x) -` B i \<inter> space (N i))"
+    if B: "\<And>i. i \<in> I \<Longrightarrow> B i \<in> sets (S' i)" for B
+    by (auto simp: space_PiM PiE_iff extensional_def)
+  have fact_ab: "P.prob (a \<inter> b) = P.prob a * P.prob b"
+    if a: "a \<in> E1" and b: "b \<in> E2" for a b
+  proof -
+    from a obtain A where A: "\<And>i. A i \<in> sets (S i)"
+      and a_def: "a = ?G -` Pi\<^sub>E I A \<inter> space (Pi\<^sub>M I N)"
+      by (auto simp: E1_def)
+    from b obtain B where B: "\<And>i. B i \<in> sets (S' i)"
+      and b_def: "b = ?H -` Pi\<^sub>E I B \<inter> space (Pi\<^sub>M I N)"
+      by (auto simp: E2_def)
+    define Cg where "Cg = (\<lambda>i. (\<lambda>x. g i x) -` A i \<inter> space (N i))"
+    define Ch where "Ch = (\<lambda>i. (\<lambda>x. h i x) -` B i \<inter> space (N i))"
+    have Cg_sets: "\<And>i. i \<in> I \<Longrightarrow> Cg i \<in> sets (N i)"
+      unfolding Cg_def by (intro measurable_sets[OF g A])
+    have Ch_sets: "\<And>i. i \<in> I \<Longrightarrow> Ch i \<in> sets (N i)"
+      unfolding Ch_def by (intro measurable_sets[OF h B])
+    have a_rect: "a = Pi\<^sub>E I Cg"
+      unfolding a_def Cg_def by (rule rect_a) (rule A)
+    have b_rect: "b = Pi\<^sub>E I Ch"
+      unfolding b_def Ch_def by (rule rect_b) (rule B)
+    have ab_rect: "a \<inter> b = Pi\<^sub>E I (\<lambda>i. Cg i \<inter> Ch i)"
+      unfolding a_rect b_rect by (rule PiE_Int)
+    have fact_i: "measure (N i) (Cg i \<inter> Ch i)
+        = measure (N i) (Cg i) * measure (N i) (Ch i)"
+      if i: "i \<in> I" for i
+    proof -
+      interpret Ni: prob_space "N i" by (rule prob)
+      have "(\<lambda>x. (g i x, h i x)) -` (A i \<times> B i) \<inter> space (N i)
+          = Cg i \<inter> Ch i"
+        by (auto simp: Cg_def Ch_def)
+      then show ?thesis
+        using Ni.indep_varD[OF ind[OF i] A B]
+        by (simp add: Cg_def Ch_def)
+    qed
+    have prob_rect: "P.prob (Pi\<^sub>E I C) = (\<Prod>i\<in>I. measure (N i) (C i))"
+      if C: "\<And>i. i \<in> I \<Longrightarrow> C i \<in> sets (N i)" for C
+    proof -
+      interpret Ni: prob_space "N i" for i by (rule prob)
+      have "emeasure (Pi\<^sub>M I N) (Pi\<^sub>E I C)
+          = (\<Prod>i\<in>I. emeasure (N i) (C i))"
+        by (rule PSF.emeasure_PiM[OF fin C])
+      also have "\<dots> = ennreal (\<Prod>i\<in>I. measure (N i) (C i))"
+        by (simp add: Ni.emeasure_eq_measure prod_ennreal)
+      finally show ?thesis
+        by (simp add: P.emeasure_eq_measure prod_nonneg)
+    qed
+    have "P.prob (a \<inter> b) = (\<Prod>i\<in>I. measure (N i) (Cg i \<inter> Ch i))"
+      unfolding ab_rect
+      by (intro prob_rect) (auto intro: Cg_sets Ch_sets)
+    also have "\<dots> = (\<Prod>i\<in>I. measure (N i) (Cg i) * measure (N i) (Ch i))"
+      by (intro prod.cong refl fact_i)
+    also have "\<dots> = (\<Prod>i\<in>I. measure (N i) (Cg i))
+        * (\<Prod>i\<in>I. measure (N i) (Ch i))"
+      by (rule prod.distrib)
+    also have "\<dots> = P.prob a * P.prob b"
+      unfolding a_rect b_rect
+      by (simp add: prob_rect[OF Cg_sets] prob_rect[OF Ch_sets])
+    finally show ?thesis .
+  qed
+  have E1_events: "E1 \<subseteq> P.events"
+    unfolding E1_def
+    by (auto intro!: measurable_sets[OF Gm] sets_PiM_I_finite[OF fin])
+  have E2_events: "E2 \<subseteq> P.events"
+    unfolding E2_def
+    by (auto intro!: measurable_sets[OF Hm] sets_PiM_I_finite[OF fin])
+  have E1_Int: "Int_stable E1"
+  proof (rule Int_stableI)
+    fix a b assume "a \<in> E1" "b \<in> E1"
+    then obtain A B where A: "\<forall>i. A i \<in> sets (S i)" "\<forall>i. B i \<in> sets (S i)"
+      and "a = ?G -` Pi\<^sub>E I A \<inter> space (Pi\<^sub>M I N)"
+        "b = ?G -` Pi\<^sub>E I B \<inter> space (Pi\<^sub>M I N)"
+      by (auto simp: E1_def)
+    then have "a \<inter> b = ?G -` Pi\<^sub>E I (\<lambda>i. A i \<inter> B i) \<inter> space (Pi\<^sub>M I N)"
+      by (auto simp: PiE_Int)
+    then show "a \<inter> b \<in> E1"
+      using A unfolding E1_def by (intro CollectI exI[of _ "\<lambda>i. A i \<inter> B i"]) auto
+  qed
+  have E2_Int: "Int_stable E2"
+  proof (rule Int_stableI)
+    fix a b assume "a \<in> E2" "b \<in> E2"
+    then obtain A B where A: "\<forall>i. A i \<in> sets (S' i)" "\<forall>i. B i \<in> sets (S' i)"
+      and "a = ?H -` Pi\<^sub>E I A \<inter> space (Pi\<^sub>M I N)"
+        "b = ?H -` Pi\<^sub>E I B \<inter> space (Pi\<^sub>M I N)"
+      by (auto simp: E2_def)
+    then have "a \<inter> b = ?H -` Pi\<^sub>E I (\<lambda>i. A i \<inter> B i) \<inter> space (Pi\<^sub>M I N)"
+      by (auto simp: PiE_Int)
+    then show "a \<inter> b \<in> E2"
+      using A unfolding E2_def by (intro CollectI exI[of _ "\<lambda>i. A i \<inter> B i"]) auto
+  qed
+  have sig: "P.indep_set (sigma_sets (space (Pi\<^sub>M I N)) E1)
+      (sigma_sets (space (Pi\<^sub>M I N)) E2)"
+    by (rule P.indep_set_sigma_sets[OF P.indep_setI[OF E1_events E2_events fact_ab]
+          E1_Int E2_Int])
+  \<comment> \<open>the rectangle preimages generate the full vimage @{text \<sigma>}-algebras\<close>
+  have gen: "sigma_sets (space (Pi\<^sub>M I N))
+      {F -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I T)}
+      \<subseteq> sigma_sets (space (Pi\<^sub>M I N)) E"
+    if Fm: "F \<in> Pi\<^sub>M I N \<rightarrow>\<^sub>M Pi\<^sub>M I T"
+      and Emem: "\<And>A. (\<forall>i. A i \<in> sets (T i)) \<Longrightarrow>
+        F -` Pi\<^sub>E I A \<inter> space (Pi\<^sub>M I N) \<in> E"
+    for F :: "('i \<Rightarrow> 'b) \<Rightarrow> 'i \<Rightarrow> 'e" and T :: "'i \<Rightarrow> 'e measure" and E
+  proof -
+    have Fsp: "F \<in> space (Pi\<^sub>M I N) \<rightarrow> space (Pi\<^sub>M I T)"
+      using measurable_space[OF Fm] by auto
+    have "{F -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I T)}
+        = {F -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sigma_sets (space (Pi\<^sub>M I T))
+            {Pi\<^sub>E I A |A. (\<forall>i. A i \<in> sets (T i)) \<and>
+              finite {i. A i \<noteq> space (T i)}}}"
+      by (simp add: sets_PiM_finite space_PiM)
+    also have "\<dots> = sigma_sets (space (Pi\<^sub>M I N))
+        {F -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> {Pi\<^sub>E I A |A.
+          (\<forall>i. A i \<in> sets (T i)) \<and> finite {i. A i \<noteq> space (T i)}}}"
+      by (rule sigma_sets_vimage_commute[OF Fsp])
+    also have "\<dots> \<subseteq> sigma_sets (space (Pi\<^sub>M I N)) E"
+    proof (rule sigma_sets_mono)
+      show "{F -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> {Pi\<^sub>E I A |A.
+          (\<forall>i. A i \<in> sets (T i)) \<and> finite {i. A i \<noteq> space (T i)}}}
+          \<subseteq> sigma_sets (space (Pi\<^sub>M I N)) E"
+        by (auto intro!: Emem)
+    qed
+    finally have fam: "{F -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I T)}
+        \<subseteq> sigma_sets (space (Pi\<^sub>M I N)) E" .
+    show ?thesis
+      by (rule sigma_sets_mono[OF fam])
+  qed
+  have genG: "sigma_sets (space (Pi\<^sub>M I N))
+      {?G -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I S)}
+      \<subseteq> sigma_sets (space (Pi\<^sub>M I N)) E1"
+    by (intro gen[OF Gm]) (auto simp: E1_def)
+  have genH: "sigma_sets (space (Pi\<^sub>M I N))
+      {?H -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I S')}
+      \<subseteq> sigma_sets (space (Pi\<^sub>M I N)) E2"
+    by (intro gen[OF Hm]) (auto simp: E2_def)
+  have main: "P.indep_set
+      (sigma_sets (space (Pi\<^sub>M I N))
+        {?G -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I S)})
+      (sigma_sets (space (Pi\<^sub>M I N))
+        {?H -` X \<inter> space (Pi\<^sub>M I N) |X. X \<in> sets (Pi\<^sub>M I S')})"
+    by (rule P.indep_set_mono[OF sig genG genH])
+  show ?thesis
+    unfolding P.indep_var_eq
+    using Gm Hm main by blast
+qed
+
+text \<open>Independence is invariant under replacing the target measures by
+  ones with the same sets.\<close>
+
+lemma (in prob_space) indep_vars_cong_sets:
+  assumes eq: "\<And>i. i \<in> I \<Longrightarrow> sets (M' i) = sets (N' i)"
+    and ind: "indep_vars M' X I"
+  shows "indep_vars N' X I"
+proof -
+  have rv: "random_variable (N' i) (X i)" if i: "i \<in> I" for i
+  proof -
+    have "random_variable (M' i) (X i)"
+      using ind i by (auto simp: indep_vars_def)
+    then show ?thesis
+      using measurable_cong_sets[OF refl eq[OF i]] by blast
+  qed
+  have "indep_sets (\<lambda>i. sigma_sets (space M)
+      {X i -` A \<inter> space M |A. A \<in> sets (M' i)}) I"
+    using ind by (auto simp: indep_vars_def)
+  then have "indep_sets (\<lambda>i. sigma_sets (space M)
+      {X i -` A \<inter> space M |A. A \<in> sets (N' i)}) I"
+    by (rule indep_sets_cong[THEN iffD1, OF refl, rotated])
+      (simp add: eq)
+  with rv show ?thesis
+    by (auto simp: indep_vars_def)
+qed
 
 section \<open>The past and an increment of the Wiener measure are independent\<close>
 

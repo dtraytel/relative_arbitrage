@@ -5,6 +5,7 @@ theory Pair_Path_Space
   imports
     "Continuous_Path_Spaces.Adapted_Quadratic_Variation"
     "Continuous_Path_Spaces.Path_Exit_Times" "Continuous_Path_Spaces.Path_Tightness"
+    "Continuous_Time_Martingales.Integrability_Criteria"
     "Disintegration.Disintegration" "Semicontinuous_Analysis.Semicontinuous_Selection"
     "Symmetric_Matrix_Spectra.Householder_Rotation"
     "Symmetric_Matrix_Spectra.Symmetric_Spectral"
@@ -73,30 +74,6 @@ proof (rule path_laws_convergent_subsequence_vec[where C = C and x = x, OF T0 g0
     if "0 \<le> u" and "u \<le> v" and "v \<le> T" for i l u v
     using bochner[OF that(1,2)] by blast
 qed
-
-section \<open>The exit time is upper semicontinuous\<close>
-
-text \<open>The join.  \<open>Stopping_Times.etime_less_iff\<close> says being strictly below \<open>c\<close>
-  is witnessed by a single time \<open>r < c\<close> at which the path is already in
-  \<open>A\<close>; \<open>Path_Space.open_eval_preimage\<close> makes the condition at each
-  witness time open in the path topology, so the witnessed condition, a
-  union over witness times, is open too.  Together they give upper
-  semicontinuity of the exit time, which is what Larsson--Ruf's Lemma 2.1
-  needs.
-
-  The degenerate branch \<open>T < c\<close> is not a special case of the witnessed one:
-  a path that never enters \<open>A\<close> still has exit time \<open>T\<close>, so when \<open>T < c\<close>
-  every path qualifies and the set is the whole space.\<close>
-
-text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close>, at the market class itself: for any
-  sequence of sufficiently volatile markets that are stopped at their horizon
-  and confined to a ball, the path laws admit a weakly convergent
-  subsequence.  The almost-sure hypotheses of the locale become the pointwise
-  hypotheses of the adapter above by restricting each market to a
-  full-measure good event (the transfer package of \<open>Stopped_Localization\<close>);
-  the restriction is invisible to the path laws.  The per-coordinate
-  compensator is the entrywise integral of \<open>acov\<close>, whose rate bound \<open>L\<close> comes
-  from the eigenvalue constraint through the diagonal entries.\<close>
 
 section \<open>Diagonal entries under the eigenvalue constraints\<close>
 
@@ -898,9 +875,7 @@ text \<open>Operational reading of (1.7), equivalent by compensator uniqueness: 
   constant, emptying the class for every \<open>T > 0\<close>. Stopping at \<open>T\<close>
   captures exactly (1.7) on \<open>[0,T]\<close>.\<close>
 
-subsection \<open>Integrability from the \<open>L\<^sup>2\<close> bound, for members and for limits\<close>
-
-text \<open>\<open>integrable_of_sq_integrable\<close> lives in @{theory Continuous_Time_Martingales.Quadratic_Variation}.\<close>
+subsection \<open>The covariation matrix of a localised martingale is its compensator\<close>
 
 theorem qvmat_eq_A_localised:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> real^'n::finite" and A :: "real \<Rightarrow> 'a \<Rightarrow> real^'n^'n"
@@ -1286,8 +1261,6 @@ text \<open>\<open>martingale_cross_measurable\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 subsection \<open>The shifted processes of a law\<close>
-
-text \<open>\<open>pair_snd_borel\<close> lives in \<open>Exit_Class_Pasting\<close>.\<close>
 
 lemma etime_shift_of_restrict:
   fixes X :: "real \<Rightarrow> 'a \<Rightarrow> 'b::{polish_space,banach}" and y :: 'b

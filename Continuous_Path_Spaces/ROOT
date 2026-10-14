@@ -14,6 +14,7 @@ session Continuous_Path_Spaces = Levy_Prokhorov_Metric +
     Semicontinuous_Analysis
   theories
     Increment_Moments
+    Difference_Quotients
     Increment_Tails
     Dyadic_Chaining
     Modulus_Tails
