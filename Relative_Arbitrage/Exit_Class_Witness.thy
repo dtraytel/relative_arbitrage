@@ -482,6 +482,19 @@ proof -
   finally show ?thesis .
 qed
 
+text \<open>The two numbers of \<open>sconstraint k L\<close> that the exit-time estimates read:
+  the norm bound \<open>CARD('n) \<sqdot> L\<close> and the trace lower bound \<open>n - k\<close>, in the
+  order those lemmas take them.\<close>
+
+lemma sconstraint_trace_bounds:
+  fixes L :: real
+  assumes k: "k < CARD('n::finite)" and L: "0 \<le> L"
+  shows "0 \<le> real CARD('n) * L"
+    and "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> norm a \<le> real CARD('n) * L"
+    and "0 < real (CARD('n) - k)"
+    and "\<And>a :: real^'n^'n. a \<in> sconstraint k L \<Longrightarrow> real (CARD('n) - k) \<le> trace a"
+  using sconstraint_bounds(1,2)[OF L] k sconstraint_trace_ge[OF k] by auto
+
 text \<open>\<open>bounded_linear_trace\<close> lives in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
 
 

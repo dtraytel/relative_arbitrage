@@ -173,13 +173,12 @@ proof -
   have L0: "1 \<le> L" using L1 by simp
   have T0': "0 \<le> T" using T0 by simp
   have L0': "0 \<le> L" using L1 by simp
-  have nk: "0 < real (CARD('n) - k)" using kn by simp
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
   have Bv: "\<bar>v y\<bar> \<le> B" for y
   proof -
     have "\<bar>v y\<bar> \<le> rK * rK / real (CARD('n) - k)"
       unfolding v_def exit_val_eq_covariation_val
-      by (rule covariation_val_real_bounded[OF T0' sconstraint_bounds(1,2)[OF L0'] nk sconstraint_trace_ge[OF kn] KB r0])
+      by (rule covariation_val_real_bounded[OF T0' sconstraint_trace_bounds[OF kn L0'] KB r0])
     then show ?thesis unfolding B_def by (simp add: le_max_iff_disj)
   qed
   have Bu': "\<bar>u y\<bar> \<le> B" for y
@@ -250,7 +249,7 @@ proof -
   have upper: "enn2real (exit_val k L T (cball 0 r) y)
       \<le> max ((r * r - y \<bullet> y) / real (CARD('n) - k)) 0" for y :: "real^'n"
     unfolding exit_val_eq_covariation_val
-    by (rule covariation_val_ball_upper[OF T0' sconstraint_bounds(1,2)[OF L0] nk0 sconstraint_trace_ge[OF kn]])
+    by (rule covariation_val_ball_upper[OF T0' sconstraint_trace_bounds[OF kn L0]])
   consider (out) "r < norm x" | (sph) "norm x = r"
     | (inn) "norm x < r" "x \<noteq> 0" | (ctr) "x = 0"
     by (cases "r < norm x", simp) (cases "norm x = r", simp, cases "x = 0", auto)
@@ -611,7 +610,9 @@ proof -
       by blast
   qed
   have cap: "lsc_env v y < T / 2" for y :: "real^'n"
-    unfolding v_def by (rule exit_val_cap_inert[OF kn _ _ KB Tbig]) (use L1 T0 in auto)
+    unfolding v_def exit_val_eq_covariation_val
+    by (rule covariation_val_cap_inert[OF less_imp_le[OF T0]
+        sconstraint_trace_bounds[OF kn order_trans[OF zero_le_one L1]] KB Tbig])
   have main: "visc_supersol_env k L K (interior K) (lsc_envK K v)"
     unfolding v_def
     by (rule exit_val_supersol_envK[OF T0 L1 k1 kn Kc])

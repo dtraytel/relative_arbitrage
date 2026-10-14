@@ -611,23 +611,23 @@ text \<open>Third, the strict quadratic minorant.  This is what replaces the
   \<open>H - \<epsilon> \<cdot> 1\<close> is quadratic by construction and tends to \<open>H\<close>.\<close>
 
 
-lemma exit_val_case2_separation:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
+lemma case2_separation:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and w :: "real^'n \<Rightarrow> real"
     and \<phi> :: "real^'n \<Rightarrow> real" and g :: "real^'n \<Rightarrow> real^'n"
     and H :: "real^'n^'n"
   assumes xi: "x \<in> interior K"
     and tf: "test_fun_at \<phi> g H x" and gx0: "g x = 0"
     and rho0: "0 < \<rho>\<^sub>0"
     and tmin: "\<And>y. y \<in> K \<Longrightarrow> dist x y < \<rho>\<^sub>0 \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
-        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) y - \<phi> y"
+      w x - \<phi> x
+        \<le> w y - \<phi> y"
     and e0: "0 < \<epsilon>"
   obtains \<rho> where "0 < \<rho>" and "cball x \<rho> \<subseteq> interior K"
     and "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
-      lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x
+      w x
         + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
         + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x))
-      \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z"
+      \<le> w z"
 proof -
   obtain r where r0: "0 < r"
     and mino: "\<And>z. z \<in> ball x r \<Longrightarrow>
@@ -650,18 +650,18 @@ proof -
     then have "dist x z < e" using elt by linarith
     then show "z \<in> interior K" using eK by auto
   qed
-  have key: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x
+  have key: "w x
       + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
       + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x))
-    \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z"
+    \<le> w z"
     if zc: "z \<in> cball x \<rho>" for z
   proof -
     have dzx: "dist x z \<le> \<rho>" using zc by simp
     have zb: "z \<in> ball x r" using dzx rlt by auto
     have zK: "z \<in> K" using sub zc interior_subset by blast
     have dxz: "dist x z < \<rho>\<^sub>0" using dzx rholt by linarith
-    have t: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x - \<phi> x
-        \<le> lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) z - \<phi> z"
+    have t: "w x - \<phi> x
+        \<le> w z - \<phi> z"
       by (rule tmin[OF zK dxz])
     have m: "\<phi> x + ((z - x) \<bullet> ((H - \<epsilon> *\<^sub>R mat 1) *v (z - x))) / 2
         + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> \<phi> z" by (rule mino[OF zb])
@@ -915,7 +915,7 @@ proof -
     and sep: "\<And>z. z \<in> cball x \<rho> \<Longrightarrow>
       ?W x + ((z - x) \<bullet> (?M *v (z - x))) / 2
         + (\<epsilon> / 4) * ((z - x) \<bullet> (z - x)) \<le> ?W z"
-  proof (rule exit_val_case2_separation[OF xi tf gx0 rho0 tmin e0])
+  proof (rule case2_separation[OF xi tf gx0 rho0 tmin e0])
     fix rr :: real
     assume a1: "0 < rr" and a2: "cball x rr \<subseteq> interior K"
       and a3: "\<And>z. z \<in> cball x rr \<Longrightarrow>
@@ -1235,51 +1235,52 @@ subsection \<open>Discharging the horizon hypothesis\<close>
 text \<open>@{thm [source] exit_val_supersol_lsc} carries the assumption that the
   horizon never binds on the interior.  For a bounded \<open>K\<close> that is not an
   assumption at all but a consequence of choosing \<open>T\<close> large enough:
-  @{thm [source] exit_val_le_ball_bound} caps the value at
+  @{thm [source] covariation_val_le_ball_bound} caps the value at
   \<open>(r\<^sup>2 - \<bar>x\<bar>\<^sup>2)/(n - k)\<close>, so \<open>T > 2r\<^sup>2/(n - k)\<close> already forces
   \<open>v\<^sub>* < T/2\<close> everywhere.  This is the paper's own setting: it has no
   horizon, and the cap here is a device of this formalisation.\<close>
 
-lemma exit_val_cap_inert:
+lemma covariation_val_cap_inert:
   fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  assumes kn: "k < CARD('n)" and L0: "0 \<le> L" and T0: "0 \<le> T"
+  assumes T0: "0 \<le> T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and th0: "0 < \<theta>" and th: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> \<theta> \<le> trace a"
     and KB: "K \<subseteq> cball 0 rK"
-    and Tbig: "2 * (rK * rK) / real (CARD('n) - k) < T"
-  shows "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
+    and Tbig: "2 * (rK * rK) / \<theta> < T"
+  shows "lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x < T / 2"
 proof -
-  have tv0: "\<And>u. 0 \<le> enn2real (exit_val k L T K u)" by simp
-  have nk0: "0 < real (CARD('n) - k)" using kn by simp
-  define A where "A = rK * rK / real (CARD('n) - k)"
-  have A0: "0 \<le> A" unfolding A_def using nk0 by simp
+  have tv0: "\<And>u. 0 \<le> enn2real (covariation_val S T K u)" by simp
+  define A where "A = rK * rK / \<theta>"
+  have A0: "0 \<le> A" unfolding A_def using th0 by simp
   have AT: "2 * A < T"
   proof -
-    have "2 * A = 2 * (rK * rK) / real (CARD('n) - k)"
+    have "2 * A = 2 * (rK * rK) / \<theta>"
       unfolding A_def by simp
     then show ?thesis using Tbig by simp
   qed
-  have b: "exit_val k L T K x
-      \<le> ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k))"
-    by (rule exit_val_le_ball_bound[OF kn T0 L0 KB])
-  have le1: "(rK * rK - x \<bullet> x) / real (CARD('n) - k) \<le> A"
+  have b: "covariation_val S T K x
+      \<le> ennreal ((rK * rK - x \<bullet> x) / \<theta>)"
+    by (rule covariation_val_le_ball_bound[OF T0 B0 B th0 th KB])
+  have le1: "(rK * rK - x \<bullet> x) / \<theta> \<le> A"
     unfolding A_def
   proof (rule divide_right_mono)
     show "rK * rK - x \<bullet> x \<le> rK * rK" using inner_ge_zero[of x] by linarith
-    show "0 \<le> real (CARD('n) - k)" using nk0 by linarith
+    show "0 \<le> \<theta>" using th0 by linarith
   qed
-  have b': "exit_val k L T K x \<le> ennreal A"
+  have b': "covariation_val S T K x \<le> ennreal A"
   proof -
-    have "ennreal ((rK * rK - x \<bullet> x) / real (CARD('n) - k)) \<le> ennreal A"
+    have "ennreal ((rK * rK - x \<bullet> x) / \<theta>) \<le> ennreal A"
       by (rule ennreal_leI[OF le1])
     with b show ?thesis by (rule order_trans)
   qed
-  have le2: "enn2real (exit_val k L T K x) \<le> A"
+  have le2: "enn2real (covariation_val S T K x) \<le> A"
   proof -
-    have "enn2real (exit_val k L T K x) \<le> enn2real (ennreal A)"
+    have "enn2real (covariation_val S T K x) \<le> enn2real (ennreal A)"
       by (rule enn2real_mono[OF b' ennreal_less_top])
     then show ?thesis using enn2real_ennreal[OF A0] by simp
   qed
-  have le3: "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x
-      \<le> enn2real (exit_val k L T K x)"
+  have le3: "lsc_env (\<lambda>u. enn2real (covariation_val S T K u)) x
+      \<le> enn2real (covariation_val S T K x)"
     by (rule lsc_env_le_self[OF tv0])
   show ?thesis using le2 le3 AT by linarith
 qed
@@ -1296,7 +1297,9 @@ corollary exit_val_supersol_lsc_bounded:
 proof (rule exit_val_supersol_lsc[OF T0 L1 k1 kn Kc])
   fix x :: "real^'n" assume "x \<in> interior K"
   show "lsc_env (\<lambda>u. enn2real (exit_val k L T K u)) x < T / 2"
-    by (rule exit_val_cap_inert[OF kn _ _ KB Tbig]) (use L1 T0 in linarith)+
+    unfolding exit_val_eq_covariation_val
+    by (rule covariation_val_cap_inert[OF less_imp_le[OF T0]
+        sconstraint_trace_bounds[OF kn order_trans[OF zero_le_one L1]] KB Tbig])
 qed
 
 
