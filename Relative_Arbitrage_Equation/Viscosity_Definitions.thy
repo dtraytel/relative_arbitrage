@@ -122,10 +122,58 @@ definition supersol_jet ::
         (\<exists>e>0. \<forall>y \<in> ball x e. w x - \<phi> x \<le> w y - \<phi> y) \<longrightarrow>
         1 \<le> ell_op_usc k L (g x) H)"
 
-text \<open>The four notions above are the generic ones of
-  @{theory Second_Order_Viscosity_Analysis.Viscosity_Solutions} at this
-  paper's operator; the equations below are the bridge, and are what lets a
-  reader instantiate the machinery of that session at a different \<open>F\<close>.\<close>
+section \<open>The bridge to the generic predicates\<close>
+
+text \<open>Every predicate above is an instance of the two generic predicates of
+  @{theory Second_Order_Viscosity_Analysis.Viscosity_Solutions}: the test class is
+  \<^const>\<open>test_fun_at\<close> or \<^const>\<open>test_fun_C2\<close>, the touching is local
+  (\<^term>\<open>nhds\<close>) or over \<open>K\<close> (\<^term>\<open>\<lambda>_. principal K\<close>), the operator is
+  \<open>F\<close>, \<open>F\<^sub>*\<close> or \<open>F\<^sup>*\<close>, and the function is \<open>u\<close> or its lower
+  envelope.  The equations below are proved, not definitional, so that the
+  definitions above read as the paper does.\<close>
+
+lemma visc_subsol_eq_gen:
+  "visc_subsol k L \<Omega> u = visc_subsol_gen test_fun_at nhds (\<lambda>p M. ereal (ell_op k L p M)) \<Omega> u"
+  by (simp add: visc_subsol_def visc_subsol_gen_nhds)
+
+lemma visc_supersol_eq_gen:
+  "visc_supersol k L \<Omega> u = visc_supersol_gen test_fun_at nhds (\<lambda>p M. ereal (ell_op k L p M)) \<Omega> u"
+  by (simp add: visc_supersol_def visc_supersol_gen_nhds)
+
+lemma visc_sol_eq_gen:
+  "visc_sol k L \<Omega> u = visc_sol_gen test_fun_at nhds (\<lambda>p M. ereal (ell_op k L p M)) \<Omega> u"
+  by (simp add: visc_sol_def visc_sol_gen_def visc_subsol_eq_gen visc_supersol_eq_gen)
+
+lemma visc_subsol_env_eq_gen:
+  "visc_subsol_env k L K \<Omega> u = visc_subsol_gen test_fun_at (\<lambda>_. principal K) (ell_op_lsc k L) \<Omega> u"
+  by (simp add: visc_subsol_env_def visc_subsol_gen_principal)
+
+lemma visc_supersol_env_eq_gen:
+  "visc_supersol_env k L K \<Omega> u = visc_supersol_gen test_fun_at (\<lambda>_. principal K) (ell_op_usc k L) \<Omega> u"
+  by (simp add: visc_supersol_env_def visc_supersol_gen_principal)
+
+lemma visc_sol_env_eq_gen:
+  "visc_sol_env k L K \<Omega> u \<longleftrightarrow>
+     visc_subsol_gen test_fun_at (\<lambda>_. principal K) (ell_op_lsc k L) \<Omega> u \<and>
+     visc_supersol_gen test_fun_at (\<lambda>_. principal K) (ell_op_usc k L) \<Omega> u"
+  by (simp add: visc_sol_env_def visc_subsol_env_eq_gen visc_supersol_env_eq_gen)
+
+lemma visc_subsol_env2_eq_gen:
+  "visc_subsol_env2 k L K \<Omega> u = visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (ell_op_lsc k L) \<Omega> u"
+  by (simp add: visc_subsol_env2_def visc_subsol_gen_principal)
+
+lemma visc_supersol_env2_eq_gen:
+  "visc_supersol_env2 k L K \<Omega> u = visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (ell_op_usc k L) \<Omega> u"
+  by (simp add: visc_supersol_env2_def visc_supersol_gen_principal)
+
+lemma visc_supersol_lsc_eq_gen:
+  "visc_supersol_lsc k L K \<Omega> u
+     = visc_supersol_gen test_fun_at (\<lambda>_. principal K) (ell_op_usc k L) \<Omega> (lsc_env u)"
+  by (simp add: visc_supersol_lsc_def visc_supersol_gen_principal)
+
+lemma supersol_jet_eq_gen:
+  "supersol_jet k L \<Omega> w = visc_supersol_gen test_fun_at nhds (ell_op_usc k L) \<Omega> w"
+  by (simp add: supersol_jet_def visc_supersol_gen_nhds)
 
 (*<*)
 end
