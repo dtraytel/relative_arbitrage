@@ -1128,9 +1128,9 @@ proof -
 qed
 
 text \<open>And it is strictly positive when the path starts strictly inside the
-  ball --- exactly the situation of the subsolution argument, where the
-  starting point is the touching point \<open>x\<close> itself.  Without this the DPP
-  bound of \<open>exit_val_cond_at_time\<close> would be vacuous.\<close>
+  ball --- exactly the situation of a viscosity subsolution argument, where
+  the starting point is the touching point \<open>x\<close> itself.  Without this a
+  dynamic programming bound at this exit time would be vacuous.\<close>
 
 lemma pball_exit_pos:
   fixes \<omega> :: "'n::finite pairpath"
