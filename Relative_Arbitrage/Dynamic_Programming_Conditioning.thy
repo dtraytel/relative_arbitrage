@@ -351,7 +351,7 @@ proof -
     have PK: "prob_space (\<kappa> p')" by (rule ksemi_sets_kernel(2)[OF KQ W])
     have sK: "sets (\<kappa> p') = sets ?Y" by (rule ksemi_sets_kernel(1)[OF KQ W])
     show ?case
-    proof (rule exit_class_diffquot_of_rational_pairs[OF sK])
+    proof (rule covariation_class_diffquot_of_rational_pairs[OF closed_sconstraint sK])
       fix p q :: real
       assume pq: "p \<in> \<rat>" "q \<in> \<rat>" "p \<in> {0..?S}" "q \<in> {0..?S}" "p < q"
       have "AE w in \<kappa> p'. w \<in> C p q"
@@ -699,7 +699,7 @@ text \<open>The conditioning half of the DPP holds at an arbitrary time function
     from the random-time statement too.
   \<^item> Approaching \<open>s(\<omega>)\<close> from above through rationals keeps the residual
     horizon smaller, and \<^const>\<open>exit_val\<close> is monotone in the horizon
-    (@{thm [source] exit_val_horizon_mono}), so the bound survives replacing
+    (@{thm [source] covariation_val_horizon_mono}), so the bound survives replacing
     \<open>T - t\<^sub>n\<close> by \<open>T - s(\<omega>)\<close>.  What is left is a limit in the space variable,
     which is clause (1), upper semicontinuity
     (@{thm [source] exit_val_usc_unconditional}).  Approaching from below
@@ -766,7 +766,9 @@ proof -
       proof (rule enn2real_mono)
         show "exit_val k L (T - t n) K (?X (t n))
             \<le> exit_val k L (T - s) K (?X (t n))"
-          by (rule exit_val_horizon_mono[OF _ _ L1 Kc]) (use tT tgt[of n] in simp_all)
+          unfolding exit_val_eq_covariation_val
+          by (rule covariation_val_horizon_mono[OF _ _ closed_sconstraint sconstraint_convex
+                mat_1_rate_in_sconstraint[OF L1] Kc]) (use tT tgt[of n] in simp_all)
         show "exit_val k L (T - s) K (?X (t n)) < \<top>"
           using Tsn by (simp add: less_top)
       qed

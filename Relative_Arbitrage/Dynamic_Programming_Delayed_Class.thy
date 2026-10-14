@@ -113,7 +113,8 @@ theorem exit_val_horizon_cap:
   shows "exit_val k L S K x = min (exit_val k L T K x) (ennreal S)"
 proof (rule order.antisym)
   show "exit_val k L S K x \<le> min (exit_val k L T K x) (ennreal S)"
-    by (intro min.boundedI exit_val_horizon_mono[OF S0 ST L K] covariation_val_le_T[OF S0, of "sconstraint k L",
+    by (intro min.boundedI covariation_val_horizon_mono[OF S0 ST closed_sconstraint sconstraint_convex
+          mat_1_rate_in_sconstraint[OF L] K, folded exit_val_eq_covariation_val] covariation_val_le_T[OF S0, of "sconstraint k L",
           folded exit_val_eq_covariation_val])
   show "min (exit_val k L T K x) (ennreal S) \<le> exit_val k L S K x"
   proof (rule ccontr)
@@ -141,7 +142,8 @@ proof (rule order.antisym)
         = min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
       by (rule ess_inf_pexit_pair_law_pcut[OF S0 ST exit_class_prob[OF Q] setsQ K])
     have inS: "pair_law_of S (pcut S) Q \<in> exit_class k L S x"
-      by (rule exit_class_pcut[OF S0 ST Q])
+      unfolding exit_class_eq_covariation
+      by (rule covariation_class_pcut[OF S0 ST closed_sconstraint Q[unfolded exit_class_eq_covariation]])
     have "b < min (ess_inf_time Q (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))) (ennreal S)"
       using bQ bS by simp
     also have "\<dots> = ess_inf_time (pair_law_of S (pcut S) Q)
@@ -313,7 +315,8 @@ proof -
       have b: "T - s \<le> T" using s0 by simp
       have cutC: "pair_law_of (T - s) (pcut (T - s)) (S0 y)
           \<in> exit_class k L (T - s) (0 :: real^'n)"
-        by (rule exit_class_pcut[OF a b S0C])
+        unfolding exit_class_eq_covariation
+        by (rule covariation_class_pcut[OF a b closed_sconstraint S0C[unfolded exit_class_eq_covariation]])
       have m1: "Sel (s, y)
           = distr (pair_law_of (T - s) (pcut (T - s)) (S0 y)) ?B (pembed s T)"
         using main[OF s0 sT, of y] by blast
@@ -329,7 +332,8 @@ proof -
       have m2: "distr (Sel (s, y)) ((path_borel (T - s) :: ('n pairpath) measure)) (prebase s T)
           = pair_law_of (T - s) (pcut (T - s)) (S0 y)"
         using main[OF s0 sT, of y] by blast
-      show ?thesis unfolding m2 by (rule exit_class_pcut[OF a b S0C])
+      show ?thesis unfolding m2 exit_class_eq_covariation
+        by (rule covariation_class_pcut[OF a b closed_sconstraint S0C[unfolded exit_class_eq_covariation]])
     qed
   next
     show "ess_inf_time (pshift_law (T - s) y
@@ -884,8 +888,8 @@ text \<open>The six remaining side conditions of the additive glue are Fubini
   statements about \<^const>\<open>ksemi\<close>, needing beyond the per-\<open>p'\<close>
   integrability \<open>Kint\<close>/\<open>KintC\<close> an outer bound: a bound on the inner
   integral that does not depend on \<open>p'\<close>.  The class has one
-  (@{thm [source] exit_class_norm_mean_le},
-  @{thm [source] exit_class_comp_norm_mean_le}) --- depending only on
+  (@{thm [source] covariation_class_norm_mean_le},
+  @{thm [source] covariation_class_comp_norm_mean_le}) --- depending only on
   \<open>CARD('n)\<close>, \<open>L\<close> and the horizon --- and it survives the delay, because
   the delayed law reads the base law at an earlier time and the bound is
   monotone in the horizon.  The same constant works for every freezing
@@ -927,7 +931,7 @@ proof -
       (auto intro!: continuous_intros)
   have "(\<integral>w. norm (fst (w (max (u - s) 0))) \<partial>\<mu>)
       \<le> 1 + real CARD('n) * (real CARD('n) * L * (T - s))"
-    by (rule exit_class_norm_mean_le[OF Ts L0 mu tmem])
+    by (rule covariation_class_norm_mean_le[OF Ts sconstraint_bounds(1,2)[OF L0] mu[unfolded exit_class_eq_covariation] tmem])
   also have "\<dots> \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
     using L0 s0 by (intro add_left_mono mult_left_mono mult_left_mono) auto
   finally show ?thesis unfolding eq .
@@ -949,7 +953,8 @@ proof -
       (unfold outerp_def, auto intro!: continuous_intros)
   have "(\<integral>w. norm (outerp (fst (w (max (u - s) 0))) - snd (w (max (u - s) 0))) \<partial>\<mu>)
       \<le> real CARD('n) * (real CARD('n) * L * (T - s)) + real CARD('n) * L * (T - s)"
-    by (rule exit_class_comp_norm_mean_le[OF Ts L0 mu tmem])
+    by (rule covariation_class_comp_norm_mean_le
+        [OF Ts sconstraint_bounds(1,2)[OF L0] mu[unfolded exit_class_eq_covariation] tmem])
   also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
     using L0 s0 by (intro add_mono mult_left_mono mult_left_mono) auto
   finally show ?thesis unfolding eq .

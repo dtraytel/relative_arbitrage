@@ -416,7 +416,9 @@ proof -
   have memm: "kglue_law' r T (\<lambda>\<omega>. z (Nm m \<omega>)) Q \<in> exit_class k L T x" for m
   proof -
     have "kglue_law r T (Nm m) Q z \<in> exit_class k L T x"
-      by (rule exit_class_kglue_law[OF r rT' L0 Q zC Nmeas])
+      unfolding exit_class_eq_covariation
+      by (rule covariation_class_kglue_law[OF r rT' closed_sconstraint sconstraint_convex
+            sconstraint_bounds(1,2)[OF L0] Q[unfolded exit_class_eq_covariation] zC[unfolded exit_class_eq_covariation] Nmeas])
     moreover have "kglue_law r T (Nm m) Q z = kglue_law' r T (\<lambda>\<omega>. z (Nm m \<omega>)) Q"
     proof (rule kglue_law_eq_kglue_law'[OF r rT' PQ _ setsQ _ NmQ])
       show "prob_space (z j)" for j by (rule exit_class_prob[OF zC])

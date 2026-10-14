@@ -17,19 +17,19 @@ text \<open>Clause (iii) from the pairwise bounds, at rational pairs only: an
   surely'' to ``almost surely, for all''; path continuity and closedness of
   the constraint set do the rest (\<open>diffquot_all_of_rational\<close>).\<close>
 
-lemma exit_class_diffquot_of_rational_pairs:
+lemma covariation_class_diffquot_of_rational_pairs:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
+  assumes Sc: "closed S" and setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
     and one: "\<And>p q :: real. p \<in> \<rat> \<Longrightarrow> q \<in> \<rat> \<Longrightarrow> p \<in> {0..T} \<Longrightarrow> q \<in> {0..T} \<Longrightarrow> p < q \<Longrightarrow>
-      AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      AE \<omega> in Q. (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S"
   shows "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
 proof -
   have spQ: "space Q = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsQ])
   have rat: "AE \<omega> in Q. \<forall>p\<in>(\<rat>::real set). \<forall>q\<in>(\<rat>::real set).
       0 \<le> p \<longrightarrow> p < q \<longrightarrow> q \<le> T \<longrightarrow>
-      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+      (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S"
     by (intro AE_ball_countable'[OF _ countable_rat] AE_impI one) auto
   from rat AE_space show ?thesis
   proof eventually_elim
@@ -42,8 +42,8 @@ proof -
     proof (intro allI impI)
       fix u v :: real
       assume uv: "0 \<le> u" "u < v" "v \<le> T"
-      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> sconstraint k L"
-        by (rule diffquot_all_of_rational[OF closed_sconstraint cont _ uv])
+      show "(1 / (v - u)) *\<^sub>R (snd (\<omega> v) - snd (\<omega> u)) \<in> S"
+        by (rule diffquot_all_of_rational[OF Sc cont _ uv])
            (use elim(1) in blast)
     qed
   qed
@@ -81,28 +81,30 @@ proof -
   qed
 qed
 
-text \<open>A member of the class at horizon \<open>T\<close>, cut back to \<open>[0,S]\<close>, is a
-  member at horizon \<open>S\<close>: the \<open>AE\<close> clauses of (1.7) survive because \<open>pcut\<close>
-  is the identity on \<open>[0,S]\<close>, the martingale clauses because stopping at
-  \<open>S\<close> is harmless (\<open>martingale_stopped_const\<close>) and transports along
+text \<open>A member of the class at horizon \<open>T\<close>, cut back to \<open>[0,U]\<close>, is a
+  member at horizon \<open>U\<close>: the \<open>AE\<close> clauses survive because \<open>pcut\<close>
+  is the identity on \<open>[0,U]\<close> (the constraint clause needs \<open>S\<close> closed, to
+  be measurable), the martingale clauses because stopping at
+  \<open>U\<close> is harmless (\<open>martingale_stopped_const\<close>) and transports along
   \<open>pcut\<close> (\<open>martingale_pair_law\<close>).\<close>
 
-theorem exit_class_pcut:
+theorem covariation_class_pcut:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes S: "0 \<le> S" and ST: "S \<le> T" and Q: "Q \<in> exit_class k L T x"
-  shows "pair_law_of S (pcut S) Q \<in> exit_class k L S x"
+  assumes U: "0 \<le> U" and UT: "U \<le> T" and Sc: "closed S"
+    and Q: "Q \<in> covariation_class S T x"
+  shows "pair_law_of U (pcut U) Q \<in> covariation_class S U x"
 proof -
-  let ?Q = "pair_law_of S (pcut S) Q"
-  let ?B = "(path_borel S :: ('n pairpath) measure)"
+  let ?Q = "pair_law_of U (pcut U) Q"
+  let ?B = "(path_borel U :: ('n pairpath) measure)"
   let ?G = "natural_filtration ?Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
   have setsQ: "sets Q = sets (path_borel T :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF Q])
-  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
-  have phim: "pcut S \<in> Q \<rightarrow>\<^sub>M ?B" by (rule pcut_measurable[OF S ST setsQ])
+    by (rule covariation_class_sets[OF Q])
+  interpret P: prob_space Q by (rule covariation_class_prob[OF Q])
+  have phim: "pcut U \<in> Q \<rightarrow>\<^sub>M ?B" by (rule pcut_measurable[OF U UT setsQ])
   have prob': "prob_space ?Q"
     unfolding pair_law_of_def by (rule P.prob_space_distr[OF phim])
-  have mT: "min u S \<le> T" for u
-    using min.cobounded2[of u S] ST by linarith
+  have mT: "min u U \<le> T" for u
+    using min.cobounded2[of u U] UT by linarith
 
   \<comment> \<open>clause (i): the initial condition\<close>
   have start': "AE \<omega> in ?Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
@@ -110,43 +112,43 @@ proof -
     have mset: "{\<omega> \<in> space ?B. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
       by (rule start_set_sets[OF refl])
     have iff: "(AE \<omega> in ?Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0)
-        = (AE \<omega> in Q. fst (pcut S \<omega> 0) = x \<and> snd (pcut S \<omega> 0) = 0)"
+        = (AE \<omega> in Q. fst (pcut U \<omega> 0) = x \<and> snd (pcut U \<omega> 0) = 0)"
       unfolding pair_law_of_def by (rule AE_distr_iff[OF phim mset])
-    have z: "(0::real) \<in> {0..S}" using S by simp
+    have z: "(0::real) \<in> {0..U}" using U by simp
     have "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-      using Q unfolding exit_class_def by blast
-    then have "AE \<omega> in Q. fst (pcut S \<omega> 0) = x \<and> snd (pcut S \<omega> 0) = 0"
+      using Q unfolding covariation_class_def by blast
+    then have "AE \<omega> in Q. fst (pcut U \<omega> 0) = x \<and> snd (pcut U \<omega> 0) = 0"
       by eventually_elim (simp add: pcut_apply[OF z])
     then show ?thesis unfolding iff .
   qed
 
-  \<comment> \<open>clause (ii): the eigenvalue constraint on the covariation\<close>
-  have cov': "AE \<omega> in ?Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+  \<comment> \<open>clause (ii): the constraint on the covariation\<close>
+  have cov': "AE \<omega> in ?Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> U \<longrightarrow>
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
   proof -
     have "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-      using Q unfolding exit_class_def by blast
-    then have "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> S \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (pcut S \<omega> t) - snd (pcut S \<omega> s)) \<in> sconstraint k L"
-      by eventually_elim (use ST in \<open>auto simp: pcut_apply\<close>)
-    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets[OF closed_sconstraint]] .
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+      using Q unfolding covariation_class_def by blast
+    then have "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> U \<longrightarrow>
+        (1 / (t - s)) *\<^sub>R (snd (pcut U \<omega> t) - snd (pcut U \<omega> s)) \<in> S"
+      by eventually_elim (use UT in \<open>auto simp: pcut_apply\<close>)
+    then show ?thesis unfolding pair_law_of_def AE_distr_iff[OF phim diffquot_all_sets[OF Sc]] .
   qed
 
   \<comment> \<open>clauses (iii) and (iv): the martingales\<close>
-  have mgX': "martingale ?Q ?G 0 (\<lambda>u \<omega>. fst (\<omega> (min u S)) :: real^'n)"
-    by (rule martingale_pcut_law[OF S P.prob_space_axioms phim pair_fst_borel
-          martingale_cong_ge[OF martingale_stopped_const[OF S exit_class_X_martingale[OF Q]]]])
+  have mgX': "martingale ?Q ?G 0 (\<lambda>u \<omega>. fst (\<omega> (min u U)) :: real^'n)"
+    by (rule martingale_pcut_law[OF U P.prob_space_axioms phim pair_fst_borel
+          martingale_cong_ge[OF martingale_stopped_const[OF U covariation_class_martingale_fst[OF Q]]]])
       (simp add: min_absorb1[OF mT])
   have mgC': "martingale ?Q ?G 0
-      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u S)) :: real^'n) - snd (\<omega> (min u S)))"
-    by (rule martingale_pcut_law[OF S P.prob_space_axioms phim compensated_map_borel
+      (\<lambda>u \<omega>. outerp (fst (\<omega> (min u U)) :: real^'n) - snd (\<omega> (min u U)))"
+    by (rule martingale_pcut_law[OF U P.prob_space_axioms phim compensated_map_borel
           martingale_cong_ge[OF martingale_stopped_const
-            [OF S exit_class_compensated_martingale[OF Q]]]])
+            [OF U covariation_class_martingale_compensated[OF Q]]]])
       (simp add: min_absorb1[OF mT])
 
   show ?thesis
-    unfolding exit_class_def mem_Collect_eq
+    unfolding covariation_class_def mem_Collect_eq
     using prob' sets_pair_law_of start' cov' mgX' mgC' by blast
 qed
 
@@ -181,14 +183,14 @@ qed
 
 lemma pglue_diffquot:
   fixes \<omega> \<omega>' :: "'n::finite pairpath"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and Sv: "convex S"
     and A: "\<And>p q :: real. 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> r \<Longrightarrow>
-        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> sconstraint k L"
+        (1 / (q - p)) *\<^sub>R (snd (\<omega> q) - snd (\<omega> p)) \<in> S"
     and B: "\<And>p q :: real. 0 \<le> p \<Longrightarrow> p < q \<Longrightarrow> q \<le> T - r \<Longrightarrow>
-        (1 / (q - p)) *\<^sub>R (snd (\<omega>' q) - snd (\<omega>' p)) \<in> sconstraint k L"
+        (1 / (q - p)) *\<^sub>R (snd (\<omega>' q) - snd (\<omega>' p)) \<in> S"
     and s: "0 \<le> s" and st: "s < t" and tT: "t \<le> T"
   shows "(1 / (t - s)) *\<^sub>R
-      (snd (pglue r T \<omega> \<omega>' t) - snd (pglue r T \<omega> \<omega>' s)) \<in> sconstraint k L"
+      (snd (pglue r T \<omega> \<omega>' t) - snd (pglue r T \<omega> \<omega>' s)) \<in> S"
 proof -
   have sT: "s \<in> {0..T}" and tI: "t \<in> {0..T}" using s st tT by auto
   consider (early) "t \<le> r" | (late) "r \<le> s" | (mid) "s < r" "r < t" by fastforce
@@ -202,7 +204,7 @@ proof -
     case late
     then have rt: "r \<le> t" using st by simp
     have "(1 / ((t - r) - (s - r))) *\<^sub>R (snd (\<omega>' (t - r)) - snd (\<omega>' (s - r)))
-        \<in> sconstraint k L"
+        \<in> S"
       using B[of "s - r" "t - r"] late st tT by simp
     then show ?thesis
       by (simp add: pglue_ge[OF sT late] pglue_ge[OF tI rt])
@@ -212,9 +214,9 @@ proof -
         = (snd (\<omega> r) - snd (\<omega> s)) + (snd (\<omega>' (t - r)) - snd (\<omega>' 0))"
       using mid(1) less_imp_le[OF mid(2)]
       by (simp add: pglue_le[OF sT] pglue_ge[OF tI])
-    have "(1 / (t - r)) *\<^sub>R (snd (\<omega>' (t - r)) - snd (\<omega>' 0)) \<in> sconstraint k L"
+    have "(1 / (t - r)) *\<^sub>R (snd (\<omega>' (t - r)) - snd (\<omega>' 0)) \<in> S"
       using B[of 0 "t - r"] mid(2) tT by simp
-    from diffquot_convex_split[OF sconstraint_convex mid A[OF s mid(1) order_refl] this]
+    from diffquot_convex_split[OF Sv mid A[OF s mid(1) order_refl] this]
     show ?thesis unfolding eq .
   qed
 qed
@@ -225,8 +227,8 @@ subsection \<open>The pasted law\<close>
 lemma pglue_law_start:
   fixes Q R :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "R \<in> exit_class k L (T - r) 0"
+    and Q: "Q \<in> covariation_class S r x"
+    and R: "R \<in> covariation_class S (T - r) 0"
   shows "AE \<omega> in pglue_law r T Q R. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
 proof -
   let ?B = "(path_borel T :: ('n pairpath) measure)"
@@ -234,11 +236,11 @@ proof -
       fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
     using start_set_sets[of ?B T x 0] by (simp add: space_borel_of)
   show ?thesis
-  proof (rule AE_pglue_law[OF r rT exit_class_prob[OF Q]
-        exit_class_prob[OF R] exit_class_sets[OF Q]
-        exit_class_sets[OF R] mset])
+  proof (rule AE_pglue_law[OF r rT covariation_class_prob[OF Q]
+        covariation_class_prob[OF R] covariation_class_sets[OF Q]
+        covariation_class_sets[OF R] mset])
     show "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-      using Q unfolding exit_class_def by blast
+      using Q unfolding covariation_class_def by blast
     show "AE \<omega>' in R. True" by simp
     fix \<omega> \<omega>' :: "'n pairpath"
     assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
@@ -251,39 +253,39 @@ qed
 
 lemma pglue_law_diffquot:
   fixes Q R :: "('n::finite pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "R \<in> exit_class k L (T - r) 0"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and Sc: "closed S" and Sv: "convex S"
+    and Q: "Q \<in> covariation_class S r x"
+    and R: "R \<in> covariation_class S (T - r) 0"
   shows "AE \<omega> in pglue_law r T Q R. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-proof (rule AE_pglue_law[OF r rT exit_class_prob[OF Q] exit_class_prob[OF R]
-      exit_class_sets[OF Q] exit_class_sets[OF R]
-      borel_of_closed[OF closedin_diffquot_constraint_all[OF closed_sconstraint]]])
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+proof (rule AE_pglue_law[OF r rT covariation_class_prob[OF Q] covariation_class_prob[OF R]
+      covariation_class_sets[OF Q] covariation_class_sets[OF R]
+      borel_of_closed[OF closedin_diffquot_constraint_all[OF Sc]]])
   show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding exit_class_def by blast
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+    using Q unfolding covariation_class_def by blast
   show "AE \<omega>' in R. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
-    using R unfolding exit_class_def by blast
+      (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> S"
+    using R unfolding covariation_class_def by blast
   fix \<omega> \<omega>' :: "'n pairpath"
   assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
     and "\<omega>' \<in> mspace (path_metric (T - r) :: ('n pairpath) metric)"
     and A: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
     and B: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
+        (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> S"
   show "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow> (1 / (t - s)) *\<^sub>R
-      (snd (pglue r T \<omega> \<omega>' t) - snd (pglue r T \<omega> \<omega>' s)) \<in> sconstraint k L"
-    using A B by (intro allI impI pglue_diffquot[OF r rT]) auto
+      (snd (pglue r T \<omega> \<omega>' t) - snd (pglue r T \<omega> \<omega>' s)) \<in> S"
+    using A B by (intro allI impI pglue_diffquot[OF r rT Sv]) auto
 qed
 
 section \<open>The horizon cap does not bind\<close>
 
-text \<open>\<open>exit_val\<close> caps the exit time at \<open>T\<close>, the paper's \<open>v\<close> does not.  Cutting
-  a member back to \<open>[0,S]\<close> (\<open>exit_class_pcut\<close>) can only shorten its
-  exit time to \<open>min \<tau> S\<close>, so the value at horizon \<open>T\<close> is already visible
-  at horizon \<open>S\<close> once \<open>S\<close> exceeds the scale \<open>(r\<^sup>2 - |x|\<^sup>2)/(n-k)\<close> of
-  \<open>exit_val_le_ball_bound\<close>.  No pasting is needed here.\<close>
+text \<open>\<open>covariation_val\<close> caps the exit time at \<open>T\<close>, the paper's \<open>v\<close> does
+  not.  Cutting a member back to \<open>[0,U]\<close> (\<open>covariation_class_pcut\<close>) can
+  only shorten its exit time to \<open>min \<tau> U\<close>, so the value at horizon \<open>T\<close> is
+  already visible at horizon \<open>U\<close> once \<open>U\<close> exceeds the scale
+  \<open>(r\<^sup>2 - |x|\<^sup>2)/\<theta>\<close> of \<open>covariation_val_le_ball_bound\<close>.  No pasting is needed here.\<close>
 
 
 text \<open>The pasting theorem needs three transfer results: a first-factor
@@ -314,8 +316,8 @@ text \<open>The glued process splits as a first-factor martingale plus a
 theorem pglue_law_X_martingale:
   fixes Q R :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "R \<in> exit_class k L (T - r) 0"
+    and Q: "Q \<in> covariation_class S r x"
+    and R: "R \<in> covariation_class S (T - r) 0"
   shows "martingale (pglue_law r T Q R)
       (natural_filtration (pglue_law r T Q R) 0 (\<lambda>v \<omega>. \<omega> v)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min u T)) :: real^'n)"
@@ -328,12 +330,12 @@ proof -
   let ?FF = "\<lambda>u. ?FQ (min u r) \<Otimes>\<^sub>M ?FR (?s u)"
   let ?B = "(path_borel T :: ('n pairpath) measure)"
   have T0: "0 \<le> T" using r rT by simp
-  have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
-  have PR: "prob_space R" by (rule exit_class_prob[OF R])
+  have PQ: "prob_space Q" by (rule covariation_class_prob[OF Q])
+  have PR: "prob_space R" by (rule covariation_class_prob[OF R])
   have setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF Q])
+    by (rule covariation_class_sets[OF Q])
   have setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
-    by (rule exit_class_sets[OF R])
+    by (rule covariation_class_sets[OF R])
   have s1_0: "0 \<le> min u r" if "0 \<le> u" for u :: real using that r by simp
   have s1_mono: "min u r \<le> min v r" if "0 \<le> u" "u \<le> v" for u v :: real
     using that by simp
@@ -343,7 +345,7 @@ proof -
 
   \<comment> \<open>the two factor martingales, on their own clocks\<close>
   have mQ0: "martingale Q ?FQ 0 (\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n)"
-    by (rule exit_class_X_martingale[OF Q])
+    by (rule covariation_class_martingale_fst[OF Q])
   have mQ1: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min (min u r) r)) :: real^'n)"
     by (rule martingale_time_change[OF mQ0 s1_0 s1_mono])
@@ -355,7 +357,7 @@ proof -
         = (\<lambda>\<omega>. fst (\<omega> (min u r)))" by simp
   qed
   have mR0: "martingale R ?FR 0 (\<lambda>u \<omega>. fst (\<omega> (min u (T - r))) :: real^'n)"
-    by (rule exit_class_X_martingale[OF R])
+    by (rule covariation_class_martingale_fst[OF R])
   have mR: "martingale R (\<lambda>u. ?FR (?s u)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min (?s u) (T - r))) :: real^'n)"
     by (rule martingale_time_change[OF mR0 s2_0 s2_mono])
@@ -440,7 +442,7 @@ proof -
     then have mset: "{p \<in> space ?M. fst (snd p 0) = (0::real^'n)} \<in> sets ?M"
       using measurable_sets[OF sm cl] by simp
     have "AE \<omega> in Q. AE \<omega>' in R. fst (snd (\<omega>, \<omega>') 0) = (0::real^'n)"
-      using R unfolding exit_class_def by auto
+      using R unfolding covariation_class_def by auto
     then show ?thesis by (rule PP.AE_pair_measure[OF mset])
   qed
   have FFm: "filtered_measure ?M ?FF (0::real)"
@@ -510,8 +512,8 @@ qed
 theorem pglue_law_comp_martingale:
   fixes Q R :: "('n::finite pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "R \<in> exit_class k L (T - r) 0"
+    and Q: "Q \<in> covariation_class S r x"
+    and R: "R \<in> covariation_class S (T - r) 0"
   shows "martingale (pglue_law r T Q R)
       (natural_filtration (pglue_law r T Q R) 0 (\<lambda>v \<omega>. \<omega> v)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T)) :: real^'n) - snd (\<omega> (min u T)))"
@@ -526,12 +528,12 @@ proof -
   let ?A = "\<lambda>u p. fst (fst p (min u r)) :: real^'n"
   let ?Bp = "\<lambda>u p. fst (snd p (?t u)) :: real^'n"
   have T0: "0 \<le> T" using r rT by simp
-  have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
-  have PR: "prob_space R" by (rule exit_class_prob[OF R])
+  have PQ: "prob_space Q" by (rule covariation_class_prob[OF Q])
+  have PR: "prob_space R" by (rule covariation_class_prob[OF R])
   have setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF Q])
+    by (rule covariation_class_sets[OF Q])
   have setsR: "sets R = sets ((path_borel (T - r) :: ('n pairpath) measure))"
-    by (rule exit_class_sets[OF R])
+    by (rule covariation_class_sets[OF R])
   have s1_0: "0 \<le> min u r" if "0 \<le> u" for u :: real using that r by simp
   have s1_mono: "min u r \<le> min v r" if "0 \<le> u" "u \<le> v" for u v :: real
     using that by simp
@@ -543,7 +545,7 @@ proof -
   have mQ1: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min (min u r) r)) :: real^'n)"
     by (rule martingale_time_change
-        [OF exit_class_X_martingale[OF Q] s1_0 s1_mono])
+        [OF covariation_class_martingale_fst[OF Q] s1_0 s1_mono])
   have mQ: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n)"
   proof (rule martingale_cong_ge[OF mQ1])
@@ -554,12 +556,12 @@ proof -
   have mR: "martingale R (\<lambda>u. ?FR (?s u)) 0
       (\<lambda>u \<omega>. fst (\<omega> (?t u)) :: real^'n)"
     by (rule martingale_time_change
-        [OF exit_class_X_martingale[OF R] s2_0 s2_mono])
+        [OF covariation_class_martingale_fst[OF R] s2_0 s2_mono])
   have cQ1: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min (min u r) r)) :: real^'n)
           - snd (\<omega> (min (min u r) r)))"
     by (rule martingale_time_change
-        [OF exit_class_compensated_martingale[OF Q] s1_0 s1_mono])
+        [OF covariation_class_martingale_compensated[OF Q] s1_0 s1_mono])
   have cQ: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u r)) :: real^'n) - snd (\<omega> (min u r)))"
   proof (rule martingale_cong_ge[OF cQ1])
@@ -571,7 +573,7 @@ proof -
   have cR: "martingale R (\<lambda>u. ?FR (?s u)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (?t u)) :: real^'n) - snd (\<omega> (?t u)))"
     by (rule martingale_time_change
-        [OF exit_class_compensated_martingale[OF R] s2_0 s2_mono])
+        [OF covariation_class_martingale_compensated[OF R] s2_0 s2_mono])
   have FQ: "filtered_measure Q (\<lambda>u. ?FQ (min u r)) (0::real)"
   proof -
     interpret MQ: martingale Q "\<lambda>u. ?FQ (min u r)" "0::real"
@@ -683,7 +685,7 @@ proof -
         \<in> sets ?M" using measurable_sets[OF sm] by simp
     have "AE \<omega> in Q. AE \<omega>' in R.
         snd (\<omega>, \<omega>') 0 = ((0::real^'n), (0::real^'n^'n))"
-      using R unfolding exit_class_def by (auto simp: prod_eq_iff)
+      using R unfolding covariation_class_def by (auto simp: prod_eq_iff)
     then show ?thesis by (rule PP.AE_pair_measure[OF mset])
   qed
   have mgl: "martingale ?M ?FF 0
@@ -760,91 +762,92 @@ text \<open>The class is closed under independent concatenation.  This is the
   needs; with a countable Borel partition of the endpoint it will give the
   \<open>\<ge>\<close> inequality of (2.9).\<close>
 
-theorem exit_class_pglue_law:
+theorem covariation_class_pglue_law:
   fixes Q R :: "('n::finite pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "R \<in> exit_class k L (T - r) 0"
-  shows "pglue_law r T Q R \<in> exit_class k L T x"
-  unfolding exit_class_def mem_Collect_eq
-  using prob_space_pglue_law[OF r rT exit_class_prob[OF Q]
-      exit_class_prob[OF R] exit_class_sets[OF Q]
-      exit_class_sets[OF R]]
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and Sc: "closed S" and Sv: "convex S"
+    and Q: "Q \<in> covariation_class S r x"
+    and R: "R \<in> covariation_class S (T - r) 0"
+  shows "pglue_law r T Q R \<in> covariation_class S T x"
+  unfolding covariation_class_def mem_Collect_eq
+  using prob_space_pglue_law[OF r rT covariation_class_prob[OF Q]
+      covariation_class_prob[OF R] covariation_class_sets[OF Q]
+      covariation_class_sets[OF R]]
     sets_pglue_law pglue_law_start[OF r rT Q R]
-    pglue_law_diffquot[OF r rT Q R] pglue_law_X_martingale[OF r rT Q R]
+    pglue_law_diffquot[OF r rT Sc Sv Q R] pglue_law_X_martingale[OF r rT Q R]
     pglue_law_comp_martingale[OF r rT Q R]
   by blast
 
-text \<open>The immediate payoff: \<open>exit_val\<close> is nondecreasing in the horizon ---
-  paste the Brownian witness onto the tail of a horizon-\<open>S\<close> member, and the
-  glued path agrees with the original on \<open>[0,S]\<close> so cannot exit earlier.\<close>
+text \<open>The immediate payoff: the value is nondecreasing in the horizon, for a
+  closed convex \<open>S\<close> holding some \<open>\<sigma> \<sigma>\<^sup>T\<close> ---
+  paste the Brownian witness onto the tail of a horizon-\<open>U\<close> member, and the
+  glued path agrees with the original on \<open>[0,U]\<close> so cannot exit earlier.\<close>
 
 
-theorem exit_val_horizon_mono:
-  fixes K :: "(real^'n::finite) set" and x :: "real^'n"
-  assumes S: "0 \<le> S" and ST: "S \<le> T" and L: "1 \<le> L" and K: "closed K"
-  shows "exit_val k L S K x \<le> exit_val k L T K x"
+theorem covariation_val_horizon_mono:
+  fixes K :: "(real^'n::finite) set" and x :: "real^'n" and \<sigma> :: "real^'n^'n"
+  assumes U: "0 \<le> U" and UT: "U \<le> T" and Sc: "closed S" and Sv: "convex S"
+    and SST: "\<sigma> ** transpose \<sigma> \<in> S" and K: "closed K"
+  shows "covariation_val S U K x \<le> covariation_val S T K x"
 proof -
-  have T0: "0 \<le> T" using S ST by simp
-  have TS: "0 \<le> T - S" using ST by simp
-  have "exit_val k L S K x = Sup ((\<lambda>Q. ess_inf_time Q
-      (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))) ` exit_class k L S x)"
-    unfolding exit_val_def ..
-  also have "\<dots> \<le> exit_val k L T K x"
+  have T0: "0 \<le> T" using U UT by simp
+  have TU: "0 \<le> T - U" using UT by simp
+  have "covariation_val S U K x = Sup ((\<lambda>Q. ess_inf_time Q
+      (\<lambda>\<omega>. pexit U K (\<lambda>t. fst (\<omega> t)))) ` covariation_class S U x)"
+    unfolding covariation_val_def ..
+  also have "\<dots> \<le> covariation_val S T K x"
   proof (rule Sup_least)
     fix e :: ennreal
-    assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t))))
-        ` exit_class k L S x"
+    assume "e \<in> (\<lambda>Q. ess_inf_time Q (\<lambda>\<omega>. pexit U K (\<lambda>t. fst (\<omega> t))))
+        ` covariation_class S U x"
     then obtain Q :: "('n pairpath) measure"
-      where Q: "Q \<in> exit_class k L S x"
-        and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit S K (\<lambda>t. fst (\<omega> t)))" by blast
-    define R where "R = pair_law_of (T - S) (bmpair (T - S))
+      where Q: "Q \<in> covariation_class S U x"
+        and e: "e = ess_inf_time Q (\<lambda>\<omega>. pexit U K (\<lambda>t. fst (\<omega> t)))" by blast
+    define R where "R = pair_law_of (T - U) (sbmpair \<sigma> (T - U))
       (bm_paths :: ('n \<Rightarrow> real \<Rightarrow> real) measure)"
-    have R: "R \<in> exit_class k L (T - S) (0 :: real^'n)"
-      unfolding R_def exit_class_eq_covariation
-      by (rule bmpair_law_in_covariation_class[OF TS closed_sconstraint mat_1_in_sconstraint[OF L]])
-    have G: "pglue_law S T Q R \<in> exit_class k L T x"
-      by (rule exit_class_pglue_law[OF S ST Q R])
+    have R: "R \<in> covariation_class S (T - U) (0 :: real^'n)"
+      unfolding R_def by (rule sbmpair_law_in_covariation_class[OF TU Sc SST])
+    have G: "pglue_law U T Q R \<in> covariation_class S T x"
+      by (rule covariation_class_pglue_law[OF U UT Sc Sv Q R])
     let ?M = "Q \<Otimes>\<^sub>M R"
-    let ?g = "\<lambda>p :: 'n pairpath \<times> 'n pairpath. pglue S T (fst p) (snd p)"
+    let ?g = "\<lambda>p :: 'n pairpath \<times> 'n pairpath. pglue U T (fst p) (snd p)"
     let ?BT = "(path_borel T :: ('n pairpath) measure)"
-    have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
-    have PR: "prob_space R" by (rule exit_class_prob[OF R])
+    have PQ: "prob_space Q" by (rule covariation_class_prob[OF Q])
+    have PR: "prob_space R" by (rule covariation_class_prob[OF R])
     interpret PP: pair_prob_space Q R
       by (simp add: pair_prob_space_def pair_sigma_finite_def PQ PR
           prob_space_imp_sigma_finite)
-    have setsQ: "sets Q = sets (path_borel S :: ('n pairpath) measure)"
-      by (rule exit_class_sets[OF Q])
-    have setsR: "sets R = sets ((path_borel (T - S) :: ('n pairpath) measure))"
-      by (rule exit_class_sets[OF R])
-    have tauS: "(\<lambda>\<omega> :: 'n pairpath. pexit S K (\<lambda>t. fst (\<omega> t)))
+    have setsQ: "sets Q = sets (path_borel U :: ('n pairpath) measure)"
+      by (rule covariation_class_sets[OF Q])
+    have setsR: "sets R = sets ((path_borel (T - U) :: ('n pairpath) measure))"
+      by (rule covariation_class_sets[OF R])
+    have tauU: "(\<lambda>\<omega> :: 'n pairpath. pexit U K (\<lambda>t. fst (\<omega> t)))
         \<in> borel_measurable Q"
-      by (rule pexit_path_measurable[OF S K setsQ])
+      by (rule pexit_path_measurable[OF U K setsQ])
     have tauT: "(\<lambda>\<omega> :: 'n pairpath. pexit T K (\<lambda>t. fst (\<omega> t)))
         \<in> borel_measurable ?BT"
       by (rule pexit_path_measurable[OF T0 K refl])
-    have aeQ: "AE \<omega> in Q. e \<le> ennreal (pexit S K (\<lambda>t. fst (\<omega> t)))"
+    have aeQ: "AE \<omega> in Q. e \<le> ennreal (pexit U K (\<lambda>t. fst (\<omega> t)))"
       unfolding e by (rule ess_inf_time_AE)
-    have aeM: "AE p in ?M. e \<le> ennreal (pexit S K (\<lambda>t. fst (fst p t)))"
+    have aeM: "AE p in ?M. e \<le> ennreal (pexit U K (\<lambda>t. fst (fst p t)))"
     proof (rule PP.AE_pair_measure)
-      have m1: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. pexit S K (\<lambda>t. fst (fst p t)))
+      have m1: "(\<lambda>p :: 'n pairpath \<times> 'n pairpath. pexit U K (\<lambda>t. fst (fst p t)))
           \<in> borel_measurable ?M"
-        by (rule measurable_compose[OF measurable_fst tauS])
-      show "{p \<in> space ?M. e \<le> ennreal (pexit S K (\<lambda>t. fst (fst p t)))}
+        by (rule measurable_compose[OF measurable_fst tauU])
+      show "{p \<in> space ?M. e \<le> ennreal (pexit U K (\<lambda>t. fst (fst p t)))}
           \<in> sets ?M" using m1 by measurable
       show "AE \<omega> in Q. AE \<omega>' in R.
-          e \<le> ennreal (pexit S K (\<lambda>t. fst (fst (\<omega>, \<omega>') t)))"
+          e \<le> ennreal (pexit U K (\<lambda>t. fst (fst (\<omega>, \<omega>') t)))"
         using aeQ by simp
     qed
     have aeG: "AE p in ?M. e \<le> ennreal (pexit T K (\<lambda>t. fst (?g p t)))"
     proof (rule eventually_mono[OF aeM])
       fix p :: "'n pairpath \<times> 'n pairpath"
-      assume "e \<le> ennreal (pexit S K (\<lambda>t. fst (fst p t)))"
+      assume "e \<le> ennreal (pexit U K (\<lambda>t. fst (fst p t)))"
       also have "\<dots> \<le> ennreal (pexit T K (\<lambda>t. fst (?g p t)))"
-        by (intro ennreal_leI pexit_pglue_ge[OF S ST])
+        by (intro ennreal_leI pexit_pglue_ge[OF U UT])
       finally show "e \<le> ennreal (pexit T K (\<lambda>t. fst (?g p t)))" .
     qed
-    have iff: "(AE \<omega> in pglue_law S T Q R.
+    have iff: "(AE \<omega> in pglue_law U T Q R.
           e \<le> ennreal (pexit T K (\<lambda>t. fst (\<omega> t))))
         = (AE p in ?M. e \<le> ennreal (pexit T K (\<lambda>t. fst (?g p t))))"
     proof -
@@ -853,21 +856,21 @@ proof -
         using tauT by measurable
       show ?thesis
         unfolding pglue_law_def pair_law_of_def
-        by (rule AE_distr_iff[OF pglue_measurable[OF S ST setsQ setsR] mset])
+        by (rule AE_distr_iff[OF pglue_measurable[OF U UT setsQ setsR] mset])
     qed
-    have "e \<le> ess_inf_time (pglue_law S T Q R)
+    have "e \<le> ess_inf_time (pglue_law U T Q R)
         (\<lambda>\<omega>. pexit T K (\<lambda>t. fst (\<omega> t)))"
       unfolding ess_inf_time_def using aeG unfolding iff[symmetric]
       by (intro Sup_upper) simp
-    also have "\<dots> \<le> exit_val k L T K x"
-      unfolding exit_val_def using G by (intro Sup_upper imageI)
-    finally show "e \<le> exit_val k L T K x" .
+    also have "\<dots> \<le> covariation_val S T K x"
+      unfolding covariation_val_def using G by (intro Sup_upper imageI)
+    finally show "e \<le> covariation_val S T K x" .
   qed
   finally show ?thesis .
 qed
 
 text \<open>Horizon-cap invisibility, both halves.  Past the natural scale of
-  Example 3.1 the horizon does not matter at all, so \<open>exit_val\<close> --- defined
+  Example 3.1 the horizon does not matter at all, so the value --- defined
   on the capped path space --- computes the paper's uncapped \<open>v\<close> of (1.6).\<close>
 
 section \<open>The pasting lower bound (Prop. 2.4)\<close>
@@ -885,8 +888,8 @@ lemma kglue_law_start:
   fixes Q :: "('n::finite pairpath) measure"
     and RR :: "nat \<Rightarrow> ('n pairpath) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "\<And>j. RR j \<in> exit_class k L (T - r) 0"
+    and Q: "Q \<in> covariation_class S r x"
+    and R: "\<And>j. RR j \<in> covariation_class S (T - r) 0"
     and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
   shows "AE \<omega> in kglue_law r T N Q RR. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
 proof -
@@ -895,11 +898,11 @@ proof -
       fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0} \<in> sets ?B"
     using start_set_sets[of ?B T x 0] by (simp add: space_borel_of)
   show ?thesis
-  proof (rule AE_kglue_law[OF r rT exit_class_prob[OF Q]
-        exit_class_prob[OF R] exit_class_sets[OF Q]
-        exit_class_sets[OF R] Nm mset])
+  proof (rule AE_kglue_law[OF r rT covariation_class_prob[OF Q]
+        covariation_class_prob[OF R] covariation_class_sets[OF Q]
+        covariation_class_sets[OF R] Nm mset])
     show "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-      using Q unfolding exit_class_def by blast
+      using Q unfolding covariation_class_def by blast
     show "AE f in Pi\<^sub>M UNIV RR. True" by simp
     fix \<omega> :: "'n pairpath" and f :: "nat \<Rightarrow> 'n pairpath"
     assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
@@ -914,51 +917,51 @@ qed
 lemma kglue_law_diffquot:
   fixes Q :: "('n::finite pairpath) measure"
     and RR :: "nat \<Rightarrow> ('n pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "\<And>j. RR j \<in> exit_class k L (T - r) 0"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and Sc: "closed S" and Sv: "convex S"
+    and Q: "Q \<in> covariation_class S r x"
+    and R: "\<And>j. RR j \<in> covariation_class S (T - r) 0"
     and Nm: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
   shows "AE \<omega> in kglue_law r T N Q RR. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-proof (rule AE_kglue_law[OF r rT exit_class_prob[OF Q]
-      exit_class_prob[OF R] exit_class_sets[OF Q]
-      exit_class_sets[OF R] Nm borel_of_closed[OF closedin_diffquot_constraint_all[OF closed_sconstraint]]])
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+proof (rule AE_kglue_law[OF r rT covariation_class_prob[OF Q]
+      covariation_class_prob[OF R] covariation_class_sets[OF Q]
+      covariation_class_sets[OF R] Nm borel_of_closed[OF closedin_diffquot_constraint_all[OF Sc]]])
   show "AE \<omega> in Q. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-    using Q unfolding exit_class_def by blast
+      (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+    using Q unfolding covariation_class_def by blast
   show "AE f in Pi\<^sub>M UNIV RR. \<forall>j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-      (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L"
+      (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> S"
     unfolding AE_all_countable
   proof
     fix j :: nat
     have Pj: "prob_space (RR i)" if "i \<in> (UNIV :: nat set)" for i
-      by (rule exit_class_prob[OF R])
+      by (rule covariation_class_prob[OF R])
     have dj: "distr (Pi\<^sub>M UNIV RR) (RR j) (\<lambda>f. f j) = RR j"
       by (rule distr_PiM_component[OF Pj UNIV_I])
     have mj: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f j) \<in> Pi\<^sub>M UNIV RR \<rightarrow>\<^sub>M RR j"
       by (rule measurable_component_singleton) simp
     have "AE \<omega>' in RR j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
-      using R unfolding exit_class_def by blast
+        (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> S"
+      using R unfolding covariation_class_def by blast
     then have "AE \<omega>' in distr (Pi\<^sub>M UNIV RR) (RR j) (\<lambda>f. f j).
         \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-          (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> sconstraint k L"
+          (1 / (t - s)) *\<^sub>R (snd (\<omega>' t) - snd (\<omega>' s)) \<in> S"
       unfolding dj .
     from AE_distrD[OF mj this]
     show "AE f in Pi\<^sub>M UNIV RR. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L" .
+        (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> S" .
   qed
   fix \<omega> :: "'n pairpath" and f :: "nat \<Rightarrow> 'n pairpath"
   assume "\<omega> \<in> mspace (path_metric r :: ('n pairpath) metric)"
     and "f \<in> space (Pi\<^sub>M UNIV RR)"
     and Aw: "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> r \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
     and Bf: "\<forall>j. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T - r \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> sconstraint k L"
+        (1 / (t - s)) *\<^sub>R (snd (f j t) - snd (f j s)) \<in> S"
   show "\<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow> (1 / (t - s)) *\<^sub>R (snd (kglue r T N (\<omega>, f) t)
-      - snd (kglue r T N (\<omega>, f) s)) \<in> sconstraint k L"
+      - snd (kglue r T N (\<omega>, f) s)) \<in> S"
     using Aw Bf unfolding kglue_def
-    by (intro allI impI pglue_diffquot[OF r rT]) auto
+    by (intro allI impI pglue_diffquot[OF r rT Sv]) auto
 qed
 
 text \<open>The decomposition for clauses (iii) and (iv) of the kernel glue is
@@ -973,12 +976,13 @@ text \<open>\<open>martingale_sub_initial\<close> lives in
   @{theory Continuous_Time_Martingales.Martingale_Algebra}.\<close>
 
 
-lemma exit_class_inner_mean_le:
+lemma covariation_class_inner_mean_le:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T (0 :: real^'n)" and t: "t \<in> {0..T}"
+  assumes T: "0 \<le> T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and Q: "Q \<in> covariation_class S T (0 :: real^'n)" and t: "t \<in> {0..T}"
   shows "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
-      \<le> real CARD('n) * (real CARD('n) * L * T)"
+      \<le> real CARD('n) * (B * T)"
 proof -
   have "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
       = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
@@ -989,28 +993,29 @@ proof -
         (simp_all add: inner_vec_def power2_eq_square)
     also have "\<dots> = (\<Sum>i\<in>UNIV. (\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q))"
       by (rule Bochner_Integration.integral_sum)
-        (rule exit_class_sq_integrable[OF T L Q t])
+        (rule covariation_class_sq_integrable[OF B0 B T Q t])
     finally show ?thesis .
   qed
-  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). real CARD('n) * L * T)"
+  also have "\<dots> \<le> (\<Sum>i\<in>(UNIV :: 'n set). B * T)"
   proof (rule sum_mono)
     fix i :: 'n
     have "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q)
-        \<le> ((0 :: real^'n) $ i)\<^sup>2 + real CARD('n) * L * T"
-      by (rule exit_class_sq_mean_le[OF T L Q t])
-    then show "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q) \<le> real CARD('n) * L * T" by simp
+        \<le> ((0 :: real^'n) $ i)\<^sup>2 + B * T"
+      by (rule covariation_class_sq_mean_le[OF B0 B T Q t])
+    then show "(\<integral>\<omega>. (fst (\<omega> t) $ i)\<^sup>2 \<partial>Q) \<le> B * T" by simp
   qed
   finally show ?thesis by simp
 qed
 
-lemma exit_class_norm_mean_le:
+lemma covariation_class_norm_mean_le:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T (0 :: real^'n)" and t: "t \<in> {0..T}"
+  assumes T: "0 \<le> T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and Q: "Q \<in> covariation_class S T (0 :: real^'n)" and t: "t \<in> {0..T}"
   shows "(\<integral>\<omega>. norm (fst (\<omega> t)) \<partial>Q)
-      \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
+      \<le> 1 + real CARD('n) * (B * T)"
 proof -
-  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
+  interpret P: prob_space Q by (rule covariation_class_prob[OF Q])
   have key: "a \<le> 1 + a * a" for a :: real
   proof -
     have "0 \<le> (a - 1/2) * (a - 1/2)" by simp
@@ -1019,14 +1024,14 @@ proof -
   qed
   have ni: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
     by (rule covariation_class_norm_sq_integrable
-        [OF T sconstraint_bounds(1,2)[OF L] Q[unfolded exit_class_eq_covariation] t])
+        [OF T B0 B Q t])
   have i1: "integrable Q (\<lambda>\<omega>. 1 + fst (\<omega> t) \<bullet> fst (\<omega> t))"
     using ni by simp
   have nm: "(\<lambda>\<omega> :: 'n pairpath. norm (fst (\<omega> t))) \<in> borel_measurable Q"
   proof -
     have "(\<lambda>\<omega> :: 'n pairpath. fst (\<omega> t)) \<in> borel_measurable Q"
       by (rule measurable_compose
-          [OF exit_class_eval_measurable[OF Q t] pair_fst_borel])
+          [OF pair_law_eval_measurable[OF covariation_class_sets[OF Q]] pair_fst_borel])
     then show ?thesis by measurable
   qed
   have le: "norm (fst (\<omega> t)) \<le> 1 + fst (\<omega> t) \<bullet> fst (\<omega> t)" for \<omega> :: "'n pairpath"
@@ -1042,17 +1047,18 @@ proof -
     by (rule integral_mono[OF i0 i1]) (rule le)
   also have "\<dots> = 1 + (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)"
     using ni by (simp add: P.prob_space)
-  also have "\<dots> \<le> 1 + real CARD('n) * (real CARD('n) * L * T)"
-    using exit_class_inner_mean_le[OF T L Q t] by simp
+  also have "\<dots> \<le> 1 + real CARD('n) * (B * T)"
+    using covariation_class_inner_mean_le[OF T B0 B Q t] by simp
   finally show ?thesis .
 qed
 
 theorem kglue_law_X_martingale:
   fixes Q :: "('n::finite pairpath) measure"
     and RR :: "nat \<Rightarrow> ('n pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and L0: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "\<And>j. RR j \<in> exit_class k L (T - r) 0"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and B0: "0 \<le> B" and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and Q: "Q \<in> covariation_class S r x"
+    and R: "\<And>j. RR j \<in> covariation_class S (T - r) 0"
     and Nm: "N \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M count_space UNIV"
   shows "martingale (kglue_law r T N Q RR)
       (natural_filtration (kglue_law r T N Q RR) 0 (\<lambda>v \<omega>. \<omega> v)) 0
@@ -1070,20 +1076,20 @@ proof -
       fst (snd p (N (fst p)) (?t u)) - fst (snd p (N (fst p)) 0) :: real^'n"
   have T0: "0 \<le> T" using r rT by simp
   have TR: "0 \<le> T - r" using rT by simp
-  have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
-  have PRj: "prob_space (RR j)" for j by (rule exit_class_prob[OF R])
+  have PQ: "prob_space Q" by (rule covariation_class_prob[OF Q])
+  have PRj: "prob_space (RR j)" for j by (rule covariation_class_prob[OF R])
   have PS: "prob_space ?S" by (rule prob_space_PiM) (rule PRj)
   interpret PQi: prob_space Q by (rule PQ)
   interpret PS': pair_sigma_finite Q ?S
     by (simp add: pair_sigma_finite_def PQ PS prob_space_imp_sigma_finite)
   have setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF Q])
+    by (rule covariation_class_sets[OF Q])
   have setsR: "sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))" for j
-    by (rule exit_class_sets[OF R])
+    by (rule covariation_class_sets[OF R])
 
   \<comment> \<open>the first factor's martingale, on the clock \<open>min u r\<close>\<close>
   have mQ0: "martingale Q ?FQ 0 (\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n)"
-    by (rule exit_class_X_martingale[OF Q])
+    by (rule covariation_class_martingale_fst[OF Q])
   have s1_0: "0 \<le> min u r" if "0 \<le> u" for u :: real using that r by simp
   have s1_mono: "min u r \<le> min v r" if "0 \<le> u" "u \<le> v" for u v :: real
     using that by simp
@@ -1116,7 +1122,7 @@ proof -
     have "martingale (RR j) (?GR j) 0 (\<lambda>v \<omega>'.
         (fst (\<omega>' (min v (T - r))) :: real^'n)
           - (\<lambda>w \<omega>'. fst (\<omega>' (min w (T - r))) :: real^'n) 0 \<omega>')"
-      by (rule martingale_sub_initial[OF exit_class_X_martingale[OF R]])
+      by (rule martingale_sub_initial[OF covariation_class_martingale_fst[OF R]])
     then show ?thesis using TR by simp
   qed
   have mBj: "martingale ?S ?GS 0
@@ -1180,7 +1186,7 @@ proof -
       by (rule measurable_from_subalg[OF FP.subalgebras[OF u] adapB[OF u]])
   qed
   \<comment> \<open>integrability, uniformly over the family of continuations\<close>
-  define C where "C = 1 + real CARD('n) * (real CARD('n) * L * (T - r))"
+  define C where "C = 1 + real CARD('n) * (B * (T - r))"
   have mj: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f j) \<in> ?S \<rightarrow>\<^sub>M RR j" for j
     by (rule measurable_component_singleton) simp
   have dj: "distr ?S (RR j) (\<lambda>f. f j) = RR j" for j
@@ -1193,7 +1199,7 @@ proof -
   proof -
     interpret MJ: martingale "RR j" "?GR j" "0::real"
       "\<lambda>w \<omega>'. fst (\<omega>' (min w (T - r))) :: real^'n"
-      by (rule exit_class_X_martingale[OF R])
+      by (rule covariation_class_martingale_fst[OF R])
     have "integrable (RR j) (\<lambda>\<omega>'. fst (\<omega>' (min v (T - r))) :: real^'n)"
       using MJ.integrable[of v] v by simp
     then show ?thesis using v by simp
@@ -1214,7 +1220,7 @@ proof -
     have "(\<integral>f. norm (fst (f j v)) \<partial>?S) = (\<integral>\<omega>'. norm (fst (\<omega>' v)) \<partial>(RR j))"
       by (rule integral_distr[OF mj hn, unfolded dj, symmetric])
     also have "\<dots> \<le> C" unfolding C_def
-      by (rule exit_class_norm_mean_le[OF TR L0 R v])
+      by (rule covariation_class_norm_mean_le[OF TR B0 B R v])
     finally show ?thesis .
   qed
   have tI: "?t u \<in> {0..T - r}" for u using TR by auto
@@ -1394,7 +1400,7 @@ text \<open>\<open>norm_outer_prod\<close> lives in
 lemma kglue_param_comp_martingale:
   fixes RR :: "nat \<Rightarrow> ('n::finite pairpath) measure"
   assumes rT: "r \<le> T"
-    and R: "\<And>j. RR j \<in> exit_class k L (T - r) 0"
+    and R: "\<And>j. RR j \<in> covariation_class S (T - r) 0"
   shows "martingale (Pi\<^sub>M UNIV RR)
       (\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. natural_filtration (RR j) 0 (\<lambda>v \<omega>. \<omega> v) (max (u - r) 0)))
       0 (\<lambda>u f. outerp (fst (f i (min (max (u - r) 0) (T - r)))
@@ -1407,11 +1413,11 @@ proof -
   let ?t = "\<lambda>u :: real. min (max (u - r) 0) (T - r)"
   let ?GS = "\<lambda>u. Pi\<^sub>M UNIV (\<lambda>j. ?GR j (?s u))"
   have TR: "0 \<le> T - r" using rT by simp
-  have PRj: "prob_space (RR j)" for j by (rule exit_class_prob[OF R])
+  have PRj: "prob_space (RR j)" for j by (rule covariation_class_prob[OF R])
   have m0: "martingale ?S ?GS 0
       (\<lambda>u f. outerp (fst (f i (?t u)) :: real^'n) - snd (f i (?t u)))"
     by (rule kglue_param_martingale
-        [OF rT exit_class_compensated_martingale[OF R] PRj])
+        [OF rT covariation_class_martingale_compensated[OF R] PRj])
   have FSf: "filtered_measure ?S ?GS (0::real)"
   proof -
     interpret MS: martingale ?S ?GS "0::real"
@@ -1427,7 +1433,7 @@ proof -
     have mi: "(\<lambda>f :: nat \<Rightarrow> 'n pairpath. f i) \<in> ?S \<rightarrow>\<^sub>M RR i"
       by (rule measurable_component_singleton) simp
     have "AE \<omega>' in RR i. fst (\<omega>' 0) = (0::real^'n) \<and> snd (\<omega>' 0) = 0"
-      using R unfolding exit_class_def by blast
+      using R unfolding covariation_class_def by blast
     then have "AE \<omega>' in distr ?S (RR i) (\<lambda>f. f i).
         fst (\<omega>' 0) = (0::real^'n) \<and> snd (\<omega>' 0) = 0" unfolding dj .
     from AE_distrD[OF mi this] show ?thesis .
@@ -1480,33 +1486,34 @@ proof -
   qed
 qed
 
-lemma exit_class_comp_norm_mean_le:
+lemma covariation_class_comp_norm_mean_le:
   fixes Q :: "('n::finite pairpath) measure"
-  assumes T: "0 \<le> T" and L: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L T (0 :: real^'n)" and t: "t \<in> {0..T}"
+  assumes T: "0 \<le> T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and Q: "Q \<in> covariation_class S T (0 :: real^'n)" and t: "t \<in> {0..T}"
   shows "(\<integral>\<omega>. norm (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
-      \<le> real CARD('n) * (real CARD('n) * L * T) + real CARD('n) * L * T"
+      \<le> real CARD('n) * (B * T) + B * T"
 proof -
-  interpret P: prob_space Q by (rule exit_class_prob[OF Q])
+  interpret P: prob_space Q by (rule covariation_class_prob[OF Q])
   have iC: "integrable Q (\<lambda>\<omega>. outerp (fst (\<omega> t)) - snd (\<omega> t))"
-    by (rule exit_class_compensated_integrable[OF Q t])
+    by (rule covariation_class_compensated_integrable[OF Q t])
   have iN: "integrable Q (\<lambda>\<omega>. norm (outerp (fst (\<omega> t)) - snd (\<omega> t)))"
     by (rule integrable_norm[OF iC])
   have iX: "integrable Q (\<lambda>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t))"
     by (rule covariation_class_norm_sq_integrable
-        [OF T sconstraint_bounds(1,2)[OF L] Q[unfolded exit_class_eq_covariation] t])
+        [OF T B0 B Q t])
   have Ym: "(\<lambda>\<omega> :: 'n pairpath. norm (snd (\<omega> t))) \<in> borel_measurable Q"
   proof -
     have "(\<lambda>\<omega> :: 'n pairpath. snd (\<omega> t)) \<in> borel_measurable Q"
       by (rule measurable_compose
-          [OF exit_class_eval_measurable[OF Q t] pair_snd_borel])
+          [OF pair_law_eval_measurable[OF covariation_class_sets[OF Q]] pair_snd_borel])
     then show ?thesis by measurable
   qed
-  have Yb: "AE \<omega> in Q. norm (snd (\<omega> t)) \<le> real CARD('n) * L * T"
-    using exit_class_Y_bounded_ae[OF T L Q] t by (auto elim: eventually_mono)
+  have Yb: "AE \<omega> in Q. norm (snd (\<omega> t)) \<le> B * T"
+    using covariation_class_Y_bounded_ae[OF T B0 B Q] t by (auto elim: eventually_mono)
   have iY: "integrable Q (\<lambda>\<omega> :: 'n pairpath. norm (snd (\<omega> t)))"
-  proof (rule P.integrable_const_bound[where B = "real CARD('n) * L * T"])
-    show "AE \<omega> in Q. norm (norm (snd (\<omega> t))) \<le> real CARD('n) * L * T"
+  proof (rule P.integrable_const_bound[where B = "B * T"])
+    show "AE \<omega> in Q. norm (norm (snd (\<omega> t))) \<le> B * T"
       using Yb by simp
   qed (rule Ym)
   have "(\<integral>\<omega>. norm (outerp (fst (\<omega> t)) - snd (\<omega> t)) \<partial>Q)
@@ -1524,18 +1531,18 @@ proof -
   qed
   also have "\<dots> = (\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
       + (\<integral>\<omega>. norm (snd (\<omega> t)) \<partial>Q)" using iX iY by simp
-  also have "\<dots> \<le> real CARD('n) * (real CARD('n) * L * T)
-      + real CARD('n) * L * T"
+  also have "\<dots> \<le> real CARD('n) * (B * T)
+      + B * T"
   proof -
     have b1: "(\<integral>\<omega>. fst (\<omega> t) \<bullet> fst (\<omega> t) \<partial>Q)
-        \<le> real CARD('n) * (real CARD('n) * L * T)"
-      by (rule exit_class_inner_mean_le[OF T L Q t])
-    have b2: "(\<integral>\<omega>. norm (snd (\<omega> t)) \<partial>Q) \<le> real CARD('n) * L * T"
+        \<le> real CARD('n) * (B * T)"
+      by (rule covariation_class_inner_mean_le[OF T B0 B Q t])
+    have b2: "(\<integral>\<omega>. norm (snd (\<omega> t)) \<partial>Q) \<le> B * T"
     proof -
       have "(\<integral>\<omega>. norm (snd (\<omega> t)) \<partial>Q)
-          \<le> (\<integral>\<omega>. real CARD('n) * L * T \<partial>Q)"
+          \<le> (\<integral>\<omega>. B * T \<partial>Q)"
         using iY Yb by (intro integral_mono_AE) auto
-      also have "\<dots> = real CARD('n) * L * T" by (simp add: P.prob_space)
+      also have "\<dots> = B * T" by (simp add: P.prob_space)
       finally show ?thesis .
     qed
     from b1 b2 show ?thesis by simp
@@ -1546,9 +1553,10 @@ qed
 theorem kglue_law_comp_martingale:
   fixes Q :: "('n::finite pairpath) measure"
     and RR :: "nat \<Rightarrow> ('n pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and L0: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "\<And>j. RR j \<in> exit_class k L (T - r) 0"
+  assumes r: "0 \<le> r" and rT: "r \<le> T"
+    and B0: "0 \<le> B" and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and Q: "Q \<in> covariation_class S r x"
+    and R: "\<And>j. RR j \<in> covariation_class S (T - r) 0"
     and Nm: "N \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M count_space UNIV"
   shows "martingale (kglue_law r T N Q RR)
       (natural_filtration (kglue_law r T N Q RR) 0 (\<lambda>v \<omega>. \<omega> v)) 0
@@ -1571,29 +1579,29 @@ proof -
   let ?P2 = "\<lambda>u p. (\<chi> i j. ?Ap p $ i * ?bb u p $ j)
       + (\<chi> i j. ?bb u p $ i * ?Ap p $ j)"
   let ?D = "\<lambda>u p. ?P1 u p + ?P2 u p"
-  define KK where "KK = real CARD('n) * (real CARD('n) * L * (T - r))
-      + real CARD('n) * L * (T - r)"
-  define C where "C = 1 + real CARD('n) * (real CARD('n) * L * (T - r))"
+  define KK where "KK = real CARD('n) * (B * (T - r))
+      + B * (T - r)"
+  define C where "C = 1 + real CARD('n) * (B * (T - r))"
   have T0: "0 \<le> T" using r rT by simp
   have TR: "0 \<le> T - r" using rT by simp
-  have Cnn: "0 \<le> C" unfolding C_def using L0 TR by simp
-  have PQ: "prob_space Q" by (rule exit_class_prob[OF Q])
-  have PRj: "prob_space (RR j)" for j by (rule exit_class_prob[OF R])
+  have Cnn: "0 \<le> C" unfolding C_def using B0 TR by simp
+  have PQ: "prob_space Q" by (rule covariation_class_prob[OF Q])
+  have PRj: "prob_space (RR j)" for j by (rule covariation_class_prob[OF R])
   have PS: "prob_space ?S" by (rule prob_space_PiM) (rule PRj)
   interpret PQi: prob_space Q by (rule PQ)
   interpret PS': pair_sigma_finite Q ?S
     by (simp add: pair_sigma_finite_def PQ PS prob_space_imp_sigma_finite)
   have setsQ: "sets Q = sets (path_borel r :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF Q])
+    by (rule covariation_class_sets[OF Q])
   have setsR: "sets (RR j) = sets ((path_borel (T - r) :: ('n pairpath) measure))" for j
-    by (rule exit_class_sets[OF R])
+    by (rule covariation_class_sets[OF R])
 
   \<comment> \<open>the first factor, on the clock \<open>min u r\<close>\<close>
   have s1_0: "0 \<le> min u r" if "0 \<le> u" for u :: real using that r by simp
   have s1_mono: "min u r \<le> min v r" if "0 \<le> u" "u \<le> v" for u v :: real
     using that by simp
   have mQ0: "martingale Q ?FQ 0 (\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n)"
-    by (rule exit_class_X_martingale[OF Q])
+    by (rule covariation_class_martingale_fst[OF Q])
   have mQ: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
       (\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n)"
   proof (rule martingale_cong_ge
@@ -1626,7 +1634,7 @@ proof -
   have cQ: "martingale Q (\<lambda>u. ?FQ (min u r)) 0
       (\<lambda>u \<omega>. outerp (fst (\<omega> (min u r)) :: real^'n) - snd (\<omega> (min u r)))"
   proof (rule martingale_cong_ge[OF martingale_time_change
-        [OF exit_class_compensated_martingale[OF Q] s1_0 s1_mono]])
+        [OF covariation_class_martingale_compensated[OF Q] s1_0 s1_mono]])
     fix u :: real assume "0 \<le> u"
     show "(\<lambda>\<omega> :: 'n pairpath. outerp (fst (\<omega> (min (min u r) r)) :: real^'n)
           - snd (\<omega> (min (min u r) r)))
@@ -1640,7 +1648,7 @@ proof -
     have "martingale (RR j) (?GR j) 0 (\<lambda>v \<omega>'.
         (fst (\<omega>' (min v (T - r))) :: real^'n)
           - (\<lambda>w \<omega>'. fst (\<omega>' (min w (T - r))) :: real^'n) 0 \<omega>')"
-      by (rule martingale_sub_initial[OF exit_class_X_martingale[OF R]])
+      by (rule martingale_sub_initial[OF covariation_class_martingale_fst[OF R]])
     then show ?thesis using TR by simp
   qed
   have mBj: "martingale ?S ?GS 0
@@ -1765,7 +1773,7 @@ proof -
   have tI: "?t u \<in> {0..T - r}" for u using TR by auto
   have zI: "(0::real) \<in> {0..T - r}" using TR by simp
   have startj: "AE \<omega>' in RR j. fst (\<omega>' 0) = (0::real^'n) \<and> snd (\<omega>' 0) = 0" for j
-    using R unfolding exit_class_def by blast
+    using R unfolding covariation_class_def by blast
   have evR: "(\<lambda>\<omega>' :: 'n pairpath. \<omega>' v) \<in> borel_measurable (RR j)" for j v
     by (rule pair_law_eval_measurable[OF setsR])
   have iCS: "integrable ?S (\<lambda>f. outerp (fst (f j (?t u)) - fst (f j 0) :: real^'n)
@@ -1806,7 +1814,7 @@ proof -
       by (rule integral_cong_AE[OF h1 h2])
         (rule eventually_mono[OF startj], simp)
     also have "\<dots> \<le> KK" unfolding KK_def
-      by (rule exit_class_comp_norm_mean_le[OF TR L0 R tI])
+      by (rule covariation_class_comp_norm_mean_le[OF TR B0 B R tI])
     finally show ?thesis .
   qed
   have hX: "(\<lambda>\<omega>' :: 'n pairpath. fst (\<omega>' v) :: real^'n)
@@ -1820,7 +1828,7 @@ proof -
     proof -
       interpret MJ: martingale "RR j" "?GR j" "0::real"
         "\<lambda>w \<omega>'. fst (\<omega>' (min w (T - r))) :: real^'n"
-        by (rule exit_class_X_martingale[OF R])
+        by (rule covariation_class_martingale_fst[OF R])
       have "integrable (RR j) (\<lambda>\<omega>'. fst (\<omega>' (min v (T - r))) :: real^'n)"
         using MJ.integrable[of v] v by simp
       then show "integrable (RR j) (\<lambda>\<omega>'. fst (\<omega>' v) :: real^'n)"
@@ -1837,7 +1845,7 @@ proof -
         = (\<integral>\<omega>'. norm (fst (\<omega>' v) :: real^'n) \<partial>(RR j))"
       by (rule integral_distr[OF mj hn, unfolded dj, symmetric])
     also have "\<dots> \<le> C" unfolding C_def
-      by (rule exit_class_norm_mean_le[OF TR L0 R v])
+      by (rule covariation_class_norm_mean_le[OF TR B0 B R v])
     finally show ?thesis .
   qed
   have bBS: "(\<integral>f. norm (fst (f j (?t u)) - fst (f j 0) :: real^'n) \<partial>?S)
@@ -2126,50 +2134,51 @@ qed
 
 text \<open>The class is closed under concatenation with a continuation chosen by
   the endpoint along any countable past-measurable selector --- what
-  Prop. 2.4's \<open>\<ge>\<close> inequality needs beyond \<open>exit_class_pglue_law\<close>:
+  Prop. 2.4's \<open>\<ge>\<close> inequality needs beyond \<open>covariation_class_pglue_law\<close>:
   with an \<open>\<epsilon>\<close>-optimal continuation attached to each cell of a countable
   Borel partition of \<open>X(r)\<close>, the pasted law realises \<open>r + v(X(r))\<close> up to
   \<open>\<epsilon>\<close>.\<close>
 
-theorem exit_class_kglue_law:
+theorem covariation_class_kglue_law:
   fixes Q :: "('n::finite pairpath) measure"
     and RR :: "nat \<Rightarrow> ('n pairpath) measure"
-  assumes r: "0 \<le> r" and rT: "r \<le> T" and L0: "0 \<le> L"
-    and Q: "Q \<in> exit_class k L r x"
-    and R: "\<And>j. RR j \<in> exit_class k L (T - r) 0"
+  assumes r: "0 \<le> r" and rT: "r \<le> T" and Sc: "closed S" and Sv: "convex S"
+    and B0: "0 \<le> B" and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and Q: "Q \<in> covariation_class S r x"
+    and R: "\<And>j. RR j \<in> covariation_class S (T - r) 0"
     and Nm: "N \<in> natural_filtration Q 0 (\<lambda>v \<omega>. \<omega> v) r \<rightarrow>\<^sub>M count_space UNIV"
-  shows "kglue_law r T N Q RR \<in> exit_class k L T x"
+  shows "kglue_law r T N Q RR \<in> covariation_class S T x"
 proof -
   have NmQ: "N \<in> Q \<rightarrow>\<^sub>M count_space UNIV"
   proof -
     interpret MQ0: martingale Q "natural_filtration Q 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v)"
       "0::real" "\<lambda>u \<omega>. fst (\<omega> (min u r)) :: real^'n"
-      by (rule exit_class_X_martingale[OF Q])
+      by (rule covariation_class_martingale_fst[OF Q])
     show ?thesis
       by (rule measurable_from_subalg[OF MQ0.subalgebras[OF r] Nm])
   qed
   show ?thesis
-    unfolding exit_class_def mem_Collect_eq
+    unfolding covariation_class_def mem_Collect_eq
   proof (intro conjI)
     show "prob_space (kglue_law r T N Q RR)"
-      by (rule prob_space_kglue_law[OF r rT exit_class_prob[OF Q]
-            exit_class_prob[OF R] exit_class_sets[OF Q]
-            exit_class_sets[OF R] NmQ])
+      by (rule prob_space_kglue_law[OF r rT covariation_class_prob[OF Q]
+            covariation_class_prob[OF R] covariation_class_sets[OF Q]
+            covariation_class_sets[OF R] NmQ])
     show "sets (kglue_law r T N Q RR)
         = sets (path_borel T :: ('n pairpath) measure)" by (rule sets_kglue_law)
     show "AE \<omega> in kglue_law r T N Q RR. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
       by (rule kglue_law_start[OF r rT Q R NmQ])
     show "AE \<omega> in kglue_law r T N Q RR. \<forall>s t. 0 \<le> s \<longrightarrow> s < t \<longrightarrow> t \<le> T \<longrightarrow>
-        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> sconstraint k L"
-      by (rule kglue_law_diffquot[OF r rT Q R NmQ])
+        (1 / (t - s)) *\<^sub>R (snd (\<omega> t) - snd (\<omega> s)) \<in> S"
+      by (rule kglue_law_diffquot[OF r rT Sc Sv Q R NmQ])
     show "martingale (kglue_law r T N Q RR)
         (natural_filtration (kglue_law r T N Q RR) 0 (\<lambda>v \<omega>. \<omega> v)) 0
         (\<lambda>u \<omega>. fst (\<omega> (min u T)) :: real^'n)"
-      by (rule kglue_law_X_martingale[OF r rT L0 Q R Nm])
+      by (rule kglue_law_X_martingale[OF r rT B0 B Q R Nm])
     show "martingale (kglue_law r T N Q RR)
         (natural_filtration (kglue_law r T N Q RR) 0 (\<lambda>v \<omega>. \<omega> v)) 0
         (\<lambda>u \<omega>. outerp (fst (\<omega> (min u T)) :: real^'n) - snd (\<omega> (min u T)))"
-      by (rule kglue_law_comp_martingale[OF r rT L0 Q R Nm])
+      by (rule kglue_law_comp_martingale[OF r rT B0 B Q R Nm])
   qed
 qed
 

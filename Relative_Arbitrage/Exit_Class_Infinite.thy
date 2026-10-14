@@ -91,7 +91,7 @@ text \<open>The class is a set of laws of the pair \<open>(X, \<langle>X\<rangle
 
 text \<open>The cut of a member of the uncapped class is a member of the capped one.
   Every clause transfers along @{const pcut}; the covariation and martingale
-  clauses are simpler here than in @{thm [source] exit_class_pcut}, since the
+  clauses are simpler here than in @{thm [source] covariation_class_pcut}, since the
   uncapped class constrains every pair of times and stops nothing.\<close>
 
 theorem iexit_class_pcut:
@@ -239,7 +239,7 @@ text \<open>The other half reduces to a single construction: every member of the
   horizon-\<open>T\<close> class is the cut of a member of the uncapped class.  Given that,
   the uncapped exit time dominates the capped one on the extension, and the
   inequality follows.  The construction itself is an iterated application of
-  @{thm [source] exit_class_pglue_law}, whose continuation may be taken with
+  @{thm [source] covariation_class_pglue_law}, whose continuation may be taken with
   covariation the identity by @{thm [source] mat_1_in_sconstraint}.\<close>
 
 theorem iexit_val_ge_of_extension:
@@ -296,7 +296,7 @@ subsection \<open>Towards the extension: cutting a glue back\<close>
 
 text \<open>Gluing a continuation onto a path at \<open>r\<close> and cutting back at \<open>r\<close>
   returns the original path, so an extension built by
-  @{thm [source] exit_class_pglue_law} restricts to the law it extends
+  @{thm [source] covariation_class_pglue_law} restricts to the law it extends
   (@{thm [source] pcut_pglue}).\<close>
 
 text \<open>Members of the horizon-\<open>r\<close> path space are extensional on \<open>{0..r}\<close>, so
@@ -413,7 +413,7 @@ proof -
 qed
 
 text \<open>Cutting the extension at a horizon beyond the glue point returns the
-  compact concatenation, so @{thm [source] exit_class_pglue_law} places every
+  compact concatenation, so @{thm [source] covariation_class_pglue_law} places every
   restriction of the extension in the class.\<close>
 
 lemma pair_law_of_pcut_iextend:
@@ -495,7 +495,9 @@ proof -
   have ST0: "0 \<le> S - T" using TS by simp
   show ?thesis
     unfolding pair_law_of_pcut_iextend[OF T TS Q]
-    by (rule exit_class_pglue_law[OF T TS Q ibm_law_cut_in_class[OF ST0 L]])
+    unfolding exit_class_eq_covariation
+    by (rule covariation_class_pglue_law[OF T TS closed_sconstraint sconstraint_convex
+          Q[unfolded exit_class_eq_covariation] ibm_law_cut_in_class[OF ST0 L, unfolded exit_class_eq_covariation]])
 qed
 
 text \<open>At the glue point itself the extension restricts to the law it
@@ -563,7 +565,8 @@ next
           ipcut_measurable[OF T sets_iextend]])
   also have "\<dots> = pair_law_of S (pcut S) (iextend T Q)"
     unfolding pair_law_of_def by (simp add: comp_def pcut_pcut[OF ST])
-  finally show ?thesis using exit_class_pcut[OF S ST Q] by simp
+  finally show ?thesis using covariation_class_pcut[OF S ST closed_sconstraint Q[unfolded exit_class_eq_covariation],
+      folded exit_class_eq_covariation] by simp
 qed
 
 lemma martingale_of_cut_laws:

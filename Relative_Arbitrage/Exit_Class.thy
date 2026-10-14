@@ -341,6 +341,14 @@ next
   qed
 qed
 
+text \<open>In the form the Brownian witness of the class reads it: the identity
+  is the covariation rate \<open>\<sigma> \<sigma>\<^sup>T\<close> of \<open>\<sigma> = I\<close>.\<close>
+
+lemma mat_1_rate_in_sconstraint:
+  assumes L: "1 \<le> L"
+  shows "mat 1 ** transpose (mat 1) \<in> (sconstraint k L :: (real^'n::finite^'n) set)"
+  using mat_1_in_sconstraint[OF L] by simp
+
 subsection \<open>Continuing a stopped volatility past its stopping time\<close>
 
 text \<open>Per (1.7)--(1.8) the paper's processes are never stopped, so a market
