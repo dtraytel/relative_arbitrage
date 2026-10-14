@@ -71,6 +71,80 @@ theorem exit_class_compactin_weak:
   unfolding exit_class_eq_covariation
   by (rule covariation_class_compactin_weak[OF T sconstraint_bounds[OF L] closed_sconstraint])
 
+subsection \<open>Lemmas 2.2 and 2.3 for an abstract constraint set\<close>
+
+text \<open>The paper states Lemmas 2.2 and 2.3 for a set \<open>S \<subseteq> \<bbbS>\<^sup>n\<^sub>+\<close> of positive
+  semidefinite matrices: bounded for relative compactness, compact and convex
+  for compactness.  A bounded set of positive semidefinite matrices supplies
+  both bounds the statements above take, with the same constant: a diagonal
+  entry of a positive semidefinite matrix is nonnegative and at most its norm.\<close>
+
+lemma psd_diag_le_norm:
+  fixes a :: "real^'n::finite^'n"
+  assumes psd: "psd a"
+  shows "0 \<le> a $ j $ j \<and> a $ j $ j \<le> norm a"
+proof
+  show "0 \<le> a $ j $ j" by (rule psd_diag_nonneg[OF psd])
+  have "a $ j $ j \<le> norm (a $ j)"
+    using component_le_norm_cart[of "a $ j" j] by linarith
+  also have "\<dots> \<le> norm a" by (rule Finite_Cartesian_Product.norm_nth_le)
+  finally show "a $ j $ j \<le> norm a" .
+qed
+
+text \<open>Lemma 2.2: for a bounded set of positive semidefinite matrices the
+  class is relatively compact for weak convergence of laws on the path space.\<close>
+
+theorem covariation_class_relatively_compact:
+  fixes x :: "real^'n::finite" and S :: "(real^'n^'n) set"
+  assumes T: "0 < T" and psd: "\<And>a. a \<in> S \<Longrightarrow> psd a" and bd: "bounded S"
+  shows "compactin (weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric)))
+      (weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric))
+         closure_of covariation_class S T x)"
+proof -
+  let ?X = "mtopology_of (path_metric T :: ('n pairpath) metric)"
+  from bd obtain B where B0: "0 < B" and B: "\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B"
+    unfolding bounded_pos by blast
+  have D: "0 \<le> a $ j $ j \<and> a $ j $ j \<le> B" if a: "a \<in> S" for a j
+    using psd_diag_le_norm[OF psd[OF a], of j] B[OF a] by linarith
+  have met: "metrizable_space ?X"
+    unfolding mtopology_of_def
+    by (rule Metric_space.metrizable_space_mtopology[OF Metric_space_mspace_mdist])
+  have sep: "separable_space ?X" by (rule separable_path_metric)
+  have bound: "covariation_class S T x
+      \<subseteq> {N. N (space N) \<le> ennreal 1 \<and> sets N = sets (borel_of ?X)}"
+  proof
+    fix N :: "('n pairpath) measure"
+    assume N: "N \<in> covariation_class S T x"
+    have "N (space N) \<le> ennreal 1"
+      by (simp add: prob_space.emeasure_space_1[OF covariation_class_prob[OF N]])
+    moreover have "sets N = sets (borel_of ?X)" by (rule covariation_class_sets[OF N])
+    ultimately show "N \<in> {N. N (space N) \<le> ennreal 1 \<and> sets N = sets (borel_of ?X)}"
+      by simp
+  qed
+  have tight: "tight_on_set ?X (covariation_class S T x)"
+    by (rule covariation_class_tight_on_set[OF T less_imp_le[OF B0] B less_imp_le[OF B0] D])
+  show ?thesis by (rule tight_imp_relatively_compact[OF met sep bound tight])
+qed
+
+text \<open>Lemma 2.3: for a compact set of positive semidefinite matrices the
+  class is compact.  The paper also assumes \<open>S\<close> convex; closedness of the class
+  under weak limits needs only \<open>S\<close> closed, so convexity is not used.\<close>
+
+theorem covariation_class_compact:
+  fixes x :: "real^'n::finite" and S :: "(real^'n^'n) set"
+  assumes T: "0 < T" and psd: "\<And>a. a \<in> S \<Longrightarrow> psd a" and cS: "compact S"
+  shows "compactin (weak_conv_topology (mtopology_of (path_metric T :: ('n pairpath) metric)))
+      (covariation_class S T x)"
+proof -
+  from compact_imp_bounded[OF cS] obtain B where B0: "0 < B" and B: "\<And>a. a \<in> S \<Longrightarrow> norm a \<le> B"
+    unfolding bounded_pos by blast
+  have D: "0 \<le> a $ j $ j \<and> a $ j $ j \<le> B" if a: "a \<in> S" for a j
+    using psd_diag_le_norm[OF psd[OF a], of j] B[OF a] by linarith
+  show ?thesis
+    by (rule covariation_class_compactin_weak[OF T less_imp_le[OF B0] B less_imp_le[OF B0] D
+          compact_imp_closed[OF cS]])
+qed
+
 section \<open>Joint continuity of the shift\<close>
 
 text \<open>After @{thm [source] covariation_class_shift_image} the functional
