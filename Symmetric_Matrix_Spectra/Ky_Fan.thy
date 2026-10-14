@@ -14,7 +14,8 @@ text \<open>
 
       \<open>kyfan m a = Sup {trace (a ** P) | is_proj P, trace P = m}\<close>
 
-    is the sum of the \<open>m\<close> LARGEST eigenvalues of \<open>a\<close> -- basis-free by
+    is the sum of the \<open>m\<close> LARGEST eigenvalues of \<open>a\<close>, by Ky Fan's maximum
+    principle \<^cite>\<open>Fan1949\<close> -- basis-free by
     construction, so no well-definedness argument is needed. The \<open>i\<close>-th
     largest eigenvalue is the difference \<open>eigval i a = kyfan i a - kyfan
     (i-1) a\<close>. This route avoids defining eigenvalues by sorting a multiset
@@ -22,8 +23,8 @@ text \<open>
     basis-independence is free, and the Courant--Fischer / Ky Fan theorems
     become EVALUATION lemmas rather than well-definedness obligations.
 
-    The one genuinely combinatorial ingredient is the linear program of
-    Section 1: maximising a linear functional over the vectors \<open>t\<close> with
+    The one genuinely combinatorial ingredient is the linear program on the
+    simplex inside a box: maximising a linear functional over the vectors \<open>t\<close> with
     \<open>0 \<le> t \<le> 1\<close> and \<open>\<Sum> t = m\<close> puts the mass on the \<open>m\<close> largest
     coefficients.  That is what turns "\<open>trace (a ** P)\<close> for an arbitrary
     rank-\<open>m\<close> projection \<open>P\<close>" into "a sum of \<open>m\<close> eigenvalues".\<close>
@@ -400,11 +401,9 @@ text \<open>If \<open>B\<close> is an orthonormal eigenbasis of the symmetric ma
 
     \<open>trace (a ** P) = \<Sum>\<^sub>u \<lambda>\<^sub>u * (u \<bullet> P u)\<close>
 
-  (\<open>trace_mult_eigen_weights\<close>, in @{theory Symmetric_Matrix_Spectra.Symmetric_Spectral}),
-  so that a projection of trace \<open>m\<close> produces exactly the weights of the
-  linear program: in \<open>[0,1]\<close> and summing to \<open>m\<close>.\<close>
-
-text \<open>The weights of a trace-\<open>m\<close> projection sum to \<open>m\<close>.\<close>
+  (\<open>trace_mult_eigen_weights\<close>), so that a projection of trace \<open>m\<close>
+  produces exactly the weights of the linear program: in \<open>[0,1]\<close> and
+  summing to \<open>m\<close>.  The weights of a trace-\<open>m\<close> projection sum to \<open>m\<close>:\<close>
 
 lemma proj_weights_sum:
   fixes P :: "real^'n::finite^'n"
@@ -414,16 +413,16 @@ lemma proj_weights_sum:
 
 section \<open>Ky Fan partial sums: the sum of the \<open>m\<close> largest eigenvalues\<close>
 
-text \<open>Like a projection-infimum characterisation of the paper's own operator, \<open>kyfan\<close> is manifestly
+text \<open>As a supremum over projections, \<open>kyfan\<close> is manifestly
   independent of any choice of basis; unlike a definition by sorting a
   multiset of eigenvalues, it needs no well-definedness proof.\<close>
 
 definition kyfan :: "nat \<Rightarrow> real^'n::finite^'n \<Rightarrow> real" where
   "kyfan m a = Sup {trace (a ** P) | P. is_proj P \<and> trace P = real m}"
 
-text \<open>The set of \<open>m\<close>-element subsets of the eigenbasis, and the largest
-  \<open>m\<close>-fold eigenvalue sum. Both are used only inside the proof of
-  \<open>kyfan_attained\<close>; they are auxiliary to the basis-free \<open>kyfan\<close>.\<close>
+text \<open>The spectral projection onto \<open>m\<close> members of an orthonormal family is
+  a projection of trace \<open>m\<close>, and the trace of \<open>a\<close> against it is the sum of
+  the quadratic forms of \<open>a\<close> at those members.\<close>
 
 lemma spectral_proj_trace:
   fixes a :: "real^'n::finite^'n"
@@ -1521,10 +1520,12 @@ proof -
     by (rule exI[of _ T]) (intro conjI T(1) T(2) le)
 qed
 
-text \<open>The upper bound of Eq. (3.5) of \<^cite>\<open>LaiShkolnikovSoner\<close>: writing \<open>w = t + s\<close> with
+text \<open>The linear program with weights in \<open>[0, L]\<close>, \<open>1 \<le> L\<close>, whose values
+  clipped at \<open>1\<close> sum to at least \<open>m\<close>: writing \<open>w = t + s\<close> with
   \<open>t u = min (w u) 1\<close> and \<open>s u = max (w u - 1) 0\<close>, the \<open>t\<close>-part is the box
   program and the \<open>s\<close>-part contributes \<open>\<le> (L-1) * (\<Sum> max (lam u) 0)\<close>,
-  giving the bracket of Eq. (3.5).\<close>
+  giving the bracket \<open>L * (\<Sum> max (lam u) 0) + \<Sum>\<^sub>u\<^sub>\<in>\<^sub>T min (lam u) 0\<close>
+  for some \<open>m\<close>-element \<open>T\<close>.\<close>
 
 
 theorem lp_upper_bound:

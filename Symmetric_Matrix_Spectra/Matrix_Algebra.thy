@@ -131,10 +131,9 @@ lemma sym_inner_swap:
 
 subsection \<open>Shifts by a multiple of the identity, and bounds from a basis\<close>
 
-text \<open>These arrived with the doubling toolbox, which needs the quadratic
-  form of a matrix shifted by \<open>\<delta> I\<close>, the entrywise reading of a linear
-  map through \<open>axis\<close>, and the crude operator bound that follows from a
-  uniform bound on the coordinates.\<close>
+text \<open>The quadratic form of a matrix shifted by \<open>\<delta> I\<close>, the entrywise
+  reading of a linear map through \<open>axis\<close>, and the crude norm bound that
+  follows from a uniform bound on the coordinates.\<close>
 
 lemma quad_form_shift_identity:
   fixes A :: "real^'n::finite^'n" and k :: "real^'n"
@@ -197,15 +196,14 @@ proof -
   finally show ?thesis .
 qed
 
-subsection \<open>The calculus the doubling and comparison arguments consume\<close>
+subsection \<open>Trace, transpose, conjugation and quadratic forms\<close>
 
 text \<open>Trace, transpose, matrix-vector and matrix-matrix identities, the
   bounded-linear and continuity facts that go with them, and the affine and
-  quadratic-form bookkeeping around them.  All of it was written as steps of
-  a viscosity-comparison proof and none of it is about one.\<close>
+  quadratic-form bookkeeping around them.  Orthogonality is HOL-Analysis's
+  own \<open>orthogonal_matrix\<close>.\<close>
 
-text \<open>Conjugation preserves each defining condition of the feasible set.
-  Orthogonality is HOL-Analysis's own \<open>orthogonal_matrix\<close>.\<close>
+text \<open>Conjugation by \<open>Q\<close> moves from one factor of a trace to the other.\<close>
 
 lemma trace_conjugate:
   fixes M Q a :: "real^'n^'n"
@@ -221,16 +219,10 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>Lemma 2.2 of \<^cite>\<open>LaiShkolnikovSoner\<close> of the paper assumes the set \<open>S\<close> of admissible covariances is
-  bounded.  For the paper's \<open>S\<close> that is a purely linear-algebraic fact,
-  provable without any probability: \<open>psd a\<close> bounds the diagonal below by
-  \<open>0\<close> and \<open>eigen_ub a L\<close> bounds it above by \<open>L\<close>, testing the quadratic form
-  at the coordinate vectors.\<close>
-
-text \<open>The off-diagonal entries are bounded too.  Testing the psd quadratic form
-  at \<open>axis i 1 \<plusminus> axis j 1\<close> gives \<open>a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j \<plusminus> 2 a\<^sub>i\<^sub>j \<ge> 0\<close>, i.e.
-  \<open>2 \<bar>a\<^sub>i\<^sub>j\<bar> \<le> a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j \<le> 2 L\<close>.  (For \<open>i = j\<close> the same bound is the diagonal
-  one.)\<close>
+text \<open>The quadratic form of a symmetric matrix at \<open>axis i 1 \<plusminus> axis j 1\<close>
+  is \<open>a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j \<plusminus> 2 a\<^sub>i\<^sub>j\<close>.  For a positive semidefinite \<open>a\<close> both
+  are nonnegative, so the off-diagonal entries are bounded by the diagonal
+  ones: \<open>2 \<bar>a\<^sub>i\<^sub>j\<bar> \<le> a\<^sub>i\<^sub>i + a\<^sub>j\<^sub>j\<close>.\<close>
 
 lemma quadform_axis_pair:
   fixes a :: "real^'n::finite^'n"
@@ -276,18 +268,7 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>\<open>p\<close> itself is an eigenvector of \<open>M\<^sub>p\<close>, with eigenvalue
-  \<open>min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close>: the conjugation kills it and the correction term
-  scales it.  This is the first half of the "sorts to the bottom of the
-  spectrum" claim after Eq. (3.4) of \<^cite>\<open>LaiShkolnikovSoner\<close>; the second half is the Poincare bound
-  \<open>\<lambda>\<^sub>(\<^sub>i\<^sub>)(M\<^sub>p) \<ge> \<lambda>\<^sub>(\<^sub>i\<^sub>+\<^sub>1\<^sub>)(M)\<close>, which is what still remains for Eq. (3.5).\<close>
-
-text \<open>An orthogonal \<open>R\<close> carries the feasible set of \<open>p\<close> onto that of \<open>Rp\<close>:
-  each clause is the change of variables \<open>x \<mapsto> R\<^sup>T x\<close>, using that \<open>R\<close> is
-  an isometry with \<open>R\<^sup>T R = 1\<close>, and moving the witnessing subspace along
-  \<open>R\<close> for the eigenvalue floor.  The dimension of the moved subspace needs
-  only \<open>dim_image_le\<close> applied to \<open>R\<^sup>T\<close>, since
-  \<open>S = R\<^sup>T(R(S))\<close> gives \<open>dim S \<le> dim (R(S))\<close>.\<close>
+text \<open>A matrix \<open>R\<close> with \<open>R\<^sup>T R = 1\<close> preserves inner products.\<close>
 
 lemma orth_preserves_inner:
   fixes R :: "real^'n::finite^'n"
@@ -315,9 +296,9 @@ lemma transpose_shift_diff:
   shows "transpose (A - \<delta> *\<^sub>R mat 1) = A - \<delta> *\<^sub>R mat 1"
   using s by (simp add: transpose_diff_matrix transpose_scalar)
 
-text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
-  from \<open>Symmetric_Spectral\<close>, general at
-  \<open>real^'m^'n\<close>.\<close>
+text \<open>Orthogonal matrices: the transpose is the inverse, so conjugation can
+  be undone, and multiplication preserves the norm of vectors and, under
+  conjugation, of matrices.\<close>
 
 lemma matvec_orth_inv:
   fixes R :: "real^'n::finite^'n" and q :: "real^'n"
@@ -517,10 +498,8 @@ lemma trace_nonneg_psd:
   shows "0 \<le> trace a"
   unfolding trace_def diag_eq_inner_axis by (intro sum_nonneg assms)
 
-text \<open>The constraint set is convex, closed and bounded, hence compact.
-  Convexity comes from convexity of the constraint set and the an eigenvalue upper bound
-  half-spaces, closedness from the a projection-infimum characterisation infimum characterisation,
-  boundedness from the standard psd entry bound.\<close>
+text \<open>The quadratic form and the trace against a fixed matrix are linear,
+  hence bounded linear and continuous, in the matrix.\<close>
 
 lemma quadform_convex_comb:
   fixes a b :: "real^'n::finite^'n"
@@ -535,10 +514,6 @@ lemma bounded_linear_cross:
       (\<lambda>v :: real^'n. (\<chi> i j. x $ i * v $ j + v $ i * x $ j) :: real^'n^'n)"
   unfolding linear_conv_bounded_linear[symmetric]
   by (intro linearI) (simp_all add: vec_eq_iff algebra_simps)
-
-text \<open>Tracing the compensated clause gives the submartingale statement
-  Lemma 2.1 of \<^cite>\<open>LaiShkolnikovSoner\<close> runs on: \<open>|X|\<^sup>2 - trace Y\<close> is a martingale and \<open>trace Y\<close> grows
-  at rate at least \<open>n - k\<close>, so \<open>E[|X\<^sub>t|\<^sup>2] - |x|\<^sup>2 \<ge> (n-k)\<sqdot>t\<close>.\<close>
 
 lemma bounded_linear_trace:
   "bounded_linear (trace :: real^'n::finite^'n \<Rightarrow> real)"
@@ -687,10 +662,8 @@ lemma matvec_norm_le:
     onorm_le_matrix_component_sum[of M]
   by (meson mult_right_mono norm_ge_zero order_trans)
 
-text \<open>The covariance field is \<open>\<Sum>\<^sub>u outerp (w u)\<close> for columns \<open>w u\<close>, and the
-  Euler machinery reads it only through its trace against the Hessian.  That
-  pairing is exact, whatever the columns: the trace of \<open>M\<close> against the sum is
-  the sum of the quadratic forms \<open>w u \<bullet> (M *v w u)\<close>.\<close>
+text \<open>The sandwich \<open>A \<mapsto> S A S\<^sup>T\<close> is bounded linear and takes \<open>c I\<close> to
+  \<open>c S S\<^sup>T\<close>.\<close>
 
 lemma trace_mult_zero_right: "trace (M ** (0 :: real^'n::finite^'n)) = 0"
   by (simp add: matrix_matrix_mult_def trace_def vec_eq_iff)
@@ -717,13 +690,10 @@ lemma sandwich_mat1:
   shows "S ** (c *\<^sub>R mat 1) ** transpose S = c *\<^sub>R (S ** transpose S)"
   by (simp add: matrix_scalar_ac scalar_matrix_assoc[symmetric] scalar_matrix_assoc[symmetric])
 
-text \<open>The Euler analysis needs exactly two facts per step: the compensated
-  quadratic increment has mean zero (an instance of
-  a mean-zero compensated-increment fact in the application, since the member's
-  second component is deterministic), and its variance is \<open>O(h\<^sup>2)\<close>.  The
-  variance bound needs no Wick calculus and no coordinate independence:
-  the pointwise AM--GM bound \<open>a\<^sup>2b\<^sup>2 \<le> (a\<^sup>4 + b\<^sup>4)/2\<close> reduces everything
-  to the fourth marginal moment \<open>3h\<^sup>2\<close> of one Brownian coordinate.\<close>
+text \<open>The increment of the quadratic
+  \<open>z \<mapsto> q \<bullet> (z - x) + (z - x) \<bullet> M (z - x)/2\<close> with symmetric \<open>M\<close> from
+  \<open>a\<close> to \<open>b\<close> is its first-order term at \<open>a\<close> plus the quadratic term
+  of the step \<open>b - a\<close>.\<close>
 
 lemma quad_taylor_step:
   fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n"
@@ -775,15 +745,8 @@ proof -
   show ?thesis using e0 e12 e3 e4 e5 e6 by linarith
 qed
 
-text \<open>The quadratic is Lipschitz on the ball, with explicit constant
-  \<open>norm q + 2 C\<^sub>M rb\<close>, via the one-step Taylor identity
-  \<open>quad_taylor_step\<close>.\<close>
-
-text \<open>Small independent pieces the contradiction assembles: algebra for the
-  softened Hessian, a generic small-radius chooser, the witness extraction
-  from a failed operator inequality, the value bound \<open>v(x) < T\<close> forced by a
-  nonzero touching gradient, and the exit-time identity on paths that never
-  leave \<open>K\<close>.\<close>
+text \<open>The trace and the quadratic form of a matrix shifted by a multiple
+  of the identity.\<close>
 
 lemma trace_msub_mat:
   fixes H a :: "real^'n::finite^'n" and s :: real
@@ -815,26 +778,10 @@ proof -
     by (simp add: algebra_simps)
 qed
 
-text \<open>The skew field above moves the witness off its own eigenframe, and the
-  margins that absorb that motion are what force \<open>1 < L\<close>: at \<open>L = 1\<close> the
-  feasible set of Eq. (1.9) of \<^cite>\<open>LaiShkolnikovSoner\<close> is rigid, its top \<open>n - k\<close> eigenvalues pinned to
-  \<open>1\<close> from both sides, so no witness has slack to perturb.  A field of exact
-  rotations needs none.  Conjugating the witness by an orthogonal matrix
-  leaves its spectrum, and hence its membership of the feasible set,
-  untouched; and the rotation carrying the frozen gradient \<open>q\<close> to the current
-  gradient makes the conjugate annihilate the current gradient, which is all
-  the Euler construction asks of the field.  The package the rotation-field package below
-  therefore carries no hypothesis on \<open>L\<close> at all, and in particular is
-  available at \<open>L = 1\<close>, the Ambrosio-Soner flow case of Remark 1.1(c).
-
-  The rotation \<open>rotm q w\<close> is a product of two Householder reflections; it
-  carries \<open>q\<close> onto the ray through \<open>w\<close> as soon as the two are not opposed,
-  and is the identity at \<open>w = q\<close>, which is where the trace margin is read
-  off: by continuity at the touching point, in place of the three explicit
-  smallness estimates the skew field needs. \<open>hrefl\<close>, \<open>rotm\<close> and their
-  properties, including the continuity of \<open>w \<mapsto> rotm q w\<close>
-  (\<open>rotm_vec_cont\<close>), live in
-  \<open>Householder_Rotation\<close>.\<close>
+text \<open>Multiplying each column of a matrix by \<open>R\<close> is multiplying the matrix
+  by \<open>R\<close>; and a perturbation \<open>q + e\<close> of \<open>q \<noteq> 0\<close> with \<open>\<bar>e\<bar> < \<bar>q\<bar>\<close> is never
+  opposed to \<open>q\<close>, the condition under which a product of two Householder
+  reflections carries \<open>q\<close> onto the ray through \<open>q + e\<close>.\<close>
 
 lemma colmat_matvec:
   fixes R :: "real^'n::finite^'n" and c :: "'n \<Rightarrow> real^'n"
@@ -859,13 +806,10 @@ proof -
   ultimately show ?thesis by linarith
 qed
 
-text \<open>The Lipschitz bound on a quadratic and the openness of its bad
-  event, re-stated with the confinement region decoupled from the
-  quadratic's centre: the Lipschitz bound needs only the two norm
-  bounds, and the bad event stays open for any open region, since the
-  stay-condition and the quadratic no longer share a centre.  These feed
-  the region versions of the vanishing-probability and limit theorems
-  below.\<close>
+text \<open>The quadratic \<open>z \<mapsto> q \<bullet> (z - x) + (z - x) \<bullet> M (z - x)/2\<close> is
+  Lipschitz on the ball of radius \<open>R\<close> around \<open>x\<close>, with constant
+  \<open>norm q + 2 C\<^sub>M R\<close>, where \<open>C\<^sub>M\<close> is the sum of the absolute values of
+  the entries of \<open>M\<close>.\<close>
 
 lemma quad_diff_bound_gen:
   fixes M :: "real^'n::finite^'n" and q x a b :: "real^'n" and R :: real
@@ -947,13 +891,10 @@ proof -
   show ?thesis using tri t1 t2 fin by linarith
 qed
 
-text \<open>The two facts that make the envelope argument affordable.  A
-  quadratic centred at \<open>x\<close> is, up to the additive constant of its value
-  at \<open>y\<close>, the quadratic centred at \<open>y\<close> with gradient \<open>q + M(y-x)\<close>, and
-  the two have the same gradient field \<open>q + M(\<sqdot> - x)\<close>, so the kill
-  hypothesis is unchanged.  Consequently every verified theorem about a
-  process started at its quadratic's centre applies verbatim to a
-  process started at \<open>y\<close> with the quadratic centred at \<open>x\<close>.\<close>
+text \<open>Recentring a quadratic.  A quadratic centred at \<open>x\<close> is, up to the
+  additive constant of its value at \<open>y\<close>, the quadratic centred at \<open>y\<close>
+  with gradient \<open>q + M(y-x)\<close>, and the two have the same gradient field
+  \<open>q + M(\<sqdot> - x)\<close>.\<close>
 
 lemma quad_grad_shift:
   fixes M :: "real^'n::finite^'n" and q x y z :: "real^'n"
@@ -976,8 +917,7 @@ lemma quad_shift:
   using quad_taylor_step[OF sym, where q = q and x = x and a = y and b = z]
   by linarith
 
-text \<open>The tilted test function of Case 2 is a quadratic plus a linear
-  term, so it is continuous.\<close>
+text \<open>A quadratic tilted by a linear term is continuous.\<close>
 
 lemma continuous_on_quad_tilt:
   fixes M :: "real^'n::finite^'n" and x \<eta> :: "real^'n"
@@ -990,12 +930,11 @@ proof -
   show ?thesis using c1 c2 by (intro continuous_intros) auto
 qed
 
-text \<open>Finally the quantitative part of the tilt.  If \<open>W\<close> is bounded
-  below by \<open>W x + Q\<close> with a quadratic surplus \<open>c|z - x|\<^sup>2\<close>, and \<open>y\<close>
-  minimises \<open>W - Q - \<langle>\<eta>, \<cdot> - x\<rangle>\<close> over the ball, then \<open>y\<close> is within
-  \<open>\<bar>\<eta>\<bar>/c\<close> of \<open>x\<close>.  The paper only records that the minimisers converge
-  to the touching point; the explicit rate is what makes them interior
-  to the ball for small \<open>\<eta>\<close>, which is what the now-local Case 1 needs.\<close>
+text \<open>Tilted minimisers stay close.  If \<open>W\<close> is bounded below by
+  \<open>W x + Q\<close> with a quadratic surplus \<open>c|z - x|\<^sup>2\<close>, and \<open>y\<close> minimises
+  \<open>W - Q - \<langle>\<eta>, \<cdot> - x\<rangle>\<close> over the ball, then \<open>y\<close> is within
+  \<open>\<bar>\<eta>\<bar>/c\<close> of \<open>x\<close>; in particular the tilted minimisers are interior
+  to the ball for small \<open>\<eta>\<close>.\<close>
 
 lemma tilted_minimiser_close:
   fixes W Q :: "real^'n::finite \<Rightarrow> real" and x y \<eta> :: "real^'n"
@@ -1032,7 +971,7 @@ proof -
   qed
 qed
 
-text \<open>The other horn of Case 2's dichotomy is that the tilted gradient
+text \<open>Suppose that the gradient of a tilted quadratic test function
   vanishes at every tilted minimiser.  Because the test function is
   exactly quadratic, a vanishing gradient makes the first-order terms of
   the minimality inequality cancel identically, leaving the purely
@@ -1045,10 +984,7 @@ text \<open>The other horn of Case 2's dichotomy is that the tilted gradient
   then the bound is available in both directions between any two points
   of the ball, and a function whose increments are \<open>O(\<bar>\<Delta>\<bar>\<^sup>2)\<close> along
   every segment is constant: subdividing a segment into \<open>n\<close> pieces costs
-  \<open>n \<cdot> C(\<bar>\<Delta>\<bar>/n)\<^sup>2 = C\<bar>\<Delta>\<bar>\<^sup>2/n\<close>, which vanishes.
-
-  Both statements below are pure real analysis; neither mentions the
-  value function or the operator.\<close>
+  \<open>n \<cdot> C(\<bar>\<Delta>\<bar>/n)\<^sup>2 = C\<bar>\<Delta>\<bar>\<^sup>2/n\<close>, which vanishes.\<close>
 
 lemma pinch_segment_bound:
   fixes W :: "real^'n::finite \<Rightarrow> real" and a b :: "real^'n"
@@ -1152,7 +1088,8 @@ proof -
   show ?thesis using zero[OF yb xb] zero[OF xb yb] by linarith
 qed
 
-text \<open>Three ingredients for the second horn.
+text \<open>Three ingredients for applying \<open>pinch_implies_constant\<close> to a tilted
+  quadratic.
 
   First, a quadratic form is bounded below by a multiple of the squared
   norm --- the constant \<open>C\<close> that \<open>pinch_implies_constant\<close> consumes.
@@ -1167,10 +1104,10 @@ text \<open>Three ingredients for the second horn.
   Third, the singular case is free.  If \<open>M\<close> is not invertible then it is
   not surjective, so some \<open>u\<close> is missed; a small multiple of \<open>u\<close> is then
   a tilt for which \<open>M z + \<eta> = 0\<close> has no solution at all, so the gradient
-  at the tilted minimiser cannot vanish and the first horn fires
-  instead.  The second horn therefore only has to be run for invertible
-  \<open>M\<close>, which is what makes the tilted minimisers sweep out a whole
-  neighbourhood.\<close>
+  at the tilted minimiser cannot vanish.  The pinch is therefore needed
+  only for invertible \<open>M\<close>, and for those the tilted minimisers sweep out
+  a whole neighbourhood: the tilt \<open>\<eta> := -M(y - x)\<close> makes \<open>y\<close> the only
+  point where the tilted gradient vanishes.\<close>
 
 lemma quad_form_bounded_below:
   fixes M :: "real^'n::finite^'n"
@@ -1287,19 +1224,8 @@ proof -
   show ?thesis by (rule that[OF lt]) (use nz in blast)
 qed
 
-text \<open>The sweep.  With \<open>M\<close> invertible the tilt \<open>\<eta> := -M(y - x)\<close> selects
-  \<open>y\<close> itself as the tilted minimiser: whatever minimiser \<open>y'\<close> the
-  machinery returns, the second horn says \<open>M(y' - x) + \<eta> = 0\<close>, i.e.
-  \<open>M(y' - x) = M(y - x)\<close>, and injectivity forces \<open>y' = y\<close>.  So the pinch
-  is available at every point of a neighbourhood of \<open>x\<close>, not just at the
-  minimisers of one fixed tilt --- and that is exactly the hypothesis of
-  \<open>pinch_implies_constant\<close>.\<close>
-
-text \<open>\<open>trace_sum_matrix\<close> is \<open>trace_matrix_sum\<close> from
-  \<open>Matrix_Algebra\<close>.\<close>
-
-text \<open>\<open>inner_matrix_transpose\<close> is the square case of \<open>inner_transpose_matrix\<close>
-  from \<open>Symmetric_Spectral\<close>.\<close>
+text \<open>An orthonormal family of \<open>m\<close> vectors is injective and spans an
+  \<open>m\<close>-dimensional subspace.\<close>
 
 lemma orthonormal_inj:
   fixes b :: "nat \<Rightarrow> real^'n::finite"
@@ -1322,10 +1248,10 @@ proof -
     using card_image[OF orthonormal_inj[OF orth]] by (simp add: dim_eq_card_independent)
 qed
 
-text \<open>The square of the field is again a field of the same shape with the
-  direction rescaled, and the rescaled direction still has norm \<open>\<le> 1\<close> because
-  \<open>(2 - a) * a = 1 - (a-1)\<^sup>2 \<le> 1\<close>.  That is what makes the clamped field
-  feasible everywhere, which the Euler-limit argument in the application demands.\<close>
+text \<open>Rescaling a vector \<open>u\<close> of norm at most \<open>1\<close> by
+  \<open>sqrt (2 - u \<bullet> u)\<close> keeps its norm at most \<open>1\<close>, because
+  \<open>(2 - a) * a = 1 - (a-1)\<^sup>2 \<le> 1\<close>.  And a unit vector extends to an
+  orthonormal family of any length up to the dimension.\<close>
 
 lemma tanpU_sq_norm_le:
   fixes u :: "real^'n::finite"
@@ -1384,16 +1310,7 @@ proof -
     by (intro exI[of _ b]) (simp add: b_def)
 qed
 
-text \<open>The two envelope-form hypotheses in the shape the doubling produces:
-  on an open \<open>\<Omega>\<close> inside \<open>K\<close>, a subsolution and supersolution in the
-  envelope-free sense are also envelope sub/supersolutions, letting the
-  doubling argument run where the \<open>\<delta> \<rightarrow> 0\<close> passage is legitimate.\<close>
-
-text \<open>The supersolution mirror: the sup-convolution is taken of \<open>-w\<close>, the
-  summand the doubled functional carries, and the transferred bound
-  becomes a local minimum statement for \<open>w\<close> after negation. The
-  correction runs the other way, \<open>Ym - \<delta> I\<close>, as with
-  \<open>jet_imp_local_min_test_onesided\<close>.\<close>
+text \<open>Negation turns a shift by \<open>\<delta> I\<close> into a shift by \<open>-\<delta> I\<close>.\<close>
 
 lemma neg_shift_matrix_apply:
   fixes B :: "real^'n::finite^'n"
@@ -1425,14 +1342,8 @@ lemma transpose_limit:
   shows "transpose A0 = A0"
   using closed_sequentially[OF closed_symmetric_matrices, of A A0] conv sym by blast
 
-text \<open>\<open>transpose_scalar\<close> is HOL-Analysis's; \<open>transpose_add\<close> lives
-  further up in this theory.\<close>
-
-text \<open>The bridge between the jets' operator-form Hessian
-  \<open>\<lambda>v. f v + c *\<^sub>R v\<close> and the matrix form the family theorem wants:
-  taking the matrix of the shifted operator adds \<open>cI\<close>.  Every shifted
-  fact then reduces to its unshifted counterpart plus
-  \<open>transpose_shift_add\<close>, the shifted positivity fact and \<open>norm_shifted_block\<close>.\<close>
+text \<open>A matrix shifted by \<open>c I\<close>: its action on a vector, and a bound on its
+  norm.\<close>
 
 lemma matrix_shift_apply:
   fixes M :: "real^'n::finite^'n"
@@ -1453,9 +1364,7 @@ proof -
 qed
 
 text \<open>Shifting \<open>Y\<close> down by \<open>cI\<close> and \<open>X\<close> up by \<open>cI\<close> costs the difference
-  exactly \<open>2cI\<close>, recovering \<open>Y-X\<close> on cancellation; this is the equation
-  behind the asymptotic \<open>psdi\<close> hypothesis, with defect
-  \<open>cs\<^sub>i=2c\<^sub>i \<rightarrow> 0\<close>.\<close>
+  exactly \<open>2cI\<close>.\<close>
 
 lemma shift_cancel_matrix:
   fixes X Y :: "real^'n::finite^'n"
@@ -1472,8 +1381,8 @@ proof -
   then show ?thesis by (simp add: linear_conv_bounded_linear)
 qed
 
-text \<open>Two small facts about the inverse of the dilation, used to transfer
-  lower semicontinuity and the bound to the transformed supersolution.\<close>
+text \<open>The inverse of the similarity \<open>z \<mapsto> c R z + b\<close>, for orthogonal \<open>R\<close>
+  and \<open>0 < c\<close>, scales distances by \<open>1/c\<close>.\<close>
 
 lemma affine_inv_dist:
   fixes R :: "real^'n::finite^'n" and b :: "real^'n"
@@ -1489,9 +1398,8 @@ proof -
         scaleR_right_diff_distrib[symmetric] del: transpose_matrix_vector)
 qed
 
-text \<open>On \<open>real^'n\<close> compactness is closedness together with a ball bound, so
-  one hypothesis supplies both of the ones the transfer needs.  The radius is
-  named only where it appears in a conclusion, which is clause (0).\<close>
+text \<open>A compact set of \<open>real^'n\<close> lies in a closed ball around the
+  origin.\<close>
 
 lemma compact_cball_bound:
   fixes K :: "(real^'n::finite) set"
@@ -1503,7 +1411,7 @@ lemma compact_cball_bound:
 subsection \<open>An abstract linear map read through its matrix\<close>
 
 text \<open>Viscosity-solution notions speak of a matrix \<open>H\<close> acting by
-  \<open>H *v h\<close> with \<open>transpose H = H\<close>, while the results above produce a
+  \<open>H *v h\<close> with \<open>transpose H = H\<close>, while the theorem on sums produces a
   bounded linear \<open>X\<close> with the abstract symmetry \<open>v \<cdot> X w = w \<cdot> X v\<close>.
   HOL-Analysis's \<open>matrix\<close> bridges the two: it represents \<open>X\<close> faithfully,
   and the abstract symmetry is exactly matrix symmetry, since
@@ -1601,10 +1509,11 @@ lemma quadratic_test_grad_derivative:
 
 subsection \<open>A difference of linear maps, read as a matrix\<close>
 
-text \<open>\<open>sums_matrix_inequality\<close> gives \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close> for bounded linear
-  \<open>X\<close>, \<open>Y\<close>, while degenerate ellipticity of the operator in the application wants \<open>psd (N - M)\<close> for matrices.
-  Since \<open>psd\<close> is symmetry plus \<open>0 \<le> x \<cdot> (a *v x)\<close>, the two are the same
-  statement once represented by \<open>matrix\<close>.\<close>
+text \<open>The theorem on sums gives \<open>v \<cdot> X v \<le> v \<cdot> Y v\<close> for bounded linear
+  \<open>X\<close>, \<open>Y\<close>, while degenerate ellipticity is stated as \<open>psd (N - M)\<close> for
+  matrices.  Since \<open>psd\<close> is symmetry plus \<open>0 \<le> x \<cdot> (a *v x)\<close>, the two are
+  the same statement once represented by \<open>matrix\<close>, whose difference acts as
+  the difference of the maps.\<close>
 
 lemma matrix_diff_vec:
   fixes X Y :: "(real^'n::finite) \<Rightarrow> (real^'n)"

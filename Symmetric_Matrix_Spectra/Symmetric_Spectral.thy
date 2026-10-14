@@ -19,8 +19,6 @@ unbundle inner_syntax
 
 section \<open>Preliminaries\<close>
 
-text \<open>\<open>inner_transpose_matrix\<close> and \<open>sym_inner_swap\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 text \<open>A linear coefficient dominated by a quadratic must vanish:\<close>
 
 lemma linear_coeff_zero:
@@ -541,7 +539,10 @@ proof -
 qed
 
 
-subsection \<open>Positive semidefiniteness under limits, shifts and two-sided bounds\<close>
+subsection \<open>Positive semidefiniteness from an ordering of linear maps\<close>
+
+text \<open>An ordering \<open>v \<bullet> X v \<le> v \<bullet> Y v\<close> of two symmetric linear maps makes
+  the difference of their matrices positive semidefinite.\<close>
 
 theorem psd_of_abstract_le:
   fixes X Y :: "(real^'n::finite) \<Rightarrow> (real^'n)"
@@ -570,23 +571,7 @@ next
     using le[of v] by simp
 qed
 
-subsection \<open>The closing chain of Theorem 4.2(a)\<close>
-
-text \<open>A scaled subsolution and a supersolution touching an ordered jet pair
-  at a common \<open>p\<close> are inconsistent: scaling supplies strictness
-  (\<open>visc_subsol_scaled_uniform\<close>), the ordering supplies \<open>psd\<close>
-  (\<open>psd_of_abstract_le\<close>), and degenerate ellipticity closes
-  (\<open>env_strict_contradiction\<close>). This is Theorem 4.2(a) modulo the
-  ordered jet pair and the two touchings, supplied by the
-  development in \<open>Rademacher\<close>,
-  \<open>Alexandrov\<close>,
-  \<open>Jensen_Lemma\<close> and
-  \<open>Doubled_Functional_Jets\<close>.\<close>
-
-text \<open>The quadratic form of \<open>W\<close> is bounded in absolute value by \<open>c\<parallel>k\<parallel>\<^sup>2\<close>,
-  uniformly over the family and independent of the tilt.\<close>
-
-subsection \<open>From the quadratic-form bound to a genuine operator bound\<close>
+subsection \<open>From a bound on the quadratic form to a bound on the norm\<close>
 
 text \<open>The diagonal bound \<open>\<bar>k \<bullet> W k\<bar> \<le> c \<parallel>k\<parallel>\<^sup>2\<close> of a symmetric linear
   map does not by itself bound the off-diagonal entries; polarisation
@@ -696,16 +681,10 @@ proof (rule norm_le_card_Basis_bound)
     unfolding e inner_matrix_axis[OF lin] .
 qed
 
-subsection \<open>Boundedness to a limit point, and limit point to nearby points\<close>
+subsection \<open>Positive semidefiniteness passes to limits\<close>
 
-text \<open>Boundedness gives a limit point by HOL's \<open>bounded_imp_convergent_subsequence\<close>.\<close>
-
-text \<open>A bounded family on which the operator bound holds yields the
-  nearby-point hypothesis at a produced limit point.  The closing argument
-  still needs, at that limit, the ordering \<open>X \<preceq> Y\<close>, symmetry of both
-  matrices, and \<open>p \<noteq> 0\<close>.  Symmetry and the ordering are closed conditions
-  and pass to the limit automatically; \<open>p \<noteq> 0\<close> is not closed and needs a
-  positive lower bound along the family.\<close>
+text \<open>The quadratic form is continuous in the matrix, so positive
+  semidefiniteness is a closed condition.\<close>
 
 lemma continuous_on_quadform:
   fixes x :: "real^'n::finite"
@@ -730,14 +709,11 @@ theorem psd_limit:
   shows "psd A0"
   using closed_sequentially[OF closed_psd, of A A0] conv p by blast
 
-text \<open>\<open>psd (Y-X)\<close> is preserved when both sequences converge, since subtraction
-  is continuous and \<open>psd\<close> is a closed condition.\<close>
-
 subsection \<open>The asymptotic ordering\<close>
 
-text \<open>Perturbing the doubled functional by \<open>-\<delta>\<parallel>z-\<xi>\<^sub>0\<parallel>\<^sup>2\<close> shifts \<open>X\<close> to
+text \<open>Perturbing a doubled functional by \<open>-\<delta>\<parallel>z-\<xi>\<^sub>0\<parallel>\<^sup>2\<close> shifts \<open>X\<close> to
   \<open>X+2\<delta>I\<close> and \<open>Y\<close> to \<open>Y-2\<delta>I\<close>, so \<open>(Y-X)-4\<delta>I\<close> need not be psd even when
-  \<open>Y-X\<close> is: the per-index ordering is lost.  What survives is the
+  \<open>Y-X\<close> is: the ordering is lost at each index.  What survives is the
   ordering in the limit, since \<open>psd\<close> is closed and the defect \<open>4\<delta>\<close>
   vanishes; the right hypothesis for a shifted family is
   \<open>psd(Y\<^sub>i-X\<^sub>i+c\<^sub>iI)\<close> with \<open>c\<^sub>i \<rightarrow> 0\<close>.\<close>
@@ -759,17 +735,6 @@ proof -
     by simp
   from psd_limit[OF this p] show ?thesis .
 qed
-
-subsection \<open>Route (i), threaded\<close>
-
-text \<open>\<open>matrix_shift_apply\<close>, \<open>norm_shifted_block\<close>, \<open>shift_cancel_matrix\<close> live in @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
-
-text \<open>The value gap transfers to the sup-convolutions with an explicit loss:
-  \<open>supconv_le_of_lipschitz\<close> sandwiches each sup-convolution between its
-  function and that function plus \<open>\<epsilon>L\<^sup>2/2\<close>, so a gap \<open>\<gamma>\<close> for
-  \<open>\<theta>u,w\<close> becomes \<open>\<gamma>-\<epsilon>(L\<^sub>u\<^sup>2+L\<^sub>w\<^sup>2)/2\<close> for the sup-convolutions,
-  positive for every sufficiently small \<open>\<epsilon>\<close>.\<close>
 
 (*<*)
 end

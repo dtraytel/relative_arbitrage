@@ -7,15 +7,16 @@ begin
 (*>*)
 
 text \<open>
-  The Poincare separation inequality and its Courant--Fischer scaffolding:
-  the ordered eigenvalues of a compression of a symmetric matrix to a
-  subspace interlace those of the matrix itself. Along the way: the trace
-  read off against a weighted sum of outer products, the dimension-counting
-  argument that any two subspaces whose dimensions exceed the ambient
-  dimension must meet, the Courant--Fischer variational lower bound for an
-  ordered eigenvalue, and the elementary continuity and Lipschitz estimates
-  that make the eigenvalues, projections and outer products of a matrix
-  vary continuously with it.
+  The variational facts about ordered eigenvalues on which Poincare
+  separation rests: the Rayleigh bounds \<open>\<lambda>\<^sub>(\<^sub>n\<^sub>) \<le> x \<bullet> a x \<le> \<lambda>\<^sub>(\<^sub>1\<^sub>)\<close> on the
+  unit sphere, the trace and quadratic form against a weighted sum of
+  outer products, the dimension-counting argument that any two subspaces
+  whose dimensions exceed the ambient dimension must meet, and the
+  Courant--Fischer lower bound for an ordered eigenvalue
+  \<^cite>\<open>HornJohnson\<close>.  Then Lipschitz estimates for the positive-part
+  sums of the eigenvalues and for the bracket
+  \<open>L * possum n a + (kyfan m a - possum m a)\<close>, and norm bounds for
+  products and conjugates of matrices.
 \<close>
 
 unbundle inner_syntax
@@ -90,8 +91,7 @@ qed
 
 text \<open>The two Rayleigh bounds.  The upper one is immediate from
   \<open>kyfan_ge_trace_mult\<close>; the lower one pairs \<open>a\<close> with the complementary
-  projection, using that the full Ky Fan sum is the trace.  The weak form of
-  Poincare separation Eq. (3.5) of \<^cite>\<open>LaiShkolnikovSoner\<close> needs.\<close>
+  projection, using that the full Ky Fan sum is the trace.\<close>
 
 
 lemma quadform_le_eigval_1:
@@ -184,14 +184,9 @@ proof -
     by (simp add: uu)
 qed
 
-text \<open>Nonnegative weights give a nonnegative quadratic form.  This makes both
-  \<open>a - c\<close> and \<open>I - c\<close> positive semidefinite for the clipped matrix \<open>c\<close>, whose
-  weights are \<open>max (\<mu>\<^sub>j - 1) 0\<close> and \<open>1 - min \<mu>\<^sub>j 1\<close> respectively.\<close>
-
 text \<open>Against a weighted sum of outer products, the quadratic form is the
   weighted sum of squared coefficients; no orthonormality is needed.  This
   bounds \<open>x \<bullet> (a *v x)\<close> by the largest weight in the sum.\<close>
-
 
 lemma quadform_weighted_outer_sum_eq:
   fixes g :: "real^'n::finite \<Rightarrow> real"
@@ -211,7 +206,6 @@ qed
 text \<open>Every eigenvalue outside a threshold set of size \<open>m\<close> is dominated by
   \<open>eigval m a\<close>: the latter is the minimum over the threshold set, and the
   threshold property puts everything outside below that minimum.\<close>
-
 
 lemma quadform_outside_threshold_le_eigval:
   fixes a :: "real^'n::finite^'n"
@@ -308,6 +302,8 @@ proof -
     using x by auto
 qed
 
+text \<open>Over an orthonormal family, nonnegative weights give a nonnegative
+  quadratic form.\<close>
 
 lemma quadform_weighted_outer_sum_nonneg:
   fixes g :: "real^'n::finite \<Rightarrow> real"
@@ -322,10 +318,7 @@ proof -
 qed
 
 text \<open>Comparison of two matrices in the same orthonormal basis: larger
-  weights give a larger quadratic form.  \<open>f = \<mu>\<close>, \<open>g = (\<lambda>v. min (\<mu> v) 1)\<close>
-  gives \<open>x \<bullet> (c *v x) \<le> x \<bullet> (a *v x)\<close>; \<open>f = (\<lambda>_. 1)\<close> gives
-  \<open>x \<bullet> (c *v x) \<le> x \<bullet> x\<close>.\<close>
-
+  weights give a larger quadratic form.\<close>
 
 lemma quadform_weighted_outer_mono:
   fixes N c :: "real^'n::finite^'n"
@@ -688,10 +681,9 @@ proof -
   finally show ?thesis .
 qed
 
-text \<open>The four-term bound.  Each term is a product of at most three factors, so
-  submultiplicativity of the Frobenius norm applies; \<open>norm D \<le> 2\<close> because both
-  projections have norm \<open>1\<close>, and \<open>norm Q \<le> \<surd>n + 1\<close>.\<close>
-
+text \<open>The four-term bound.  Each term of the expansion is a product of at
+  most three factors, so submultiplicativity of the Frobenius norm
+  applies.\<close>
 
 lemma norm_conj_diff_le:
   fixes M Q D :: "real^'n::finite^'n"
@@ -742,10 +734,6 @@ proof -
     using bX bY bZ by (simp add: algebra_simps)
   finally show ?thesis .
 qed
-
-text \<open>Assembling: \<open>M\<^sub>p\<close> is Lipschitz in \<open>p\<close> away from the origin.  The
-  correction coefficient \<open>c = min (\<lambda>\<^sub>(\<^sub>n\<^sub>)(M)) 0\<close> is \<open>p\<close>-independent, so it
-  contributes only \<open>\<bar>c\<bar> * norm D\<close>.\<close>
 
 text \<open>Hence the bracket is Lipschitz in the norm as well.\<close>
 

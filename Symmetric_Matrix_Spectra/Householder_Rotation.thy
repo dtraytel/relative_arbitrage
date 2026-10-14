@@ -17,10 +17,6 @@ text \<open>
 
 section \<open>The Householder reflection\<close>
 
-text \<open>\<open>continuous_on_matrix_entry\<close>, \<open>continuous_on_matrix_mult\<close> and
-  \<open>continuous_on_matrix_transpose\<close> live in
-  @{theory Symmetric_Matrix_Spectra.Matrix_Algebra}.\<close>
-
 definition hrefl :: "real^'n::finite \<Rightarrow> real^'n^'n" where
   "hrefl v = mat 1 - (2 / (v \<bullet> v)) *\<^sub>R outer_prod v v"
 
@@ -302,9 +298,11 @@ proof -
   show ?thesis by (rule not_sym[OF less_imp_neq[OF pos2]])
 qed
 
-section \<open>Continuity of the transport\<close>
+section \<open>Continuity of the rotation in its target\<close>
 
-text \<open>The half space, and what it rules out.\<close>
+text \<open>On the open half space \<open>0 < \<parallel>q\<parallel> \<parallel>w\<parallel> + q \<bullet> w\<close>, which excludes the
+  targets \<open>w\<close> opposed to \<open>q\<close>, the rotation \<open>rotm q w\<close> depends
+  continuously on \<open>w\<close>.\<close>
 
 lemma rotm_vec_cont:
   fixes q c :: "real^'n::finite" and A :: "(real^'n) set"
@@ -352,9 +350,6 @@ proof -
       using ok by blast
   qed
 qed
-
-text \<open>The real-valued functional the assembly actually needs: the Hessian
-  paired with the conjugated witness.\<close>
 
 (*<*)
 end
