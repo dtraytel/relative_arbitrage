@@ -188,12 +188,6 @@ lemma exit_class_sets:
   shows "sets Q = sets (path_borel T :: ('n pairpath) measure)"
   using Q unfolding exit_class_eq_covariation by (rule covariation_class_sets)
 
-lemma exit_class_start:
-  fixes Q :: "('n::finite pairpath) measure"
-  assumes Q: "Q \<in> exit_class k L T x"
-  shows "AE \<omega> in Q. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-  using Q unfolding exit_class_eq_covariation by (rule covariation_class_start)
-
 
 
 lemma closedin_diffquot_constraint:

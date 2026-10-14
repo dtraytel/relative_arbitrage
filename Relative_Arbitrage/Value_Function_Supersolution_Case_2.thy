@@ -316,7 +316,7 @@ proof -
       have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
         by (rule space_of_path_sets[OF setsP])
       have start: "AE \<omega> in P. fst (\<omega> 0) = y \<and> snd (\<omega> 0) = 0"
-        by (rule exit_class_start[OF Pc])
+        by (rule covariation_class_start[OF Pc[unfolded exit_class_eq_covariation]])
       have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
       define \<theta> where "\<theta> = (\<lambda>\<omega> :: 'n pairpath. min cc (pball_exit T x rr \<omega>))"
       have st: "path_stopping_time T \<theta>"

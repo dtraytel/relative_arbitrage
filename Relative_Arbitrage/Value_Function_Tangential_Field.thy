@@ -334,7 +334,7 @@ proof -
   have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsP])
   have start: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    by (rule exit_class_start[OF P])
+    by (rule covariation_class_start[OF P[unfolded exit_class_eq_covariation]])
   have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
   have AEfun: "AE \<omega> in P. cc + min \<beta> (T - cc)
       \<le> pexit cc K (\<lambda>t. fst (\<omega> t))
