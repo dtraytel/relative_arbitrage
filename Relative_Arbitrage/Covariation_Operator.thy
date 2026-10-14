@@ -645,6 +645,46 @@ lemma ell_op_lsc_eq_covariation_op_lsc:
   by (intro ext) (simp add: ell_op_lsc_eq_op_lsc op_lsc_def covariation_op_lsc_def
       ell_op_eq_covariation_op[OF k1 kn L1])
 
+section \<open>Proposition 4.1 for an abstract constraint set\<close>
+
+text \<open>Uniqueness on an expandable \<open>K\<close>, for Definition 3.1 with the operator
+  \<^const>\<open>covariation_op\<close> \<open>S\<close> and its envelopes; each function may have its
+  own bound.\<close>
+
+theorem covariation_op_uniqueness_expandable:
+  fixes u w :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
+  assumes B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and Spsd: "\<And>a. a \<in> S \<Longrightarrow> psd a"
+    and rot: "\<And>R b. orthogonal_matrix R \<Longrightarrow> b \<in> S \<Longrightarrow> R ** b ** transpose R \<in> S"
+    and kill: "\<And>p :: real^'n. \<exists>a\<in>S. a *v p = 0"
+    and cK: "compact K" and neK: "K \<noteq> {}" and expK: "expandable K"
+    and uscu: "\<And>c z. u z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> u y < c"
+    and uscw: "\<And>c z. w z < c \<Longrightarrow> \<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> w y < c"
+    and Bu: "\<And>y. \<bar>u y\<bar> \<le> Cu" and Bw: "\<And>y. \<bar>w y\<bar> \<le> Cw"
+    and subu: "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_lsc S)
+      (interior K \<union> {x \<in> K - interior K. 0 < u x}) u"
+    and supu: "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_usc S)
+      (interior K \<union> {x \<in> K - interior K. lsc_env u x < 0}) (lsc_env u)"
+    and subw: "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_lsc S)
+      (interior K \<union> {x \<in> K - interior K. 0 < w x}) w"
+    and supw: "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_usc S)
+      (interior K \<union> {x \<in> K - interior K. lsc_env w x < 0}) (lsc_env w)"
+    and x: "x \<in> K"
+  shows "u x = w x"
+proof -
+  have GO: "geometric_operator (covariation_op_real S :: real^'n \<Rightarrow> real^'n^'n \<Rightarrow> real)"
+    by (rule covariation_op_real_geometric_operator[OF B Spsd rot kill])
+  have lscF: "op_lsc (covariation_op_real S) = covariation_op_lsc S"
+    by (rule op_lsc_covariation_op_real[OF B Spsd kill])
+  have uscF: "op_usc (covariation_op_real S) = covariation_op_usc S"
+    by (rule op_usc_covariation_op_real[OF B Spsd kill])
+  have Bu': "\<bar>u y\<bar> \<le> max Cu Cw" and Bw': "\<bar>w y\<bar> \<le> max Cu Cw" for y
+    using Bu[of y] Bw[of y] by (simp_all add: le_max_iff_disj)
+  show ?thesis
+    by (rule geometric_operator.uniqueness_expandable[OF GO cK neK expK uscu uscw Bu' Bw'
+          subu[folded lscF] supu[folded uscF] subw[folded lscF] supw[folded uscF] x])
+qed
+
 text \<open>The sphere-tangential rates \<open>I - u u\<^sup>T\<close> annihilate every gradient, so a
   set containing them satisfies the last hypothesis of the instance.\<close>
 

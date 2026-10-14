@@ -195,7 +195,6 @@ theorem covariation_val_uniqueness:
   shows "u x = enn2real (covariation_val S T K x)"
 proof -
   define v where "v = (\<lambda>z. enn2real (covariation_val S T K z))"
-  define F where "F = (covariation_op_real S :: real^'n \<Rightarrow> real^'n^'n \<Rightarrow> real)"
   have kill: "\<exists>a\<in>S. a *v p = 0" for p :: "real^'n"
     by (rule tangential_rates_kill) (rule tan1)
   have Kc: "closed K" by (rule compact_imp_closed[OF cK])
@@ -203,53 +202,29 @@ proof -
     by (rule tan1) simp
   have "norm x \<le> rK" using subsetD[OF KB x] by simp
   then have r0: "0 \<le> rK" using norm_ge_zero[of x] by linarith
-  have GO: "geometric_operator F"
-    unfolding F_def by (rule covariation_op_real_geometric_operator[OF B Spsd rot kill])
-  have lscF: "op_lsc F = covariation_op_lsc S"
-    unfolding F_def by (rule op_lsc_covariation_op_real[OF B Spsd kill])
-  have uscF: "op_usc F = covariation_op_usc S"
-    unfolding F_def by (rule op_usc_covariation_op_real[OF B Spsd kill])
-  have Fop: "ereal (F p M) = covariation_op S p M" for p M
-    unfolding F_def by (rule ereal_covariation_op_real[OF B Spsd kill])
-  define BB where "BB = max Bd (rK * rK / \<theta>)"
-  have Bv: "\<bar>v y\<bar> \<le> BB" for y
-  proof -
-    have "\<bar>v y\<bar> \<le> rK * rK / \<theta>"
-      unfolding v_def
-      by (rule covariation_val_real_bounded[OF less_imp_le[OF T0] B0 B th0 th KB r0])
-    then show ?thesis unfolding BB_def by (simp add: le_max_iff_disj)
-  qed
-  have Bu': "\<bar>u y\<bar> \<le> BB" for y
-    using Bu[of y] unfolding BB_def by (simp add: le_max_iff_disj)
+  have Bv: "\<bar>v y\<bar> \<le> rK * rK / \<theta>" for y
+    unfolding v_def by (rule covariation_val_real_bounded[OF less_imp_le[OF T0] B0 B th0 th KB r0])
   have uscv: "\<exists>e>0. \<forall>y. dist z y < e \<longrightarrow> v y < c" if "v z < c" for c z
     unfolding v_def
     by (rule covariation_val_real_usc[OF T0 B0 B D0 D Sc SST Kc that[unfolded v_def]])
-  have subv: "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (op_lsc F)
+  have "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_lsc S)
       (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
-  proof -
-    have "visc_subsol_gen test_fun_at (\<lambda>_. principal K) (covariation_op S)
-        (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
-      unfolding v_def by (rule covariation_val_subsol_bc[OF T0 B0 B D0 D Sc Sv SST Spsd Kc])
-    then have "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op S)
-        (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
-      by (rule visc_subsol_gen_test_mono) (rule test_fun_C2_imp_test_fun_at)
-    then show ?thesis
-      by (rule visc_subsol_gen_mono) (metis op_lsc_le Fop)
-  qed
-  have supv: "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (op_usc F)
+    unfolding v_def
+    by (rule visc_subsol_gen_mono[OF covariation_val_subsol_bc[OF T0 B0 B D0 D Sc Sv SST Spsd Kc]
+          covariation_op_lsc_le])
+  then have subv: "visc_subsol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_lsc S)
+      (interior K \<union> {x \<in> K - interior K. 0 < v x}) v"
+    by (rule visc_subsol_gen_test_mono) (rule test_fun_C2_imp_test_fun_at)
+  have "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S)
       (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
-  proof -
-    have "visc_supersol_gen test_fun_at (\<lambda>_. principal K) (covariation_op_usc S)
-        (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
-      unfolding v_def
-      by (rule covariation_val_supersol_bc[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 th0 th
-            Kc KB Tbig])
-    then show ?thesis unfolding uscF
-      by (rule visc_supersol_gen_test_mono) (rule test_fun_C2_imp_test_fun_at)
-  qed
+    unfolding v_def
+    by (rule covariation_val_supersol_bc[OF T0 B0 B D0 D Sc Sv Spsd rot tan1 n2 th0 th Kc KB Tbig])
+  then have supv: "visc_supersol_gen test_fun_C2 (\<lambda>_. principal K) (covariation_op_usc S)
+      (interior K \<union> {x \<in> K - interior K. lsc_env v x < 0}) (lsc_env v)"
+    by (rule visc_supersol_gen_test_mono) (rule test_fun_C2_imp_test_fun_at)
   have "u x = v x"
-    by (rule geometric_operator.uniqueness_expandable[OF GO cK neK expK uscu uscv Bu' Bv
-          subu[folded lscF] supu[folded uscF] subv supv x])
+    by (rule covariation_op_uniqueness_expandable[OF B Spsd rot kill
+          cK neK expK uscu uscv Bu Bv subu supu subv supv x])
   then show ?thesis unfolding v_def .
 qed
 
