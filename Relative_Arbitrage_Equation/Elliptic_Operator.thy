@@ -1,6 +1,6 @@
 
 (*<*)
-theory Curvature_Operator
+theory Elliptic_Operator
   imports
     "Symmetric_Matrix_Spectra.Poincare_Separation"
 begin

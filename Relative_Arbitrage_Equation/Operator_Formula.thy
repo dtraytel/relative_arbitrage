@@ -2,7 +2,7 @@
 (*<*)
 theory Operator_Formula
   imports
-    Curvature_Operator Operator_Continuity
+    Elliptic_Operator Operator_Continuity
 begin
 
 (*>*)

@@ -3,7 +3,7 @@ section \<open>The viscosity-solution predicates, in one place\<close>
 (*<*)
 theory Viscosity_Definitions
   imports
-    Curvature_Operator Geometric_Operator
+    Elliptic_Operator Geometric_Operator
     "Semicontinuous_Analysis.Semicontinuous_Envelopes"
 begin
 
@@ -54,7 +54,7 @@ definition visc_sol ::
 text \<open>The paper's touching condition is global: \<open>(u - \<phi>)(x)\<close> is the maximum
   of \<open>u - \<phi>\<close> over all of \<open>K\<close> (resp. the minimum, for supersolutions).  The
   test-function data \<open>(\<phi>, g, H)\<close> is the same as in
-  \<open>Curvature_Operator\<close>, i.e. \<open>g\<close> is the gradient and \<open>H\<close> the Hessian.\<close>
+  \<open>Elliptic_Operator\<close>, i.e. \<open>g\<close> is the gradient and \<open>H\<close> the Hessian.\<close>
 
 definition visc_subsol_env ::
   "nat \<Rightarrow> real \<Rightarrow> (real^'n::finite) set \<Rightarrow> (real^'n) set

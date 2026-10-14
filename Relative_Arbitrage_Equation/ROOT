@@ -14,7 +14,7 @@ session Relative_Arbitrage_Equation = Second_Order_Viscosity_Analysis +
     Semicontinuous_Analysis
   theories
     Geometric_Operator
-    Curvature_Operator
+    Elliptic_Operator
     Viscosity_Definitions
     Constraint_Set_Convexity
     Eigenvalue_Bound_Exact

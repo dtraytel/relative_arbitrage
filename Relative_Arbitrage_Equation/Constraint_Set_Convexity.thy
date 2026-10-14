@@ -1,7 +1,7 @@
 
 (*<*)
 theory Constraint_Set_Convexity
-  imports Curvature_Operator "Symmetric_Matrix_Spectra.Ky_Fan"
+  imports Elliptic_Operator "Symmetric_Matrix_Spectra.Ky_Fan"
 begin
 
 (*>*)

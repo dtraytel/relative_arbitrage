@@ -388,7 +388,7 @@ text \<open>Theorem 4.2 of the paper reaches its contradiction through Eq. (4.3)
   \<open>F(p\<^sub>\<epsilon>, M\<^sub>\<epsilon>) \<ge> F(p\<^sub>\<epsilon>, N\<^sub>\<epsilon>)\<close>, which is the degenerate ellipticity of \<open>F\<close>:
   adding a positive semidefinite matrix to the Hessian argument can only
   decrease \<open>F\<close>, since \<open>F\<close> is an infimum of \<open>-\<onehalf> tr(M a)\<close> over positive
-  semidefinite \<open>a\<close>.  \<open>ell_op_pointwise_elliptic\<close> (@{theory Relative_Arbitrage_Equation.Curvature_Operator})
+  semidefinite \<open>a\<close>.  \<open>ell_op_pointwise_elliptic\<close> (@{theory Relative_Arbitrage_Equation.Elliptic_Operator})
   is the statement for a single \<open>a\<close>; passing to the infimum is what Section 4
   actually uses, and is proved here.\<close>
 

@@ -1,7 +1,7 @@
 (*<*)
 theory Subspace_Tangential_Field
   imports
-    Curvature_Operator
+    Elliptic_Operator
     "Symmetric_Matrix_Spectra.Orthogonal_Projections"
 begin
 

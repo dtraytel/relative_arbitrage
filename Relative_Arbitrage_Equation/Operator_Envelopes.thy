@@ -18,7 +18,7 @@ text \<open>
   \<open>F\<^sup>*(grad phi, Hess phi) \<ge> 1\<close>, with the paper's global touching
   condition, a maximum over \<open>K\<close> rather than on a small ball. It proves
   the sandwich \<open>F\<^sub>* \<le> F \<le> F\<^sup>*\<close>, that the envelope-free viscosity
-  notions of \<open>Curvature_Operator\<close> imply the envelope ones, hence that
+  notions of \<open>Elliptic_Operator\<close> imply the envelope ones, hence that
   Example 3.1 satisfies Definition 3.1 as stated, and the clause of
   Lemma 3.1 at the degenerate point, \<open>F\<^sub>* = F\<close> on \<open>{0} \<times> S\<^sup>n\<close>, using
   that at \<open>p = 0\<close> the constraint \<open>a p = 0\<close> is vacuous and that \<open>F\<close> is
@@ -176,7 +176,7 @@ abbreviation mgap :: "real \<Rightarrow> real^'n::finite^'n \<Rightarrow> real^'
   "mgap L M N \<equiv> entrysum (M - N) * L / 2"
 
 text \<open>\<open>trace_mult_feasible_bound\<close>, \<open>ell_op_le_witness\<close> and \<open>ell_op_approx\<close>
-  live in @{theory Relative_Arbitrage_Equation.Curvature_Operator}.\<close>
+  live in @{theory Relative_Arbitrage_Equation.Elliptic_Operator}.\<close>
 
 lemma ell_op_M_gap:
   fixes M N :: "real^'n::finite^'n"
