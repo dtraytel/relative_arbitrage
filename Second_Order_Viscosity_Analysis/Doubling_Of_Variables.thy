@@ -30,8 +30,9 @@ text \<open>
   @{theory Second_Order_Viscosity_Analysis.Theorem_On_Sums}, which supplies
   the matrix inequality between the two diagonal blocks.
 
-  Everything is at \<open>'a::euclidean_space\<close> except the 33 statements that
-  produce a matrix, which stay at \<open>real^'n\<close>.
+  Everything is at \<open>'a::euclidean_space\<close> except the statements that
+  mention a matrix (a Hessian, a block of one, or the penalty's Hessian
+  \<open>Z\<close>), which stay at \<open>real^'n\<close>.
 \<close>
 
 text \<open>A supersolution is usually tested against a quadratic touching it from
@@ -2214,23 +2215,19 @@ text \<open>a maximum-principle interface asserts a maximiser in \<open>K - inte
   condition.\<close>
 
 lemma compact_frontier_nonempty:
-  fixes K :: "(real^'n::finite) set"
+  fixes K :: "'a::euclidean_space set"
   assumes cK: "compact K" and ne: "K \<noteq> {}"
-    and dim: "0 < CARD('n)"
   shows "K - interior K \<noteq> {}"
 proof -
   have clK: "closed K" by (rule compact_imp_closed[OF cK])
   have fr: "frontier K = K - interior K"
     using clK by (simp add: frontier_def)
-  have unb: "\<not> bounded (UNIV :: (real^'n) set)"
-  proof -
-    have "\<exists>x :: 'n. True" using dim by (simp add: card_gt_0_iff ex_in_conv)
-    then show ?thesis by simp
-  qed
+  have unb: "\<not> bounded (UNIV :: 'a set)"
+    by simp
   have nU: "K \<noteq> UNIV"
   proof
     assume "K = UNIV"
-    then have "bounded (UNIV :: (real^'n) set)"
+    then have "bounded (UNIV :: 'a set)"
       using compact_imp_bounded[OF cK] by simp
     with unb show False by blast
   qed
@@ -2379,36 +2376,36 @@ qed
 section \<open>Jets of the doubled sup-convolution\<close>
 
 theorem doubled_functional_semiconvex_gen:
-  fixes u v :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  fixes u v :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
   assumes Bu: "\<And>y. u y \<le> Bu" and Bv: "\<And>y. v y \<le> Bv"
     and e: "0 < \<epsilon>" and k: "0 \<le> \<kappa>"
     and sc: "convex_on UNIV (\<lambda>d. (\<kappa>/2) * (norm d)\<^sup>2 - Pn d)"
-  shows "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+  shows "convex_on UNIV (\<lambda>z::'a \<times> 'a.
       (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z) - Pn (fst z - snd z))
       + ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>)/2) * (norm z)\<^sup>2)"
 proof -
   have ce: "0 \<le> 1/\<epsilon>" using e by simp
-  have A: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+  have A: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
       supconv u \<epsilon> (fst z) + ((1/\<epsilon>)/2) * (norm z)\<^sup>2)"
     by (rule semiconvex_of_fst[OF supconv_semiconvex'[OF Bu e] ce])
-  have B: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+  have B: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
       supconv v \<epsilon> (snd z) + ((1/\<epsilon>)/2) * (norm z)\<^sup>2)"
     by (rule semiconvex_of_snd[OF supconv_semiconvex'[OF Bv e] ce])
-  have AB: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+  have AB: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
       (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z))
       + ((1/\<epsilon> + 1/\<epsilon>)/2) * (norm z)\<^sup>2)"
     by (rule semiconvex_add[OF A B])
-  have C: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+  have C: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
       - Pn (fst z - snd z) + ((2*\<kappa>)/2) * (norm z)\<^sup>2)"
     by (rule semiconvex_penalty_gen[OF k sc])
-  have ABC: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+  have ABC: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
       ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)) + - Pn (fst z - snd z))
       + (((1/\<epsilon> + 1/\<epsilon>) + 2*\<kappa>)/2) * (norm z)\<^sup>2)"
     by (rule semiconvex_add[OF AB C])
-  have eq: "(\<lambda>z::(real^'n) \<times> (real^'n).
+  have eq: "(\<lambda>z::'a \<times> 'a.
         ((supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z)) + - Pn (fst z - snd z))
         + (((1/\<epsilon> + 1/\<epsilon>) + 2*\<kappa>)/2) * (norm z)\<^sup>2)
-      = (\<lambda>z::(real^'n) \<times> (real^'n).
+      = (\<lambda>z::'a \<times> 'a.
         (supconv u \<epsilon> (fst z) + supconv v \<epsilon> (snd z) - Pn (fst z - snd z))
         + ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>)/2) * (norm z)\<^sup>2)"
     by (rule ext) simp
@@ -2423,7 +2420,7 @@ text \<open>Jensen's lemma for the shifted general functional, the strict-gap
   \<open>2\<delta>\<close> by \<open>semiconvex_shift_perturb\<close>.\<close>
 
 theorem doubled_supconv_jet_exists_shifted_gen:
-  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
   assumes Bu: "\<And>y. u y \<le> Bu" and Bw: "\<And>y. w y \<le> Bw"
     and e: "0 < \<epsilon>" and k: "0 \<le> \<kappa>"
     and sc: "convex_on UNIV (\<lambda>d. (\<kappa>/2) * (norm d)\<^sup>2 - Pn d)"
@@ -2463,7 +2460,7 @@ proof -
         - Pn (fst z - snd z)
       = (supconv u \<epsilon> (fst z) + supconv w \<epsilon> (snd z) - Pn (fst z - snd z))
         - \<delta> * (norm (z - \<xi>\<^sub>0))\<^sup>2"
-    for z :: "(real^'n) \<times> (real^'n)"
+    for z :: "'a \<times> 'a"
   proof -
     have nsplit: "(norm (z - \<xi>\<^sub>0))\<^sup>2
         = (norm (fst z - fst \<xi>\<^sub>0))\<^sup>2 + (norm (snd z - snd \<xi>\<^sub>0))\<^sup>2"
@@ -2475,11 +2472,11 @@ proof -
     qed
     show ?thesis unfolding nsplit by (simp add: algebra_simps)
   qed
-  have base: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+  have base: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
       (supconv u \<epsilon> (fst z) + supconv w \<epsilon> (snd z) - Pn (fst z - snd z))
       + ((1/\<epsilon> + 1/\<epsilon> + 2*\<kappa>)/2) * (norm z)\<^sup>2)"
     by (rule doubled_functional_semiconvex_gen[OF Bu Bw e k sc])
-  have cvx: "convex_on UNIV (\<lambda>z::(real^'n) \<times> (real^'n).
+  have cvx: "convex_on UNIV (\<lambda>z::'a \<times> 'a.
       ((supconv u \<epsilon> (fst z) - \<delta> * (norm (fst z - fst \<xi>\<^sub>0))\<^sup>2)
         + (supconv w \<epsilon> (snd z) - \<delta> * (norm (snd z - snd \<xi>\<^sub>0))\<^sup>2)
         - Pn (fst z - snd z))
@@ -2557,7 +2554,7 @@ text \<open>The quadratic penalty is the instance \<open>Pn d = (\<alpha>/2) \<p
   \<open>\<kappa> = \<alpha>\<close> of \<open>doubled_supconv_jet_exists_shifted_gen\<close>.\<close>
 
 theorem doubled_supconv_jet_exists_shifted:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes Bu: "\<And>y. u y \<le> Bu" and Bw: "\<And>y. w y \<le> Bw"
     and e: "0 < \<epsilon>" and a: "0 \<le> \<alpha>" and dnn: "0 \<le> \<delta>"
     and rho: "0 < \<rho>" "\<rho> < r"
@@ -2637,7 +2634,7 @@ text \<open>The viscosity hypotheses concern \<open>u\<close> and \<open>w\<clos
   to \<open>u\<close> at the attaining point, with the same jet data \<open>(p, A)\<close>.\<close>
 
 theorem supconv_bound_transfer:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
   assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
     and opt: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
     and loc: "supconv u \<epsilon> (x + k) - supconv u \<epsilon> x \<le> c"
@@ -2706,72 +2703,31 @@ qed
 subsection \<open>Descending the one-sided bound to the attainment point\<close>
 
 text \<open>\<open>supconv_local_max_transfer_ball\<close> descends a local max for a fixed
-  quadratic; the \<open>o(|h|^2)\<close> version needed here applies it once per
-  threshold \<open>c\<close>: the one-sided bound at threshold \<open>c/2\<close> is a local max
-  for \<open>c *\<^sub>R mat 1\<close> with zero gradient, and descent yields the one-sided
-  bound at threshold \<open>c\<close> for \<open>u\<close> at \<open>ys\<close>. Quantifying over \<open>c\<close> makes the
-  Hessian effectively zero without a vanishing second-order jet directly.\<close>
+  quadratic; the \<open>o(|h|^2)\<close> version needed here descends a one-sided bound
+  at every threshold \<open>c\<close>.  It needs no matrix: the increments of \<open>u\<close> at
+  the attainment point \<open>ys\<close> are dominated by those of \<open>supconv u \<epsilon>\<close> at \<open>x\<close>
+  (\<open>supconv_dominates_shift\<close>), so each one-sided bound for the latter is
+  one for \<open>u\<close>.  Quantifying over \<open>c\<close> makes the Hessian effectively zero
+  without a vanishing second-order jet directly.\<close>
 
 lemma supconv_onesided_descent:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
   assumes B: "\<And>y. u y \<le> Bu" and e: "0 < \<epsilon>"
     and opt: "supconv u \<epsilon> x = u ys - (dist x ys)\<^sup>2 / (2*\<epsilon>)"
     and ub: "\<And>c. 0 < c \<Longrightarrow> \<forall>\<^sub>F hh in at 0.
         (supconv u \<epsilon> (x + hh) - supconv u \<epsilon> x) / (norm hh)\<^sup>2 < c"
     and c: "0 < c"
   shows "\<forall>\<^sub>F hh in at 0. (u (ys + hh) - u ys) / (norm hh)\<^sup>2 < c"
-proof -
-  have chalf: "0 < c/2" using c by simp
-  have chlt: "c/2 < c" using c by simp
-  from ub[OF chalf] obtain d where dpos: "0 < d"
-    and b: "\<And>hh. hh \<noteq> 0 \<Longrightarrow> dist hh 0 < d \<Longrightarrow>
-      (supconv u \<epsilon> (x + hh) - supconv u \<epsilon> x) / (norm hh)\<^sup>2 < c/2"
-    unfolding eventually_at by blast
-  have quad: "hh \<bullet> ((c *\<^sub>R mat 1) *v hh) = c * (norm hh)\<^sup>2" for hh :: "real^'n"
-    by (simp add: scaleR_matrix_vector_assoc[symmetric] power2_norm_eq_inner)
-  \<comment> \<open>the one-sided bound IS a local max for the quadratic \<open>c *\<^sub>R mat 1\<close>\<close>
-  have lm: "supconv u \<epsilon> (x + h)
-      - ((0::real^'n) \<bullet> h + (h \<bullet> ((c *\<^sub>R mat 1) *v h))/2) \<le> supconv u \<epsilon> x"
-    if nh: "norm h < d" for h
-  proof (cases "h = 0")
-    case True
-    show ?thesis unfolding True by simp
-  next
-    case False
-    have nn: "0 < (norm h)\<^sup>2" using False by simp
-    have dh: "dist h 0 < d" using nh by (simp add: dist_norm)
-    have "(supconv u \<epsilon> (x + h) - supconv u \<epsilon> x) / (norm h)\<^sup>2 < c/2"
-      by (rule b[OF False dh])
-    then have lt: "supconv u \<epsilon> (x + h) - supconv u \<epsilon> x < (c/2) * (norm h)\<^sup>2"
-      using nn by (simp add: field_simps)
-    show ?thesis unfolding quad using lt by simp
-  qed
-  obtain ee where eepos: "0 < ee"
-    and ballb: "\<And>z. z \<in> ball ys ee \<Longrightarrow>
-      u z - ((0::real^'n) \<bullet> (z - ys)
-          + ((z - ys) \<bullet> ((c *\<^sub>R mat 1) *v (z - ys)))/2)
-      \<le> u ys - ((0::real^'n) \<bullet> (ys - ys)
-          + ((ys - ys) \<bullet> ((c *\<^sub>R mat 1) *v (ys - ys)))/2)"
-    using supconv_local_max_transfer_ball[OF B e opt dpos lm] by blast
-  have main: "(u (ys + hh) - u ys) / (norm hh)\<^sup>2 < c"
-    if h0: "hh \<noteq> 0" and hd: "dist hh 0 < ee" for hh
-  proof -
-    have nn: "0 < (norm hh)\<^sup>2" using h0 by simp
-    have zb: "ys + hh \<in> ball ys ee" using hd by (simp add: dist_norm)
-    have zz: "(ys + hh) - ys = hh" by simp
-    from ballb[OF zb]
-    have h1: "u (ys + hh) - (hh \<bullet> ((c *\<^sub>R mat 1) *v hh))/2 \<le> u ys"
-      unfolding zz by simp
-    have h2: "u (ys + hh) - u ys \<le> (c * (norm hh)\<^sup>2)/2"
-      using h1 unfolding quad by linarith
-    have "(u (ys + hh) - u ys) / (norm hh)\<^sup>2
-        \<le> ((c * (norm hh)\<^sup>2)/2) / (norm hh)\<^sup>2"
-      by (rule divide_right_mono[OF h2]) simp
-    also have "((c * (norm hh)\<^sup>2)/2) / (norm hh)\<^sup>2 = c/2"
-      using nn by (simp add: field_simps)
-    finally show ?thesis using chlt by linarith
-  qed
-  show ?thesis unfolding eventually_at using eepos main by blast
+  using ub[OF c]
+proof (rule eventually_mono)
+  fix hh
+  assume lt: "(supconv u \<epsilon> (x + hh) - supconv u \<epsilon> x) / (norm hh)\<^sup>2 < c"
+  have "u (ys + hh) - u ys \<le> supconv u \<epsilon> (x + hh) - supconv u \<epsilon> x"
+    by (rule supconv_dominates_shift[OF B e opt])
+  then have "(u (ys + hh) - u ys) / (norm hh)\<^sup>2
+      \<le> (supconv u \<epsilon> (x + hh) - supconv u \<epsilon> x) / (norm hh)\<^sup>2"
+    by (rule divide_right_mono) simp
+  with lt show "(u (ys + hh) - u ys) / (norm hh)\<^sup>2 < c" by linarith
 qed
 
 subsection \<open>Symmetry of the two block matrices\<close>
@@ -2886,7 +2842,7 @@ text \<open>All three viscosity predicates quantify over \<open>x \<in> \<Omega>
   neighbourhood of the maximiser.\<close>
 
 lemma supconv_extend_far_le:
-  fixes u :: "real^'n::finite \<Rightarrow> real" and K :: "(real^'n) set"
+  fixes u :: "'a::euclidean_space \<Rightarrow> real" and K :: "'a set"
   assumes B: "\<And>y. \<theta> * (if y \<in> K then u y else C) \<le> Bu" and e: "0 < \<epsilon>"
     and d0: "0 \<le> d" and gap: "2*\<epsilon>*(Bu - \<theta>*C) < d\<^sup>2"
     and far: "\<And>b. b \<in> K \<Longrightarrow> d < dist x b"
@@ -2908,7 +2864,7 @@ text \<open>The Crandall--Ishii core needs \<open>continuous_on UNIV\<close> onl
   usc/lsc data directly.\<close>
 
 lemma attain_gate_of_positive:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
   assumes t0: "0 < \<theta>" and e: "0 < \<epsilon>"
     and pos: "0 < supconv (\<lambda>y. \<theta> * u y) \<epsilon> x"
     and opt: "supconv (\<lambda>y. \<theta> * u y) \<epsilon> x = \<theta> * u z - (dist x z)\<^sup>2 / (2*\<epsilon>)"
@@ -2924,7 +2880,7 @@ text \<open>On a \<open>\<rho>\<close>-ball where the sup-convolution stays posi
   point lies in the gated set - the core's \<open>atu\<close> hypothesis.\<close>
 
 lemma atu_of_positive_ball:
-  fixes u :: "real^'n::finite \<Rightarrow> real"
+  fixes u :: "'a::euclidean_space \<Rightarrow> real"
   assumes t0: "0 < \<theta>" and e: "0 < \<epsilon>"
     and posb: "\<And>x. dist x p \<le> \<rho> \<Longrightarrow> 0 < supconv (\<lambda>y. \<theta> * u y) \<epsilon> x"
     and dx: "dist x p \<le> \<rho>"
@@ -2936,8 +2892,8 @@ text \<open>The shifted Jensen family for a general penalty: run the shifted
   construction at tilts \<open>\<delta>\<^sub>i = D\<^sub>0/(2+i)\<close> and skolemise with \<open>choice4\<close>.\<close>
 
 theorem shifted_jensen_family_gen:
-  fixes u w :: "real^'n::finite \<Rightarrow> real" and Pn :: "real^'n \<Rightarrow> real"
-    and \<xi>\<^sub>0 :: "(real^'n) \<times> (real^'n)"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real" and Pn :: "'a \<Rightarrow> real"
+    and \<xi>\<^sub>0 :: "'a \<times> 'a"
   assumes Bu: "\<And>y. u y \<le> Bu" and Bw: "\<And>y. w y \<le> Bw"
     and e: "0 < \<epsilon>" and k: "0 \<le> \<kappa>"
     and sc: "convex_on UNIV (\<lambda>d. (\<kappa>/2) * (norm d)\<^sup>2 - Pn d)"

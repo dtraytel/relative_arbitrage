@@ -556,7 +556,7 @@ text \<open>The classical first- and second-order conditions at a local minimum 
   into a second-order expansion along that line.\<close>
 
 lemma local_min_gradient_zero:
-  fixes \<psi> :: "real^'n \<Rightarrow> real"
+  fixes \<psi> :: "'a::euclidean_space \<Rightarrow> real"
   assumes deriv: "(\<psi> has_derivative (\<lambda>h. g \<bullet> h)) (at x)"
     and min: "eventually (\<lambda>y. \<psi> x \<le> \<psi> y) (at x)"
   shows "g = 0"

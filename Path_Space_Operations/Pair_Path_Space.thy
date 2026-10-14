@@ -22,7 +22,14 @@ text \<open>The path space this development works on carries a pair: the state
   that type and collects what is true of paths, and of laws of paths, before
   any constraint on the covariation is imposed -- measurability of the
   coordinates, continuity of evaluation, and martingale clauses for a
-  general law.\<close>
+  general law.
+
+  A fact that never looks inside the pair is stated for paths with values
+  in any Polish Banach space \<open>'p\<close>, here and in the theories that follow;
+  the pair is the instance \<open>'p = 'a \<times> 'b\<close>.  Only the facts that read a
+  component (the shift \<open>pshift\<close> of the first component, \<open>pfst\<close>, exit
+  times of the first component, path stopping times, the covariation
+  constraint) are stated at a product.\<close>
 
 
 section \<open>Diagonal entries under the eigenvalue constraints\<close>
@@ -139,9 +146,9 @@ text \<open>
 \<close>
 
 lemma space_of_path_sets:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
-  assumes "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  shows "space Q = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
+  assumes "sets Q = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
+  shows "space Q = mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
   using sets_eq_imp_space_eq[OF assms] by (simp add: space_borel_of)
 
 section \<open>The constraint passes to weak limits, without Skorokhod\<close>
@@ -155,24 +162,24 @@ text \<open>The paper passes the covariation constraint to the limit law via
   every approximating law, hence under the limit.\<close>
 
 lemma restrict_measurable_natural_filtration:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
-  assumes setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
+  assumes setsQ: "sets Q = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and s: "0 \<le> s" and sT: "s \<le> T"
   shows "(\<lambda>\<omega>. restrict \<omega> {0..s})
       \<in> natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s
-        \<rightarrow>\<^sub>M (path_borel s :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+        \<rightarrow>\<^sub>M (path_borel s :: (real \<Rightarrow> 'p) measure)"
 proof -
   let ?F = "natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s"
-  have spF: "space ?F = mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+  have spF: "space ?F = mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
     by (simp add: space_of_path_sets[OF setsQ])
-  have evm: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> u) \<in> borel_measurable ?F"
+  have evm: "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). \<omega> u) \<in> borel_measurable ?F"
     if u: "u \<in> {0..s}" for u
     unfolding natural_filtration_def
     by (rule measurable_family_vimage_algebra) (use u in auto)
   have cont: "continuous_on {0..s} (\<lambda>u. \<omega> u)"
-    if w: "\<omega> \<in> space ?F" for \<omega> :: "(real \<Rightarrow> 'a \<times> 'b)"
+    if w: "\<omega> \<in> space ?F" for \<omega> :: "(real \<Rightarrow> 'p)"
   proof -
-    have "\<omega> \<in> mspace (path_metric T :: ((real \<Rightarrow> 'a \<times> 'b)) metric)"
+    have "\<omega> \<in> mspace (path_metric T :: (real \<Rightarrow> 'p) metric)"
       using w spF by simp
     from mspace_path_metricD[OF this] show ?thesis
       by (rule continuous_on_subset) (use sT s in auto)
@@ -181,10 +188,10 @@ proof -
 qed
 
 lemma past_test_measurable_natural_filtration:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure" and h :: "((real \<Rightarrow> 'a \<times> 'b)) \<Rightarrow> real"
-  assumes setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure" and h :: "(real \<Rightarrow> 'p) \<Rightarrow> real"
+  assumes setsQ: "sets Q = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and s: "0 \<le> s" and sT: "s \<le> T"
-    and h: "h \<in> borel_measurable (path_borel s :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and h: "h \<in> borel_measurable (path_borel s :: (real \<Rightarrow> 'p) measure)"
   shows "(\<lambda>\<omega>. h (restrict \<omega> {0..s}))
       \<in> borel_measurable (natural_filtration Q 0 (\<lambda>u \<omega>. \<omega> u) s)"
   by (rule measurable_compose
@@ -193,7 +200,7 @@ lemma past_test_measurable_natural_filtration:
 subsection \<open>The identity at a law, against a bounded test\<close>
 
 lemma continuous_on_iglue:
-  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
+  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'p::real_normed_vector)"
   assumes r: "0 \<le> r"
     and c1: "continuous_on {0..r} \<omega>"
     and c2: "continuous_on {0..} \<omega>'"
@@ -219,7 +226,7 @@ proof -
 qed
 
 lemma continuous_on_pglue:
-  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'a::real_normed_vector \<times> 'b::real_normed_vector)"
+  fixes \<omega> \<omega>' :: "(real \<Rightarrow> 'p::real_normed_vector)"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
     and c1: "continuous_on {0..r} \<omega>"
     and c2: "continuous_on {0..T - r} \<omega>'"

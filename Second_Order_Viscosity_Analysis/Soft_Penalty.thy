@@ -39,7 +39,7 @@ text \<open>Writing \<open>s = d \<bullet> d\<close> and \<open>t = 2(d \<bullet
   \<open>d = 0\<close>, so on the diagonal this penalty contributes the zero 2-jet ---
   the degenerate configuration a comparison argument has to exclude.\<close>
 
-definition quartic_pen :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real" where
+definition quartic_pen :: "real \<Rightarrow> 'a::euclidean_space \<Rightarrow> real" where
   "quartic_pen \<beta> d = (\<beta>/4) * (d \<bullet> d)\<^sup>2"
 
 text \<open>\<open>semiconvex_penalty_gen\<close> reduces the question to exhibiting one
@@ -52,7 +52,7 @@ text \<open>\<open>semiconvex_penalty_gen\<close> reduces the question to exhibi
   \<open>\<surd>(s+1) - 1 = s/(\<surd>(s+1)+1)\<close>, so \<open>P(h)/\<parallel>h\<parallel>\<^sup>2 \<rightarrow> 0\<close>: near \<open>0\<close> the penalty
   is \<open>\<approx> (\<kappa>/8)\<parallel>d\<parallel>\<^sup>4\<close>, while far out it grows quadratically.\<close>
 
-definition soft_pen :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real" where
+definition soft_pen :: "real \<Rightarrow> 'a::euclidean_space \<Rightarrow> real" where
   "soft_pen \<kappa> d = (\<kappa>/2) * (norm d)\<^sup>2 - \<kappa> * (sqrt ((norm d)\<^sup>2 + 1) - 1)"
 
 lemma div_mul_div_cancel_aux:
@@ -151,7 +151,7 @@ text \<open>One input to the remainder limit: \<open>(d \<bullet> h)\<^sup>2/\<p
   \<open>Cauchy_Schwarz_ineq\<close>), enabling \<open>Lim_null_comparison\<close>.\<close>
 
 corollary inner_sq_quotient_bounded:
-  fixes d h :: "real^'n::finite"
+  fixes d h :: "'a::euclidean_space"
   assumes h: "h \<noteq> 0"
   shows "(d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2 \<le> (norm d)\<^sup>2"
 proof -
@@ -166,22 +166,22 @@ text \<open>The other input: the denominator \<open>T h = \<surd>(u + \<Delta> h
   \<open>R(2R)\<^sup>2 = 4R\<^sup>3\<close>.\<close>
 
 lemma soft_pen_T_tendsto:
-  fixes d :: "real^'n::finite"
-  shows "((\<lambda>h::real^'n. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+  fixes d :: "'a::euclidean_space"
+  shows "((\<lambda>h::'a. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
         + sqrt ((norm d)\<^sup>2 + 1))
       \<longlongrightarrow> 2 * sqrt ((norm d)\<^sup>2 + 1)) (at 0)"
 proof -
-  have "((\<lambda>h::real^'n. ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
-      \<longlongrightarrow> ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> (0::real^'n)) + ((0::real^'n) \<bullet> 0)))
+  have "((\<lambda>h::'a. ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+      \<longlongrightarrow> ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> (0::'a)) + ((0::'a) \<bullet> 0)))
       (at 0)"
     by (intro tendsto_intros)
-  then have a: "((\<lambda>h::real^'n. ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+  then have a: "((\<lambda>h::'a. ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
       \<longlongrightarrow> (norm d)\<^sup>2 + 1) (at 0)"
     by simp
-  have b: "((\<lambda>h::real^'n. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))))
+  have b: "((\<lambda>h::'a. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))))
       \<longlongrightarrow> sqrt ((norm d)\<^sup>2 + 1)) (at 0)"
     by (rule tendsto_real_sqrt[OF a])
-  have "((\<lambda>h::real^'n. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+  have "((\<lambda>h::'a. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
         + sqrt ((norm d)\<^sup>2 + 1))
       \<longlongrightarrow> sqrt ((norm d)\<^sup>2 + 1) + sqrt ((norm d)\<^sup>2 + 1)) (at 0)"
     by (rule tendsto_add[OF b tendsto_const])
@@ -192,8 +192,8 @@ text \<open>The bracket itself vanishes: \<open>T h \<rightarrow> 2R\<close> giv
   \<open>2/(R T h\<^sup>2) \<rightarrow> 1/(2R\<^sup>3)\<close>, the constant subtracted.\<close>
 
 lemma soft_pen_bracket_tendsto:
-  fixes d :: "real^'n::finite"
-  shows "((\<lambda>h::real^'n. 2 / (sqrt ((norm d)\<^sup>2 + 1)
+  fixes d :: "'a::euclidean_space"
+  shows "((\<lambda>h::'a. 2 / (sqrt ((norm d)\<^sup>2 + 1)
           * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
              + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
         - 1 / (2 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3)) \<longlongrightarrow> 0) (at 0)"
@@ -201,17 +201,17 @@ proof -
   have up: "0 < (norm d)\<^sup>2 + 1"
     by (rule add_nonneg_pos[OF zero_le_power2 zero_less_one])
   have Rp: "0 < sqrt ((norm d)\<^sup>2 + 1)" using up by simp
-  have Tl: "((\<lambda>h::real^'n. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+  have Tl: "((\<lambda>h::'a. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
         + sqrt ((norm d)\<^sup>2 + 1)) \<longlongrightarrow> 2 * sqrt ((norm d)\<^sup>2 + 1)) (at 0)"
     by (rule soft_pen_T_tendsto)
-  have Dl: "((\<lambda>h::real^'n. sqrt ((norm d)\<^sup>2 + 1)
+  have Dl: "((\<lambda>h::'a. sqrt ((norm d)\<^sup>2 + 1)
         * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
            + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
       \<longlongrightarrow> sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2) (at 0)"
     by (intro tendsto_intros Tl)
   have dnz: "sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2 \<noteq> 0"
     using Rp by (simp add: power2_eq_square)
-  have Ql: "((\<lambda>h::real^'n. 2 / (sqrt ((norm d)\<^sup>2 + 1)
+  have Ql: "((\<lambda>h::'a. 2 / (sqrt ((norm d)\<^sup>2 + 1)
         * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
            + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2))
       \<longlongrightarrow> 2 / (sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)) (at 0)"
@@ -224,7 +224,7 @@ proof -
       by (simp add: power2_eq_square power3_eq_cube)
     show ?thesis unfolding e using Rp by (simp add: field_simps)
   qed
-  have "((\<lambda>h::real^'n. 2 / (sqrt ((norm d)\<^sup>2 + 1)
+  have "((\<lambda>h::'a. 2 / (sqrt ((norm d)\<^sup>2 + 1)
         * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
            + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
       - 1 / (2 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3))
@@ -238,8 +238,8 @@ text \<open>The second summand of the remainder quotient: numerator \<open>\<rig
   denominator \<open>\<rightarrow> 8R\<^sup>3 \<noteq> 0\<close>.\<close>
 
 lemma soft_pen_second_summand_tendsto:
-  fixes d :: "real^'n::finite"
-  shows "((\<lambda>h::real^'n. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))
+  fixes d :: "'a::euclidean_space"
+  shows "((\<lambda>h::'a. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))
       / (2 * sqrt ((norm d)\<^sup>2 + 1)
           * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
              + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)) \<longlongrightarrow> 0) (at 0)"
@@ -247,24 +247,24 @@ proof -
   have up: "0 < (norm d)\<^sup>2 + 1"
     by (rule add_nonneg_pos[OF zero_le_power2 zero_less_one])
   have Rp: "0 < sqrt ((norm d)\<^sup>2 + 1)" using up by simp
-  have Nl: "((\<lambda>h::real^'n. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))) \<longlongrightarrow> 0) (at 0)"
+  have Nl: "((\<lambda>h::'a. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))) \<longlongrightarrow> 0) (at 0)"
   proof -
-    have "((\<lambda>h::real^'n. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h)))
-        \<longlongrightarrow> \<kappa> * (4*(d \<bullet> (0::real^'n)) + ((0::real^'n) \<bullet> 0))) (at 0)"
+    have "((\<lambda>h::'a. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h)))
+        \<longlongrightarrow> \<kappa> * (4*(d \<bullet> (0::'a)) + ((0::'a) \<bullet> 0))) (at 0)"
       by (intro tendsto_intros)
     then show ?thesis by simp
   qed
-  have Tl: "((\<lambda>h::real^'n. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
+  have Tl: "((\<lambda>h::'a. sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
         + sqrt ((norm d)\<^sup>2 + 1)) \<longlongrightarrow> 2 * sqrt ((norm d)\<^sup>2 + 1)) (at 0)"
     by (rule soft_pen_T_tendsto)
-  have Dl: "((\<lambda>h::real^'n. 2 * sqrt ((norm d)\<^sup>2 + 1)
+  have Dl: "((\<lambda>h::'a. 2 * sqrt ((norm d)\<^sup>2 + 1)
         * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
            + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
       \<longlongrightarrow> 2 * sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2) (at 0)"
     by (intro tendsto_intros Tl)
   have dnz: "2 * sqrt ((norm d)\<^sup>2 + 1) * (2 * sqrt ((norm d)\<^sup>2 + 1))\<^sup>2 \<noteq> 0"
     using Rp by (simp add: power2_eq_square)
-  have "((\<lambda>h::real^'n. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))
+  have "((\<lambda>h::'a. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))
       / (2 * sqrt ((norm d)\<^sup>2 + 1)
           * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
              + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2))
@@ -290,6 +290,10 @@ lemma rem_split_aux:
 
 text \<open>\<open>outer_prod\<close> lives in @{theory Symmetric_Matrix_Spectra.Outer_Products}.\<close>
 
+text \<open>The penalties, the gradient \<open>soft_grad\<close> and every fact that does not
+  mention a matrix hold in any Euclidean space \<open>'a\<close>.  Only the Hessian
+  \<open>soft_hess\<close>, a matrix, and the facts about it are stated at \<open>real^'n\<close>.\<close>
+
 definition soft_hess :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'n^'n" where
   "soft_hess \<kappa> d = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R mat 1
       + (\<kappa> / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) *\<^sub>R outer_prod d d"
@@ -301,11 +305,11 @@ text \<open>the jet form below writes the Hessian as a quadratic expression,
   \<open>\<kappa>\<parallel>z\<parallel>\<^sup>2\<close>, so the quadratic form is bounded by \<open>2\<kappa>\<parallel>z\<parallel>\<^sup>2\<close>, uniformly in
   \<open>d\<close>.\<close>
 
-definition soft_grad :: "real \<Rightarrow> real^'n::finite \<Rightarrow> real^'n" where
+definition soft_grad :: "real \<Rightarrow> 'a::euclidean_space \<Rightarrow> 'a" where
   "soft_grad \<kappa> d = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R d"
 
 lemma sqrt_norm_sq_add_one_ge_one:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   shows "1 \<le> sqrt ((norm d)\<^sup>2 + 1)"
   by simp
 
@@ -318,7 +322,7 @@ text \<open>The gradient field of \<open>soft_pen \<kappa>\<close> is Lipschitz 
   factor \<open>Rx+Ry\<close>.\<close>
 
 lemma soft_R_lipschitz:
-  fixes x y :: "real^'n::finite"
+  fixes x y :: "'a::euclidean_space"
   shows "\<bar>sqrt ((norm x)\<^sup>2 + 1) - sqrt ((norm y)\<^sup>2 + 1)\<bar> \<le> norm (x - y)"
 proof -
   let ?s = "sqrt ((norm x)\<^sup>2 + 1)"
@@ -376,7 +380,7 @@ text \<open>The shrink map \<open>d \<mapsto> d / R d\<close> is 2-Lipschitz: wi
   \<open>\<parallel>y\<parallel> \<le> t\<close>, \<open>s \<ge> 1\<close> yields the non-sharp constant 2. Since
   \<open>soft_grad \<kappa> d = \<kappa> d - \<kappa>(shrink d)\<close>, \<open>soft_grad \<kappa>\<close> is \<open>3\<kappa>\<close>-Lipschitz.\<close>
 
-definition soft_shrink :: "real^'n::finite \<Rightarrow> real^'n" where
+definition soft_shrink :: "'a::euclidean_space \<Rightarrow> 'a" where
   "soft_shrink d = (1 / sqrt ((norm d)\<^sup>2 + 1)) *\<^sub>R d"
 
 text \<open>At \<open>d = 0\<close> the gradient and Hessian of \<open>soft_pen\<close> both vanish, so a
@@ -387,7 +391,7 @@ text \<open>At \<open>d = 0\<close> the gradient and Hessian of \<open>soft_pen\
   bound \<open>c\<close> needed elsewhere.\<close>
 
 lemma soft_R_gt_one:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   assumes d: "d \<noteq> 0"
   shows "1 < sqrt ((norm d)\<^sup>2 + 1)"
 proof -
@@ -396,7 +400,7 @@ proof -
 qed
 
 lemma soft_R_coeff_pos:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   assumes d: "d \<noteq> 0"
   shows "0 < 1 - 1 / sqrt ((norm d)\<^sup>2 + 1)"
 proof -
@@ -407,13 +411,13 @@ proof -
 qed
 
 lemma soft_grad_coeff_pos:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   assumes d: "d \<noteq> 0" and k: "0 < \<kappa>"
   shows "0 < \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))"
   by (rule mult_pos_pos[OF k soft_R_coeff_pos[OF d]])
 
 lemma soft_grad_nonzero:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   assumes d: "d \<noteq> 0" and k: "0 < \<kappa>"
   shows "soft_grad \<kappa> d \<noteq> 0"
 proof -
@@ -425,7 +429,7 @@ proof -
 qed
 
 lemma soft_grad_norm_pos:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   assumes d: "d \<noteq> 0" and k: "0 < \<kappa>"
   shows "0 < norm (soft_grad \<kappa> d)"
   using soft_grad_nonzero[OF d k] by simp
@@ -453,13 +457,13 @@ proof -
 qed
 
 lemma soft_gap_pos:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   assumes d: "d \<noteq> 0"
   shows "0 < (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * norm d"
   by (rule mult_pos_pos[OF soft_R_coeff_pos[OF d]]) (use d in simp)
 
 lemma soft_rho_exists:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   assumes d: "d \<noteq> 0" and B: "0 < B"
   shows "\<exists>\<rho>. 0 < \<rho> \<and> \<rho> < B
       \<and> 6 * \<rho> < (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * norm d"
@@ -630,11 +634,11 @@ proof -
 qed
 
 lemma soft_pen_gap:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   shows "(\<kappa>/2) * (norm d)\<^sup>2 - soft_pen \<kappa> d
-      = \<kappa> * norm ((d, 1) :: (real^'n) \<times> real) - \<kappa>"
+      = \<kappa> * norm ((d, 1) :: 'a \<times> real) - \<kappa>"
 proof -
-  have n: "norm ((d, 1) :: (real^'n) \<times> real) = sqrt ((norm d)\<^sup>2 + 1)"
+  have n: "norm ((d, 1) :: 'a \<times> real) = sqrt ((norm d)\<^sup>2 + 1)"
     by (simp add: norm_Pair)
   show ?thesis unfolding soft_pen_def n by (simp add: algebra_simps)
 qed
@@ -642,21 +646,21 @@ qed
 theorem soft_pen_semiconcave:
   fixes \<kappa> :: real
   assumes k: "0 \<le> \<kappa>"
-  shows "convex_on UNIV (\<lambda>d::real^'n::finite. (\<kappa>/2) * (norm d)\<^sup>2 - soft_pen \<kappa> d)"
+  shows "convex_on UNIV (\<lambda>d::'a::euclidean_space. (\<kappa>/2) * (norm d)\<^sup>2 - soft_pen \<kappa> d)"
 proof -
-  have e: "(\<lambda>d::real^'n. (\<kappa>/2) * (norm d)\<^sup>2 - soft_pen \<kappa> d)
-      = (\<lambda>d::real^'n. \<kappa> * norm ((d, 1) :: (real^'n) \<times> real) + (- \<kappa>))"
+  have e: "(\<lambda>d::'a. (\<kappa>/2) * (norm d)\<^sup>2 - soft_pen \<kappa> d)
+      = (\<lambda>d::'a. \<kappa> * norm ((d, 1) :: 'a \<times> real) + (- \<kappa>))"
   proof (rule ext)
-    fix d :: "real^'n"
+    fix d :: "'a"
     show "(\<kappa>/2) * (norm d)\<^sup>2 - soft_pen \<kappa> d
-        = \<kappa> * norm ((d, 1) :: (real^'n) \<times> real) + (- \<kappa>)"
+        = \<kappa> * norm ((d, 1) :: 'a \<times> real) + (- \<kappa>)"
       using soft_pen_gap[of \<kappa> d] by simp
   qed
-  have c1: "convex_on UNIV (\<lambda>d::real^'n. norm ((d, 1) :: (real^'n) \<times> real))"
+  have c1: "convex_on UNIV (\<lambda>d::'a. norm ((d, 1) :: 'a \<times> real))"
     by (rule convex_on_norm_lift)
-  have c2: "convex_on UNIV (\<lambda>d::real^'n. \<kappa> * norm ((d, 1) :: (real^'n) \<times> real))"
+  have c2: "convex_on UNIV (\<lambda>d::'a. \<kappa> * norm ((d, 1) :: 'a \<times> real))"
     by (rule convex_on_cmul[OF k c1])
-  have c3: "convex_on UNIV (\<lambda>d::real^'n. - \<kappa>)"
+  have c3: "convex_on UNIV (\<lambda>d::'a. - \<kappa>)"
     by (simp add: convex_on_const)
   show ?thesis unfolding e by (rule convex_on_add[OF c2 c3])
 qed
@@ -664,7 +668,7 @@ qed
 text \<open>\<open>div_mul_div_cancel_aux\<close> lives in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_pen_quotient:
-  fixes h :: "real^'n::finite"
+  fixes h :: "'a::euclidean_space"
   assumes h: "h \<noteq> 0"
   shows "soft_pen \<kappa> h / (norm h)\<^sup>2
       = \<kappa>/2 - \<kappa> / (sqrt ((norm h)\<^sup>2 + 1) + 1)"
@@ -702,13 +706,13 @@ qed
 
 theorem soft_pen_vanishing_jet_at_zero:
   fixes \<kappa> :: real
-  shows "((\<lambda>h::real^'n::finite. (soft_pen \<kappa> (0 + h) - soft_pen \<kappa> 0)
+  shows "((\<lambda>h::'a::euclidean_space. (soft_pen \<kappa> (0 + h) - soft_pen \<kappa> 0)
       / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
 proof -
   have z: "soft_pen \<kappa> 0 = 0" by (simp add: soft_pen_def)
-  have nz0: "\<forall>\<^sub>F h in at (0::real^'n). h \<noteq> 0"
+  have nz0: "\<forall>\<^sub>F h in at (0::'a). h \<noteq> 0"
     by (simp add: eventually_at_filter)
-  have ev: "\<forall>\<^sub>F h in at (0::real^'n).
+  have ev: "\<forall>\<^sub>F h in at (0::'a).
       \<kappa>/2 - \<kappa> / (sqrt ((norm h)\<^sup>2 + 1) + 1)
         = (soft_pen \<kappa> (0 + h) - soft_pen \<kappa> 0) / (norm h)\<^sup>2"
     using nz0
@@ -716,10 +720,10 @@ proof -
     case (elim h)
     then show ?case unfolding z using soft_pen_quotient[OF elim] by simp
   qed
-  have lim: "((\<lambda>h::real^'n. \<kappa>/2 - \<kappa> / (sqrt ((norm h)\<^sup>2 + 1) + 1))
-      \<longlongrightarrow> \<kappa>/2 - \<kappa> / (sqrt ((norm (0::real^'n))\<^sup>2 + 1) + 1)) (at 0)"
+  have lim: "((\<lambda>h::'a. \<kappa>/2 - \<kappa> / (sqrt ((norm h)\<^sup>2 + 1) + 1))
+      \<longlongrightarrow> \<kappa>/2 - \<kappa> / (sqrt ((norm (0::'a))\<^sup>2 + 1) + 1)) (at 0)"
     by (intro tendsto_intros) simp
-  have val: "\<kappa>/2 - \<kappa> / (sqrt ((norm (0::real^'n))\<^sup>2 + 1) + 1) = 0"
+  have val: "\<kappa>/2 - \<kappa> / (sqrt ((norm (0::'a))\<^sup>2 + 1) + 1) = 0"
     by simp
   show ?thesis
     by (rule Lim_transform_eventually[OF lim[unfolded val] ev])
@@ -737,7 +741,7 @@ text \<open>\<open>soft_pen\<close>'s increment expands exactly: the quadratic p
   \<open>R = 1\<close>.\<close>
 
 theorem soft_pen_expand:
-  fixes d h :: "real^'n::finite"
+  fixes d h :: "'a::euclidean_space"
   shows "soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
       = (\<kappa>/2) * (2*(d \<bullet> h) + (h \<bullet> h))
         - \<kappa> * ((2*(d \<bullet> h) + (h \<bullet> h)) / (2 * sqrt ((norm d)\<^sup>2 + 1))
@@ -778,7 +782,7 @@ qed
 text \<open>\<open>soft_pen_rem_aux\<close> lives in \<open>Soft_Penalty\<close>.\<close>
 
 theorem soft_pen_rem:
-  fixes d h :: "real^'n::finite"
+  fixes d h :: "'a::euclidean_space"
   shows "soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
         - \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (d \<bullet> h)
         - (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (h \<bullet> h)
@@ -806,22 +810,22 @@ text \<open>The jet assembles the analysis above via \<open>soft_pen_rem\<close>
   step.\<close>
 
 theorem soft_pen_jet_form:
-  fixes d :: "real^'n::finite"
-  shows "((\<lambda>h::real^'n. (soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
+  fixes d :: "'a::euclidean_space"
+  shows "((\<lambda>h::'a. (soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
       - \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (d \<bullet> h)
       - (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (h \<bullet> h)
           + \<kappa> * (d \<bullet> h)\<^sup>2 / (sqrt ((norm d)\<^sup>2 + 1)) ^ 3) / 2) / (norm h)\<^sup>2)
     \<longlongrightarrow> 0) (at 0)"
 proof -
   let ?R = "sqrt ((norm d)\<^sup>2 + 1)"
-  let ?T = "\<lambda>h::real^'n.
+  let ?T = "\<lambda>h::'a.
       sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))) + sqrt ((norm d)\<^sup>2 + 1)"
-  let ?Br = "\<lambda>h::real^'n.
+  let ?Br = "\<lambda>h::'a.
       2 / (sqrt ((norm d)\<^sup>2 + 1)
             * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
                + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)
       - 1 / (2 * (sqrt ((norm d)\<^sup>2 + 1)) ^ 3)"
-  let ?Sc = "\<lambda>h::real^'n. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))
+  let ?Sc = "\<lambda>h::'a. \<kappa> * (4*(d \<bullet> h) + (h \<bullet> h))
       / (2 * sqrt ((norm d)\<^sup>2 + 1)
           * (sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))
              + sqrt ((norm d)\<^sup>2 + 1))\<^sup>2)"
@@ -829,7 +833,7 @@ proof -
     by (rule add_nonneg_pos[OF zero_le_power2 zero_less_one])
   have Rp: "0 < ?R" using up by simp
   have Rnz: "?R \<noteq> 0" using Rp by linarith
-  have uDh: "0 \<le> ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))" for h :: "real^'n"
+  have uDh: "0 \<le> ((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h))" for h :: "'a"
   proof -
     have D: "(norm (d + h))\<^sup>2 = (norm d)\<^sup>2 + (2*(d \<bullet> h) + (h \<bullet> h))"
       by (simp add: power2_norm_eq_inner
@@ -839,26 +843,26 @@ proof -
     show ?thesis unfolding e
       by (rule add_nonneg_nonneg[OF zero_le_power2 zero_le_one])
   qed
-  have Tnz: "?T h \<noteq> 0" for h :: "real^'n"
+  have Tnz: "?T h \<noteq> 0" for h :: "'a"
   proof -
     have "0 \<le> sqrt (((norm d)\<^sup>2 + 1) + (2*(d \<bullet> h) + (h \<bullet> h)))"
       using uDh[of h] by simp
     then show ?thesis using Rp by linarith
   qed
-  have nz0: "\<forall>\<^sub>F h in at (0::real^'n). h \<noteq> 0"
+  have nz0: "\<forall>\<^sub>F h in at (0::'a). h \<noteq> 0"
     by (simp add: eventually_at_filter)
-  have gl: "((\<lambda>h::real^'n. (norm d)\<^sup>2 * \<bar>\<kappa> * ?Br h\<bar>) \<longlongrightarrow> 0) (at 0)"
+  have gl: "((\<lambda>h::'a. (norm d)\<^sup>2 * \<bar>\<kappa> * ?Br h\<bar>) \<longlongrightarrow> 0) (at 0)"
   proof -
-    have "((\<lambda>h::real^'n. \<kappa> * ?Br h) \<longlongrightarrow> \<kappa> * 0) (at 0)"
+    have "((\<lambda>h::'a. \<kappa> * ?Br h) \<longlongrightarrow> \<kappa> * 0) (at 0)"
       by (rule tendsto_mult[OF tendsto_const soft_pen_bracket_tendsto])
-    then have "((\<lambda>h::real^'n. \<bar>\<kappa> * ?Br h\<bar>) \<longlongrightarrow> \<bar>\<kappa> * 0\<bar>) (at 0)"
+    then have "((\<lambda>h::'a. \<bar>\<kappa> * ?Br h\<bar>) \<longlongrightarrow> \<bar>\<kappa> * 0\<bar>) (at 0)"
       by (rule tendsto_rabs)
-    then have "((\<lambda>h::real^'n. (norm d)\<^sup>2 * \<bar>\<kappa> * ?Br h\<bar>)
+    then have "((\<lambda>h::'a. (norm d)\<^sup>2 * \<bar>\<kappa> * ?Br h\<bar>)
         \<longlongrightarrow> (norm d)\<^sup>2 * \<bar>\<kappa> * 0\<bar>) (at 0)"
       by (rule tendsto_mult[OF tendsto_const])
     then show ?thesis by simp
   qed
-  have cmp: "\<forall>\<^sub>F h in at (0::real^'n).
+  have cmp: "\<forall>\<^sub>F h in at (0::'a).
       norm (((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * (\<kappa> * ?Br h))
         \<le> (norm d)\<^sup>2 * \<bar>\<kappa> * ?Br h\<bar>"
     using nz0
@@ -874,15 +878,15 @@ proof -
       by (rule mult_right_mono[OF bd]) simp
     finally show ?case .
   qed
-  have first: "((\<lambda>h::real^'n. ((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * (\<kappa> * ?Br h))
+  have first: "((\<lambda>h::'a. ((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * (\<kappa> * ?Br h))
       \<longlongrightarrow> 0) (at 0)"
     by (rule Lim_null_comparison[OF cmp gl])
-  have second: "((\<lambda>h::real^'n. ?Sc h) \<longlongrightarrow> 0) (at 0)"
+  have second: "((\<lambda>h::'a. ?Sc h) \<longlongrightarrow> 0) (at 0)"
     by (rule soft_pen_second_summand_tendsto)
-  have sum0: "((\<lambda>h::real^'n.
+  have sum0: "((\<lambda>h::'a.
       ((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * (\<kappa> * ?Br h) + ?Sc h) \<longlongrightarrow> 0) (at 0)"
     using tendsto_add[OF first second] by simp
-  have ev: "\<forall>\<^sub>F h in at (0::real^'n).
+  have ev: "\<forall>\<^sub>F h in at (0::'a).
       ((d \<bullet> h)\<^sup>2 / (norm h)\<^sup>2) * (\<kappa> * ?Br h) + ?Sc h
       = (soft_pen \<kappa> (d + h) - soft_pen \<kappa> d
           - \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (d \<bullet> h)
@@ -997,7 +1001,7 @@ subsection \<open>The gradient field of \<open>soft_pen\<close>, and the two uni
 text \<open>\<open>soft_grad\<close> lives in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_grad_inner:
-  fixes d h :: "real^'n::finite"
+  fixes d h :: "'a::euclidean_space"
   shows "soft_grad \<kappa> d \<bullet> h = \<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * (d \<bullet> h)"
   unfolding soft_grad_def by simp
 
@@ -1091,7 +1095,7 @@ subsection \<open>\<open>soft_grad\<close> is Lipschitz, at a non-sharp elementa
 text \<open>\<open>soft_R_lipschitz\<close>, \<open>soft_shrink\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_grad_split:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   shows "soft_grad \<kappa> d = \<kappa> *\<^sub>R d - \<kappa> *\<^sub>R soft_shrink d"
 proof -
   have "soft_grad \<kappa> d = (\<kappa> - \<kappa> * (1 / sqrt ((norm d)\<^sup>2 + 1))) *\<^sub>R d"
@@ -1104,7 +1108,7 @@ proof -
 qed
 
 lemma soft_shrink_lipschitz:
-  fixes x y :: "real^'n::finite"
+  fixes x y :: "'a::euclidean_space"
   shows "norm (soft_shrink x - soft_shrink y) \<le> 2 * norm (x - y)"
 proof -
   let ?s = "sqrt ((norm x)\<^sup>2 + 1)"
@@ -1176,7 +1180,7 @@ proof -
 qed
 
 theorem soft_grad_lipschitz:
-  fixes x y :: "real^'n::finite"
+  fixes x y :: "'a::euclidean_space"
   assumes k: "0 \<le> \<kappa>"
   shows "norm (soft_grad \<kappa> x - soft_grad \<kappa> y) \<le> (3*\<kappa>) * norm (x - y)"
 proof -
@@ -1206,7 +1210,7 @@ text \<open>Taking \<open>c\<close> to be the actual gradient norm at the maximi
   chain is an upper bound, such a \<open>\<rho>\<close> always exists.\<close>
 
 lemma soft_grad_norm_eq:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   assumes k: "0 \<le> \<kappa>"
   shows "norm (soft_grad \<kappa> d)
       = (\<kappa> * (1 - 1 / sqrt ((norm d)\<^sup>2 + 1))) * norm d"
@@ -1220,7 +1224,7 @@ proof -
 qed
 
 lemma soft_rsmall_of_rho:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   assumes k: "0 < \<kappa>"
     and small: "6 * \<rho> < (1 - 1 / sqrt ((norm d)\<^sup>2 + 1)) * norm d"
   shows "(3*\<kappa>) * (2*\<rho>) < norm (soft_grad \<kappa> d)"
@@ -1243,13 +1247,13 @@ text \<open>\<open>doubled_functional_semiconvex_gen\<close> takes the semiconve
   the penalty \<open>Pn\<close> as the hypothesis \<open>sc\<close>; the doubled constant is
   \<open>1/\<epsilon> + 1/\<epsilon> + 2\<kappa>\<close>.\<close>
 
-lemma soft_pen_zero: "soft_pen \<kappa> (0 :: real^'n::finite) = 0"
+lemma soft_pen_zero: "soft_pen \<kappa> (0 :: 'a::euclidean_space) = 0"
   unfolding soft_pen_def by simp
 
 text \<open>\<open>sqrt_shift_diff_bound\<close>, \<open>soft_pen_radial_mono\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_pen_mono_norm:
-  fixes x y :: "real^'n::finite"
+  fixes x y :: "'a::euclidean_space"
   assumes k: "0 \<le> \<kappa>" and le: "norm x \<le> norm y"
   shows "soft_pen \<kappa> x \<le> soft_pen \<kappa> y"
 proof -
@@ -1260,18 +1264,18 @@ proof -
 qed
 
 lemma soft_pen_nonneg:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   assumes k: "0 \<le> \<kappa>"
   shows "0 \<le> soft_pen \<kappa> d"
 proof -
-  have "norm (0 :: real^'n) \<le> norm d" by simp
-  then have "soft_pen \<kappa> (0 :: real^'n) \<le> soft_pen \<kappa> d"
+  have "norm (0 :: 'a) \<le> norm d" by simp
+  then have "soft_pen \<kappa> (0 :: 'a) \<le> soft_pen \<kappa> d"
     by (rule soft_pen_mono_norm[OF k])
   then show ?thesis unfolding soft_pen_zero .
 qed
 
 lemma soft_pen_little_o:
-  "((\<lambda>h::real^'n::finite. soft_pen \<kappa> h / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
+  "((\<lambda>h::'a::euclidean_space. soft_pen \<kappa> h / (norm h)\<^sup>2) \<longlongrightarrow> 0) (at 0)"
   using soft_pen_vanishing_jet_at_zero[where \<kappa> = \<kappa>]
   unfolding soft_pen_zero by simp
 
@@ -1279,21 +1283,21 @@ text \<open>A diagonal maximiser's increment bound is exactly the one-sided
   hypothesis \<open>supersol_no_vanishing_jet_onesided\<close> consumes.\<close>
 
 lemma diagonal_increment_onesided:
-  fixes B :: "real^'n::finite \<Rightarrow> real"
+  fixes B :: "'a::euclidean_space \<Rightarrow> real"
   assumes dom: "\<forall>\<^sub>F hh in at 0. B (p + hh) - B p \<le> soft_pen \<kappa> hh"
     and c: "0 < c"
   shows "\<forall>\<^sub>F hh in at 0. (B (p + hh) - B p) / (norm hh)\<^sup>2 < c"
   by (rule onesided_of_dominated[OF dom soft_pen_little_o c])
 
 lemma soft_pen_neg:
-  fixes d :: "real^'n::finite"
+  fixes d :: "'a::euclidean_space"
   shows "soft_pen \<kappa> (- d) = soft_pen \<kappa> d"
   unfolding soft_pen_def by simp
 
 text \<open>\<open>diagonal_max_increments\<close> lives in @{theory Second_Order_Viscosity_Analysis.Doubling_Of_Variables}.\<close>
 
 lemma diagonal_max_increment_soft:
-  fixes A B :: "real^'n::finite \<Rightarrow> real"
+  fixes A B :: "'a::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         A x + B y - soft_pen \<kappa> (x - y) \<le> A p + B p - soft_pen \<kappa> (p - p)"
     and pK: "p \<in> K" and hK: "p + h \<in> K"
@@ -1314,7 +1318,7 @@ subsection \<open>Coercivity of \<open>soft_pen\<close>: recovering the norm bou
 text \<open>\<open>sqrt_lt_half_plus_one\<close>, \<open>radial_profile_pos\<close> live in \<open>Soft_Penalty\<close>.\<close>
 
 lemma soft_pen_ge_radial:
-  fixes x :: "real^'n::finite"
+  fixes x :: "'a::euclidean_space"
   assumes k: "0 \<le> \<kappa>" and bnn: "0 \<le> \<beta>" and b: "\<beta> \<le> norm x"
   shows "(\<kappa>/2) * \<beta>\<^sup>2 - \<kappa> * (sqrt (\<beta>\<^sup>2 + 1) - 1) \<le> soft_pen \<kappa> x"
 proof -
@@ -1330,7 +1334,7 @@ text \<open>The packaged coercivity, in the shape \<open>norm_lt_of_penalty_boun
   profile is strictly positive and linear in \<open>\<kappa>\<close> (\<open>soft_pen_kappa_exists\<close>).\<close>
 
 lemma soft_pen_coercive_outside:
-  fixes x :: "real^'n::finite"
+  fixes x :: "'a::euclidean_space"
   assumes k: "0 \<le> \<kappa>" and bnn: "0 \<le> \<beta>"
     and big: "C\<^sub>0 < (\<kappa>/2) * \<beta>\<^sup>2 - \<kappa> * (sqrt (\<beta>\<^sup>2 + 1) - 1)"
     and b: "\<beta> \<le> norm x"
@@ -1346,7 +1350,7 @@ text \<open>The \<open>y\<close>-side of the two-domain interface: at the maximi
   only on the \<open>y\<close>-side.\<close>
 
 lemma pin_of_penalty_bound:
-  fixes A Bfun :: "real^'n::finite \<Rightarrow> real" and xh yh :: "real^'n"
+  fixes A Bfun :: "'a::euclidean_space \<Rightarrow> real" and xh yh :: "'a"
   assumes k: "0 \<le> \<kappa>\<^sub>P" and bnn: "0 \<le> \<beta>"
     and Aub: "\<And>x. A x \<le> Bu" and Bnp: "\<And>y. Bfun y \<le> 0"
     and Mnn: "0 \<le> M"
@@ -1370,11 +1374,11 @@ text \<open>Continuity of \<open>soft_pen\<close> is the single hypothesis
   total in Isabelle, so no positivity side condition is needed.\<close>
 
 lemma soft_pen_continuous:
-  "continuous_on UNIV (soft_pen \<kappa> :: real^'n::finite \<Rightarrow> real)"
+  "continuous_on UNIV (soft_pen \<kappa> :: 'a::euclidean_space \<Rightarrow> real)"
   unfolding soft_pen_def by (intro continuous_intros)
 
 theorem doubling_maximiser_exists_soft:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
   shows "\<exists>xh\<in>K. \<exists>yh\<in>K. \<forall>x\<in>K. \<forall>y\<in>K.
@@ -1391,7 +1395,7 @@ text \<open>The \<open>soft_pen\<close> analogue of \<open>doubling_dist_bound\<
   \<open>\<kappa>\<close> and the maximiser together.\<close>
 
 lemma doubling_near_soft:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes mx: "\<And>x y. x \<in> K \<Longrightarrow> y \<in> K \<Longrightarrow>
         u x - w y - soft_pen \<kappa> (x - y)
           \<le> u xh - w yh - soft_pen \<kappa> (xh - yh)"
@@ -1405,7 +1409,7 @@ proof -
   have pb: "soft_pen \<kappa> (xh - yh) \<le> C - (u z - w z)"
     by (rule doubling_penalty_bound_gen[OF mx soft_pen_zero IntI[OF z z] bnd])
   have coer: "C - (u z - w z) < soft_pen \<kappa> x" if "\<beta> \<le> norm x"
-    for x :: "real^'n"
+    for x :: "'a"
     by (rule soft_pen_coercive_outside[OF k bnn big that])
   \<comment> \<open>pin every argument: \<open>?Pn ?d\<close> is higher-order and admits several unifiers\<close>
   have "norm (xh - yh) < \<beta>"
@@ -1417,7 +1421,7 @@ proof -
 qed
 
 theorem doubling_close_maximiser_soft:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and cu: "continuous_on K u" and cw: "continuous_on K w"
     and z: "z \<in> K"
@@ -1453,7 +1457,7 @@ text \<open>The \<open>\<kappa> \<rightarrow> \<infinity>\<close> step in the su
   \<open>w := \<lambda>y. -supconv(-w)\<epsilon> y\<close>.  The assembly takes \<open>u := \<theta> ut\<close>.\<close>
 
 theorem doubling_close_maximiser_supconv_soft:
-  fixes u w :: "real^'n::finite \<Rightarrow> real"
+  fixes u w :: "'a::euclidean_space \<Rightarrow> real"
   assumes cK: "compact K" and neK: "K \<noteq> {}"
     and Bu: "\<And>y. u y \<le> Bu" and Bw: "\<And>y. (- w) y \<le> Bw"
     and e: "0 < \<epsilon>"

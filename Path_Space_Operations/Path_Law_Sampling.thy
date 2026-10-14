@@ -876,57 +876,57 @@ qed
 subsection \<open>Past and future events in the natural filtration\<close>
 
 lemma pfut_vimage_natural_filtration:
-  fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+  fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and setsP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and i: "0 \<le> i" and iS: "i \<le> T - r"
-    and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)) 0 (\<lambda>v w. w v) i)"
+    and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) 0 (\<lambda>v w. w v) i)"
   shows "pfut r T -` A' \<inter> space P
       \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + i))"
 proof -
-  let ?Y = "(path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?Y = "(path_borel (T - r) :: (real \<Rightarrow> 'p) measure)"
   have sp: "space (pair_law_of (T - r) (pfut r T) P) = space ?Y"
     by (simp add: space_pair_law_of space_borel_of)
   have nfeq: "natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
-        (\<lambda>v w :: (real \<Rightarrow> 'a \<times> 'b). w v) i
+        (\<lambda>v w :: (real \<Rightarrow> 'p). w v) i
       = natural_filtration ?Y 0 (\<lambda>v w. w v) i"
     by (rule natural_filtration_cong_space[OF sp])
   have AQ: "A' \<in> sets (natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
-      (\<lambda>v w :: (real \<Rightarrow> 'a \<times> 'b). w v) i)"
+      (\<lambda>v w :: (real \<Rightarrow> 'p). w v) i)"
     unfolding nfeq using A' .
   have m: "pfut r T
-      \<in> natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) (r + min i (T - r))
+      \<in> natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) (r + min i (T - r))
         \<rightarrow>\<^sub>M natural_filtration (pair_law_of (T - r) (pfut r T) P) 0
             (\<lambda>v w. w v) i"
     by (rule pfut_filtration_measurable[OF r rT setsP])
   have mm: "min i (T - r) = i" using iS by simp
   have "pfut r T -` A' \<inter> space (natural_filtration P 0
-      (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) (r + i))
+      (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) (r + i))
       \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + i))"
     using measurable_sets[OF m AQ] unfolding mm .
   then show ?thesis by simp
 qed
 
 lemma rect_vimage_natural_filtration:
-  fixes P :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
+  fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsP: "sets P = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and setsP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and i: "0 \<le> i" and iS: "i \<le> T - r"
-    and A: "A \<in> sets (path_borel r :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: ((real \<Rightarrow> 'a \<times> 'b)) measure)) 0 (\<lambda>v w. w v) i)"
-  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (pcut r \<omega>, pfut r T \<omega>)) -` (A \<times> A') \<inter> space P
+    and A: "A \<in> sets (path_borel r :: (real \<Rightarrow> 'p) measure)"
+    and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) 0 (\<lambda>v w. w v) i)"
+  shows "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). (pcut r \<omega>, pfut r T \<omega>)) -` (A \<times> A') \<inter> space P
       \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + i))"
 proof -
   have c1: "pcut r -` A \<inter> space P
-      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) r)"
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) r)"
     by (rule pcut_vimage_natural_filtration[OF r rT setsP A])
   have c1': "pcut r -` A \<inter> space P
-      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) (r + i))"
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) (r + i))"
     using c1 sets_natural_filtration_mono[of r "r + i"] i by auto
   have c2: "pfut r T -` A' \<inter> space P
-      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'a \<times> 'b). \<omega> v) (r + i))"
+      \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) (r + i))"
     by (rule pfut_vimage_natural_filtration[OF r rT setsP i iS A'])
-  have "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). (pcut r \<omega>, pfut r T \<omega>)) -` (A \<times> A') \<inter> space P
+  have "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). (pcut r \<omega>, pfut r T \<omega>)) -` (A \<times> A') \<inter> space P
       = (pcut r -` A \<inter> space P) \<inter> (pfut r T -` A' \<inter> space P)" by auto
   then show ?thesis using sets.Int[OF c1' c2] by simp
 qed
@@ -948,19 +948,19 @@ text \<open>The per-\<open>(i,j,A')\<close> statement, for a real functional \<o
   workhorse @{thm [source] AE_zero_of_set_integral_zero} is.\<close>
 
 lemma pfut_rcd_F_increment_zero:
-  fixes P :: "('n::finite pairpath) measure"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
+    and F :: "'p \<Rightarrow> real"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and PS: "prob_space P"
-    and K: "\<kappa> \<in> (path_borel r :: ('n pairpath) measure)
-        \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
+    and K: "\<kappa> \<in> (path_borel r :: (real \<Rightarrow> 'p) measure)
+        \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure))"
     and eq: "distr P
-          ((path_borel r :: ('n pairpath) measure)
-            \<Otimes>\<^sub>M (path_borel (T - r) :: ('n pairpath) measure))
+          ((path_borel r :: (real \<Rightarrow> 'p) measure)
+            \<Otimes>\<^sub>M (path_borel (T - r) :: (real \<Rightarrow> 'p) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
         = ksemi (pair_law_of r (pcut r) P)
-            ((path_borel (T - r) :: ('n pairpath) measure)) \<kappa>"
+            ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) \<kappa>"
     and Fb: "F \<in> borel_measurable borel"
     and Pint: "\<And>u. u \<in> {0..T - r} \<Longrightarrow> integrable P (\<lambda>\<omega>. F (pfut r T \<omega> u))"
     and Pinc: "\<And>C u v. C \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + u))
@@ -968,16 +968,16 @@ lemma pfut_rcd_F_increment_zero:
       \<Longrightarrow> set_lebesgue_integral P C (\<lambda>\<omega>. F (pfut r T \<omega> u))
         = set_lebesgue_integral P C (\<lambda>\<omega>. F (pfut r T \<omega> v))"
     and i0: "0 \<le> i" and ij: "i \<le> j" and jS: "j \<le> T - r"
-    and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: ('n pairpath) measure)) 0 (\<lambda>v w. w v) i)"
+    and A': "A' \<in> sets (natural_filtration ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) 0 (\<lambda>v w. w v) i)"
   shows "AE p' in pair_law_of r (pcut r) P.
       (\<integral>w. indicator A' w * (F (w j) - F (w i)) \<partial>(\<kappa> p')) = 0"
 proof -
-  let ?X = "(path_borel r :: ('n pairpath) measure)"
+  let ?X = "(path_borel r :: (real \<Rightarrow> 'p) measure)"
   let ?S = "T - r"
-  let ?Y = "(path_borel ?S :: ('n pairpath) measure)"
+  let ?Y = "(path_borel ?S :: (real \<Rightarrow> 'p) measure)"
   let ?Q = "pair_law_of r (pcut r) P"
-  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
-  let ?h = "\<lambda>w :: 'n pairpath. F (w j) - F (w i)"
+  let ?\<phi> = "\<lambda>\<omega> :: (real \<Rightarrow> 'p). (pcut r \<omega>, pfut r T \<omega>)"
+  let ?h = "\<lambda>w :: (real \<Rightarrow> 'p). F (w j) - F (w i)"
   have iS: "i \<le> ?S" using ij jS by simp
   have i0S: "i \<in> {0..?S}" using i0 iS by simp
   have j0S: "j \<in> {0..?S}" using i0 ij jS by simp
@@ -1008,14 +1008,14 @@ proof -
     using mphi measurable_cong_sets[OF refl SQY[symmetric]] by blast
 
   \<comment> \<open>the integrand and its integrability under \<open>P\<close>\<close>
-  have Fm: "(\<lambda>w :: 'n pairpath. F (w u)) \<in> borel_measurable ?Y" for u
+  have Fm: "(\<lambda>w :: (real \<Rightarrow> 'p). F (w u)) \<in> borel_measurable ?Y" for u
     by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] Fb])
   have hm: "?h \<in> borel_measurable ?Y" using Fm by measurable
-  have hi: "integrable P (\<lambda>\<omega> :: 'n pairpath. ?h (snd (?\<phi> \<omega>)))"
+  have hi: "integrable P (\<lambda>\<omega> :: (real \<Rightarrow> 'p). ?h (snd (?\<phi> \<omega>)))"
     using Bochner_Integration.integrable_diff[OF Pint[OF j0S] Pint[OF i0S]] by simp
   have hsnd: "integrable (ksemi ?Q ?Y \<kappa>) (\<lambda>p. ?h (snd p))"
   proof -
-    have hm2: "(\<lambda>p :: ('n pairpath) \<times> ('n pairpath). ?h (snd p))
+    have hm2: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). ?h (snd p))
         \<in> borel_measurable (?Q \<Otimes>\<^sub>M ?Y)"
       by (rule measurable_compose[OF measurable_snd hm])
     have "integrable (distr P (?Q \<Otimes>\<^sub>M ?Y) ?\<phi>) (\<lambda>p. ?h (snd p))"
@@ -1037,22 +1037,22 @@ proof -
   proof -
     let ?S' = "?\<phi> -` (A \<times> A') \<inter> space P"
     have AX: "A \<in> sets ?X" using A setsQ by simp
-    have Sfilt: "?S' \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + i))"
+    have Sfilt: "?S' \<in> sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) (r + i))"
       by (rule rect_vimage_natural_filtration[OF r rT setsP i0 iS AX A'])
-    have "sets (natural_filtration P 0 (\<lambda>v \<omega> :: 'n pairpath. \<omega> v) (r + i))
+    have "sets (natural_filtration P 0 (\<lambda>v \<omega> :: (real \<Rightarrow> 'p). \<omega> v) (r + i))
         \<subseteq> sets P"
       by (rule sets_natural_filtration_subset) (rule pair_law_eval_measurable[OF setsP])
     then have SP: "?S' \<in> sets P" using Sfilt by blast
-    have si: "set_integrable P ?S' (\<lambda>\<omega> :: 'n pairpath. F (pfut r T \<omega> u))"
+    have si: "set_integrable P ?S' (\<lambda>\<omega> :: (real \<Rightarrow> 'p). F (pfut r T \<omega> u))"
       if u: "u \<in> {0..?S}" for u
       unfolding set_integrable_def by (rule integrable_mult_indicator[OF SP Pint[OF u]])
-    have "set_lebesgue_integral P ?S' (\<lambda>\<omega> :: 'n pairpath. ?h (snd (?\<phi> \<omega>)))
+    have "set_lebesgue_integral P ?S' (\<lambda>\<omega> :: (real \<Rightarrow> 'p). ?h (snd (?\<phi> \<omega>)))
         = set_lebesgue_integral P ?S' (\<lambda>\<omega>. F (pfut r T \<omega> j))
           - set_lebesgue_integral P ?S' (\<lambda>\<omega>. F (pfut r T \<omega> i))"
       using set_integral_diff(2)[OF si[OF j0S] si[OF i0S]] by simp
     also have "\<dots> = 0" using Pinc[OF Sfilt i0 ij jS] by simp
     finally have zero: "set_lebesgue_integral P ?S'
-        (\<lambda>\<omega> :: 'n pairpath. ?h (snd (?\<phi> \<omega>))) = 0" .
+        (\<lambda>\<omega> :: (real \<Rightarrow> 'p). ?h (snd (?\<phi> \<omega>))) = 0" .
     show ?thesis
       unfolding integral_ksemi_rect_of_set_integral
         [OF eq'[symmetric] mphi' hm A A'Y]
@@ -1069,30 +1069,30 @@ text \<open>The other hypothesis of
   @{thm [source] AE_integrable_ksemi_section}.\<close>
 
 lemma pfut_rcd_F_integrable:
-  fixes P :: "('n::finite pairpath) measure"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
+    and F :: "'p \<Rightarrow> real"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and PS: "prob_space P"
-    and K: "\<kappa> \<in> (path_borel r :: ('n pairpath) measure)
-        \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
+    and K: "\<kappa> \<in> (path_borel r :: (real \<Rightarrow> 'p) measure)
+        \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure))"
     and eq: "distr P
-          ((path_borel r :: ('n pairpath) measure)
-            \<Otimes>\<^sub>M (path_borel (T - r) :: ('n pairpath) measure))
+          ((path_borel r :: (real \<Rightarrow> 'p) measure)
+            \<Otimes>\<^sub>M (path_borel (T - r) :: (real \<Rightarrow> 'p) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
         = ksemi (pair_law_of r (pcut r) P)
-            ((path_borel (T - r) :: ('n pairpath) measure)) \<kappa>"
+            ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) \<kappa>"
     and Fb: "F \<in> borel_measurable borel"
     and Pint: "integrable P (\<lambda>\<omega>. F (pfut r T \<omega> u))"
   shows "AE p' in pair_law_of r (pcut r) P.
-      integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. F (w u))"
+      integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w u))"
 proof -
-  let ?X = "(path_borel r :: ('n pairpath) measure)"
+  let ?X = "(path_borel r :: (real \<Rightarrow> 'p) measure)"
   let ?S = "T - r"
-  let ?Y = "(path_borel ?S :: ('n pairpath) measure)"
+  let ?Y = "(path_borel ?S :: (real \<Rightarrow> 'p) measure)"
   let ?Q = "pair_law_of r (pcut r) P"
-  let ?\<phi> = "\<lambda>\<omega> :: 'n pairpath. (pcut r \<omega>, pfut r T \<omega>)"
-  let ?g = "\<lambda>p :: ('n pairpath) \<times> ('n pairpath). F (snd p u)"
+  let ?\<phi> = "\<lambda>\<omega> :: (real \<Rightarrow> 'p). (pcut r \<omega>, pfut r T \<omega>)"
+  let ?g = "\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). F (snd p u)"
   interpret PP: prob_space P by (rule PS)
   have mcut: "pcut r \<in> P \<rightarrow>\<^sub>M ?X" by (rule pcut_measurable[OF r rT setsP])
   have mfut: "pfut r T \<in> P \<rightarrow>\<^sub>M ?Y" by (rule pfut_measurable_law[OF r rT setsP])
@@ -1143,11 +1143,11 @@ text \<open>All four clauses hold, with no martingale hypothesis left over.
   written for.\<close>
 
 lemma aglue_law_integrable_of_bound:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
-    and H :: "'a \<times> 'b \<Rightarrow> 'c::{banach,second_countable_topology}"
+  fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
+    and H :: "'p \<Rightarrow> 'c::{banach,second_countable_topology}"
   assumes T0: "0 \<le> T" and PQ: "prob_space Q"
-    and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and setsQ: "sets Q = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and Hb: "H \<in> borel_measurable borel"
     and dom: "\<And>p' w. norm (H (padd T p' w t)) \<le> a p' + G p' w"
     and aint: "integrable Q a" and bint: "integrable Q b"
@@ -1155,18 +1155,18 @@ lemma aglue_law_integrable_of_bound:
     and Gbnd: "\<And>p'. p' \<in> space Q \<Longrightarrow> (\<integral>w. G p' w \<partial>(\<kappa> p')) \<le> b p'"
   shows "integrable (aglue_law T \<kappa> Q) (\<lambda>\<omega>. H (\<omega> t))"
 proof -
-  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?B = "(path_borel T :: (real \<Rightarrow> 'p) measure)"
   let ?S = "ksemi Q ?B \<kappa>"
   have ne: "space Q \<noteq> {}" by (rule prob_space.not_empty[OF PQ])
   have setsS: "sets ?S = sets (Q \<Otimes>\<^sub>M ?B)" by (rule sets_ksemi[OF Kp ne])
-  have pmP: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). padd T (fst p) (snd p))
+  have pmP: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). padd T (fst p) (snd p))
       \<in> Q \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B" by (rule padd_measurable_ksemi[OF T0 setsQ])
-  have pm: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). padd T (fst p) (snd p))
+  have pm: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). padd T (fst p) (snd p))
       \<in> ?S \<rightarrow>\<^sub>M ?B"
     using pmP measurable_cong_sets[OF setsS refl] by blast
-  have hb: "(\<lambda>\<omega> :: (real \<Rightarrow> 'a \<times> 'b). H (\<omega> t)) \<in> borel_measurable ?B"
+  have hb: "(\<lambda>\<omega> :: (real \<Rightarrow> 'p). H (\<omega> t)) \<in> borel_measurable ?B"
     by (rule measurable_compose[OF pair_law_eval_measurable[OF refl] Hb])
-  have gm: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)).
+  have gm: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p).
       H (padd T (fst p) (snd p) t)) \<in> borel_measurable (Q \<Otimes>\<^sub>M ?B)"
     by (rule measurable_compose[OF pmP hb])
   have bnd: "(\<integral>\<^sup>+w. ennreal (norm (H (padd T (fst (p', w)) (snd (p', w)) t))) \<partial>(\<kappa> p'))
@@ -1179,11 +1179,11 @@ proof -
       by (rule Bochner_Integration.integrable_add[OF PK.integrable_const Gint[OF sp]])
     have mP: "(\<lambda>w. norm (H (padd T p' w t))) \<in> borel_measurable (\<kappa> p')"
     proof -
-      have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). padd T p' w) \<in> ?B \<rightarrow>\<^sub>M ?B"
+      have "(\<lambda>w :: (real \<Rightarrow> 'p). padd T p' w) \<in> ?B \<rightarrow>\<^sub>M ?B"
         by (rule padd_measurable_left[OF T0])
            (use sp space_of_path_sets[OF setsQ] in simp)
       from measurable_compose[OF this hb]
-      have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). H (padd T p' w t)) \<in> borel_measurable (\<kappa> p')"
+      have "(\<lambda>w :: (real \<Rightarrow> 'p). H (padd T p' w t)) \<in> borel_measurable (\<kappa> p')"
         using measurable_cong_sets[OF sK refl] by blast
       then show ?thesis by measurable
     qed
@@ -1293,24 +1293,24 @@ text \<open>One generic lemma covers both, and \<open>gintX\<close>/\<open>gintC
   \<^const>\<open>pcut\<close> for \<open>gint\<close>.\<close>
 
 lemma aglue_section_int_at:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
-    and h cc :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
+  fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
+    and h cc :: "(real \<Rightarrow> 'p) \<Rightarrow> real"
   assumes T0: "0 \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and hb: "h \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and cb: "cc \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and setsQ: "sets Q = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: (real \<Rightarrow> 'p) measure)"
+    and hb: "h \<in> borel_measurable (path_borel T :: (real \<Rightarrow> 'p) measure)"
+    and cb: "cc \<in> borel_measurable (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and c1: "\<And>\<omega>. \<bar>cc \<omega>\<bar> \<le> 1"
     and Kint: "integrable (\<kappa> p') (\<lambda>w. h (padd T p' w))"
     and sp: "p' \<in> space Q"
   shows "integrable (\<kappa> p') (\<lambda>w. cc (padd T p' w) * h (padd T p' w))"
 proof (rule Bochner_Integration.integrable_bound[OF Kint])
-  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+  let ?B = "(path_borel T :: (real \<Rightarrow> 'p) measure)"
   have sK: "sets (\<kappa> p') = sets ?B" by (rule ksemi_sets_kernel(1)[OF Kp sp])
-  have pl: "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). padd T p' w) \<in> ?B \<rightarrow>\<^sub>M ?B"
+  have pl: "(\<lambda>w :: (real \<Rightarrow> 'p). padd T p' w) \<in> ?B \<rightarrow>\<^sub>M ?B"
     by (rule padd_measurable_left[OF T0])
        (use sp space_of_path_sets[OF setsQ] in simp)
-  have "(\<lambda>w :: (real \<Rightarrow> 'a \<times> 'b). cc (padd T p' w) * h (padd T p' w))
+  have "(\<lambda>w :: (real \<Rightarrow> 'p). cc (padd T p' w) * h (padd T p' w))
       \<in> borel_measurable ?B"
     using measurable_compose[OF pl cb] measurable_compose[OF pl hb] by simp
   then show "(\<lambda>w. cc (padd T p' w) * h (padd T p' w))
@@ -1323,23 +1323,23 @@ next
 qed
 
 lemma aglue_section_measurable:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
-    and h cc :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
+  fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
+    and h cc :: "(real \<Rightarrow> 'p) \<Rightarrow> real"
   assumes T0: "0 \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and hb: "h \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and cb: "cc \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and setsQ: "sets Q = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: (real \<Rightarrow> 'p) measure)"
+    and hb: "h \<in> borel_measurable (path_borel T :: (real \<Rightarrow> 'p) measure)"
+    and cb: "cc \<in> borel_measurable (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and c1: "\<And>\<omega>. \<bar>cc \<omega>\<bar> \<le> 1"
     and Kint: "\<And>p'. p' \<in> space Q
       \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. h (padd T p' w))"
   shows "(\<lambda>p'. \<integral>w. cc (padd T p' w) * h (padd T p' w) \<partial>(\<kappa> p'))
       \<in> borel_measurable Q"
 proof -
-  let ?B = "(path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-  have pmP: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)). padd T (fst p) (snd p))
+  let ?B = "(path_borel T :: (real \<Rightarrow> 'p) measure)"
+  have pmP: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p). padd T (fst p) (snd p))
       \<in> Q \<Otimes>\<^sub>M ?B \<rightarrow>\<^sub>M ?B" by (rule padd_measurable_ksemi[OF T0 setsQ])
-  have gm: "(\<lambda>p :: ((real \<Rightarrow> 'a \<times> 'b)) \<times> ((real \<Rightarrow> 'a \<times> 'b)).
+  have gm: "(\<lambda>p :: (real \<Rightarrow> 'p) \<times> (real \<Rightarrow> 'p).
       cc (padd T (fst p) (snd p)) * h (padd T (fst p) (snd p)))
       \<in> borel_measurable (Q \<Otimes>\<^sub>M ?B)"
     using measurable_compose[OF pmP cb] measurable_compose[OF pmP hb] by simp
@@ -1381,13 +1381,13 @@ text \<open>\<open>gintX\<close>/\<open>gintC\<close>: the same section integral
   here too.\<close>
 
 lemma aglue_section_integrable:
-  fixes Q :: "((real \<Rightarrow> 'a::{polish_space,banach} \<times> 'b::{polish_space,banach})) measure"
-    and h cc HB :: "(real \<Rightarrow> 'a \<times> 'b) \<Rightarrow> real"
+  fixes Q :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
+    and h cc HB :: "(real \<Rightarrow> 'p) \<Rightarrow> real"
   assumes T0: "0 \<le> T"
-    and setsQ: "sets Q = sets (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and hb: "h \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
-    and cb: "cc \<in> borel_measurable (path_borel T :: ((real \<Rightarrow> 'a \<times> 'b)) measure)"
+    and setsQ: "sets Q = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
+    and Kp: "\<kappa> \<in> Q \<rightarrow>\<^sub>M prob_algebra (path_borel T :: (real \<Rightarrow> 'p) measure)"
+    and hb: "h \<in> borel_measurable (path_borel T :: (real \<Rightarrow> 'p) measure)"
+    and cb: "cc \<in> borel_measurable (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and c1: "\<And>\<omega>. \<bar>cc \<omega>\<bar> \<le> 1"
     and Kint: "\<And>p'. p' \<in> space Q
       \<Longrightarrow> integrable (\<kappa> p') (\<lambda>w. h (padd T p' w))"
@@ -1404,7 +1404,7 @@ proof -
     show "AE p' in Q. norm (\<integral>w. cc (padd T p' w) * h (padd T p' w) \<partial>(\<kappa> p'))
         \<le> norm (HB p')"
     proof (rule eventually_mono[OF AE_space])
-      fix p' :: "(real \<Rightarrow> 'a \<times> 'b)" assume sp: "p' \<in> space Q"
+      fix p' :: "(real \<Rightarrow> 'p)" assume sp: "p' \<in> space Q"
       have iH: "integrable (\<kappa> p') (\<lambda>w. h (padd T p' w))" by (rule Kint[OF sp])
       have iA: "integrable (\<kappa> p') (\<lambda>w. \<bar>h (padd T p' w)\<bar>)"
         using iH by simp
@@ -1418,7 +1418,7 @@ proof -
         show "integrable (\<kappa> p') (\<lambda>w. \<bar>cc (padd T p' w) * h (padd T p' w)\<bar>)"
           using iCH by simp
         show "\<bar>cc (padd T p' w) * h (padd T p' w)\<bar>
-            \<le> \<bar>h (padd T p' w)\<bar>" for w :: "(real \<Rightarrow> 'a \<times> 'b)"
+            \<le> \<bar>h (padd T p' w)\<bar>" for w :: "(real \<Rightarrow> 'p)"
           by (simp add: abs_mult mult_left_le_one_le c1)
       qed
       also have "\<dots> \<le> HB p'" by (rule Kbnd[OF sp])
@@ -1558,19 +1558,19 @@ text \<open>Only countably many conditions survive the passage from "for each,
   all times.\<close>
 
 theorem pfut_rcd_F_martingale:
-  fixes P :: "('n::finite pairpath) measure"
-    and F :: "(real^'n) \<times> (real^'n^'n) \<Rightarrow> real"
+  fixes P :: "(real \<Rightarrow> 'p::{polish_space,banach}) measure"
+    and F :: "'p \<Rightarrow> real"
   assumes r: "0 \<le> r" and rT: "r \<le> T"
-    and setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
+    and setsP: "sets P = sets (path_borel T :: (real \<Rightarrow> 'p) measure)"
     and PS: "prob_space P"
-    and K: "\<kappa> \<in> (path_borel r :: ('n pairpath) measure)
-        \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: ('n pairpath) measure))"
+    and K: "\<kappa> \<in> (path_borel r :: (real \<Rightarrow> 'p) measure)
+        \<rightarrow>\<^sub>M prob_algebra ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure))"
     and eq: "distr P
-          ((path_borel r :: ('n pairpath) measure)
-            \<Otimes>\<^sub>M (path_borel (T - r) :: ('n pairpath) measure))
+          ((path_borel r :: (real \<Rightarrow> 'p) measure)
+            \<Otimes>\<^sub>M (path_borel (T - r) :: (real \<Rightarrow> 'p) measure))
           (\<lambda>\<omega>. (pcut r \<omega>, pfut r T \<omega>))
         = ksemi (pair_law_of r (pcut r) P)
-            ((path_borel (T - r) :: ('n pairpath) measure)) \<kappa>"
+            ((path_borel (T - r) :: (real \<Rightarrow> 'p) measure)) \<kappa>"
     and Fc: "continuous_on UNIV F"
     and Pint: "\<And>u. u \<in> {0..T - r} \<Longrightarrow> integrable P (\<lambda>\<omega>. F (pfut r T \<omega> u))"
     and Pinc: "\<And>C u v. C \<in> sets (natural_filtration P 0 (\<lambda>v \<omega>. \<omega> v) (r + u))
@@ -1581,11 +1581,11 @@ theorem pfut_rcd_F_martingale:
       martingale (\<kappa> p') (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v)) 0
         (\<lambda>u w. F (w (min u (T - r))))"
 proof -
-  let ?X = "(path_borel r :: ('n pairpath) measure)"
+  let ?X = "(path_borel r :: (real \<Rightarrow> 'p) measure)"
   let ?S = "T - r"
-  let ?Y = "(path_borel ?S :: ('n pairpath) measure)"
+  let ?Y = "(path_borel ?S :: (real \<Rightarrow> 'p) measure)"
   let ?Q = "pair_law_of r (pcut r) P"
-  let ?G = "\<lambda>q. natural_filtration ?Y 0 (\<lambda>v w :: 'n pairpath. w v) q"
+  let ?G = "\<lambda>q. natural_filtration ?Y 0 (\<lambda>v w :: (real \<Rightarrow> 'p). w v) q"
   have Tr: "0 \<le> ?S" using rT by simp
   have SS: "?S \<in> {0..?S}" using Tr by simp
   have Fb: "F \<in> borel_measurable borel"
@@ -1632,11 +1632,11 @@ proof -
     qed
   qed
   have rat_int: "AE p' in ?Q. \<forall>q \<in> (\<rat> :: real set). q \<in> {0..?S} \<longrightarrow>
-      integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. F (w q))"
+      integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w q))"
   proof (rule AE_ball_countable'[OF _ countable_rat])
     fix q :: real assume "q \<in> \<rat>"
     show "AE p' in ?Q. q \<in> {0..?S} \<longrightarrow>
-        integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. F (w q))"
+        integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w q))"
     proof (cases "q \<in> {0..?S}")
       case True
       show ?thesis
@@ -1647,7 +1647,7 @@ proof -
       then show ?thesis by auto
     qed
   qed
-  have S_int: "AE p' in ?Q. integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. F (w ?S))"
+  have S_int: "AE p' in ?Q. integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w ?S))"
     by (rule pfut_rcd_F_integrable[OF r rT setsP PS K eq Fb Pint[OF SS]])
 
   \<comment> \<open>and the assembly at each good \<open>p'\<close>\<close>
@@ -1658,38 +1658,38 @@ proof -
       and Z0: "\<And>q A'. q \<in> \<rat> \<Longrightarrow> q \<in> {0..?S} \<Longrightarrow> A' \<in> Eg q \<Longrightarrow>
           (\<integral>w. indicator A' w * (F (w ?S) - F (w q)) \<partial>(\<kappa> p')) = 0"
       and RI: "\<And>q. q \<in> \<rat> \<Longrightarrow> q \<in> {0..?S} \<Longrightarrow>
-          integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. F (w q))"
-      and SI: "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. F (w ?S))" by blast+
+          integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w q))"
+      and SI: "integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w ?S))" by blast+
     have PK: "prob_space (\<kappa> p')" by (rule ksemi_sets_kernel(2)[OF KQ W])
     have sK: "sets (\<kappa> p') = sets ?Y" by (rule ksemi_sets_kernel(1)[OF KQ W])
     have spK: "space (\<kappa> p') = space ?Y" by (rule sets_eq_imp_space_eq[OF sK])
-    have nfK: "natural_filtration (\<kappa> p') 0 (\<lambda>v w :: 'n pairpath. w v) u = ?G u"
+    have nfK: "natural_filtration (\<kappa> p') 0 (\<lambda>v w :: (real \<Rightarrow> 'p). w v) u = ?G u"
       for u by (rule natural_filtration_cong_space[OF spK])
-    have spY: "space ?Y = mspace (path_metric ?S :: ('n pairpath) metric)"
+    have spY: "space ?Y = mspace (path_metric ?S :: (real \<Rightarrow> 'p) metric)"
       by (simp add: space_borel_of)
-    have Fm: "(\<lambda>w :: 'n pairpath. F (w (min u ?S)))
+    have Fm: "(\<lambda>w :: (real \<Rightarrow> 'p). F (w (min u ?S)))
         \<in> borel_measurable (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v) u)"
       if "0 \<le> u" for u
     proof -
-      have "(\<lambda>w :: 'n pairpath. w (min u ?S))
+      have "(\<lambda>w :: (real \<Rightarrow> 'p). w (min u ?S))
           \<in> borel_measurable (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v) u)"
         by (rule natural_filtration_eval) (use that Tr in auto)
       then show ?thesis by (rule measurable_compose[OF _ Fb])
     qed
     show ?case
     proof (rule martingale_of_rational_set_integral_eq[OF Tr sK PK])
-      show "(\<lambda>w :: 'n pairpath. F (w (min u ?S)))
+      show "(\<lambda>w :: (real \<Rightarrow> 'p). F (w (min u ?S)))
           \<in> borel_measurable (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v) u)"
         if "u \<in> {0..?S}" for u by (rule Fm) (use that in simp)
-      show "(\<lambda>w :: 'n pairpath. F (w (min u ?S)))
+      show "(\<lambda>w :: (real \<Rightarrow> 'p). F (w (min u ?S)))
           \<in> borel_measurable (natural_filtration (\<kappa> p') 0 (\<lambda>v w. w v) u)"
         if "0 \<le> u" for u by (rule Fm[OF that])
-      show "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. F (w (min q ?S)))"
+      show "integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w (min q ?S)))"
         if "q \<in> \<rat>" "q \<in> {0..?S}" for q using RI[OF that] that(2) by simp
-      show "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. F (w (min ?S ?S)))"
+      show "integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w (min ?S ?S)))"
         using SI by simp
       show "continuous_on {0..?S} (\<lambda>u. F (w (min u ?S)))"
-        if "w \<in> space (\<kappa> p')" for w :: "'n pairpath"
+        if "w \<in> space (\<kappa> p')" for w :: "(real \<Rightarrow> 'p)"
       proof -
         have "continuous_on {0..?S} w"
           by (rule mspace_path_metricD) (use that spK spY in simp)
@@ -1697,12 +1697,12 @@ proof -
           by (rule continuous_on_compose2[OF Fc]) simp
         then show ?thesis by (rule continuous_on_eq) simp
       qed
-      show "(\<lambda>w :: 'n pairpath. F (w (min u ?S))) = (\<lambda>w. F (w (min ?S ?S)))"
+      show "(\<lambda>w :: (real \<Rightarrow> 'p). F (w (min u ?S))) = (\<lambda>w. F (w (min ?S ?S)))"
         if "?S \<le> u" for u using that by simp
       \<comment> \<open>the \<open>\<pi>\<close>-system widens to \<open>\<F>\<^sub>q\<close> at this fixed \<open>p'\<close>\<close>
       fix q :: real and A
       assume qrat: "q \<in> \<rat>" and q: "q \<in> {0..?S}"
-        and A: "A \<in> sets (natural_filtration (\<kappa> p') 0 (\<lambda>v w :: 'n pairpath. w v) q)"
+        and A: "A \<in> sets (natural_filtration (\<kappa> p') 0 (\<lambda>v w :: (real \<Rightarrow> 'p). w v) q)"
       have AG: "A \<in> sets (?G q)" using A nfK by simp
       have EgS: "countable (Eg q)" "Int_stable (Eg q)"
         "Eg q \<subseteq> Pow (space ?Y)" "space ?Y \<in> Eg q"
@@ -1710,31 +1710,31 @@ proof -
         using Espec[OF q] by blast+
       have subG: "subalgebra (\<kappa> p') (?G q)"
         using subalgebra_natural_filtration_path[OF sK, of q] nfK by simp
-      have iq: "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. F (w q))" by (rule RI[OF qrat q])
-      have gi: "integrable (\<kappa> p') (\<lambda>w :: 'n pairpath. F (w ?S) - F (w q))"
+      have iq: "integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w q))" by (rule RI[OF qrat q])
+      have gi: "integrable (\<kappa> p') (\<lambda>w :: (real \<Rightarrow> 'p). F (w ?S) - F (w q))"
         by (rule Bochner_Integration.integrable_diff[OF SI iq])
       have gz: "set_lebesgue_integral (\<kappa> p') B
-          (\<lambda>w :: 'n pairpath. F (w ?S) - F (w q)) = 0"
+          (\<lambda>w :: (real \<Rightarrow> 'p). F (w ?S) - F (w q)) = 0"
         if B: "B \<in> Eg q" for B
         using Z0[OF qrat q B] unfolding set_lebesgue_integral_def by simp
       have zA: "set_lebesgue_integral (\<kappa> p') A
-          (\<lambda>w :: 'n pairpath. F (w ?S) - F (w q)) = 0"
+          (\<lambda>w :: (real \<Rightarrow> 'p). F (w ?S) - F (w q)) = 0"
         by (rule set_integral_zero_of_generator
             [OF subG gi EgS(2) _ _ _ gz AG])
            (use EgS(3) EgS(4) EgS(5) spK in simp_all)
       have AQ: "A \<in> sets (\<kappa> p')"
         using AG subG by (auto simp: subalgebra_def)
-      have s1: "set_integrable (\<kappa> p') A (\<lambda>w :: 'n pairpath. F (w ?S))"
+      have s1: "set_integrable (\<kappa> p') A (\<lambda>w :: (real \<Rightarrow> 'p). F (w ?S))"
         unfolding set_integrable_def
         by (rule integrable_mult_indicator[OF AQ SI])
-      have s2: "set_integrable (\<kappa> p') A (\<lambda>w :: 'n pairpath. F (w q))"
+      have s2: "set_integrable (\<kappa> p') A (\<lambda>w :: (real \<Rightarrow> 'p). F (w q))"
         unfolding set_integrable_def
         by (rule integrable_mult_indicator[OF AQ iq])
-      have "set_lebesgue_integral (\<kappa> p') A (\<lambda>w :: 'n pairpath. F (w ?S))
+      have "set_lebesgue_integral (\<kappa> p') A (\<lambda>w :: (real \<Rightarrow> 'p). F (w ?S))
           - set_lebesgue_integral (\<kappa> p') A (\<lambda>w. F (w q)) = 0"
         using set_integral_diff(2)[OF s1 s2] zA by simp
       then show "set_lebesgue_integral (\<kappa> p') A
-            (\<lambda>w :: 'n pairpath. F (w (min q ?S)))
+            (\<lambda>w :: (real \<Rightarrow> 'p). F (w (min q ?S)))
           = set_lebesgue_integral (\<kappa> p') A (\<lambda>w. F (w (min ?S ?S)))"
         using q by simp
     qed

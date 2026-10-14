@@ -355,15 +355,17 @@ qed (use symH in \<open>auto intro: continuous_on_const\<close>)
 text \<open>The two quartic shifts share the gradient computation.\<close>
 
 lemma quartic_shift_derivative:
-  fixes \<phi> :: "real^'n::finite \<Rightarrow> real" and C :: real
+  fixes \<phi> :: "'a::euclidean_space \<Rightarrow> real" and C :: real
   assumes d: "(\<phi> has_derivative (\<lambda>h. g \<bullet> h)) (at y)"
   shows "((\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2) has_derivative
       (\<lambda>h. (g - (4 * C * ((y - x) \<bullet> (y - x))) *\<^sub>R (y - x)) \<bullet> h)) (at y)"
 proof -
+  have e: "q \<bullet> h - c * (v \<bullet> h) = (q - c *\<^sub>R v) \<bullet> h" for q v h :: 'a and c :: real
+    by (simp add: inner_diff_left)
   have "((\<lambda>z. \<phi> z - C * ((z - x) \<bullet> (z - x))\<^sup>2) has_derivative
       (\<lambda>h. g \<bullet> h - C * (2 * ((y - x) \<bullet> (y - x)) * (2 * ((y - x) \<bullet> h))))) (at y)"
     using d by (auto intro!: derivative_eq_intros simp: inner_commute)
-  then show ?thesis by (simp only: quartic_coeff_assoc inner_scaleR_diff_eq)
+  then show ?thesis by (simp only: quartic_coeff_assoc e)
 qed
 
 lemma test_fun_C2_quartic_shift:
@@ -425,7 +427,7 @@ text \<open>A local touching becomes a global one over \<open>K\<close> by a qua
   (\<open>test_fun_at_quartic_shift\<close>, \<open>test_fun_C2_quartic_shift\<close>).\<close>
 
 lemma local_max_quartic_deepen:
-  fixes u \<phi> :: "real^'n::finite \<Rightarrow> real"
+  fixes u \<phi> :: "'a::euclidean_space \<Rightarrow> real"
   assumes uhi: "\<And>y. y \<in> K \<Longrightarrow> u y \<le> Bu"
     and phi: "\<And>y. y \<in> K \<Longrightarrow> B\<phi> \<le> \<phi> y"
     and r0: "0 < r"
