@@ -519,10 +519,10 @@ Path_Stopping_Times.path_stopping_time_max    # KEEP_API
 Path_Stopping_Times.path_stopping_time_shift    # KEEP_API
 Path_Stopping_Times.path_stopping_time_cut_eq    # KEEP_ROOT
 Path_Stopping_Times.pstopped_cut_compose    # KEEP_ROOT
-Path_Stopping_Times.pre_sigma_ofI_le    # KEEP_ROOT
+Stopping_Time_Sampling.pre_sigma_ofI_le    # KEEP_ROOT
 Path_Stopping_Times.pstopped_vimage_pre_sigma    # KEEP_ROOT
-Path_Stopping_Times.sigma_algebra_pre_sigma_of    # KEEP_API
-Path_Stopping_Times.integrable_at_bounded_stopping_time    # FIX_THEN_KEEP
+Stopping_Time_Sampling.sigma_algebra_pre_sigma_of    # KEEP_API
+Stopping_Time_Sampling.integrable_at_bounded_stopping_time    # FIX_THEN_KEEP
 Path_Stopping_Times.set_integral_increment_times_known    # FIX_THEN_KEEP
 Path_Law_Pasting.kglue_law'_rcd_eq    # KEEP_API
 Path_Law_Pasting.AE_kglue_law_of_kernel    # KEEP_API
