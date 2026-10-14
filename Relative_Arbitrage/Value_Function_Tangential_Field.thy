@@ -44,6 +44,29 @@ proof -
   then show ?thesis unfolding sq using feasible_subset_sconstraint by blast
 qed
 
+text \<open>With a full orthonormal family the projector is the identity: the
+  sphere-tangential rates lie in the constraint set as soon as \<open>1 \<le> k\<close>.\<close>
+
+lemma tanpU_id_sq_sconstraint:
+  fixes u :: "real^'n::finite"
+  assumes u1: "norm u \<le> 1" and k1: "1 \<le> k" and L1: "1 \<le> L"
+  shows "tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> sconstraint k L"
+proof -
+  obtain i :: 'n where True by blast
+  have uu: "axis i (1::real) \<bullet> axis i 1 = 1" by simp
+  obtain bb :: "nat \<Rightarrow> real^'n"
+    where orth: "\<forall>i < CARD('n). \<forall>j < CARD('n). bb i \<bullet> bb j = (if i = j then 1 else 0)"
+    using orthonormal_family_containing[OF uu order.refl] by auto
+  have orth': "\<And>i j. i < CARD('n) \<Longrightarrow> j < CARD('n) \<Longrightarrow>
+      bb i \<bullet> bb j = (if i = j then 1 else 0)"
+    using orth by blast
+  have P1: "projmat bb CARD('n) = mat 1"
+    by (simp add: matrix_eq projmat_full_id[OF orth'])
+  have mk: "CARD('n) - k \<le> CARD('n) - 1" using k1 by simp
+  show ?thesis
+    using tanpU_sq_sconstraint[OF orth' u1 _ mk L1] unfolding P1 by simp
+qed
+
 
 text \<open>The exact growth identity for the subspace-tangential field around a
   centre \<open>y\<^sub>0\<close>, for general \<open>k\<close>: inside the region where the projection of
@@ -63,11 +86,17 @@ text \<open>The exact growth identity for the subspace-tangential field around a
 
 theorem subspace_tangential_exact_growth:
   fixes b :: "nat \<Rightarrow> real^'n::finite" and x y\<^sub>0 :: "real^'n" and \<rho> rB T :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L" and rho0: "0 < \<rho>"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
+    and tan: "\<And>u. norm u \<le> 1 \<Longrightarrow> projmat b m *v u = u \<Longrightarrow>
+      tanpU (projmat b m) u ** transpose (tanpU (projmat b m) u) \<in> S"
+    and rho0: "0 < \<rho>"
     and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and mk: "CARD('n) - k \<le> m - 1"
     and xfix: "projmat b m *v (x - y\<^sub>0) = x - y\<^sub>0"
-  shows "\<exists>P \<in> exit_class k L T x. AE \<omega> in P. \<forall>t.
+  shows "\<exists>P \<in> covariation_class S T x. AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> T \<longrightarrow>
       (\<forall>s\<in>{0..t}. fst (\<omega> s)
           \<in> {w. \<rho> < norm (projmat b m *v (w - y\<^sub>0))} \<inter> ball y\<^sub>0 rB) \<longrightarrow>
@@ -90,10 +119,8 @@ proof -
   have mvc: "continuous_on UNIV (\<lambda>w :: real^'n. projmat b m *v (w - y\<^sub>0))"
     by (rule continuous_on_compose2[OF _ shc, of UNIV])
       (simp_all add: linear_continuous_on linear_linear)
-  have SFs: "\<And>z. SF z ** transpose (SF z) \<in> sconstraint k L"
-    unfolding SF_def
-    by (rule tanpU_sq_sconstraint[OF orth uvecV_norm_le[OF rho0]
-          uvecV_fix[OF Pidem] mk L1])
+  have SFs: "\<And>z. SF z ** transpose (SF z) \<in> S"
+    unfolding SF_def by (rule tan[OF uvecV_norm_le[OF rho0] uvecV_fix[OF Pidem]])
   have ROo: "open RO"
   proof -
     have "open {w :: real^'n. \<rho> < norm (projmat b m *v (w - y\<^sub>0))}"
@@ -196,8 +223,7 @@ proof -
   have marg2: "\<And>z. z \<in> RO \<Longrightarrow> - 2 * (real m - 1)
       \<le> trace (((-2::real) *\<^sub>R mat 1) ** (SF z ** transpose (SF z)))"
     using trRO[of _ "-2"] by simp
-  have L0: "0 \<le> L" using L1 by simp
-  obtain P where P: "P \<in> covariation_class (sconstraint k L) T x"
+  obtain P where P: "P \<in> covariation_class S T x"
     and AE2: "AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> T \<longrightarrow> (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> RO) \<longrightarrow>
       (t * (2 * (real m - 1)) / 2
@@ -208,10 +234,10 @@ proof -
         \<le> ((-2) *\<^sub>R (x - y\<^sub>0)) \<bullet> (fst (\<omega> t) - x)
           + (1/2) * ((fst (\<omega> t) - x)
               \<bullet> (((-2::real) *\<^sub>R mat 1) *v (fst (\<omega> t) - x))))"
-    by (rule bexE[OF eulerp_limit_good2_region[OF T0 sconstraint_bounds[OF L0] closed_sconstraint
-        sconstraint_convex SFc SFs sym1 sym2 ROo ROb kill1 marg1 kill2 marg2]])
+    by (rule bexE[OF eulerp_limit_good2_region[OF T0 B0 B D0 D Sc Sv SFc SFs sym1 sym2
+        ROo ROb kill1 marg1 kill2 marg2]])
   show ?thesis
-  proof (intro bexI[OF _ P[folded exit_class_eq_covariation]])
+  proof (intro bexI[OF _ P])
     show "AE \<omega> in P. \<forall>t.
         0 < t \<longrightarrow> t \<le> T \<longrightarrow>
         (\<forall>s\<in>{0..t}. fst (\<omega> s)
@@ -281,25 +307,33 @@ text \<open>Paths of the tangential member cannot leave the annulus around \<ope
   before the deterministic time \<open>(rB\<^sup>2 - |x-y\<^sub>0|\<^sup>2)/(m-1)\<close>: the inner
   boundary is unreachable because the squared distance only grows, and
   reaching the outer sphere pins the time exactly.  Feeding the
-  DPP @{thm [source] exit_val_dpp_ge_const_time} at a constant time
+  DPP @{thm [source] covariation_val_dpp_ge_const_time} at a constant time
   \<open>cc\<close> before that and before \<open>T\<close> turns confinement into the lower bound
   \<open>v(x) \<ge> cc + min \<beta> (T - cc)\<close>, where \<open>\<beta>\<close> bounds the value on the ball
   from below.\<close>
 
-theorem exit_val_ball_lower_gen:
+theorem covariation_val_ball_lower_gen:
   fixes K :: "(real^'n::finite) set" and x y\<^sub>0 :: "real^'n"
     and b :: "nat \<Rightarrow> real^'n" and rB T cc \<beta> :: real
-  assumes T0: "0 < T" and L1: "1 \<le> L"
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
+    and tan: "\<And>u. norm u \<le> 1 \<Longrightarrow> projmat b m *v u = u \<Longrightarrow>
+      tanpU (projmat b m) u ** transpose (tanpU (projmat b m) u) \<in> S"
     and Kc: "closed K" and sub: "cball y\<^sub>0 rB \<subseteq> K"
     and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
     and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
-    and mk: "CARD('n) - k \<le> m - 1" and m2: "2 \<le> m"
+    and m2: "2 \<le> m"
     and xfix: "projmat b m *v (x - y\<^sub>0) = x - y\<^sub>0"
     and cc0: "0 < cc" and ccT: "cc < T"
     and ccdf: "cc < (rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (real m - 1)"
-    and vlow: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow> \<beta> \<le> enn2real (exit_val k L T K w)"
-  shows "ennreal (cc + min \<beta> (T - cc)) \<le> exit_val k L T K x"
+    and vlow: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow> \<beta> \<le> enn2real (covariation_val S T K w)"
+  shows "ennreal (cc + min \<beta> (T - cc)) \<le> covariation_val S T K x"
 proof -
+  have SST: "tanpU (projmat b m) 0 ** transpose (tanpU (projmat b m) 0) \<in> S"
+    by (rule tan) simp_all
   define \<rho>\<^sub>0 where "\<rho>\<^sub>0 = norm (x - y\<^sub>0)"
   define \<rho> where "\<rho> = \<rho>\<^sub>0 / 2"
   define cn where "cn = real m - 1"
@@ -321,25 +355,25 @@ proof -
     by (intro continuous_intros mvc)
   have Fnc: "continuous_on UNIV (\<lambda>w :: real^'n. (norm (w - y\<^sub>0))\<^sup>2)"
     by (intro continuous_intros)
-  obtain P where P: "P \<in> exit_class k L T x"
+  obtain P where P: "P \<in> covariation_class S T x"
     and AEg: "AE \<omega> in P. \<forall>t.
       0 < t \<longrightarrow> t \<le> T \<longrightarrow>
       (\<forall>s\<in>{0..t}. fst (\<omega> s) \<in> ?RO) \<longrightarrow>
       (norm (projmat b m *v (fst (\<omega> t) - y\<^sub>0)))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + t * (real m - 1)
         \<and> (norm (fst (\<omega> t) - y\<^sub>0))\<^sup>2 = (norm (x - y\<^sub>0))\<^sup>2 + t * (real m - 1)"
-    using subspace_tangential_exact_growth[OF T0 L1 rho0 orth mk xfix, where rB = rB]
-    by blast
+    by (rule bexE[OF subspace_tangential_exact_growth[OF T0 B0 B D0 D Sc Sv tan rho0 orth xfix,
+          where rB = rB]])
   have setsP: "sets P = sets (path_borel T :: ('n pairpath) measure)"
-    by (rule exit_class_sets[OF P])
+    by (rule covariation_class_sets[OF P])
   have spaceP: "space P = mspace (path_metric T :: ('n pairpath) metric)"
     by (rule space_of_path_sets[OF setsP])
   have start: "AE \<omega> in P. fst (\<omega> 0) = x \<and> snd (\<omega> 0) = 0"
-    by (rule covariation_class_start[OF P[unfolded exit_class_eq_covariation]])
+    by (rule covariation_class_start[OF P])
   have sp: "AE \<omega> in P. \<omega> \<in> space P" by (rule AE_space)
   have AEfun: "AE \<omega> in P. cc + min \<beta> (T - cc)
       \<le> pexit cc K (\<lambda>t. fst (\<omega> t))
         + (if pexit cc K (\<lambda>t. fst (\<omega> t)) = cc \<and> fst (\<omega> cc) \<in> K
-           then enn2real (exit_val k L (T - cc) K (fst (\<omega> cc))) else 0)"
+           then enn2real (covariation_val S (T - cc) K (fst (\<omega> cc))) else 0)"
     using AEg start sp
   proof (eventually_elim)
     case (elim \<omega>)
@@ -459,22 +493,96 @@ proof -
       by (rule pexit_eq_of_stays[OF cc0']) (use inK in simp)
     have XccK: "fst (\<omega> cc) \<in> K" using inK[of cc] cc0 by simp
     have XccB: "fst (\<omega> cc) \<in> ball y\<^sub>0 rB" using inB[of cc] cc0 by simp
-    have cap: "enn2real (exit_val k L (T - cc) K (fst (\<omega> cc)))
-        = min (enn2real (exit_val k L T K (fst (\<omega> cc)))) (T - cc)"
-      by (rule enn2real_paper_v_horizon_cap[OF _ _ L1 Kc]) (use ccT cc0 in auto)
+    have cap: "enn2real (covariation_val S (T - cc) K (fst (\<omega> cc)))
+        = min (enn2real (covariation_val S T K (fst (\<omega> cc)))) (T - cc)"
+      by (rule enn2real_covariation_val_horizon_cap[OF _ _ Sc Sv SST Kc]) (use ccT cc0 in auto)
     show ?case
       using pex XccK cap vlow[OF XccB] by (simp add: min_def)
   qed
   show ?thesis
-    by (rule exit_val_dpp_ge_const_time[OF _ L1 Kc
+    by (rule covariation_val_dpp_ge_const_time[OF T0 B0 B D0 D Sc Sv SST Kc
           path_stopping_time_const[OF cc0' less_imp_le[OF ccT]] borel_measurable_const P AEfun])
-      (use cc0 ccT in linarith)
 qed
+
+text \<open>The paper's constraint set contains every subspace-tangential rate of
+  a subspace of dimension \<open>m \<ge> n - k + 1\<close> (@{thm [source] tanpU_sq_sconstraint}).\<close>
+
+theorem exit_val_ball_lower_gen:
+  fixes K :: "(real^'n::finite) set" and x y\<^sub>0 :: "real^'n"
+    and b :: "nat \<Rightarrow> real^'n" and rB T cc \<beta> :: real
+  assumes T0: "0 < T" and L1: "1 \<le> L"
+    and Kc: "closed K" and sub: "cball y\<^sub>0 rB \<subseteq> K"
+    and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
+    and orth: "\<And>i j. i < m \<Longrightarrow> j < m \<Longrightarrow> b i \<bullet> b j = (if i = j then 1 else 0)"
+    and mk: "CARD('n) - k \<le> m - 1" and m2: "2 \<le> m"
+    and xfix: "projmat b m *v (x - y\<^sub>0) = x - y\<^sub>0"
+    and cc0: "0 < cc" and ccT: "cc < T"
+    and ccdf: "cc < (rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (real m - 1)"
+    and vlow: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow> \<beta> \<le> enn2real (exit_val k L T K w)"
+  shows "ennreal (cc + min \<beta> (T - cc)) \<le> exit_val k L T K x"
+  unfolding exit_val_eq_covariation_val
+  by (rule covariation_val_ball_lower_gen[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+        closed_sconstraint sconstraint_convex tanpU_sq_sconstraint[OF orth _ _ mk L1] Kc sub xy xin
+        orth m2 xfix cc0 ccT ccdf vlow[unfolded exit_val_eq_covariation_val]])
 
 text \<open>With \<open>m = CARD('n)\<close> the projector is the identity, the field is
   sphere-tangential and the rate is \<open>CARD('n) - 1\<close>; at
   \<open>cc = min (T/2) (\<delta>/2)\<close> this is the (non-sharp) ball bound that the
   dichotomy of Case 2 uses.\<close>
+
+theorem covariation_val_ball_lower_plus:
+  fixes K :: "(real^'n::finite) set" and y\<^sub>0 x :: "real^'n"
+    and rB T \<beta> :: real
+  assumes T0: "0 < T" and B0: "0 \<le> B"
+    and B: "\<And>a :: real^'n^'n. a \<in> S \<Longrightarrow> norm a \<le> B"
+    and D0: "0 \<le> D"
+    and D: "\<And>(a :: real^'n^'n) j. a \<in> S \<Longrightarrow> 0 \<le> a $ j $ j \<and> a $ j $ j \<le> D"
+    and Sc: "closed S" and Sv: "convex S"
+    and tan1: "\<And>u :: real^'n. norm u \<le> 1 \<Longrightarrow>
+      tanpU (mat 1) u ** transpose (tanpU (mat 1) u) \<in> S"
+    and n2: "2 \<le> CARD('n)"
+    and Kc: "closed K" and sub: "cball y\<^sub>0 rB \<subseteq> K"
+    and xy: "x \<noteq> y\<^sub>0" and xin: "norm (x - y\<^sub>0) < rB"
+    and b0: "0 \<le> \<beta>"
+    and vlow: "\<And>w. w \<in> ball y\<^sub>0 rB \<Longrightarrow>
+      \<beta> \<le> enn2real (covariation_val S T K w)"
+  shows "ennreal (min (T / 2)
+      ((rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2) / (2 * (real CARD('n) - 1)))
+      + min \<beta> (T / 2))
+      \<le> covariation_val S T K x"
+proof -
+  define Dr where "Dr = rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2"
+  define cc where "cc = min (T / 2) (Dr / (2 * (real CARD('n) - 1)))"
+  have uu: "sgn (x - y\<^sub>0) \<bullet> sgn (x - y\<^sub>0) = 1"
+    using xy by (simp add: dot_square_norm norm_sgn)
+  obtain bb :: "nat \<Rightarrow> real^'n"
+    where orth: "\<forall>i < CARD('n). \<forall>j < CARD('n). bb i \<bullet> bb j = (if i = j then 1 else 0)"
+    using orthonormal_family_containing[OF uu order.refl] by auto
+  have orth': "\<And>i j. i < CARD('n) \<Longrightarrow> j < CARD('n) \<Longrightarrow>
+      bb i \<bullet> bb j = (if i = j then 1 else 0)"
+    using orth by blast
+  have P1: "projmat bb CARD('n) = mat 1"
+    by (simp add: matrix_eq projmat_full_id[OF orth'])
+  have tanb: "\<And>u. norm u \<le> 1 \<Longrightarrow> projmat bb CARD('n) *v u = u \<Longrightarrow>
+      tanpU (projmat bb CARD('n)) u ** transpose (tanpU (projmat bb CARD('n)) u) \<in> S"
+    unfolding P1 by (rule tan1)
+  have cn0: "0 < real CARD('n) - 1" using n2 by linarith
+  have Dr0: "0 < Dr"
+    unfolding Dr_def using xin by (intro diff_gt_0_iff_gt[THEN iffD2] power_strict_mono) auto
+  have cc0: "0 < cc" unfolding cc_def using T0 Dr0 cn0 by simp
+  have ccT: "cc < T" unfolding cc_def using T0 by simp
+  have "Dr / (2 * (real CARD('n) - 1)) < Dr / (real CARD('n) - 1)"
+    using Dr0 cn0 by (intro divide_strict_left_mono) auto
+  then have ccdf: "cc < Dr / (real CARD('n) - 1)"
+    unfolding cc_def by (rule le_less_trans[OF min.cobounded2])
+  have main: "ennreal (cc + min \<beta> (T - cc)) \<le> covariation_val S T K x"
+    by (rule covariation_val_ball_lower_gen[OF T0 B0 B D0 D Sc Sv tanb Kc sub xy xin orth' n2
+          projmat_full_id[OF orth'] cc0 ccT ccdf[unfolded Dr_def] vlow])
+  have ccT2: "cc \<le> T / 2" unfolding cc_def by (rule min.cobounded1)
+  have le: "ennreal (cc + min \<beta> (T / 2)) \<le> ennreal (cc + min \<beta> (T - cc))"
+    using ccT2 by (intro ennreal_leI add_left_mono min.mono) simp_all
+  show ?thesis using order_trans[OF le main] unfolding cc_def Dr_def .
+qed
 
 theorem exit_val_ball_lower_plus:
   fixes K :: "(real^'n::finite) set" and y\<^sub>0 x :: "real^'n"
@@ -491,33 +599,12 @@ theorem exit_val_ball_lower_plus:
       + min \<beta> (T / 2))
       \<le> exit_val k L T K x"
 proof -
-  define D where "D = rB\<^sup>2 - (norm (x - y\<^sub>0))\<^sup>2"
-  define cc where "cc = min (T / 2) (D / (2 * (real CARD('n) - 1)))"
-  have uu: "sgn (x - y\<^sub>0) \<bullet> sgn (x - y\<^sub>0) = 1"
-    using xy by (simp add: dot_square_norm norm_sgn)
-  obtain bb :: "nat \<Rightarrow> real^'n"
-    where orth: "\<forall>i < CARD('n). \<forall>j < CARD('n). bb i \<bullet> bb j = (if i = j then 1 else 0)"
-    using orthonormal_family_containing[OF uu order.refl] by auto
-  have orth': "\<And>i j. i < CARD('n) \<Longrightarrow> j < CARD('n) \<Longrightarrow>
-      bb i \<bullet> bb j = (if i = j then 1 else 0)"
-    using orth by blast
-  have cn0: "0 < real CARD('n) - 1" using k1 kn by linarith
-  have D0: "0 < D"
-    unfolding D_def using xin by (intro diff_gt_0_iff_gt[THEN iffD2] power_strict_mono) auto
-  have cc0: "0 < cc" unfolding cc_def using T0 D0 cn0 by simp
-  have ccT: "cc < T" unfolding cc_def using T0 by simp
-  have "D / (2 * (real CARD('n) - 1)) < D / (real CARD('n) - 1)"
-    using D0 cn0 by (intro divide_strict_left_mono) auto
-  then have ccdf: "cc < D / (real CARD('n) - 1)"
-    unfolding cc_def by (rule le_less_trans[OF min.cobounded2])
-  have main: "ennreal (cc + min \<beta> (T - cc)) \<le> exit_val k L T K x"
-    by (rule exit_val_ball_lower_gen[OF T0 L1 Kc sub xy xin orth' _ _
-          projmat_full_id[OF orth'] cc0 ccT ccdf[unfolded D_def] vlow])
-      (use k1 kn in auto)
-  have ccT2: "cc \<le> T / 2" unfolding cc_def by (rule min.cobounded1)
-  have le: "ennreal (cc + min \<beta> (T / 2)) \<le> ennreal (cc + min \<beta> (T - cc))"
-    using ccT2 by (intro ennreal_leI add_left_mono min.mono) simp_all
-  show ?thesis using order_trans[OF le main] unfolding cc_def D_def .
+  have n2: "2 \<le> CARD('n)" using k1 kn by linarith
+  show ?thesis
+    unfolding exit_val_eq_covariation_val
+    by (rule covariation_val_ball_lower_plus[OF T0 sconstraint_bounds[OF order_trans[OF zero_le_one L1]]
+          closed_sconstraint sconstraint_convex tanpU_id_sq_sconstraint[OF _ k1 L1] n2 Kc sub xy xin b0
+          vlow[unfolded exit_val_eq_covariation_val]])
 qed
 
 
